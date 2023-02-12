@@ -1,4 +1,4 @@
 package org.idp.server;
 
-public class OAuthApi {
-}
+/** OAuthApi */
+public class OAuthApi {}
