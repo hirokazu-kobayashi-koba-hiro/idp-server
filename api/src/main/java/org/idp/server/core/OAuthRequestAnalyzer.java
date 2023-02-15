@@ -1,11 +1,9 @@
 package org.idp.server.core;
 
-/**
- * OAuthRequestAnalyzer
- */
+/** OAuthRequestAnalyzer */
 public class OAuthRequestAnalyzer {
 
-    public AuthorizationProfile analyze(OAuthRequestParameters oAuthRequestParameters) {
-        return AuthorizationProfile.OAUTH;
-    }
+  public AuthorizationProfile analyze(OAuthRequestParameters oAuthRequestParameters) {
+    return AuthorizationProfile.OAUTH;
+  }
 }

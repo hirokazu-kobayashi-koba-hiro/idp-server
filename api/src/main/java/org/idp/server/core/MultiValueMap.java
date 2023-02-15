@@ -1,8 +1,9 @@
 package org.idp.server.core;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 /** MultiValueMap */
 public class MultiValueMap {
@@ -31,4 +32,14 @@ public class MultiValueMap {
     return values.isEmpty();
   }
 
+  public List<String> multiValueKeys() {
+    List<String> keys = new ArrayList<>();
+    values.forEach(
+        (key, value) -> {
+          if (value.length > 1) {
+            keys.add(key);
+          }
+        });
+    return keys;
+  }
 }
