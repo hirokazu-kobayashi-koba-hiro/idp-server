@@ -86,7 +86,7 @@ public class OAuthRequestParameters {
   }
 
   String getString(OAuthRequestKey key) {
-    if (values.contains(key.name())) {
+    if (!values.contains(key.name())) {
       return "";
     }
     return values.getFirst(key.name());

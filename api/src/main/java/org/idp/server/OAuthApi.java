@@ -1,7 +1,9 @@
 package org.idp.server;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.idp.server.core.OAuthRequestParameters;
+import org.idp.server.core.OAuthRequestResult;
 import org.idp.server.core.TokenIssuer;
 import org.idp.server.core.oauth.OAuthBadRequestException;
 import org.idp.server.core.oauth.validator.OAuthRequestInitialValidator;
@@ -21,10 +23,11 @@ public class OAuthApi {
       initialValidator.validate(oAuthRequestParameters);
       return new OAuthRequestResponse();
     } catch (OAuthBadRequestException exception) {
-      log.warning(exception.getMessage());
-      return new OAuthRequestResponse();
+      log.log(Level.WARNING, exception.getMessage(), exception);
+      return new OAuthRequestResponse(OAuthRequestResult.BAD_REQUEST);
     } catch (Exception exception) {
-      return new OAuthRequestResponse();
+      log.log(Level.SEVERE, exception.getMessage(), exception);
+      return new OAuthRequestResponse(OAuthRequestResult.SERVER_ERROR);
     }
   }
 }

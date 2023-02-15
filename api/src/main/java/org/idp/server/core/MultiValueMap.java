@@ -18,8 +18,8 @@ public class MultiValueMap {
   }
 
   public String getFirst(String key) {
-    if (values.containsKey(key)) {
-      return null;
+    if (!values.containsKey(key)) {
+      return "";
     }
     return values.get(key)[0];
   }
