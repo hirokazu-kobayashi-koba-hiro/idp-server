@@ -1,4 +1,4 @@
-package org.idp.server.core;
+package org.idp.server.core.oauth.params;
 
 /** OAuthRequestKey */
 public enum OAuthRequestKey {
@@ -16,5 +16,7 @@ public enum OAuthRequestKey {
   id_token_hint,
   login_hint,
   acr_values,
-  claims
+  claims,
+  request,
+  request_uri
 }

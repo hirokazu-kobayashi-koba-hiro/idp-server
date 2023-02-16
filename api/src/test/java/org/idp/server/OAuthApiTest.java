@@ -1,7 +1,7 @@
 package org.idp.server;
 
 import java.util.Map;
-import org.idp.server.core.OAuthRequestResult;
+import org.idp.server.core.oauth.params.OAuthRequestResult;
 import org.idp.server.io.OAuthRequest;
 import org.idp.server.io.OAuthRequestResponse;
 import org.junit.jupiter.api.Assertions;

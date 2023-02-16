@@ -1,4 +1,4 @@
-package org.idp.server.core;
+package org.idp.server.core.oauth.params;
 
 import java.util.ArrayList;
 import java.util.HashMap;

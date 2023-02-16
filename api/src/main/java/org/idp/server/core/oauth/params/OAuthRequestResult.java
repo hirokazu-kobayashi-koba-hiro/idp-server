@@ -1,4 +1,4 @@
-package org.idp.server.core;
+package org.idp.server.core.oauth.params;
 
 /** OAuthRequestResult */
 public enum OAuthRequestResult {
