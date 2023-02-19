@@ -6,13 +6,13 @@ import org.idp.server.core.oauth.OAuthBadRequestException;
 import org.idp.server.core.oauth.OAuthRequestAnalyzer;
 import org.idp.server.core.oauth.OAuthRequestPattern;
 import org.idp.server.core.oauth.OAuthRequestValidatorProvider;
-import org.idp.server.core.oauth.params.OAuthRequestParameters;
-import org.idp.server.core.oauth.params.OAuthRequestResult;
-import org.idp.server.core.oauth.params.TokenIssuer;
 import org.idp.server.core.oauth.validator.OAuthRequestInitialValidator;
 import org.idp.server.core.oauth.validator.OAuthRequestValidator;
 import org.idp.server.io.OAuthRequest;
 import org.idp.server.io.OAuthRequestResponse;
+import org.idp.server.type.OAuthRequestParameters;
+import org.idp.server.type.OAuthRequestResult;
+import org.idp.server.type.TokenIssuer;
 
 /** OAuthApi */
 public class OAuthApi {

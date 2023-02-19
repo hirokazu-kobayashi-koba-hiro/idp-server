@@ -2,7 +2,7 @@ package org.idp.server.core.oauth.validator;
 
 import java.util.List;
 import org.idp.server.core.oauth.OAuthBadRequestException;
-import org.idp.server.core.oauth.params.OAuthRequestParameters;
+import org.idp.server.type.OAuthRequestParameters;
 
 /** OAuthRequestInitialValidator */
 public class OAuthRequestInitialValidator {
@@ -13,7 +13,7 @@ public class OAuthRequestInitialValidator {
   }
 
   void throwIfNotContainsClientId(OAuthRequestParameters oAuthRequestParameters) {
-    String clientId = oAuthRequestParameters.getClientId();
+    String clientId = oAuthRequestParameters.clientId();
     if (clientId.isEmpty()) {
       throw new OAuthBadRequestException("authorization request must contains client_id");
     }

@@ -1,4 +1,4 @@
-package org.idp.server.core.oauth.params;
+package org.idp.server.type;
 
 /** OAuthRequestKey */
 public enum OAuthRequestKey {

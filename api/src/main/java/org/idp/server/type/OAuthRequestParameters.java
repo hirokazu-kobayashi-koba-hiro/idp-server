@@ -1,6 +1,6 @@
-package org.idp.server.core.oauth.params;
+package org.idp.server.type;
 
-import static org.idp.server.core.oauth.params.OAuthRequestKey.*;
+import static org.idp.server.type.OAuthRequestKey.*;
 
 import java.util.List;
 import java.util.Map;
@@ -25,7 +25,7 @@ public class OAuthRequestParameters {
     return values.isEmpty();
   }
 
-  public String getScope() {
+  public String scope() {
     return getString(scope);
   }
 
@@ -33,7 +33,7 @@ public class OAuthRequestParameters {
     return contains(scope);
   }
 
-  public String getResponseType() {
+  public String responseType() {
     return getString(response_type);
   }
 
@@ -41,7 +41,7 @@ public class OAuthRequestParameters {
     return contains(response_type);
   }
 
-  public String getClientId() {
+  public String clientId() {
     return getString(client_id);
   }
 
@@ -49,7 +49,7 @@ public class OAuthRequestParameters {
     return contains(client_id);
   }
 
-  public String getRedirectUri() {
+  public String redirectUri() {
     return getString(redirect_uri);
   }
 
@@ -57,7 +57,7 @@ public class OAuthRequestParameters {
     return contains(redirect_uri);
   }
 
-  public String getState() {
+  public String state() {
     return getString(state);
   }
 
@@ -65,7 +65,7 @@ public class OAuthRequestParameters {
     return contains(state);
   }
 
-  public String getResponseMode() {
+  public String responseMode() {
     return getString(response_mode);
   }
 
@@ -73,7 +73,7 @@ public class OAuthRequestParameters {
     return contains(response_mode);
   }
 
-  public String getNonce() {
+  public String nonce() {
     return getString(nonce);
   }
 
@@ -81,7 +81,7 @@ public class OAuthRequestParameters {
     return contains(nonce);
   }
 
-  public String getDisplay() {
+  public String display() {
     return getString(display);
   }
 
@@ -89,7 +89,7 @@ public class OAuthRequestParameters {
     return contains(display);
   }
 
-  public String getPrompt() {
+  public String prompt() {
     return getString(prompt);
   }
 
@@ -97,7 +97,7 @@ public class OAuthRequestParameters {
     return contains(prompt);
   }
 
-  public String getMaxAge() {
+  public String maxAge() {
     return getString(max_age);
   }
 
@@ -105,7 +105,7 @@ public class OAuthRequestParameters {
     return contains(max_age);
   }
 
-  public String getUiLocales() {
+  public String uiLocales() {
     return getString(ui_locales);
   }
 
@@ -113,7 +113,7 @@ public class OAuthRequestParameters {
     return contains(ui_locales);
   }
 
-  public String getIdTokenHint() {
+  public String idTokenHint() {
     return getString(id_token_hint);
   }
 
@@ -121,7 +121,7 @@ public class OAuthRequestParameters {
     return contains(id_token_hint);
   }
 
-  public String getLoginHint() {
+  public String loginHint() {
     return getString(login_hint);
   }
 
@@ -129,7 +129,7 @@ public class OAuthRequestParameters {
     return contains(login_hint);
   }
 
-  public String getAcrValues() {
+  public String acrValues() {
     return getString(acr_values);
   }
 
@@ -137,7 +137,7 @@ public class OAuthRequestParameters {
     return contains(acr_values);
   }
 
-  public String getClaims() {
+  public String claims() {
     return getString(claims);
   }
 
@@ -145,7 +145,7 @@ public class OAuthRequestParameters {
     return contains(claims);
   }
 
-  public String getRequest() {
+  public String request() {
     return getString(request);
   }
 
@@ -153,7 +153,7 @@ public class OAuthRequestParameters {
     return contains(request);
   }
 
-  public String getRequestUri() {
+  public String requestUri() {
     return getString(request_uri);
   }
 
