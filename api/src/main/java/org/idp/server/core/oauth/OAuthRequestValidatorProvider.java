@@ -3,27 +3,27 @@ package org.idp.server.core.oauth;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.oauth.validator.NormalPatternValidator;
-import org.idp.server.core.oauth.validator.OAuthRequestValidator;
-import org.idp.server.core.oauth.validator.RequestObjectPatternValidator;
-import org.idp.server.core.oauth.validator.RequestUriPatternValidator;
+import org.idp.server.core.oauth.validator.NormalPatternContextCreator;
+import org.idp.server.core.oauth.validator.OAuthRequestContextCreator;
+import org.idp.server.core.oauth.validator.RequestObjectPatternContextCreator;
+import org.idp.server.core.oauth.validator.RequestUriPatternContextCreator;
 
 /** OAuthRequestValidatorProvider */
 public class OAuthRequestValidatorProvider {
 
-  static Map<OAuthRequestPattern, OAuthRequestValidator> map = new HashMap<>();
+  static Map<OAuthRequestPattern, OAuthRequestContextCreator> map = new HashMap<>();
 
   static {
-    map.put(OAuthRequestPattern.NORMAL, new NormalPatternValidator());
-    map.put(OAuthRequestPattern.REQUEST_OBJECT, new RequestObjectPatternValidator());
-    map.put(OAuthRequestPattern.REQUEST_URI, new RequestUriPatternValidator());
+    map.put(OAuthRequestPattern.NORMAL, new NormalPatternContextCreator());
+    map.put(OAuthRequestPattern.REQUEST_OBJECT, new RequestObjectPatternContextCreator());
+    map.put(OAuthRequestPattern.REQUEST_URI, new RequestUriPatternContextCreator());
   }
 
-  public OAuthRequestValidator provide(OAuthRequestPattern oAuthRequestPattern) {
-    OAuthRequestValidator oAuthRequestValidator = map.get(oAuthRequestPattern);
-    if (Objects.isNull(oAuthRequestValidator)) {
+  public OAuthRequestContextCreator provide(OAuthRequestPattern oAuthRequestPattern) {
+    OAuthRequestContextCreator oAuthRequestContextCreator = map.get(oAuthRequestPattern);
+    if (Objects.isNull(oAuthRequestContextCreator)) {
       throw new RuntimeException("not support request pattern");
     }
-    return oAuthRequestValidator;
+    return oAuthRequestContextCreator;
   }
 }

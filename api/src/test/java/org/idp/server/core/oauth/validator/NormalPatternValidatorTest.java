@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 public class NormalPatternValidatorTest {
 
-  NormalPatternValidator sut = new NormalPatternValidator();
+  NormalPatternContextCreator sut = new NormalPatternContextCreator();
 
   @Test
   void test() {}

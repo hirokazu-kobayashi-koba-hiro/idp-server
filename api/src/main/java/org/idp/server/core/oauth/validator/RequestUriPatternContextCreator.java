@@ -4,11 +4,11 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.type.OAuthRequestParameters;
 
-/** NormalPatternValidator */
-public class NormalPatternValidator implements OAuthRequestValidator {
+/** RequestUriPatternValidator */
+public class RequestUriPatternContextCreator implements OAuthRequestContextCreator {
 
   @Override
-  public void validate(
+  public void create(
       OAuthRequestParameters parameters,
       ServerConfiguration serverConfiguration,
       ClientConfiguration configuration) {}
