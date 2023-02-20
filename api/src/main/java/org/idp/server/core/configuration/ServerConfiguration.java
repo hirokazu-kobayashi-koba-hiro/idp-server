@@ -1,9 +1,10 @@
 package org.idp.server.core.configuration;
 
 import java.util.List;
+import org.idp.server.basic.json.JsonReadable;
 
 /** ServerConfiguration */
-public class ServerConfiguration {
+public class ServerConfiguration implements JsonReadable {
   String issuer;
   String authorizationEndpoint;
   String tokenEndpoint;
@@ -49,358 +50,171 @@ public class ServerConfiguration {
 
   public ServerConfiguration() {}
 
-  public String getIssuer() {
+  public String issuer() {
     return issuer;
   }
 
-  public void setIssuer(String issuer) {
-    this.issuer = issuer;
-  }
-
-  public String getAuthorizationEndpoint() {
+  public String authorizationEndpoint() {
     return authorizationEndpoint;
   }
 
-  public void setAuthorizationEndpoint(String authorizationEndpoint) {
-    this.authorizationEndpoint = authorizationEndpoint;
-  }
-
-  public String getTokenEndpoint() {
+  public String tokenEndpoint() {
     return tokenEndpoint;
   }
 
-  public void setTokenEndpoint(String tokenEndpoint) {
-    this.tokenEndpoint = tokenEndpoint;
-  }
-
-  public String getUserinfoEndpoint() {
+  public String userinfoEndpoint() {
     return userinfoEndpoint;
   }
 
-  public void setUserinfoEndpoint(String userinfoEndpoint) {
-    this.userinfoEndpoint = userinfoEndpoint;
-  }
-
-  public String getJwksUri() {
+  public String jwksUri() {
     return jwksUri;
   }
 
-  public void setJwksUri(String jwksUri) {
-    this.jwksUri = jwksUri;
-  }
-
-  public List<String> getScopesSupported() {
+  public List<String> scopesSupported() {
     return scopesSupported;
   }
 
-  public void setScopesSupported(List<String> scopesSupported) {
-    this.scopesSupported = scopesSupported;
-  }
-
-  public List<String> getResponseTypesSupported() {
+  public List<String> responseTypesSupported() {
     return responseTypesSupported;
   }
 
-  public void setResponseTypesSupported(List<String> responseTypesSupported) {
-    this.responseTypesSupported = responseTypesSupported;
-  }
-
-  public List<String> getResponseModesSupported() {
+  public List<String> responseModesSupported() {
     return responseModesSupported;
   }
 
-  public void setResponseModesSupported(List<String> responseModesSupported) {
-    this.responseModesSupported = responseModesSupported;
-  }
-
-  public List<String> getGrantTypesSupported() {
+  public List<String> grantTypesSupported() {
     return grantTypesSupported;
   }
 
-  public void setGrantTypesSupported(List<String> grantTypesSupported) {
-    this.grantTypesSupported = grantTypesSupported;
-  }
-
-  public List<String> getAcrValuesSupported() {
+  public List<String> acrValuesSupported() {
     return acrValuesSupported;
   }
 
-  public void setAcrValuesSupported(List<String> acrValuesSupported) {
-    this.acrValuesSupported = acrValuesSupported;
-  }
-
-  public List<String> getSubjectTypesSupported() {
+  public List<String> subjectTypesSupported() {
     return subjectTypesSupported;
   }
 
-  public void setSubjectTypesSupported(List<String> subjectTypesSupported) {
-    this.subjectTypesSupported = subjectTypesSupported;
-  }
-
-  public List<String> getIdTokenSigningAlgValuesSupported() {
+  public List<String> idTokenSigningAlgValuesSupported() {
     return idTokenSigningAlgValuesSupported;
   }
 
-  public void setIdTokenSigningAlgValuesSupported(List<String> idTokenSigningAlgValuesSupported) {
-    this.idTokenSigningAlgValuesSupported = idTokenSigningAlgValuesSupported;
-  }
-
-  public List<String> getIdTokenEncryptionAlgValuesSupported() {
+  public List<String> idTokenEncryptionAlgValuesSupported() {
     return idTokenEncryptionAlgValuesSupported;
   }
 
-  public void setIdTokenEncryptionAlgValuesSupported(
-      List<String> idTokenEncryptionAlgValuesSupported) {
-    this.idTokenEncryptionAlgValuesSupported = idTokenEncryptionAlgValuesSupported;
-  }
-
-  public List<String> getIdTokenEncryptionEncValuesSupported() {
+  public List<String> idTokenEncryptionEncValuesSupported() {
     return idTokenEncryptionEncValuesSupported;
   }
 
-  public void setIdTokenEncryptionEncValuesSupported(
-      List<String> idTokenEncryptionEncValuesSupported) {
-    this.idTokenEncryptionEncValuesSupported = idTokenEncryptionEncValuesSupported;
-  }
-
-  public List<String> getUserinfoSigningAlgValuesSupported() {
+  public List<String> userinfoSigningAlgValuesSupported() {
     return userinfoSigningAlgValuesSupported;
   }
 
-  public void setUserinfoSigningAlgValuesSupported(List<String> userinfoSigningAlgValuesSupported) {
-    this.userinfoSigningAlgValuesSupported = userinfoSigningAlgValuesSupported;
-  }
-
-  public List<String> getUserinfoEncryptionAlgValuesSupported() {
+  public List<String> userinfoEncryptionAlgValuesSupported() {
     return userinfoEncryptionAlgValuesSupported;
   }
 
-  public void setUserinfoEncryptionAlgValuesSupported(
-      List<String> userinfoEncryptionAlgValuesSupported) {
-    this.userinfoEncryptionAlgValuesSupported = userinfoEncryptionAlgValuesSupported;
-  }
-
-  public List<String> getUserinfoEncryptionEncValuesSupported() {
+  public List<String> userinfoEncryptionEncValuesSupported() {
     return userinfoEncryptionEncValuesSupported;
   }
 
-  public void setUserinfoEncryptionEncValuesSupported(
-      List<String> userinfoEncryptionEncValuesSupported) {
-    this.userinfoEncryptionEncValuesSupported = userinfoEncryptionEncValuesSupported;
-  }
-
-  public List<String> getRequestObjectSigningAlgValuesSupported() {
+  public List<String> requestObjectSigningAlgValuesSupported() {
     return requestObjectSigningAlgValuesSupported;
   }
 
-  public void setRequestObjectSigningAlgValuesSupported(
-      List<String> requestObjectSigningAlgValuesSupported) {
-    this.requestObjectSigningAlgValuesSupported = requestObjectSigningAlgValuesSupported;
-  }
-
-  public List<String> getRequestObjectEncryptionAlgValuesSupported() {
+  public List<String> requestObjectEncryptionAlgValuesSupported() {
     return requestObjectEncryptionAlgValuesSupported;
   }
 
-  public void setRequestObjectEncryptionAlgValuesSupported(
-      List<String> requestObjectEncryptionAlgValuesSupported) {
-    this.requestObjectEncryptionAlgValuesSupported = requestObjectEncryptionAlgValuesSupported;
-  }
-
-  public List<String> getRequestObjectEncryptionEncValuesSupported() {
+  public List<String> requestObjectEncryptionEncValuesSupported() {
     return requestObjectEncryptionEncValuesSupported;
   }
 
-  public void setRequestObjectEncryptionEncValuesSupported(
-      List<String> requestObjectEncryptionEncValuesSupported) {
-    this.requestObjectEncryptionEncValuesSupported = requestObjectEncryptionEncValuesSupported;
-  }
-
-  public List<String> getAuthorizationSigningAlgValuesSupported() {
+  public List<String> authorizationSigningAlgValuesSupported() {
     return authorizationSigningAlgValuesSupported;
   }
 
-  public void setAuthorizationSigningAlgValuesSupported(
-      List<String> authorizationSigningAlgValuesSupported) {
-    this.authorizationSigningAlgValuesSupported = authorizationSigningAlgValuesSupported;
-  }
-
-  public List<String> getAuthorizationEncryptionAlgValuesSupported() {
+  public List<String> authorizationEncryptionAlgValuesSupported() {
     return authorizationEncryptionAlgValuesSupported;
   }
 
-  public void setAuthorizationEncryptionAlgValuesSupported(
-      List<String> authorizationEncryptionAlgValuesSupported) {
-    this.authorizationEncryptionAlgValuesSupported = authorizationEncryptionAlgValuesSupported;
-  }
-
-  public List<String> getAuthorizationEncryptionEncValuesSupported() {
+  public List<String> authorizationEncryptionEncValuesSupported() {
     return authorizationEncryptionEncValuesSupported;
   }
 
-  public void setAuthorizationEncryptionEncValuesSupported(
-      List<String> authorizationEncryptionEncValuesSupported) {
-    this.authorizationEncryptionEncValuesSupported = authorizationEncryptionEncValuesSupported;
-  }
-
-  public List<String> getTokenEndpointAuthMethodsSupported() {
+  public List<String> tokenEndpointAuthMethodsSupported() {
     return tokenEndpointAuthMethodsSupported;
   }
 
-  public void setTokenEndpointAuthMethodsSupported(List<String> tokenEndpointAuthMethodsSupported) {
-    this.tokenEndpointAuthMethodsSupported = tokenEndpointAuthMethodsSupported;
-  }
-
-  public List<String> getTokenEndpointAuthSigningAlgValuesSupported() {
+  public List<String> tokenEndpointAuthSigningAlgValuesSupported() {
     return tokenEndpointAuthSigningAlgValuesSupported;
   }
 
-  public void setTokenEndpointAuthSigningAlgValuesSupported(
-      List<String> tokenEndpointAuthSigningAlgValuesSupported) {
-    this.tokenEndpointAuthSigningAlgValuesSupported = tokenEndpointAuthSigningAlgValuesSupported;
-  }
-
-  public List<String> getDisplayValuesSupported() {
+  public List<String> displayValuesSupported() {
     return displayValuesSupported;
   }
 
-  public void setDisplayValuesSupported(List<String> displayValuesSupported) {
-    this.displayValuesSupported = displayValuesSupported;
-  }
-
-  public List<String> getClaimTypesSupported() {
+  public List<String> claimTypesSupported() {
     return claimTypesSupported;
   }
 
-  public void setClaimTypesSupported(List<String> claimTypesSupported) {
-    this.claimTypesSupported = claimTypesSupported;
-  }
-
-  public List<String> getClaimsSupported() {
+  public List<String> claimsSupported() {
     return claimsSupported;
   }
 
-  public void setClaimsSupported(List<String> claimsSupported) {
-    this.claimsSupported = claimsSupported;
-  }
-
-  public boolean isClaimsParameterSupported() {
+  public boolean claimsParameterSupported() {
     return claimsParameterSupported;
   }
 
-  public void setClaimsParameterSupported(boolean claimsParameterSupported) {
-    this.claimsParameterSupported = claimsParameterSupported;
-  }
-
-  public boolean isRequestParameterSupported() {
+  public boolean requestParameterSupported() {
     return requestParameterSupported;
   }
 
-  public void setRequestParameterSupported(boolean requestParameterSupported) {
-    this.requestParameterSupported = requestParameterSupported;
-  }
-
-  public boolean isRequestUriParameterSupported() {
+  public boolean requestUriParameterSupported() {
     return requestUriParameterSupported;
   }
 
-  public void setRequestUriParameterSupported(boolean requestUriParameterSupported) {
-    this.requestUriParameterSupported = requestUriParameterSupported;
-  }
-
-  public boolean isRequireRequestUriRegistration() {
+  public boolean requireRequestUriRegistration() {
     return requireRequestUriRegistration;
   }
 
-  public void setRequireRequestUriRegistration(boolean requireRequestUriRegistration) {
-    this.requireRequestUriRegistration = requireRequestUriRegistration;
-  }
-
-  public String getRevocationEndpoint() {
+  public String revocationEndpoint() {
     return revocationEndpoint;
   }
 
-  public void setRevocationEndpoint(String revocationEndpoint) {
-    this.revocationEndpoint = revocationEndpoint;
-  }
-
-  public List<String> getRevocationEndpointAuthMethodsSupported() {
+  public List<String> revocationEndpointAuthMethodsSupported() {
     return revocationEndpointAuthMethodsSupported;
   }
 
-  public void setRevocationEndpointAuthMethodsSupported(
-      List<String> revocationEndpointAuthMethodsSupported) {
-    this.revocationEndpointAuthMethodsSupported = revocationEndpointAuthMethodsSupported;
-  }
-
-  public List<String> getRevocationEndpointAuthSigningAlgValuesSupported() {
+  public List<String> revocationEndpointAuthSigningAlgValuesSupported() {
     return revocationEndpointAuthSigningAlgValuesSupported;
   }
 
-  public void setRevocationEndpointAuthSigningAlgValuesSupported(
-      List<String> revocationEndpointAuthSigningAlgValuesSupported) {
-    this.revocationEndpointAuthSigningAlgValuesSupported =
-        revocationEndpointAuthSigningAlgValuesSupported;
-  }
-
-  public String getIntrospectionEndpoint() {
+  public String introspectionEndpoint() {
     return introspectionEndpoint;
   }
 
-  public void setIntrospectionEndpoint(String introspectionEndpoint) {
-    this.introspectionEndpoint = introspectionEndpoint;
-  }
-
-  public List<String> getIntrospectionEndpointAuthMethodsSupported() {
+  public List<String> introspectionEndpointAuthMethodsSupported() {
     return introspectionEndpointAuthMethodsSupported;
   }
 
-  public void setIntrospectionEndpointAuthMethodsSupported(
-      List<String> introspectionEndpointAuthMethodsSupported) {
-    this.introspectionEndpointAuthMethodsSupported = introspectionEndpointAuthMethodsSupported;
-  }
-
-  public List<String> getIntrospectionEndpointAuthSigningAlgValuesSupported() {
+  public List<String> introspectionEndpointAuthSigningAlgValuesSupported() {
     return introspectionEndpointAuthSigningAlgValuesSupported;
   }
 
-  public void setIntrospectionEndpointAuthSigningAlgValuesSupported(
-      List<String> introspectionEndpointAuthSigningAlgValuesSupported) {
-    this.introspectionEndpointAuthSigningAlgValuesSupported =
-        introspectionEndpointAuthSigningAlgValuesSupported;
-  }
-
-  public List<String> getCodeChallengeMethodsSupported() {
+  public List<String> codeChallengeMethodsSupported() {
     return codeChallengeMethodsSupported;
   }
 
-  public void setCodeChallengeMethodsSupported(List<String> codeChallengeMethodsSupported) {
-    this.codeChallengeMethodsSupported = codeChallengeMethodsSupported;
-  }
-
-  public boolean isTlsClientCertificateBoundAccessTokens() {
+  public boolean tlsClientCertificateBoundAccessTokens() {
     return tlsClientCertificateBoundAccessTokens;
   }
 
-  public void setTlsClientCertificateBoundAccessTokens(
-      boolean tlsClientCertificateBoundAccessTokens) {
-    this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
-  }
-
-  public boolean isRequireSignedRequestObject() {
+  public boolean requireSignedRequestObject() {
     return requireSignedRequestObject;
   }
 
-  public void setRequireSignedRequestObject(boolean requireSignedRequestObject) {
-    this.requireSignedRequestObject = requireSignedRequestObject;
-  }
-
-  public boolean isAuthorizationResponseIssParameterSupported() {
+  public boolean authorizationResponseIssParameterSupported() {
     return authorizationResponseIssParameterSupported;
-  }
-
-  public void setAuthorizationResponseIssParameterSupported(
-      boolean authorizationResponseIssParameterSupported) {
-    this.authorizationResponseIssParameterSupported = authorizationResponseIssParameterSupported;
   }
 }

@@ -1,9 +1,10 @@
 package org.idp.server.core.configuration;
 
 import java.util.List;
+import org.idp.server.basic.json.JsonReadable;
 
 /** ClientConfiguration */
-public class ClientConfiguration {
+public class ClientConfiguration implements JsonReadable {
   String clientId;
   String redirectUris;
   String tokenEndpointAuthMethod;
@@ -23,131 +24,67 @@ public class ClientConfiguration {
 
   public ClientConfiguration() {}
 
-  public String getClientId() {
+  public String clientId() {
     return clientId;
   }
 
-  public void setClientId(String clientId) {
-    this.clientId = clientId;
-  }
-
-  public String getRedirectUris() {
+  public String redirectUris() {
     return redirectUris;
   }
 
-  public void setRedirectUris(String redirectUris) {
-    this.redirectUris = redirectUris;
-  }
-
-  public String getTokenEndpointAuthMethod() {
+  public String tokenEndpointAuthMethod() {
     return tokenEndpointAuthMethod;
   }
 
-  public void setTokenEndpointAuthMethod(String tokenEndpointAuthMethod) {
-    this.tokenEndpointAuthMethod = tokenEndpointAuthMethod;
-  }
-
-  public List<String> getGrantTypes() {
+  public List<String> grantTypes() {
     return grantTypes;
   }
 
-  public void setGrantTypes(List<String> grantTypes) {
-    this.grantTypes = grantTypes;
-  }
-
-  public List<String> getResponseTypes() {
+  public List<String> responseTypes() {
     return responseTypes;
   }
 
-  public void setResponseTypes(List<String> responseTypes) {
-    this.responseTypes = responseTypes;
-  }
-
-  public String getClientName() {
+  public String clientName() {
     return clientName;
   }
 
-  public void setClientName(String clientName) {
-    this.clientName = clientName;
-  }
-
-  public String getClientUri() {
+  public String clientUri() {
     return clientUri;
   }
 
-  public void setClientUri(String clientUri) {
-    this.clientUri = clientUri;
-  }
-
-  public String getLogoUri() {
+  public String logoUri() {
     return logoUri;
   }
 
-  public void setLogoUri(String logoUri) {
-    this.logoUri = logoUri;
-  }
-
-  public String getScope() {
+  public String scope() {
     return scope;
   }
 
-  public void setScope(String scope) {
-    this.scope = scope;
-  }
-
-  public String getContacts() {
+  public String contacts() {
     return contacts;
   }
 
-  public void setContacts(String contacts) {
-    this.contacts = contacts;
-  }
-
-  public String getTosUri() {
+  public String tosUri() {
     return tosUri;
   }
 
-  public void setTosUri(String tosUri) {
-    this.tosUri = tosUri;
-  }
-
-  public String getPolicyUri() {
+  public String policyUri() {
     return policyUri;
   }
 
-  public void setPolicyUri(String policyUri) {
-    this.policyUri = policyUri;
-  }
-
-  public String getJwksUri() {
+  public String jwksUri() {
     return jwksUri;
   }
 
-  public void setJwksUri(String jwksUri) {
-    this.jwksUri = jwksUri;
-  }
-
-  public String getJwks() {
+  public String jwks() {
     return jwks;
   }
 
-  public void setJwks(String jwks) {
-    this.jwks = jwks;
-  }
-
-  public String getSoftwareId() {
+  public String softwareId() {
     return softwareId;
   }
 
-  public void setSoftwareId(String softwareId) {
-    this.softwareId = softwareId;
-  }
-
-  public String getSoftwareVersion() {
+  public String softwareVersion() {
     return softwareVersion;
-  }
-
-  public void setSoftwareVersion(String softwareVersion) {
-    this.softwareVersion = softwareVersion;
   }
 }

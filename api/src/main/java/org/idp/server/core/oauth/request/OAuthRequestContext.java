@@ -5,12 +5,10 @@ import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.OAuthRequestPattern;
 import org.idp.server.type.OAuthRequestParameters;
 
-/**
- * OAuthRequestContext
- */
+/** OAuthRequestContext */
 public class OAuthRequestContext {
-    OAuthRequestPattern pattern;
-    OAuthRequestParameters parameters;
-    ServerConfiguration serverConfiguration;
-    ClientConfiguration clientConfiguration;
+  OAuthRequestPattern pattern;
+  OAuthRequestParameters parameters;
+  ServerConfiguration serverConfiguration;
+  ClientConfiguration clientConfiguration;
 }

@@ -1,11 +1,10 @@
 package org.idp.server.type;
 
+import static org.idp.server.type.OAuthRequestKey.*;
+
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import static org.idp.server.type.OAuthRequestKey.*;
 
 /** RequestObjectParameters */
 public class RequestObjectParameters {

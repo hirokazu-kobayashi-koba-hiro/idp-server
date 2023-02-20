@@ -6,8 +6,8 @@ import org.idp.server.core.oauth.OAuthBadRequestException;
 import org.idp.server.core.oauth.OAuthRequestAnalyzer;
 import org.idp.server.core.oauth.OAuthRequestPattern;
 import org.idp.server.core.oauth.OAuthRequestValidatorProvider;
-import org.idp.server.core.oauth.validator.OAuthRequestInitialValidator;
 import org.idp.server.core.oauth.validator.OAuthRequestContextCreator;
+import org.idp.server.core.oauth.validator.OAuthRequestInitialValidator;
 import org.idp.server.io.OAuthRequest;
 import org.idp.server.io.OAuthRequestResponse;
 import org.idp.server.type.OAuthRequestParameters;
@@ -29,7 +29,8 @@ public class OAuthApi {
       initialValidator.validate(oAuthRequestParameters);
       OAuthRequestPattern oAuthRequestPattern =
           requestAnalyzer.analyzePattern(oAuthRequestParameters);
-      OAuthRequestContextCreator oAuthRequestContextCreator = validatorProvider.provide(oAuthRequestPattern);
+      OAuthRequestContextCreator oAuthRequestContextCreator =
+          validatorProvider.provide(oAuthRequestPattern);
 
       return new OAuthRequestResponse();
     } catch (OAuthBadRequestException exception) {
