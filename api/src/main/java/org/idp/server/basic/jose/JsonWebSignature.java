@@ -1,6 +1,10 @@
 package org.idp.server.basic.jose;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import java.text.ParseException;
 import java.util.Objects;
 
 /** JsonWebSignature */
@@ -13,11 +17,45 @@ public class JsonWebSignature {
     this.value = value;
   }
 
-  public SignedJWT value() {
+  public static JsonWebSignature parse(String jose) throws JoseInvalidException {
+    try {
+      SignedJWT signedJWT = SignedJWT.parse(jose);
+      return new JsonWebSignature(signedJWT);
+    } catch (ParseException e) {
+      throw new JoseInvalidException(e.getMessage(), e);
+    }
+  }
+
+  public String serialize() {
+    return value.serialize();
+  }
+
+  SignedJWT value() {
     return value;
   }
 
   public boolean exists() {
     return Objects.nonNull(value);
+  }
+
+  public String keyId() {
+    return value.getHeader().getKeyID();
+  }
+
+  public JsonWebTokenClaims claims() {
+    try {
+      JWTClaimsSet jwtClaimsSet = value.getJWTClaimsSet();
+      return new JsonWebTokenClaims(jwtClaimsSet);
+    } catch (ParseException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public boolean verify(JWSVerifier verifier) throws JoseInvalidException {
+    try {
+      return value.verify(verifier);
+    } catch (JOSEException e) {
+      throw new JoseInvalidException(e.getMessage(), e);
+    }
   }
 }

@@ -25,4 +25,11 @@ public class JsonWebKeys implements Iterable<JsonWebKey> {
   public boolean exists() {
     return !values.isEmpty();
   }
+
+  public JsonWebKey find(String keyId) {
+    return values.stream()
+        .filter(value -> value.keyId().equals(keyId))
+        .findFirst()
+        .orElse(new JsonWebKey());
+  }
 }

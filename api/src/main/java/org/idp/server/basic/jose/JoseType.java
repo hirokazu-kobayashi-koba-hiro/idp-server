@@ -15,7 +15,7 @@ public enum JoseType {
   signature,
   encryption;
 
-  public static JoseType parse(String jose) {
+  public static JoseType parse(String jose) throws JoseInvalidException {
     try {
       String headerValue = jose.split("\\.")[0];
       Base64URL header = new Base64URL(headerValue);
@@ -30,10 +30,10 @@ public enum JoseType {
       } else if (alg instanceof JWEAlgorithm) {
         return encryption;
       } else {
-        throw new RuntimeException("Unexpected algorithm type: " + alg);
+        throw new JoseInvalidException("Unexpected algorithm type: " + alg);
       }
     } catch (ParseException e) {
-      throw new RuntimeException(e);
+      throw new JoseInvalidException("parse failed, invalid jose header", e);
     }
   }
 }
