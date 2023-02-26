@@ -1,11 +1,11 @@
 package org.idp.server.core.oauth.validator;
 
-import org.idp.server.oauth.request.NormalPatternContextCreator;
+import org.idp.server.service.NormalPatternContextService;
 import org.junit.jupiter.api.Test;
 
 public class NormalPatternValidatorTest {
 
-  NormalPatternContextCreator sut = new NormalPatternContextCreator();
+  NormalPatternContextService sut = new NormalPatternContextService();
 
   @Test
   void test() {}

@@ -19,7 +19,7 @@ public class AuthorizationRequest {
   LoginHint loginHint;
   AcrValues acrValues;
   Claims claims;
-  Request request;
+  RequestObject requestObject;
   RequestUri requestUri;
 
   AuthorizationRequest(
@@ -38,7 +38,7 @@ public class AuthorizationRequest {
       LoginHint loginHint,
       AcrValues acrValues,
       Claims claims,
-      Request request,
+      RequestObject requestObject,
       RequestUri requestUri) {
     this.scope = scope;
     this.responseType = responseType;
@@ -55,7 +55,7 @@ public class AuthorizationRequest {
     this.loginHint = loginHint;
     this.acrValues = acrValues;
     this.claims = claims;
-    this.request = request;
+    this.requestObject = requestObject;
     this.requestUri = requestUri;
   }
 
@@ -119,8 +119,8 @@ public class AuthorizationRequest {
     return claims;
   }
 
-  public Request request() {
-    return request;
+  public RequestObject request() {
+    return requestObject;
   }
 
   public RequestUri requestUri() {

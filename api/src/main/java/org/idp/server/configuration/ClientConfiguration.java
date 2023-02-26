@@ -6,6 +6,7 @@ import org.idp.server.basic.json.JsonReadable;
 /** ClientConfiguration */
 public class ClientConfiguration implements JsonReadable {
   String clientId;
+  String clientSecret;
   String redirectUris;
   String tokenEndpointAuthMethod;
   List<String> grantTypes;
@@ -26,6 +27,10 @@ public class ClientConfiguration implements JsonReadable {
 
   public String clientId() {
     return clientId;
+  }
+
+  public String clientSecret() {
+    return clientSecret;
   }
 
   public String redirectUris() {

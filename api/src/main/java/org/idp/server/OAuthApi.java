@@ -10,11 +10,11 @@ import org.idp.server.oauth.OAuthBadRequestException;
 import org.idp.server.oauth.OAuthRequestAnalyzer;
 import org.idp.server.oauth.OAuthRequestPattern;
 import org.idp.server.oauth.request.OAuthRequestContext;
-import org.idp.server.oauth.request.OAuthRequestContextCreator;
-import org.idp.server.oauth.request.OAuthRequestContextCreatorRegistry;
+import org.idp.server.oauth.request.OAuthRequestContextService;
 import org.idp.server.oauth.validator.OAuthRequestInitialValidator;
 import org.idp.server.repository.ClientConfigurationRepository;
 import org.idp.server.repository.ServerConfigurationRepository;
+import org.idp.server.service.OAuthRequestContextServiceRegistry;
 import org.idp.server.type.ClientId;
 import org.idp.server.type.OAuthRequestParameters;
 import org.idp.server.type.OAuthRequestResult;
@@ -24,8 +24,8 @@ import org.idp.server.type.TokenIssuer;
 public class OAuthApi {
   OAuthRequestInitialValidator initialValidator = new OAuthRequestInitialValidator();
   OAuthRequestAnalyzer requestAnalyzer = new OAuthRequestAnalyzer();
-  OAuthRequestContextCreatorRegistry contextCreatorRegistry =
-      new OAuthRequestContextCreatorRegistry();
+  OAuthRequestContextServiceRegistry contextCreatorRegistry =
+      new OAuthRequestContextServiceRegistry();
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
   Logger log = Logger.getLogger(OAuthApi.class.getName());
@@ -47,10 +47,11 @@ public class OAuthApi {
           clientConfigurationRepository.get(new ClientId(oAuthRequestParameters.clientId()));
       OAuthRequestPattern oAuthRequestPattern =
           requestAnalyzer.analyzePattern(oAuthRequestParameters);
-      OAuthRequestContextCreator oAuthRequestContextCreator =
+      OAuthRequestContextService oAuthRequestContextService =
           contextCreatorRegistry.get(oAuthRequestPattern);
       OAuthRequestContext oAuthRequestContext =
-          oAuthRequestContextCreator.create(oAuthRequestParameters, null, null);
+          oAuthRequestContextService.create(
+              oAuthRequestParameters, serverConfiguration, clientConfiguration);
 
       return new OAuthRequestResponse();
     } catch (OAuthBadRequestException exception) {

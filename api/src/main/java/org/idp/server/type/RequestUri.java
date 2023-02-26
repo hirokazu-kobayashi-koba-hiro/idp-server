@@ -1,5 +1,7 @@
 package org.idp.server.type;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Objects;
 
 /** RequestUri */
@@ -31,5 +33,9 @@ public class RequestUri {
   @Override
   public int hashCode() {
     return Objects.hash(value);
+  }
+
+  public URI toURI() throws URISyntaxException {
+    return new URI(value);
   }
 }

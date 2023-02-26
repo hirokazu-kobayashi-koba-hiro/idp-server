@@ -19,7 +19,7 @@ public class AuthorizationRequestBuilder {
   LoginHint loginHint;
   AcrValues acrValues;
   Claims claims;
-  Request request;
+  RequestObject requestObject;
   RequestUri requestUri;
 
   public AuthorizationRequestBuilder() {}
@@ -74,8 +74,8 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
-  public AuthorizationRequestBuilder add(Request request) {
-    this.request = request;
+  public AuthorizationRequestBuilder add(RequestObject requestObject) {
+    this.requestObject = requestObject;
     return this;
   }
 
@@ -126,7 +126,7 @@ public class AuthorizationRequestBuilder {
         loginHint,
         acrValues,
         claims,
-        request,
+        requestObject,
         requestUri);
   }
 }

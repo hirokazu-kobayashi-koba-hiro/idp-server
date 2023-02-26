@@ -7,6 +7,8 @@ public class JoseContext {
   JsonWebTokenClaims claims;
   JsonWebSignatureVerifier jwsVerifier;
 
+  public JoseContext() {}
+
   public JoseContext(
       JsonWebSignature jsonWebSignature,
       JsonWebTokenClaims claims,

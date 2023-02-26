@@ -16,12 +16,12 @@ import java.util.Objects;
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests">reqyest
  *     object</a>
  */
-public class Request {
+public class RequestObject {
   String value;
 
-  public Request() {}
+  public RequestObject() {}
 
-  public Request(String value) {
+  public RequestObject(String value) {
     this.value = value;
   }
 
@@ -37,7 +37,7 @@ public class Request {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    Request that = (Request) o;
+    RequestObject that = (RequestObject) o;
     return Objects.equals(value, that.value);
   }
 

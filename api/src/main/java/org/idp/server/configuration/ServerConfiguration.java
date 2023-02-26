@@ -9,6 +9,8 @@ public class ServerConfiguration implements JsonReadable {
   String authorizationEndpoint;
   String tokenEndpoint;
   String userinfoEndpoint;
+
+  String jwks;
   String jwksUri;
   List<String> scopesSupported;
   List<String> responseTypesSupported;
@@ -64,6 +66,10 @@ public class ServerConfiguration implements JsonReadable {
 
   public String userinfoEndpoint() {
     return userinfoEndpoint;
+  }
+
+  public String jwks() {
+    return jwks;
   }
 
   public String jwksUri() {
