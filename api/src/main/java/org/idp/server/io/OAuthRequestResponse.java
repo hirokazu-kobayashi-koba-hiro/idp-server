@@ -1,6 +1,6 @@
 package org.idp.server.io;
 
-import org.idp.server.core.type.OAuthRequestResult;
+import org.idp.server.type.OAuthRequestResult;
 
 /** OAuthRequestResponse */
 public class OAuthRequestResponse {

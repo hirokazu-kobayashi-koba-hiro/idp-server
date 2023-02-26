@@ -3,9 +3,9 @@ package org.idp.server.datasource.memory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.repository.ClientConfigurationRepository;
-import org.idp.server.core.type.ClientId;
+import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.repository.ClientConfigurationRepository;
+import org.idp.server.type.ClientId;
 
 /** ClientConfigurationMemoryDataSource */
 public class ClientConfigurationMemoryDataSource implements ClientConfigurationRepository {
