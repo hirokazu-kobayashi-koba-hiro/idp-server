@@ -1,7 +1,7 @@
 package org.idp.server.basic.json;
 
-import org.idp.server.configuration.ClientConfiguration;
-import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.core.configuration.ClientConfiguration;
+import org.idp.server.core.configuration.ServerConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

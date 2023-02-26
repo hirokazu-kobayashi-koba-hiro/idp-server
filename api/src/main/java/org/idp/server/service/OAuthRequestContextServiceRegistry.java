@@ -3,9 +3,9 @@ package org.idp.server.service;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.oauth.OAuthRequestPattern;
+import org.idp.server.core.oauth.request.OAuthRequestContextService;
 import org.idp.server.httpclient.RequestObjectHttpClient;
-import org.idp.server.oauth.OAuthRequestPattern;
-import org.idp.server.oauth.request.OAuthRequestContextService;
 
 /** OAuthRequestContextServiceRegistry */
 public class OAuthRequestContextServiceRegistry {

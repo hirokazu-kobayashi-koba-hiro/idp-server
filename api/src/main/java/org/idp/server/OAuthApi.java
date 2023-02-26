@@ -2,23 +2,23 @@ package org.idp.server;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.idp.server.configuration.ClientConfiguration;
-import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.core.configuration.ClientConfiguration;
+import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.oauth.OAuthBadRequestException;
+import org.idp.server.core.oauth.OAuthRequestAnalyzer;
+import org.idp.server.core.oauth.OAuthRequestPattern;
+import org.idp.server.core.oauth.request.OAuthRequestContext;
+import org.idp.server.core.oauth.request.OAuthRequestContextService;
+import org.idp.server.core.oauth.validator.OAuthRequestInitialValidator;
+import org.idp.server.core.repository.ClientConfigurationRepository;
+import org.idp.server.core.repository.ServerConfigurationRepository;
+import org.idp.server.core.type.ClientId;
+import org.idp.server.core.type.OAuthRequestParameters;
+import org.idp.server.core.type.OAuthRequestResult;
+import org.idp.server.core.type.TokenIssuer;
 import org.idp.server.io.OAuthRequest;
 import org.idp.server.io.OAuthRequestResponse;
-import org.idp.server.oauth.OAuthBadRequestException;
-import org.idp.server.oauth.OAuthRequestAnalyzer;
-import org.idp.server.oauth.OAuthRequestPattern;
-import org.idp.server.oauth.request.OAuthRequestContext;
-import org.idp.server.oauth.request.OAuthRequestContextService;
-import org.idp.server.oauth.validator.OAuthRequestInitialValidator;
-import org.idp.server.repository.ClientConfigurationRepository;
-import org.idp.server.repository.ServerConfigurationRepository;
 import org.idp.server.service.OAuthRequestContextServiceRegistry;
-import org.idp.server.type.ClientId;
-import org.idp.server.type.OAuthRequestParameters;
-import org.idp.server.type.OAuthRequestResult;
-import org.idp.server.type.TokenIssuer;
 
 /** OAuthApi */
 public class OAuthApi {

@@ -7,8 +7,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import org.idp.server.basic.http.HttpClientFactory;
-import org.idp.server.gateway.RequestObjectGateway;
-import org.idp.server.type.RequestObject;
+import org.idp.server.core.gateway.RequestObjectGateway;
+import org.idp.server.core.type.RequestObject;
 
 /** RequestObjectHttpClient */
 public class RequestObjectHttpClient implements RequestObjectGateway {
@@ -22,7 +22,12 @@ public class RequestObjectHttpClient implements RequestObjectGateway {
   @Override
   public RequestObject get(String requestUri) {
     try {
-      HttpRequest request = HttpRequest.newBuilder().uri(new URI(requestUri)).GET().build();
+      HttpRequest request =
+          HttpRequest.newBuilder()
+              .uri(new URI(requestUri))
+              .GET()
+              .header("Content-Type", "application/json")
+              .build();
       HttpResponse<String> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String body = response.body();
