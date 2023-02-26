@@ -1,10 +1,9 @@
 package org.idp.server.core.oauth.request;
 
-import org.idp.server.core.oauth.OAuthRequestPattern;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.oauth.OAuthRequestPattern;
 
 /** OAuthRequestContextCreatorRegistry */
 public class OAuthRequestContextCreatorRegistry {

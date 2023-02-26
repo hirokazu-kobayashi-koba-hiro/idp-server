@@ -1,7 +1,6 @@
 package org.idp.server.core.oauth.request;
 
 import org.idp.server.core.type.*;
-import org.idp.server.type.*;
 
 /** AuthorizationRequest */
 public class AuthorizationRequest {

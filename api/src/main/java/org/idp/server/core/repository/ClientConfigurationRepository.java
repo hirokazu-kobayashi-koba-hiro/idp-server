@@ -4,5 +4,5 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.type.ClientId;
 
 public interface ClientConfigurationRepository {
-    ClientConfiguration get(ClientId clientId);
+  ClientConfiguration get(ClientId clientId);
 }
