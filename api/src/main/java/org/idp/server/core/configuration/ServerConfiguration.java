@@ -1,5 +1,6 @@
 package org.idp.server.core.configuration;
 
+import java.util.Arrays;
 import java.util.List;
 import org.idp.server.basic.json.JsonReadable;
 
@@ -9,7 +10,6 @@ public class ServerConfiguration implements JsonReadable {
   String authorizationEndpoint;
   String tokenEndpoint;
   String userinfoEndpoint;
-
   String jwks;
   String jwksUri;
   List<String> scopesSupported;
@@ -49,6 +49,10 @@ public class ServerConfiguration implements JsonReadable {
   boolean tlsClientCertificateBoundAccessTokens;
   boolean requireSignedRequestObject;
   boolean authorizationResponseIssParameterSupported;
+
+  // extension
+  List<String> fapiBaselineScopes;
+  List<String> fapiAdvanceScopes;
 
   public ServerConfiguration() {}
 
@@ -222,5 +226,22 @@ public class ServerConfiguration implements JsonReadable {
 
   public boolean authorizationResponseIssParameterSupported() {
     return authorizationResponseIssParameterSupported;
+  }
+
+  public List<String> filteredScope(String spacedScopes) {
+    List<String> scopes = Arrays.stream(spacedScopes.split(" ")).toList();
+    return scopes.stream().filter(scope -> scopesSupported.contains(scope)).toList();
+  }
+
+  public List<String> filteredScope(List<String> scopes) {
+    return scopes.stream().filter(scope -> scopesSupported.contains(scope)).toList();
+  }
+
+  public boolean hasFapiBaselineScope(List<String> scopes) {
+    return scopes.stream().anyMatch(scope -> fapiBaselineScopes.contains(scope));
+  }
+
+  public boolean hasFapiAdvanceScope(List<String> scopes) {
+    return scopes.stream().anyMatch(scope -> fapiAdvanceScopes.contains(scope));
   }
 }

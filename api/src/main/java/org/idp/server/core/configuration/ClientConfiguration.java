@@ -1,5 +1,6 @@
 package org.idp.server.core.configuration;
 
+import java.util.Arrays;
 import java.util.List;
 import org.idp.server.basic.json.JsonReadable;
 
@@ -22,6 +23,9 @@ public class ClientConfiguration implements JsonReadable {
   String jwks;
   String softwareId;
   String softwareVersion;
+
+  // extension
+  boolean supportedJar;
 
   public ClientConfiguration() {}
 
@@ -91,5 +95,22 @@ public class ClientConfiguration implements JsonReadable {
 
   public String softwareVersion() {
     return softwareVersion;
+  }
+
+  public List<String> scopes() {
+    return Arrays.stream(scope.split(" ")).toList();
+  }
+
+  public List<String> filteredScope(String spacedScopes) {
+    List<String> scopes = Arrays.stream(spacedScopes.split(" ")).toList();
+    return scopes.stream().filter(scope -> scopes().contains(scope)).toList();
+  }
+
+  public List<String> filteredScope(List<String> scopes) {
+    return scopes.stream().filter(scope -> scopes().contains(scope)).toList();
+  }
+
+  public boolean isSupportedJar() {
+    return supportedJar;
   }
 }

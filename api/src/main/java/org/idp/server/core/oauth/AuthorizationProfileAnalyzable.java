@@ -1,6 +1,8 @@
 package org.idp.server.core.oauth;
 
+import java.util.List;
 import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.type.OAuthRequestParameters;
@@ -13,7 +15,27 @@ public interface AuthorizationProfileAnalyzable {
       JoseContext joseContext,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
-
+    List<String> filteredScopes = filterScopes(parameters, joseContext, clientConfiguration);
+    if (serverConfiguration.hasFapiAdvanceScope(filteredScopes)) {
+      return AuthorizationProfile.FAPI_ADVANCE;
+    }
+    if (serverConfiguration.hasFapiBaselineScope(filteredScopes)) {
+      return AuthorizationProfile.FAPI_BASELINE;
+    }
+    if (filteredScopes.contains("openid")) {
+      return AuthorizationProfile.OIDC;
+    }
     return AuthorizationProfile.OAUTH2;
+  }
+
+  default List<String> filterScopes(
+      OAuthRequestParameters parameters,
+      JoseContext joseContext,
+      ClientConfiguration clientConfiguration) {
+    String scope = parameters.scope();
+    JsonWebTokenClaims claims = joseContext.claims();
+    String joseScope = claims.scope();
+    String targetScope = clientConfiguration.isSupportedJar() ? joseScope : scope;
+    return clientConfiguration.filteredScope(targetScope);
   }
 }

@@ -5,6 +5,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.type.OAuthRequestKey;
 
 /** JsonWebTokenClaims */
 public class JsonWebTokenClaims {
@@ -66,6 +67,17 @@ public class JsonWebTokenClaims {
 
   public Map<String, Object> payload() {
     return value.getClaims();
+  }
+
+  public String scope() {
+    return getValue(OAuthRequestKey.scope);
+  }
+
+  String getValue(OAuthRequestKey key) {
+    if (contains(key.name())) {
+      return "";
+    }
+    return (String) payload().get(key.name());
   }
 
   boolean contains(String key) {
