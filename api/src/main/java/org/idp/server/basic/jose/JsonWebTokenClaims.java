@@ -69,15 +69,11 @@ public class JsonWebTokenClaims {
     return value.getClaims();
   }
 
-  public String scope() {
-    return getValue(OAuthRequestKey.scope);
-  }
-
-  String getValue(OAuthRequestKey key) {
-    if (contains(key.name())) {
+  public String getValue(String key) {
+    if (contains(key)) {
       return "";
     }
-    return (String) payload().get(key.name());
+    return (String) payload().get(key);
   }
 
   boolean contains(String key) {

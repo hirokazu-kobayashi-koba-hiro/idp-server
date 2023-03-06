@@ -34,7 +34,7 @@ public interface AuthorizationProfileAnalyzable {
       ClientConfiguration clientConfiguration) {
     String scope = parameters.scope();
     JsonWebTokenClaims claims = joseContext.claims();
-    String joseScope = claims.scope();
+    String joseScope = claims.getValue("scope");
     String targetScope = clientConfiguration.isSupportedJar() ? joseScope : scope;
     return clientConfiguration.filteredScope(targetScope);
   }
