@@ -31,6 +31,11 @@ public class RequestUriPatternContextService
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
+      if (!clientConfiguration.isRegisteredRequestUri(parameters.requestUri().value())) {
+        throw new OAuthBadRequestException(
+            String.format(
+                "request uri does not registered (%s)", parameters.redirectUri().value()));
+      }
       RequestObject requestObject = requestObjectGateway.get(parameters.requestUri());
       JoseHandler joseHandler = new JoseHandler();
       JoseContext joseContext =
@@ -39,13 +44,16 @@ public class RequestUriPatternContextService
               clientConfiguration.jwks(),
               serverConfiguration.jwks(),
               clientConfiguration.clientSecret());
+      joseContext.verifySignature();
       AuthorizationProfile profile =
           analyze(parameters, joseContext, serverConfiguration, clientConfiguration);
+
       return new OAuthRequestContext(
           profile,
           OAuthRequestPattern.NORMAL,
           parameters,
           joseContext,
+          null,
           serverConfiguration,
           clientConfiguration);
     } catch (JoseInvalidException exception) {

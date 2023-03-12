@@ -13,6 +13,7 @@ public class OAuthRequestContext {
   OAuthRequestPattern pattern;
   OAuthRequestParameters parameters;
   JoseContext joseContext;
+  AuthorizationRequest authorizationRequest;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
 
@@ -23,12 +24,14 @@ public class OAuthRequestContext {
       OAuthRequestPattern pattern,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
+      AuthorizationRequest authorizationRequest,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     this.profile = profile;
     this.pattern = pattern;
     this.parameters = parameters;
     this.joseContext = joseContext;
+    this.authorizationRequest = authorizationRequest;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
   }
@@ -47,6 +50,10 @@ public class OAuthRequestContext {
 
   public JoseContext joseContext() {
     return joseContext;
+  }
+
+  public AuthorizationRequest authorizationRequest() {
+    return authorizationRequest;
   }
 
   public ServerConfiguration serverConfiguration() {

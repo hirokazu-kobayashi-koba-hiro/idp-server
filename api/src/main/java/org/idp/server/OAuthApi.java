@@ -12,7 +12,6 @@ import org.idp.server.core.oauth.request.OAuthRequestContextService;
 import org.idp.server.core.oauth.validator.OAuthRequestInitialValidator;
 import org.idp.server.core.repository.ClientConfigurationRepository;
 import org.idp.server.core.repository.ServerConfigurationRepository;
-import org.idp.server.core.type.ClientId;
 import org.idp.server.core.type.OAuthRequestParameters;
 import org.idp.server.core.type.OAuthRequestResult;
 import org.idp.server.core.type.TokenIssuer;
@@ -44,7 +43,7 @@ public class OAuthApi {
       ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
       initialValidator.validate(oAuthRequestParameters);
       ClientConfiguration clientConfiguration =
-          clientConfigurationRepository.get(new ClientId(oAuthRequestParameters.clientId()));
+          clientConfigurationRepository.get(oAuthRequestParameters.clientId());
       OAuthRequestPattern oAuthRequestPattern =
           requestAnalyzer.analyzePattern(oAuthRequestParameters);
       OAuthRequestContextService oAuthRequestContextService =

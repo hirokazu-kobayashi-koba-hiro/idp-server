@@ -23,6 +23,7 @@ public class ClientConfiguration implements JsonReadable {
   String jwks;
   String softwareId;
   String softwareVersion;
+  List<String> requestUris;
 
   // extension
   boolean supportedJar;
@@ -112,5 +113,9 @@ public class ClientConfiguration implements JsonReadable {
 
   public boolean isSupportedJar() {
     return supportedJar;
+  }
+
+  public boolean isRegisteredRequestUri(String requestUri) {
+    return requestUris.contains(requestUri);
   }
 }

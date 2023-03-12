@@ -1,38 +1,37 @@
 package org.idp.server.core.type;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-/** AcrValues */
-public class AcrValues {
-
+/** Scopes */
+public class Scopes {
   Set<String> values;
 
-  public AcrValues() {
+  public Scopes() {
     this.values = new HashSet<>();
   }
 
-  public AcrValues(String value) {
+  public Scopes(String value) {
     if (Objects.isNull(value) || value.isEmpty()) {
       this.values = new HashSet<>();
       return;
     }
     this.values = Arrays.stream(value.split(" ")).collect(Collectors.toSet());
-    ;
   }
 
-  public AcrValues(Set<String> values) {
+  public Scopes(Set<String> values) {
     this.values = values;
-  }
-
-  public Set<String> values() {
-    return values;
   }
 
   public boolean exists() {
     return !values.isEmpty();
+  }
+
+  public String toStringValues() {
+    return String.join(" ", values);
+  }
+
+  public boolean contains(String scope) {
+    return values.contains(scope);
   }
 }

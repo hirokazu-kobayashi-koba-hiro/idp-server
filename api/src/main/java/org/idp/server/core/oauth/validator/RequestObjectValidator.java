@@ -1,9 +1,4 @@
 package org.idp.server.core.oauth.validator;
 
-/**
- * RequestObjectValidator
- */
-public class RequestObjectValidator {
-
-
-}
+/** RequestObjectValidator */
+public class RequestObjectValidator {}

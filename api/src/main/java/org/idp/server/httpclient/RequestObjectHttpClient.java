@@ -9,6 +9,7 @@ import java.net.http.HttpResponse;
 import org.idp.server.basic.http.HttpClientFactory;
 import org.idp.server.core.gateway.RequestObjectGateway;
 import org.idp.server.core.type.RequestObject;
+import org.idp.server.core.type.RequestUri;
 
 /** RequestObjectHttpClient */
 public class RequestObjectHttpClient implements RequestObjectGateway {
@@ -20,11 +21,11 @@ public class RequestObjectHttpClient implements RequestObjectGateway {
   }
 
   @Override
-  public RequestObject get(String requestUri) {
+  public RequestObject get(RequestUri requestUri) {
     try {
       HttpRequest request =
           HttpRequest.newBuilder()
-              .uri(new URI(requestUri))
+              .uri(new URI(requestUri.value()))
               .GET()
               .header("Content-Type", "application/json")
               .build();

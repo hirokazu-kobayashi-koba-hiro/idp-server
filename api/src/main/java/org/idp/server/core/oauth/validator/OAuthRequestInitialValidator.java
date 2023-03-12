@@ -13,8 +13,7 @@ public class OAuthRequestInitialValidator {
   }
 
   void throwIfNotContainsClientId(OAuthRequestParameters oAuthRequestParameters) {
-    String clientId = oAuthRequestParameters.clientId();
-    if (clientId.isEmpty()) {
+    if (!oAuthRequestParameters.hasClientId()) {
       throw new OAuthBadRequestException("authorization request must contains client_id");
     }
   }

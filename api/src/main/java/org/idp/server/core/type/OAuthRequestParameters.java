@@ -25,143 +25,143 @@ public class OAuthRequestParameters {
     return values.isEmpty();
   }
 
-  public String scope() {
-    return getString(scope);
+  public Scopes scope() {
+    return new Scopes(getString(scope));
   }
 
   public boolean hasScope() {
     return contains(scope);
   }
 
-  public String responseType() {
-    return getString(response_type);
+  public ResponseType responseType() {
+    return ResponseType.of(getString(response_type));
   }
 
   public boolean hasResponseType() {
     return contains(response_type);
   }
 
-  public String clientId() {
-    return getString(client_id);
+  public ClientId clientId() {
+    return new ClientId(getString(client_id));
   }
 
   public boolean hasClientId() {
     return contains(client_id);
   }
 
-  public String redirectUri() {
-    return getString(redirect_uri);
+  public RedirectUri redirectUri() {
+    return new RedirectUri(getString(redirect_uri));
   }
 
   public boolean hasRedirectUri() {
     return contains(redirect_uri);
   }
 
-  public String state() {
-    return getString(state);
+  public State state() {
+    return new State(getString(state));
   }
 
   public boolean hasState() {
     return contains(state);
   }
 
-  public String responseMode() {
-    return getString(response_mode);
+  public ResponseMode responseMode() {
+    return ResponseMode.of(getString(response_mode));
   }
 
   public boolean hasResponseMode() {
     return contains(response_mode);
   }
 
-  public String nonce() {
-    return getString(nonce);
+  public Nonce nonce() {
+    return new Nonce(getString(nonce));
   }
 
   public boolean hasNonce() {
     return contains(nonce);
   }
 
-  public String display() {
-    return getString(display);
+  public Display display() {
+    return Display.of(getString(display));
   }
 
   public boolean hasDisplay() {
     return contains(display);
   }
 
-  public String prompt() {
-    return getString(prompt);
+  public Prompt prompt() {
+    return Prompt.of(getString(prompt));
   }
 
   public boolean hasPrompt() {
     return contains(prompt);
   }
 
-  public String maxAge() {
-    return getString(max_age);
+  public MaxAge maxAge() {
+    return new MaxAge(getString(max_age));
   }
 
   public boolean hasMaxAge() {
     return contains(max_age);
   }
 
-  public String uiLocales() {
-    return getString(ui_locales);
+  public UiLocales uiLocales() {
+    return new UiLocales(getString(ui_locales));
   }
 
   public boolean hasUiLocales() {
     return contains(ui_locales);
   }
 
-  public String idTokenHint() {
-    return getString(id_token_hint);
+  public IdTokenHint idTokenHint() {
+    return new IdTokenHint(getString(id_token_hint));
   }
 
   public boolean hasIdTokenHint() {
     return contains(id_token_hint);
   }
 
-  public String loginHint() {
-    return getString(login_hint);
+  public LoginHint loginHint() {
+    return new LoginHint(getString(login_hint));
   }
 
   public boolean hasLoginHint() {
     return contains(login_hint);
   }
 
-  public String acrValues() {
-    return getString(acr_values);
+  public AcrValues acrValues() {
+    return new AcrValues(getString(acr_values));
   }
 
   public boolean hasAcrValues() {
     return contains(acr_values);
   }
 
-  public String claims() {
-    return getString(claims);
+  public Claims claims() {
+    return new Claims(getString(claims));
   }
 
   public boolean hasClaims() {
     return contains(claims);
   }
 
-  public String request() {
-    return getString(request);
+  public RequestObject request() {
+    return new RequestObject(getString(request));
   }
 
   public boolean hasRequest() {
     return contains(request);
   }
 
-  public String requestUri() {
-    return getString(request_uri);
+  public RequestUri requestUri() {
+    return new RequestUri(getString(request_uri));
   }
 
   public boolean hasRequestUri() {
     return contains(request_uri);
   }
 
-  String getString(OAuthRequestKey key) {
+  public String getString(OAuthRequestKey key) {
     if (!values.contains(key.name())) {
       return "";
     }

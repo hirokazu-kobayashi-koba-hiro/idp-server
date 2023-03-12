@@ -5,7 +5,6 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.type.OAuthRequestKey;
 
 /** JsonWebTokenClaims */
 public class JsonWebTokenClaims {

@@ -4,19 +4,23 @@ import java.util.Objects;
 
 /** MaxAge */
 public class MaxAge {
-  Long value;
+  String value;
 
   public MaxAge() {}
 
-  public MaxAge(long value) {
+  public MaxAge(String value) {
     this.value = value;
   }
 
-  public long value() {
+  public String value() {
     return value;
   }
 
   public boolean exists() {
-    return Objects.nonNull(value);
+    return Objects.nonNull(value) && !value.isEmpty();
+  }
+
+  public long toLongValue() {
+    return Long.parseLong(value);
   }
 }

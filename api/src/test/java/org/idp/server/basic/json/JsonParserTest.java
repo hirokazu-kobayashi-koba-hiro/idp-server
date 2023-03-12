@@ -16,13 +16,13 @@ public class JsonParserTest {
                     "https://client.example.org/callback",
                     "https://client.example.org/callback2"
                   ],
-                  "scope": "read write",
+                  "scopes": "read write",
                   "example_extension_parameter": "example_value"
                 }
                 """;
     JsonParser jsonParser = JsonParser.create();
     ClientConfiguration clientConfiguration = jsonParser.read(json, ClientConfiguration.class);
-    Assertions.assertEquals("read write", clientConfiguration.scope());
+    Assertions.assertEquals("read write", clientConfiguration.scopes());
   }
 
   @Test

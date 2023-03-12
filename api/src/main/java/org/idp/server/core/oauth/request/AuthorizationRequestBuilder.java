@@ -4,7 +4,7 @@ import org.idp.server.core.type.*;
 
 /** AuthorizationRequestBuilder */
 public class AuthorizationRequestBuilder {
-  Scope scope;
+  Scopes scopes;
   ResponseType responseType;
   ClientId clientId;
   RedirectUri redirectUri;
@@ -94,8 +94,8 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
-  public AuthorizationRequestBuilder add(Scope scope) {
-    this.scope = scope;
+  public AuthorizationRequestBuilder add(Scopes scopes) {
+    this.scopes = scopes;
     return this;
   }
 
@@ -111,7 +111,7 @@ public class AuthorizationRequestBuilder {
 
   public AuthorizationRequest build() {
     return new AuthorizationRequest(
-        scope,
+        scopes,
         responseType,
         clientId,
         redirectUri,

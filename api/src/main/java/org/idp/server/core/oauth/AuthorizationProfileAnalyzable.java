@@ -5,6 +5,7 @@ import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.type.OAuthRequestKey;
 import org.idp.server.core.type.OAuthRequestParameters;
 
 /** AuthorizationProfileAnalyzable */
@@ -32,7 +33,8 @@ public interface AuthorizationProfileAnalyzable {
       OAuthRequestParameters parameters,
       JoseContext joseContext,
       ClientConfiguration clientConfiguration) {
-    String scope = parameters.scope();
+    // FIXME
+    String scope = parameters.getString(OAuthRequestKey.scope);
     JsonWebTokenClaims claims = joseContext.claims();
     String joseScope = claims.getValue("scope");
     String targetScope = clientConfiguration.isSupportedJar() ? joseScope : scope;

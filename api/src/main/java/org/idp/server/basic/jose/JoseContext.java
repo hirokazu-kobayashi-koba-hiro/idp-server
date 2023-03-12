@@ -3,9 +3,9 @@ package org.idp.server.basic.jose;
 /** JoseContext */
 public class JoseContext {
 
-  JsonWebSignature jsonWebSignature;
-  JsonWebTokenClaims claims;
-  JsonWebSignatureVerifier jwsVerifier;
+  JsonWebSignature jsonWebSignature = new JsonWebSignature();
+  JsonWebTokenClaims claims = new JsonWebTokenClaims();
+  JsonWebSignatureVerifier jwsVerifier = new JsonWebSignatureVerifier();
 
   public JoseContext() {}
 
@@ -31,6 +31,12 @@ public class JoseContext {
   }
 
   public void verifySignature() throws JoseInvalidException {
-    jwsVerifier.verify(jsonWebSignature);
+    if (hasJsonWebSignature()) {
+      jwsVerifier.verify(jsonWebSignature);
+    }
+  }
+
+  public boolean hasJsonWebSignature() {
+    return jsonWebSignature.exists();
   }
 }

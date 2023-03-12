@@ -4,7 +4,7 @@ import org.idp.server.core.type.*;
 
 /** AuthorizationRequest */
 public class AuthorizationRequest {
-  Scope scope;
+  Scopes scopes;
   ResponseType responseType;
   ClientId clientId;
   RedirectUri redirectUri;
@@ -23,7 +23,7 @@ public class AuthorizationRequest {
   RequestUri requestUri;
 
   AuthorizationRequest(
-      Scope scope,
+      Scopes scopes,
       ResponseType responseType,
       ClientId clientId,
       RedirectUri redirectUri,
@@ -40,7 +40,7 @@ public class AuthorizationRequest {
       Claims claims,
       RequestObject requestObject,
       RequestUri requestUri) {
-    this.scope = scope;
+    this.scopes = scopes;
     this.responseType = responseType;
     this.clientId = clientId;
     this.redirectUri = redirectUri;
@@ -59,8 +59,8 @@ public class AuthorizationRequest {
     this.requestUri = requestUri;
   }
 
-  public Scope scope() {
-    return scope;
+  public Scopes scope() {
+    return scopes;
   }
 
   public ResponseType responseType() {
