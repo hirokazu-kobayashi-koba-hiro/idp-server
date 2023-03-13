@@ -1,7 +1,7 @@
 package org.idp.server.core.oauth.validator;
 
 import java.util.List;
-import org.idp.server.core.oauth.OAuthBadRequestException;
+import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.type.OAuthRequestParameters;
 
 /** OAuthRequestInitialValidator */

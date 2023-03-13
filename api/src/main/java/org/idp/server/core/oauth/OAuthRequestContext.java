@@ -1,10 +1,9 @@
-package org.idp.server.core.oauth.request;
+package org.idp.server.core.oauth;
 
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.oauth.AuthorizationProfile;
-import org.idp.server.core.oauth.OAuthRequestPattern;
+import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.type.OAuthRequestParameters;
 
 /** OAuthRequestContext */
@@ -62,5 +61,25 @@ public class OAuthRequestContext {
 
   public ClientConfiguration clientConfiguration() {
     return clientConfiguration;
+  }
+
+  public boolean isRequestParameterPattern() {
+    return pattern.isRequestParameter();
+  }
+
+  public boolean isOAuth2Profile() {
+    return profile.isOAuth2();
+  }
+
+  public boolean isOidcProfile() {
+    return profile.isOidc();
+  }
+
+  public boolean isFapiBaselineProfile() {
+    return profile.isFapiBaseline();
+  }
+
+  public boolean isFapiAdvanceProfile() {
+    return profile.isFapiAdvance();
   }
 }

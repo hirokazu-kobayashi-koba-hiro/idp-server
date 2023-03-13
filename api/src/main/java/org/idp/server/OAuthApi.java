@@ -4,12 +4,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.oauth.OAuthBadRequestException;
 import org.idp.server.core.oauth.OAuthRequestAnalyzer;
+import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.OAuthRequestPattern;
-import org.idp.server.core.oauth.request.OAuthRequestContext;
+import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.request.OAuthRequestContextService;
 import org.idp.server.core.oauth.validator.OAuthRequestInitialValidator;
+import org.idp.server.core.oauth.verifier.OAuthRequestVerifier;
 import org.idp.server.core.repository.ClientConfigurationRepository;
 import org.idp.server.core.repository.ServerConfigurationRepository;
 import org.idp.server.core.type.OAuthRequestParameters;
@@ -25,6 +26,7 @@ public class OAuthApi {
   OAuthRequestAnalyzer requestAnalyzer = new OAuthRequestAnalyzer();
   OAuthRequestContextServiceRegistry contextCreatorRegistry =
       new OAuthRequestContextServiceRegistry();
+  OAuthRequestVerifier oAuthRequestVerifier = new OAuthRequestVerifier();
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
   Logger log = Logger.getLogger(OAuthApi.class.getName());
@@ -51,6 +53,8 @@ public class OAuthApi {
       OAuthRequestContext oAuthRequestContext =
           oAuthRequestContextService.create(
               oAuthRequestParameters, serverConfiguration, clientConfiguration);
+
+      oAuthRequestVerifier.verify(oAuthRequestContext);
 
       return new OAuthRequestResponse();
     } catch (OAuthBadRequestException exception) {

@@ -1,4 +1,4 @@
-package org.idp.server.core.oauth;
+package org.idp.server.core.oauth.exception;
 
 /** OAuthBadRequestException */
 public class OAuthBadRequestException extends RuntimeException {

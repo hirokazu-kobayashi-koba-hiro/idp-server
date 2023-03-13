@@ -8,9 +8,11 @@ import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.gateway.RequestObjectGateway;
 import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.AuthorizationProfileAnalyzable;
-import org.idp.server.core.oauth.OAuthBadRequestException;
+import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.OAuthRequestPattern;
-import org.idp.server.core.oauth.request.OAuthRequestContext;
+import org.idp.server.core.oauth.exception.OAuthBadRequestException;
+import org.idp.server.core.oauth.factory.RequestObjectPatternFactory;
+import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.OAuthRequestContextService;
 import org.idp.server.core.type.OAuthRequestParameters;
 import org.idp.server.core.type.RequestObject;
@@ -20,6 +22,7 @@ public class RequestUriPatternContextService
     implements OAuthRequestContextService, AuthorizationProfileAnalyzable {
 
   RequestObjectGateway requestObjectGateway;
+  RequestObjectPatternFactory requestObjectPatternFactory = new RequestObjectPatternFactory();
 
   public RequestUriPatternContextService(RequestObjectGateway requestObjectGateway) {
     this.requestObjectGateway = requestObjectGateway;
@@ -47,13 +50,16 @@ public class RequestUriPatternContextService
       joseContext.verifySignature();
       AuthorizationProfile profile =
           analyze(parameters, joseContext, serverConfiguration, clientConfiguration);
+      AuthorizationRequest authorizationRequest =
+          requestObjectPatternFactory.create(
+              parameters, joseContext, serverConfiguration, clientConfiguration);
 
       return new OAuthRequestContext(
           profile,
           OAuthRequestPattern.NORMAL,
           parameters,
           joseContext,
-          null,
+          authorizationRequest,
           serverConfiguration,
           clientConfiguration);
     } catch (JoseInvalidException exception) {

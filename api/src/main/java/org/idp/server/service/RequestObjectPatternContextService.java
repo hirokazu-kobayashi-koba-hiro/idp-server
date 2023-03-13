@@ -7,11 +7,11 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.AuthorizationProfileAnalyzable;
-import org.idp.server.core.oauth.OAuthBadRequestException;
+import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.OAuthRequestPattern;
+import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.factory.RequestObjectPatternFactory;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.oauth.request.OAuthRequestContext;
 import org.idp.server.core.oauth.request.OAuthRequestContextService;
 import org.idp.server.core.type.OAuthRequestParameters;
 
@@ -30,7 +30,7 @@ public class RequestObjectPatternContextService
       JoseHandler joseHandler = new JoseHandler();
       JoseContext joseContext =
           joseHandler.handle(
-              parameters.request(),
+              parameters.request().value(),
               clientConfiguration.jwks(),
               serverConfiguration.jwks(),
               clientConfiguration.clientSecret());

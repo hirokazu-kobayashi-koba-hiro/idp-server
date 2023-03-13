@@ -6,4 +6,20 @@ public enum AuthorizationProfile {
   OIDC,
   FAPI_BASELINE,
   FAPI_ADVANCE;
+
+  public boolean isOAuth2() {
+    return this == OAUTH2;
+  }
+
+  public boolean isOidc() {
+    return this == OIDC;
+  }
+
+  public boolean isFapiBaseline() {
+    return this == FAPI_BASELINE;
+  }
+
+  public boolean isFapiAdvance() {
+    return this == FAPI_ADVANCE;
+  }
 }

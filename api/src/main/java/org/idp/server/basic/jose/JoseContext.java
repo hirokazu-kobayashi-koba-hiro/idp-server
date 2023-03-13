@@ -39,4 +39,8 @@ public class JoseContext {
   public boolean hasJsonWebSignature() {
     return jsonWebSignature.exists();
   }
+
+  public boolean exists() {
+    return claims.exists();
+  }
 }

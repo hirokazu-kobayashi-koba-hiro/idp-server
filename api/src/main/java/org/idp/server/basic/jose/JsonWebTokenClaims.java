@@ -5,6 +5,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /** JsonWebTokenClaims */
 public class JsonWebTokenClaims {
@@ -77,5 +78,12 @@ public class JsonWebTokenClaims {
 
   boolean contains(String key) {
     return value.getClaims().containsKey(key);
+  }
+
+  public boolean exists() {
+    if (Objects.isNull(value) || Objects.isNull(value.getClaims())) {
+      return false;
+    }
+    return !value.getClaims().isEmpty();
   }
 }
