@@ -8,6 +8,8 @@ import org.idp.server.core.type.OAuthRequestParameters;
 
 /** OAuthRequestContext */
 public class OAuthRequestContext {
+
+  OAuthRequestIdentifier identifier;
   AuthorizationProfile profile;
   OAuthRequestPattern pattern;
   OAuthRequestParameters parameters;
@@ -19,6 +21,7 @@ public class OAuthRequestContext {
   public OAuthRequestContext() {}
 
   public OAuthRequestContext(
+      OAuthRequestIdentifier identifier,
       AuthorizationProfile profile,
       OAuthRequestPattern pattern,
       OAuthRequestParameters parameters,
@@ -26,6 +29,7 @@ public class OAuthRequestContext {
       AuthorizationRequest authorizationRequest,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
+    this.identifier = identifier;
     this.profile = profile;
     this.pattern = pattern;
     this.parameters = parameters;
@@ -33,6 +37,10 @@ public class OAuthRequestContext {
     this.authorizationRequest = authorizationRequest;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
+  }
+
+  public OAuthRequestIdentifier identifier() {
+    return identifier;
   }
 
   public AuthorizationProfile profile() {

@@ -3,6 +3,7 @@ package org.idp.server.core.configuration;
 import java.util.Arrays;
 import java.util.List;
 import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.core.type.TokenIssuer;
 
 /** ServerConfiguration */
 public class ServerConfiguration implements JsonReadable {
@@ -56,8 +57,8 @@ public class ServerConfiguration implements JsonReadable {
 
   public ServerConfiguration() {}
 
-  public String issuer() {
-    return issuer;
+  public TokenIssuer issuer() {
+    return new TokenIssuer(issuer);
   }
 
   public String authorizationEndpoint() {

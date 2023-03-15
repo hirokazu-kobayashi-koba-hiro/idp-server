@@ -1,15 +1,13 @@
 package org.idp.server.service;
 
+import java.util.UUID;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JoseHandler;
 import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.gateway.RequestObjectGateway;
-import org.idp.server.core.oauth.AuthorizationProfile;
-import org.idp.server.core.oauth.AuthorizationProfileAnalyzable;
-import org.idp.server.core.oauth.OAuthRequestContext;
-import org.idp.server.core.oauth.OAuthRequestPattern;
+import org.idp.server.core.oauth.*;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.factory.RequestObjectPatternFactory;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
@@ -53,8 +51,10 @@ public class RequestUriPatternContextService
       AuthorizationRequest authorizationRequest =
           requestObjectPatternFactory.create(
               parameters, joseContext, serverConfiguration, clientConfiguration);
-
+      OAuthRequestIdentifier oAuthRequestIdentifier =
+          new OAuthRequestIdentifier(UUID.randomUUID().toString());
       return new OAuthRequestContext(
+          oAuthRequestIdentifier,
           profile,
           OAuthRequestPattern.NORMAL,
           parameters,

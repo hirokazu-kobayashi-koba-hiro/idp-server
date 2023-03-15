@@ -3,6 +3,7 @@ package org.idp.server.core.configuration;
 import java.util.Arrays;
 import java.util.List;
 import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.core.type.ClientId;
 
 /** ClientConfiguration */
 public class ClientConfiguration implements JsonReadable {
@@ -30,8 +31,8 @@ public class ClientConfiguration implements JsonReadable {
 
   public ClientConfiguration() {}
 
-  public String clientId() {
-    return clientId;
+  public ClientId clientId() {
+    return new ClientId(clientId);
   }
 
   public String clientSecret() {
