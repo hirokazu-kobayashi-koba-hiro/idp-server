@@ -1,0 +1,4 @@
+rootProject.name = 'idp-server'
+
+include 'app'
+include 'lib'
