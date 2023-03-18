@@ -18,6 +18,13 @@ public class OAuthRequestResponse {
     this.result = result;
   }
 
+  public OAuthRequestResponse(OAuthRequestResult result, AuthorizationRequest authorizationRequest, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
+    this.result = result;
+    this.authorizationRequest = authorizationRequest;
+    this.serverConfiguration = serverConfiguration;
+    this.clientConfiguration = clientConfiguration;
+  }
+
   public OAuthRequestResult result() {
     return result;
   }
