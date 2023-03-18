@@ -64,7 +64,7 @@ public class OAuthApi {
 
       oAuthRequestRepository.register(oAuthRequestContext);
 
-      return new OAuthRequestResponse();
+      return new OAuthRequestResponse(OAuthRequestResult.OK, oAuthRequestContext);
     } catch (OAuthBadRequestException exception) {
       log.log(Level.WARNING, exception.getMessage(), exception);
       return new OAuthRequestResponse(OAuthRequestResult.BAD_REQUEST);

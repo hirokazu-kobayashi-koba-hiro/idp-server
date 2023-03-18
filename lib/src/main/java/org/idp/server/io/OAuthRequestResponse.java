@@ -2,6 +2,7 @@ package org.idp.server.io;
 
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.type.OAuthRequestResult;
 
@@ -11,6 +12,8 @@ public class OAuthRequestResponse {
   AuthorizationRequest authorizationRequest;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
+
+
 
   public OAuthRequestResponse() {}
 
@@ -23,6 +26,13 @@ public class OAuthRequestResponse {
     this.authorizationRequest = authorizationRequest;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
+  }
+
+  public OAuthRequestResponse(OAuthRequestResult result, OAuthRequestContext context) {
+    this.result = result;
+    this.authorizationRequest = context.authorizationRequest();
+    this.serverConfiguration = context.serverConfiguration();
+    this.clientConfiguration = context.clientConfiguration();
   }
 
   public OAuthRequestResult result() {
