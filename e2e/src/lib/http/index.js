@@ -1,22 +1,11 @@
+import axios from "axios"
 export const get = async ({ url, headers }) => {
   try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "content-type": "application/json",
-        ...headers,
-      },
-      mode: "cors",
-    })
-    return {
-      status: response.status,
-      headers: response.headers,
-      data: await response.json(),
-    }
+    return await axios.get(url)
   } catch (e) {
     return {
       status: 500,
-      data: e.messages,
+      data: e,
     }
   }
 }
@@ -26,9 +15,7 @@ export const post = async ({ url, headers, body }) => {
     const response = await fetch(url, {
       method: "POST",
       body: body ? JSON.stringify(body) : undefined,
-      headers: {
-        ...headers,
-      },
+      headers,
       mode: "cors",
     })
     return {
