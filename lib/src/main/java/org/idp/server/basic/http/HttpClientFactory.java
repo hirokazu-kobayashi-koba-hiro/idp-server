@@ -10,7 +10,6 @@ public class HttpClientFactory {
         .version(HttpClient.Version.HTTP_1_1)
         .followRedirects(HttpClient.Redirect.NORMAL)
         .connectTimeout(Duration.ofSeconds(20))
-        .authenticator(Authenticator.getDefault())
         .build();
   }
 }

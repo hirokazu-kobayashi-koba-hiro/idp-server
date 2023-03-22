@@ -1,7 +1,7 @@
 package org.idp.server.core.type;
 
-/** OAuthRequestResult */
-public enum OAuthRequestResult {
+/** OAuthRequestStatus */
+public enum OAuthRequestStatus {
   OK,
   NO_INTERACTION_OK,
   BAD_REQUEST,

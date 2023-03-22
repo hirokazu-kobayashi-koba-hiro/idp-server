@@ -1,0 +1,3 @@
+idp:
+  configurations:
+   basePath: "src/main/resources/config/sample"

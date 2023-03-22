@@ -9,7 +9,7 @@ import org.idp.server.core.type.ClientId;
 public class ClientConfiguration implements JsonReadable {
   String clientId;
   String clientSecret;
-  String redirectUris;
+  List<String> redirectUris;
   String tokenEndpointAuthMethod;
   List<String> grantTypes;
   List<String> responseTypes;
@@ -39,7 +39,7 @@ public class ClientConfiguration implements JsonReadable {
     return clientSecret;
   }
 
-  public String redirectUris() {
+  public List<String> redirectUris() {
     return redirectUris;
   }
 

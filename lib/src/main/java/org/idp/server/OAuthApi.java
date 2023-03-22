@@ -10,6 +10,7 @@ import org.idp.server.core.oauth.OAuthRequestAnalyzer;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.OAuthRequestPattern;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
+import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oauth.request.OAuthRequestContextService;
 import org.idp.server.core.oauth.validator.OAuthRequestInitialValidator;
 import org.idp.server.core.oauth.verifier.OAuthRequestVerifier;
@@ -17,7 +18,7 @@ import org.idp.server.core.repository.ClientConfigurationRepository;
 import org.idp.server.core.repository.OAuthRequestRepository;
 import org.idp.server.core.repository.ServerConfigurationRepository;
 import org.idp.server.core.type.OAuthRequestParameters;
-import org.idp.server.core.type.OAuthRequestResult;
+import org.idp.server.core.type.OAuthRequestStatus;
 import org.idp.server.core.type.TokenIssuer;
 import org.idp.server.io.OAuthRequest;
 import org.idp.server.io.OAuthRequestResponse;
@@ -64,18 +65,21 @@ public class OAuthApi {
 
       oAuthRequestRepository.register(oAuthRequestContext);
 
-      return new OAuthRequestResponse(OAuthRequestResult.OK, oAuthRequestContext);
+      return new OAuthRequestResponse(OAuthRequestStatus.OK, oAuthRequestContext);
     } catch (OAuthBadRequestException exception) {
       log.log(Level.WARNING, exception.getMessage(), exception);
-      return new OAuthRequestResponse(OAuthRequestResult.BAD_REQUEST);
+      return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST);
+    } catch (OAuthRedirectableBadRequestException exception) {
+        log.log(Level.WARNING, exception.getMessage(), exception);
+        return new OAuthRequestResponse(OAuthRequestStatus.REDIRECABLE_BAD_REQUEST);
     } catch (ServerConfigurationNotFoundException
         | ClientConfigurationNotFoundException exception) {
       log.log(Level.WARNING, "not found configuration");
       log.log(Level.WARNING, exception.getMessage(), exception);
-      return new OAuthRequestResponse(OAuthRequestResult.BAD_REQUEST);
+      return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST);
     } catch (Exception exception) {
       log.log(Level.SEVERE, exception.getMessage(), exception);
-      return new OAuthRequestResponse(OAuthRequestResult.SERVER_ERROR);
+      return new OAuthRequestResponse(OAuthRequestStatus.SERVER_ERROR);
     }
   }
 }
