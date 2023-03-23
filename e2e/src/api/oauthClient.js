@@ -1,4 +1,5 @@
 import { get } from "../lib/http"
+import { convertToSnake } from "../lib/util"
 
 export const getAuthorizations = async ({
   endpoint,
@@ -20,25 +21,110 @@ export const getAuthorizations = async ({
   request,
   requestUri
 }) => {
-  const query = new URLSearchParams({
-    scope: scope? scope: "",
-    response_type: responseType? responseType: "",
-    client_id: clientId? clientId: "",
-    redirect_uri: redirectUri? requestUri: "",
-    state: state? state: "",
-    response_mode: responseMode? responseMode: "",
-    nonce: nonce? nonce: "",
-    display: display? display: "",
-    prompt: prompt? prompt: "",
-    max_age: maxAge? maxAge: "",
-    ui_locales: uiLocales? uiLocales: "",
-    id_token_hint: idTokenHint? idTokenHint: "",
-    login_hint: loginHint? loginHint: "",
-    acr_values: acrValues? acrValues: "",
-    claims: claims? claims: "",
-    request: request? request: "",
-    request_uri: requestUri? requestUri: "",
-  }).toString();
+  let params = {};
+  if (scope) {
+    params = {
+      ...params,
+      scope,
+    }
+  }
+  if (responseType) {
+    params = {
+      ...params,
+      responseType,
+    }
+  }
+  if (clientId) {
+    params = {
+      ...params,
+      clientId,
+    }
+  }
+  if (redirectUri) {
+    params = {
+      ...params,
+      redirectUri,
+    }
+  }
+  if (state) {
+    params = {
+      ...params,
+      state,
+    }
+  }
+  if (responseMode) {
+    params = {
+      ...params,
+      responseMode,
+    }
+  }
+  if (nonce) {
+    params = {
+      ...params,
+      nonce,
+    }
+  }
+  if (display) {
+    params = {
+      ...params,
+      display,
+    }
+  }
+  if (prompt) {
+    params = {
+      ...params,
+      prompt,
+    }
+  }
+  if (maxAge) {
+    params = {
+      ...params,
+      maxAge,
+    }
+  }
+  if (uiLocales) {
+    params = {
+      ...params,
+      uiLocales,
+    }
+  }
+  if (idTokenHint) {
+    params = {
+      ...params,
+      idTokenHint,
+    }
+  }
+  if (loginHint) {
+    params = {
+      ...params,
+      loginHint,
+    }
+  }
+  if (acrValues) {
+    params = {
+      ...params,
+      acrValues,
+    }
+  }
+  if (claims) {
+    params = {
+      ...params,
+      claims,
+    }
+  }
+  if (request) {
+    params = {
+      ...params,
+      request,
+    }
+  }
+  if (requestUri) {
+    params = {
+      ...params,
+      requestUri,
+    }
+  }
+  const query = new URLSearchParams(convertToSnake(params)).toString();
   const url = `${endpoint}?${query}`
   console.log(url)
   return await get({

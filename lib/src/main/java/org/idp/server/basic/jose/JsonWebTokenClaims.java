@@ -70,13 +70,16 @@ public class JsonWebTokenClaims {
   }
 
   public String getValue(String key) {
-    if (contains(key)) {
+    if (!contains(key)) {
       return "";
     }
     return (String) payload().get(key);
   }
 
   boolean contains(String key) {
+    if (Objects.isNull(value)) {
+      return false;
+    }
     return value.getClaims().containsKey(key);
   }
 

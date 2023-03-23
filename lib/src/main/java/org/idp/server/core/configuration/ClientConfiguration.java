@@ -2,6 +2,8 @@ package org.idp.server.core.configuration;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.type.ClientId;
 
@@ -104,6 +106,9 @@ public class ClientConfiguration implements JsonReadable {
   }
 
   public List<String> filteredScope(String spacedScopes) {
+    if (Objects.isNull(spacedScopes) || spacedScopes.isEmpty()) {
+      return List.of();
+    }
     List<String> scopes = Arrays.stream(spacedScopes.split(" ")).toList();
     return scopes.stream().filter(scope -> scopes().contains(scope)).toList();
   }

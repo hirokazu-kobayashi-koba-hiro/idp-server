@@ -6,14 +6,15 @@ import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.type.OAuthRequestStatus;
 
+import java.util.Map;
+
 /** OAuthRequestResponse */
 public class OAuthRequestResponse {
   OAuthRequestStatus result;
   AuthorizationRequest authorizationRequest;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
-
-
+  Map<String, String> contents;
 
   public OAuthRequestResponse() {}
 
@@ -33,6 +34,7 @@ public class OAuthRequestResponse {
     this.authorizationRequest = context.authorizationRequest();
     this.serverConfiguration = context.serverConfiguration();
     this.clientConfiguration = context.clientConfiguration();
+    this.contents = Map.of("id", context.identifier().value());
   }
 
   public OAuthRequestStatus result() {
@@ -49,5 +51,9 @@ public class OAuthRequestResponse {
 
   public ClientConfiguration clientConfiguration() {
     return clientConfiguration;
+  }
+
+  public Map<String, String> contents() {
+    return contents;
   }
 }
