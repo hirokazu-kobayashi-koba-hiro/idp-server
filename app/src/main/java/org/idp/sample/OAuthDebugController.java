@@ -33,7 +33,7 @@ public class OAuthDebugController implements ParameterTransformable {
     Tenant tenant = Tenant.of(tenantId);
     OAuthRequest oAuthRequest = new OAuthRequest(params, tenant.issuer());
     OAuthRequestResponse response = oAuthApi.request(oAuthRequest);
-    switch (response.result()) {
+    switch (response.status()) {
       case OK -> {
         return new ResponseEntity<>(response.contents(), HttpStatus.OK);
       }

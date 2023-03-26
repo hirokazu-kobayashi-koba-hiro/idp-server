@@ -1,4 +1,4 @@
-package org.idp.server.core.type;
+package org.idp.server.core.type.status;
 
 /** OAuthRequestStatus */
 public enum OAuthRequestStatus {

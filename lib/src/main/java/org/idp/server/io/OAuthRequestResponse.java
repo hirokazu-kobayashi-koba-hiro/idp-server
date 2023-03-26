@@ -4,13 +4,13 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.type.OAuthRequestStatus;
+import org.idp.server.core.type.status.OAuthRequestStatus;
 
 import java.util.Map;
 
 /** OAuthRequestResponse */
 public class OAuthRequestResponse {
-  OAuthRequestStatus result;
+  OAuthRequestStatus status;
   AuthorizationRequest authorizationRequest;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
@@ -18,27 +18,27 @@ public class OAuthRequestResponse {
 
   public OAuthRequestResponse() {}
 
-  public OAuthRequestResponse(OAuthRequestStatus result) {
-    this.result = result;
+  public OAuthRequestResponse(OAuthRequestStatus status) {
+    this.status = status;
   }
 
-  public OAuthRequestResponse(OAuthRequestStatus result, AuthorizationRequest authorizationRequest, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
-    this.result = result;
+  public OAuthRequestResponse(OAuthRequestStatus status, AuthorizationRequest authorizationRequest, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
+    this.status = status;
     this.authorizationRequest = authorizationRequest;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
   }
 
-  public OAuthRequestResponse(OAuthRequestStatus result, OAuthRequestContext context) {
-    this.result = result;
+  public OAuthRequestResponse(OAuthRequestStatus status, OAuthRequestContext context) {
+    this.status = status;
     this.authorizationRequest = context.authorizationRequest();
     this.serverConfiguration = context.serverConfiguration();
     this.clientConfiguration = context.clientConfiguration();
     this.contents = Map.of("id", context.identifier().value());
   }
 
-  public OAuthRequestStatus result() {
-    return result;
+  public OAuthRequestStatus status() {
+    return status;
   }
 
   public AuthorizationRequest authorizationRequest() {

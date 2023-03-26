@@ -18,8 +18,10 @@ import org.idp.server.core.repository.ClientConfigurationRepository;
 import org.idp.server.core.repository.OAuthRequestRepository;
 import org.idp.server.core.repository.ServerConfigurationRepository;
 import org.idp.server.core.type.OAuthRequestParameters;
-import org.idp.server.core.type.OAuthRequestStatus;
+import org.idp.server.core.type.status.OAuthRequestStatus;
 import org.idp.server.core.type.TokenIssuer;
+import org.idp.server.io.OAuthAuthorizeRequest;
+import org.idp.server.io.OAuthAuthorizeResponse;
 import org.idp.server.io.OAuthRequest;
 import org.idp.server.io.OAuthRequestResponse;
 import org.idp.server.service.OAuthRequestContextServiceRegistry;
@@ -81,5 +83,9 @@ public class OAuthApi {
       log.log(Level.SEVERE, exception.getMessage(), exception);
       return new OAuthRequestResponse(OAuthRequestStatus.SERVER_ERROR);
     }
+  }
+
+  public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest oAuthAuthorizeRequest) {
+    return new OAuthAuthorizeResponse();
   }
 }
