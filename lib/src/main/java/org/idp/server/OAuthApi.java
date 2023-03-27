@@ -8,6 +8,7 @@ import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.core.oauth.OAuthRequestAnalyzer;
 import org.idp.server.core.oauth.OAuthRequestContext;
+import org.idp.server.core.oauth.OAuthRequestIdentifier;
 import org.idp.server.core.oauth.OAuthRequestPattern;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
@@ -18,20 +19,20 @@ import org.idp.server.core.repository.ClientConfigurationRepository;
 import org.idp.server.core.repository.OAuthRequestRepository;
 import org.idp.server.core.repository.ServerConfigurationRepository;
 import org.idp.server.core.type.OAuthRequestParameters;
+import org.idp.server.core.type.ResponseType;
 import org.idp.server.core.type.status.OAuthRequestStatus;
 import org.idp.server.core.type.TokenIssuer;
 import org.idp.server.io.OAuthAuthorizeRequest;
 import org.idp.server.io.OAuthAuthorizeResponse;
 import org.idp.server.io.OAuthRequest;
 import org.idp.server.io.OAuthRequestResponse;
-import org.idp.server.service.OAuthRequestContextServiceRegistry;
+import org.idp.server.handler.oauth.OAuthRequestContextHandler;
 
 /** OAuthApi */
 public class OAuthApi {
   OAuthRequestInitialValidator initialValidator = new OAuthRequestInitialValidator();
-  OAuthRequestAnalyzer requestAnalyzer = new OAuthRequestAnalyzer();
-  OAuthRequestContextServiceRegistry contextCreatorRegistry =
-      new OAuthRequestContextServiceRegistry();
+  OAuthRequestContextHandler contextHandler =
+      new OAuthRequestContextHandler();
   OAuthRequestVerifier oAuthRequestVerifier = new OAuthRequestVerifier();
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
@@ -55,12 +56,8 @@ public class OAuthApi {
       initialValidator.validate(oAuthRequestParameters);
       ClientConfiguration clientConfiguration =
           clientConfigurationRepository.get(oAuthRequestParameters.clientId());
-      OAuthRequestPattern oAuthRequestPattern =
-          requestAnalyzer.analyzePattern(oAuthRequestParameters);
-      OAuthRequestContextService oAuthRequestContextService =
-          contextCreatorRegistry.get(oAuthRequestPattern);
-      OAuthRequestContext oAuthRequestContext =
-          oAuthRequestContextService.create(
+
+      OAuthRequestContext oAuthRequestContext = contextHandler.handle(
               oAuthRequestParameters, serverConfiguration, clientConfiguration);
 
       oAuthRequestVerifier.verify(oAuthRequestContext);
@@ -85,7 +82,16 @@ public class OAuthApi {
     }
   }
 
-  public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest oAuthAuthorizeRequest) {
-    return new OAuthAuthorizeResponse();
+  public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
+    OAuthRequestIdentifier oAuthRequestIdentifier = request.toIdentifier();
+    try {
+      OAuthRequestContext oAuthRequestContext = oAuthRequestRepository.get(oAuthRequestIdentifier);
+      ResponseType responseType = oAuthRequestContext.responseType();
+
+      return new OAuthAuthorizeResponse();
+    } catch (Exception exception) {
+      log.log(Level.SEVERE, exception.getMessage(), exception);
+      return new OAuthAuthorizeResponse();
+    }
   }
 }

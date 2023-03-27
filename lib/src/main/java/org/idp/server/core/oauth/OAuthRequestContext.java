@@ -5,6 +5,8 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.type.OAuthRequestParameters;
+import org.idp.server.core.type.ResponseMode;
+import org.idp.server.core.type.ResponseType;
 
 /** OAuthRequestContext */
 public class OAuthRequestContext {
@@ -90,4 +92,12 @@ public class OAuthRequestContext {
   public boolean isFapiAdvanceProfile() {
     return profile.isFapiAdvance();
   }
+
+    public ResponseType responseType() {
+    return authorizationRequest.responseType();
+    }
+
+    public ResponseMode responseMode() {
+    return authorizationRequest.responseMode();
+    }
 }

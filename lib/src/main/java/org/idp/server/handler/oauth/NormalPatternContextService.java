@@ -1,4 +1,4 @@
-package org.idp.server.service;
+package org.idp.server.handler.oauth;
 
 import java.util.UUID;
 import org.idp.server.basic.jose.JoseContext;
