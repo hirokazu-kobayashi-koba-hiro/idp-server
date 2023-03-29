@@ -1,14 +1,14 @@
-package org.idp.server.core.oauth;
+package org.idp.server.core.oauth.request;
 
 import java.util.Objects;
 
-/** OAuthRequestIdentifier */
-public class OAuthRequestIdentifier {
+/** AuthorizationRequestIdentifier */
+public class AuthorizationRequestIdentifier {
   String value;
 
-  public OAuthRequestIdentifier() {}
+  public AuthorizationRequestIdentifier() {}
 
-  public OAuthRequestIdentifier(String value) {
+  public AuthorizationRequestIdentifier(String value) {
     this.value = value;
   }
 
@@ -20,7 +20,7 @@ public class OAuthRequestIdentifier {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    OAuthRequestIdentifier that = (OAuthRequestIdentifier) o;
+    AuthorizationRequestIdentifier that = (AuthorizationRequestIdentifier) o;
     return Objects.equals(value, that.value);
   }
 

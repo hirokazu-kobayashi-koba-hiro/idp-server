@@ -1,9 +1,14 @@
 package org.idp.server.core.oauth.request;
 
+import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.type.*;
 
 /** AuthorizationRequestBuilder */
 public class AuthorizationRequestBuilder {
+
+  AuthorizationRequestIdentifier identifier;
+  TokenIssuer tokenIssuer;
+  AuthorizationProfile profile;
   Scopes scopes;
   ResponseType responseType;
   ClientId clientId;
@@ -23,6 +28,21 @@ public class AuthorizationRequestBuilder {
   RequestUri requestUri;
 
   public AuthorizationRequestBuilder() {}
+
+  public AuthorizationRequestBuilder add(AuthorizationRequestIdentifier identifier) {
+    this.identifier = identifier;
+    return this;
+  }
+
+  public AuthorizationRequestBuilder add(TokenIssuer tokenIssuer) {
+    this.tokenIssuer = tokenIssuer;
+    return this;
+  }
+
+  public AuthorizationRequestBuilder add(AuthorizationProfile profile) {
+    this.profile = profile;
+    return this;
+  }
 
   public AuthorizationRequestBuilder add(AcrValues acrValues) {
     this.acrValues = acrValues;
@@ -111,6 +131,9 @@ public class AuthorizationRequestBuilder {
 
   public AuthorizationRequest build() {
     return new AuthorizationRequest(
+            identifier,
+        tokenIssuer,
+        profile,
         scopes,
         responseType,
         clientId,

@@ -4,6 +4,7 @@ import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
+import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.type.OAuthRequestParameters;
 import org.idp.server.core.type.ResponseMode;
 import org.idp.server.core.type.ResponseType;
@@ -11,8 +12,6 @@ import org.idp.server.core.type.ResponseType;
 /** OAuthRequestContext */
 public class OAuthRequestContext {
 
-  OAuthRequestIdentifier identifier;
-  AuthorizationProfile profile;
   OAuthRequestPattern pattern;
   OAuthRequestParameters parameters;
   JoseContext joseContext;
@@ -23,16 +22,12 @@ public class OAuthRequestContext {
   public OAuthRequestContext() {}
 
   public OAuthRequestContext(
-      OAuthRequestIdentifier identifier,
-      AuthorizationProfile profile,
       OAuthRequestPattern pattern,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
       AuthorizationRequest authorizationRequest,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
-    this.identifier = identifier;
-    this.profile = profile;
     this.pattern = pattern;
     this.parameters = parameters;
     this.joseContext = joseContext;
@@ -41,12 +36,12 @@ public class OAuthRequestContext {
     this.clientConfiguration = clientConfiguration;
   }
 
-  public OAuthRequestIdentifier identifier() {
-    return identifier;
+  public AuthorizationRequestIdentifier identifier() {
+    return authorizationRequest.identifier();
   }
 
   public AuthorizationProfile profile() {
-    return profile;
+    return authorizationRequest.profile();
   }
 
   public OAuthRequestPattern pattern() {
@@ -78,19 +73,19 @@ public class OAuthRequestContext {
   }
 
   public boolean isOAuth2Profile() {
-    return profile.isOAuth2();
+    return profile().isOAuth2();
   }
 
   public boolean isOidcProfile() {
-    return profile.isOidc();
+    return profile().isOidc();
   }
 
   public boolean isFapiBaselineProfile() {
-    return profile.isFapiBaseline();
+    return profile().isFapiBaseline();
   }
 
   public boolean isFapiAdvanceProfile() {
-    return profile.isFapiAdvance();
+    return profile().isFapiAdvance();
   }
 
     public ResponseType responseType() {

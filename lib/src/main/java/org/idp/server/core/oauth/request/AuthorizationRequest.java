@@ -1,9 +1,14 @@
 package org.idp.server.core.oauth.request;
 
+import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.type.*;
 
 /** AuthorizationRequest */
 public class AuthorizationRequest {
+
+  AuthorizationRequestIdentifier identifier;
+  TokenIssuer tokenIssuer;
+  AuthorizationProfile profile;
   Scopes scopes;
   ResponseType responseType;
   ClientId clientId;
@@ -23,6 +28,9 @@ public class AuthorizationRequest {
   RequestUri requestUri;
 
   AuthorizationRequest(
+      AuthorizationRequestIdentifier identifier,
+      TokenIssuer tokenIssuer,
+      AuthorizationProfile profile,
       Scopes scopes,
       ResponseType responseType,
       ClientId clientId,
@@ -40,6 +48,9 @@ public class AuthorizationRequest {
       Claims claims,
       RequestObject requestObject,
       RequestUri requestUri) {
+    this.identifier = identifier;
+    this.tokenIssuer = tokenIssuer;
+    this.profile = profile;
     this.scopes = scopes;
     this.responseType = responseType;
     this.clientId = clientId;
@@ -57,6 +68,18 @@ public class AuthorizationRequest {
     this.claims = claims;
     this.requestObject = requestObject;
     this.requestUri = requestUri;
+  }
+
+  public AuthorizationRequestIdentifier identifier() {
+    return identifier;
+  }
+
+  public TokenIssuer tokenIssuer() {
+    return tokenIssuer;
+  }
+
+  public AuthorizationProfile profile() {
+    return profile;
   }
 
   public Scopes scope() {
@@ -126,4 +149,5 @@ public class AuthorizationRequest {
   public RequestUri requestUri() {
     return requestUri;
   }
+
 }

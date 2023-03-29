@@ -6,20 +6,18 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationNotFoundException;
-import org.idp.server.core.oauth.OAuthRequestAnalyzer;
 import org.idp.server.core.oauth.OAuthRequestContext;
-import org.idp.server.core.oauth.OAuthRequestIdentifier;
-import org.idp.server.core.oauth.OAuthRequestPattern;
+import org.idp.server.core.oauth.request.AuthorizationRequest;
+import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
-import org.idp.server.core.oauth.request.OAuthRequestContextService;
 import org.idp.server.core.oauth.validator.OAuthRequestInitialValidator;
 import org.idp.server.core.oauth.verifier.OAuthRequestVerifier;
 import org.idp.server.core.repository.ClientConfigurationRepository;
-import org.idp.server.core.repository.OAuthRequestRepository;
+import org.idp.server.core.repository.AuthorizationRequestRepository;
 import org.idp.server.core.repository.ServerConfigurationRepository;
+import org.idp.server.core.type.ClientId;
 import org.idp.server.core.type.OAuthRequestParameters;
-import org.idp.server.core.type.ResponseType;
 import org.idp.server.core.type.status.OAuthRequestStatus;
 import org.idp.server.core.type.TokenIssuer;
 import org.idp.server.io.OAuthAuthorizeRequest;
@@ -36,14 +34,14 @@ public class OAuthApi {
   OAuthRequestVerifier oAuthRequestVerifier = new OAuthRequestVerifier();
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
-  OAuthRequestRepository oAuthRequestRepository;
+  AuthorizationRequestRepository authorizationRequestRepository;
   Logger log = Logger.getLogger(OAuthApi.class.getName());
 
   OAuthApi(
-      OAuthRequestRepository oAuthRequestRepository,
+      AuthorizationRequestRepository authorizationRequestRepository,
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
-    this.oAuthRequestRepository = oAuthRequestRepository;
+    this.authorizationRequestRepository = authorizationRequestRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
@@ -62,7 +60,7 @@ public class OAuthApi {
 
       oAuthRequestVerifier.verify(oAuthRequestContext);
 
-      oAuthRequestRepository.register(oAuthRequestContext);
+      authorizationRequestRepository.register(oAuthRequestContext.authorizationRequest());
 
       return new OAuthRequestResponse(OAuthRequestStatus.OK, oAuthRequestContext);
     } catch (OAuthBadRequestException exception) {
@@ -83,10 +81,13 @@ public class OAuthApi {
   }
 
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
-    OAuthRequestIdentifier oAuthRequestIdentifier = request.toIdentifier();
+    AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
     try {
-      OAuthRequestContext oAuthRequestContext = oAuthRequestRepository.get(oAuthRequestIdentifier);
-      ResponseType responseType = oAuthRequestContext.responseType();
+      AuthorizationRequest authorizationRequest = authorizationRequestRepository.get(authorizationRequestIdentifier);
+      TokenIssuer tokenIssuer = authorizationRequest.tokenIssuer();
+      ClientId clientId = authorizationRequest.clientId();
+      ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
+      ClientConfiguration clientConfiguration = clientConfigurationRepository.get(clientId);
 
       return new OAuthAuthorizeResponse();
     } catch (Exception exception) {

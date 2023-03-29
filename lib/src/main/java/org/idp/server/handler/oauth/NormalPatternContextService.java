@@ -8,6 +8,7 @@ import org.idp.server.core.oauth.*;
 import org.idp.server.core.oauth.factory.NormalRequestFactory;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.OAuthRequestContextService;
+import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.type.OAuthRequestParameters;
 
 /** NormalPatternContextService */
@@ -26,12 +27,9 @@ public class NormalPatternContextService
         analyze(parameters, joseContext, serverConfiguration, clientConfiguration);
     AuthorizationRequest authorizationRequest =
         normalRequestFactory.create(
-            parameters, joseContext, serverConfiguration, clientConfiguration);
-    OAuthRequestIdentifier oAuthRequestIdentifier =
-        new OAuthRequestIdentifier(UUID.randomUUID().toString());
+                profile, parameters, joseContext, serverConfiguration, clientConfiguration);
+
     return new OAuthRequestContext(
-        oAuthRequestIdentifier,
-        profile,
         OAuthRequestPattern.NORMAL,
         parameters,
         joseContext,

@@ -1,6 +1,7 @@
 package org.idp.server.io;
 
-import org.idp.server.core.oauth.OAuthRequestIdentifier;
+import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.type.TokenIssuer;
 
 import java.util.Map;
 
@@ -21,11 +22,15 @@ public class OAuthAuthorizeRequest {
         return this;
     }
 
-    public OAuthRequestIdentifier toIdentifier() {
-        return new OAuthRequestIdentifier(id);
+    public AuthorizationRequestIdentifier toIdentifier() {
+        return new AuthorizationRequestIdentifier(id);
     }
 
     public Map<String, Object> customProperties() {
         return customProperties;
+    }
+
+    public TokenIssuer toTokenIssuer() {
+        return null;
     }
 }

@@ -3,21 +3,29 @@ package org.idp.server.core.oauth.factory;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestBuilder;
+import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.type.*;
+
+import java.util.UUID;
 
 /** NormalRequestFactory */
 public class NormalRequestFactory implements AuthorizationRequestFactory {
 
   @Override
   public AuthorizationRequest create(
+          AuthorizationProfile profile,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
+    builder.add(new AuthorizationRequestIdentifier(UUID.randomUUID().toString()));
+    builder.add(serverConfiguration.issuer());
+    builder.add(profile);
     builder.add(parameters.scope());
     builder.add(parameters.responseType());
     builder.add(parameters.clientId());
