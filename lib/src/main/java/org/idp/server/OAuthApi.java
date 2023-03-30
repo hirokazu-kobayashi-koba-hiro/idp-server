@@ -1,37 +1,44 @@
 package org.idp.server;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationNotFoundException;
+import org.idp.server.core.oauth.OAuthAuthorizeContext;
 import org.idp.server.core.oauth.OAuthRequestContext;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
+import org.idp.server.core.oauth.request.AuthorizationRequest;
+import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.oauth.response.AuthorizationResponse;
 import org.idp.server.core.oauth.validator.OAuthRequestInitialValidator;
 import org.idp.server.core.oauth.verifier.OAuthRequestVerifier;
-import org.idp.server.core.repository.ClientConfigurationRepository;
 import org.idp.server.core.repository.AuthorizationRequestRepository;
+import org.idp.server.core.repository.ClientConfigurationRepository;
 import org.idp.server.core.repository.ServerConfigurationRepository;
 import org.idp.server.core.type.ClientId;
 import org.idp.server.core.type.OAuthRequestParameters;
-import org.idp.server.core.type.status.OAuthRequestStatus;
 import org.idp.server.core.type.TokenIssuer;
+import org.idp.server.core.type.status.OAuthAuthorizeStatus;
+import org.idp.server.core.type.status.OAuthRequestStatus;
+import org.idp.server.handler.oauth.OAuthRequestContextHandler;
+import org.idp.server.handler.oauth.authorize.OAuthAuthorizeHandler;
 import org.idp.server.io.OAuthAuthorizeRequest;
 import org.idp.server.io.OAuthAuthorizeResponse;
 import org.idp.server.io.OAuthRequest;
 import org.idp.server.io.OAuthRequestResponse;
-import org.idp.server.handler.oauth.OAuthRequestContextHandler;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** OAuthApi */
 public class OAuthApi {
   OAuthRequestInitialValidator initialValidator = new OAuthRequestInitialValidator();
-  OAuthRequestContextHandler contextHandler =
+  OAuthRequestContextHandler requestContextHandler =
       new OAuthRequestContextHandler();
   OAuthRequestVerifier oAuthRequestVerifier = new OAuthRequestVerifier();
+
+  OAuthAuthorizeHandler authAuthorizeHandler = new OAuthAuthorizeHandler();
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
   AuthorizationRequestRepository authorizationRequestRepository;
@@ -55,7 +62,7 @@ public class OAuthApi {
       ClientConfiguration clientConfiguration =
           clientConfigurationRepository.get(oAuthRequestParameters.clientId());
 
-      OAuthRequestContext oAuthRequestContext = contextHandler.handle(
+      OAuthRequestContext oAuthRequestContext = requestContextHandler.handle(
               oAuthRequestParameters, serverConfiguration, clientConfiguration);
 
       oAuthRequestVerifier.verify(oAuthRequestContext);
@@ -88,8 +95,10 @@ public class OAuthApi {
       ClientId clientId = authorizationRequest.clientId();
       ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
       ClientConfiguration clientConfiguration = clientConfigurationRepository.get(clientId);
+      AuthorizationResponse authorizationResponse = authAuthorizeHandler.handle(new OAuthAuthorizeContext(authorizationRequest, serverConfiguration, clientConfiguration));
 
-      return new OAuthAuthorizeResponse();
+
+      return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, authorizationResponse);
     } catch (Exception exception) {
       log.log(Level.SEVERE, exception.getMessage(), exception);
       return new OAuthAuthorizeResponse();
