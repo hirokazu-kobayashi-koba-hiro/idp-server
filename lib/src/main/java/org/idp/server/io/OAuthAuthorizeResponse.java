@@ -24,4 +24,8 @@ public class OAuthAuthorizeResponse {
     public AuthorizationResponse authorizationResponse() {
         return authorizationResponse;
     }
+
+    public String redirectUriValue() {
+        return authorizationResponse.redirectUriValue();
+    }
 }

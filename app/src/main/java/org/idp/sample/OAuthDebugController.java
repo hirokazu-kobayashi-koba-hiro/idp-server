@@ -3,6 +3,8 @@ package org.idp.sample;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.OAuthApi;
+import org.idp.server.io.OAuthAuthorizeRequest;
+import org.idp.server.io.OAuthAuthorizeResponse;
 import org.idp.server.io.OAuthRequest;
 import org.idp.server.io.OAuthRequestResponse;
 import org.slf4j.Logger;
@@ -49,5 +51,15 @@ public class OAuthDebugController implements ParameterTransformable {
         return new ResponseEntity<>(response.contents(), HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
+  }
+
+  @PostMapping("/{id}/authorize")
+  public ResponseEntity<?> authorize(
+      @PathVariable String id, @PathVariable("tenant-id") String tenantId) {
+    Tenant tenant = Tenant.of(tenantId);
+    OAuthAuthorizeRequest authAuthorizeRequest = new OAuthAuthorizeRequest(id, tenant.issuer());
+    OAuthAuthorizeResponse authAuthorizeResponse = oAuthApi.authorize(authAuthorizeRequest);
+    Map<String, String> response = Map.of("redirect_uri", authAuthorizeResponse.redirectUriValue());
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 }

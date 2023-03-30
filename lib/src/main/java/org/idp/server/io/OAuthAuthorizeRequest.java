@@ -10,11 +10,13 @@ import java.util.Map;
  */
 public class OAuthAuthorizeRequest {
     String id;
+    String tokenIssure;
     Map<String, Object> customProperties;
     //TODO user
 
-    public OAuthAuthorizeRequest(String id) {
+    public OAuthAuthorizeRequest(String id, String tokenIssuer) {
         this.id = id;
+        this.tokenIssure = tokenIssuer;
     }
 
     public OAuthAuthorizeRequest setCustomProperties(Map<String, Object> customProperties) {
@@ -31,6 +33,6 @@ public class OAuthAuthorizeRequest {
     }
 
     public TokenIssuer toTokenIssuer() {
-        return null;
+        return new TokenIssuer(tokenIssure);
     }
 }
