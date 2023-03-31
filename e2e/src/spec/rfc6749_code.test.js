@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { authorize, getAuthorizations } from "../api/oauthClient"
+import { authorize, getAuthorizations } from "../api/oauthClient";
 
 describe("The OAuth 2.0 Authorization Framework", () => {
   const authorizationEndpoint = "http://localhost:8080/123/api/debug/v1/authorizations";

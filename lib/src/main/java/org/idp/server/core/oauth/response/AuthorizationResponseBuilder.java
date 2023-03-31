@@ -19,6 +19,7 @@ public class AuthorizationResponseBuilder {
         this.responseModeValue = responseModeValue;
         this.tokenIssuer = tokenIssuer;
         this.queryParams = new QueryParams();
+        queryParams.add("iss", tokenIssuer.value());
     }
 
 
