@@ -1,23 +1,25 @@
 package org.idp.server.core.oauth.response;
 
 import org.idp.server.basic.http.QueryParams;
-import org.idp.server.core.type.*;
 import org.idp.server.core.type.Error;
+import org.idp.server.core.type.*;
 
-public class AuthorizationResponse {
+public class AuthorizationErrorResponse {
     RedirectUri redirectUri;
     ResponseModeValue responseModeValue;
-    AuthorizationCode authorizationCode;
     State state;
     TokenIssuer tokenIssuer;
+    Error error;
+    ErrorDescription errorDescription;
     QueryParams queryParams;
 
-    AuthorizationResponse(RedirectUri redirectUri, ResponseModeValue responseModeValue, AuthorizationCode authorizationCode, State state, TokenIssuer tokenIssuer, Error error, ErrorDescription errorDescription, QueryParams queryParams) {
+    AuthorizationErrorResponse(RedirectUri redirectUri, ResponseModeValue responseModeValue, State state, TokenIssuer tokenIssuer, Error error, ErrorDescription errorDescription, QueryParams queryParams) {
         this.redirectUri = redirectUri;
         this.responseModeValue = responseModeValue;
-        this.authorizationCode = authorizationCode;
         this.state = state;
         this.tokenIssuer = tokenIssuer;
+        this.error = error;
+        this.errorDescription = errorDescription;
         this.queryParams = queryParams;
     }
 
@@ -30,9 +32,6 @@ public class AuthorizationResponse {
         return responseModeValue;
     }
 
-    public AuthorizationCode authorizationCode() {
-        return authorizationCode;
-    }
 
     public State state() {
         return state;
@@ -40,6 +39,14 @@ public class AuthorizationResponse {
 
     public TokenIssuer tokenIssuer() {
         return tokenIssuer;
+    }
+
+    public Error error() {
+        return error;
+    }
+
+    public ErrorDescription errorDescription() {
+        return errorDescription;
     }
 
     QueryParams queryParams() {

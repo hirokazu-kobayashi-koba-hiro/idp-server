@@ -1,5 +1,6 @@
 package org.idp.server.io;
 
+import org.idp.server.core.oauth.response.AuthorizationErrorResponse;
 import org.idp.server.core.oauth.response.AuthorizationResponse;
 import org.idp.server.core.type.status.OAuthAuthorizeStatus;
 
@@ -9,6 +10,8 @@ import org.idp.server.core.type.status.OAuthAuthorizeStatus;
 public class OAuthAuthorizeResponse {
     OAuthAuthorizeStatus status;
     AuthorizationResponse authorizationResponse;
+
+    AuthorizationErrorResponse errorResponse;
 
     public OAuthAuthorizeResponse() {}
 
@@ -26,6 +29,8 @@ public class OAuthAuthorizeResponse {
     }
 
     public String redirectUriValue() {
-        return authorizationResponse.redirectUriValue();
+        return status.isOK() ?
+                authorizationResponse.redirectUriValue()
+                : errorResponse.redirectUriValue();
     }
 }
