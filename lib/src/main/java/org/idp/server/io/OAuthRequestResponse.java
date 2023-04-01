@@ -5,7 +5,7 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.type.status.OAuthRequestStatus;
+import org.idp.server.io.status.OAuthRequestStatus;
 
 /** OAuthRequestResponse */
 public class OAuthRequestResponse {

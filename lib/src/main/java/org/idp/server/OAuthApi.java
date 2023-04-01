@@ -24,14 +24,14 @@ import org.idp.server.core.repository.ServerConfigurationRepository;
 import org.idp.server.core.type.ClientId;
 import org.idp.server.core.type.OAuthRequestParameters;
 import org.idp.server.core.type.TokenIssuer;
-import org.idp.server.core.type.status.OAuthAuthorizeStatus;
-import org.idp.server.core.type.status.OAuthRequestStatus;
 import org.idp.server.handler.oauth.OAuthRequestContextHandler;
 import org.idp.server.handler.oauth.authorize.OAuthAuthorizeHandler;
 import org.idp.server.io.OAuthAuthorizeRequest;
 import org.idp.server.io.OAuthAuthorizeResponse;
 import org.idp.server.io.OAuthRequest;
 import org.idp.server.io.OAuthRequestResponse;
+import org.idp.server.io.status.OAuthAuthorizeStatus;
+import org.idp.server.io.status.OAuthRequestStatus;
 
 /** OAuthApi */
 public class OAuthApi {
