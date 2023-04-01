@@ -1,5 +1,6 @@
 package org.idp.server.core.oauth;
 
+import java.time.LocalDateTime;
 import org.idp.server.basic.date.UtcDateTime;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
@@ -8,50 +9,46 @@ import org.idp.server.core.type.ExpiresDateTime;
 import org.idp.server.core.type.ResponseType;
 import org.idp.server.core.type.TokenIssuer;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.temporal.TemporalUnit;
-
-/**
- * OAuthAuthorizeContext
- */
+/** OAuthAuthorizeContext */
 public class OAuthAuthorizeContext {
-    AuthorizationRequest authorizationRequest;
-    ServerConfiguration serverConfiguration;
-    ClientConfiguration clientConfiguration;
+  AuthorizationRequest authorizationRequest;
+  ServerConfiguration serverConfiguration;
+  ClientConfiguration clientConfiguration;
 
-    public OAuthAuthorizeContext() {}
+  public OAuthAuthorizeContext() {}
 
-    public OAuthAuthorizeContext(AuthorizationRequest authorizationRequest, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
-        this.authorizationRequest = authorizationRequest;
-        this.serverConfiguration = serverConfiguration;
-        this.clientConfiguration = clientConfiguration;
-    }
+  public OAuthAuthorizeContext(
+      AuthorizationRequest authorizationRequest,
+      ServerConfiguration serverConfiguration,
+      ClientConfiguration clientConfiguration) {
+    this.authorizationRequest = authorizationRequest;
+    this.serverConfiguration = serverConfiguration;
+    this.clientConfiguration = clientConfiguration;
+  }
 
-    public AuthorizationRequest authorizationRequest() {
-        return authorizationRequest;
-    }
+  public AuthorizationRequest authorizationRequest() {
+    return authorizationRequest;
+  }
 
-    public ServerConfiguration serverConfiguration() {
-        return serverConfiguration;
-    }
+  public ServerConfiguration serverConfiguration() {
+    return serverConfiguration;
+  }
 
-    public ClientConfiguration clientConfiguration() {
-        return clientConfiguration;
-    }
+  public ClientConfiguration clientConfiguration() {
+    return clientConfiguration;
+  }
 
-    public TokenIssuer tokenIssuer() {
-        return serverConfiguration.issuer();
-    }
+  public TokenIssuer tokenIssuer() {
+    return serverConfiguration.issuer();
+  }
 
-    public ResponseType responseType() {
-        return authorizationRequest.responseType();
-    }
+  public ResponseType responseType() {
+    return authorizationRequest.responseType();
+  }
 
-    public ExpiresDateTime authorizationCodeGrantExpiresDateTime() {
-        LocalDateTime localDateTime = UtcDateTime.now();
-        int duration = serverConfiguration.authorizationCodeValidDuration();
-        return new ExpiresDateTime(localDateTime.plusMinutes(duration));
-    }
-
+  public ExpiresDateTime authorizationCodeGrantExpiresDateTime() {
+    LocalDateTime localDateTime = UtcDateTime.now();
+    int duration = serverConfiguration.authorizationCodeValidDuration();
+    return new ExpiresDateTime(localDateTime.plusMinutes(duration));
+  }
 }

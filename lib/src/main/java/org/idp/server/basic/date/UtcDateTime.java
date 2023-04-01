@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 public class UtcDateTime {
 
-    public static LocalDateTime now() {
-        return LocalDateTime.now(Clock.systemUTC());
-    }
+  public static LocalDateTime now() {
+    return LocalDateTime.now(Clock.systemUTC());
+  }
 }

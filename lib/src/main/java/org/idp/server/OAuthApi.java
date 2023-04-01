@@ -1,5 +1,7 @@
 package org.idp.server;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.core.configuration.ServerConfiguration;
@@ -31,14 +33,10 @@ import org.idp.server.io.OAuthAuthorizeResponse;
 import org.idp.server.io.OAuthRequest;
 import org.idp.server.io.OAuthRequestResponse;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 /** OAuthApi */
 public class OAuthApi {
   OAuthRequestInitialValidator initialValidator = new OAuthRequestInitialValidator();
-  OAuthRequestContextHandler requestContextHandler =
-      new OAuthRequestContextHandler();
+  OAuthRequestContextHandler requestContextHandler = new OAuthRequestContextHandler();
   OAuthRequestVerifier oAuthRequestVerifier = new OAuthRequestVerifier();
 
   OAuthAuthorizeHandler authAuthorizeHandler = new OAuthAuthorizeHandler();
@@ -68,7 +66,8 @@ public class OAuthApi {
       ClientConfiguration clientConfiguration =
           clientConfigurationRepository.get(tokenIssuer, oAuthRequestParameters.clientId());
 
-      OAuthRequestContext oAuthRequestContext = requestContextHandler.handle(
+      OAuthRequestContext oAuthRequestContext =
+          requestContextHandler.handle(
               oAuthRequestParameters, serverConfiguration, clientConfiguration);
 
       oAuthRequestVerifier.verify(oAuthRequestContext);
@@ -80,8 +79,8 @@ public class OAuthApi {
       log.log(Level.WARNING, exception.getMessage(), exception);
       return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST);
     } catch (OAuthRedirectableBadRequestException exception) {
-        log.log(Level.WARNING, exception.getMessage(), exception);
-        return new OAuthRequestResponse(OAuthRequestStatus.REDIRECABLE_BAD_REQUEST);
+      log.log(Level.WARNING, exception.getMessage(), exception);
+      return new OAuthRequestResponse(OAuthRequestStatus.REDIRECABLE_BAD_REQUEST);
     } catch (ServerConfigurationNotFoundException
         | ClientConfigurationNotFoundException exception) {
       log.log(Level.WARNING, "not found configuration");
@@ -96,16 +95,21 @@ public class OAuthApi {
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
     try {
-      AuthorizationRequest authorizationRequest = authorizationRequestRepository.get(authorizationRequestIdentifier);
+      AuthorizationRequest authorizationRequest =
+          authorizationRequestRepository.get(authorizationRequestIdentifier);
       TokenIssuer tokenIssuer = authorizationRequest.tokenIssuer();
       ClientId clientId = authorizationRequest.clientId();
       ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-      ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tokenIssuer, clientId);
-      OAuthAuthorizeContext oAuthAuthorizeContext = new OAuthAuthorizeContext(authorizationRequest, serverConfiguration, clientConfiguration);
-      AuthorizationResponse authorizationResponse = authAuthorizeHandler.handle(oAuthAuthorizeContext);
+      ClientConfiguration clientConfiguration =
+          clientConfigurationRepository.get(tokenIssuer, clientId);
+      OAuthAuthorizeContext oAuthAuthorizeContext =
+          new OAuthAuthorizeContext(authorizationRequest, serverConfiguration, clientConfiguration);
+      AuthorizationResponse authorizationResponse =
+          authAuthorizeHandler.handle(oAuthAuthorizeContext);
 
       if (authorizationResponse.hasAuthorizationCode()) {
-        AuthorizationCodeGrant authorizationCodeGrant = AuthorizationCodeGrantCreator.create(oAuthAuthorizeContext, authorizationResponse);
+        AuthorizationCodeGrant authorizationCodeGrant =
+            AuthorizationCodeGrantCreator.create(oAuthAuthorizeContext, authorizationResponse);
         authorizationCodeGrantRepository.register(authorizationCodeGrant);
       }
 

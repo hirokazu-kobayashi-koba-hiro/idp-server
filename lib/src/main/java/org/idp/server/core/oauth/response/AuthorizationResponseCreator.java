@@ -4,5 +4,5 @@ import org.idp.server.core.oauth.OAuthAuthorizeContext;
 
 public interface AuthorizationResponseCreator {
 
-    AuthorizationResponse create(OAuthAuthorizeContext context);
+  AuthorizationResponse create(OAuthAuthorizeContext context);
 }

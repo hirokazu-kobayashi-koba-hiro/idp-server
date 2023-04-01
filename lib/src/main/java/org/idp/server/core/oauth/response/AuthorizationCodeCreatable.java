@@ -5,8 +5,8 @@ import org.idp.server.core.type.AuthorizationCode;
 
 public interface AuthorizationCodeCreatable {
 
-    default AuthorizationCode createAuthorizationCode() {
-        RandomStringGenerator randomStringGenerator = new RandomStringGenerator(20);
-        return new AuthorizationCode(randomStringGenerator.generate());
-    }
+  default AuthorizationCode createAuthorizationCode() {
+    RandomStringGenerator randomStringGenerator = new RandomStringGenerator(20);
+    return new AuthorizationCode(randomStringGenerator.generate());
+  }
 }

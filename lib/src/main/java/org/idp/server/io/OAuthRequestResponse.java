@@ -1,12 +1,11 @@
 package org.idp.server.io;
 
+import java.util.Map;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.type.status.OAuthRequestStatus;
-
-import java.util.Map;
 
 /** OAuthRequestResponse */
 public class OAuthRequestResponse {
@@ -22,7 +21,11 @@ public class OAuthRequestResponse {
     this.status = status;
   }
 
-  public OAuthRequestResponse(OAuthRequestStatus status, AuthorizationRequest authorizationRequest, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
+  public OAuthRequestResponse(
+      OAuthRequestStatus status,
+      AuthorizationRequest authorizationRequest,
+      ServerConfiguration serverConfiguration,
+      ClientConfiguration clientConfiguration) {
     this.status = status;
     this.authorizationRequest = authorizationRequest;
     this.serverConfiguration = serverConfiguration;

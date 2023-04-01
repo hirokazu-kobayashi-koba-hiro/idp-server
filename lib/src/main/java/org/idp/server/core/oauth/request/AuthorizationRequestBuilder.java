@@ -131,7 +131,7 @@ public class AuthorizationRequestBuilder {
 
   public AuthorizationRequest build() {
     return new AuthorizationRequest(
-            identifier,
+        identifier,
         tokenIssuer,
         profile,
         scopes,

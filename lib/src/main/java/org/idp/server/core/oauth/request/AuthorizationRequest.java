@@ -149,5 +149,4 @@ public class AuthorizationRequest {
   public RequestUri requestUri() {
     return requestUri;
   }
-
 }

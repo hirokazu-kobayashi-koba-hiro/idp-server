@@ -1,19 +1,16 @@
 package org.idp.server.core.type;
 
-/**
- * ResponseModeValue
- * ? or #
- */
+/** ResponseModeValue ? or # */
 public class ResponseModeValue {
-    String value;
+  String value;
 
-    public ResponseModeValue() {}
+  public ResponseModeValue() {}
 
-    public ResponseModeValue(String value) {
-        this.value = value;
-    }
+  public ResponseModeValue(String value) {
+    this.value = value;
+  }
 
-    public String value() {
-        return value;
-    }
+  public String value() {
+    return value;
+  }
 }

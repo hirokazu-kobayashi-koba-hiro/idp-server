@@ -8,32 +8,32 @@ import java.util.Objects;
  * <p>authorization grant
  */
 public class AuthorizationCode {
-    String value;
+  String value;
 
-    public AuthorizationCode() {}
+  public AuthorizationCode() {}
 
-    public AuthorizationCode(String value) {
-        this.value = value;
-    }
+  public AuthorizationCode(String value) {
+    this.value = value;
+  }
 
-    public String value() {
-        return value;
-    }
+  public String value() {
+    return value;
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        AuthorizationCode that = (AuthorizationCode) o;
-        return Objects.equals(value, that.value);
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    AuthorizationCode that = (AuthorizationCode) o;
+    return Objects.equals(value, that.value);
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(value);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(value);
+  }
 
-    public boolean exists() {
-        return Objects.nonNull(value) && !value.isEmpty();
-    }
+  public boolean exists() {
+    return Objects.nonNull(value) && !value.isEmpty();
+  }
 }

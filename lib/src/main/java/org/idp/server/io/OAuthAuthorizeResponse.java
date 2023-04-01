@@ -4,33 +4,32 @@ import org.idp.server.core.oauth.response.AuthorizationErrorResponse;
 import org.idp.server.core.oauth.response.AuthorizationResponse;
 import org.idp.server.core.type.status.OAuthAuthorizeStatus;
 
-/**
- * OAuthAuthorizeResponse
- */
+/** OAuthAuthorizeResponse */
 public class OAuthAuthorizeResponse {
-    OAuthAuthorizeStatus status;
-    AuthorizationResponse authorizationResponse;
+  OAuthAuthorizeStatus status;
+  AuthorizationResponse authorizationResponse;
 
-    AuthorizationErrorResponse errorResponse;
+  AuthorizationErrorResponse errorResponse;
 
-    public OAuthAuthorizeResponse() {}
+  public OAuthAuthorizeResponse() {}
 
-    public OAuthAuthorizeResponse(OAuthAuthorizeStatus status, AuthorizationResponse authorizationResponse) {
-        this.status = status;
-        this.authorizationResponse = authorizationResponse;
-    }
+  public OAuthAuthorizeResponse(
+      OAuthAuthorizeStatus status, AuthorizationResponse authorizationResponse) {
+    this.status = status;
+    this.authorizationResponse = authorizationResponse;
+  }
 
-    public OAuthAuthorizeStatus status() {
-        return status;
-    }
+  public OAuthAuthorizeStatus status() {
+    return status;
+  }
 
-    public AuthorizationResponse authorizationResponse() {
-        return authorizationResponse;
-    }
+  public AuthorizationResponse authorizationResponse() {
+    return authorizationResponse;
+  }
 
-    public String redirectUriValue() {
-        return status.isOK() ?
-                authorizationResponse.redirectUriValue()
-                : errorResponse.redirectUriValue();
-    }
+  public String redirectUriValue() {
+    return status.isOK()
+        ? authorizationResponse.redirectUriValue()
+        : errorResponse.redirectUriValue();
+  }
 }

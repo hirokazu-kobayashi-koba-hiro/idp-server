@@ -1,5 +1,6 @@
 package org.idp.server.core.oauth.factory;
 
+import java.util.UUID;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.configuration.ClientConfiguration;
@@ -9,8 +10,6 @@ import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.type.*;
-
-import java.util.UUID;
 
 /**
  * RequestObjectPatternFactory
@@ -29,7 +28,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
 
   @Override
   public AuthorizationRequest create(
-          AuthorizationProfile profile,
+      AuthorizationProfile profile,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
       ServerConfiguration serverConfiguration,

@@ -5,14 +5,14 @@ import java.util.Map;
 
 public interface OAuthError {
 
-    String error();
+  String error();
 
-    String errorDescription();
+  String errorDescription();
 
-    default Map<String, String> errors() {
-        HashMap<String, String> map = new HashMap<>();
-        map.put("error", error());
-        map.put("error_description", errorDescription());
-        return map;
-    }
+  default Map<String, String> errors() {
+    HashMap<String, String> map = new HashMap<>();
+    map.put("error", error());
+    map.put("error_description", errorDescription());
+    return map;
+  }
 }

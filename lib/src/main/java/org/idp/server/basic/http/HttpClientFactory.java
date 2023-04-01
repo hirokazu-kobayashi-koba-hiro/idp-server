@@ -1,6 +1,5 @@
 package org.idp.server.basic.http;
 
-import java.net.Authenticator;
 import java.net.http.HttpClient;
 import java.time.Duration;
 

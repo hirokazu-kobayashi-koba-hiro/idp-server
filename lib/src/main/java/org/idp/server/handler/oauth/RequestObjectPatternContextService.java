@@ -1,6 +1,5 @@
 package org.idp.server.handler.oauth;
 
-import java.util.UUID;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JoseHandler;
 import org.idp.server.basic.jose.JoseInvalidException;
@@ -11,7 +10,6 @@ import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.factory.RequestObjectPatternFactory;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.OAuthRequestContextService;
-import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.type.OAuthRequestParameters;
 
 /** RequestObjectPatternContextService */

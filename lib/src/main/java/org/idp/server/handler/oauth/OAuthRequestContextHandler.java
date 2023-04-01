@@ -3,7 +3,6 @@ package org.idp.server.handler.oauth;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.OAuthRequestAnalyzer;
@@ -27,7 +26,10 @@ public class OAuthRequestContextHandler {
         new RequestUriPatternContextService(new RequestObjectHttpClient()));
   }
 
-  public OAuthRequestContext handle(OAuthRequestParameters parameters, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
+  public OAuthRequestContext handle(
+      OAuthRequestParameters parameters,
+      ServerConfiguration serverConfiguration,
+      ClientConfiguration clientConfiguration) {
     OAuthRequestPattern oAuthRequestPattern = requestAnalyzer.analyzePattern(parameters);
     OAuthRequestContextService oAuthRequestContextService = map.get(oAuthRequestPattern);
     if (Objects.isNull(oAuthRequestContextService)) {

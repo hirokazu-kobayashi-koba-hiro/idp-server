@@ -88,11 +88,11 @@ public class OAuthRequestContext {
     return profile().isFapiAdvance();
   }
 
-    public ResponseType responseType() {
+  public ResponseType responseType() {
     return authorizationRequest.responseType();
-    }
+  }
 
-    public ResponseMode responseMode() {
+  public ResponseMode responseMode() {
     return authorizationRequest.responseMode();
-    }
+  }
 }

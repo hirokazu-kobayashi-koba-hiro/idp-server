@@ -8,11 +8,13 @@ public class OAuthRedirectableBadRequestException extends RuntimeException imple
   String error;
   String errorDescription;
   OAuthRequestContext oAuthRequestContext;
+
   public OAuthRedirectableBadRequestException(String message) {
     super(message);
   }
 
-  public OAuthRedirectableBadRequestException(String error, String message, Throwable throwable, OAuthRequestContext oAuthRequestContext) {
+  public OAuthRedirectableBadRequestException(
+      String error, String message, Throwable throwable, OAuthRequestContext oAuthRequestContext) {
     super(message, throwable);
     this.error = error;
     this.errorDescription = message;

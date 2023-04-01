@@ -1,15 +1,13 @@
 package org.idp.server.core.type.status;
 
-/**
- * OAuthAuthorizeStatus
- */
+/** OAuthAuthorizeStatus */
 public enum OAuthAuthorizeStatus {
-    OK,
-    BAD_REQUEST,
-    REDIRECABLE_BAD_REQUEST,
-    SERVER_ERROR;
+  OK,
+  BAD_REQUEST,
+  REDIRECABLE_BAD_REQUEST,
+  SERVER_ERROR;
 
-    public boolean isOK() {
-        return this == OK;
-    }
+  public boolean isOK() {
+    return this == OK;
+  }
 }

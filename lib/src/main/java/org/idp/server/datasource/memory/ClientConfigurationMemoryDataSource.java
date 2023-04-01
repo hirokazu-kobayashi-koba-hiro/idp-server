@@ -43,7 +43,8 @@ public class ClientConfigurationMemoryDataSource
         ClientConfiguration clientConfiguration = jsonParser.read(json, ClientConfiguration.class);
         TokenIssuer tokenIssuer = clientConfiguration.tokenIssuer();
         ClientId clientId = clientConfiguration.clientId();
-        MultiClientIdentifier multiClientIdentifier = new MultiClientIdentifier(tokenIssuer, clientId);
+        MultiClientIdentifier multiClientIdentifier =
+            new MultiClientIdentifier(tokenIssuer, clientId);
         map.put(multiClientIdentifier, clientConfiguration);
       }
     } catch (IOException e) {

@@ -10,7 +10,7 @@ import org.idp.server.core.type.OAuthRequestParameters;
 /** AuthorizationRequestFactory */
 public interface AuthorizationRequestFactory {
   AuthorizationRequest create(
-          AuthorizationProfile profile,
+      AuthorizationProfile profile,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
       ServerConfiguration serverConfiguration,
