@@ -54,6 +54,7 @@ public class ServerConfiguration implements JsonReadable {
   // extension
   List<String> fapiBaselineScopes;
   List<String> fapiAdvanceScopes;
+  int authorizationCodeValidDuration;
 
   public ServerConfiguration() {}
 
@@ -244,5 +245,9 @@ public class ServerConfiguration implements JsonReadable {
 
   public boolean hasFapiAdvanceScope(List<String> scopes) {
     return scopes.stream().anyMatch(scope -> fapiAdvanceScopes.contains(scope));
+  }
+
+  public int authorizationCodeValidDuration() {
+    return authorizationCodeValidDuration;
   }
 }

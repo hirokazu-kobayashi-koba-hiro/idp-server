@@ -49,4 +49,8 @@ public class AuthorizationResponse {
     public String redirectUriValue() {
         return String.format("%s%s%s", redirectUri.value(), responseModeValue.value(), queryParams.params());
     }
+
+    public boolean hasAuthorizationCode() {
+        return authorizationCode.exists();
+    }
 }

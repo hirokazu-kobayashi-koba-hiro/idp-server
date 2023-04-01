@@ -8,11 +8,14 @@ import org.idp.server.core.oauth.OAuthAuthorizeContext;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
+import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
+import org.idp.server.core.oauth.grant.AuthorizationCodeGrantCreator;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.AuthorizationResponse;
 import org.idp.server.core.oauth.validator.OAuthRequestInitialValidator;
 import org.idp.server.core.oauth.verifier.OAuthRequestVerifier;
+import org.idp.server.core.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.repository.AuthorizationRequestRepository;
 import org.idp.server.core.repository.ClientConfigurationRepository;
 import org.idp.server.core.repository.ServerConfigurationRepository;
@@ -42,13 +45,16 @@ public class OAuthApi {
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
   AuthorizationRequestRepository authorizationRequestRepository;
+  AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
   Logger log = Logger.getLogger(OAuthApi.class.getName());
 
   OAuthApi(
       AuthorizationRequestRepository authorizationRequestRepository,
+      AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
+    this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
@@ -60,7 +66,7 @@ public class OAuthApi {
       ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
       initialValidator.validate(oAuthRequestParameters);
       ClientConfiguration clientConfiguration =
-          clientConfigurationRepository.get(oAuthRequestParameters.clientId());
+          clientConfigurationRepository.get(tokenIssuer, oAuthRequestParameters.clientId());
 
       OAuthRequestContext oAuthRequestContext = requestContextHandler.handle(
               oAuthRequestParameters, serverConfiguration, clientConfiguration);
@@ -94,9 +100,14 @@ public class OAuthApi {
       TokenIssuer tokenIssuer = authorizationRequest.tokenIssuer();
       ClientId clientId = authorizationRequest.clientId();
       ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-      ClientConfiguration clientConfiguration = clientConfigurationRepository.get(clientId);
-      AuthorizationResponse authorizationResponse = authAuthorizeHandler.handle(new OAuthAuthorizeContext(authorizationRequest, serverConfiguration, clientConfiguration));
+      ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tokenIssuer, clientId);
+      OAuthAuthorizeContext oAuthAuthorizeContext = new OAuthAuthorizeContext(authorizationRequest, serverConfiguration, clientConfiguration);
+      AuthorizationResponse authorizationResponse = authAuthorizeHandler.handle(oAuthAuthorizeContext);
 
+      if (authorizationResponse.hasAuthorizationCode()) {
+        AuthorizationCodeGrant authorizationCodeGrant = AuthorizationCodeGrantCreator.create(oAuthAuthorizeContext, authorizationResponse);
+        authorizationCodeGrantRepository.register(authorizationCodeGrant);
+      }
 
       return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, authorizationResponse);
     } catch (Exception exception) {

@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.type.ClientId;
+import org.idp.server.core.type.TokenIssuer;
 
 /** ClientConfiguration */
 public class ClientConfiguration implements JsonReadable {
@@ -30,6 +31,7 @@ public class ClientConfiguration implements JsonReadable {
 
   // extension
   boolean supportedJar;
+  String issuer;
 
   public ClientConfiguration() {}
 
@@ -123,5 +125,9 @@ public class ClientConfiguration implements JsonReadable {
 
   public boolean isRegisteredRequestUri(String requestUri) {
     return requestUris.contains(requestUri);
+  }
+
+  public TokenIssuer tokenIssuer() {
+    return new TokenIssuer(issuer);
   }
 }

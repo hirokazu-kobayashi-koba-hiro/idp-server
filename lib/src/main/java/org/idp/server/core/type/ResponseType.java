@@ -36,6 +36,10 @@ public enum ResponseType {
     return unknown;
   }
 
+  public boolean isAuthorizationCodeFlow() {
+    return this == code;
+  }
+
   public boolean isImplicitFlow() {
     return this == token || this == id_token || this == token_id_token;
   }
