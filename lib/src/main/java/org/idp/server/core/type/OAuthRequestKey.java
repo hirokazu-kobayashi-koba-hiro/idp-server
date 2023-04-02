@@ -18,5 +18,7 @@ public enum OAuthRequestKey {
   acr_values,
   claims,
   request,
-  request_uri
+  request_uri,
+  code,
+  grant_type,
 }

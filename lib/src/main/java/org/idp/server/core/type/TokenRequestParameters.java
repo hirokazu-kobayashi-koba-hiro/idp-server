@@ -25,22 +25,6 @@ public class TokenRequestParameters {
     return values.isEmpty();
   }
 
-  public Scopes scope() {
-    return new Scopes(getString(scope));
-  }
-
-  public boolean hasScope() {
-    return contains(scope);
-  }
-
-  public ResponseType responseType() {
-    return ResponseType.of(getString(response_type));
-  }
-
-  public boolean hasResponseType() {
-    return contains(response_type);
-  }
-
   public ClientId clientId() {
     return new ClientId(getString(client_id));
   }
@@ -57,108 +41,20 @@ public class TokenRequestParameters {
     return contains(redirect_uri);
   }
 
-  public State state() {
-    return new State(getString(state));
+  public AuthorizationCode code() {
+    return new AuthorizationCode(getString(code));
   }
 
-  public boolean hasState() {
-    return contains(state);
+  public boolean hasCode() {
+    return contains(code);
   }
 
-  public ResponseMode responseMode() {
-    return ResponseMode.of(getString(response_mode));
+  public GrantType grantType() {
+    return GrantType.of(getString(grant_type));
   }
 
-  public boolean hasResponseMode() {
-    return contains(response_mode);
-  }
-
-  public Nonce nonce() {
-    return new Nonce(getString(nonce));
-  }
-
-  public boolean hasNonce() {
-    return contains(nonce);
-  }
-
-  public Display display() {
-    return Display.of(getString(display));
-  }
-
-  public boolean hasDisplay() {
-    return contains(display);
-  }
-
-  public Prompt prompt() {
-    return Prompt.of(getString(prompt));
-  }
-
-  public boolean hasPrompt() {
-    return contains(prompt);
-  }
-
-  public MaxAge maxAge() {
-    return new MaxAge(getString(max_age));
-  }
-
-  public boolean hasMaxAge() {
-    return contains(max_age);
-  }
-
-  public UiLocales uiLocales() {
-    return new UiLocales(getString(ui_locales));
-  }
-
-  public boolean hasUiLocales() {
-    return contains(ui_locales);
-  }
-
-  public IdTokenHint idTokenHint() {
-    return new IdTokenHint(getString(id_token_hint));
-  }
-
-  public boolean hasIdTokenHint() {
-    return contains(id_token_hint);
-  }
-
-  public LoginHint loginHint() {
-    return new LoginHint(getString(login_hint));
-  }
-
-  public boolean hasLoginHint() {
-    return contains(login_hint);
-  }
-
-  public AcrValues acrValues() {
-    return new AcrValues(getString(acr_values));
-  }
-
-  public boolean hasAcrValues() {
-    return contains(acr_values);
-  }
-
-  public Claims claims() {
-    return new Claims(getString(claims));
-  }
-
-  public boolean hasClaims() {
-    return contains(claims);
-  }
-
-  public RequestObject request() {
-    return new RequestObject(getString(request));
-  }
-
-  public boolean hasRequest() {
-    return contains(request);
-  }
-
-  public RequestUri requestUri() {
-    return new RequestUri(getString(request_uri));
-  }
-
-  public boolean hasRequestUri() {
-    return contains(request_uri);
+  public boolean hasGrantType() {
+    return contains(grant_type);
   }
 
   public String getString(OAuthRequestKey key) {

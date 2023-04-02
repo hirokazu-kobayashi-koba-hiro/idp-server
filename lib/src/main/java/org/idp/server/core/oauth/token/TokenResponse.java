@@ -1,5 +1,7 @@
 package org.idp.server.core.oauth.token;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.type.AccessToken;
 import org.idp.server.core.type.ExpiresIn;
 import org.idp.server.core.type.RefreshToken;
@@ -10,6 +12,7 @@ public class TokenResponse {
   TokenType tokenType;
   ExpiresIn expiresIn;
   RefreshToken refreshToken;
+  Map<String, Object> values = new HashMap<>();
 
   public TokenResponse(
       AccessToken accessToken,
@@ -36,5 +39,9 @@ public class TokenResponse {
 
   public RefreshToken refreshToken() {
     return refreshToken;
+  }
+
+  public Map<String, Object> values() {
+    return values;
   }
 }
