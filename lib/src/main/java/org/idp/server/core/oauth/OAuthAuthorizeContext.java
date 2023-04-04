@@ -4,14 +4,18 @@ import java.time.LocalDateTime;
 import org.idp.server.basic.date.UtcDateTime;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.type.ExpiresDateTime;
+import org.idp.server.core.type.CustomProperties;
+import org.idp.server.core.type.ExpiredAt;
 import org.idp.server.core.type.ResponseType;
 import org.idp.server.core.type.TokenIssuer;
 
 /** OAuthAuthorizeContext */
 public class OAuthAuthorizeContext {
   AuthorizationRequest authorizationRequest;
+  User user;
+  CustomProperties customProperties;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
 
@@ -19,15 +23,27 @@ public class OAuthAuthorizeContext {
 
   public OAuthAuthorizeContext(
       AuthorizationRequest authorizationRequest,
+      User user,
+      CustomProperties customProperties,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     this.authorizationRequest = authorizationRequest;
+    this.user = user;
+    this.clientConfiguration = clientConfiguration;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
   }
 
   public AuthorizationRequest authorizationRequest() {
     return authorizationRequest;
+  }
+
+  public User user() {
+    return user;
+  }
+
+  public CustomProperties customProperties() {
+    return customProperties;
   }
 
   public ServerConfiguration serverConfiguration() {
@@ -46,9 +62,9 @@ public class OAuthAuthorizeContext {
     return authorizationRequest.responseType();
   }
 
-  public ExpiresDateTime authorizationCodeGrantExpiresDateTime() {
+  public ExpiredAt authorizationCodeGrantExpiresDateTime() {
     LocalDateTime localDateTime = UtcDateTime.now();
     int duration = serverConfiguration.authorizationCodeValidDuration();
-    return new ExpiresDateTime(localDateTime.plusMinutes(duration));
+    return new ExpiredAt(localDateTime.plusMinutes(duration));
   }
 }

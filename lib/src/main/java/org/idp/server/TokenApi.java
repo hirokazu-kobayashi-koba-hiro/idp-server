@@ -4,32 +4,27 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
-import org.idp.server.core.repository.AuthorizationCodeGrantRepository;
-import org.idp.server.core.repository.AuthorizationRequestRepository;
+import org.idp.server.core.oauth.TokenRequestContext;
+import org.idp.server.core.oauth.token.OAuthToken;
 import org.idp.server.core.repository.ClientConfigurationRepository;
 import org.idp.server.core.repository.ServerConfigurationRepository;
-import org.idp.server.core.type.ClientId;
-import org.idp.server.core.type.TokenIssuer;
-import org.idp.server.core.type.TokenRequestParameters;
+import org.idp.server.core.type.*;
+import org.idp.server.handler.token.OAuthTokenRequestHandler;
 import org.idp.server.io.TokenRequest;
 import org.idp.server.io.TokenRequestResponse;
 
 public class TokenApi {
 
-  AuthorizationRequestRepository authorizationRequestRepository;
-  AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
+  OAuthTokenRequestHandler tokenRequestHandler;
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
   Logger log = Logger.getLogger(TokenApi.class.getName());
 
   TokenApi(
-      AuthorizationRequestRepository authorizationRequestRepository,
-      AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
+      OAuthTokenRequestHandler tokenRequestHandler,
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
-    this.authorizationRequestRepository = authorizationRequestRepository;
-    this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
+    this.tokenRequestHandler = tokenRequestHandler;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
@@ -38,14 +33,16 @@ public class TokenApi {
     TokenIssuer tokenIssuer = tokenRequest.toTokenIssuer();
     TokenRequestParameters parameters = tokenRequest.toParameters();
     try {
-      ClientId clientId = parameters.clientId();
+      ClientSecretBasic clientSecretBasic = tokenRequest.clientSecretBasic();
+      ClientId clientId = tokenRequest.clientId();
       ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
       ClientConfiguration clientConfiguration =
           clientConfigurationRepository.get(tokenIssuer, clientId);
-      // TODO validate
-      AuthorizationCodeGrant authorizationCodeGrant =
-          authorizationCodeGrantRepository.find(parameters.code());
-      // TODO verify
+      // TODO request validate
+      TokenRequestContext tokenRequestContext =
+          new TokenRequestContext(
+              clientSecretBasic, parameters, serverConfiguration, clientConfiguration);
+      OAuthToken oAuthToken = tokenRequestHandler.handle(tokenRequestContext);
 
       return new TokenRequestResponse();
     } catch (Exception exception) {

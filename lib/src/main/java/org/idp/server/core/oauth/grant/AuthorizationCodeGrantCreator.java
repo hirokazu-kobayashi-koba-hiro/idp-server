@@ -3,8 +3,7 @@ package org.idp.server.core.oauth.grant;
 import org.idp.server.core.oauth.OAuthAuthorizeContext;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.AuthorizationResponse;
-import org.idp.server.core.type.AuthorizationCode;
-import org.idp.server.core.type.ExpiresDateTime;
+import org.idp.server.core.type.*;
 
 public class AuthorizationCodeGrantCreator {
 
@@ -12,9 +11,17 @@ public class AuthorizationCodeGrantCreator {
       OAuthAuthorizeContext oAuthAuthorizeContext, AuthorizationResponse authorizationResponse) {
     AuthorizationRequestIdentifier authorizationRequestIdentifier =
         oAuthAuthorizeContext.authorizationRequest().identifier();
+    Subject subject = new Subject(oAuthAuthorizeContext.user().sub());
+    ClientId clientId = oAuthAuthorizeContext.clientConfiguration().clientId();
+    AuthorizationGranted authorizationGranted = new AuthorizationGranted(subject, clientId);
     AuthorizationCode authorizationCode = authorizationResponse.authorizationCode();
-    ExpiresDateTime expiresDateTime = oAuthAuthorizeContext.authorizationCodeGrantExpiresDateTime();
+    ExpiredAt expiredAt = oAuthAuthorizeContext.authorizationCodeGrantExpiresDateTime();
+    CustomProperties customProperties = oAuthAuthorizeContext.customProperties();
     return new AuthorizationCodeGrant(
-        authorizationRequestIdentifier, authorizationCode, expiresDateTime);
+        authorizationRequestIdentifier,
+        authorizationGranted,
+        authorizationCode,
+        expiredAt,
+        customProperties);
   }
 }

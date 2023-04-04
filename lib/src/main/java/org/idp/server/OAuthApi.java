@@ -103,7 +103,12 @@ public class OAuthApi {
       ClientConfiguration clientConfiguration =
           clientConfigurationRepository.get(tokenIssuer, clientId);
       OAuthAuthorizeContext oAuthAuthorizeContext =
-          new OAuthAuthorizeContext(authorizationRequest, serverConfiguration, clientConfiguration);
+          new OAuthAuthorizeContext(
+              authorizationRequest,
+              request.user(),
+              request.toCustomProperties(),
+              serverConfiguration,
+              clientConfiguration);
       AuthorizationResponse authorizationResponse =
           authAuthorizeHandler.handle(oAuthAuthorizeContext);
 

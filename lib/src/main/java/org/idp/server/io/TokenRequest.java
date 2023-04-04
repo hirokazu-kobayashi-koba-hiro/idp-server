@@ -1,21 +1,29 @@
 package org.idp.server.io;
 
 import java.util.Map;
-import org.idp.server.core.type.TokenIssuer;
-import org.idp.server.core.type.TokenRequestParameters;
+import org.idp.server.basic.http.BasicAuth;
+import org.idp.server.basic.http.BasicAuthConvertable;
+import org.idp.server.core.type.*;
 
-public class TokenRequest {
+public class TokenRequest implements BasicAuthConvertable {
+  String authorizationHeaders;
   Map<String, String[]> params;
   String issuer;
 
   public TokenRequest() {
+    this.authorizationHeaders = "";
     this.params = Map.of();
     this.issuer = "";
   }
 
-  public TokenRequest(Map<String, String[]> params, String issuer) {
+  public TokenRequest(String authorizationHeaders, Map<String, String[]> params, String issuer) {
+    this.authorizationHeaders = authorizationHeaders;
     this.params = params;
     this.issuer = issuer;
+  }
+
+  public String getAuthorizationHeaders() {
+    return authorizationHeaders;
   }
 
   public Map<String, String[]> getParams() {
@@ -24,6 +32,25 @@ public class TokenRequest {
 
   public String getIssuer() {
     return issuer;
+  }
+
+  public ClientId clientId() {
+    TokenRequestParameters parameters = toParameters();
+    if (parameters.hasClientId()) {
+      return parameters.clientId();
+    }
+    if (isBasicAuth(authorizationHeaders)) {
+      BasicAuth basicAuth = convertBasicAuth(authorizationHeaders);
+      return new ClientId(basicAuth.username());
+    }
+    return new ClientId();
+  }
+
+  public ClientSecretBasic clientSecretBasic() {
+    if (isBasicAuth(authorizationHeaders)) {
+      return new ClientSecretBasic(convertBasicAuth(authorizationHeaders));
+    }
+    return new ClientSecretBasic();
   }
 
   public TokenRequestParameters toParameters() {

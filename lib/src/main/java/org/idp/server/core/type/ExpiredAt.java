@@ -2,13 +2,13 @@ package org.idp.server.core.type;
 
 import java.time.LocalDateTime;
 
-/** ExpiresDateTime */
-public class ExpiresDateTime {
+/** ExpiredAt */
+public class ExpiredAt {
   LocalDateTime value;
 
-  public ExpiresDateTime() {}
+  public ExpiredAt() {}
 
-  public ExpiresDateTime(LocalDateTime value) {
+  public ExpiredAt(LocalDateTime value) {
     this.value = value;
   }
 
