@@ -1,4 +1,4 @@
-package org.idp.server.handler.token;
+package org.idp.server.service;
 
 import org.idp.server.core.authenticator.ClientSecretPostAuthenticator;
 import org.idp.server.core.configuration.ClientConfiguration;

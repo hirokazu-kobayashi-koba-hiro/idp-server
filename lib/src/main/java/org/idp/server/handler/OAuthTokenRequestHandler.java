@@ -1,4 +1,4 @@
-package org.idp.server.handler.token;
+package org.idp.server.handler;
 
 import static org.idp.server.core.type.GrantType.authorization_code;
 
@@ -12,6 +12,7 @@ import org.idp.server.core.token.OAuthTokenCreationService;
 import org.idp.server.core.token.TokenRequestContext;
 import org.idp.server.core.token.validator.TokenRequestValidator;
 import org.idp.server.core.type.GrantType;
+import org.idp.server.service.TokenCreationCodeGrantService;
 
 public class OAuthTokenRequestHandler {
 

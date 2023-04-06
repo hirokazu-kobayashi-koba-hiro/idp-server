@@ -1,22 +1,29 @@
-package org.idp.server.handler.oauth;
+package org.idp.server.service;
 
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JoseHandler;
 import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.gateway.RequestObjectGateway;
 import org.idp.server.core.oauth.*;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.factory.RequestObjectPatternFactory;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.OAuthRequestContextService;
 import org.idp.server.core.type.OAuthRequestParameters;
+import org.idp.server.core.type.RequestObject;
 
-/** RequestObjectPatternContextService */
-public class RequestObjectPatternContextService
+/** RequestUriPatternContextService */
+public class RequestUriPatternContextService
     implements OAuthRequestContextService, AuthorizationProfileAnalyzable {
 
+  RequestObjectGateway requestObjectGateway;
   RequestObjectPatternFactory requestObjectPatternFactory = new RequestObjectPatternFactory();
+
+  public RequestUriPatternContextService(RequestObjectGateway requestObjectGateway) {
+    this.requestObjectGateway = requestObjectGateway;
+  }
 
   @Override
   public OAuthRequestContext create(
@@ -24,10 +31,16 @@ public class RequestObjectPatternContextService
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
+      if (!clientConfiguration.isRegisteredRequestUri(parameters.requestUri().value())) {
+        throw new OAuthBadRequestException(
+            String.format(
+                "request uri does not registered (%s)", parameters.redirectUri().value()));
+      }
+      RequestObject requestObject = requestObjectGateway.get(parameters.requestUri());
       JoseHandler joseHandler = new JoseHandler();
       JoseContext joseContext =
           joseHandler.handle(
-              parameters.request().value(),
+              requestObject.value(),
               clientConfiguration.jwks(),
               serverConfiguration.jwks(),
               clientConfiguration.clientSecret());
@@ -38,7 +51,7 @@ public class RequestObjectPatternContextService
           requestObjectPatternFactory.create(
               profile, parameters, joseContext, serverConfiguration, clientConfiguration);
       return new OAuthRequestContext(
-          OAuthRequestPattern.NORMAL,
+          OAuthRequestPattern.REQUEST_URI,
           parameters,
           joseContext,
           authorizationRequest,

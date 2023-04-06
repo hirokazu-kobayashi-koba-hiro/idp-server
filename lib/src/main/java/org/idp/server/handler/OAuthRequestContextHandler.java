@@ -1,4 +1,4 @@
-package org.idp.server.handler.oauth;
+package org.idp.server.handler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +11,9 @@ import org.idp.server.core.oauth.OAuthRequestPattern;
 import org.idp.server.core.oauth.request.OAuthRequestContextService;
 import org.idp.server.core.type.OAuthRequestParameters;
 import org.idp.server.httpclient.RequestObjectHttpClient;
+import org.idp.server.service.NormalPatternContextService;
+import org.idp.server.service.RequestObjectPatternContextService;
+import org.idp.server.service.RequestUriPatternContextService;
 
 /** OAuthRequestContextHandler */
 public class OAuthRequestContextHandler {

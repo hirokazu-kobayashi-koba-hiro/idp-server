@@ -1,4 +1,4 @@
-package org.idp.server.handler.oauth;
+package org.idp.server.service;
 
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.core.configuration.ClientConfiguration;

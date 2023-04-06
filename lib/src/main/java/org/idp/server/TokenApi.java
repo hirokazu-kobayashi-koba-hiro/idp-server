@@ -11,7 +11,7 @@ import org.idp.server.core.token.TokenErrorResponse;
 import org.idp.server.core.token.TokenRequestContext;
 import org.idp.server.core.type.*;
 import org.idp.server.core.type.Error;
-import org.idp.server.handler.token.OAuthTokenRequestHandler;
+import org.idp.server.handler.OAuthTokenRequestHandler;
 import org.idp.server.io.TokenRequest;
 import org.idp.server.io.TokenRequestResponse;
 import org.idp.server.io.status.TokenRequestStatus;

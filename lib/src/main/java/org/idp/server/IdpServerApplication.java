@@ -5,7 +5,7 @@ import org.idp.server.datasource.memory.AuthorizationCodeGrantMemoryDataSource;
 import org.idp.server.datasource.memory.AuthorizationRequestMemoryDataSource;
 import org.idp.server.datasource.memory.ClientConfigurationMemoryDataSource;
 import org.idp.server.datasource.memory.ServerConfigurationMemoryDataSource;
-import org.idp.server.handler.token.OAuthTokenRequestHandler;
+import org.idp.server.handler.OAuthTokenRequestHandler;
 import org.idp.server.io.config.MemoryDataSourceConfig;
 
 /** IdpServerApplication */
