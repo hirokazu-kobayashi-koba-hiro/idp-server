@@ -1,4 +1,4 @@
-package org.idp.server.core.oauth.exception;
+package org.idp.server.core.token.exception;
 
 public class TokenBadRequestException extends RuntimeException {
   public TokenBadRequestException(String message) {

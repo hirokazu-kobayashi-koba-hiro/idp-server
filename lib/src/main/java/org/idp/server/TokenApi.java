@@ -4,14 +4,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.oauth.TokenRequestContext;
-import org.idp.server.core.oauth.token.OAuthToken;
 import org.idp.server.core.repository.ClientConfigurationRepository;
 import org.idp.server.core.repository.ServerConfigurationRepository;
+import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.token.TokenErrorResponse;
+import org.idp.server.core.token.TokenRequestContext;
 import org.idp.server.core.type.*;
+import org.idp.server.core.type.Error;
 import org.idp.server.handler.token.OAuthTokenRequestHandler;
 import org.idp.server.io.TokenRequest;
 import org.idp.server.io.TokenRequestResponse;
+import org.idp.server.io.status.TokenRequestStatus;
 
 public class TokenApi {
 
@@ -44,10 +47,13 @@ public class TokenApi {
               clientSecretBasic, parameters, serverConfiguration, clientConfiguration);
       OAuthToken oAuthToken = tokenRequestHandler.handle(tokenRequestContext);
 
-      return new TokenRequestResponse();
+      return new TokenRequestResponse(TokenRequestStatus.OK, oAuthToken.tokenResponse());
     } catch (Exception exception) {
       log.log(Level.SEVERE, exception.getMessage(), exception);
-      return new TokenRequestResponse();
+      Error error = new Error("server_error");
+      ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
+      TokenErrorResponse tokenErrorResponse = new TokenErrorResponse(error, errorDescription);
+      return new TokenRequestResponse(TokenRequestStatus.SERVER_ERROR, tokenErrorResponse);
     }
   }
 }

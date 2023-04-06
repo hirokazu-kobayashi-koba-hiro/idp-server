@@ -1,7 +1,7 @@
-package org.idp.server.core.oauth.validator;
+package org.idp.server.core.token.validator;
 
-import org.idp.server.core.oauth.TokenRequestContext;
-import org.idp.server.core.oauth.exception.TokenBadRequestException;
+import org.idp.server.core.token.TokenRequestContext;
+import org.idp.server.core.token.exception.TokenBadRequestException;
 import org.idp.server.core.type.GrantType;
 
 public class TokenRequestCodeGrantValidator {
@@ -12,14 +12,16 @@ public class TokenRequestCodeGrantValidator {
   }
 
   void throwIfUnSupportedGrantTypeWithClient(TokenRequestContext tokenRequestContext) {
-    if (tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.authorization_code)) {
-      throw new TokenBadRequestException("client ");
+    if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.authorization_code)) {
+      throw new TokenBadRequestException(
+          "this request grant_type is authorization_code, but client does not support");
     }
   }
 
   void throwIfUnSupportedGrantTypeWithServer(TokenRequestContext tokenRequestContext) {
-    if (tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.authorization_code)) {
-      throw new TokenBadRequestException("");
+    if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.authorization_code)) {
+      throw new TokenBadRequestException(
+          "this request grant_type is authorization_code, but authorization server does not support");
     }
   }
 

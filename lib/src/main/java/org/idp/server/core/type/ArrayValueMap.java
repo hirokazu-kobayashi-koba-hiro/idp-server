@@ -5,15 +5,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** MultiValueMap */
-public class MultiValueMap {
+/** ArrayValueMap */
+public class ArrayValueMap {
   Map<String, String[]> values;
 
-  public MultiValueMap() {
+  public ArrayValueMap() {
     this.values = new HashMap<>();
   }
 
-  public MultiValueMap(Map<String, String[]> values) {
+  public ArrayValueMap(Map<String, String[]> values) {
     this.values = values;
   }
 

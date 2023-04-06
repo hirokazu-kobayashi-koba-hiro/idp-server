@@ -13,7 +13,7 @@ public interface BasicAuthConvertable {
   }
 
   default BasicAuth convertBasicAuth(String authorizationHeader) {
-    byte[] decode = Base64.getDecoder().decode(authorizationHeader);
+    byte[] decode = Base64.getUrlDecoder().decode(authorizationHeader);
     String decodedValue = new String(decode);
     if (!decodedValue.contains(":")) {
       return new BasicAuth();

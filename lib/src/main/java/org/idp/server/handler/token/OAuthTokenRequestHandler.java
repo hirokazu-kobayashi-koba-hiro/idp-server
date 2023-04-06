@@ -5,18 +5,18 @@ import static org.idp.server.core.type.GrantType.authorization_code;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.oauth.TokenRequestContext;
-import org.idp.server.core.oauth.token.OAuthToken;
-import org.idp.server.core.oauth.token.OAuthTokenCreationService;
-import org.idp.server.core.oauth.validator.TokenRequestValidator;
 import org.idp.server.core.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.repository.AuthorizationRequestRepository;
+import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.token.OAuthTokenCreationService;
+import org.idp.server.core.token.TokenRequestContext;
+import org.idp.server.core.token.validator.TokenRequestValidator;
 import org.idp.server.core.type.GrantType;
 
 public class OAuthTokenRequestHandler {
 
   Map<GrantType, OAuthTokenCreationService> map = new HashMap<>();
-  TokenRequestValidator tokenRequestValidator;
+  TokenRequestValidator tokenRequestValidator = new TokenRequestValidator();
 
   public OAuthTokenRequestHandler(
       AuthorizationRequestRepository authorizationRequestRepository,

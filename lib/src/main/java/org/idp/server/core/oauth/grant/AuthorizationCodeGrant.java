@@ -12,21 +12,17 @@ public class AuthorizationCodeGrant {
   AuthorizationCode authorizationCode;
   ExpiredAt expiredAt;
 
-  CustomProperties customProperties;
-
   public AuthorizationCodeGrant() {}
 
   public AuthorizationCodeGrant(
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
       AuthorizationGranted authorizationGranted,
       AuthorizationCode authorizationCode,
-      ExpiredAt expiredAt,
-      CustomProperties customProperties) {
+      ExpiredAt expiredAt) {
     this.authorizationRequestIdentifier = authorizationRequestIdentifier;
     this.authorizationGranted = authorizationGranted;
     this.authorizationCode = authorizationCode;
     this.expiredAt = expiredAt;
-    this.customProperties = customProperties;
   }
 
   public AuthorizationRequestIdentifier authorizationRequestIdentifier() {
@@ -37,12 +33,12 @@ public class AuthorizationCodeGrant {
     return authorizationGranted.subject();
   }
 
-  public AuthorizationCode authorizationCode() {
-    return authorizationCode;
+  public AuthorizationGranted authorizationGranted() {
+    return authorizationGranted;
   }
 
-  public CustomProperties customProperties() {
-    return customProperties;
+  public AuthorizationCode authorizationCode() {
+    return authorizationCode;
   }
 
   public boolean isGrantedClient(ClientId clientId) {

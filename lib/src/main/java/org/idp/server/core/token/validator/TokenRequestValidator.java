@@ -1,6 +1,6 @@
-package org.idp.server.core.oauth.validator;
+package org.idp.server.core.token.validator;
 
-import org.idp.server.core.oauth.TokenRequestContext;
+import org.idp.server.core.token.TokenRequestContext;
 
 public class TokenRequestValidator {
 

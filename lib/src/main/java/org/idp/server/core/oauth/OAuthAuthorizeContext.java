@@ -6,10 +6,7 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.type.CustomProperties;
-import org.idp.server.core.type.ExpiredAt;
-import org.idp.server.core.type.ResponseType;
-import org.idp.server.core.type.TokenIssuer;
+import org.idp.server.core.type.*;
 
 /** OAuthAuthorizeContext */
 public class OAuthAuthorizeContext {
@@ -31,15 +28,19 @@ public class OAuthAuthorizeContext {
     this.user = user;
     this.clientConfiguration = clientConfiguration;
     this.serverConfiguration = serverConfiguration;
-    this.clientConfiguration = clientConfiguration;
+    this.customProperties = customProperties;
   }
 
   public AuthorizationRequest authorizationRequest() {
     return authorizationRequest;
   }
 
-  public User user() {
-    return user;
+  public Subject subject() {
+    return new Subject(user.sub());
+  }
+
+  public Scopes scopes() {
+    return authorizationRequest.scope();
   }
 
   public CustomProperties customProperties() {

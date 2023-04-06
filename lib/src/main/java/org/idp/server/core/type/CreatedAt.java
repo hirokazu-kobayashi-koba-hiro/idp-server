@@ -1,6 +1,7 @@
 package org.idp.server.core.type;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 /** CreatedAt */
 public class CreatedAt {
@@ -16,7 +17,7 @@ public class CreatedAt {
     return value;
   }
 
-  public boolean isExpire(LocalDateTime other) {
-    return value.isBefore(other);
+  public long toEpochSecondWithUtc() {
+    return value.toEpochSecond(ZoneOffset.UTC);
   }
 }

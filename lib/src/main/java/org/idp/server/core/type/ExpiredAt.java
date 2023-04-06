@@ -1,6 +1,7 @@
 package org.idp.server.core.type;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 /** ExpiredAt */
 public class ExpiredAt {
@@ -18,5 +19,9 @@ public class ExpiredAt {
 
   public boolean isExpire(LocalDateTime other) {
     return value.isBefore(other);
+  }
+
+  public long toEpochSecondWithUtc() {
+    return value.toEpochSecond(ZoneOffset.UTC);
   }
 }

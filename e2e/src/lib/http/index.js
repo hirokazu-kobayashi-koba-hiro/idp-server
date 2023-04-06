@@ -1,32 +1,31 @@
 import axios from "axios";
-export const get = async ({ url, headers }) => {
+export const get = async ({ url }) => {
   try {
     return await axios.get(url);
   } catch (e) {
-    return {
-      status: 500,
-      data: e,
-    };
+    return e.response? e.response : e;
   }
 };
 
 export const post = async ({ url, headers, body }) => {
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
-      headers,
-      mode: "cors",
+    return await axios.post(url, body, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        ...headers,
+      },
     });
-    return {
-      status: response.status,
-      headers: response.headers,
-      data: await response.json(),
-    };
   } catch (e) {
-    return {
-      status: 500,
-      data: e.messages,
-    };
+    return e.response? e.response : e;
+  }
+};
+
+export const postWithJson = async ({ url, headers, body }) => {
+  try {
+    return await axios.post(url, body, {
+      headers
+    });
+  } catch (e) {
+    return e.response? e.response : e;
   }
 };

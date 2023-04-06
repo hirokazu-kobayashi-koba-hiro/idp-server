@@ -1,6 +1,4 @@
-package org.idp.server.core.oauth.token;
-
-import org.idp.server.core.oauth.TokenRequestContext;
+package org.idp.server.core.token;
 
 public interface OAuthTokenCreationService {
 

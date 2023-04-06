@@ -1,4 +1,4 @@
-package org.idp.server.core.oauth.token;
+package org.idp.server.core.token;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,17 +12,21 @@ public class TokenResponse {
   TokenType tokenType;
   ExpiresIn expiresIn;
   RefreshToken refreshToken;
-  Map<String, Object> values = new HashMap<>();
+  Map<String, Object> response = new HashMap<>();
+
+  public TokenResponse() {}
 
   public TokenResponse(
       AccessToken accessToken,
       TokenType tokenType,
       ExpiresIn expiresIn,
-      RefreshToken refreshToken) {
+      RefreshToken refreshToken,
+      Map<String, Object> response) {
     this.accessToken = accessToken;
     this.tokenType = tokenType;
     this.expiresIn = expiresIn;
     this.refreshToken = refreshToken;
+    this.response = response;
   }
 
   public AccessToken accessToken() {
@@ -41,7 +45,7 @@ public class TokenResponse {
     return refreshToken;
   }
 
-  public Map<String, Object> values() {
-    return values;
+  public Map<String, Object> response() {
+    return response;
   }
 }

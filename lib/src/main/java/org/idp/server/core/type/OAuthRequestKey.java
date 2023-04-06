@@ -21,4 +21,5 @@ public enum OAuthRequestKey {
   request_uri,
   code,
   grant_type,
+  client_secret,
 }

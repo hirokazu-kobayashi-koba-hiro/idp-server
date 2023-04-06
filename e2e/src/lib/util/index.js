@@ -1,3 +1,29 @@
+export const convertToAuthorizationResponse = (redirectUri) => {
+  const query = redirectUri.includes("?")
+    ? redirectUri.split("?")[1]
+    : redirectUri.split("#"[1]);
+  const params = new URLSearchParams(query);
+  return {
+    responseMode: redirectUri.includes("?") ? "?" : "#",
+    code: params.get("code"),
+    accessToken: params.get("access_token"),
+    tokenType: params.get("token_type"),
+    refreshToken: params.get("refresh_token"),
+    idToken: params.get("id_token"),
+    expiresIn: params.get("expires_in"),
+    state: params.get("state"),
+    iss: params.get("iss"),
+    error: params.get("error"),
+    errorDescription: params.get("error_description")
+  };
+};
+
+export const createBasicAuthHeader = ({username, password}) => {
+  const basicParam = `${username}:${password}`;
+  return {
+    Authorization: `Basic  ${Buffer.from(basicParam).toString("base64")}`,
+  };
+};
 
 export const convertToSnake = (params) => {
   if (isObject(params)) {

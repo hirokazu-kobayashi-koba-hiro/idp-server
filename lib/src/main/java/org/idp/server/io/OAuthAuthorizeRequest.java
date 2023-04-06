@@ -1,5 +1,6 @@
 package org.idp.server.io;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
@@ -11,7 +12,7 @@ public class OAuthAuthorizeRequest {
   String id;
   String tokenIssure;
   User user;
-  Map<String, Object> customProperties;
+  Map<String, Object> customProperties = new HashMap<>();
   // TODO user
 
   public OAuthAuthorizeRequest(String id, String tokenIssuer, User user) {

@@ -7,18 +7,18 @@ import java.util.Map;
 
 /** OAuthRequestParameters */
 public class OAuthRequestParameters {
-  MultiValueMap values;
+  ArrayValueMap values;
 
   public OAuthRequestParameters() {
-    this.values = new MultiValueMap();
+    this.values = new ArrayValueMap();
   }
 
-  public OAuthRequestParameters(MultiValueMap values) {
+  public OAuthRequestParameters(ArrayValueMap values) {
     this.values = values;
   }
 
   public OAuthRequestParameters(Map<String, String[]> values) {
-    this.values = new MultiValueMap(values);
+    this.values = new ArrayValueMap(values);
   }
 
   public boolean isEmpty() {

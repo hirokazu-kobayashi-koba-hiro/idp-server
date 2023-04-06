@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 public class JoseContextTest {
 
   @Test
-  void createAndVerify() throws JoseInvalidException {
+  void createAndVerify() throws JoseInvalidException, JwkInvalidException {
     JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
     Map<String, Object> claims =
         Map.of(
@@ -33,7 +33,7 @@ public class JoseContextTest {
                   }
                 """;
     JsonWebSignature jsonWebSignature =
-        jsonWebSignatureFactory.createWithAsymmetric(claims, Map.of(), jwkValue);
+        jsonWebSignatureFactory.createWithAsymmetricKey(claims, Map.of(), jwkValue);
     String requestObject = jsonWebSignature.serialize();
     System.out.println(requestObject);
     String jwks =

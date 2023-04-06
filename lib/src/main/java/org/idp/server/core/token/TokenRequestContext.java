@@ -1,4 +1,4 @@
-package org.idp.server.core.oauth;
+package org.idp.server.core.token;
 
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
@@ -70,5 +70,13 @@ public class TokenRequestContext {
 
   public boolean matchClientSecret(ClientSecret clientSecret) {
     return clientConfiguration.clientSecret().equals(clientSecret.value());
+  }
+
+  public boolean hasClientSecretWithParams() {
+    return parameters.hasClientSecret();
+  }
+
+  public ClientSecret clientSecretWithParams() {
+    return parameters.clientSecret();
   }
 }

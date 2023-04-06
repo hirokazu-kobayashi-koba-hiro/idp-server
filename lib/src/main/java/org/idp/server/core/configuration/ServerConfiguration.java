@@ -55,6 +55,8 @@ public class ServerConfiguration implements JsonReadable {
   List<String> fapiBaselineScopes;
   List<String> fapiAdvanceScopes;
   int authorizationCodeValidDuration;
+  String tokenSignedKeyId;
+  long accessTokenDuration;
 
   public ServerConfiguration() {}
 
@@ -249,5 +251,13 @@ public class ServerConfiguration implements JsonReadable {
 
   public int authorizationCodeValidDuration() {
     return authorizationCodeValidDuration;
+  }
+
+  public String tokenSignedKeyId() {
+    return tokenSignedKeyId;
+  }
+
+  public long accessTokenDuration() {
+    return accessTokenDuration;
   }
 }

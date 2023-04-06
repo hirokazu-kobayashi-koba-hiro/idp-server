@@ -139,3 +139,32 @@ export const authorize = async ({ endpoint, id }) => {
     url,
   });
 };
+
+export const requestToken = async ({ endpoint, code, grantType, redirectUri, refreshToken, clientId, clientSecret, basicAuth }) => {
+  let params = new URLSearchParams;
+  if (code) {
+    params.append("code", code);
+  }
+  if (grantType) {
+    params.append("grant_type", grantType);
+  }
+  if (redirectUri) {
+    params.append("redirect_uri", redirectUri);
+  }
+  if (refreshToken) {
+    params.append("refresh_token", refreshToken);
+  }
+  if (clientId) {
+    params.append("client_id", clientId);
+  }
+  if (clientSecret) {
+    params.append("client_secret", clientSecret);
+  }
+  console.log(params.toString());
+  const headers = basicAuth? basicAuth : {};
+  return await post({
+    url: endpoint,
+    body: params,
+    headers,
+  });
+};

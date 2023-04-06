@@ -11,17 +11,16 @@ public class AuthorizationCodeGrantCreator {
       OAuthAuthorizeContext oAuthAuthorizeContext, AuthorizationResponse authorizationResponse) {
     AuthorizationRequestIdentifier authorizationRequestIdentifier =
         oAuthAuthorizeContext.authorizationRequest().identifier();
-    Subject subject = new Subject(oAuthAuthorizeContext.user().sub());
+    Subject subject = oAuthAuthorizeContext.subject();
     ClientId clientId = oAuthAuthorizeContext.clientConfiguration().clientId();
-    AuthorizationGranted authorizationGranted = new AuthorizationGranted(subject, clientId);
+    Scopes scopes = oAuthAuthorizeContext.scopes();
+    CustomProperties customProperties = oAuthAuthorizeContext.customProperties();
+    AuthorizationGranted authorizationGranted =
+        new AuthorizationGranted(subject, clientId, scopes, customProperties);
     AuthorizationCode authorizationCode = authorizationResponse.authorizationCode();
     ExpiredAt expiredAt = oAuthAuthorizeContext.authorizationCodeGrantExpiresDateTime();
-    CustomProperties customProperties = oAuthAuthorizeContext.customProperties();
+
     return new AuthorizationCodeGrant(
-        authorizationRequestIdentifier,
-        authorizationGranted,
-        authorizationCode,
-        expiredAt,
-        customProperties);
+        authorizationRequestIdentifier, authorizationGranted, authorizationCode, expiredAt);
   }
 }

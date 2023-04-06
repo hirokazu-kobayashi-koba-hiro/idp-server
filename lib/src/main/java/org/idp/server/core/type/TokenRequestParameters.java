@@ -7,18 +7,18 @@ import java.util.Map;
 
 /** TokenRequestParameters */
 public class TokenRequestParameters {
-  MultiValueMap values;
+  ArrayValueMap values;
 
   public TokenRequestParameters() {
-    this.values = new MultiValueMap();
+    this.values = new ArrayValueMap();
   }
 
-  public TokenRequestParameters(MultiValueMap values) {
+  public TokenRequestParameters(ArrayValueMap values) {
     this.values = values;
   }
 
   public TokenRequestParameters(Map<String, String[]> values) {
-    this.values = new MultiValueMap(values);
+    this.values = new ArrayValueMap(values);
   }
 
   public boolean isEmpty() {
@@ -31,6 +31,14 @@ public class TokenRequestParameters {
 
   public boolean hasClientId() {
     return contains(client_id);
+  }
+
+  public ClientSecret clientSecret() {
+    return new ClientSecret(getString(client_secret));
+  }
+
+  public boolean hasClientSecret() {
+    return contains(client_secret);
   }
 
   public RedirectUri redirectUri() {
