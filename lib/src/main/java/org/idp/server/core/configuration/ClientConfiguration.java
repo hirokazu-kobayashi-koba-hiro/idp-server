@@ -103,6 +103,9 @@ public class ClientConfiguration implements JsonReadable {
   }
 
   public List<String> scopes() {
+    if (Objects.isNull(scope)) {
+      return List.of();
+    }
     return Arrays.stream(scope.split(" ")).toList();
   }
 

@@ -1,7 +1,7 @@
 package org.idp.server.core.type;
 
 public class ExpiresIn {
-  int value;
+  long value;
 
   public ExpiresIn() {}
 
@@ -9,7 +9,11 @@ public class ExpiresIn {
     this.value = value;
   }
 
-  public int value() {
+  public ExpiresIn(long value) {
+    this.value = value;
+  }
+
+  public long value() {
     return value;
   }
 }

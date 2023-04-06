@@ -9,12 +9,13 @@ import org.idp.server.core.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.repository.AuthorizationRequestRepository;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.validator.TokenRequestCodeGrantValidator;
-import org.idp.server.core.type.AccessToken;
-import org.idp.server.core.type.AuthorizationCode;
-import org.idp.server.core.type.TokenType;
+import org.idp.server.core.type.*;
 
 public class TokenCreationCodeGrantService
-    implements OAuthTokenCreationService, AccessTokenPayloadCreatable, AccessTokenCreatable {
+    implements OAuthTokenCreationService,
+        AccessTokenPayloadCreatable,
+        AccessTokenCreatable,
+        RefreshTokenCreatable {
 
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
@@ -49,10 +50,13 @@ public class TokenCreationCodeGrantService
             clientConfiguration);
     AccessToken accessToken =
         createAccessToken(accessTokenPayload, serverConfiguration, clientConfiguration);
-
-    TokenResponseBuilder tokenResponseBuilder = new TokenResponseBuilder();
-    tokenResponseBuilder.add(accessToken);
-    tokenResponseBuilder.add(TokenType.Bearer);
+    RefreshToken refreshToken = createRefreshToken();
+    TokenResponseBuilder tokenResponseBuilder =
+        new TokenResponseBuilder()
+            .add(accessToken)
+            .add(TokenType.Bearer)
+            .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
+            .add(refreshToken);
     TokenResponse tokenResponse = tokenResponseBuilder.build();
     return new OAuthToken(tokenResponse, accessTokenPayload);
   }

@@ -15,6 +15,7 @@ describe("The OAuth 2.0 Authorization Framework", () => {
         clientId: "s6BhdRkqt3",
         responseType: "code",
         state: "aiueo",
+        scope: "account transfers",
         redirectUri: "https://client.example.org/callback"
       });
       console.log(response.data);
