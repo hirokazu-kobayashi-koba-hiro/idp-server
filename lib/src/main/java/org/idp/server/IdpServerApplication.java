@@ -5,6 +5,8 @@ import org.idp.server.datasource.memory.AuthorizationCodeGrantMemoryDataSource;
 import org.idp.server.datasource.memory.AuthorizationRequestMemoryDataSource;
 import org.idp.server.datasource.memory.ClientConfigurationMemoryDataSource;
 import org.idp.server.datasource.memory.ServerConfigurationMemoryDataSource;
+import org.idp.server.handler.OAuthAuthorizeHandler;
+import org.idp.server.handler.OAuthRequestHandler;
 import org.idp.server.handler.OAuthTokenRequestHandler;
 import org.idp.server.io.config.MemoryDataSourceConfig;
 
@@ -25,12 +27,18 @@ public class IdpServerApplication {
         new ServerConfigurationMemoryDataSource(serverConfigurations);
     ClientConfigurationMemoryDataSource clientConfigurationMemoryDataSource =
         new ClientConfigurationMemoryDataSource(clientConfigurations);
-    this.oAuthApi =
-        new OAuthApi(
+    OAuthRequestHandler oAuthRequestHandler =
+        new OAuthRequestHandler(
+            authorizationRequestMemoryDataSource,
+            serverConfigurationMemoryDataSource,
+            clientConfigurationMemoryDataSource);
+    OAuthAuthorizeHandler oAuthAuthorizeHandler =
+        new OAuthAuthorizeHandler(
             authorizationRequestMemoryDataSource,
             authorizationCodeGrantMemoryDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
+    this.oAuthApi = new OAuthApi(oAuthRequestHandler, oAuthAuthorizeHandler);
     OAuthTokenRequestHandler tokenRequestHandler =
         new OAuthTokenRequestHandler(
             authorizationRequestMemoryDataSource, authorizationCodeGrantMemoryDataSource);

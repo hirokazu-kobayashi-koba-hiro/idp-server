@@ -2,30 +2,20 @@ package org.idp.server;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
-import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationNotFoundException;
-import org.idp.server.core.oauth.OAuthAuthorizeContext;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
-import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
-import org.idp.server.core.oauth.grant.AuthorizationCodeGrantCreator;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.AuthorizationResponse;
-import org.idp.server.core.oauth.validator.OAuthRequestInitialValidator;
-import org.idp.server.core.oauth.verifier.OAuthRequestVerifier;
-import org.idp.server.core.repository.AuthorizationCodeGrantRepository;
-import org.idp.server.core.repository.AuthorizationRequestRepository;
-import org.idp.server.core.repository.ClientConfigurationRepository;
-import org.idp.server.core.repository.ServerConfigurationRepository;
-import org.idp.server.core.type.ClientId;
+import org.idp.server.core.oauth.validator.OAuthRequestValidator;
+import org.idp.server.core.type.CustomProperties;
 import org.idp.server.core.type.OAuthRequestParameters;
 import org.idp.server.core.type.TokenIssuer;
-import org.idp.server.handler.OAuthRequestContextHandler;
 import org.idp.server.handler.OAuthAuthorizeHandler;
+import org.idp.server.handler.OAuthRequestHandler;
 import org.idp.server.io.OAuthAuthorizeRequest;
 import org.idp.server.io.OAuthAuthorizeResponse;
 import org.idp.server.io.OAuthRequest;
@@ -35,44 +25,25 @@ import org.idp.server.io.status.OAuthRequestStatus;
 
 /** OAuthApi */
 public class OAuthApi {
-  OAuthRequestInitialValidator initialValidator = new OAuthRequestInitialValidator();
-  OAuthRequestContextHandler requestContextHandler = new OAuthRequestContextHandler();
-  OAuthRequestVerifier oAuthRequestVerifier = new OAuthRequestVerifier();
-
-  OAuthAuthorizeHandler authAuthorizeHandler = new OAuthAuthorizeHandler();
-  ServerConfigurationRepository serverConfigurationRepository;
-  ClientConfigurationRepository clientConfigurationRepository;
-  AuthorizationRequestRepository authorizationRequestRepository;
-  AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
+  OAuthRequestValidator requestValidator;
+  OAuthRequestHandler requestHandler;
+  OAuthAuthorizeHandler authAuthorizeHandler;
   Logger log = Logger.getLogger(OAuthApi.class.getName());
 
-  OAuthApi(
-      AuthorizationRequestRepository authorizationRequestRepository,
-      AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
-    this.authorizationRequestRepository = authorizationRequestRepository;
-    this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
-    this.serverConfigurationRepository = serverConfigurationRepository;
-    this.clientConfigurationRepository = clientConfigurationRepository;
+  OAuthApi(OAuthRequestHandler requestHandler, OAuthAuthorizeHandler authAuthorizeHandler) {
+    this.requestValidator = new OAuthRequestValidator();
+    this.requestHandler = requestHandler;
+    this.authAuthorizeHandler = authAuthorizeHandler;
   }
 
   public OAuthRequestResponse request(OAuthRequest oAuthRequest) {
     OAuthRequestParameters oAuthRequestParameters = oAuthRequest.toParameters();
     TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
     try {
-      ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-      initialValidator.validate(oAuthRequestParameters);
-      ClientConfiguration clientConfiguration =
-          clientConfigurationRepository.get(tokenIssuer, oAuthRequestParameters.clientId());
+      requestValidator.validate(oAuthRequestParameters);
 
       OAuthRequestContext oAuthRequestContext =
-          requestContextHandler.handle(
-              oAuthRequestParameters, serverConfiguration, clientConfiguration);
-
-      oAuthRequestVerifier.verify(oAuthRequestContext);
-
-      authorizationRequestRepository.register(oAuthRequestContext.authorizationRequest());
+          requestHandler.handle(oAuthRequestParameters, tokenIssuer);
 
       return new OAuthRequestResponse(OAuthRequestStatus.OK, oAuthRequestContext);
     } catch (OAuthBadRequestException exception) {
@@ -93,30 +64,14 @@ public class OAuthApi {
   }
 
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
+    TokenIssuer tokenIssuer = request.toTokenIssuer();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
+    User user = request.user();
+    CustomProperties customProperties = request.toCustomProperties();
     try {
-      AuthorizationRequest authorizationRequest =
-          authorizationRequestRepository.get(authorizationRequestIdentifier);
-      TokenIssuer tokenIssuer = authorizationRequest.tokenIssuer();
-      ClientId clientId = authorizationRequest.clientId();
-      ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-      ClientConfiguration clientConfiguration =
-          clientConfigurationRepository.get(tokenIssuer, clientId);
-      OAuthAuthorizeContext oAuthAuthorizeContext =
-          new OAuthAuthorizeContext(
-              authorizationRequest,
-              request.user(),
-              request.toCustomProperties(),
-              serverConfiguration,
-              clientConfiguration);
       AuthorizationResponse authorizationResponse =
-          authAuthorizeHandler.handle(oAuthAuthorizeContext);
-
-      if (authorizationResponse.hasAuthorizationCode()) {
-        AuthorizationCodeGrant authorizationCodeGrant =
-            AuthorizationCodeGrantCreator.create(oAuthAuthorizeContext, authorizationResponse);
-        authorizationCodeGrantRepository.register(authorizationCodeGrant);
-      }
+          authAuthorizeHandler.handle(
+              tokenIssuer, authorizationRequestIdentifier, user, customProperties);
 
       return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, authorizationResponse);
     } catch (Exception exception) {

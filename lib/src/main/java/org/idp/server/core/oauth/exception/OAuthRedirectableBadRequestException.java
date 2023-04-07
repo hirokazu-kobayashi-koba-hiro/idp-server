@@ -3,7 +3,7 @@ package org.idp.server.core.oauth.exception;
 import org.idp.server.core.oauth.OAuthRequestContext;
 
 /** OAuthRedirectableBadRequestException */
-public class OAuthRedirectableBadRequestException extends RuntimeException implements OAuthError {
+public class OAuthRedirectableBadRequestException extends RuntimeException {
 
   String error;
   String errorDescription;
@@ -23,15 +23,5 @@ public class OAuthRedirectableBadRequestException extends RuntimeException imple
 
   public OAuthRequestContext oAuthRequestContext() {
     return oAuthRequestContext;
-  }
-
-  @Override
-  public String error() {
-    return error;
-  }
-
-  @Override
-  public String errorDescription() {
-    return errorDescription;
   }
 }

@@ -1,6 +1,7 @@
 package org.idp.server.core.oauth.grant;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.type.*;
 
@@ -47,5 +48,9 @@ public class AuthorizationCodeGrant {
 
   public boolean isExpire(LocalDateTime other) {
     return expiredAt.isExpire(other);
+  }
+
+  public boolean exists() {
+    return Objects.nonNull(authorizationCode) && authorizationCode.exists();
   }
 }

@@ -5,7 +5,7 @@ import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.type.OAuthRequestParameters;
 
 /** OAuthRequestInitialValidator */
-public class OAuthRequestInitialValidator {
+public class OAuthRequestValidator {
 
   public void validate(OAuthRequestParameters oAuthRequestParameters) {
     throwIfNotContainsClientId(oAuthRequestParameters);

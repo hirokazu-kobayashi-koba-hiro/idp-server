@@ -10,14 +10,13 @@ import org.idp.server.core.type.TokenIssuer;
 /** OAuthAuthorizeRequest */
 public class OAuthAuthorizeRequest {
   String id;
-  String tokenIssure;
+  String tokenIssuer;
   User user;
   Map<String, Object> customProperties = new HashMap<>();
-  // TODO user
 
   public OAuthAuthorizeRequest(String id, String tokenIssuer, User user) {
     this.id = id;
-    this.tokenIssure = tokenIssuer;
+    this.tokenIssuer = tokenIssuer;
     this.user = user;
   }
 
@@ -39,6 +38,6 @@ public class OAuthAuthorizeRequest {
   }
 
   public TokenIssuer toTokenIssuer() {
-    return new TokenIssuer(tokenIssure);
+    return new TokenIssuer(tokenIssuer);
   }
 }
