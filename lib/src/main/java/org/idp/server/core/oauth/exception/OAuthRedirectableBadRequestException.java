@@ -14,8 +14,8 @@ public class OAuthRedirectableBadRequestException extends RuntimeException {
   }
 
   public OAuthRedirectableBadRequestException(
-      String error, String message, Throwable throwable, OAuthRequestContext oAuthRequestContext) {
-    super(message, throwable);
+      String error, String message, OAuthRequestContext oAuthRequestContext) {
+    super(message);
     this.error = error;
     this.errorDescription = message;
     this.oAuthRequestContext = oAuthRequestContext;

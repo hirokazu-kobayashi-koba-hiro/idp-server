@@ -1,5 +1,6 @@
 package org.idp.server.service;
 
+import java.util.Set;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
@@ -21,11 +22,16 @@ public class NormalPatternContextService
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     JoseContext joseContext = new JoseContext();
-    AuthorizationProfile profile =
-        analyze(parameters, joseContext, serverConfiguration, clientConfiguration);
+    Set<String> filteredScopes = filterScopes(parameters, joseContext, clientConfiguration);
+    AuthorizationProfile profile = analyze(filteredScopes, serverConfiguration);
     AuthorizationRequest authorizationRequest =
         normalRequestFactory.create(
-            profile, parameters, joseContext, serverConfiguration, clientConfiguration);
+            profile,
+            parameters,
+            joseContext,
+            filteredScopes,
+            serverConfiguration,
+            clientConfiguration);
 
     return new OAuthRequestContext(
         OAuthRequestPattern.NORMAL,

@@ -1,5 +1,6 @@
 package org.idp.server.core.oauth.factory;
 
+import java.util.Set;
 import java.util.UUID;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
@@ -33,13 +34,13 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
       AuthorizationProfile profile,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
+      Set<String> filteredScopes,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     JsonWebTokenClaims jsonWebTokenClaims = joseContext.claims();
     RequestObjectParameters requestObjectParameters =
         new RequestObjectParameters(jsonWebTokenClaims.payload());
-    Scopes scopes =
-        requestObjectParameters.hasScope() ? requestObjectParameters.scope() : parameters.scope();
+    Scopes scopes = new Scopes(filteredScopes);
     ResponseType responseType =
         requestObjectParameters.hasResponseType()
             ? requestObjectParameters.responseType()

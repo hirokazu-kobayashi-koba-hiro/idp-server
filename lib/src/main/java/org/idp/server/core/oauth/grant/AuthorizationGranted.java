@@ -1,7 +1,7 @@
 package org.idp.server.core.oauth.grant;
 
-import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.extension.CustomProperties;
+import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.Scopes;
 import org.idp.server.core.type.oauth.Subject;
 

@@ -14,7 +14,5 @@ public class OidcRequestVerifier implements AuthorizationRequestVerifier {
     throwIfInvalidRedirectUri(oAuthRequestContext);
   }
 
-  void throwIfInvalidRedirectUri(OAuthRequestContext oAuthRequestContext) {
-
-  }
+  void throwIfInvalidRedirectUri(OAuthRequestContext oAuthRequestContext) {}
 }

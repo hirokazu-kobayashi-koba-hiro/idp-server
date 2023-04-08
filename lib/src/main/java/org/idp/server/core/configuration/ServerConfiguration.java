@@ -1,62 +1,65 @@
 package org.idp.server.core.configuration;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.core.type.oauth.ResponseType;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** ServerConfiguration */
 public class ServerConfiguration implements JsonReadable {
-  String issuer;
-  String authorizationEndpoint;
-  String tokenEndpoint;
-  String userinfoEndpoint;
-  String jwks;
-  String jwksUri;
-  List<String> scopesSupported;
-  List<String> responseTypesSupported;
-  List<String> responseModesSupported;
-  List<String> grantTypesSupported;
-  List<String> acrValuesSupported;
-  List<String> subjectTypesSupported;
-  List<String> idTokenSigningAlgValuesSupported;
-  List<String> idTokenEncryptionAlgValuesSupported;
-  List<String> idTokenEncryptionEncValuesSupported;
-  List<String> userinfoSigningAlgValuesSupported;
-  List<String> userinfoEncryptionAlgValuesSupported;
-  List<String> userinfoEncryptionEncValuesSupported;
-  List<String> requestObjectSigningAlgValuesSupported;
-  List<String> requestObjectEncryptionAlgValuesSupported;
-  List<String> requestObjectEncryptionEncValuesSupported;
-  List<String> authorizationSigningAlgValuesSupported;
-  List<String> authorizationEncryptionAlgValuesSupported;
-  List<String> authorizationEncryptionEncValuesSupported;
-  List<String> tokenEndpointAuthMethodsSupported;
-  List<String> tokenEndpointAuthSigningAlgValuesSupported;
-  List<String> displayValuesSupported;
-  List<String> claimTypesSupported;
-  List<String> claimsSupported;
-  boolean claimsParameterSupported;
-  boolean requestParameterSupported;
-  boolean requestUriParameterSupported;
-  boolean requireRequestUriRegistration;
-  String revocationEndpoint;
-  List<String> revocationEndpointAuthMethodsSupported;
-  List<String> revocationEndpointAuthSigningAlgValuesSupported;
-  String introspectionEndpoint;
-  List<String> introspectionEndpointAuthMethodsSupported;
-  List<String> introspectionEndpointAuthSigningAlgValuesSupported;
-  List<String> codeChallengeMethodsSupported;
-  boolean tlsClientCertificateBoundAccessTokens;
-  boolean requireSignedRequestObject;
-  boolean authorizationResponseIssParameterSupported;
+  String issuer = "";
+  String authorizationEndpoint = "";
+  String tokenEndpoint = "";
+  String userinfoEndpoint = "";
+  String jwks = "";
+  String jwksUri = "";
+  List<String> scopesSupported = new ArrayList<>();
+  List<String> responseTypesSupported = new ArrayList<>();
+  List<String> responseModesSupported = new ArrayList<>();
+  List<String> grantTypesSupported = new ArrayList<>();
+  List<String> acrValuesSupported = new ArrayList<>();
+  List<String> subjectTypesSupported = new ArrayList<>();
+  List<String> idTokenSigningAlgValuesSupported = new ArrayList<>();
+  List<String> idTokenEncryptionAlgValuesSupported = new ArrayList<>();
+  List<String> idTokenEncryptionEncValuesSupported = new ArrayList<>();
+  List<String> userinfoSigningAlgValuesSupported = new ArrayList<>();
+  List<String> userinfoEncryptionAlgValuesSupported = new ArrayList<>();
+  List<String> userinfoEncryptionEncValuesSupported = new ArrayList<>();
+  List<String> requestObjectSigningAlgValuesSupported = new ArrayList<>();
+  List<String> requestObjectEncryptionAlgValuesSupported = new ArrayList<>();
+  List<String> requestObjectEncryptionEncValuesSupported = new ArrayList<>();
+  List<String> authorizationSigningAlgValuesSupported = new ArrayList<>();
+  List<String> authorizationEncryptionAlgValuesSupported = new ArrayList<>();
+  List<String> authorizationEncryptionEncValuesSupported = new ArrayList<>();
+  List<String> tokenEndpointAuthMethodsSupported = new ArrayList<>();
+  List<String> tokenEndpointAuthSigningAlgValuesSupported = new ArrayList<>();
+  List<String> displayValuesSupported = new ArrayList<>();
+  List<String> claimTypesSupported = new ArrayList<>();
+  List<String> claimsSupported = new ArrayList<>();
+  boolean claimsParameterSupported = true;
+  boolean requestParameterSupported = true;
+  boolean requestUriParameterSupported = true;
+  boolean requireRequestUriRegistration = true;
+  String revocationEndpoint = "";
+  List<String> revocationEndpointAuthMethodsSupported = new ArrayList<>();
+  List<String> revocationEndpointAuthSigningAlgValuesSupported = new ArrayList<>();
+  String introspectionEndpoint = "";
+  List<String> introspectionEndpointAuthMethodsSupported = new ArrayList<>();
+  List<String> introspectionEndpointAuthSigningAlgValuesSupported = new ArrayList<>();
+  List<String> codeChallengeMethodsSupported = new ArrayList<>();
+  boolean tlsClientCertificateBoundAccessTokens = false;
+  boolean requireSignedRequestObject = false;
+  boolean authorizationResponseIssParameterSupported = false;
 
   // extension
-  List<String> fapiBaselineScopes;
-  List<String> fapiAdvanceScopes;
-  int authorizationCodeValidDuration;
-  String tokenSignedKeyId;
-  long accessTokenDuration;
+  List<String> fapiBaselineScopes = new ArrayList<>();
+  List<String> fapiAdvanceScopes = new ArrayList<>();
+  int authorizationCodeValidDuration = 600;
+  String tokenSignedKeyId = "";
+  long accessTokenDuration = 3600;
 
   public ServerConfiguration() {}
 
@@ -241,11 +244,11 @@ public class ServerConfiguration implements JsonReadable {
     return scopes.stream().filter(scope -> scopesSupported.contains(scope)).toList();
   }
 
-  public boolean hasFapiBaselineScope(List<String> scopes) {
+  public boolean hasFapiBaselineScope(Set<String> scopes) {
     return scopes.stream().anyMatch(scope -> fapiBaselineScopes.contains(scope));
   }
 
-  public boolean hasFapiAdvanceScope(List<String> scopes) {
+  public boolean hasFapiAdvanceScope(Set<String> scopes) {
     return scopes.stream().anyMatch(scope -> fapiAdvanceScopes.contains(scope));
   }
 
@@ -259,5 +262,9 @@ public class ServerConfiguration implements JsonReadable {
 
   public long accessTokenDuration() {
     return accessTokenDuration;
+  }
+
+  public boolean isSupportedResponseType(ResponseType responseType) {
+    return responseTypesSupported.contains(responseType.name());
   }
 }

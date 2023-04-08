@@ -1,13 +1,12 @@
 package org.idp.server.core.type;
 
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.*;
-
 import static org.idp.server.core.type.OAuthRequestKey.*;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.type.oauth.*;
+import org.idp.server.core.type.oidc.*;
 
 /** RequestObjectParameters */
 public class RequestObjectParameters {

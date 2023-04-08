@@ -1,5 +1,6 @@
 package org.idp.server.service;
 
+import java.util.Set;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JoseHandler;
 import org.idp.server.basic.jose.JoseInvalidException;
@@ -45,11 +46,16 @@ public class RequestUriPatternContextService
               serverConfiguration.jwks(),
               clientConfiguration.clientSecret());
       joseContext.verifySignature();
-      AuthorizationProfile profile =
-          analyze(parameters, joseContext, serverConfiguration, clientConfiguration);
+      Set<String> filteredScopes = filterScopes(parameters, joseContext, clientConfiguration);
+      AuthorizationProfile profile = analyze(filteredScopes, serverConfiguration);
       AuthorizationRequest authorizationRequest =
           requestObjectPatternFactory.create(
-              profile, parameters, joseContext, serverConfiguration, clientConfiguration);
+              profile,
+              parameters,
+              joseContext,
+              filteredScopes,
+              serverConfiguration,
+              clientConfiguration);
       return new OAuthRequestContext(
           OAuthRequestPattern.REQUEST_URI,
           parameters,

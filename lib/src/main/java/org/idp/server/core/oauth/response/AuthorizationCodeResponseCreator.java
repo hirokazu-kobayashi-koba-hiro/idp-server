@@ -2,8 +2,8 @@ package org.idp.server.core.oauth.response;
 
 import org.idp.server.core.oauth.OAuthAuthorizeContext;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.type.oauth.AuthorizationCode;
 import org.idp.server.core.type.extension.ResponseModeValue;
+import org.idp.server.core.type.oauth.AuthorizationCode;
 
 public class AuthorizationCodeResponseCreator
     implements AuthorizationResponseCreator, AuthorizationCodeCreatable {

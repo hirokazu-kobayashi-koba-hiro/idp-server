@@ -1,7 +1,6 @@
 package org.idp.server.core.token;
 
 import java.util.Map;
-
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.oauth.*;
 

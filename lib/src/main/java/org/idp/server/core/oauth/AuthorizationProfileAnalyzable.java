@@ -1,6 +1,6 @@
 package org.idp.server.core.oauth;
 
-import java.util.List;
+import java.util.Set;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.configuration.ClientConfiguration;
@@ -12,11 +12,8 @@ import org.idp.server.core.type.OAuthRequestParameters;
 public interface AuthorizationProfileAnalyzable {
 
   default AuthorizationProfile analyze(
-      OAuthRequestParameters parameters,
-      JoseContext joseContext,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
-    List<String> filteredScopes = filterScopes(parameters, joseContext, clientConfiguration);
+      Set<String> filteredScopes, ServerConfiguration serverConfiguration) {
+
     if (serverConfiguration.hasFapiAdvanceScope(filteredScopes)) {
       return AuthorizationProfile.FAPI_ADVANCE;
     }
@@ -29,11 +26,11 @@ public interface AuthorizationProfileAnalyzable {
     return AuthorizationProfile.OAUTH2;
   }
 
-  default List<String> filterScopes(
+  default Set<String> filterScopes(
       OAuthRequestParameters parameters,
       JoseContext joseContext,
       ClientConfiguration clientConfiguration) {
-    // FIXME
+
     String scope = parameters.getString(OAuthRequestKey.scope);
     JsonWebTokenClaims claims = joseContext.claims();
     String joseScope = claims.getValue("scope");

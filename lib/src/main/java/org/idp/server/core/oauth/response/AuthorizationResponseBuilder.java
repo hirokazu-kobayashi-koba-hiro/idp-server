@@ -38,11 +38,6 @@ public class AuthorizationResponseBuilder {
 
   public AuthorizationResponse build() {
     return new AuthorizationResponse(
-        redirectUri,
-        responseModeValue,
-        authorizationCode,
-        state,
-        tokenIssuer,
-        queryParams);
+        redirectUri, responseModeValue, authorizationCode, state, tokenIssuer, queryParams);
   }
 }

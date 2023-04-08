@@ -1,20 +1,20 @@
 package org.idp.server.core.configuration;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.ResponseType;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** ClientConfiguration */
 public class ClientConfiguration implements JsonReadable {
   String clientId;
   String clientSecret;
-  List<String> redirectUris;
+  List<String> redirectUris = new ArrayList<>();
   String tokenEndpointAuthMethod;
-  List<String> grantTypes;
-  List<String> responseTypes;
+  List<String> grantTypes = new ArrayList<>();
+  List<String> responseTypes = new ArrayList<>();
   String clientName;
   String clientUri;
   String logoUri;
@@ -26,7 +26,7 @@ public class ClientConfiguration implements JsonReadable {
   String jwks;
   String softwareId;
   String softwareVersion;
-  List<String> requestUris;
+  List<String> requestUris = new ArrayList<>();
 
   // extension
   boolean supportedJar;
@@ -109,16 +109,16 @@ public class ClientConfiguration implements JsonReadable {
     return Arrays.stream(scope.split(" ")).toList();
   }
 
-  public List<String> filteredScope(String spacedScopes) {
+  public Set<String> filteredScope(String spacedScopes) {
     if (Objects.isNull(spacedScopes) || spacedScopes.isEmpty()) {
-      return List.of();
+      return Set.of();
     }
     List<String> scopes = Arrays.stream(spacedScopes.split(" ")).toList();
-    return scopes.stream().filter(scope -> scopes().contains(scope)).toList();
+    return scopes.stream().filter(scope -> scopes().contains(scope)).collect(Collectors.toSet());
   }
 
-  public List<String> filteredScope(List<String> scopes) {
-    return scopes.stream().filter(scope -> scopes().contains(scope)).toList();
+  public Set<String> filteredScope(List<String> scopes) {
+    return scopes.stream().filter(scope -> scopes().contains(scope)).collect(Collectors.toSet());
   }
 
   public boolean isSupportedJar() {
@@ -131,5 +131,9 @@ public class ClientConfiguration implements JsonReadable {
 
   public TokenIssuer tokenIssuer() {
     return new TokenIssuer(issuer);
+  }
+
+  public boolean isSupportedResponseType(ResponseType responseType) {
+    return responseTypes.contains(responseType.name());
   }
 }

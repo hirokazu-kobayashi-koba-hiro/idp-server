@@ -1,5 +1,6 @@
 package org.idp.server.core.oauth.factory;
 
+import java.util.Set;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
@@ -13,6 +14,7 @@ public interface AuthorizationRequestFactory {
       AuthorizationProfile profile,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
+      Set<String> filteredScopes,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration);
 }

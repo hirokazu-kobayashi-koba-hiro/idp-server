@@ -8,5 +8,6 @@ public interface AuthorizationRequestVerifier {
   default boolean shouldNotVerify(OAuthRequestContext oAuthRequestContext) {
     return false;
   }
+
   void verify(OAuthRequestContext oAuthRequestContext);
 }

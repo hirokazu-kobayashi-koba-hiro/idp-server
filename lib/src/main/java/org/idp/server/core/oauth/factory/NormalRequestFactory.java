@@ -1,5 +1,6 @@
 package org.idp.server.core.oauth.factory;
 
+import java.util.Set;
 import java.util.UUID;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.core.configuration.ClientConfiguration;
@@ -9,6 +10,7 @@ import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.type.*;
+import org.idp.server.core.type.oauth.Scopes;
 
 /** NormalRequestFactory */
 public class NormalRequestFactory implements AuthorizationRequestFactory {
@@ -18,6 +20,7 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
       AuthorizationProfile profile,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
+      Set<String> filteredScopes,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
 
@@ -25,7 +28,7 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
     builder.add(new AuthorizationRequestIdentifier(UUID.randomUUID().toString()));
     builder.add(serverConfiguration.issuer());
     builder.add(profile);
-    builder.add(parameters.scope());
+    builder.add(new Scopes(filteredScopes));
     builder.add(parameters.responseType());
     builder.add(parameters.clientId());
     builder.add(parameters.redirectUri());

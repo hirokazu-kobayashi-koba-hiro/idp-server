@@ -6,8 +6,9 @@ import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.type.OAuthRequestParameters;
-import org.idp.server.core.type.oidc.ResponseMode;
 import org.idp.server.core.type.oauth.ResponseType;
+import org.idp.server.core.type.oauth.Scopes;
+import org.idp.server.core.type.oidc.ResponseMode;
 
 /** OAuthRequestContext */
 public class OAuthRequestContext {
@@ -94,5 +95,17 @@ public class OAuthRequestContext {
 
   public ResponseMode responseMode() {
     return authorizationRequest.responseMode();
+  }
+
+  public boolean isSupportedResponseTypeWithServer(ResponseType responseType) {
+    return serverConfiguration.isSupportedResponseType(responseType);
+  }
+
+  public boolean isSupportedResponseTypeWithClient(ResponseType responseType) {
+    return clientConfiguration.isSupportedResponseType(responseType);
+  }
+
+  public Scopes scopes() {
+    return authorizationRequest.scope();
   }
 }
