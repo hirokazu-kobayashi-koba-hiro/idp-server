@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.type.CustomProperties;
-import org.idp.server.core.type.TokenIssuer;
+import org.idp.server.core.type.extension.CustomProperties;
+import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** OAuthAuthorizeRequest */
 public class OAuthAuthorizeRequest {

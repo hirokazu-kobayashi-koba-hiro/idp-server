@@ -1,7 +1,8 @@
 package org.idp.server.core.oauth.request;
 
 import org.idp.server.core.oauth.AuthorizationProfile;
-import org.idp.server.core.type.*;
+import org.idp.server.core.type.oauth.*;
+import org.idp.server.core.type.oidc.*;
 
 /** AuthorizationRequest */
 public class AuthorizationRequest {

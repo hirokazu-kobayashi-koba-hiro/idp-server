@@ -5,6 +5,7 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
+import org.idp.server.core.oauth.response.AuthorizationErrorResponse;
 import org.idp.server.io.status.OAuthRequestStatus;
 
 /** OAuthRequestResponse */
@@ -13,6 +14,7 @@ public class OAuthRequestResponse {
   AuthorizationRequest authorizationRequest;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
+  AuthorizationErrorResponse errorResponse;
   Map<String, String> contents;
 
   public OAuthRequestResponse() {}
@@ -21,23 +23,13 @@ public class OAuthRequestResponse {
     this.status = status;
   }
 
-  public OAuthRequestResponse(
-      OAuthRequestStatus status,
-      AuthorizationRequest authorizationRequest,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
-    this.status = status;
-    this.authorizationRequest = authorizationRequest;
-    this.serverConfiguration = serverConfiguration;
-    this.clientConfiguration = clientConfiguration;
-  }
-
   public OAuthRequestResponse(OAuthRequestStatus status, OAuthRequestContext context) {
     this.status = status;
     this.authorizationRequest = context.authorizationRequest();
     this.serverConfiguration = context.serverConfiguration();
     this.clientConfiguration = context.clientConfiguration();
     this.contents = Map.of("id", context.identifier().value());
+    this.errorResponse = new AuthorizationErrorResponse();
   }
 
   public OAuthRequestStatus status() {

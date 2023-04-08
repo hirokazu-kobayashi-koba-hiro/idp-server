@@ -1,8 +1,11 @@
 package org.idp.server.core.oauth.response;
 
 import org.idp.server.basic.http.QueryParams;
-import org.idp.server.core.type.*;
-import org.idp.server.core.type.Error;
+import org.idp.server.core.type.extension.ResponseModeValue;
+import org.idp.server.core.type.oauth.AuthorizationCode;
+import org.idp.server.core.type.oauth.RedirectUri;
+import org.idp.server.core.type.oauth.State;
+import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class AuthorizationResponse {
   RedirectUri redirectUri;
@@ -18,8 +21,6 @@ public class AuthorizationResponse {
       AuthorizationCode authorizationCode,
       State state,
       TokenIssuer tokenIssuer,
-      Error error,
-      ErrorDescription errorDescription,
       QueryParams queryParams) {
     this.redirectUri = redirectUri;
     this.responseModeValue = responseModeValue;

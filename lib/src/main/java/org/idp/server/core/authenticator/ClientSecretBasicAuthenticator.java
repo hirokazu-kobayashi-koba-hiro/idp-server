@@ -2,7 +2,7 @@ package org.idp.server.core.authenticator;
 
 import org.idp.server.core.authenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.token.TokenRequestContext;
-import org.idp.server.core.type.ClientSecretBasic;
+import org.idp.server.core.type.oauth.ClientSecretBasic;
 
 public class ClientSecretBasicAuthenticator implements ClientAuthenticator {
 

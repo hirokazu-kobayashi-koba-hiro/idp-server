@@ -7,7 +7,7 @@ import org.idp.server.basic.jose.JwkInvalidException;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ConfigurationInvalidException;
 import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.type.AccessToken;
+import org.idp.server.core.type.oauth.AccessToken;
 
 public interface AccessTokenCreatable {
 

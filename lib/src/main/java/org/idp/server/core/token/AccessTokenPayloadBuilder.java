@@ -2,7 +2,9 @@ package org.idp.server.core.token;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.type.*;
+
+import org.idp.server.core.type.extension.CustomProperties;
+import org.idp.server.core.type.oauth.*;
 
 public class AccessTokenPayloadBuilder {
   TokenIssuer tokenIssuer;

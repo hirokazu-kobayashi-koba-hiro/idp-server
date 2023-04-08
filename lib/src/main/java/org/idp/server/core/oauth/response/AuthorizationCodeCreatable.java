@@ -1,7 +1,7 @@
 package org.idp.server.core.oauth.response;
 
 import org.idp.server.basic.random.RandomStringGenerator;
-import org.idp.server.core.type.AuthorizationCode;
+import org.idp.server.core.type.oauth.AuthorizationCode;
 
 public interface AuthorizationCodeCreatable {
 

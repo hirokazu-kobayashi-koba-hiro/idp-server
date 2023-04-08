@@ -5,8 +5,8 @@ import org.idp.server.basic.date.UtcDateTime;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.grant.AuthorizationGranted;
-import org.idp.server.core.type.CreatedAt;
-import org.idp.server.core.type.ExpiredAt;
+import org.idp.server.core.type.oauth.CreatedAt;
+import org.idp.server.core.type.oauth.ExpiredAt;
 
 public interface AccessTokenPayloadCreatable {
   default AccessTokenPayload createAccessTokenPayload(

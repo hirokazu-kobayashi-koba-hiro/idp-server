@@ -6,7 +6,8 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.type.*;
+import org.idp.server.core.type.extension.CustomProperties;
+import org.idp.server.core.type.oauth.*;
 
 /** OAuthAuthorizeContext */
 public class OAuthAuthorizeContext {

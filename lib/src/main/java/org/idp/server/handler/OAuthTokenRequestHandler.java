@@ -1,6 +1,6 @@
 package org.idp.server.handler;
 
-import static org.idp.server.core.type.GrantType.authorization_code;
+import static org.idp.server.core.type.oauth.GrantType.authorization_code;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +11,7 @@ import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.OAuthTokenCreationService;
 import org.idp.server.core.token.TokenRequestContext;
 import org.idp.server.core.token.validator.TokenRequestValidator;
-import org.idp.server.core.type.GrantType;
+import org.idp.server.core.type.oauth.GrantType;
 import org.idp.server.service.TokenCreationCodeGrantService;
 
 public class OAuthTokenRequestHandler {

@@ -18,6 +18,9 @@ public class OAuthRequestVerifier {
   public void verify(OAuthRequestContext oAuthRequestContext) {
     verifiers.forEach(
         verifier -> {
+          if (verifier.shouldNotVerify(oAuthRequestContext)) {
+            return;
+          }
           verifier.verify(oAuthRequestContext);
         });
   }

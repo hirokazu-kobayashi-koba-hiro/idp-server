@@ -9,7 +9,7 @@ import org.idp.server.core.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.repository.AuthorizationRequestRepository;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.validator.TokenRequestCodeGrantValidator;
-import org.idp.server.core.type.*;
+import org.idp.server.core.type.oauth.*;
 
 public class TokenCreationCodeGrantService
     implements OAuthTokenCreationService,

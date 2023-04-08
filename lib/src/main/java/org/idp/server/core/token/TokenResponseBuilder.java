@@ -2,10 +2,10 @@ package org.idp.server.core.token;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.type.AccessToken;
-import org.idp.server.core.type.ExpiresIn;
-import org.idp.server.core.type.RefreshToken;
-import org.idp.server.core.type.TokenType;
+import org.idp.server.core.type.oauth.AccessToken;
+import org.idp.server.core.type.oauth.ExpiresIn;
+import org.idp.server.core.type.oauth.RefreshToken;
+import org.idp.server.core.type.oauth.TokenType;
 
 public class TokenResponseBuilder {
   AccessToken accessToken;

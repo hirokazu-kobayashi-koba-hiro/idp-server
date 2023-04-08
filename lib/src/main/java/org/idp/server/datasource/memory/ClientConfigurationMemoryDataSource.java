@@ -11,8 +11,8 @@ import org.idp.server.basic.resource.ResourceReadable;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.core.repository.ClientConfigurationRepository;
-import org.idp.server.core.type.ClientId;
-import org.idp.server.core.type.TokenIssuer;
+import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** ClientConfigurationMemoryDataSource */
 public class ClientConfigurationMemoryDataSource

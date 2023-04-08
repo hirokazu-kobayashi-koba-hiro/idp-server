@@ -1,5 +1,7 @@
 package org.idp.server.core.type;
 
+import org.idp.server.core.type.oauth.*;
+
 import static org.idp.server.core.type.OAuthRequestKey.*;
 
 import java.util.List;

@@ -4,6 +4,9 @@ import java.util.Map;
 import org.idp.server.basic.http.BasicAuth;
 import org.idp.server.basic.http.BasicAuthConvertable;
 import org.idp.server.core.type.*;
+import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.ClientSecretBasic;
+import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class TokenRequest implements BasicAuthConvertable {
   String authorizationHeaders;

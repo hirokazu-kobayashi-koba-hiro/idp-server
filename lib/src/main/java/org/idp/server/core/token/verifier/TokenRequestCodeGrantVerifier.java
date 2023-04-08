@@ -3,7 +3,7 @@ package org.idp.server.core.token.verifier;
 import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.core.token.TokenRequestContext;
 import org.idp.server.core.token.exception.TokenBadRequestException;
-import org.idp.server.core.type.GrantType;
+import org.idp.server.core.type.oauth.GrantType;
 
 public class TokenRequestCodeGrantVerifier {
 

@@ -3,7 +3,7 @@ package org.idp.server.core.configuration;
 import java.util.Arrays;
 import java.util.List;
 import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.core.type.TokenIssuer;
+import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** ServerConfiguration */
 public class ServerConfiguration implements JsonReadable {

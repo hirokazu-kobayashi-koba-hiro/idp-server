@@ -1,8 +1,9 @@
 package org.idp.server.core.oauth.response;
 
 import org.idp.server.basic.http.QueryParams;
-import org.idp.server.core.type.*;
-import org.idp.server.core.type.Error;
+import org.idp.server.core.type.extension.ResponseModeValue;
+import org.idp.server.core.type.oauth.*;
+import org.idp.server.core.type.oauth.Error;
 
 public class AuthorizationErrorResponse {
   RedirectUri redirectUri;
@@ -12,6 +13,8 @@ public class AuthorizationErrorResponse {
   Error error;
   ErrorDescription errorDescription;
   QueryParams queryParams;
+
+  public AuthorizationErrorResponse() {}
 
   AuthorizationErrorResponse(
       RedirectUri redirectUri,

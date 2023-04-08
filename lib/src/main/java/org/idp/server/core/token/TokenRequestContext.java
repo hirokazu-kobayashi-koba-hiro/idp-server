@@ -3,6 +3,10 @@ package org.idp.server.core.token;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.type.*;
+import org.idp.server.core.type.oauth.AuthorizationCode;
+import org.idp.server.core.type.oauth.ClientSecret;
+import org.idp.server.core.type.oauth.ClientSecretBasic;
+import org.idp.server.core.type.oauth.GrantType;
 
 public class TokenRequestContext {
 

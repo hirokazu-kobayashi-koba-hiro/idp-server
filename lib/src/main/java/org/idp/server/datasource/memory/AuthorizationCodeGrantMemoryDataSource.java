@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.core.repository.AuthorizationCodeGrantRepository;
-import org.idp.server.core.type.AuthorizationCode;
+import org.idp.server.core.type.oauth.AuthorizationCode;
 
 public class AuthorizationCodeGrantMemoryDataSource implements AuthorizationCodeGrantRepository {
 

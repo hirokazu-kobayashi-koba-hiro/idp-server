@@ -2,7 +2,7 @@ package org.idp.server.io;
 
 import java.util.Map;
 import org.idp.server.core.type.OAuthRequestParameters;
-import org.idp.server.core.type.TokenIssuer;
+import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** OAuthRequest */
 public class OAuthRequest {

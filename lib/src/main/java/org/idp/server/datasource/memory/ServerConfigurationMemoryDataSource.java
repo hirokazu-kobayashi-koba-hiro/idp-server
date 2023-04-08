@@ -11,7 +11,7 @@ import org.idp.server.basic.resource.ResourceReadable;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.core.repository.ServerConfigurationRepository;
-import org.idp.server.core.type.TokenIssuer;
+import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** ServerConfigurationMemoryDataSource */
 public class ServerConfigurationMemoryDataSource

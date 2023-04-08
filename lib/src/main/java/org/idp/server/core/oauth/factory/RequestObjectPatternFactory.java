@@ -10,6 +10,8 @@ import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.type.*;
+import org.idp.server.core.type.oauth.*;
+import org.idp.server.core.type.oidc.*;
 
 /**
  * RequestObjectPatternFactory

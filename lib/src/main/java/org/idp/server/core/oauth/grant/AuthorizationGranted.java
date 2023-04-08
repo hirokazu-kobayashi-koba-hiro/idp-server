@@ -1,9 +1,9 @@
 package org.idp.server.core.oauth.grant;
 
-import org.idp.server.core.type.ClientId;
-import org.idp.server.core.type.CustomProperties;
-import org.idp.server.core.type.Scopes;
-import org.idp.server.core.type.Subject;
+import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.extension.CustomProperties;
+import org.idp.server.core.type.oauth.Scopes;
+import org.idp.server.core.type.oauth.Subject;
 
 public class AuthorizationGranted {
 

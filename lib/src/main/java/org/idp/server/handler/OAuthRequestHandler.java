@@ -14,7 +14,7 @@ import org.idp.server.core.repository.AuthorizationRequestRepository;
 import org.idp.server.core.repository.ClientConfigurationRepository;
 import org.idp.server.core.repository.ServerConfigurationRepository;
 import org.idp.server.core.type.OAuthRequestParameters;
-import org.idp.server.core.type.TokenIssuer;
+import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.httpclient.RequestObjectHttpClient;
 import org.idp.server.service.NormalPatternContextService;
 import org.idp.server.service.RequestObjectPatternContextService;

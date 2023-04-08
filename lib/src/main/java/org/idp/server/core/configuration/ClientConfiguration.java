@@ -4,8 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.core.type.ClientId;
-import org.idp.server.core.type.TokenIssuer;
+import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** ClientConfiguration */
 public class ClientConfiguration implements JsonReadable {

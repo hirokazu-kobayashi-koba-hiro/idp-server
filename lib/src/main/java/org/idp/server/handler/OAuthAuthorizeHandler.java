@@ -18,10 +18,10 @@ import org.idp.server.core.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.repository.AuthorizationRequestRepository;
 import org.idp.server.core.repository.ClientConfigurationRepository;
 import org.idp.server.core.repository.ServerConfigurationRepository;
-import org.idp.server.core.type.ClientId;
-import org.idp.server.core.type.CustomProperties;
-import org.idp.server.core.type.ResponseType;
-import org.idp.server.core.type.TokenIssuer;
+import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.extension.CustomProperties;
+import org.idp.server.core.type.oauth.ResponseType;
+import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** OAuthAuthorizeHandler */
 public class OAuthAuthorizeHandler {
