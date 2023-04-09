@@ -15,6 +15,7 @@ import org.idp.server.core.type.OAuthRequestParameters;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.handler.OAuthAuthorizeHandler;
+import org.idp.server.handler.OAuthRequestExceptionHandler;
 import org.idp.server.handler.OAuthRequestHandler;
 import org.idp.server.io.OAuthAuthorizeRequest;
 import org.idp.server.io.OAuthAuthorizeResponse;
@@ -27,12 +28,14 @@ import org.idp.server.io.status.OAuthRequestStatus;
 public class OAuthApi {
   OAuthRequestValidator requestValidator;
   OAuthRequestHandler requestHandler;
+  OAuthRequestExceptionHandler oAuthRequestExceptionHandler;
   OAuthAuthorizeHandler authAuthorizeHandler;
   Logger log = Logger.getLogger(OAuthApi.class.getName());
 
   OAuthApi(OAuthRequestHandler requestHandler, OAuthAuthorizeHandler authAuthorizeHandler) {
     this.requestValidator = new OAuthRequestValidator();
     this.requestHandler = requestHandler;
+    this.oAuthRequestExceptionHandler = new OAuthRequestExceptionHandler();
     this.authAuthorizeHandler = authAuthorizeHandler;
   }
 
@@ -51,7 +54,7 @@ public class OAuthApi {
       return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST);
     } catch (OAuthRedirectableBadRequestException exception) {
       log.log(Level.WARNING, exception.getMessage(), exception);
-      return new OAuthRequestResponse(OAuthRequestStatus.REDIRECABLE_BAD_REQUEST);
+      return oAuthRequestExceptionHandler.handle(exception);
     } catch (ServerConfigurationNotFoundException
         | ClientConfigurationNotFoundException exception) {
       log.log(Level.WARNING, "not found configuration");

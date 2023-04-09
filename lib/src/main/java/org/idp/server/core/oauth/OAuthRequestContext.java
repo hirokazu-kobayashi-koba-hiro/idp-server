@@ -6,8 +6,7 @@ import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.type.OAuthRequestParameters;
-import org.idp.server.core.type.oauth.ResponseType;
-import org.idp.server.core.type.oauth.Scopes;
+import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.ResponseMode;
 
 /** OAuthRequestContext */
@@ -107,5 +106,17 @@ public class OAuthRequestContext {
 
   public Scopes scopes() {
     return authorizationRequest.scope();
+  }
+
+  public RedirectUri redirectUri() {
+    return authorizationRequest.redirectUri();
+  }
+
+  public TokenIssuer tokenIssuer() {
+    return serverConfiguration.issuer();
+  }
+
+  public State state() {
+    return authorizationRequest.state();
   }
 }

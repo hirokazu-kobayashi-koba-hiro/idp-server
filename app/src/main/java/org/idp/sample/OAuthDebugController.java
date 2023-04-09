@@ -42,7 +42,7 @@ public class OAuthDebugController implements ParameterTransformable {
       }
       case REDIRECABLE_BAD_REQUEST -> {
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Location", "");
+        httpHeaders.add("location", response.redirectUri());
         return new ResponseEntity<>(httpHeaders, HttpStatus.FOUND);
       }
       case BAD_REQUEST -> {

@@ -16,6 +16,7 @@ public class OAuthRequestResponse {
   ClientConfiguration clientConfiguration;
   AuthorizationErrorResponse errorResponse;
   Map<String, String> contents;
+  String redirectUri;
 
   public OAuthRequestResponse() {}
 
@@ -30,6 +31,12 @@ public class OAuthRequestResponse {
     this.clientConfiguration = context.clientConfiguration();
     this.contents = Map.of("id", context.identifier().value());
     this.errorResponse = new AuthorizationErrorResponse();
+  }
+
+  public OAuthRequestResponse(OAuthRequestStatus status, AuthorizationErrorResponse errorResponse) {
+    this.status = status;
+    this.errorResponse = errorResponse;
+    this.redirectUri = errorResponse.redirectUriValue();
   }
 
   public OAuthRequestStatus status() {
@@ -50,5 +57,9 @@ public class OAuthRequestResponse {
 
   public Map<String, String> contents() {
     return contents;
+  }
+
+  public String redirectUri() {
+    return redirectUri;
   }
 }
