@@ -1,7 +1,9 @@
 import axios from "axios";
 export const get = async ({ url }) => {
   try {
-    return await axios.get(url);
+    return await axios.get(url, {
+      maxRedirects: 0,
+    });
   } catch (e) {
     return e.response? e.response : e;
   }
@@ -13,6 +15,7 @@ export const post = async ({ url, headers, body }) => {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         ...headers,
+        maxRedirects: 0,
       },
     });
   } catch (e) {
