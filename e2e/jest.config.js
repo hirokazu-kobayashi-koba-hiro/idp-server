@@ -5,4 +5,5 @@ module.exports = {
   moduleDirectories: ["node_modules", "src"],
   maxWorkers: 5,
   setupFilesAfterEnv: [`${process.cwd()}/jest.setup.js`],
+  testRunner: "jest-jasmine2",
 };
