@@ -19,7 +19,7 @@ export const getAuthorizations = async ({
   acrValues,
   claims,
   request,
-  requestUri
+  requestUri,
 }) => {
   let params = {};
   if (scope) {
@@ -140,8 +140,17 @@ export const authorize = async ({ endpoint, id }) => {
   });
 };
 
-export const requestToken = async ({ endpoint, code, grantType, redirectUri, refreshToken, clientId, clientSecret, basicAuth }) => {
-  let params = new URLSearchParams;
+export const requestToken = async ({
+  endpoint,
+  code,
+  grantType,
+  redirectUri,
+  refreshToken,
+  clientId,
+  clientSecret,
+  basicAuth,
+}) => {
+  let params = new URLSearchParams();
   if (code) {
     params.append("code", code);
   }
@@ -161,7 +170,7 @@ export const requestToken = async ({ endpoint, code, grantType, redirectUri, ref
     params.append("client_secret", clientSecret);
   }
   console.log(params.toString());
-  const headers = basicAuth? basicAuth : {};
+  const headers = basicAuth ? basicAuth : {};
   return await post({
     url: endpoint,
     body: params,

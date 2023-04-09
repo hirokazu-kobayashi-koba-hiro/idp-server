@@ -14,11 +14,11 @@ export const convertToAuthorizationResponse = (redirectUri) => {
     state: params.get("state"),
     iss: params.get("iss"),
     error: params.get("error"),
-    errorDescription: params.get("error_description")
+    errorDescription: params.get("error_description"),
   };
 };
 
-export const createBasicAuthHeader = ({username, password}) => {
+export const createBasicAuthHeader = ({ username, password }) => {
   const basicParam = `${username}:${password}`;
   return {
     Authorization: `Basic  ${Buffer.from(basicParam).toString("base64")}`,
@@ -28,12 +28,12 @@ export const createBasicAuthHeader = ({username, password}) => {
 export const convertToSnake = (params) => {
   if (isObject(params)) {
     const convertParams = {};
-    Object.keys(params).map(key => {
+    Object.keys(params).map((key) => {
       convertParams[toSnake(key)] = convertToSnake(params[key]);
     });
     return convertParams;
   } else if (isArray(params)) {
-    return params.map(value => {
+    return params.map((value) => {
       return convertToSnake(value);
     });
   }

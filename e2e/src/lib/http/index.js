@@ -5,7 +5,7 @@ export const get = async ({ url }) => {
       maxRedirects: 0,
     });
   } catch (e) {
-    return e.response? e.response : e;
+    return e.response ? e.response : e;
   }
 };
 
@@ -19,16 +19,16 @@ export const post = async ({ url, headers, body }) => {
       },
     });
   } catch (e) {
-    return e.response? e.response : e;
+    return e.response ? e.response : e;
   }
 };
 
 export const postWithJson = async ({ url, headers, body }) => {
   try {
     return await axios.post(url, body, {
-      headers
+      headers,
     });
   } catch (e) {
-    return e.response? e.response : e;
+    return e.response ? e.response : e;
   }
 };

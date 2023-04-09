@@ -1,27 +1,27 @@
 import { authorize, getAuthorizations } from "../api/oauthClient";
 import { serverConfig } from "../spec/testConfig";
-import { convertToAuthorizationResponse } from "../lib/util"
+import { convertToAuthorizationResponse } from "../lib/util";
 
 export const requestAuthorizations = async ({
- endpoint,
- scope,
- responseType,
- clientId,
- redirectUri,
- state,
- responseMode,
- nonce,
- display,
- prompt,
- maxAge,
- uiLocales,
- idTokenHint,
- loginHint,
- acrValues,
- claims,
- request,
- requestUri,
- enabledSsr = false,
+  endpoint,
+  scope,
+  responseType,
+  clientId,
+  redirectUri,
+  state,
+  responseMode,
+  nonce,
+  display,
+  prompt,
+  maxAge,
+  uiLocales,
+  idTokenHint,
+  loginHint,
+  acrValues,
+  claims,
+  request,
+  requestUri,
+  enabledSsr = false,
 }) => {
   const response = await getAuthorizations({
     endpoint,
@@ -45,15 +45,13 @@ export const requestAuthorizations = async ({
   });
   console.log(response.data);
   if (enabledSsr) {
-    
     return {};
   } else {
     if (response.status === 302) {
       console.debug("redirect");
       console.log(response.headers);
       const { location } = response.headers;
-      const authorizationResponse
-        = convertToAuthorizationResponse(location);
+      const authorizationResponse = convertToAuthorizationResponse(location);
       return {
         status: response.status,
         authorizationResponse,
@@ -72,12 +70,12 @@ export const requestAuthorizations = async ({
       id: response.data.id,
     });
     console.log(authorizeResponse.data);
-    const authorizationResponse
-      = convertToAuthorizationResponse(authorizeResponse.data.redirect_uri);
+    const authorizationResponse = convertToAuthorizationResponse(
+      authorizeResponse.data.redirect_uri
+    );
     return {
       status: authorizeResponse.status,
       authorizationResponse,
     };
   }
-
 };

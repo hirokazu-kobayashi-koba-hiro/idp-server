@@ -1,6 +1,7 @@
 {
   "scripts": {
     "test": "jest",
+    "test-coverage": "npx jest --coverage",
     "pretter": "npx prettier --write ."
   },
   "devDependencies": {
