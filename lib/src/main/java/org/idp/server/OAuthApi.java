@@ -51,7 +51,8 @@ public class OAuthApi {
       return new OAuthRequestResponse(OAuthRequestStatus.OK, oAuthRequestContext);
     } catch (OAuthBadRequestException exception) {
       log.log(Level.WARNING, exception.getMessage(), exception);
-      return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST);
+      return new OAuthRequestResponse(
+          OAuthRequestStatus.BAD_REQUEST, exception.error(), exception.errorDescription());
     } catch (OAuthRedirectableBadRequestException exception) {
       log.log(Level.WARNING, exception.getMessage(), exception);
       return oAuthRequestExceptionHandler.handle(exception);

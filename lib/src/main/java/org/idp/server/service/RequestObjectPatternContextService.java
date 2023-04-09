@@ -51,7 +51,7 @@ public class RequestObjectPatternContextService
           serverConfiguration,
           clientConfiguration);
     } catch (JoseInvalidException exception) {
-      throw new OAuthBadRequestException(exception.getMessage(), exception);
+      throw new OAuthBadRequestException("invalid_request", exception.getMessage(), exception);
     }
   }
 }

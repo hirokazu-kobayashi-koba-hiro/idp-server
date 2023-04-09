@@ -1,8 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { getAuthorizations, requestToken } from "../api/oauthClient";
+import { getAuthorizations, requestToken } from "./api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
-import { requestAuthorizations } from "../oauth";
+import { requestAuthorizations } from "./oauth";
 
 describe("The OAuth 2.0 Authorization Framework", () => {
   it("success pattern", async () => {
@@ -58,6 +58,20 @@ describe("The OAuth 2.0 Authorization Framework", () => {
       expect(status).toBe(302);
 
       expect(authorizationResponse.error).toEqual("invalid_request");
+      expect(authorizationResponse.errorDescription).toEqual("response type is required on authorization request");
+    });
+
+    it ("4.1.1.  Authorization Request client_id REQUIRED", async () => {
+      const { status, error } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        redirectUri: clientSecretPostClient.redirectUri,
+        scope: clientSecretPostClient.scope,
+      });
+      console.log(error);
+      expect(status).toBe(400);
+
+      expect(error.error).toEqual("invalid_request");
+      expect(error.error_description).toEqual("authorization request must contains client_id");
     });
   });
 });

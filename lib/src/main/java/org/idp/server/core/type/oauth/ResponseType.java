@@ -47,4 +47,12 @@ public enum ResponseType {
   public boolean isHybridFlow() {
     return this == code_token || this == code_id_token || this == code_token_id_token;
   }
+
+  public boolean isUndefined() {
+    return this == undefined;
+  }
+
+  public boolean isUnknown() {
+    return this == unknown;
+  }
 }

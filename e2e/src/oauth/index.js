@@ -1,5 +1,5 @@
 import { authorize, getAuthorizations } from "../api/oauthClient";
-import { serverConfig } from "../spec/testConfig";
+import { serverConfig } from "../testConfig";
 import { convertToAuthorizationResponse } from "../lib/util";
 
 export const requestAuthorizations = async ({

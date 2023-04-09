@@ -14,7 +14,8 @@ public class OAuthRequestValidator {
 
   void throwIfNotContainsClientId(OAuthRequestParameters oAuthRequestParameters) {
     if (!oAuthRequestParameters.hasClientId()) {
-      throw new OAuthBadRequestException("authorization request must contains client_id");
+      throw new OAuthBadRequestException(
+          "invalid_request", "authorization request must contains client_id");
     }
   }
 
@@ -24,6 +25,7 @@ public class OAuthRequestValidator {
     if (!filteredKeys.isEmpty()) {
       String keysValue = String.join(" ", filteredKeys);
       throw new OAuthBadRequestException(
+          "invalid_request",
           String.format(
               "authorization request must not contains duplicate value; keys (%s)", keysValue));
     }

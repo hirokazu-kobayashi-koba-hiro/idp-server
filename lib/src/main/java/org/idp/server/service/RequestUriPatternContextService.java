@@ -34,6 +34,7 @@ public class RequestUriPatternContextService
     try {
       if (!clientConfiguration.isRegisteredRequestUri(parameters.requestUri().value())) {
         throw new OAuthBadRequestException(
+            "invalid_request",
             String.format(
                 "request uri does not registered (%s)", parameters.redirectUri().value()));
       }
@@ -64,7 +65,7 @@ public class RequestUriPatternContextService
           serverConfiguration,
           clientConfiguration);
     } catch (JoseInvalidException exception) {
-      throw new OAuthBadRequestException(exception.getMessage(), exception);
+      throw new OAuthBadRequestException("invalid_request", exception.getMessage(), exception);
     }
   }
 }

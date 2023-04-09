@@ -6,6 +6,8 @@ import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.response.AuthorizationErrorResponse;
+import org.idp.server.core.type.oauth.Error;
+import org.idp.server.core.type.oauth.ErrorDescription;
 import org.idp.server.io.status.OAuthRequestStatus;
 
 /** OAuthRequestResponse */
@@ -30,7 +32,12 @@ public class OAuthRequestResponse {
     this.serverConfiguration = context.serverConfiguration();
     this.clientConfiguration = context.clientConfiguration();
     this.contents = Map.of("id", context.identifier().value());
-    this.errorResponse = new AuthorizationErrorResponse();
+  }
+
+  public OAuthRequestResponse(
+      OAuthRequestStatus status, Error error, ErrorDescription errorDescription) {
+    this.status = status;
+    this.contents = Map.of("error", error.value(), "error_description", errorDescription.value());
   }
 
   public OAuthRequestResponse(OAuthRequestStatus status, AuthorizationErrorResponse errorResponse) {

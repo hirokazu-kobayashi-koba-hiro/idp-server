@@ -5,6 +5,7 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.type.OAuthRequestKey;
 import org.idp.server.core.type.OAuthRequestParameters;
 import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.ResponseMode;
@@ -118,5 +119,9 @@ public class OAuthRequestContext {
 
   public State state() {
     return authorizationRequest.state();
+  }
+
+  public String getParams(OAuthRequestKey key) {
+    return parameters.getString(key);
   }
 }
