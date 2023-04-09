@@ -73,5 +73,20 @@ describe("The OAuth 2.0 Authorization Framework", () => {
       expect(error.error).toEqual("invalid_request");
       expect(error.error_description).toEqual("authorization request must contains client_id");
     });
+
+    it ("4.1.1.  Authorization Request scope", async () => {
+      const { status, authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        scope: "test bank",
+      });
+      console.log(authorizationResponse);
+      expect(status).toBe(302);
+
+      expect(authorizationResponse.error).toEqual("invalid_scope");
+      expect(authorizationResponse.errorDescription).toEqual("authorization request does not contains valid scope (test bank)");
+    });
   });
 });

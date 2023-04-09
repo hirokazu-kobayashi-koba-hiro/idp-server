@@ -55,7 +55,11 @@ public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
     Scopes scopes = context.scopes();
     if (!scopes.exists()) {
       throw new OAuthRedirectableBadRequestException(
-          "invalid_request", "authorization request does not contains valid scope", context);
+          "invalid_scope",
+          String.format(
+              "authorization request does not contains valid scope (%s)",
+              context.getParams(OAuthRequestKey.scope)),
+          context);
     }
   }
 }
