@@ -36,7 +36,7 @@ public class MaxAge {
     return Long.parseLong(value);
   }
 
-  public boolean isInvalid() {
+  public boolean isValid() {
     if (!exists()) {
       return true;
     }

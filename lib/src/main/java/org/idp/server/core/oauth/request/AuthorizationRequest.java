@@ -166,6 +166,6 @@ public class AuthorizationRequest {
   }
 
   public boolean isInvalidMaxAge() {
-    return maxAge.isInvalid();
+    return !maxAge.isValid();
   }
 }
