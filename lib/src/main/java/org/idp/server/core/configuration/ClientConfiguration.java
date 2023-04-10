@@ -129,6 +129,10 @@ public class ClientConfiguration implements JsonReadable {
     return requestUris.contains(requestUri);
   }
 
+  public boolean isRegisteredRedirectUri(String redirectUri) {
+    return redirectUris.contains(redirectUri);
+  }
+
   public TokenIssuer tokenIssuer() {
     return new TokenIssuer(issuer);
   }

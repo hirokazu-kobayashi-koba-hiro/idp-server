@@ -21,7 +21,7 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
   }
 
   void throwIfNotContainsRedirectUri(OAuthRequestContext context) {
-    if (context.hasRedirectUri()) {
+    if (!context.hasRedirectUri()) {
       throw new OAuthBadRequestException(
           "invalid_request", "oidc profile authorization request must contains redirect_uri param");
     }

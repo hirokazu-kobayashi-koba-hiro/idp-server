@@ -109,7 +109,7 @@ public class OAuthRequestContext {
 
   public boolean isRegisteredRedirectUri() {
     RedirectUri redirectUri = redirectUri();
-    return clientConfiguration.isRegisteredRequestUri(redirectUri.value());
+    return clientConfiguration.isRegisteredRedirectUri(redirectUri.value());
   }
 
   public Scopes scopes() {
