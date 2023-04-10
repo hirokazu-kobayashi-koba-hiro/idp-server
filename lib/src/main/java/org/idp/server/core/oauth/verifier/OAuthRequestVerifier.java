@@ -1,27 +1,39 @@
 package org.idp.server.core.oauth.verifier;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.OAuthRequestContext;
+import org.idp.server.core.oauth.verifier.base.AuthorizationRequestVerifier;
+import org.idp.server.core.oauth.verifier.extension.AuthorizationRequestExtensionVerifier;
+import org.idp.server.core.oauth.verifier.extension.PckeVerifier;
+import org.idp.server.core.oauth.verifier.extension.RequestObjectVerifier;
 
 /** OAuthRequestVerifier */
 public class OAuthRequestVerifier {
 
-  static List<AuthorizationRequestVerifier> verifiers = new ArrayList<>();
+  static Map<AuthorizationProfile, AuthorizationRequestVerifier> baseVerifiers = new HashMap<>();
+  static List<AuthorizationRequestExtensionVerifier> extensionVerifiers = new ArrayList<>();
 
   static {
-    verifiers.add(new OAuth2RequestVerifier());
-    verifiers.add(new OidcRequestVerifier());
-    verifiers.add(new RequestObjectVerifier());
+    baseVerifiers.put(AuthorizationProfile.OAUTH2, new OAuth2RequestVerifier());
+    baseVerifiers.put(AuthorizationProfile.OIDC, new OidcRequestVerifier());
+    extensionVerifiers.add(new PckeVerifier());
+    extensionVerifiers.add(new RequestObjectVerifier());
   }
 
-  public void verify(OAuthRequestContext oAuthRequestContext) {
-    verifiers.forEach(
+  public void verify(OAuthRequestContext context) {
+    AuthorizationRequestVerifier baseRequestVerifier = baseVerifiers.get(context.profile());
+    if (Objects.isNull(baseRequestVerifier)) {
+      throw new RuntimeException(
+          String.format("unsupported profile (%s)", context.profile().name()));
+    }
+    baseRequestVerifier.verify(context);
+    extensionVerifiers.forEach(
         verifier -> {
-          if (verifier.shouldNotVerify(oAuthRequestContext)) {
+          if (verifier.shouldNotVerify(context)) {
             return;
           }
-          verifier.verify(oAuthRequestContext);
+          verifier.verify(context);
         });
   }
 }

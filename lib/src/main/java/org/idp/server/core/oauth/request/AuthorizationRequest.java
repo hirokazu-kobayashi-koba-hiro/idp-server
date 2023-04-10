@@ -164,4 +164,8 @@ public class AuthorizationRequest {
   public boolean isInvalidPrompt() {
     return prompt.isUnknown();
   }
+
+  public boolean isInvalidMaxAge() {
+    return maxAge.isInvalid();
+  }
 }

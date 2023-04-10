@@ -4,17 +4,11 @@ import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.oauth.verifier.AuthorizationRequestVerifier;
 import org.idp.server.core.type.OAuthRequestKey;
 
 public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
 
   OAuthRequestBaseVerifier baseVerifier = new OAuthRequestBaseVerifier();
-
-  @Override
-  public boolean shouldNotVerify(OAuthRequestContext oAuthRequestContext) {
-    return !oAuthRequestContext.isOidcProfile();
-  }
 
   @Override
   public void verify(OAuthRequestContext context) {
@@ -23,6 +17,7 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
     baseVerifier.verify(context);
     throwIfInvalidDisplay(context);
     throwIfInvalidPrompt(context);
+    throwIfInvalidMaxAge(context);
   }
 
   void throwIfNotContainsRedirectUri(OAuthRequestContext context) {
@@ -62,6 +57,18 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
           String.format(
               "authorization request prompt is defined that none, login, consent, select_account, but request prompt is (%s)",
               context.getParams(OAuthRequestKey.prompt)),
+          context);
+    }
+  }
+
+  void throwIfInvalidMaxAge(OAuthRequestContext context) {
+    AuthorizationRequest authorizationRequest = context.authorizationRequest();
+    if (authorizationRequest.isInvalidMaxAge()) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request",
+          String.format(
+              "authorization request max_age is invalid (%s)",
+              context.getParams(OAuthRequestKey.max_age)),
           context);
     }
   }

@@ -2,7 +2,6 @@ package org.idp.server.core.oauth.verifier.base;
 
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
-import org.idp.server.core.oauth.verifier.AuthorizationRequestVerifier;
 import org.idp.server.core.type.OAuthRequestKey;
 import org.idp.server.core.type.oauth.ResponseType;
 import org.idp.server.core.type.oauth.Scopes;
