@@ -18,6 +18,8 @@ public class AuthorizationRequest {
   ResponseMode responseMode;
   Nonce nonce;
   Display display;
+
+  // FIXME consider space delimited request pattern
   Prompt prompt;
   MaxAge maxAge;
   UiLocales uiLocales;
@@ -149,5 +151,17 @@ public class AuthorizationRequest {
 
   public RequestUri requestUri() {
     return requestUri;
+  }
+
+  public boolean hasRedirectUri() {
+    return redirectUri.exists();
+  }
+
+  public boolean isInvalidDisplay() {
+    return display.isUnknown();
+  }
+
+  public boolean isInvalidPrompt() {
+    return prompt.isUnknown();
   }
 }

@@ -22,4 +22,8 @@ public enum Display {
     }
     return unknown;
   }
+
+  public boolean isUnknown() {
+    return this == unknown;
+  }
 }

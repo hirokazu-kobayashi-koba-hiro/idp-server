@@ -97,12 +97,19 @@ public class OAuthRequestContext {
     return authorizationRequest.responseMode();
   }
 
-  public boolean isSupportedResponseTypeWithServer(ResponseType responseType) {
+  public boolean isSupportedResponseTypeWithServer() {
+    ResponseType responseType = responseType();
     return serverConfiguration.isSupportedResponseType(responseType);
   }
 
-  public boolean isSupportedResponseTypeWithClient(ResponseType responseType) {
+  public boolean isSupportedResponseTypeWithClient() {
+    ResponseType responseType = responseType();
     return clientConfiguration.isSupportedResponseType(responseType);
+  }
+
+  public boolean isRegisteredRedirectUri() {
+    RedirectUri redirectUri = redirectUri();
+    return clientConfiguration.isRegisteredRequestUri(redirectUri.value());
   }
 
   public Scopes scopes() {
@@ -123,5 +130,9 @@ public class OAuthRequestContext {
 
   public String getParams(OAuthRequestKey key) {
     return parameters.getString(key);
+  }
+
+  public boolean hasRedirectUri() {
+    return authorizationRequest.hasRedirectUri();
   }
 }
