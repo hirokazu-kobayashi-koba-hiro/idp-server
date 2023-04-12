@@ -1,21 +1,18 @@
 package org.idp.server.service;
 
-import org.idp.server.core.authenticator.ClientSecretPostAuthenticator;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.repository.AuthorizationCodeGrantRepository;
-import org.idp.server.core.repository.AuthorizationRequestRepository;
-import org.idp.server.core.token.*;
-import org.idp.server.core.token.validator.TokenRequestCodeGrantValidator;
-import org.idp.server.core.type.oauth.*;
+import org.idp.server.authenticator.ClientSecretPostAuthenticator;
+import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.oauth.grant.AuthorizationCodeGrant;
+import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.repository.AuthorizationCodeGrantRepository;
+import org.idp.server.repository.AuthorizationRequestRepository;
+import org.idp.server.token.*;
+import org.idp.server.token.validator.TokenRequestCodeGrantValidator;
+import org.idp.server.type.oauth.*;
 
 public class TokenCreationCodeGrantService
-    implements OAuthTokenCreationService,
-        AccessTokenPayloadCreatable,
-        AccessTokenCreatable,
-        RefreshTokenCreatable {
+    implements OAuthTokenCreationService, AccessTokenCreatable, RefreshTokenCreatable {
 
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;

@@ -8,11 +8,11 @@ import java.util.Objects;
 import org.idp.server.IdpServerFailedInitializationException;
 import org.idp.server.basic.json.JsonParser;
 import org.idp.server.basic.resource.ResourceReadable;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
-import org.idp.server.core.repository.ClientConfigurationRepository;
-import org.idp.server.core.type.oauth.ClientId;
-import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.configuration.ClientConfigurationNotFoundException;
+import org.idp.server.repository.ClientConfigurationRepository;
+import org.idp.server.type.oauth.ClientId;
+import org.idp.server.type.oauth.TokenIssuer;
 
 /** ClientConfigurationMemoryDataSource */
 public class ClientConfigurationMemoryDataSource

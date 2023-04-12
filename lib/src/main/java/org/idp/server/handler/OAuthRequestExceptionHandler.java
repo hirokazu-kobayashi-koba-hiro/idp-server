@@ -1,15 +1,15 @@
 package org.idp.server.handler;
 
-import org.idp.server.core.oauth.OAuthRequestContext;
-import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
-import org.idp.server.core.oauth.response.AuthorizationErrorResponse;
-import org.idp.server.core.oauth.response.AuthorizationErrorResponseBuilder;
-import org.idp.server.core.type.extension.ResponseModeValue;
-import org.idp.server.core.type.oauth.RedirectUri;
-import org.idp.server.core.type.oauth.State;
-import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.io.OAuthRequestResponse;
 import org.idp.server.io.status.OAuthRequestStatus;
+import org.idp.server.oauth.OAuthRequestContext;
+import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
+import org.idp.server.oauth.response.AuthorizationErrorResponse;
+import org.idp.server.oauth.response.AuthorizationErrorResponseBuilder;
+import org.idp.server.type.extension.ResponseModeValue;
+import org.idp.server.type.oauth.RedirectUri;
+import org.idp.server.type.oauth.State;
+import org.idp.server.type.oauth.TokenIssuer;
 
 public class OAuthRequestExceptionHandler {
 

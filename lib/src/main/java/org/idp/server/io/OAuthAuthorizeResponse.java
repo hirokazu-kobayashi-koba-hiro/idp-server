@@ -1,8 +1,8 @@
 package org.idp.server.io;
 
-import org.idp.server.core.oauth.response.AuthorizationErrorResponse;
-import org.idp.server.core.oauth.response.AuthorizationResponse;
 import org.idp.server.io.status.OAuthAuthorizeStatus;
+import org.idp.server.oauth.response.AuthorizationErrorResponse;
+import org.idp.server.oauth.response.AuthorizationResponse;
 
 /** OAuthAuthorizeResponse */
 public class OAuthAuthorizeResponse {

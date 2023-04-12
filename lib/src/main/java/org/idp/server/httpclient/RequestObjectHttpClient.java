@@ -7,9 +7,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import org.idp.server.basic.http.HttpClientFactory;
-import org.idp.server.core.gateway.RequestObjectGateway;
-import org.idp.server.core.type.oauth.RequestUri;
-import org.idp.server.core.type.oidc.RequestObject;
+import org.idp.server.gateway.RequestObjectGateway;
+import org.idp.server.type.oauth.RequestUri;
+import org.idp.server.type.oidc.RequestObject;
 
 /** RequestObjectHttpClient */
 public class RequestObjectHttpClient implements RequestObjectGateway {

@@ -3,9 +3,9 @@ package org.idp.server.datasource.memory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
-import org.idp.server.core.repository.AuthorizationCodeGrantRepository;
-import org.idp.server.core.type.oauth.AuthorizationCode;
+import org.idp.server.oauth.grant.AuthorizationCodeGrant;
+import org.idp.server.repository.AuthorizationCodeGrantRepository;
+import org.idp.server.type.oauth.AuthorizationCode;
 
 public class AuthorizationCodeGrantMemoryDataSource implements AuthorizationCodeGrantRepository {
 

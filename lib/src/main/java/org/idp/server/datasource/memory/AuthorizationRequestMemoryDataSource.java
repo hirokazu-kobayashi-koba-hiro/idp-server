@@ -3,9 +3,9 @@ package org.idp.server.datasource.memory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.repository.AuthorizationRequestRepository;
+import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.repository.AuthorizationRequestRepository;
 
 /** AuthorizationRequestMemoryDataSource */
 public class AuthorizationRequestMemoryDataSource implements AuthorizationRequestRepository {

@@ -1,14 +1,14 @@
 package org.idp.server.io;
 
 import java.util.Map;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.oauth.OAuthRequestContext;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.oauth.response.AuthorizationErrorResponse;
-import org.idp.server.core.type.oauth.Error;
-import org.idp.server.core.type.oauth.ErrorDescription;
+import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.io.status.OAuthRequestStatus;
+import org.idp.server.oauth.OAuthRequestContext;
+import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.response.AuthorizationErrorResponse;
+import org.idp.server.type.oauth.Error;
+import org.idp.server.type.oauth.ErrorDescription;
 
 /** OAuthRequestResponse */
 public class OAuthRequestResponse {

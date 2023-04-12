@@ -2,20 +2,20 @@ package org.idp.server;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.repository.ClientConfigurationRepository;
-import org.idp.server.core.repository.ServerConfigurationRepository;
-import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.token.TokenErrorResponse;
-import org.idp.server.core.token.TokenRequestContext;
-import org.idp.server.core.type.*;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oauth.Error;
+import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.handler.OAuthTokenRequestHandler;
 import org.idp.server.io.TokenRequest;
 import org.idp.server.io.TokenRequestResponse;
 import org.idp.server.io.status.TokenRequestStatus;
+import org.idp.server.repository.ClientConfigurationRepository;
+import org.idp.server.repository.ServerConfigurationRepository;
+import org.idp.server.token.OAuthToken;
+import org.idp.server.token.TokenErrorResponse;
+import org.idp.server.token.TokenRequestContext;
+import org.idp.server.type.TokenRequestParameters;
+import org.idp.server.type.oauth.*;
+import org.idp.server.type.oauth.Error;
 
 public class TokenApi {
 

@@ -1,9 +1,9 @@
 package org.idp.server.io;
 
 import java.util.Map;
-import org.idp.server.core.token.TokenErrorResponse;
-import org.idp.server.core.token.TokenResponse;
 import org.idp.server.io.status.TokenRequestStatus;
+import org.idp.server.token.TokenErrorResponse;
+import org.idp.server.token.TokenResponse;
 
 public class TokenRequestResponse {
   TokenRequestStatus status;

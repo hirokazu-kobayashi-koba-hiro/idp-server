@@ -2,10 +2,10 @@ package org.idp.server.io;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.oauth.identity.User;
+import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.type.extension.CustomProperties;
+import org.idp.server.type.oauth.TokenIssuer;
 
 /** OAuthAuthorizeRequest */
 public class OAuthAuthorizeRequest {
