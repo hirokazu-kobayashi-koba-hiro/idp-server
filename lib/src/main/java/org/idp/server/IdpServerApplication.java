@@ -1,14 +1,14 @@
 package org.idp.server;
 
 import java.util.List;
-import org.idp.server.datasource.memory.AuthorizationCodeGrantMemoryDataSource;
-import org.idp.server.datasource.memory.AuthorizationRequestMemoryDataSource;
-import org.idp.server.datasource.memory.ClientConfigurationMemoryDataSource;
-import org.idp.server.datasource.memory.ServerConfigurationMemoryDataSource;
 import org.idp.server.handler.OAuthAuthorizeHandler;
 import org.idp.server.handler.OAuthRequestHandler;
 import org.idp.server.handler.OAuthTokenRequestHandler;
-import org.idp.server.io.config.MemoryDataSourceConfig;
+import org.idp.server.handler.io.config.MemoryDataSourceConfig;
+import org.idp.server.oauth.datasource.memory.AuthorizationCodeGrantMemoryDataSource;
+import org.idp.server.oauth.datasource.memory.AuthorizationRequestMemoryDataSource;
+import org.idp.server.oauth.datasource.memory.ClientConfigurationMemoryDataSource;
+import org.idp.server.oauth.datasource.memory.ServerConfigurationMemoryDataSource;
 
 /** IdpServerApplication */
 public class IdpServerApplication {

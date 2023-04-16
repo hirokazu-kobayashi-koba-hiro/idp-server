@@ -1,7 +1,7 @@
 package org.idp.server.handler;
 
-import org.idp.server.io.OAuthRequestResponse;
-import org.idp.server.io.status.OAuthRequestStatus;
+import org.idp.server.handler.io.OAuthRequestResponse;
+import org.idp.server.handler.io.status.OAuthRequestStatus;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.oauth.response.AuthorizationErrorResponse;

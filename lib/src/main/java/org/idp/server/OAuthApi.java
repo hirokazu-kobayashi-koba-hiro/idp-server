@@ -7,22 +7,22 @@ import org.idp.server.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.handler.OAuthAuthorizeHandler;
 import org.idp.server.handler.OAuthRequestExceptionHandler;
 import org.idp.server.handler.OAuthRequestHandler;
-import org.idp.server.io.OAuthAuthorizeRequest;
-import org.idp.server.io.OAuthAuthorizeResponse;
-import org.idp.server.io.OAuthRequest;
-import org.idp.server.io.OAuthRequestResponse;
-import org.idp.server.io.status.OAuthAuthorizeStatus;
-import org.idp.server.io.status.OAuthRequestStatus;
+import org.idp.server.handler.io.OAuthAuthorizeRequest;
+import org.idp.server.handler.io.OAuthAuthorizeResponse;
+import org.idp.server.handler.io.OAuthRequest;
+import org.idp.server.handler.io.OAuthRequestResponse;
+import org.idp.server.handler.io.status.OAuthAuthorizeStatus;
+import org.idp.server.handler.io.status.OAuthRequestStatus;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.exception.OAuthBadRequestException;
 import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.oauth.response.AuthorizationResponse;
+import org.idp.server.oauth.validator.OAuthRequestValidator;
 import org.idp.server.type.OAuthRequestParameters;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.TokenIssuer;
-import org.idp.server.validator.OAuthRequestValidator;
 
 /** OAuthApi */
 public class OAuthApi {

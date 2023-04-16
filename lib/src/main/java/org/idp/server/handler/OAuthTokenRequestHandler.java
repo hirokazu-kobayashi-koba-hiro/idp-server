@@ -5,12 +5,12 @@ import static org.idp.server.type.oauth.GrantType.authorization_code;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.repository.AuthorizationCodeGrantRepository;
-import org.idp.server.repository.AuthorizationRequestRepository;
-import org.idp.server.service.TokenCreationCodeGrantService;
+import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
+import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.OAuthTokenCreationService;
 import org.idp.server.token.TokenRequestContext;
+import org.idp.server.token.service.TokenCreationCodeGrantService;
 import org.idp.server.token.validator.TokenRequestValidator;
 import org.idp.server.type.oauth.GrantType;
 

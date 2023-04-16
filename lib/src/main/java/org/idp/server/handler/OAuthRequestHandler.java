@@ -5,20 +5,20 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.httpclient.RequestObjectHttpClient;
 import org.idp.server.oauth.OAuthRequestAnalyzer;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.OAuthRequestPattern;
+import org.idp.server.oauth.httpclient.RequestObjectHttpClient;
+import org.idp.server.oauth.repository.AuthorizationRequestRepository;
+import org.idp.server.oauth.repository.ClientConfigurationRepository;
+import org.idp.server.oauth.repository.ServerConfigurationRepository;
 import org.idp.server.oauth.request.OAuthRequestContextService;
-import org.idp.server.repository.AuthorizationRequestRepository;
-import org.idp.server.repository.ClientConfigurationRepository;
-import org.idp.server.repository.ServerConfigurationRepository;
-import org.idp.server.service.NormalPatternContextService;
-import org.idp.server.service.RequestObjectPatternContextService;
-import org.idp.server.service.RequestUriPatternContextService;
+import org.idp.server.oauth.service.NormalPatternContextService;
+import org.idp.server.oauth.service.RequestObjectPatternContextService;
+import org.idp.server.oauth.service.RequestUriPatternContextService;
+import org.idp.server.oauth.verifier.OAuthRequestVerifier;
 import org.idp.server.type.OAuthRequestParameters;
 import org.idp.server.type.oauth.TokenIssuer;
-import org.idp.server.verifier.OAuthRequestVerifier;
 
 /** OAuthRequestHandler */
 public class OAuthRequestHandler {
