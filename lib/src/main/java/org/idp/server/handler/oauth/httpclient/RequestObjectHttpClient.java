@@ -1,4 +1,4 @@
-package org.idp.server.oauth.httpclient;
+package org.idp.server.handler.oauth.httpclient;
 
 import java.io.IOException;
 import java.net.URI;

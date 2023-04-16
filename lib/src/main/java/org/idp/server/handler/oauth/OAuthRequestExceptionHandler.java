@@ -1,4 +1,4 @@
-package org.idp.server.handler;
+package org.idp.server.handler.oauth;
 
 import org.idp.server.handler.io.OAuthRequestResponse;
 import org.idp.server.handler.io.status.OAuthRequestStatus;

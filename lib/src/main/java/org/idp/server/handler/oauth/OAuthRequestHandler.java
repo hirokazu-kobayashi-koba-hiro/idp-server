@@ -1,14 +1,14 @@
-package org.idp.server.handler;
+package org.idp.server.handler.oauth;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.handler.oauth.httpclient.RequestObjectHttpClient;
 import org.idp.server.oauth.OAuthRequestAnalyzer;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.OAuthRequestPattern;
-import org.idp.server.oauth.httpclient.RequestObjectHttpClient;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.repository.ClientConfigurationRepository;
 import org.idp.server.oauth.repository.ServerConfigurationRepository;

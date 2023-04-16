@@ -1,4 +1,4 @@
-package org.idp.server.handler;
+package org.idp.server.handler.oauth;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package org.idp.server.handler;
+package org.idp.server.handler.token;
 
 import static org.idp.server.type.oauth.GrantType.authorization_code;
 
