@@ -1,6 +1,7 @@
 package org.idp.server;
 
 import java.util.List;
+import org.idp.server.handler.ciba.CibaRequestHandler;
 import org.idp.server.handler.io.config.MemoryDataSourceConfig;
 import org.idp.server.handler.oauth.OAuthAuthorizeHandler;
 import org.idp.server.handler.oauth.OAuthRequestHandler;
@@ -8,13 +9,15 @@ import org.idp.server.handler.oauth.datasource.memory.AuthorizationCodeGrantMemo
 import org.idp.server.handler.oauth.datasource.memory.AuthorizationRequestMemoryDataSource;
 import org.idp.server.handler.oauth.datasource.memory.ClientConfigurationMemoryDataSource;
 import org.idp.server.handler.oauth.datasource.memory.ServerConfigurationMemoryDataSource;
-import org.idp.server.handler.token.OAuthTokenRequestHandler;
+import org.idp.server.handler.oauth.httpclient.RequestObjectHttpClient;
+import org.idp.server.handler.token.TokenRequestHandler;
 
 /** IdpServerApplication */
 public class IdpServerApplication {
 
   OAuthApi oAuthApi;
   TokenApi tokenApi;
+  CibaApi cibaApi;
 
   public IdpServerApplication(MemoryDataSourceConfig memoryDataSourceConfig) {
     List<String> serverConfigurations = memoryDataSourceConfig.serverConfigurations();
@@ -31,7 +34,8 @@ public class IdpServerApplication {
         new OAuthRequestHandler(
             authorizationRequestMemoryDataSource,
             serverConfigurationMemoryDataSource,
-            clientConfigurationMemoryDataSource);
+            clientConfigurationMemoryDataSource,
+            new RequestObjectHttpClient());
     OAuthAuthorizeHandler oAuthAuthorizeHandler =
         new OAuthAuthorizeHandler(
             authorizationRequestMemoryDataSource,
@@ -39,14 +43,14 @@ public class IdpServerApplication {
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
     this.oAuthApi = new OAuthApi(oAuthRequestHandler, oAuthAuthorizeHandler);
-    OAuthTokenRequestHandler tokenRequestHandler =
-        new OAuthTokenRequestHandler(
-            authorizationRequestMemoryDataSource, authorizationCodeGrantMemoryDataSource);
-    this.tokenApi =
-        new TokenApi(
-            tokenRequestHandler,
+    TokenRequestHandler tokenRequestHandler =
+        new TokenRequestHandler(
+            authorizationRequestMemoryDataSource,
+            authorizationCodeGrantMemoryDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
+    this.tokenApi = new TokenApi(tokenRequestHandler);
+    this.cibaApi = new CibaApi(new CibaRequestHandler());
   }
 
   public OAuthApi oAuthApi() {
@@ -55,5 +59,9 @@ public class IdpServerApplication {
 
   public TokenApi tokenApi() {
     return tokenApi;
+  }
+
+  public CibaApi cibaApi() {
+    return cibaApi;
   }
 }

@@ -5,10 +5,11 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.handler.oauth.httpclient.RequestObjectHttpClient;
+import org.idp.server.handler.io.OAuthRequest;
 import org.idp.server.oauth.OAuthRequestAnalyzer;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.OAuthRequestPattern;
+import org.idp.server.oauth.gateway.RequestObjectGateway;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.repository.ClientConfigurationRepository;
 import org.idp.server.oauth.repository.ServerConfigurationRepository;
@@ -16,6 +17,7 @@ import org.idp.server.oauth.request.OAuthRequestContextService;
 import org.idp.server.oauth.service.NormalPatternContextService;
 import org.idp.server.oauth.service.RequestObjectPatternContextService;
 import org.idp.server.oauth.service.RequestUriPatternContextService;
+import org.idp.server.oauth.validator.OAuthRequestValidator;
 import org.idp.server.oauth.verifier.OAuthRequestVerifier;
 import org.idp.server.type.OAuthRequestParameters;
 import org.idp.server.type.oauth.TokenIssuer;
@@ -23,6 +25,7 @@ import org.idp.server.type.oauth.TokenIssuer;
 /** OAuthRequestHandler */
 public class OAuthRequestHandler {
   Map<OAuthRequestPattern, OAuthRequestContextService> map = new HashMap<>();
+  OAuthRequestValidator requestValidator;
   OAuthRequestAnalyzer requestAnalyzer;
   OAuthRequestVerifier verifier;
   AuthorizationRequestRepository authorizationRequestRepository;
@@ -32,7 +35,9 @@ public class OAuthRequestHandler {
   public OAuthRequestHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+      ClientConfigurationRepository clientConfigurationRepository,
+      RequestObjectGateway requestObjectGateway) {
+    this.requestValidator = new OAuthRequestValidator();
     this.requestAnalyzer = new OAuthRequestAnalyzer();
     this.verifier = new OAuthRequestVerifier();
     this.authorizationRequestRepository = authorizationRequestRepository;
@@ -41,11 +46,13 @@ public class OAuthRequestHandler {
     map.put(OAuthRequestPattern.NORMAL, new NormalPatternContextService());
     map.put(OAuthRequestPattern.REQUEST_OBJECT, new RequestObjectPatternContextService());
     map.put(
-        OAuthRequestPattern.REQUEST_URI,
-        new RequestUriPatternContextService(new RequestObjectHttpClient()));
+        OAuthRequestPattern.REQUEST_URI, new RequestUriPatternContextService(requestObjectGateway));
   }
 
-  public OAuthRequestContext handle(OAuthRequestParameters parameters, TokenIssuer tokenIssuer) {
+  public OAuthRequestContext handle(OAuthRequest oAuthRequest) {
+    OAuthRequestParameters parameters = oAuthRequest.toParameters();
+    TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
+    requestValidator.validate(parameters);
 
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
     ClientConfiguration clientConfiguration =

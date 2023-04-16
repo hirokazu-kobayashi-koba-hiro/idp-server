@@ -1,4 +1,4 @@
-package org.idp.server.authenticator.exception;
+package org.idp.server.clientauthenticator.exception;
 
 public class ClientUnAuthorizedException extends RuntimeException {
   public ClientUnAuthorizedException(String message) {

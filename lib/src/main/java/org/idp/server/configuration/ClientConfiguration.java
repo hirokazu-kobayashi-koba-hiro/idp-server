@@ -140,4 +140,8 @@ public class ClientConfiguration implements JsonReadable {
   public boolean isSupportedResponseType(ResponseType responseType) {
     return responseTypes.contains(responseType.name());
   }
+
+  public boolean matchClientSecret(String that) {
+    return clientSecret.equals(that);
+  }
 }

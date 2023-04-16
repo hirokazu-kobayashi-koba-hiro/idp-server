@@ -1,5 +1,6 @@
 package org.idp.server.token;
 
+import org.idp.server.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.type.OAuthRequestKey;
@@ -9,7 +10,7 @@ import org.idp.server.type.oauth.ClientSecret;
 import org.idp.server.type.oauth.ClientSecretBasic;
 import org.idp.server.type.oauth.GrantType;
 
-public class TokenRequestContext {
+public class TokenRequestContext implements BackchannelRequestContext {
 
   ClientSecretBasic clientSecretBasic;
   TokenRequestParameters parameters;
@@ -27,10 +28,12 @@ public class TokenRequestContext {
     this.clientConfiguration = clientConfiguration;
   }
 
+  @Override
   public ClientSecretBasic clientSecretBasic() {
     return clientSecretBasic;
   }
 
+  @Override
   public boolean hasClientSecretBasic() {
     return clientSecretBasic.exists();
   }
@@ -55,10 +58,12 @@ public class TokenRequestContext {
     return parameters.grantType();
   }
 
+  @Override
   public ServerConfiguration serverConfiguration() {
     return serverConfiguration;
   }
 
+  @Override
   public ClientConfiguration clientConfiguration() {
     return clientConfiguration;
   }

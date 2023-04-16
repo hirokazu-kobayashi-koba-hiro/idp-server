@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.handler.io.OAuthAuthorizeRequest;
 import org.idp.server.oauth.OAuthAuthorizeContext;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.grant.AuthorizationCodeGrantCreator;
@@ -44,11 +45,12 @@ public class OAuthAuthorizeHandler {
     map.put(ResponseType.code, new AuthorizationCodeResponseCreator());
   }
 
-  public AuthorizationResponse handle(
-      TokenIssuer tokenIssuer,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      User user,
-      CustomProperties customProperties) {
+  public AuthorizationResponse handle(OAuthAuthorizeRequest request) {
+    TokenIssuer tokenIssuer = request.toTokenIssuer();
+    AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
+    User user = request.user();
+    CustomProperties customProperties = request.toCustomProperties();
+
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.get(authorizationRequestIdentifier);
     ClientId clientId = authorizationRequest.clientId();

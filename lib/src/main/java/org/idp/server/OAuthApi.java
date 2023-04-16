@@ -16,37 +16,25 @@ import org.idp.server.handler.oauth.OAuthRequestHandler;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.exception.OAuthBadRequestException;
 import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
-import org.idp.server.oauth.identity.User;
-import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.oauth.response.AuthorizationResponse;
-import org.idp.server.oauth.validator.OAuthRequestValidator;
-import org.idp.server.type.OAuthRequestParameters;
-import org.idp.server.type.extension.CustomProperties;
-import org.idp.server.type.oauth.TokenIssuer;
 
 /** OAuthApi */
 public class OAuthApi {
-  OAuthRequestValidator requestValidator;
   OAuthRequestHandler requestHandler;
   OAuthRequestExceptionHandler oAuthRequestExceptionHandler;
   OAuthAuthorizeHandler authAuthorizeHandler;
   Logger log = Logger.getLogger(OAuthApi.class.getName());
 
   OAuthApi(OAuthRequestHandler requestHandler, OAuthAuthorizeHandler authAuthorizeHandler) {
-    this.requestValidator = new OAuthRequestValidator();
     this.requestHandler = requestHandler;
     this.oAuthRequestExceptionHandler = new OAuthRequestExceptionHandler();
     this.authAuthorizeHandler = authAuthorizeHandler;
   }
 
   public OAuthRequestResponse request(OAuthRequest oAuthRequest) {
-    OAuthRequestParameters oAuthRequestParameters = oAuthRequest.toParameters();
-    TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
-    try {
-      requestValidator.validate(oAuthRequestParameters);
 
-      OAuthRequestContext oAuthRequestContext =
-          requestHandler.handle(oAuthRequestParameters, tokenIssuer);
+    try {
+      OAuthRequestContext oAuthRequestContext = requestHandler.handle(oAuthRequest);
 
       return new OAuthRequestResponse(OAuthRequestStatus.OK, oAuthRequestContext);
     } catch (OAuthBadRequestException exception) {
@@ -68,14 +56,8 @@ public class OAuthApi {
   }
 
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
-    AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
-    User user = request.user();
-    CustomProperties customProperties = request.toCustomProperties();
     try {
-      AuthorizationResponse authorizationResponse =
-          authAuthorizeHandler.handle(
-              tokenIssuer, authorizationRequestIdentifier, user, customProperties);
+      AuthorizationResponse authorizationResponse = authAuthorizeHandler.handle(request);
 
       return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, authorizationResponse);
     } catch (Exception exception) {
