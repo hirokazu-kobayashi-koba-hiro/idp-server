@@ -2,7 +2,7 @@
 
 ## architecture
 
-[architecture](./architecture.svg)
+![architecture](./architecture.svg)
 
 ## supported spec
 
