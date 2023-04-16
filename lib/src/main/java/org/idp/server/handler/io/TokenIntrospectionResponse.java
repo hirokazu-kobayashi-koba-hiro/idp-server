@@ -7,7 +7,7 @@ import org.idp.server.token.AccessTokenPayload;
 public class TokenIntrospectionResponse {
   TokenIntrospectionRequestStatus status;
   AccessTokenPayload accessTokenPayload;
-  Map<String, Object> contents;
+  Map<String, Object> response;
 
   public TokenIntrospectionResponse(
       TokenIntrospectionRequestStatus status,
@@ -15,12 +15,28 @@ public class TokenIntrospectionResponse {
       Map<String, Object> contents) {
     this.status = status;
     this.accessTokenPayload = accessTokenPayload;
-    this.contents = contents;
+    this.response = contents;
   }
 
   public TokenIntrospectionResponse(
       TokenIntrospectionRequestStatus status, Map<String, Object> contents) {
     this.status = status;
-    this.contents = contents;
+    this.response = contents;
+  }
+
+  public TokenIntrospectionRequestStatus status() {
+    return status;
+  }
+
+  public int statusCode() {
+    return status.statusCode();
+  }
+
+  public AccessTokenPayload accessTokenPayload() {
+    return accessTokenPayload;
+  }
+
+  public Map<String, Object> response() {
+    return response;
   }
 }

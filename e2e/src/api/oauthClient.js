@@ -177,3 +177,21 @@ export const requestToken = async ({
     headers,
   });
 };
+
+export const inspectToken = async ({
+  endpoint,
+  token,
+  tokenHintType,
+}) => {
+  let params = new URLSearchParams();
+  if (params) {
+    params.append("token", token);
+  }
+  if (tokenHintType) {
+    params.append("token_hint_type", tokenHintType);
+  }
+  return await post({
+    url: endpoint,
+    body: params,
+  });
+};
