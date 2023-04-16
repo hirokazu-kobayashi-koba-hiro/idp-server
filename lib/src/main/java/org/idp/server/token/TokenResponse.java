@@ -29,6 +29,7 @@ public class TokenResponse {
     this.tokenType = tokenType;
     this.expiresIn = expiresIn;
     this.refreshToken = refreshToken;
+    this.idToken = idToken;
     this.response = response;
   }
 

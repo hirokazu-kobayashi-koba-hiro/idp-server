@@ -1,7 +1,5 @@
 package org.idp.server.oauth;
 
-import org.idp.server.type.OAuthRequestParameters;
-
 /** OAuthRequestAnalyzer */
 public class OAuthRequestAnalyzer {
 

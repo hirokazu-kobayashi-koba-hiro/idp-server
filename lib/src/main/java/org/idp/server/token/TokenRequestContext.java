@@ -4,7 +4,6 @@ import org.idp.server.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.type.OAuthRequestKey;
-import org.idp.server.type.TokenRequestParameters;
 import org.idp.server.type.oauth.AuthorizationCode;
 import org.idp.server.type.oauth.ClientSecret;
 import org.idp.server.type.oauth.ClientSecretBasic;

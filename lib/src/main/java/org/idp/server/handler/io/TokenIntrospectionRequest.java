@@ -1,21 +1,19 @@
 package org.idp.server.handler.io;
 
 import java.util.Map;
-import org.idp.server.oauth.OAuthRequestParameters;
+import org.idp.server.tokenintrospection.TokenIntrospectionRequestParameters;
 import org.idp.server.type.oauth.TokenIssuer;
 
-/** OAuthRequest */
-public class OAuthRequest {
-
+public class TokenIntrospectionRequest {
   Map<String, String[]> params;
   String issuer;
 
-  public OAuthRequest() {
+  public TokenIntrospectionRequest() {
     this.params = Map.of();
     this.issuer = "";
   }
 
-  public OAuthRequest(Map<String, String[]> params, String issuer) {
+  public TokenIntrospectionRequest(Map<String, String[]> params, String issuer) {
     this.params = params;
     this.issuer = issuer;
   }
@@ -28,8 +26,8 @@ public class OAuthRequest {
     return issuer;
   }
 
-  public OAuthRequestParameters toParameters() {
-    return new OAuthRequestParameters(params);
+  public TokenIntrospectionRequestParameters toParameters() {
+    return new TokenIntrospectionRequestParameters(params);
   }
 
   public TokenIssuer toTokenIssuer() {

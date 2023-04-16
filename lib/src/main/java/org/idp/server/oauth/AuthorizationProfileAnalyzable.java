@@ -6,7 +6,6 @@ import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.type.OAuthRequestKey;
-import org.idp.server.type.OAuthRequestParameters;
 
 /** AuthorizationProfileAnalyzable */
 public interface AuthorizationProfileAnalyzable {

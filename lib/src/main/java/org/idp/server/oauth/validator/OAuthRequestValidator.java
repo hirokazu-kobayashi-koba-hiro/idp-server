@@ -1,8 +1,8 @@
 package org.idp.server.oauth.validator;
 
 import java.util.List;
+import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.exception.OAuthBadRequestException;
-import org.idp.server.type.OAuthRequestParameters;
 
 /** OAuthRequestInitialValidator */
 public class OAuthRequestValidator {

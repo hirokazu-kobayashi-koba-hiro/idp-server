@@ -1,7 +1,9 @@
-package org.idp.server.type;
+package org.idp.server.token;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.type.ArrayValueMap;
+import org.idp.server.type.OAuthRequestKey;
 import org.idp.server.type.oauth.*;
 
 /** TokenRequestParameters */

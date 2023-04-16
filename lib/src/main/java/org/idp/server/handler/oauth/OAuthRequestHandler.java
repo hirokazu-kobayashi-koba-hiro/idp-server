@@ -8,6 +8,7 @@ import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.handler.io.OAuthRequest;
 import org.idp.server.oauth.OAuthRequestAnalyzer;
 import org.idp.server.oauth.OAuthRequestContext;
+import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.OAuthRequestPattern;
 import org.idp.server.oauth.gateway.RequestObjectGateway;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
@@ -19,7 +20,6 @@ import org.idp.server.oauth.service.RequestObjectPatternContextService;
 import org.idp.server.oauth.service.RequestUriPatternContextService;
 import org.idp.server.oauth.validator.OAuthRequestValidator;
 import org.idp.server.oauth.verifier.OAuthRequestVerifier;
-import org.idp.server.type.OAuthRequestParameters;
 import org.idp.server.type.oauth.TokenIssuer;
 
 /** OAuthRequestHandler */

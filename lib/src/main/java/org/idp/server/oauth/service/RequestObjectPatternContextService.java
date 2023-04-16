@@ -9,12 +9,12 @@ import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.AuthorizationProfile;
 import org.idp.server.oauth.AuthorizationProfileAnalyzable;
 import org.idp.server.oauth.OAuthRequestContext;
+import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.OAuthRequestPattern;
 import org.idp.server.oauth.exception.OAuthBadRequestException;
 import org.idp.server.oauth.factory.RequestObjectPatternFactory;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.OAuthRequestContextService;
-import org.idp.server.type.OAuthRequestParameters;
 
 /** RequestObjectPatternContextService */
 public class RequestObjectPatternContextService

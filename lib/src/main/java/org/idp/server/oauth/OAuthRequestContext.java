@@ -6,7 +6,6 @@ import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.OAuthRequestKey;
-import org.idp.server.type.OAuthRequestParameters;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.ResponseMode;
 

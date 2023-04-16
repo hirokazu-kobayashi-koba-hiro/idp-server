@@ -1,26 +1,24 @@
-package org.idp.server.type;
+package org.idp.server.oauth;
 
 import static org.idp.server.type.OAuthRequestKey.*;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import org.idp.server.type.OAuthRequestKey;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 
-/** OAuthRequestParameters */
-public class OAuthRequestParameters {
-  ArrayValueMap values;
+/** RequestObjectParameters */
+public class RequestObjectParameters {
+  Map<String, Object> values;
 
-  public OAuthRequestParameters() {
-    this.values = new ArrayValueMap();
+  public RequestObjectParameters() {
+    this.values = new HashMap<>();
   }
 
-  public OAuthRequestParameters(ArrayValueMap values) {
+  public RequestObjectParameters(Map<String, Object> values) {
     this.values = values;
-  }
-
-  public OAuthRequestParameters(Map<String, String[]> values) {
-    this.values = new ArrayValueMap(values);
   }
 
   public boolean isEmpty() {
@@ -163,18 +161,15 @@ public class OAuthRequestParameters {
     return contains(request_uri);
   }
 
-  public String getString(OAuthRequestKey key) {
-    if (!values.contains(key.name())) {
+  String getString(OAuthRequestKey key) {
+    Object value = values.get(key.name());
+    if (Objects.isNull(value)) {
       return "";
     }
-    return values.getFirst(key.name());
+    return (String) value;
   }
 
   boolean contains(OAuthRequestKey key) {
-    return values.contains(key.name());
-  }
-
-  public List<String> multiValueKeys() {
-    return values.multiValueKeys();
+    return values.containsKey(key.name());
   }
 }

@@ -1,5 +1,6 @@
 package org.idp.server.token.service;
 
+import java.util.UUID;
 import org.idp.server.clientauthenticator.ClientSecretPostAuthenticator;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
@@ -78,6 +79,7 @@ public class TokenCreationCodeGrantService
       tokenResponseBuilder.add(idToken);
     }
     TokenResponse tokenResponse = tokenResponseBuilder.build();
-    return new OAuthToken(tokenResponse, accessTokenPayload);
+    OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
+    return new OAuthToken(identifier, tokenResponse, accessTokenPayload);
   }
 }

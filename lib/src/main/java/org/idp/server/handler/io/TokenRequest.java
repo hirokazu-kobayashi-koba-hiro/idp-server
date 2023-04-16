@@ -3,7 +3,7 @@ package org.idp.server.handler.io;
 import java.util.Map;
 import org.idp.server.basic.http.BasicAuth;
 import org.idp.server.basic.http.BasicAuthConvertable;
-import org.idp.server.type.TokenRequestParameters;
+import org.idp.server.token.TokenRequestParameters;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ClientSecretBasic;
 import org.idp.server.type.oauth.TokenIssuer;

@@ -15,9 +15,10 @@ import org.idp.server.oauth.repository.ServerConfigurationRepository;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.OAuthTokenCreationService;
 import org.idp.server.token.TokenRequestContext;
+import org.idp.server.token.TokenRequestParameters;
+import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.token.service.TokenCreationCodeGrantService;
 import org.idp.server.token.validator.TokenRequestValidator;
-import org.idp.server.type.TokenRequestParameters;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ClientSecretBasic;
 import org.idp.server.type.oauth.GrantType;
@@ -27,12 +28,14 @@ public class TokenRequestHandler {
 
   Map<GrantType, OAuthTokenCreationService> map = new HashMap<>();
   TokenRequestValidator tokenRequestValidator;
+  OAuthTokenRepository oAuthTokenRepository;
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
   public TokenRequestHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
+      OAuthTokenRepository oAuthTokenRepository,
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
     map.put(
@@ -40,6 +43,7 @@ public class TokenRequestHandler {
         new TokenCreationCodeGrantService(
             authorizationRequestRepository, authorizationCodeGrantRepository));
     this.tokenRequestValidator = new TokenRequestValidator();
+    this.oAuthTokenRepository = oAuthTokenRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
@@ -63,6 +67,10 @@ public class TokenRequestHandler {
     if (Objects.isNull(oAuthTokenCreationService)) {
       throw new RuntimeException(String.format("unsupported grant_type (%s)", grantType.name()));
     }
-    return oAuthTokenCreationService.create(tokenRequestContext);
+
+    OAuthToken oAuthToken = oAuthTokenCreationService.create(tokenRequestContext);
+    oAuthTokenRepository.register(oAuthToken);
+
+    return oAuthToken;
   }
 }
