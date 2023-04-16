@@ -168,4 +168,16 @@ public class AuthorizationRequest {
   public boolean isInvalidMaxAge() {
     return !maxAge.isValid();
   }
+
+  public boolean hasState() {
+    return state.exists();
+  }
+
+  public boolean hasNonce() {
+    return nonce.exists();
+  }
+
+  public boolean isOidcProfile() {
+    return scopes.contains("openid");
+  }
 }

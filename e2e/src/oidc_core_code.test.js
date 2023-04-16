@@ -5,7 +5,7 @@ import { clientSecretPostClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1", () => {
-  xit("success pattern", async () => {
+  it("success pattern", async () => {
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
       clientId: clientSecretPostClient.clientId,
@@ -27,6 +27,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1", () => {
     });
     console.log(tokenResponse.data);
     expect(tokenResponse.status).toBe(200);
+    expect(tokenResponse.data).toHaveProperty("id_token");
   });
 
   describe("3.1.2.1.  Authentication Request", () => {

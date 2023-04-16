@@ -1,6 +1,7 @@
 package org.idp.server.oauth.grant;
 
 import org.idp.server.oauth.OAuthAuthorizeContext;
+import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.oauth.response.AuthorizationResponse;
 import org.idp.server.type.extension.CustomProperties;
@@ -12,12 +13,12 @@ public class AuthorizationCodeGrantCreator {
       OAuthAuthorizeContext oAuthAuthorizeContext, AuthorizationResponse authorizationResponse) {
     AuthorizationRequestIdentifier authorizationRequestIdentifier =
         oAuthAuthorizeContext.authorizationRequest().identifier();
-    Subject subject = oAuthAuthorizeContext.subject();
+    User user = oAuthAuthorizeContext.user();
     ClientId clientId = oAuthAuthorizeContext.clientConfiguration().clientId();
     Scopes scopes = oAuthAuthorizeContext.scopes();
     CustomProperties customProperties = oAuthAuthorizeContext.customProperties();
     AuthorizationGranted authorizationGranted =
-        new AuthorizationGranted(subject, clientId, scopes, customProperties);
+        new AuthorizationGranted(user, clientId, scopes, customProperties);
     AuthorizationCode authorizationCode = authorizationResponse.authorizationCode();
     ExpiredAt expiredAt = oAuthAuthorizeContext.authorizationCodeGrantExpiresDateTime();
 

@@ -3,16 +3,24 @@ package org.idp.server.token.service;
 import org.idp.server.authenticator.ClientSecretPostAuthenticator;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
+import org.idp.server.oauth.grant.AuthorizationGranted;
+import org.idp.server.oauth.identity.IdTokenCreatable;
+import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.token.*;
 import org.idp.server.token.validator.TokenRequestCodeGrantValidator;
 import org.idp.server.type.oauth.*;
+import org.idp.server.type.oidc.IdToken;
 
 public class TokenCreationCodeGrantService
-    implements OAuthTokenCreationService, AccessTokenCreatable, RefreshTokenCreatable {
+    implements OAuthTokenCreationService,
+        AccessTokenCreatable,
+        RefreshTokenCreatable,
+        IdTokenCreatable {
 
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
@@ -54,6 +62,21 @@ public class TokenCreationCodeGrantService
             .add(TokenType.Bearer)
             .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
             .add(refreshToken);
+    if (authorizationRequest.isOidcProfile()) {
+      AuthorizationCode authorizationCode = authorizationCodeGrant.authorizationCode();
+      AuthorizationGranted authorizationGranted = authorizationCodeGrant.authorizationGranted();
+      User user = authorizationGranted.user();
+      IdToken idToken =
+          createIdToken(
+              authorizationRequest,
+              authorizationCode,
+              accessToken,
+              user,
+              new Authentication(),
+              serverConfiguration,
+              clientConfiguration);
+      tokenResponseBuilder.add(idToken);
+    }
     TokenResponse tokenResponse = tokenResponseBuilder.build();
     return new OAuthToken(tokenResponse, accessTokenPayload);
   }

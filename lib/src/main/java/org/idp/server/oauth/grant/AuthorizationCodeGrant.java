@@ -2,11 +2,11 @@ package org.idp.server.oauth.grant;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.oauth.AuthorizationCode;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ExpiredAt;
-import org.idp.server.type.oauth.Subject;
 
 /** AuthorizationCodeGrant */
 public class AuthorizationCodeGrant {
@@ -33,8 +33,8 @@ public class AuthorizationCodeGrant {
     return authorizationRequestIdentifier;
   }
 
-  public Subject subject() {
-    return authorizationGranted.subject();
+  public User user() {
+    return authorizationGranted.user();
   }
 
   public AuthorizationGranted authorizationGranted() {

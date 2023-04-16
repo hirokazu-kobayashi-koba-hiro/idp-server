@@ -36,8 +36,8 @@ public class OAuthAuthorizeContext {
     return authorizationRequest;
   }
 
-  public Subject subject() {
-    return new Subject(user.sub());
+  public User user() {
+    return user;
   }
 
   public Scopes scopes() {

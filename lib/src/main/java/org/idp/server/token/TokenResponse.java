@@ -18,11 +18,12 @@ public class TokenResponse {
 
   public TokenResponse() {}
 
-  public TokenResponse(
+  TokenResponse(
       AccessToken accessToken,
       TokenType tokenType,
       ExpiresIn expiresIn,
       RefreshToken refreshToken,
+      IdToken idToken,
       Map<String, Object> response) {
     this.accessToken = accessToken;
     this.tokenType = tokenType;
@@ -45,6 +46,10 @@ public class TokenResponse {
 
   public RefreshToken refreshToken() {
     return refreshToken;
+  }
+
+  public IdToken idToken() {
+    return idToken;
   }
 
   public Map<String, Object> response() {

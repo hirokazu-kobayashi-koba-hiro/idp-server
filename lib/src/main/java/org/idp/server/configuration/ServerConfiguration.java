@@ -59,6 +59,7 @@ public class ServerConfiguration implements JsonReadable {
   List<String> fapiAdvanceScopes = new ArrayList<>();
   int authorizationCodeValidDuration = 600;
   String tokenSignedKeyId = "";
+  String idTokenSignedKeyId = "";
   long accessTokenDuration = 3600;
 
   public ServerConfiguration() {}
@@ -258,6 +259,10 @@ public class ServerConfiguration implements JsonReadable {
 
   public String tokenSignedKeyId() {
     return tokenSignedKeyId;
+  }
+
+  public String idTokenSignedKeyId() {
+    return idTokenSignedKeyId;
   }
 
   public long accessTokenDuration() {

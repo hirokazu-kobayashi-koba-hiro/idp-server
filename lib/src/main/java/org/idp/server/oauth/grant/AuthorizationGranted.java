@@ -1,5 +1,6 @@
 package org.idp.server.oauth.grant;
 
+import org.idp.server.oauth.identity.User;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.Scopes;
@@ -7,25 +8,29 @@ import org.idp.server.type.oauth.Subject;
 
 public class AuthorizationGranted {
 
-  Subject subject;
+  User user;
   ClientId clientId;
   Scopes scopes;
   CustomProperties customProperties;
 
   public AuthorizationGranted(
-      Subject subject, ClientId clientId, Scopes scopes, CustomProperties customProperties) {
+      User user, ClientId clientId, Scopes scopes, CustomProperties customProperties) {
+    this.user = user;
     this.clientId = clientId;
-    this.subject = subject;
     this.scopes = scopes;
     this.customProperties = customProperties;
   }
 
-  public Subject subject() {
-    return subject;
+  public User user() {
+    return user;
   }
 
   public String subjectValue() {
-    return subject.value();
+    return user.sub();
+  }
+
+  public Subject subject() {
+    return new Subject(user.sub());
   }
 
   public ClientId clientId() {
