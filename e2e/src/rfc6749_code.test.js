@@ -4,7 +4,7 @@ import { getAuthorizations, requestToken } from "./api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
 
-describe("The OAuth 2.0 Authorization Framework", () => {
+describe("The OAuth 2.0 Authorization Framework code", () => {
   it("success pattern", async () => {
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,

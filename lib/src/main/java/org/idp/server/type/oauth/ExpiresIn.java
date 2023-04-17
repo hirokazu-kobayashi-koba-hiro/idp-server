@@ -16,4 +16,8 @@ public class ExpiresIn {
   public long value() {
     return value;
   }
+
+  public String toStringValue() {
+    return String.valueOf(value);
+  }
 }

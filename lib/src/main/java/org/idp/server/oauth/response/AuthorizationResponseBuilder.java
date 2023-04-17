@@ -1,18 +1,20 @@
 package org.idp.server.oauth.response;
 
 import org.idp.server.basic.http.QueryParams;
+import org.idp.server.token.AccessTokenPayload;
 import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
-import org.idp.server.type.oauth.Error;
 
 public class AuthorizationResponseBuilder {
   RedirectUri redirectUri;
   ResponseModeValue responseModeValue;
-  AuthorizationCode authorizationCode;
-  State state;
+  AuthorizationCode authorizationCode = new AuthorizationCode();
+  State state = new State();
+  AccessToken accessToken = new AccessToken();
+  AccessTokenPayload accessTokenPayload = new AccessTokenPayload();
+  TokenType tokenType = TokenType.undefined;
+  ExpiresIn expiresIn = new ExpiresIn();
   TokenIssuer tokenIssuer;
-  Error error;
-  ErrorDescription errorDescription;
   QueryParams queryParams;
 
   public AuthorizationResponseBuilder(
@@ -36,8 +38,42 @@ public class AuthorizationResponseBuilder {
     return this;
   }
 
+  public AuthorizationResponseBuilder add(AccessToken accessToken) {
+    this.accessToken = accessToken;
+    this.queryParams.add("access_token", accessToken.value());
+    return this;
+  }
+
+  public AuthorizationResponseBuilder add(AccessTokenPayload accessTokenPayload) {
+    this.accessTokenPayload = accessTokenPayload;
+    return this;
+  }
+
+  public AuthorizationResponseBuilder add(ExpiresIn expiresIn) {
+    this.expiresIn = expiresIn;
+    this.queryParams.add("expires_in", expiresIn.toStringValue());
+    return this;
+  }
+
+  public AuthorizationResponseBuilder add(TokenType tokenType) {
+    if (tokenType.isDefined()) {
+      this.tokenType = tokenType;
+      this.queryParams.add("token_type", tokenType.name());
+    }
+    return this;
+  }
+
   public AuthorizationResponse build() {
     return new AuthorizationResponse(
-        redirectUri, responseModeValue, authorizationCode, state, tokenIssuer, queryParams);
+        redirectUri,
+        responseModeValue,
+        authorizationCode,
+        state,
+        accessToken,
+        accessTokenPayload,
+        tokenType,
+        expiresIn,
+        tokenIssuer,
+        queryParams);
   }
 }

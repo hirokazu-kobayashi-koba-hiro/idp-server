@@ -12,8 +12,8 @@ public class TokenResponse {
   AccessToken accessToken;
   TokenType tokenType;
   ExpiresIn expiresIn;
-  RefreshToken refreshToken;
-  IdToken idToken;
+  RefreshToken refreshToken = new RefreshToken();
+  IdToken idToken = new IdToken();
   Map<String, Object> response = new HashMap<>();
 
   public TokenResponse() {}
@@ -55,5 +55,9 @@ public class TokenResponse {
 
   public Map<String, Object> response() {
     return response;
+  }
+
+  public boolean hasRefreshToken() {
+    return refreshToken.exists();
   }
 }

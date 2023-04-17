@@ -22,7 +22,9 @@ public class OAuthTokenMemoryDataSource implements OAuthTokenRepository {
   @Override
   public void register(OAuthToken oAuthToken) {
     registerWithAccessTokenKey(oAuthToken);
-    registerWithRefreshTokenKey(oAuthToken);
+    if (oAuthToken.hasRefreshToken()) {
+      registerWithRefreshTokenKey(oAuthToken);
+    }
   }
 
   void registerWithAccessTokenKey(OAuthToken oAuthToken) {

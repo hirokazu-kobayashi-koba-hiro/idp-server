@@ -2,5 +2,10 @@ package org.idp.server.type.oauth;
 
 public enum TokenType {
   Bearer,
-  DPoP;
+  DPoP,
+  undefined;
+
+  public boolean isDefined() {
+    return this != undefined;
+  }
 }

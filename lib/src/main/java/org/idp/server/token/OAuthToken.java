@@ -53,4 +53,8 @@ public class OAuthToken {
   public RefreshToken refreshToken() {
     return tokenResponse.refreshToken();
   }
+
+  public boolean hasRefreshToken() {
+    return tokenResponse.hasRefreshToken();
+  }
 }

@@ -5,7 +5,7 @@ import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.AuthorizationCode;
 
-public class AuthorizationCodeResponseCreator
+public class AuthorizationResponseCodeCreator
     implements AuthorizationResponseCreator, AuthorizationCodeCreatable {
 
   @Override
@@ -14,9 +14,11 @@ public class AuthorizationCodeResponseCreator
     AuthorizationCode authorizationCode = createAuthorizationCode();
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(
-            authorizationRequest.redirectUri(), new ResponseModeValue("?"), context.tokenIssuer());
-    authorizationResponseBuilder.add(authorizationRequest.state());
-    authorizationResponseBuilder.add(authorizationCode);
+                authorizationRequest.redirectUri(),
+                new ResponseModeValue("?"),
+                context.tokenIssuer())
+            .add(authorizationRequest.state())
+            .add(authorizationCode);
     return authorizationResponseBuilder.build();
   }
 }

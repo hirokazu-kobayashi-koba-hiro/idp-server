@@ -12,8 +12,8 @@ public class TokenResponseBuilder {
   AccessToken accessToken;
   TokenType tokenType;
   ExpiresIn expiresIn;
-  RefreshToken refreshToken;
-  IdToken idToken;
+  RefreshToken refreshToken = new RefreshToken();
+  IdToken idToken = new IdToken();
   Map<String, Object> values = new HashMap<>();
 
   public TokenResponseBuilder() {}

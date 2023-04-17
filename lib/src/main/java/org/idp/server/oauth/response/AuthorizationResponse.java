@@ -1,17 +1,19 @@
 package org.idp.server.oauth.response;
 
 import org.idp.server.basic.http.QueryParams;
+import org.idp.server.token.AccessTokenPayload;
 import org.idp.server.type.extension.ResponseModeValue;
-import org.idp.server.type.oauth.AuthorizationCode;
-import org.idp.server.type.oauth.RedirectUri;
-import org.idp.server.type.oauth.State;
-import org.idp.server.type.oauth.TokenIssuer;
+import org.idp.server.type.oauth.*;
 
 public class AuthorizationResponse {
   RedirectUri redirectUri;
   ResponseModeValue responseModeValue;
   AuthorizationCode authorizationCode;
   State state;
+  AccessToken accessToken;
+  AccessTokenPayload accessTokenPayload;
+  TokenType tokenType;
+  ExpiresIn expiresIn;
   TokenIssuer tokenIssuer;
   QueryParams queryParams;
 
@@ -20,12 +22,20 @@ public class AuthorizationResponse {
       ResponseModeValue responseModeValue,
       AuthorizationCode authorizationCode,
       State state,
+      AccessToken accessToken,
+      AccessTokenPayload accessTokenPayload,
+      TokenType tokenType,
+      ExpiresIn expiresIn,
       TokenIssuer tokenIssuer,
       QueryParams queryParams) {
     this.redirectUri = redirectUri;
     this.responseModeValue = responseModeValue;
     this.authorizationCode = authorizationCode;
     this.state = state;
+    this.accessToken = accessToken;
+    this.accessTokenPayload = accessTokenPayload;
+    this.tokenType = tokenType;
+    this.expiresIn = expiresIn;
     this.tokenIssuer = tokenIssuer;
     this.queryParams = queryParams;
   }
@@ -50,6 +60,22 @@ public class AuthorizationResponse {
     return tokenIssuer;
   }
 
+  public AccessToken accessToken() {
+    return accessToken;
+  }
+
+  public AccessTokenPayload accessTokenPayload() {
+    return accessTokenPayload;
+  }
+
+  public TokenType tokenType() {
+    return tokenType;
+  }
+
+  public ExpiresIn expiresIn() {
+    return expiresIn;
+  }
+
   QueryParams queryParams() {
     return queryParams;
   }
@@ -61,5 +87,9 @@ public class AuthorizationResponse {
 
   public boolean hasAuthorizationCode() {
     return authorizationCode.exists();
+  }
+
+  public boolean hasAccessToken() {
+    return accessToken.exists();
   }
 }

@@ -46,6 +46,7 @@ public class IdpServerApplication {
         new OAuthAuthorizeHandler(
             authorizationRequestMemoryDataSource,
             authorizationCodeGrantMemoryDataSource,
+            oAuthTokenMemoryDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
     this.oAuthApi = new OAuthApi(oAuthRequestHandler, oAuthAuthorizeHandler);

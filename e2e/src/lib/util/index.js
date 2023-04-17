@@ -1,7 +1,7 @@
 export const convertToAuthorizationResponse = (redirectUri) => {
   const query = redirectUri.includes("?")
     ? redirectUri.split("?")[1]
-    : redirectUri.split("#"[1]);
+    : redirectUri.split("#")[1];
   const params = new URLSearchParams(query);
   return {
     responseMode: redirectUri.includes("?") ? "?" : "#",

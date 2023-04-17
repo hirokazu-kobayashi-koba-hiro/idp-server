@@ -14,6 +14,8 @@ public class AccessTokenPayload {
   ExpiredAt expiredAt;
   Map<String, Object> values;
 
+  public AccessTokenPayload() {}
+
   AccessTokenPayload(
       TokenIssuer tokenIssuer,
       Subject subject,

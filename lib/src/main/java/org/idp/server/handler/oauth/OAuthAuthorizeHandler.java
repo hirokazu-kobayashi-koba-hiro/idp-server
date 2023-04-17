@@ -10,15 +10,15 @@ import org.idp.server.oauth.OAuthAuthorizeContext;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.grant.AuthorizationCodeGrantCreator;
 import org.idp.server.oauth.identity.User;
-import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
-import org.idp.server.oauth.repository.AuthorizationRequestRepository;
-import org.idp.server.oauth.repository.ClientConfigurationRepository;
-import org.idp.server.oauth.repository.ServerConfigurationRepository;
+import org.idp.server.oauth.repository.*;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.oauth.response.AuthorizationCodeResponseCreator;
 import org.idp.server.oauth.response.AuthorizationResponse;
+import org.idp.server.oauth.response.AuthorizationResponseCodeCreator;
 import org.idp.server.oauth.response.AuthorizationResponseCreator;
+import org.idp.server.oauth.response.AuthorizationResponseTokenCreator;
+import org.idp.server.token.*;
+import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ResponseType;
@@ -30,19 +30,23 @@ public class OAuthAuthorizeHandler {
   Map<ResponseType, AuthorizationResponseCreator> map = new HashMap<>();
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
+  OAuthTokenRepository oAuthTokenRepository;
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
   public OAuthAuthorizeHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
+      OAuthTokenRepository oAuthTokenRepository,
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
+    this.oAuthTokenRepository = oAuthTokenRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
-    map.put(ResponseType.code, new AuthorizationCodeResponseCreator());
+    map.put(ResponseType.code, new AuthorizationResponseCodeCreator());
+    map.put(ResponseType.token, new AuthorizationResponseTokenCreator());
   }
 
   public AuthorizationResponse handle(OAuthAuthorizeRequest request) {
@@ -72,6 +76,11 @@ public class OAuthAuthorizeHandler {
       AuthorizationCodeGrant authorizationCodeGrant =
           AuthorizationCodeGrantCreator.create(context, authorizationResponse);
       authorizationCodeGrantRepository.register(authorizationCodeGrant);
+    }
+
+    if (authorizationResponse.hasAccessToken()) {
+      OAuthToken oAuthToken = OAuthTokenFactory.create(authorizationResponse);
+      oAuthTokenRepository.register(oAuthToken);
     }
 
     return authorizationResponse;
