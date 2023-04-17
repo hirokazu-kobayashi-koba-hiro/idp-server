@@ -13,6 +13,7 @@ import org.idp.server.handler.oauth.httpclient.RequestObjectHttpClient;
 import org.idp.server.handler.token.TokenRequestHandler;
 import org.idp.server.handler.token.datasource.OAuthTokenMemoryDataSource;
 import org.idp.server.handler.tokenintrospection.TokenIntrospectionHandler;
+import org.idp.server.handler.tokenrevocation.TokenRevocationHandler;
 
 /** IdpServerApplication */
 public class IdpServerApplication {
@@ -20,6 +21,7 @@ public class IdpServerApplication {
   OAuthApi oAuthApi;
   TokenApi tokenApi;
   TokenIntrospectionApi tokenIntrospectionApi;
+  TokenRevocationApi tokenRevocationApi;
   CibaApi cibaApi;
 
   public IdpServerApplication(MemoryDataSourceConfig memoryDataSourceConfig) {
@@ -58,6 +60,12 @@ public class IdpServerApplication {
     TokenIntrospectionHandler tokenIntrospectionHandler =
         new TokenIntrospectionHandler(oAuthTokenMemoryDataSource);
     this.tokenIntrospectionApi = new TokenIntrospectionApi(tokenIntrospectionHandler);
+    TokenRevocationHandler tokenRevocationHandler =
+        new TokenRevocationHandler(
+            oAuthTokenMemoryDataSource,
+            serverConfigurationMemoryDataSource,
+            clientConfigurationMemoryDataSource);
+    this.tokenRevocationApi = new TokenRevocationApi(tokenRevocationHandler);
     this.cibaApi = new CibaApi(new CibaRequestHandler());
   }
 
@@ -71,6 +79,10 @@ public class IdpServerApplication {
 
   public TokenIntrospectionApi tokenIntrospectionApi() {
     return tokenIntrospectionApi;
+  }
+
+  public TokenRevocationApi tokenRevocationApi() {
+    return tokenRevocationApi;
   }
 
   public CibaApi cibaApi() {

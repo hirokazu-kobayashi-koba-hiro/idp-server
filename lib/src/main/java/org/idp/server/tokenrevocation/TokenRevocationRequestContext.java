@@ -1,21 +1,20 @@
-package org.idp.server.token;
+package org.idp.server.tokenrevocation;
 
 import org.idp.server.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.type.OAuthRequestKey;
 import org.idp.server.type.oauth.*;
 
-public class TokenRequestContext implements BackchannelRequestContext {
+public class TokenRevocationRequestContext implements BackchannelRequestContext {
 
   ClientSecretBasic clientSecretBasic;
-  TokenRequestParameters parameters;
+  TokenRevocationRequestParameters parameters;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
 
-  public TokenRequestContext(
+  public TokenRevocationRequestContext(
       ClientSecretBasic clientSecretBasic,
-      TokenRequestParameters parameters,
+      TokenRevocationRequestParameters parameters,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     this.clientSecretBasic = clientSecretBasic;
@@ -34,24 +33,8 @@ public class TokenRequestContext implements BackchannelRequestContext {
     return clientSecretBasic.exists();
   }
 
-  public TokenRequestParameters parameters() {
+  public TokenRevocationRequestParameters parameters() {
     return parameters;
-  }
-
-  public String getValue(OAuthRequestKey key) {
-    return parameters.getString(key);
-  }
-
-  public AuthorizationCode code() {
-    return parameters.code();
-  }
-
-  public boolean hasCode() {
-    return parameters().hasCode();
-  }
-
-  public GrantType grantType() {
-    return parameters.grantType();
   }
 
   @Override
@@ -81,13 +64,5 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public boolean matchClientSecret(ClientSecret clientSecret) {
     return clientConfiguration.clientSecret().equals(clientSecret.value());
-  }
-
-  public boolean hasClientSecretWithParams() {
-    return parameters.hasClientSecret();
-  }
-
-  public ClientSecret clientSecretWithParams() {
-    return parameters.clientSecret();
   }
 }

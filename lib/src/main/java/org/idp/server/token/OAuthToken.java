@@ -1,6 +1,7 @@
 package org.idp.server.token;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import org.idp.server.type.oauth.AccessToken;
 import org.idp.server.type.oauth.RefreshToken;
 import org.idp.server.type.oauth.TokenIssuer;
@@ -38,7 +39,7 @@ public class OAuthToken {
   }
 
   public boolean exists() {
-    return identifier.exists();
+    return Objects.nonNull(identifier) && identifier.exists();
   }
 
   public boolean isExpire(LocalDateTime other) {

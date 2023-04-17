@@ -195,3 +195,32 @@ export const inspectToken = async ({
     body: params,
   });
 };
+
+export const revokeToken = async ({
+ endpoint,
+ token,
+ tokenHintType,
+ clientId,
+ clientSecret,
+ basicAuth,
+}) => {
+  let params = new URLSearchParams();
+  if (params) {
+    params.append("token", token);
+  }
+  if (tokenHintType) {
+    params.append("token_hint_type", tokenHintType);
+  }
+  if (clientId) {
+    params.append("client_id", clientId);
+  }
+  if (clientSecret) {
+    params.append("client_secret", clientSecret);
+  }
+  const headers = basicAuth ? basicAuth : {};
+  return await post({
+    url: endpoint,
+    body: params,
+    headers,
+  });
+};

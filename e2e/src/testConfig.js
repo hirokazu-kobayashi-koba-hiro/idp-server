@@ -6,6 +6,7 @@ export const serverConfig = {
     "http://localhost:8080/123/api/debug/v1/authorizations/{id}/authorize",
   tokenEndpoint: "http://localhost:8080/123/api/v1/tokens",
   tokenIntrospectionEndpoint: "http://localhost:8080/123/api/v1/tokens/introspection",
+  tokenRevocationEndpoint: "http://localhost:8080/123/api/v1/tokens/revocation",
   enabledSsr: false,
 };
 export const clientSecretPostClient = {

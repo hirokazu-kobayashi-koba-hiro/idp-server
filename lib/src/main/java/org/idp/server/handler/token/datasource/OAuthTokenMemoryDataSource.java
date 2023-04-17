@@ -55,6 +55,22 @@ public class OAuthTokenMemoryDataSource implements OAuthTokenRepository {
     return oAuthToken;
   }
 
+  @Override
+  public void delete(OAuthToken oAuthToken) {
+    deleteWithAccessTokenKey(oAuthToken);
+    deleteWithRefreshTokenKey(oAuthToken);
+  }
+
+  void deleteWithAccessTokenKey(OAuthToken oAuthToken) {
+    String key = accessTokenKey(oAuthToken.tokenIssuer(), oAuthToken.accessToken());
+    accessTokens.remove(key);
+  }
+
+  void deleteWithRefreshTokenKey(OAuthToken oAuthToken) {
+    String key = refreshTokenKey(oAuthToken.tokenIssuer(), oAuthToken.refreshToken());
+    refreshTokens.remove(key);
+  }
+
   String accessTokenKey(TokenIssuer tokenIssuer, AccessToken accessToken) {
     return String.format("%s%s", tokenIssuer.value(), accessToken.value());
   }

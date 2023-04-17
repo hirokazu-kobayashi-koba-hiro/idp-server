@@ -21,8 +21,7 @@ public class TokenIntrospectionApi {
 
   public TokenIntrospectionResponse inspect(TokenIntrospectionRequest request) {
     try {
-      TokenIntrospectionResponse response = handler.handle(request);
-      return response;
+      return handler.handle(request);
     } catch (TokenInvalidException exception) {
       Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
       return new TokenIntrospectionResponse(

@@ -12,4 +12,6 @@ public interface OAuthTokenRepository {
   OAuthToken find(TokenIssuer tokenIssuer, AccessToken accessToken);
 
   OAuthToken find(TokenIssuer tokenIssuer, RefreshToken refreshToken);
+
+  void delete(OAuthToken oAuthToken);
 }

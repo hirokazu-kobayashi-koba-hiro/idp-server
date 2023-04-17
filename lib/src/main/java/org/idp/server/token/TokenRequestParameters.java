@@ -2,12 +2,13 @@ package org.idp.server.token;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.type.ArrayValueMap;
 import org.idp.server.type.OAuthRequestKey;
 import org.idp.server.type.oauth.*;
 
 /** TokenRequestParameters */
-public class TokenRequestParameters {
+public class TokenRequestParameters implements BackchannelRequestParameters {
   ArrayValueMap values;
 
   public TokenRequestParameters() {
@@ -26,18 +27,22 @@ public class TokenRequestParameters {
     return values.isEmpty();
   }
 
+  @Override
   public ClientId clientId() {
     return new ClientId(getString(OAuthRequestKey.client_id));
   }
 
+  @Override
   public boolean hasClientId() {
     return contains(OAuthRequestKey.client_id);
   }
 
+  @Override
   public ClientSecret clientSecret() {
     return new ClientSecret(getString(OAuthRequestKey.client_secret));
   }
 
+  @Override
   public boolean hasClientSecret() {
     return contains(OAuthRequestKey.client_secret);
   }

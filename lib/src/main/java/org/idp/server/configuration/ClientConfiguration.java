@@ -3,6 +3,7 @@ package org.idp.server.configuration;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.type.oauth.ClientAuthenticationType;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ResponseType;
 import org.idp.server.type.oauth.TokenIssuer;
@@ -143,5 +144,9 @@ public class ClientConfiguration implements JsonReadable {
 
   public boolean matchClientSecret(String that) {
     return clientSecret.equals(that);
+  }
+
+  public ClientAuthenticationType clientAuthenticationType() {
+    return ClientAuthenticationType.valueOf(tokenEndpointAuthMethod);
   }
 }
