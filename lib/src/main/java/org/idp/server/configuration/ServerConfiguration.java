@@ -270,6 +270,6 @@ public class ServerConfiguration implements JsonReadable {
   }
 
   public boolean isSupportedResponseType(ResponseType responseType) {
-    return responseTypesSupported.contains(responseType.name());
+    return responseTypesSupported.contains(responseType.value());
   }
 }

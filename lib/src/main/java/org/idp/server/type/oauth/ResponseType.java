@@ -7,20 +7,23 @@ import java.util.stream.Collectors;
 
 /** ResponseType */
 public enum ResponseType {
-  code(Set.of("code")),
-  token(Set.of("token")),
-  id_token(Set.of("id_token")),
-  code_token(Set.of("code", "token")),
-  code_token_id_token(Set.of("code", "token", "id_token")),
-  code_id_token(Set.of("code", "id_token")),
-  token_id_token(Set.of("token", "id_token")),
-  undefined(Set.of()),
-  unknown(Set.of());
+  code(Set.of("code"), "code"),
+  token(Set.of("token"), "token"),
+  id_token(Set.of("id_token"), "id_token"),
+  code_token(Set.of("code", "token"), "code token"),
+  code_token_id_token(Set.of("code", "token", "id_token"), "code token id_token"),
+  code_id_token(Set.of("code", "id_token"), "code id_token"),
+  token_id_token(Set.of("token", "id_token"), "token id_token"),
+  none(Set.of("none"), "none"),
+  undefined(Set.of(), ""),
+  unknown(Set.of(), "");
 
   Set<String> values;
+  String value;
 
-  ResponseType(Set<String> values) {
+  ResponseType(Set<String> values, String value) {
     this.values = values;
+    this.value = value;
   }
 
   public static ResponseType of(String input) {
@@ -54,5 +57,9 @@ public enum ResponseType {
 
   public boolean isUnknown() {
     return this == unknown;
+  }
+
+  public String value() {
+    return value;
   }
 }

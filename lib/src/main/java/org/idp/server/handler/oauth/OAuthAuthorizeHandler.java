@@ -13,10 +13,7 @@ import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.repository.*;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.oauth.response.AuthorizationResponse;
-import org.idp.server.oauth.response.AuthorizationResponseCodeCreator;
-import org.idp.server.oauth.response.AuthorizationResponseCreator;
-import org.idp.server.oauth.response.AuthorizationResponseTokenCreator;
+import org.idp.server.oauth.response.*;
 import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.type.extension.CustomProperties;
@@ -47,6 +44,7 @@ public class OAuthAuthorizeHandler {
     this.clientConfigurationRepository = clientConfigurationRepository;
     map.put(ResponseType.code, new AuthorizationResponseCodeCreator());
     map.put(ResponseType.token, new AuthorizationResponseTokenCreator());
+    map.put(ResponseType.code_token_id_token, new AuthorizationResponseCodeTokenIdTokenCreator());
   }
 
   public AuthorizationResponse handle(OAuthAuthorizeRequest request) {

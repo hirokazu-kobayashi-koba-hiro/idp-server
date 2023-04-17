@@ -4,6 +4,7 @@ import org.idp.server.basic.http.QueryParams;
 import org.idp.server.token.AccessTokenPayload;
 import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
+import org.idp.server.type.oidc.IdToken;
 
 public class AuthorizationResponseBuilder {
   RedirectUri redirectUri;
@@ -14,6 +15,7 @@ public class AuthorizationResponseBuilder {
   AccessTokenPayload accessTokenPayload = new AccessTokenPayload();
   TokenType tokenType = TokenType.undefined;
   ExpiresIn expiresIn = new ExpiresIn();
+  IdToken idToken = new IdToken();
   TokenIssuer tokenIssuer;
   QueryParams queryParams;
 
@@ -63,6 +65,12 @@ public class AuthorizationResponseBuilder {
     return this;
   }
 
+  public AuthorizationResponseBuilder add(IdToken idToken) {
+    this.idToken = idToken;
+    this.queryParams.add("id_token", idToken.value());
+    return this;
+  }
+
   public AuthorizationResponse build() {
     return new AuthorizationResponse(
         redirectUri,
@@ -73,6 +81,7 @@ public class AuthorizationResponseBuilder {
         accessTokenPayload,
         tokenType,
         expiresIn,
+        idToken,
         tokenIssuer,
         queryParams);
   }

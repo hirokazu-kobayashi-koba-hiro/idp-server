@@ -139,7 +139,7 @@ public class ClientConfiguration implements JsonReadable {
   }
 
   public boolean isSupportedResponseType(ResponseType responseType) {
-    return responseTypes.contains(responseType.name());
+    return responseTypes.contains(responseType.value());
   }
 
   public boolean matchClientSecret(String that) {
