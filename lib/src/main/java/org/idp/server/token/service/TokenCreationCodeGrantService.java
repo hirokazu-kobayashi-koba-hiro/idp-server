@@ -12,6 +12,8 @@ import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.token.AccessTokenCreatable;
+import org.idp.server.oauth.token.AccessTokenPayload;
 import org.idp.server.token.*;
 import org.idp.server.token.validator.TokenRequestCodeGrantValidator;
 import org.idp.server.type.oauth.*;

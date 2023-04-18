@@ -2,7 +2,7 @@ package org.idp.server.tokenintrospection;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.token.AccessTokenPayload;
+import org.idp.server.oauth.token.AccessTokenPayload;
 
 public class TokenIntrospectionContentsCreator {
 

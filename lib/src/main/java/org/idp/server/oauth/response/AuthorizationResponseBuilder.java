@@ -1,7 +1,7 @@
 package org.idp.server.oauth.response;
 
 import org.idp.server.basic.http.QueryParams;
-import org.idp.server.token.AccessTokenPayload;
+import org.idp.server.oauth.token.AccessTokenPayload;
 import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;

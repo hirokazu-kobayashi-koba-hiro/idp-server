@@ -1,4 +1,4 @@
-package org.idp.server.token;
+package org.idp.server.oauth.token;
 
 import java.time.LocalDateTime;
 import java.util.Map;

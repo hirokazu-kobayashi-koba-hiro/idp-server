@@ -2,6 +2,7 @@ package org.idp.server.token;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.idp.server.oauth.token.AccessTokenPayload;
 import org.idp.server.type.oauth.AccessToken;
 import org.idp.server.type.oauth.RefreshToken;
 import org.idp.server.type.oauth.TokenIssuer;

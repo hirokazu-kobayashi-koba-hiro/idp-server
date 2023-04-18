@@ -2,6 +2,7 @@ package org.idp.server.token;
 
 import java.util.UUID;
 import org.idp.server.oauth.response.AuthorizationResponse;
+import org.idp.server.oauth.token.AccessTokenPayload;
 import org.idp.server.type.oauth.AccessToken;
 import org.idp.server.type.oauth.ExpiresIn;
 import org.idp.server.type.oauth.TokenType;
