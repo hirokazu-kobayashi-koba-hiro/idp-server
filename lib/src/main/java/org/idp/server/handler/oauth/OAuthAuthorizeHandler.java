@@ -1,5 +1,7 @@
 package org.idp.server.handler.oauth;
 
+import static org.idp.server.type.oauth.ResponseType.*;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -42,9 +44,14 @@ public class OAuthAuthorizeHandler {
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
-    map.put(ResponseType.code, new AuthorizationResponseCodeCreator());
-    map.put(ResponseType.token, new AuthorizationResponseTokenCreator());
-    map.put(ResponseType.code_token_id_token, new AuthorizationResponseCodeTokenIdTokenCreator());
+    map.put(code, new AuthorizationResponseCodeCreator());
+    map.put(token, new AuthorizationResponseTokenCreator());
+    map.put(id_token, new AuthorizationResponseIdTokenCreator());
+    map.put(code_token, new AuthorizationResponseCodeTokenCreator());
+    map.put(code_token_id_token, new AuthorizationResponseCodeTokenIdTokenCreator());
+    map.put(code_id_token, new AuthorizationResponseCodeIdTokenCreator());
+    map.put(token_id_token, new AuthorizationResponseTokenIdTokenCreator());
+    map.put(none, new AuthorizationResponseNoneCreator());
   }
 
   public AuthorizationResponse handle(OAuthAuthorizeRequest request) {

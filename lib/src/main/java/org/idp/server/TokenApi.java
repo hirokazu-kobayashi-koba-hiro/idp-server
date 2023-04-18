@@ -5,19 +5,20 @@ import java.util.logging.Logger;
 import org.idp.server.handler.io.TokenRequest;
 import org.idp.server.handler.io.TokenRequestResponse;
 import org.idp.server.handler.io.status.TokenRequestStatus;
+import org.idp.server.handler.token.TokenRequestErrorHandler;
 import org.idp.server.handler.token.TokenRequestHandler;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.TokenErrorResponse;
-import org.idp.server.type.oauth.*;
-import org.idp.server.type.oauth.Error;
 
 public class TokenApi {
 
   TokenRequestHandler tokenRequestHandler;
+  TokenRequestErrorHandler errorHandler;
   Logger log = Logger.getLogger(TokenApi.class.getName());
 
   TokenApi(TokenRequestHandler tokenRequestHandler) {
     this.tokenRequestHandler = tokenRequestHandler;
+    this.errorHandler = new TokenRequestErrorHandler();
   }
 
   public TokenRequestResponse request(TokenRequest tokenRequest) {
@@ -27,9 +28,7 @@ public class TokenApi {
       return new TokenRequestResponse(TokenRequestStatus.OK, oAuthToken.tokenResponse());
     } catch (Exception exception) {
       log.log(Level.SEVERE, exception.getMessage(), exception);
-      Error error = new Error("server_error");
-      ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
-      TokenErrorResponse tokenErrorResponse = new TokenErrorResponse(error, errorDescription);
+      TokenErrorResponse tokenErrorResponse = errorHandler.handle(exception);
       return new TokenRequestResponse(TokenRequestStatus.SERVER_ERROR, tokenErrorResponse);
     }
   }
