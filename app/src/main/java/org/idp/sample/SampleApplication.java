@@ -1,5 +1,6 @@
 package org.idp.sample;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.handler.io.config.MemoryDataSourceConfig;
@@ -21,7 +22,9 @@ public class SampleApplication {
   @Bean
   public IdpServerApplication idpServerApplication() {
     List<String> serverPaths = List.of(configurationBasePath + "/server.json");
-    List<String> clientPaths = List.of(configurationBasePath + "/clients/clientSecretBasic.json");
+    List<String> clientPaths = new ArrayList<>();
+    clientPaths.add(configurationBasePath + "/clients/clientSecretBasic.json");
+    clientPaths.add(configurationBasePath + "/clients/clientSecretPost.json");
     return new IdpServerApplication(new MemoryDataSourceConfig(serverPaths, clientPaths));
   }
 }

@@ -1,7 +1,6 @@
 package org.idp.server.token.service;
 
 import java.util.UUID;
-import org.idp.server.clientauthenticator.ClientSecretPostAuthenticator;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.authentication.Authentication;
@@ -46,9 +45,6 @@ public class TokenCreationCodeGrantService
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.get(authorizationCodeGrant.authorizationRequestIdentifier());
 
-    // FIXME consider various client authentication type
-    ClientSecretPostAuthenticator authenticator = new ClientSecretPostAuthenticator();
-    authenticator.authenticate(tokenRequestContext);
     ServerConfiguration serverConfiguration = tokenRequestContext.serverConfiguration();
     ClientConfiguration clientConfiguration = tokenRequestContext.clientConfiguration();
     AccessTokenPayload accessTokenPayload =

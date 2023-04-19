@@ -22,7 +22,7 @@ class ClientSecretBasicAuthenticator implements ClientAuthenticator {
   }
 
   void throwIfNotContainsClientSecretBasic(BackchannelRequestContext context) {
-    if (context.hasClientSecretBasic()) {
+    if (!context.hasClientSecretBasic()) {
       throw new ClientUnAuthorizedException(
           "client authentication type is client_secret_basic, but request does not contains client_secret_basic");
     }

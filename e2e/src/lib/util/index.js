@@ -21,7 +21,7 @@ export const convertToAuthorizationResponse = (redirectUri) => {
 export const createBasicAuthHeader = ({ username, password }) => {
   const basicParam = `${username}:${password}`;
   return {
-    Authorization: `Basic  ${Buffer.from(basicParam).toString("base64")}`,
+    Authorization: `Basic ${Buffer.from(basicParam).toString("base64")}`,
   };
 };
 

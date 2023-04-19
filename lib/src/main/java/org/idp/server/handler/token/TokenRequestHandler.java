@@ -5,6 +5,7 @@ import static org.idp.server.type.oauth.GrantType.authorization_code;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.handler.io.TokenRequest;
@@ -28,6 +29,7 @@ public class TokenRequestHandler {
 
   Map<GrantType, OAuthTokenCreationService> map = new HashMap<>();
   TokenRequestValidator tokenRequestValidator;
+  ClientAuthenticatorHandler clientAuthenticatorHandler;
   OAuthTokenRepository oAuthTokenRepository;
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
@@ -43,6 +45,7 @@ public class TokenRequestHandler {
         new TokenCreationCodeGrantService(
             authorizationRequestRepository, authorizationCodeGrantRepository));
     this.tokenRequestValidator = new TokenRequestValidator();
+    this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
@@ -61,6 +64,8 @@ public class TokenRequestHandler {
         new TokenRequestContext(
             clientSecretBasic, parameters, serverConfiguration, clientConfiguration);
     tokenRequestValidator.validate(tokenRequestContext);
+
+    clientAuthenticatorHandler.authenticate(tokenRequestContext);
 
     GrantType grantType = tokenRequestContext.grantType();
     OAuthTokenCreationService oAuthTokenCreationService = map.get(grantType);
