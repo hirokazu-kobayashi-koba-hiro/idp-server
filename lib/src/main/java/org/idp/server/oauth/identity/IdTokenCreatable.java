@@ -17,7 +17,7 @@ import org.idp.server.type.oauth.ExpiredAt;
 import org.idp.server.type.oauth.State;
 import org.idp.server.type.oidc.IdToken;
 
-public interface IdTokenCreatable extends ClaimHashable {
+public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashable {
 
   // FIXME user claim
   default Map<String, Object> createClaims(
@@ -30,7 +30,6 @@ public interface IdTokenCreatable extends ClaimHashable {
     LocalDateTime now = UtcDateTime.now();
     ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(idTokenDuration));
     HashMap<String, Object> claims = new HashMap<>();
-    claims.put("sub", user.sub());
     claims.put("iss", authorizationRequest.tokenIssuer().value());
     claims.put("aud", authorizationRequest.clientId().value());
     claims.put("exp", expiredAt.toEpochSecondWithUtc());
@@ -48,6 +47,13 @@ public interface IdTokenCreatable extends ClaimHashable {
     if (accessToken.exists()) {
       claims.put("at_hash", hash(accessToken.value(), "ES256"));
     }
+    // FIXME IdTokenClaims
+    IdTokenIndividualClaimsDecider idTokenIndividualClaimsDecider =
+        new IdTokenIndividualClaimsDecider(
+            authorizationRequest.scope(), new IdTokenClaims(), false);
+    Map<String, Object> individualClaims =
+        createIndividualClaims(user, idTokenIndividualClaimsDecider);
+    claims.putAll(individualClaims);
     return claims;
   }
 

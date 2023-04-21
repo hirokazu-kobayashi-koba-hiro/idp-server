@@ -1,7 +1,6 @@
-package org.idp.server.handler.io;
+package org.idp.server.handler.tokenintrospection.io;
 
 import java.util.Map;
-import org.idp.server.handler.io.status.TokenIntrospectionRequestStatus;
 import org.idp.server.oauth.token.AccessTokenPayload;
 
 public class TokenIntrospectionResponse {

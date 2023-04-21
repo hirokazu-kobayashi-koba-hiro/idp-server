@@ -1,4 +1,4 @@
-package org.idp.server.handler.io.config;
+package org.idp.server.handler.config;
 
 import java.util.List;
 

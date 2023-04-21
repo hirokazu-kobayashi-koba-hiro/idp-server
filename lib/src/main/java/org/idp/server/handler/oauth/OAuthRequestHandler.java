@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.handler.io.OAuthRequest;
+import org.idp.server.handler.oauth.io.OAuthRequest;
 import org.idp.server.oauth.OAuthRequestAnalyzer;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.OAuthRequestParameters;

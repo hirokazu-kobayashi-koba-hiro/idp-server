@@ -1,4 +1,4 @@
-package org.idp.server.handler.io.status;
+package org.idp.server.handler.token.io;
 
 public enum TokenRequestStatus {
   OK(200),

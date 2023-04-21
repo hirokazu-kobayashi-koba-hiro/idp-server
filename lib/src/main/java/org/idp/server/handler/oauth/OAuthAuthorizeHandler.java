@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.handler.io.OAuthAuthorizeRequest;
+import org.idp.server.handler.oauth.io.OAuthAuthorizeRequest;
 import org.idp.server.oauth.OAuthAuthorizeContext;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.grant.AuthorizationCodeGrantCreator;

@@ -1,4 +1,4 @@
-package org.idp.server.handler.io;
+package org.idp.server.handler.oauth.io;
 
 import java.util.Map;
 import org.idp.server.oauth.OAuthRequestParameters;

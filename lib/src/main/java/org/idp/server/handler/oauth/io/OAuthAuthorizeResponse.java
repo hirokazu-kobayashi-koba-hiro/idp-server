@@ -1,6 +1,5 @@
-package org.idp.server.handler.io;
+package org.idp.server.handler.oauth.io;
 
-import org.idp.server.handler.io.status.OAuthAuthorizeStatus;
 import org.idp.server.oauth.response.AuthorizationErrorResponse;
 import org.idp.server.oauth.response.AuthorizationResponse;
 

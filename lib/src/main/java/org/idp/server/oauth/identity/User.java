@@ -14,6 +14,7 @@ public class User {
   String email;
   boolean emailVerified;
   String gender;
+  String birthdate;
   String zoneinfo;
   String locale;
   String phoneNumber;
@@ -135,6 +136,15 @@ public class User {
 
   public User setGender(String gender) {
     this.gender = gender;
+    return this;
+  }
+
+  public String birthdate() {
+    return birthdate;
+  }
+
+  public User setBirthdate(String birthdate) {
+    this.birthdate = birthdate;
     return this;
   }
 

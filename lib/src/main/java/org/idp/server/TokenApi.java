@@ -2,11 +2,11 @@ package org.idp.server;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.idp.server.handler.io.TokenRequest;
-import org.idp.server.handler.io.TokenRequestResponse;
-import org.idp.server.handler.io.status.TokenRequestStatus;
 import org.idp.server.handler.token.TokenRequestErrorHandler;
 import org.idp.server.handler.token.TokenRequestHandler;
+import org.idp.server.handler.token.io.TokenRequest;
+import org.idp.server.handler.token.io.TokenRequestResponse;
+import org.idp.server.handler.token.io.TokenRequestStatus;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.TokenErrorResponse;
 

@@ -2,13 +2,13 @@ package org.idp.server.handler.tokenrevocation.io;
 
 import java.util.Map;
 import org.idp.server.basic.http.BasicAuth;
-import org.idp.server.basic.http.BasicAuthConvertable;
+import org.idp.server.token.AuthorizationHeaderHandlerable;
 import org.idp.server.tokenrevocation.TokenRevocationRequestParameters;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ClientSecretBasic;
 import org.idp.server.type.oauth.TokenIssuer;
 
-public class TokenRevocationRequest implements BasicAuthConvertable {
+public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
 
   String authorizationHeaders;
   Map<String, String[]> params;

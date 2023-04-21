@@ -1,9 +1,9 @@
 package org.idp.server.handler.tokenintrospection;
 
 import java.util.Map;
-import org.idp.server.handler.io.TokenIntrospectionRequest;
-import org.idp.server.handler.io.TokenIntrospectionResponse;
-import org.idp.server.handler.io.status.TokenIntrospectionRequestStatus;
+import org.idp.server.handler.tokenintrospection.io.TokenIntrospectionRequest;
+import org.idp.server.handler.tokenintrospection.io.TokenIntrospectionRequestStatus;
+import org.idp.server.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.tokenintrospection.TokenIntrospectionContentsCreator;

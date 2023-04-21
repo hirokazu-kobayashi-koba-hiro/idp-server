@@ -1,7 +1,6 @@
-package org.idp.server.handler.io;
+package org.idp.server.handler.token.io;
 
 import java.util.Map;
-import org.idp.server.handler.io.status.TokenRequestStatus;
 import org.idp.server.token.TokenErrorResponse;
 import org.idp.server.token.TokenResponse;
 

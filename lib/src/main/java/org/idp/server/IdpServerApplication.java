@@ -2,7 +2,7 @@ package org.idp.server;
 
 import java.util.List;
 import org.idp.server.handler.ciba.CibaRequestHandler;
-import org.idp.server.handler.io.config.MemoryDataSourceConfig;
+import org.idp.server.handler.config.MemoryDataSourceConfig;
 import org.idp.server.handler.oauth.OAuthAuthorizeHandler;
 import org.idp.server.handler.oauth.OAuthRequestHandler;
 import org.idp.server.handler.oauth.datasource.memory.AuthorizationCodeGrantMemoryDataSource;

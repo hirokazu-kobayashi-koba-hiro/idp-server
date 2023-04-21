@@ -1,4 +1,4 @@
-package org.idp.server.handler.io.status;
+package org.idp.server.handler.oauth.io;
 
 /** OAuthRequestStatus */
 public enum OAuthRequestStatus {

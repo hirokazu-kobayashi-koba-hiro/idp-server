@@ -3,7 +3,7 @@ package org.idp.sample;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.handler.io.config.MemoryDataSourceConfig;
+import org.idp.server.handler.config.MemoryDataSourceConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

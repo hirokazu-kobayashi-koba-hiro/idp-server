@@ -18,6 +18,7 @@ export const convertToAuthorizationResponse = (redirectUri) => {
   };
 };
 
+
 export const createBasicAuthHeader = ({ username, password }) => {
   const basicParam = `${username}:${password}`;
   return {

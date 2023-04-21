@@ -8,7 +8,7 @@ import java.util.Objects;
 import org.idp.server.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.handler.io.TokenRequest;
+import org.idp.server.handler.token.io.TokenRequest;
 import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.repository.ClientConfigurationRepository;

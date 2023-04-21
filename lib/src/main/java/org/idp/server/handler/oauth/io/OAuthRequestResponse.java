@@ -1,9 +1,8 @@
-package org.idp.server.handler.io;
+package org.idp.server.handler.oauth.io;
 
 import java.util.Map;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.handler.io.status.OAuthRequestStatus;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.response.AuthorizationErrorResponse;
