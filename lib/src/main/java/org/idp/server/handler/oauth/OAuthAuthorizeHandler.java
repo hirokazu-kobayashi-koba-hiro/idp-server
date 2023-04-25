@@ -11,6 +11,7 @@ import org.idp.server.handler.oauth.io.OAuthAuthorizeRequest;
 import org.idp.server.oauth.OAuthAuthorizeContext;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.grant.AuthorizationCodeGrantCreator;
+import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.repository.*;
 import org.idp.server.oauth.request.AuthorizationRequest;
@@ -76,7 +77,7 @@ public class OAuthAuthorizeHandler {
     }
 
     AuthorizationResponse authorizationResponse = authorizationResponseCreator.create(context);
-
+    AuthorizationGrant authorizationGrant = context.toAuthorizationGranted();
     if (authorizationResponse.hasAuthorizationCode()) {
       AuthorizationCodeGrant authorizationCodeGrant =
           AuthorizationCodeGrantCreator.create(context, authorizationResponse);
@@ -84,7 +85,7 @@ public class OAuthAuthorizeHandler {
     }
 
     if (authorizationResponse.hasAccessToken()) {
-      OAuthToken oAuthToken = OAuthTokenFactory.create(authorizationResponse);
+      OAuthToken oAuthToken = OAuthTokenFactory.create(authorizationResponse, authorizationGrant);
       oAuthTokenRepository.register(oAuthToken);
     }
 

@@ -1,5 +1,6 @@
-import { get, post } from "../lib/http";
+import { get, post, postWithJson } from "../lib/http";
 import { convertToSnake } from "../lib/util";
+import { re } from "@babel/core/lib/vendor/import-meta-resolve";
 
 export const getAuthorizations = async ({
   endpoint,
@@ -222,5 +223,25 @@ export const revokeToken = async ({
     url: endpoint,
     body: params,
     headers,
+  });
+};
+
+export const getUserinfo = async ({
+  endpoint,
+  authorizationHeader,
+}) => {
+  return await get({
+    url: endpoint,
+    headers: authorizationHeader,
+  });
+};
+
+export const postUserinfo = async ({
+  endpoint,
+  authorizationHeader,
+}) => {
+  return await post({
+    url: endpoint,
+    headers: authorizationHeader,
   });
 };

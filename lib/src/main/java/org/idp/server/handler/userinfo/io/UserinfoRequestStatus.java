@@ -15,4 +15,8 @@ public enum UserinfoRequestStatus {
   public int statusCode() {
     return statusCode;
   }
+
+  public boolean isOK() {
+    return this == OK;
+  }
 }

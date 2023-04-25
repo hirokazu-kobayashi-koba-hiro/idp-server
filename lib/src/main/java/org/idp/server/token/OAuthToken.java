@@ -2,25 +2,30 @@ package org.idp.server.token;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.token.AccessTokenPayload;
 import org.idp.server.type.oauth.AccessToken;
 import org.idp.server.type.oauth.RefreshToken;
+import org.idp.server.type.oauth.Subject;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public class OAuthToken {
   OAuthTokenIdentifier identifier;
   TokenResponse tokenResponse;
   AccessTokenPayload accessTokenPayload;
+  AuthorizationGrant authorizationGrant;
 
   public OAuthToken() {}
 
   public OAuthToken(
       OAuthTokenIdentifier identifier,
       TokenResponse tokenResponse,
-      AccessTokenPayload accessTokenPayload) {
+      AccessTokenPayload accessTokenPayload,
+      AuthorizationGrant authorizationGrant) {
     this.identifier = identifier;
     this.tokenResponse = tokenResponse;
     this.accessTokenPayload = accessTokenPayload;
+    this.authorizationGrant = authorizationGrant;
   }
 
   public OAuthTokenIdentifier identifier() {
@@ -37,6 +42,10 @@ public class OAuthToken {
 
   public AccessTokenPayload accessTokenPayload() {
     return accessTokenPayload;
+  }
+
+  public AuthorizationGrant authorizationGrant() {
+    return authorizationGrant;
   }
 
   public boolean exists() {
@@ -57,5 +66,13 @@ public class OAuthToken {
 
   public boolean hasRefreshToken() {
     return tokenResponse.hasRefreshToken();
+  }
+
+  public Subject subject() {
+    return accessTokenPayload.subject();
+  }
+
+  public boolean hasOpenidScope() {
+    return accessTokenPayload.hasOpenidScope();
   }
 }

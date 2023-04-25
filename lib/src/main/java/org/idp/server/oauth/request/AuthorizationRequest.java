@@ -1,6 +1,7 @@
 package org.idp.server.oauth.request;
 
 import org.idp.server.oauth.AuthorizationProfile;
+import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 
@@ -26,9 +27,10 @@ public class AuthorizationRequest {
   IdTokenHint idTokenHint;
   LoginHint loginHint;
   AcrValues acrValues;
-  Claims claims;
+  ClaimsValue claimsValue;
   RequestObject requestObject;
   RequestUri requestUri;
+  ClaimsPayload claimsPayload;
 
   AuthorizationRequest(
       AuthorizationRequestIdentifier identifier,
@@ -48,9 +50,10 @@ public class AuthorizationRequest {
       IdTokenHint idTokenHint,
       LoginHint loginHint,
       AcrValues acrValues,
-      Claims claims,
+      ClaimsValue claimsValue,
       RequestObject requestObject,
-      RequestUri requestUri) {
+      RequestUri requestUri,
+      ClaimsPayload claimsPayload) {
     this.identifier = identifier;
     this.tokenIssuer = tokenIssuer;
     this.profile = profile;
@@ -68,9 +71,10 @@ public class AuthorizationRequest {
     this.idTokenHint = idTokenHint;
     this.loginHint = loginHint;
     this.acrValues = acrValues;
-    this.claims = claims;
+    this.claimsValue = claimsValue;
     this.requestObject = requestObject;
     this.requestUri = requestUri;
+    this.claimsPayload = claimsPayload;
   }
 
   public AuthorizationRequestIdentifier identifier() {
@@ -141,8 +145,8 @@ public class AuthorizationRequest {
     return acrValues;
   }
 
-  public Claims claims() {
-    return claims;
+  public ClaimsValue claims() {
+    return claimsValue;
   }
 
   public RequestObject request() {
@@ -151,6 +155,10 @@ public class AuthorizationRequest {
 
   public RequestUri requestUri() {
     return requestUri;
+  }
+
+  public ClaimsPayload claimsPayload() {
+    return claimsPayload;
   }
 
   public boolean hasRedirectUri() {

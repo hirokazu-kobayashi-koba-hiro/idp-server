@@ -1,35 +1,29 @@
 package org.idp.server.type.oidc;
 
-import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
 
 /** Claims */
 public class Claims {
-  String value;
+  Set<String> values;
 
-  public Claims() {}
-
-  public Claims(String value) {
-    this.value = value;
+  public Claims() {
+    this.values = new HashSet<>();
   }
 
-  public String value() {
-    return value;
+  public Claims(Set<String> values) {
+    this.values = values;
   }
 
   public boolean exists() {
-    return Objects.nonNull(value) && !value.isEmpty();
+    return !values.isEmpty();
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Claims that = (Claims) o;
-    return Objects.equals(value, that.value);
+  public String toStringValues() {
+    return String.join(" ", values);
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(value);
+  public boolean contains(String claim) {
+    return values.contains(claim);
   }
 }

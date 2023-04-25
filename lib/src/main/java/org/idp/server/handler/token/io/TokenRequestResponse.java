@@ -6,26 +6,34 @@ import org.idp.server.token.TokenResponse;
 
 public class TokenRequestResponse {
   TokenRequestStatus status;
-  TokenResponse response;
+  TokenResponse tokenResponse;
   TokenErrorResponse errorResponse;
 
-  public TokenRequestResponse(TokenRequestStatus status, TokenResponse response) {
+  public TokenRequestResponse(TokenRequestStatus status, TokenResponse tokenResponse) {
     this.status = status;
-    this.response = response;
+    this.tokenResponse = tokenResponse;
     this.errorResponse = new TokenErrorResponse();
   }
 
   public TokenRequestResponse(TokenRequestStatus status, TokenErrorResponse errorResponse) {
     this.status = status;
-    this.response = new TokenResponse();
+    this.tokenResponse = new TokenResponse();
     this.errorResponse = errorResponse;
   }
 
   public Map<String, Object> response() {
     if (status.isOK()) {
-      return response.response();
+      return tokenResponse.response();
     }
     return errorResponse.response();
+  }
+
+  public TokenResponse tokenResponse() {
+    return tokenResponse;
+  }
+
+  public TokenErrorResponse errorResponse() {
+    return errorResponse;
   }
 
   public TokenRequestStatus status() {

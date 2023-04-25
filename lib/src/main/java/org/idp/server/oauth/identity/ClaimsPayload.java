@@ -4,8 +4,8 @@ import java.util.Objects;
 import org.idp.server.basic.json.JsonReadable;
 
 public class ClaimsPayload implements JsonReadable {
-  UserinfoClaims userinfo;
-  IdTokenClaims idToken;
+  UserinfoClaims userinfo = new UserinfoClaims();
+  IdTokenClaims idToken = new IdTokenClaims();
 
   public ClaimsPayload() {}
 

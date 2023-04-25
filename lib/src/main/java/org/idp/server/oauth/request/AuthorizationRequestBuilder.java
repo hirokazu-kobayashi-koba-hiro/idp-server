@@ -1,6 +1,7 @@
 package org.idp.server.oauth.request;
 
 import org.idp.server.oauth.AuthorizationProfile;
+import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 
@@ -24,9 +25,10 @@ public class AuthorizationRequestBuilder {
   IdTokenHint idTokenHint;
   LoginHint loginHint;
   AcrValues acrValues;
-  Claims claims;
+  ClaimsValue claimsValue;
   RequestObject requestObject;
   RequestUri requestUri;
+  ClaimsPayload claimsPayload;
 
   public AuthorizationRequestBuilder() {}
 
@@ -50,8 +52,8 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
-  public AuthorizationRequestBuilder add(Claims claims) {
-    this.claims = claims;
+  public AuthorizationRequestBuilder add(ClaimsValue claimsValue) {
+    this.claimsValue = claimsValue;
     return this;
   }
 
@@ -130,6 +132,11 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
+  public AuthorizationRequestBuilder add(ClaimsPayload claimsPayload) {
+    this.claimsPayload = claimsPayload;
+    return this;
+  }
+
   public AuthorizationRequest build() {
     return new AuthorizationRequest(
         identifier,
@@ -149,8 +156,9 @@ public class AuthorizationRequestBuilder {
         idTokenHint,
         loginHint,
         acrValues,
-        claims,
+        claimsValue,
         requestObject,
-        requestUri);
+        requestUri,
+        claimsPayload);
   }
 }

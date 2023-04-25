@@ -83,7 +83,7 @@ public class JsonParserTest {
                       "name", "given_name", "family_name", "nickname",
                       "profile", "picture", "website",
                       "email", "email_verified", "locale", "zoneinfo",
-                      "http://example.info/claims/groups"],
+                      "http://example.info/claimsValue/groups"],
                    "claims_parameter_supported":
                      true,
                    "service_documentation":

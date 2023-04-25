@@ -3,9 +3,12 @@ package org.idp.server.token.service;
 import java.util.UUID;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.grantmangment.AuthorizationGranted;
+import org.idp.server.grantmangment.AuthorizationGrantedIdentifier;
+import org.idp.server.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
-import org.idp.server.oauth.grant.AuthorizationGranted;
+import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.IdTokenCreatable;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
@@ -26,13 +29,16 @@ public class TokenCreationCodeGrantService
 
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
+  AuthorizationGrantedRepository authorizationGrantedRepository;
   TokenRequestCodeGrantValidator validator;
 
   public TokenCreationCodeGrantService(
       AuthorizationRequestRepository authorizationRequestRepository,
-      AuthorizationCodeGrantRepository authorizationCodeGrantRepository) {
+      AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
+      AuthorizationGrantedRepository authorizationGrantedRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
+    this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.validator = new TokenRequestCodeGrantValidator();
   }
 
@@ -49,9 +55,7 @@ public class TokenCreationCodeGrantService
     ClientConfiguration clientConfiguration = tokenRequestContext.clientConfiguration();
     AccessTokenPayload accessTokenPayload =
         createAccessTokenPayload(
-            authorizationCodeGrant.authorizationGranted(),
-            serverConfiguration,
-            clientConfiguration);
+            authorizationCodeGrant.authorizationGrant(), serverConfiguration, clientConfiguration);
     AccessToken accessToken =
         createAccessToken(accessTokenPayload, serverConfiguration, clientConfiguration);
     RefreshToken refreshToken = createRefreshToken();
@@ -63,8 +67,8 @@ public class TokenCreationCodeGrantService
             .add(refreshToken);
     if (authorizationRequest.isOidcProfile()) {
       AuthorizationCode authorizationCode = authorizationCodeGrant.authorizationCode();
-      AuthorizationGranted authorizationGranted = authorizationCodeGrant.authorizationGranted();
-      User user = authorizationGranted.user();
+      AuthorizationGrant authorizationGrant = authorizationCodeGrant.authorizationGrant();
+      User user = authorizationGrant.user();
       IdToken idToken =
           createIdToken(
               authorizationRequest,
@@ -78,6 +82,15 @@ public class TokenCreationCodeGrantService
     }
     TokenResponse tokenResponse = tokenResponseBuilder.build();
     OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
-    return new OAuthToken(identifier, tokenResponse, accessTokenPayload);
+
+    AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
+        new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
+    AuthorizationGranted authorizationGranted =
+        new AuthorizationGranted(
+            authorizationGrantedIdentifier, authorizationCodeGrant.authorizationGrant());
+    authorizationGrantedRepository.register(authorizationGranted);
+
+    return new OAuthToken(
+        identifier, tokenResponse, accessTokenPayload, authorizationCodeGrant.authorizationGrant());
   }
 }

@@ -12,7 +12,7 @@ import org.idp.server.type.oauth.ExpiredAt;
 public class AuthorizationCodeGrant {
 
   AuthorizationRequestIdentifier authorizationRequestIdentifier;
-  AuthorizationGranted authorizationGranted;
+  AuthorizationGrant authorizationGrant;
   AuthorizationCode authorizationCode;
   ExpiredAt expiredAt;
 
@@ -20,11 +20,11 @@ public class AuthorizationCodeGrant {
 
   public AuthorizationCodeGrant(
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      AuthorizationGranted authorizationGranted,
+      AuthorizationGrant authorizationGrant,
       AuthorizationCode authorizationCode,
       ExpiredAt expiredAt) {
     this.authorizationRequestIdentifier = authorizationRequestIdentifier;
-    this.authorizationGranted = authorizationGranted;
+    this.authorizationGrant = authorizationGrant;
     this.authorizationCode = authorizationCode;
     this.expiredAt = expiredAt;
   }
@@ -34,11 +34,11 @@ public class AuthorizationCodeGrant {
   }
 
   public User user() {
-    return authorizationGranted.user();
+    return authorizationGrant.user();
   }
 
-  public AuthorizationGranted authorizationGranted() {
-    return authorizationGranted;
+  public AuthorizationGrant authorizationGrant() {
+    return authorizationGrant;
   }
 
   public AuthorizationCode authorizationCode() {
@@ -46,7 +46,7 @@ public class AuthorizationCodeGrant {
   }
 
   public boolean isGrantedClient(ClientId clientId) {
-    return authorizationGranted.isGranted(clientId);
+    return authorizationGrant.isGranted(clientId);
   }
 
   public boolean isExpire(LocalDateTime other) {

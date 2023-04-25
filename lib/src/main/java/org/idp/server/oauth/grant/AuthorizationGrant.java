@@ -1,23 +1,30 @@
 package org.idp.server.oauth.grant;
 
+import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.Scopes;
 import org.idp.server.type.oauth.Subject;
 
-public class AuthorizationGranted {
+public class AuthorizationGrant {
 
   User user;
   ClientId clientId;
   Scopes scopes;
+  ClaimsPayload claimsPayload;
   CustomProperties customProperties;
 
-  public AuthorizationGranted(
-      User user, ClientId clientId, Scopes scopes, CustomProperties customProperties) {
+  public AuthorizationGrant(
+      User user,
+      ClientId clientId,
+      Scopes scopes,
+      ClaimsPayload claimsPayload,
+      CustomProperties customProperties) {
     this.user = user;
     this.clientId = clientId;
     this.scopes = scopes;
+    this.claimsPayload = claimsPayload;
     this.customProperties = customProperties;
   }
 
@@ -43,6 +50,10 @@ public class AuthorizationGranted {
 
   public Scopes scopes() {
     return scopes;
+  }
+
+  public ClaimsPayload claimsPayload() {
+    return claimsPayload;
   }
 
   public String scopesValue() {

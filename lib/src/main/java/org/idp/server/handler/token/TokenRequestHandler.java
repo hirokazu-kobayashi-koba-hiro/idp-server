@@ -8,6 +8,7 @@ import java.util.Objects;
 import org.idp.server.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.handler.token.io.TokenRequest;
 import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
@@ -37,13 +38,16 @@ public class TokenRequestHandler {
   public TokenRequestHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
+      AuthorizationGrantedRepository authorizationGrantedRepository,
       OAuthTokenRepository oAuthTokenRepository,
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
     map.put(
         authorization_code,
         new TokenCreationCodeGrantService(
-            authorizationRequestRepository, authorizationCodeGrantRepository));
+            authorizationRequestRepository,
+            authorizationCodeGrantRepository,
+            authorizationGrantedRepository));
     this.tokenRequestValidator = new TokenRequestValidator();
     this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
     this.oAuthTokenRepository = oAuthTokenRepository;

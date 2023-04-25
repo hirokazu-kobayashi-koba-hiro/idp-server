@@ -29,6 +29,9 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     if (claimsDecider.shouldAddProfile()) {
       claims.put("profile", user.profile());
     }
+    if (claimsDecider.shouldAddPicture()) {
+      claims.put("picture", user.picture());
+    }
     if (claimsDecider.shouldAddWebsite()) {
       claims.put("website", user.website());
     }
@@ -42,7 +45,7 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       claims.put("gender", user.gender());
     }
     if (claimsDecider.shouldAddBirthdate()) {
-      claims.put("sub", user.birthdate());
+      claims.put("birthdate", user.birthdate());
     }
     if (claimsDecider.shouldAddZoneinfo()) {
       claims.put("zoneinfo", user.zoneinfo());
@@ -89,6 +92,9 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     if (claimsDecider.shouldAddProfile()) {
       claims.put("profile", user.profile());
     }
+    if (claimsDecider.shouldAddPicture()) {
+      claims.put("picture", user.picture());
+    }
     if (claimsDecider.shouldAddWebsite()) {
       claims.put("website", user.website());
     }
@@ -102,7 +108,7 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       claims.put("gender", user.gender());
     }
     if (claimsDecider.shouldAddBirthdate()) {
-      claims.put("sub", user.birthdate());
+      claims.put("birthdate", user.birthdate());
     }
     if (claimsDecider.shouldAddZoneinfo()) {
       claims.put("zoneinfo", user.zoneinfo());

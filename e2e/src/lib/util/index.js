@@ -1,3 +1,4 @@
+
 export const convertToAuthorizationResponse = (redirectUri) => {
   const query = redirectUri.includes("?")
     ? redirectUri.split("?")[1]
@@ -23,6 +24,12 @@ export const createBasicAuthHeader = ({ username, password }) => {
   const basicParam = `${username}:${password}`;
   return {
     Authorization: `Basic ${Buffer.from(basicParam).toString("base64")}`,
+  };
+};
+
+export const createBearerHeader = (accessToken) => {
+  return {
+    Authorization: `Bearer ${accessToken}`,
   };
 };
 

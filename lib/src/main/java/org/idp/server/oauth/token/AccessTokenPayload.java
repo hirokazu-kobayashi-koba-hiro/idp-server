@@ -66,4 +66,8 @@ public class AccessTokenPayload {
   public Map<String, Object> values() {
     return values;
   }
+
+  public boolean hasOpenidScope() {
+    return scopes.contains("openid");
+  }
 }

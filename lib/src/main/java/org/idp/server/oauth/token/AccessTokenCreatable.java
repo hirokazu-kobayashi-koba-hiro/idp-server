@@ -9,7 +9,7 @@ import org.idp.server.basic.jose.JwkInvalidException;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ConfigurationInvalidException;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.oauth.grant.AuthorizationGranted;
+import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.type.oauth.AccessToken;
 import org.idp.server.type.oauth.CreatedAt;
 import org.idp.server.type.oauth.ExpiredAt;
@@ -17,7 +17,7 @@ import org.idp.server.type.oauth.ExpiredAt;
 public interface AccessTokenCreatable {
 
   default AccessTokenPayload createAccessTokenPayload(
-      AuthorizationGranted authorizationGranted,
+      AuthorizationGrant authorizationGrant,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     LocalDateTime localDateTime = UtcDateTime.now();
@@ -26,10 +26,10 @@ public interface AccessTokenCreatable {
     ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(accessTokenDuration));
     AccessTokenPayloadBuilder builder = new AccessTokenPayloadBuilder();
     builder.add(serverConfiguration.issuer());
-    builder.add(authorizationGranted.subject());
-    builder.add(authorizationGranted.clientId());
-    builder.add(authorizationGranted.scopes());
-    builder.add(authorizationGranted.customProperties());
+    builder.add(authorizationGrant.subject());
+    builder.add(authorizationGrant.clientId());
+    builder.add(authorizationGrant.scopes());
+    builder.add(authorizationGrant.customProperties());
     builder.add(createdAt);
     builder.add(expiredAt);
     return builder.build();

@@ -141,8 +141,8 @@ public class OAuthRequestParameters {
     return contains(acr_values);
   }
 
-  public Claims claims() {
-    return new Claims(getString(claims));
+  public ClaimsValue claims() {
+    return new ClaimsValue(getString(claims));
   }
 
   public boolean hasClaims() {

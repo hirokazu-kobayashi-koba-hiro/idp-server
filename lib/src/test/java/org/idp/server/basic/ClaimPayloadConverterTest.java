@@ -19,7 +19,7 @@ public class ClaimPayloadConverterTest {
                      "email": {"essential": true},
                      "email_verified": {"essential": true},
                      "picture": null,
-                     "http://example.info/claims/groups": null
+                     "http://example.info/claimsValue/groups": null
                     },
                    "id_token":
                     {

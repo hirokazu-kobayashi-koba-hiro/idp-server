@@ -1,7 +1,6 @@
 package org.idp.server.oauth.factory;
 
 import java.util.Set;
-import java.util.UUID;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.configuration.ClientConfiguration;
@@ -11,7 +10,6 @@ import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.RequestObjectParameters;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestBuilder;
-import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 
@@ -90,7 +88,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
         requestObjectParameters.hasAcrValues()
             ? requestObjectParameters.acrValues()
             : parameters.acrValues();
-    Claims claims =
+    ClaimsValue claimsValue =
         requestObjectParameters.hasClaims()
             ? requestObjectParameters.claims()
             : parameters.claims();
@@ -98,7 +96,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
     RequestUri requestUri = new RequestUri();
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
-    builder.add(new AuthorizationRequestIdentifier(UUID.randomUUID().toString()));
+    builder.add(createIdentifier());
     builder.add(serverConfiguration.issuer());
     builder.add(profile);
     builder.add(scopes);
@@ -115,9 +113,10 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
     builder.add(idTokenHint);
     builder.add(loginHint);
     builder.add(acrValues);
-    builder.add(claims);
+    builder.add(claimsValue);
     builder.add(requestObject);
     builder.add(requestUri);
+    builder.add(convertClaimsPayload(claimsValue));
     return builder.build();
   }
 }

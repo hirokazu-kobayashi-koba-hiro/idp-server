@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import org.idp.server.basic.date.UtcDateTime;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.oauth.grant.AuthorizationGrant;
+import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.type.extension.CustomProperties;
@@ -42,6 +44,17 @@ public class OAuthAuthorizeContext {
 
   public Scopes scopes() {
     return authorizationRequest.scope();
+  }
+
+  public ClaimsPayload claimsPayload() {
+    return authorizationRequest.claimsPayload();
+  }
+
+  public AuthorizationGrant toAuthorizationGranted() {
+    ClientId clientId = clientConfiguration.clientId();
+    Scopes scopes = authorizationRequest.scope();
+    ClaimsPayload claimsPayload = authorizationRequest.claimsPayload();
+    return new AuthorizationGrant(user, clientId, scopes, claimsPayload, customProperties);
   }
 
   public CustomProperties customProperties() {
