@@ -50,7 +50,9 @@ public class RequestUriPatternContextService
               serverConfiguration.jwks(),
               clientConfiguration.clientSecret());
       joseContext.verifySignature();
-      Set<String> filteredScopes = filterScopes(parameters, joseContext, clientConfiguration);
+      OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_URI;
+      Set<String> filteredScopes =
+          filterScopes(pattern, parameters, joseContext, clientConfiguration);
       AuthorizationProfile profile = analyze(filteredScopes, serverConfiguration);
       AuthorizationRequest authorizationRequest =
           requestObjectPatternFactory.create(
@@ -61,7 +63,7 @@ public class RequestUriPatternContextService
               serverConfiguration,
               clientConfiguration);
       return new OAuthRequestContext(
-          OAuthRequestPattern.REQUEST_URI,
+          pattern,
           parameters,
           joseContext,
           authorizationRequest,

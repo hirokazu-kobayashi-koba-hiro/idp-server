@@ -25,7 +25,9 @@ public class NormalPatternContextService
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     JoseContext joseContext = new JoseContext();
-    Set<String> filteredScopes = filterScopes(parameters, joseContext, clientConfiguration);
+    OAuthRequestPattern pattern = OAuthRequestPattern.NORMAL;
+    Set<String> filteredScopes =
+        filterScopes(pattern, parameters, joseContext, clientConfiguration);
     AuthorizationProfile profile = analyze(filteredScopes, serverConfiguration);
     AuthorizationRequest authorizationRequest =
         normalRequestFactory.create(
@@ -36,7 +38,7 @@ public class NormalPatternContextService
             serverConfiguration,
             clientConfiguration);
     return new OAuthRequestContext(
-        OAuthRequestPattern.NORMAL,
+        pattern,
         parameters,
         joseContext,
         authorizationRequest,

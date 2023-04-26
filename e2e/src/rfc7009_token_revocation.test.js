@@ -54,6 +54,4 @@ describe("OAuth 2.0 Token Revocation", () => {
     expect(reIntrospectionResponse.status).toBe(200);
     expect(reIntrospectionResponse.data.active).toBe(false);
   });
-
-
 });

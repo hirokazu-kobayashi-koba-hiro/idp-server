@@ -130,8 +130,6 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 hybrid", () => {
       expect(authorizationResponse.code).toBeNull();
       expect(authorizationResponse.accessToken).toBeNull();
       expect(authorizationResponse.idToken).toBeNull();
-
     });
   });
-
 });

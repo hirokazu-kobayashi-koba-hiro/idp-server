@@ -5,7 +5,8 @@ export const serverConfig = {
   authorizeEndpoint:
     "http://localhost:8080/123/api/debug/v1/authorizations/{id}/authorize",
   tokenEndpoint: "http://localhost:8080/123/api/v1/tokens",
-  tokenIntrospectionEndpoint: "http://localhost:8080/123/api/v1/tokens/introspection",
+  tokenIntrospectionEndpoint:
+    "http://localhost:8080/123/api/v1/tokens/introspection",
   tokenRevocationEndpoint: "http://localhost:8080/123/api/v1/tokens/revocation",
   userinfoEndpoint: "http://localhost:8080/123/api/v1/userinfo",
   enabledSsr: false,
@@ -17,6 +18,16 @@ export const clientSecretPostClient = {
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  requestKey: {
+    kty: "EC",
+    d: "uj7jNVQIfSCBdiV4A_yVnY8htLZS7nskIXAGIVDb9oM",
+    use: "sig",
+    crv: "P-256",
+    kid: "request_secret_post",
+    x: "H4E6D5GqxTrZshUvkG-z0sAWNkbixERVSpm3YjcIU1U",
+    y: "413NbE2n5PeQJlG1Nfq_nCbqR_ZKbVAzsyyrmYph7Fs",
+    alg: "ES256",
+  },
 };
 
 export const clientSecretBasicClient = {

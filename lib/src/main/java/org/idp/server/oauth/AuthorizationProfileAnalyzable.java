@@ -26,6 +26,7 @@ public interface AuthorizationProfileAnalyzable {
   }
 
   default Set<String> filterScopes(
+      OAuthRequestPattern pattern,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
       ClientConfiguration clientConfiguration) {
@@ -33,7 +34,9 @@ public interface AuthorizationProfileAnalyzable {
     String scope = parameters.getString(OAuthRequestKey.scope);
     JsonWebTokenClaims claims = joseContext.claims();
     String joseScope = claims.getValue("scope");
-    String targetScope = clientConfiguration.isSupportedJar() ? joseScope : scope;
+    String targetScope =
+        (pattern.isRequestParameter() || clientConfiguration.isSupportedJar()) ? joseScope : scope;
+
     return clientConfiguration.filteredScope(targetScope);
   }
 }

@@ -18,5 +18,4 @@ describe("The OAuth 2.0 Authorization Framework implicit", () => {
     expect(authorizationResponse.tokenType).toEqual("Bearer");
     expect(authorizationResponse.expiresIn).not.toBeNull();
   });
-
 });

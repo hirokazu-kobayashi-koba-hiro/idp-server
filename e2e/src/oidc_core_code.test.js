@@ -42,7 +42,9 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(status).toBe(302);
 
       expect(authorizationResponse.error).toEqual("invalid_scope");
-      expect(authorizationResponse.errorDescription).toEqual("authorization request does not contains valid scope ()");
+      expect(authorizationResponse.errorDescription).toEqual(
+        "authorization request does not contains valid scope ()"
+      );
     });
 
     it("response_type REQUIRED. OAuth 2.0 Response Type value that determines the authorization processing flow to be used, including what parameters are returned from the endpoints used. When using the Authorization Code Flow, this value is code.", async () => {
@@ -56,10 +58,12 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(status).toBe(302);
 
       expect(authorizationResponse.error).toEqual("invalid_request");
-      expect(authorizationResponse.errorDescription).toEqual("response type is required on authorization request");
+      expect(authorizationResponse.errorDescription).toEqual(
+        "response type is required on authorization request"
+      );
     });
 
-    it ("client_id REQUIRED. OAuth 2.0 Client Identifier valid at the Authorization Server.", async () => {
+    it("client_id REQUIRED. OAuth 2.0 Client Identifier valid at the Authorization Server.", async () => {
       const { status, error } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         redirectUri: clientSecretPostClient.redirectUri,
@@ -69,7 +73,9 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(status).toBe(400);
 
       expect(error.error).toEqual("invalid_request");
-      expect(error.error_description).toEqual("authorization request must contains client_id");
+      expect(error.error_description).toEqual(
+        "authorization request must contains client_id"
+      );
     });
 
     it("state RECOMMENDED. Opaque value used to maintain state between the request and the callback. Typically, Cross-Site Request Forgery (CSRF, XSRF) mitigation is done by cryptographically binding the value of this parameter with a browser cookie.", async () => {
@@ -134,7 +140,9 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(status).toBe(302);
 
       expect(authorizationResponse.error).toEqual("invalid_request");
-      expect(authorizationResponse.errorDescription).toEqual("authorization request display is defined that page, popup, touch, wap, but request display is (test)");
+      expect(authorizationResponse.errorDescription).toEqual(
+        "authorization request display is defined that page, popup, touch, wap, but request display is (test)"
+      );
     });
 
     it("prompt OPTIONAL. Space delimited, case sensitive list of ASCII string values that specifies whether the Authorization Server prompts the End-User for reauthentication and consent. ", async () => {
@@ -154,7 +162,9 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(status).toBe(302);
 
       expect(authorizationResponse.error).toEqual("invalid_request");
-      expect(authorizationResponse.errorDescription).toEqual("authorization request prompt is defined that none, login, consent, select_account, but request prompt is (test)");
+      expect(authorizationResponse.errorDescription).toEqual(
+        "authorization request prompt is defined that none, login, consent, select_account, but request prompt is (test)"
+      );
     });
 
     it("max_age OPTIONAL. Maximum Authentication Age. Specifies the allowable elapsed time in seconds since the last time the End-User was actively authenticated by the OP. If the elapsed time is greater than this value, the OP MUST attempt to actively re-authenticate the End-User. (The max_age request parameter corresponds to the OpenID 2.0 PAPE [OpenID.PAPE] max_auth_age request parameter.) When max_age is used, the ID Token returned MUST include an auth_time Claim Value.", async () => {
@@ -168,14 +178,15 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         responseMode: "query",
         nonce: "nonce",
         display: "page",
-        maxAge: "-100"
+        maxAge: "-100",
       });
       console.log(authorizationResponse);
       expect(status).toBe(302);
 
       expect(authorizationResponse.error).toEqual("invalid_request");
-      expect(authorizationResponse.errorDescription).toEqual("authorization request max_age is invalid (-100)");
+      expect(authorizationResponse.errorDescription).toEqual(
+        "authorization request max_age is invalid (-100)"
+      );
     });
   });
-
 });

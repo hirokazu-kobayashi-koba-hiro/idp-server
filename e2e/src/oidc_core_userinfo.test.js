@@ -46,6 +46,4 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 userinfo", () => {
     expect(postUserinfoResponse.status).toBe(200);
     expect(postUserinfoResponse.data).toHaveProperty("sub");
   });
-
-
 });

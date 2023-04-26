@@ -179,11 +179,7 @@ export const requestToken = async ({
   });
 };
 
-export const inspectToken = async ({
-  endpoint,
-  token,
-  tokenHintType,
-}) => {
+export const inspectToken = async ({ endpoint, token, tokenHintType }) => {
   let params = new URLSearchParams();
   if (params) {
     params.append("token", token);
@@ -198,12 +194,12 @@ export const inspectToken = async ({
 };
 
 export const revokeToken = async ({
- endpoint,
- token,
- tokenHintType,
- clientId,
- clientSecret,
- basicAuth,
+  endpoint,
+  token,
+  tokenHintType,
+  clientId,
+  clientSecret,
+  basicAuth,
 }) => {
   let params = new URLSearchParams();
   if (params) {
@@ -226,20 +222,14 @@ export const revokeToken = async ({
   });
 };
 
-export const getUserinfo = async ({
-  endpoint,
-  authorizationHeader,
-}) => {
+export const getUserinfo = async ({ endpoint, authorizationHeader }) => {
   return await get({
     url: endpoint,
     headers: authorizationHeader,
   });
 };
 
-export const postUserinfo = async ({
-  endpoint,
-  authorizationHeader,
-}) => {
+export const postUserinfo = async ({ endpoint, authorizationHeader }) => {
   return await post({
     url: endpoint,
     headers: authorizationHeader,

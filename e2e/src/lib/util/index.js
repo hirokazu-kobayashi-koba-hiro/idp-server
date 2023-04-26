@@ -1,4 +1,3 @@
-
 export const convertToAuthorizationResponse = (redirectUri) => {
   const query = redirectUri.includes("?")
     ? redirectUri.split("?")[1]
@@ -18,7 +17,6 @@ export const convertToAuthorizationResponse = (redirectUri) => {
     errorDescription: params.get("error_description"),
   };
 };
-
 
 export const createBasicAuthHeader = ({ username, password }) => {
   const basicParam = `${username}:${password}`;
