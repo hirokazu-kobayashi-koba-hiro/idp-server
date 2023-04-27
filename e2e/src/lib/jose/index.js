@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 import jwkToPem from "jwk-to-pem";
 import jwt_decode from "jwt-decode";
 
-const createJwt = ({ payload, secret, options }) => {
+export const createJwt = ({ payload, secret, options }) => {
   return jwt.sign(payload, secret, options);
 };
 

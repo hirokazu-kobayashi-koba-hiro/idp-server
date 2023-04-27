@@ -1,6 +1,7 @@
 package org.idp.server.basic.jose;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
@@ -57,5 +58,12 @@ public class JsonWebSignature {
     } catch (JOSEException e) {
       throw new JoseInvalidException(e.getMessage(), e);
     }
+  }
+
+  public boolean isSymmetricType() {
+    JWSAlgorithm algorithm = value.getHeader().getAlgorithm();
+    return algorithm.equals(JWSAlgorithm.HS256)
+        || algorithm.equals(JWSAlgorithm.HS384)
+        || algorithm.equals(JWSAlgorithm.HS512);
   }
 }

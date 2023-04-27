@@ -5,10 +5,7 @@ import java.util.Map;
 import org.idp.server.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.type.ArrayValueMap;
 import org.idp.server.type.OAuthRequestKey;
-import org.idp.server.type.oauth.AccessToken;
-import org.idp.server.type.oauth.ClientId;
-import org.idp.server.type.oauth.ClientSecret;
-import org.idp.server.type.oauth.RefreshToken;
+import org.idp.server.type.oauth.*;
 
 /** TokenRevocationRequestParameters */
 public class TokenRevocationRequestParameters implements BackchannelRequestParameters {
@@ -75,5 +72,25 @@ public class TokenRevocationRequestParameters implements BackchannelRequestParam
   @Override
   public boolean hasClientSecret() {
     return contains(OAuthRequestKey.client_secret);
+  }
+
+  @Override
+  public ClientAssertion clientAssertion() {
+    return new ClientAssertion(getString(OAuthRequestKey.client_assertion));
+  }
+
+  @Override
+  public boolean hasClientAssertion() {
+    return contains(OAuthRequestKey.client_assertion);
+  }
+
+  @Override
+  public ClientAssertionType clientAssertionType() {
+    return ClientAssertionType.of(getString(OAuthRequestKey.client_assertion_type));
+  }
+
+  @Override
+  public boolean hasClientAssertionType() {
+    return contains(OAuthRequestKey.client_assertion_type);
   }
 }

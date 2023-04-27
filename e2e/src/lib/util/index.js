@@ -31,6 +31,10 @@ export const createBearerHeader = (accessToken) => {
   };
 };
 
+export const toEpocTime = ({ plus = 0 }) => {
+  return Math.floor(new Date().getTime() / 1000) + plus;
+};
+
 export const convertToSnake = (params) => {
   if (isObject(params)) {
     const convertParams = {};

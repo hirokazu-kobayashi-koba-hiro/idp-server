@@ -65,6 +65,14 @@ public class JsonWebTokenClaims {
     return contains(JWTClaimNames.JWT_ID);
   }
 
+  public Date getExp() {
+    return value.getExpirationTime();
+  }
+
+  public boolean hasExp() {
+    return contains(JWTClaimNames.EXPIRATION_TIME);
+  }
+
   public Map<String, Object> payload() {
     return value.getClaims();
   }

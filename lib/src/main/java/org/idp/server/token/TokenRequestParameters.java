@@ -47,6 +47,26 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
     return contains(OAuthRequestKey.client_secret);
   }
 
+  @Override
+  public ClientAssertion clientAssertion() {
+    return new ClientAssertion(getString(OAuthRequestKey.client_assertion));
+  }
+
+  @Override
+  public boolean hasClientAssertion() {
+    return contains(OAuthRequestKey.client_assertion);
+  }
+
+  @Override
+  public ClientAssertionType clientAssertionType() {
+    return ClientAssertionType.of(getString(OAuthRequestKey.client_assertion_type));
+  }
+
+  @Override
+  public boolean hasClientAssertionType() {
+    return contains(OAuthRequestKey.client_assertion_type);
+  }
+
   public RedirectUri redirectUri() {
     return new RedirectUri(getString(OAuthRequestKey.redirect_uri));
   }

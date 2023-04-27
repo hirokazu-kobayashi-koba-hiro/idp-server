@@ -38,3 +38,13 @@ export const clientSecretBasicClient = {
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
 };
+
+export const clientSecretJwtClient = {
+  clientId: "clientSecretJwt",
+  clientSecret:
+    "clientSecretJwtSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://client.example.org/callback",
+  scope: "account transfers",
+  fapiBaselineScope: "read",
+  fapiAdvanceScope: "write",
+};

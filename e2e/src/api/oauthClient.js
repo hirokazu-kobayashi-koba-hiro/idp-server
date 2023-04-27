@@ -1,6 +1,5 @@
-import { get, post, postWithJson } from "../lib/http";
+import { get, post } from "../lib/http";
 import { convertToSnake } from "../lib/util";
-import { re } from "@babel/core/lib/vendor/import-meta-resolve";
 
 export const getAuthorizations = async ({
   endpoint,
@@ -149,6 +148,8 @@ export const requestToken = async ({
   refreshToken,
   clientId,
   clientSecret,
+  clientAssertion,
+  clientAssertionType,
   basicAuth,
 }) => {
   let params = new URLSearchParams();
@@ -169,6 +170,12 @@ export const requestToken = async ({
   }
   if (clientSecret) {
     params.append("client_secret", clientSecret);
+  }
+  if (clientAssertion) {
+    params.append("client_assertion", clientAssertion);
+  }
+  if (clientAssertionType) {
+    params.append("client_assertion_type", clientAssertionType);
   }
   console.log(params.toString());
   const headers = basicAuth ? basicAuth : {};
@@ -199,6 +206,8 @@ export const revokeToken = async ({
   tokenHintType,
   clientId,
   clientSecret,
+  clientAssertion,
+  clientAssertionType,
   basicAuth,
 }) => {
   let params = new URLSearchParams();
@@ -213,6 +222,12 @@ export const revokeToken = async ({
   }
   if (clientSecret) {
     params.append("client_secret", clientSecret);
+  }
+  if (clientAssertion) {
+    params.append("client_assertion", clientAssertion);
+  }
+  if (clientAssertionType) {
+    params.append("client_assertion_type", clientAssertionType);
   }
   const headers = basicAuth ? basicAuth : {};
   return await post({
