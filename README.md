@@ -21,4 +21,5 @@
 1. client_secret_post
 2. client_secret_basic
 3. client_secret_jwt
+4. private_key_jwt
 
