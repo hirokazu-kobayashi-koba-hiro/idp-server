@@ -4,7 +4,7 @@ import org.idp.server.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.type.oauth.ClientSecret;
 
-public class ClientSecretPostAuthenticator implements ClientAuthenticator {
+class ClientSecretPostAuthenticator implements ClientAuthenticator {
 
   @Override
   public void authenticate(BackchannelRequestContext context) {

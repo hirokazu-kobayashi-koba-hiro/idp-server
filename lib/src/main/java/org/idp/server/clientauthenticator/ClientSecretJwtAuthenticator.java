@@ -5,7 +5,6 @@ import org.idp.server.basic.jose.JoseHandler;
 import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.configuration.ClientConfiguration;
-import org.idp.server.configuration.ServerConfiguration;
 
 class ClientSecretJwtAuthenticator
     implements ClientAuthenticator, ClientAuthenticationJwtValidatable {
@@ -33,12 +32,11 @@ class ClientSecretJwtAuthenticator
   void throwIfUnMatchClientAssertion(BackchannelRequestContext context) {
     try {
       BackchannelRequestParameters parameters = context.parameters();
-      ServerConfiguration serverConfiguration = context.serverConfiguration();
       ClientConfiguration clientConfiguration = context.clientConfiguration();
       JoseContext joseContext =
           joseHandler.handle(
               parameters.clientAssertion().value(),
-              serverConfiguration.jwks(),
+              clientConfiguration.jwks(),
               clientConfiguration.jwks(),
               clientConfiguration.clientSecret());
       joseContext.verifySignature();

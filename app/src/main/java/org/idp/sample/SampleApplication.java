@@ -26,6 +26,7 @@ public class SampleApplication {
     clientPaths.add(configurationBasePath + "/clients/clientSecretBasic.json");
     clientPaths.add(configurationBasePath + "/clients/clientSecretPost.json");
     clientPaths.add(configurationBasePath + "/clients/clientSecretJwt.json");
+    clientPaths.add(configurationBasePath + "/clients/privateKeyJwt.json");
     return new IdpServerApplication(new MemoryDataSourceConfig(serverPaths, clientPaths));
   }
 }
