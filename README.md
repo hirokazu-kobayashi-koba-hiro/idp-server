@@ -16,3 +16,9 @@
    3. hybrid flow
 3. RFC7662 OAuth 2.0 Token Introspection
 
+## supported client authentication
+
+1. client_secret_post
+2. client_secret_basic
+3. client_secret_jwt
+
