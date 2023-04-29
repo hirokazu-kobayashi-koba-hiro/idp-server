@@ -250,3 +250,9 @@ export const postUserinfo = async ({ endpoint, authorizationHeader }) => {
     headers: authorizationHeader,
   });
 };
+
+export const getJwks = async ({ endpoint }) => {
+  return await get({
+    url: endpoint,
+  });
+};

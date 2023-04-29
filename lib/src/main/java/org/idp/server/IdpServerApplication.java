@@ -3,6 +3,7 @@ package org.idp.server;
 import java.util.List;
 import org.idp.server.handler.ciba.CibaRequestHandler;
 import org.idp.server.handler.config.MemoryDataSourceConfig;
+import org.idp.server.handler.discovery.DiscoveryHandler;
 import org.idp.server.handler.grantmanagment.datasource.AuthorizationGrantedMemoryDataSource;
 import org.idp.server.handler.oauth.OAuthAuthorizeHandler;
 import org.idp.server.handler.oauth.OAuthRequestHandler;
@@ -25,6 +26,7 @@ public class IdpServerApplication {
   TokenIntrospectionApi tokenIntrospectionApi;
   TokenRevocationApi tokenRevocationApi;
   UserinfoApi userinfoApi;
+  JwksApi jwksApi;
   CibaApi cibaApi;
 
   public IdpServerApplication(MemoryDataSourceConfig memoryDataSourceConfig) {
@@ -79,6 +81,8 @@ public class IdpServerApplication {
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
     this.userinfoApi = new UserinfoApi(userinfoHandler);
+    DiscoveryHandler discoveryHandler = new DiscoveryHandler(serverConfigurationMemoryDataSource);
+    this.jwksApi = new JwksApi(discoveryHandler);
     this.cibaApi = new CibaApi(new CibaRequestHandler());
   }
 
@@ -100,6 +104,10 @@ public class IdpServerApplication {
 
   public UserinfoApi userinfoApi() {
     return userinfoApi;
+  }
+
+  public JwksApi jwksApi() {
+    return jwksApi;
   }
 
   public CibaApi cibaApi() {
