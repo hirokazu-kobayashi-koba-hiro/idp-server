@@ -3,7 +3,7 @@ import { describe, expect, it } from "@jest/globals";
 import { getJwks, requestToken } from "./api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
-import { createJwtWithPrivateKey, decodeJwt } from "./lib/jose";
+import { createJwtWithPrivateKey, verifyAndDecodeIdToken, verifySignature } from "./lib/jose";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", () => {
   it("success pattern", async () => {
@@ -42,7 +42,10 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     console.log(jwksResponse.data);
     expect(jwksResponse.status).toBe(200);
 
-    const decodedIdToken = decodeJwt(tokenResponse.data.id_token);
+    const decodedIdToken = verifyAndDecodeIdToken({
+      idToken: tokenResponse.data.id_token,
+      jwks: jwksResponse.data,
+    });
     console.log(decodedIdToken);
   });
 });

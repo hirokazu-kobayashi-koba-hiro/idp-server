@@ -25,11 +25,13 @@ export const createJwtWithPrivateKey = ({
   });
 };
 
-export const decodeJwt = (jwt) => {
-  const header = jwt_decode(jwt, { header: true });
-  const payload = jwt_decode(jwt);
+export const verifyAndDecodeIdToken = ({idToken, jwks}) => {
+  const header = jwt_decode(idToken, { header: true });
+  const jwk = jwks.keys.filter(jwk => jwk.kid === header.kid)[0];
+  const publicKey = jwkToPem(jwk);
+  const verifyResult = jwt.verify(idToken, publicKey);
   return {
     header,
-    payload,
+    payload: verifyResult,
   };
 };

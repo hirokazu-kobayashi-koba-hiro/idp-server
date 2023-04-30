@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { requestToken } from "./api/oauthClient";
-import { clientSecretJwtClient, privateKeyJwt, privateKeyJwtClient, serverConfig } from "./testConfig";
+import { getJwks, requestToken } from "./api/oauthClient";
+import { clientSecretJwtClient, privateKeyJwtClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
-import { createJwt, createJwtWithPrivateKey, decodeJwt } from "./lib/jose";
+import { verifyAndDecodeIdToken } from "./lib/jose";
 import { createClientAssertion } from "./lib/oauth";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", () => {
@@ -37,7 +37,15 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     console.log(tokenResponse.data);
     expect(tokenResponse.status).toBe(200);
     expect(tokenResponse.data).toHaveProperty("id_token");
-    const decodedIdToken = decodeJwt(tokenResponse.data.id_token);
+
+    const jwksResponse = await getJwks({endpoint: serverConfig.jwksEndpoint});
+    console.log(jwksResponse.data);
+    expect(jwksResponse.status).toBe(200);
+
+    const decodedIdToken = verifyAndDecodeIdToken({
+      idToken: tokenResponse.data.id_token,
+      jwks: jwksResponse.data,
+    });
     console.log(decodedIdToken);
   });
 
@@ -71,7 +79,15 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     console.log(tokenResponse.data);
     expect(tokenResponse.status).toBe(200);
     expect(tokenResponse.data).toHaveProperty("id_token");
-    const decodedIdToken = decodeJwt(tokenResponse.data.id_token);
+
+    const jwksResponse = await getJwks({endpoint: serverConfig.jwksEndpoint});
+    console.log(jwksResponse.data);
+    expect(jwksResponse.status).toBe(200);
+
+    const decodedIdToken = verifyAndDecodeIdToken({
+      idToken: tokenResponse.data.id_token,
+      jwks: jwksResponse.data,
+    });
     console.log(decodedIdToken);
   });
 });
