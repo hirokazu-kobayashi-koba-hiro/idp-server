@@ -1,7 +1,7 @@
 package org.idp.server.oauth.response;
 
 import org.idp.server.basic.http.QueryParams;
-import org.idp.server.oauth.token.AccessTokenPayload;
+import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
@@ -12,7 +12,6 @@ public class AuthorizationResponseBuilder {
   AuthorizationCode authorizationCode = new AuthorizationCode();
   State state = new State();
   AccessToken accessToken = new AccessToken();
-  AccessTokenPayload accessTokenPayload = new AccessTokenPayload();
   TokenType tokenType = TokenType.undefined;
   ExpiresIn expiresIn = new ExpiresIn();
   IdToken idToken = new IdToken();
@@ -42,12 +41,7 @@ public class AuthorizationResponseBuilder {
 
   public AuthorizationResponseBuilder add(AccessToken accessToken) {
     this.accessToken = accessToken;
-    this.queryParams.add("access_token", accessToken.value());
-    return this;
-  }
-
-  public AuthorizationResponseBuilder add(AccessTokenPayload accessTokenPayload) {
-    this.accessTokenPayload = accessTokenPayload;
+    this.queryParams.add("access_token", accessToken.accessTokenValue().value());
     return this;
   }
 
@@ -78,7 +72,6 @@ public class AuthorizationResponseBuilder {
         authorizationCode,
         state,
         accessToken,
-        accessTokenPayload,
         tokenType,
         expiresIn,
         idToken,

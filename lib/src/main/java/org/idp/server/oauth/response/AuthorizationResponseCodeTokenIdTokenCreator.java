@@ -6,6 +6,7 @@ import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.IdTokenCreatable;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenCreatable;
 import org.idp.server.oauth.token.AccessTokenPayload;
 import org.idp.server.type.extension.ResponseModeValue;
@@ -34,7 +35,7 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
         createIdToken(
             authorizationRequest,
             authorizationCode,
-            accessToken,
+            accessToken.accessTokenValue(),
             user,
             new Authentication(),
             context.serverConfiguration(),
@@ -46,7 +47,6 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
                 context.tokenIssuer())
             .add(authorizationRequest.state())
             .add(authorizationCode)
-            .add(accessTokenPayload)
             .add(TokenType.Bearer)
             .add(new ExpiresIn(context.serverConfiguration().accessTokenDuration()))
             .add(accessToken)

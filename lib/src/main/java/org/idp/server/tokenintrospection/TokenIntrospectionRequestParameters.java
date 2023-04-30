@@ -26,12 +26,12 @@ public class TokenIntrospectionRequestParameters {
     return values.isEmpty();
   }
 
-  public AccessToken accessToken() {
-    return new AccessToken(getString(OAuthRequestKey.token));
+  public AccessTokenValue accessToken() {
+    return new AccessTokenValue(getString(OAuthRequestKey.token));
   }
 
-  public RefreshToken refreshToken() {
-    return new RefreshToken(getString(OAuthRequestKey.token));
+  public RefreshTokenValue refreshToken() {
+    return new RefreshTokenValue(getString(OAuthRequestKey.token));
   }
 
   public boolean hasToken() {

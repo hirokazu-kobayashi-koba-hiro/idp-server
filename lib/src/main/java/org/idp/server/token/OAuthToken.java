@@ -3,16 +3,19 @@ package org.idp.server.token;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import org.idp.server.oauth.grant.AuthorizationGrant;
+import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenPayload;
-import org.idp.server.type.oauth.AccessToken;
-import org.idp.server.type.oauth.RefreshToken;
+import org.idp.server.oauth.token.RefreshToken;
+import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.RefreshTokenValue;
 import org.idp.server.type.oauth.Subject;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public class OAuthToken {
   OAuthTokenIdentifier identifier;
   TokenResponse tokenResponse;
-  AccessTokenPayload accessTokenPayload;
+  AccessToken accessToken;
+  RefreshToken refreshToken;
   AuthorizationGrant authorizationGrant;
 
   public OAuthToken() {}
@@ -20,11 +23,13 @@ public class OAuthToken {
   public OAuthToken(
       OAuthTokenIdentifier identifier,
       TokenResponse tokenResponse,
-      AccessTokenPayload accessTokenPayload,
+      AccessToken accessToken,
+      RefreshToken refreshToken,
       AuthorizationGrant authorizationGrant) {
     this.identifier = identifier;
     this.tokenResponse = tokenResponse;
-    this.accessTokenPayload = accessTokenPayload;
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
     this.authorizationGrant = authorizationGrant;
   }
 
@@ -33,7 +38,7 @@ public class OAuthToken {
   }
 
   public TokenIssuer tokenIssuer() {
-    return accessTokenPayload.tokenIssuer();
+    return accessTokenPayload().tokenIssuer();
   }
 
   public TokenResponse tokenResponse() {
@@ -41,7 +46,7 @@ public class OAuthToken {
   }
 
   public AccessTokenPayload accessTokenPayload() {
-    return accessTokenPayload;
+    return accessToken.accessTokenPayload();
   }
 
   public AuthorizationGrant authorizationGrant() {
@@ -53,14 +58,14 @@ public class OAuthToken {
   }
 
   public boolean isExpire(LocalDateTime other) {
-    return accessTokenPayload.expiredAt().isExpire(other);
+    return accessToken.isExpired(other);
   }
 
-  public AccessToken accessToken() {
+  public AccessTokenValue accessToken() {
     return tokenResponse.accessToken();
   }
 
-  public RefreshToken refreshToken() {
+  public RefreshTokenValue refreshToken() {
     return tokenResponse.refreshToken();
   }
 
@@ -69,10 +74,10 @@ public class OAuthToken {
   }
 
   public Subject subject() {
-    return accessTokenPayload.subject();
+    return accessTokenPayload().subject();
   }
 
   public boolean hasOpenidScope() {
-    return accessTokenPayload.hasOpenidScope();
+    return accessTokenPayload().hasOpenidScope();
   }
 }

@@ -1,17 +1,17 @@
 package org.idp.server.token.repository;
 
 import org.idp.server.token.OAuthToken;
-import org.idp.server.type.oauth.AccessToken;
-import org.idp.server.type.oauth.RefreshToken;
+import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.RefreshTokenValue;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public interface OAuthTokenRepository {
 
   void register(OAuthToken oAuthToken);
 
-  OAuthToken find(TokenIssuer tokenIssuer, AccessToken accessToken);
+  OAuthToken find(TokenIssuer tokenIssuer, AccessTokenValue accessTokenValue);
 
-  OAuthToken find(TokenIssuer tokenIssuer, RefreshToken refreshToken);
+  OAuthToken find(TokenIssuer tokenIssuer, RefreshTokenValue refreshTokenValue);
 
   void delete(OAuthToken oAuthToken);
 }

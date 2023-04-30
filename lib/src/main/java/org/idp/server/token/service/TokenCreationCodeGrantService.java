@@ -14,8 +14,7 @@ import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.request.AuthorizationRequest;
-import org.idp.server.oauth.token.AccessTokenCreatable;
-import org.idp.server.oauth.token.AccessTokenPayload;
+import org.idp.server.oauth.token.*;
 import org.idp.server.token.*;
 import org.idp.server.token.validator.TokenRequestCodeGrantValidator;
 import org.idp.server.type.oauth.*;
@@ -58,13 +57,13 @@ public class TokenCreationCodeGrantService
             authorizationCodeGrant.authorizationGrant(), serverConfiguration, clientConfiguration);
     AccessToken accessToken =
         createAccessToken(accessTokenPayload, serverConfiguration, clientConfiguration);
-    RefreshToken refreshToken = createRefreshToken();
+    RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
     TokenResponseBuilder tokenResponseBuilder =
         new TokenResponseBuilder()
-            .add(accessToken)
+            .add(accessToken.accessTokenValue())
             .add(TokenType.Bearer)
             .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
-            .add(refreshToken);
+            .add(refreshToken.refreshTokenValue());
     if (authorizationRequest.isOidcProfile()) {
       AuthorizationCode authorizationCode = authorizationCodeGrant.authorizationCode();
       AuthorizationGrant authorizationGrant = authorizationCodeGrant.authorizationGrant();
@@ -73,7 +72,7 @@ public class TokenCreationCodeGrantService
           createIdToken(
               authorizationRequest,
               authorizationCode,
-              accessToken,
+              accessToken.accessTokenValue(),
               user,
               new Authentication(),
               serverConfiguration,
@@ -91,6 +90,10 @@ public class TokenCreationCodeGrantService
     authorizationGrantedRepository.register(authorizationGranted);
 
     return new OAuthToken(
-        identifier, tokenResponse, accessTokenPayload, authorizationCodeGrant.authorizationGrant());
+        identifier,
+        tokenResponse,
+        accessToken,
+        refreshToken,
+        authorizationCodeGrant.authorizationGrant());
   }
 }

@@ -9,7 +9,7 @@ import org.idp.server.oauth.repository.ClientConfigurationRepository;
 import org.idp.server.oauth.repository.ServerConfigurationRepository;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.repository.OAuthTokenRepository;
-import org.idp.server.type.oauth.AccessToken;
+import org.idp.server.type.oauth.AccessTokenValue;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.idp.server.userinfo.UserinfoClaimsCreator;
 import org.idp.server.userinfo.UserinfoResponse;
@@ -33,10 +33,10 @@ public class UserinfoHandler {
   }
 
   public UserinfoRequestResponse handle(UserinfoRequest request, UserinfoDelegate delegate) {
-    AccessToken accessToken = request.toAccessToken();
+    AccessTokenValue accessTokenValue = request.toAccessToken();
     TokenIssuer tokenIssuer = request.toTokenIssuer();
     serverConfigurationRepository.get(tokenIssuer);
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessToken);
+    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenValue);
     verifier.verify(oAuthToken);
     User user = delegate.getUser(oAuthToken.subject());
     UserinfoClaimsCreator claimsCreator = new UserinfoClaimsCreator();

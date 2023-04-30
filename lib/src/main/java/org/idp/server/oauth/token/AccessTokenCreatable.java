@@ -2,7 +2,7 @@ package org.idp.server.oauth.token;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import org.idp.server.basic.date.UtcDateTime;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.jose.JsonWebSignature;
 import org.idp.server.basic.jose.JsonWebSignatureFactory;
 import org.idp.server.basic.jose.JwkInvalidException;
@@ -10,7 +10,7 @@ import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ConfigurationInvalidException;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.grant.AuthorizationGrant;
-import org.idp.server.type.oauth.AccessToken;
+import org.idp.server.type.oauth.AccessTokenValue;
 import org.idp.server.type.oauth.CreatedAt;
 import org.idp.server.type.oauth.ExpiredAt;
 
@@ -20,7 +20,7 @@ public interface AccessTokenCreatable {
       AuthorizationGrant authorizationGrant,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
-    LocalDateTime localDateTime = UtcDateTime.now();
+    LocalDateTime localDateTime = SystemDateTime.now();
     CreatedAt createdAt = new CreatedAt(localDateTime);
     long accessTokenDuration = serverConfiguration.accessTokenDuration();
     ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(accessTokenDuration));
@@ -47,7 +47,12 @@ public interface AccessTokenCreatable {
               Map.of(),
               serverConfiguration.jwks(),
               serverConfiguration.tokenSignedKeyId());
-      return new AccessToken(jsonWebSignature.serialize());
+      AccessTokenValue accessTokenValue = new AccessTokenValue(jsonWebSignature.serialize());
+      return new AccessToken(
+          accessTokenValue,
+          accessTokenPayload,
+          accessTokenPayload.createdAt(),
+          accessTokenPayload.expiredAt());
     } catch (JwkInvalidException jwkInvalidException) {
       throw new ConfigurationInvalidException(jwkInvalidException);
     }

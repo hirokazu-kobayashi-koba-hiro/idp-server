@@ -90,4 +90,16 @@ public class TokenRequestContext implements BackchannelRequestContext {
   public ClientSecret clientSecretWithParams() {
     return parameters.clientSecret();
   }
+
+  public TokenIssuer tokenIssuer() {
+    return serverConfiguration.tokenIssuer();
+  }
+
+  public boolean hasRefreshToken() {
+    return parameters.hasRefreshToken();
+  }
+
+  public RefreshTokenValue refreshToken() {
+    return parameters.refreshToken();
+  }
 }

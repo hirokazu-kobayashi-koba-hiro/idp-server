@@ -14,8 +14,8 @@ import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.tokenrevocation.TokenRevocationRequestContext;
 import org.idp.server.tokenrevocation.TokenRevocationRequestParameters;
 import org.idp.server.tokenrevocation.validator.TokenRevocationValidator;
-import org.idp.server.type.oauth.AccessToken;
-import org.idp.server.type.oauth.RefreshToken;
+import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.RefreshTokenValue;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public class TokenRevocationHandler {
@@ -60,14 +60,14 @@ public class TokenRevocationHandler {
   // TODO consider, because duplicated method token introspection handler
   OAuthToken find(TokenRevocationRequest request) {
     TokenRevocationRequestParameters parameters = request.toParameters();
-    AccessToken accessToken = parameters.accessToken();
+    AccessTokenValue accessTokenValue = parameters.accessToken();
     TokenIssuer tokenIssuer = request.toTokenIssuer();
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessToken);
+    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenValue);
     if (oAuthToken.exists()) {
       return oAuthToken;
     } else {
-      RefreshToken refreshToken = parameters.refreshToken();
-      return oAuthTokenRepository.find(tokenIssuer, refreshToken);
+      RefreshTokenValue refreshTokenValue = parameters.refreshToken();
+      return oAuthTokenRepository.find(tokenIssuer, refreshTokenValue);
     }
   }
 }

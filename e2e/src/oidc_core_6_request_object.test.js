@@ -3,7 +3,7 @@ import { describe, expect, it } from "@jest/globals";
 import { getJwks, requestToken } from "./api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
-import { createJwtWithPrivateKey, verifyAndDecodeIdToken, verifySignature } from "./lib/jose";
+import { createJwtWithPrivateKey, verifyAndDecodeIdToken } from "./lib/jose";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", () => {
   it("success pattern", async () => {

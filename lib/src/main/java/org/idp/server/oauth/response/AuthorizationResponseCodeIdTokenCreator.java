@@ -22,7 +22,7 @@ public class AuthorizationResponseCodeIdTokenCreator
         createIdToken(
             authorizationRequest,
             authorizationCode,
-            new AccessToken(),
+            new AccessTokenValue(),
             user,
             new Authentication(),
             context.serverConfiguration(),

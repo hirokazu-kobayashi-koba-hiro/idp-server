@@ -3,6 +3,7 @@ package org.idp.server.oauth.response;
 import org.idp.server.oauth.OAuthAuthorizeContext;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenCreatable;
 import org.idp.server.oauth.token.AccessTokenPayload;
 import org.idp.server.type.extension.ResponseModeValue;
@@ -30,7 +31,6 @@ public class AuthorizationResponseCodeTokenCreator
                 context.tokenIssuer())
             .add(authorizationRequest.state())
             .add(authorizationCode)
-            .add(accessTokenPayload)
             .add(TokenType.Bearer)
             .add(new ExpiresIn(context.serverConfiguration().accessTokenDuration()))
             .add(accessToken);

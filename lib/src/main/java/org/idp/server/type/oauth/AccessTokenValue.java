@@ -2,12 +2,12 @@ package org.idp.server.type.oauth;
 
 import java.util.Objects;
 
-public class AccessToken {
+public class AccessTokenValue {
   String value;
 
-  public AccessToken() {}
+  public AccessTokenValue() {}
 
-  public AccessToken(String value) {
+  public AccessTokenValue(String value) {
     this.value = value;
   }
 
@@ -19,7 +19,7 @@ public class AccessToken {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    AccessToken that = (AccessToken) o;
+    AccessTokenValue that = (AccessTokenValue) o;
     return Objects.equals(value, that.value);
   }
 

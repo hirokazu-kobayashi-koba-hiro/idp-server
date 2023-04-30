@@ -2,39 +2,39 @@ package org.idp.server.token;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.type.oauth.AccessToken;
+import org.idp.server.type.oauth.AccessTokenValue;
 import org.idp.server.type.oauth.ExpiresIn;
-import org.idp.server.type.oauth.RefreshToken;
+import org.idp.server.type.oauth.RefreshTokenValue;
 import org.idp.server.type.oauth.TokenType;
 import org.idp.server.type.oidc.IdToken;
 
 public class TokenResponse {
-  AccessToken accessToken;
+  AccessTokenValue accessTokenValue;
   TokenType tokenType;
   ExpiresIn expiresIn;
-  RefreshToken refreshToken = new RefreshToken();
+  RefreshTokenValue refreshTokenValue = new RefreshTokenValue();
   IdToken idToken = new IdToken();
   Map<String, Object> response = new HashMap<>();
 
   public TokenResponse() {}
 
   TokenResponse(
-      AccessToken accessToken,
+      AccessTokenValue accessTokenValue,
       TokenType tokenType,
       ExpiresIn expiresIn,
-      RefreshToken refreshToken,
+      RefreshTokenValue refreshTokenValue,
       IdToken idToken,
       Map<String, Object> response) {
-    this.accessToken = accessToken;
+    this.accessTokenValue = accessTokenValue;
     this.tokenType = tokenType;
     this.expiresIn = expiresIn;
-    this.refreshToken = refreshToken;
+    this.refreshTokenValue = refreshTokenValue;
     this.idToken = idToken;
     this.response = response;
   }
 
-  public AccessToken accessToken() {
-    return accessToken;
+  public AccessTokenValue accessToken() {
+    return accessTokenValue;
   }
 
   public TokenType tokenType() {
@@ -45,8 +45,8 @@ public class TokenResponse {
     return expiresIn;
   }
 
-  public RefreshToken refreshToken() {
-    return refreshToken;
+  public RefreshTokenValue refreshToken() {
+    return refreshTokenValue;
   }
 
   public IdToken idToken() {
@@ -58,6 +58,6 @@ public class TokenResponse {
   }
 
   public boolean hasRefreshToken() {
-    return refreshToken.exists();
+    return refreshTokenValue.exists();
   }
 }

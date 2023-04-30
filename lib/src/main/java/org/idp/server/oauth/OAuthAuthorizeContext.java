@@ -1,7 +1,7 @@
 package org.idp.server.oauth;
 
 import java.time.LocalDateTime;
-import org.idp.server.basic.date.UtcDateTime;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.grant.AuthorizationGrant;
@@ -78,7 +78,7 @@ public class OAuthAuthorizeContext {
   }
 
   public ExpiredAt authorizationCodeGrantExpiresDateTime() {
-    LocalDateTime localDateTime = UtcDateTime.now();
+    LocalDateTime localDateTime = SystemDateTime.now();
     int duration = serverConfiguration.authorizationCodeValidDuration();
     return new ExpiredAt(localDateTime.plusMinutes(duration));
   }

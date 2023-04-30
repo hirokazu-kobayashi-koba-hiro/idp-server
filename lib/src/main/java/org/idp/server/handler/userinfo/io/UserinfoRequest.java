@@ -1,7 +1,7 @@
 package org.idp.server.handler.userinfo.io;
 
 import org.idp.server.token.AuthorizationHeaderHandlerable;
-import org.idp.server.type.oauth.AccessToken;
+import org.idp.server.type.oauth.AccessTokenValue;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public class UserinfoRequest implements AuthorizationHeaderHandlerable {
@@ -21,7 +21,7 @@ public class UserinfoRequest implements AuthorizationHeaderHandlerable {
     return issuer;
   }
 
-  public AccessToken toAccessToken() {
+  public AccessTokenValue toAccessToken() {
     return extractAccessToken(authorizationHeaders);
   }
 

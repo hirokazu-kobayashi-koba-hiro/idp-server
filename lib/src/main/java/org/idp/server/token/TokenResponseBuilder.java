@@ -2,25 +2,25 @@ package org.idp.server.token;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.type.oauth.AccessToken;
+import org.idp.server.type.oauth.AccessTokenValue;
 import org.idp.server.type.oauth.ExpiresIn;
-import org.idp.server.type.oauth.RefreshToken;
+import org.idp.server.type.oauth.RefreshTokenValue;
 import org.idp.server.type.oauth.TokenType;
 import org.idp.server.type.oidc.IdToken;
 
 public class TokenResponseBuilder {
-  AccessToken accessToken;
+  AccessTokenValue accessTokenValue;
   TokenType tokenType;
   ExpiresIn expiresIn;
-  RefreshToken refreshToken = new RefreshToken();
+  RefreshTokenValue refreshTokenValue = new RefreshTokenValue();
   IdToken idToken = new IdToken();
   Map<String, Object> values = new HashMap<>();
 
   public TokenResponseBuilder() {}
 
-  public TokenResponseBuilder add(AccessToken accessToken) {
-    this.accessToken = accessToken;
-    values.put("access_token", accessToken.value());
+  public TokenResponseBuilder add(AccessTokenValue accessTokenValue) {
+    this.accessTokenValue = accessTokenValue;
+    values.put("access_token", accessTokenValue.value());
     return this;
   }
 
@@ -36,9 +36,9 @@ public class TokenResponseBuilder {
     return this;
   }
 
-  public TokenResponseBuilder add(RefreshToken refreshToken) {
-    this.refreshToken = refreshToken;
-    values.put("refresh_token", refreshToken.value());
+  public TokenResponseBuilder add(RefreshTokenValue refreshTokenValue) {
+    this.refreshTokenValue = refreshTokenValue;
+    values.put("refresh_token", refreshTokenValue.value());
     return this;
   }
 
@@ -49,6 +49,7 @@ public class TokenResponseBuilder {
   }
 
   public TokenResponse build() {
-    return new TokenResponse(accessToken, tokenType, expiresIn, refreshToken, idToken, values);
+    return new TokenResponse(
+        accessTokenValue, tokenType, expiresIn, refreshTokenValue, idToken, values);
   }
 }

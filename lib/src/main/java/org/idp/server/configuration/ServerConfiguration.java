@@ -59,7 +59,9 @@ public class ServerConfiguration implements JsonReadable {
   int authorizationCodeValidDuration = 600;
   String tokenSignedKeyId = "";
   String idTokenSignedKeyId = "";
-  long accessTokenDuration = 3600;
+  long accessTokenDuration = 1800;
+
+  long refreshTokenDuration = 3600;
 
   public ServerConfiguration() {}
 
@@ -274,6 +276,10 @@ public class ServerConfiguration implements JsonReadable {
 
   public long accessTokenDuration() {
     return accessTokenDuration;
+  }
+
+  public long refreshTokenDuration() {
+    return refreshTokenDuration;
   }
 
   public boolean hasTokenEndpoint() {

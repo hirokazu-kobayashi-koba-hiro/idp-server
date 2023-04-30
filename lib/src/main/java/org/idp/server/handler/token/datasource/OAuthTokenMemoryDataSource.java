@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.repository.OAuthTokenRepository;
-import org.idp.server.type.oauth.AccessToken;
-import org.idp.server.type.oauth.RefreshToken;
+import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.RefreshTokenValue;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public class OAuthTokenMemoryDataSource implements OAuthTokenRepository {
@@ -38,8 +38,8 @@ public class OAuthTokenMemoryDataSource implements OAuthTokenRepository {
   }
 
   @Override
-  public OAuthToken find(TokenIssuer tokenIssuer, AccessToken accessToken) {
-    String key = accessTokenKey(tokenIssuer, accessToken);
+  public OAuthToken find(TokenIssuer tokenIssuer, AccessTokenValue accessTokenValue) {
+    String key = accessTokenKey(tokenIssuer, accessTokenValue);
     OAuthToken oAuthToken = accessTokens.get(key);
     if (Objects.isNull(oAuthToken)) {
       return new OAuthToken();
@@ -48,8 +48,8 @@ public class OAuthTokenMemoryDataSource implements OAuthTokenRepository {
   }
 
   @Override
-  public OAuthToken find(TokenIssuer tokenIssuer, RefreshToken refreshToken) {
-    String key = refreshTokenKey(tokenIssuer, refreshToken);
+  public OAuthToken find(TokenIssuer tokenIssuer, RefreshTokenValue refreshTokenValue) {
+    String key = refreshTokenKey(tokenIssuer, refreshTokenValue);
     OAuthToken oAuthToken = refreshTokens.get(key);
     if (Objects.isNull(oAuthToken)) {
       return new OAuthToken();
@@ -73,11 +73,11 @@ public class OAuthTokenMemoryDataSource implements OAuthTokenRepository {
     refreshTokens.remove(key);
   }
 
-  String accessTokenKey(TokenIssuer tokenIssuer, AccessToken accessToken) {
-    return String.format("%s%s", tokenIssuer.value(), accessToken.value());
+  String accessTokenKey(TokenIssuer tokenIssuer, AccessTokenValue accessTokenValue) {
+    return String.format("%s%s", tokenIssuer.value(), accessTokenValue.value());
   }
 
-  String refreshTokenKey(TokenIssuer tokenIssuer, RefreshToken refreshToken) {
-    return String.format("%s%s", tokenIssuer.value(), refreshToken.value());
+  String refreshTokenKey(TokenIssuer tokenIssuer, RefreshTokenValue refreshTokenValue) {
+    return String.format("%s%s", tokenIssuer.value(), refreshTokenValue.value());
   }
 }

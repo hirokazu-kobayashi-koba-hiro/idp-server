@@ -21,7 +21,7 @@ public class AuthorizationResponseIdTokenCreator
         createIdToken(
             authorizationRequest,
             new AuthorizationCode(),
-            new AccessToken(),
+            new AccessTokenValue(),
             user,
             new Authentication(),
             context.serverConfiguration(),

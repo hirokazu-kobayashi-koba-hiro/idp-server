@@ -2,12 +2,12 @@ package org.idp.server.type.oauth;
 
 import java.util.Objects;
 
-public class RefreshToken {
+public class RefreshTokenValue {
   String value;
 
-  public RefreshToken() {}
+  public RefreshTokenValue() {}
 
-  public RefreshToken(String value) {
+  public RefreshTokenValue(String value) {
     this.value = value;
   }
 
@@ -19,7 +19,7 @@ public class RefreshToken {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    RefreshToken that = (RefreshToken) o;
+    RefreshTokenValue that = (RefreshTokenValue) o;
     return Objects.equals(value, that.value);
   }
 
