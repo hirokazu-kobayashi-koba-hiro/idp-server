@@ -7,12 +7,14 @@ import org.idp.server.type.oauth.TokenIssuer;
 
 /** ServerConfiguration */
 public class ServerConfiguration implements JsonReadable {
-  String issuer = "";
-  String authorizationEndpoint = "";
+  String issuer;
+  String authorizationEndpoint;
   String tokenEndpoint = "";
   String userinfoEndpoint = "";
-  String jwks = "";
-  String jwksUri = "";
+  String jwks;
+  String jwksUri;
+
+  String registrationEndpoint = "";
   List<String> scopesSupported = new ArrayList<>();
   List<String> responseTypesSupported = new ArrayList<>();
   List<String> responseModesSupported = new ArrayList<>();
@@ -87,6 +89,10 @@ public class ServerConfiguration implements JsonReadable {
 
   public String jwksUri() {
     return jwksUri;
+  }
+
+  public String registrationEndpoint() {
+    return registrationEndpoint;
   }
 
   public List<String> scopesSupported() {
@@ -270,6 +276,18 @@ public class ServerConfiguration implements JsonReadable {
     return accessTokenDuration;
   }
 
+  public boolean hasTokenEndpoint() {
+    return Objects.nonNull(tokenEndpoint) && !tokenEndpoint.isEmpty();
+  }
+
+  public boolean hasUserinfoEndpoint() {
+    return Objects.nonNull(userinfoEndpoint) && !userinfoEndpoint.isEmpty();
+  }
+
+  public boolean hasRegistrationEndpoint() {
+    return Objects.nonNull(revocationEndpoint) && !registrationEndpoint.isEmpty();
+  }
+
   public boolean isSupportedResponseType(ResponseType responseType) {
     return responseTypesSupported.contains(responseType.value());
   }
@@ -358,7 +376,7 @@ public class ServerConfiguration implements JsonReadable {
     return !displayValuesSupported.isEmpty();
   }
 
-  public boolean setClaimTypesSupported() {
+  public boolean hasClaimTypesSupported() {
     return !claimTypesSupported.isEmpty();
   }
 
@@ -370,7 +388,7 @@ public class ServerConfiguration implements JsonReadable {
     return Objects.nonNull(revocationEndpoint) && !revocationEndpoint.isEmpty();
   }
 
-  public boolean setRevocationEndpointAuthMethodsSupported() {
+  public boolean hasRevocationEndpointAuthMethodsSupported() {
     return !revocationEndpointAuthMethodsSupported.isEmpty();
   }
 
@@ -390,7 +408,7 @@ public class ServerConfiguration implements JsonReadable {
     return !introspectionEndpointAuthSigningAlgValuesSupported.isEmpty();
   }
 
-  public boolean setCodeChallengeMethodsSupported() {
+  public boolean hasCodeChallengeMethodsSupported() {
     return !codeChallengeMethodsSupported.isEmpty();
   }
 }
