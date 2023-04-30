@@ -1,6 +1,7 @@
 package org.idp.server.handler.token;
 
 import static org.idp.server.type.oauth.GrantType.authorization_code;
+import static org.idp.server.type.oauth.GrantType.refresh_token;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,7 @@ import org.idp.server.token.TokenRequestContext;
 import org.idp.server.token.TokenRequestParameters;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.token.service.OAuthTokenCreationService;
+import org.idp.server.token.service.RefreshTokenGrantService;
 import org.idp.server.token.service.TokenCreationCodeGrantService;
 import org.idp.server.token.validator.TokenRequestValidator;
 import org.idp.server.type.oauth.ClientId;
@@ -48,6 +50,7 @@ public class TokenRequestHandler {
             authorizationRequestRepository,
             authorizationCodeGrantRepository,
             authorizationGrantedRepository));
+    map.put(refresh_token, new RefreshTokenGrantService(oAuthTokenRepository));
     this.tokenRequestValidator = new TokenRequestValidator();
     this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
     this.oAuthTokenRepository = oAuthTokenRepository;
