@@ -10,6 +10,7 @@ export const serverConfig = {
   tokenRevocationEndpoint: "http://localhost:8080/123/api/v1/tokens/revocation",
   userinfoEndpoint: "http://localhost:8080/123/api/v1/userinfo",
   jwksEndpoint: "http://localhost:8080/123/api/v1/jwks",
+  discoveryEndpoint: "http://localhost:8080/123/.well-known/openid-configuration",
   enabledSsr: false,
 };
 export const clientSecretPostClient = {

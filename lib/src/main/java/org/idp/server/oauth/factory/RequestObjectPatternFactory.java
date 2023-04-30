@@ -97,7 +97,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());
-    builder.add(serverConfiguration.issuer());
+    builder.add(serverConfiguration.tokenIssuer());
     builder.add(profile);
     builder.add(scopes);
     builder.add(responseType);

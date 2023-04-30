@@ -251,6 +251,12 @@ export const postUserinfo = async ({ endpoint, authorizationHeader }) => {
   });
 };
 
+export const getConfiguration = async ({ endpoint}) => {
+  return await get({
+    url: endpoint
+  });
+};
+
 export const getJwks = async ({ endpoint }) => {
   return await get({
     url: endpoint,

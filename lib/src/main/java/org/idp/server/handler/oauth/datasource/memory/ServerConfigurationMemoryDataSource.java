@@ -38,7 +38,7 @@ public class ServerConfigurationMemoryDataSource
       for (String path : paths) {
         String json = read(path);
         ServerConfiguration serverConfiguration = jsonParser.read(json, ServerConfiguration.class);
-        map.put(serverConfiguration.issuer(), serverConfiguration);
+        map.put(serverConfiguration.tokenIssuer(), serverConfiguration);
       }
     } catch (IOException e) {
       throw new IdpServerFailedInitializationException(e.getMessage(), e);

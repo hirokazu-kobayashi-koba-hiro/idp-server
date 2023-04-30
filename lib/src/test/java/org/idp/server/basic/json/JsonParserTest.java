@@ -95,6 +95,6 @@ public class JsonParserTest {
     JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
     ServerConfiguration serverConfiguration = jsonParser.read(json, ServerConfiguration.class);
 
-    Assertions.assertEquals("https://server.example.com", serverConfiguration.issuer());
+    Assertions.assertEquals("https://server.example.com", serverConfiguration.tokenIssuer());
   }
 }

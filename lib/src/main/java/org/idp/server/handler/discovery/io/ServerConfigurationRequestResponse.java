@@ -2,16 +2,18 @@ package org.idp.server.handler.discovery.io;
 
 import java.util.Map;
 
-public class JwksRequestResponse {
-  JwksRequestStatus status;
+public class ServerConfigurationRequestResponse {
+
+  ServerConfigurationRequestStatus status;
   Map<String, Object> content;
 
-  public JwksRequestResponse(JwksRequestStatus status, Map<String, Object> content) {
+  public ServerConfigurationRequestResponse(
+      ServerConfigurationRequestStatus status, Map<String, Object> content) {
     this.status = status;
     this.content = content;
   }
 
-  public JwksRequestStatus status() {
+  public ServerConfigurationRequestStatus status() {
     return status;
   }
 

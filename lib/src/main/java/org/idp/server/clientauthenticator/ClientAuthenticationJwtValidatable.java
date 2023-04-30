@@ -50,7 +50,7 @@ public interface ClientAuthenticationJwtValidatable {
           "client assertion is invalid, must contains aud claim in jwt payload");
     }
     ServerConfiguration serverConfiguration = context.serverConfiguration();
-    if (claims.getAud().contains(serverConfiguration.issuer().value())) {
+    if (claims.getAud().contains(serverConfiguration.tokenIssuer().value())) {
       return;
     }
     if (claims.getAud().contains(serverConfiguration.tokenEndpoint())) {

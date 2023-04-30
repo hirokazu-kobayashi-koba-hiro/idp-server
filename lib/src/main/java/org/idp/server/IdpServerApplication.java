@@ -26,6 +26,7 @@ public class IdpServerApplication {
   TokenIntrospectionApi tokenIntrospectionApi;
   TokenRevocationApi tokenRevocationApi;
   UserinfoApi userinfoApi;
+  DiscoveryApi discoveryApi;
   JwksApi jwksApi;
   CibaApi cibaApi;
 
@@ -82,6 +83,7 @@ public class IdpServerApplication {
             clientConfigurationMemoryDataSource);
     this.userinfoApi = new UserinfoApi(userinfoHandler);
     DiscoveryHandler discoveryHandler = new DiscoveryHandler(serverConfigurationMemoryDataSource);
+    this.discoveryApi = new DiscoveryApi(discoveryHandler);
     this.jwksApi = new JwksApi(discoveryHandler);
     this.cibaApi = new CibaApi(new CibaRequestHandler());
   }
@@ -104,6 +106,10 @@ public class IdpServerApplication {
 
   public UserinfoApi userinfoApi() {
     return userinfoApi;
+  }
+
+  public DiscoveryApi discoveryApi() {
+    return discoveryApi;
   }
 
   public JwksApi jwksApi() {

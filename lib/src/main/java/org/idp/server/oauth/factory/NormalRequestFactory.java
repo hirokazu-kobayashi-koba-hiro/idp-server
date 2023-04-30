@@ -24,7 +24,7 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());
-    builder.add(serverConfiguration.issuer());
+    builder.add(serverConfiguration.tokenIssuer());
     builder.add(profile);
     builder.add(new Scopes(filteredScopes));
     builder.add(parameters.responseType());

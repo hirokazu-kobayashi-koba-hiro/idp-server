@@ -1,9 +1,6 @@
 package org.idp.server.configuration;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.type.oauth.ResponseType;
 import org.idp.server.type.oauth.TokenIssuer;
@@ -64,8 +61,12 @@ public class ServerConfiguration implements JsonReadable {
 
   public ServerConfiguration() {}
 
-  public TokenIssuer issuer() {
+  public TokenIssuer tokenIssuer() {
     return new TokenIssuer(issuer);
+  }
+
+  public String issuer() {
+    return issuer;
   }
 
   public String authorizationEndpoint() {
@@ -271,5 +272,125 @@ public class ServerConfiguration implements JsonReadable {
 
   public boolean isSupportedResponseType(ResponseType responseType) {
     return responseTypesSupported.contains(responseType.value());
+  }
+
+  public boolean hasScopesSupported() {
+    return !scopesSupported.isEmpty();
+  }
+
+  public boolean hasResponseTypesSupported() {
+    return !responseTypesSupported.isEmpty();
+  }
+
+  public boolean hasResponseModesSupported() {
+    return !responseModesSupported.isEmpty();
+  }
+
+  public boolean hasGrantTypesSupported() {
+    return !grantTypesSupported.isEmpty();
+  }
+
+  public boolean hasAcrValuesSupported() {
+    return !acrValuesSupported.isEmpty();
+  }
+
+  public boolean hasSubjectTypesSupported() {
+    return !subjectTypesSupported.isEmpty();
+  }
+
+  public boolean hasIdTokenSigningAlgValuesSupported() {
+    return !idTokenSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasIdTokenEncryptionAlgValuesSupported() {
+    return !idTokenEncryptionAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasIdTokenEncryptionEncValuesSupported() {
+    return !idTokenEncryptionEncValuesSupported.isEmpty();
+  }
+
+  public boolean hasUserinfoSigningAlgValuesSupported() {
+    return !userinfoSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasUserinfoEncryptionAlgValuesSupported() {
+    return !userinfoEncryptionAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasUserinfoEncryptionEncValuesSupported() {
+    return !userinfoEncryptionEncValuesSupported.isEmpty();
+  }
+
+  public boolean hasRequestObjectSigningAlgValuesSupported() {
+    return !requestObjectSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasRequestObjectEncryptionAlgValuesSupported() {
+    return !requestObjectEncryptionAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasRequestObjectEncryptionEncValuesSupported() {
+    return !requestObjectEncryptionEncValuesSupported.isEmpty();
+  }
+
+  public boolean hasAuthorizationSigningAlgValuesSupported() {
+    return !authorizationSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasAuthorizationEncryptionAlgValuesSupported() {
+    return !authorizationEncryptionAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasAuthorizationEncryptionEncValuesSupported() {
+    return !authorizationEncryptionEncValuesSupported.isEmpty();
+  }
+
+  public boolean hasTokenEndpointAuthMethodsSupported() {
+    return !tokenEndpointAuthMethodsSupported.isEmpty();
+  }
+
+  public boolean hasTokenEndpointAuthSigningAlgValuesSupported() {
+    return !tokenEndpointAuthSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasDisplayValuesSupported() {
+    return !displayValuesSupported.isEmpty();
+  }
+
+  public boolean setClaimTypesSupported() {
+    return !claimTypesSupported.isEmpty();
+  }
+
+  public boolean hasClaimsSupported() {
+    return !claimsSupported.isEmpty();
+  }
+
+  public boolean hasRevocationEndpoint() {
+    return Objects.nonNull(revocationEndpoint) && !revocationEndpoint.isEmpty();
+  }
+
+  public boolean setRevocationEndpointAuthMethodsSupported() {
+    return !revocationEndpointAuthMethodsSupported.isEmpty();
+  }
+
+  public boolean hasRevocationEndpointAuthSigningAlgValuesSupported() {
+    return !revocationEndpointAuthSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasIntrospectionEndpoint() {
+    return Objects.nonNull(introspectionEndpoint) && !introspectionEndpoint.isEmpty();
+  }
+
+  public boolean hasIntrospectionEndpointAuthMethodsSupported() {
+    return !introspectionEndpointAuthMethodsSupported.isEmpty();
+  }
+
+  public boolean hasIntrospectionEndpointAuthSigningAlgValuesSupported() {
+    return !introspectionEndpointAuthSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean setCodeChallengeMethodsSupported() {
+    return !codeChallengeMethodsSupported.isEmpty();
   }
 }

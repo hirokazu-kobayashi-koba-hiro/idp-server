@@ -70,7 +70,7 @@ public class OAuthAuthorizeContext {
   }
 
   public TokenIssuer tokenIssuer() {
-    return serverConfiguration.issuer();
+    return serverConfiguration.tokenIssuer();
   }
 
   public ResponseType responseType() {

@@ -120,7 +120,7 @@ public class OAuthRequestContext {
   }
 
   public TokenIssuer tokenIssuer() {
-    return serverConfiguration.issuer();
+    return serverConfiguration.tokenIssuer();
   }
 
   public State state() {
