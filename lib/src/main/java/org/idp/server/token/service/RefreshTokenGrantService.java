@@ -50,6 +50,8 @@ public class RefreshTokenGrantService
             .add(new ExpiresIn(serverConfiguration.accessTokenDuration()));
     TokenResponse tokenResponse = tokenResponseBuilder.build();
 
+    oAuthTokenRepository.delete(oAuthToken);
+
     return new OAuthToken(
         identifier, tokenResponse, accessToken, refreshToken, oAuthToken.authorizationGrant());
   }

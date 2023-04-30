@@ -3,7 +3,9 @@
   "authorization_endpoint": "https://server.example.com/connect/authorize",
   "token_endpoint": "https://server.example.com/connect/token",
   "token_endpoint_auth_methods_supported": [
+    "client_secret_post",
     "client_secret_basic",
+    "client_secret_jwt",
     "private_key_jwt"
   ],
   "token_endpoint_auth_signing_alg_values_supported": [
@@ -15,6 +17,11 @@
   "end_session_endpoint": "https://server.example.com/connect/end_session",
   "jwks_uri": "https://server.example.com/jwks.json",
   "jwks": "{\n    \"keys\": [\n        {\n            \"kty\": \"EC\",\n            \"d\": \"yIWDrlhnCy3yL9xLuqZGOBFFq4PWGsCeM7Sc_lfeaQQ\",\n            \"use\": \"sig\",\n            \"crv\": \"P-256\",\n            \"kid\": \"access_token\",\n            \"x\": \"iWJINqt0ySv3kVEvlHbvNkPKY2pPSf1cG1PSx3tRfw0\",\n            \"y\": \"rW1FdfXK5AQcv-Go6Xho0CR5AbLai7Gp9IdLTIXTSIQ\",\n            \"alg\": \"ES256\"\n        }\n    ]\n}",
+  "grant_types_supported": [
+    "authorization_code",
+    "refresh_token",
+    "client_credentials"
+  ],
   "token_signed_key_id": "access_token",
   "id_token_signed_key_id": "access_token",
   "registration_endpoint": "https://server.example.com/connect/register",

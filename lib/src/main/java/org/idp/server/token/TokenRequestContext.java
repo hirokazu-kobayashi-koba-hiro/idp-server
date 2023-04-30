@@ -4,22 +4,26 @@ import org.idp.server.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.type.OAuthRequestKey;
+import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.*;
 
 public class TokenRequestContext implements BackchannelRequestContext {
 
   ClientSecretBasic clientSecretBasic;
   TokenRequestParameters parameters;
+  CustomProperties customProperties;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
 
   public TokenRequestContext(
       ClientSecretBasic clientSecretBasic,
       TokenRequestParameters parameters,
+      CustomProperties customProperties,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     this.clientSecretBasic = clientSecretBasic;
     this.parameters = parameters;
+    this.customProperties = customProperties;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
   }
@@ -52,6 +56,10 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public GrantType grantType() {
     return parameters.grantType();
+  }
+
+  public CustomProperties customProperties() {
+    return customProperties;
   }
 
   @Override
@@ -101,5 +109,9 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public RefreshTokenValue refreshToken() {
     return parameters.refreshToken();
+  }
+
+  public Scopes scopes() {
+    return parameters.scopes();
   }
 }

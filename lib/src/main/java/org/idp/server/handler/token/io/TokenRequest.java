@@ -1,9 +1,11 @@
 package org.idp.server.handler.token.io;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.http.BasicAuth;
 import org.idp.server.token.AuthorizationHeaderHandlerable;
 import org.idp.server.token.TokenRequestParameters;
+import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ClientSecretBasic;
 import org.idp.server.type.oauth.TokenIssuer;
@@ -13,11 +15,7 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
   Map<String, String[]> params;
   String issuer;
 
-  public TokenRequest() {
-    this.authorizationHeaders = "";
-    this.params = Map.of();
-    this.issuer = "";
-  }
+  Map<String, Object> customProperties = new HashMap<>();
 
   public TokenRequest(String authorizationHeaders, Map<String, String[]> params, String issuer) {
     this.authorizationHeaders = authorizationHeaders;
@@ -35,6 +33,15 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
 
   public String getIssuer() {
     return issuer;
+  }
+
+  public Map<String, Object> customProperties() {
+    return customProperties;
+  }
+
+  public TokenRequest setCustomProperties(Map<String, Object> customProperties) {
+    this.customProperties = customProperties;
+    return this;
   }
 
   public ClientId clientId() {
@@ -62,5 +69,9 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
 
   public TokenIssuer toTokenIssuer() {
     return new TokenIssuer(issuer);
+  }
+
+  public CustomProperties toCustomProperties() {
+    return new CustomProperties(customProperties);
   }
 }

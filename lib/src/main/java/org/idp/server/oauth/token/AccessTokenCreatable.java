@@ -26,7 +26,9 @@ public interface AccessTokenCreatable {
     ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(accessTokenDuration));
     AccessTokenPayloadBuilder builder = new AccessTokenPayloadBuilder();
     builder.add(serverConfiguration.tokenIssuer());
-    builder.add(authorizationGrant.subject());
+    if (authorizationGrant.hasUser()) {
+      builder.add(authorizationGrant.subject());
+    }
     builder.add(authorizationGrant.clientId());
     builder.add(authorizationGrant.scopes());
     builder.add(authorizationGrant.customProperties());

@@ -16,6 +16,7 @@ import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.token.*;
 import org.idp.server.token.*;
+import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.token.validator.TokenRequestCodeGrantValidator;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
@@ -27,15 +28,18 @@ public class TokenCreationCodeGrantService
         IdTokenCreatable {
 
   AuthorizationRequestRepository authorizationRequestRepository;
+  OAuthTokenRepository oAuthTokenRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
   TokenRequestCodeGrantValidator validator;
 
   public TokenCreationCodeGrantService(
       AuthorizationRequestRepository authorizationRequestRepository,
+      OAuthTokenRepository oAuthTokenRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
+    this.oAuthTokenRepository = oAuthTokenRepository;
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
     this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.validator = new TokenRequestCodeGrantValidator();
@@ -89,11 +93,16 @@ public class TokenCreationCodeGrantService
             authorizationGrantedIdentifier, authorizationCodeGrant.authorizationGrant());
     authorizationGrantedRepository.register(authorizationGranted);
 
-    return new OAuthToken(
-        identifier,
-        tokenResponse,
-        accessToken,
-        refreshToken,
-        authorizationCodeGrant.authorizationGrant());
+    OAuthToken oAuthToken =
+        new OAuthToken(
+            identifier,
+            tokenResponse,
+            accessToken,
+            refreshToken,
+            authorizationCodeGrant.authorizationGrant());
+
+    oAuthTokenRepository.register(oAuthToken);
+
+    return oAuthToken;
   }
 }

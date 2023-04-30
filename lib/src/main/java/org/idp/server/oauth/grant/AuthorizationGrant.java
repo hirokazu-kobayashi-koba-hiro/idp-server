@@ -67,4 +67,8 @@ public class AuthorizationGrant {
   public boolean isGranted(ClientId clientId) {
     return this.clientId.equals(clientId);
   }
+
+  public boolean hasUser() {
+    return user.exists();
+  }
 }

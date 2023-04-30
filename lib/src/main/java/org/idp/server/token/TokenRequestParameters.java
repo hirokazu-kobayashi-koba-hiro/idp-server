@@ -99,6 +99,10 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
     return contains(OAuthRequestKey.refresh_token);
   }
 
+  public Scopes scopes() {
+    return new Scopes(getString(OAuthRequestKey.scope));
+  }
+
   public String getString(OAuthRequestKey key) {
     if (!values.contains(key.name())) {
       return "";

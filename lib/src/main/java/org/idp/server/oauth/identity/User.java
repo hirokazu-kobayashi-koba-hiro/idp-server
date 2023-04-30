@@ -1,5 +1,7 @@
 package org.idp.server.oauth.identity;
 
+import java.util.Objects;
+
 public class User {
   String sub;
   String name;
@@ -191,5 +193,9 @@ public class User {
   public User setUpdateAt(long updateAt) {
     this.updateAt = updateAt;
     return this;
+  }
+
+  public boolean exists() {
+    return Objects.nonNull(sub) && !sub.isEmpty();
   }
 }

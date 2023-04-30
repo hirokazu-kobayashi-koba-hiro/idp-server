@@ -6,6 +6,7 @@ public enum GrantType {
   authorization_code,
   implicit,
   password,
+  client_credentials,
   refresh_token,
   unknown,
   undefined;

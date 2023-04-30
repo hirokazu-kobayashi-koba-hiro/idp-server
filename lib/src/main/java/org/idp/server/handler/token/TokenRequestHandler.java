@@ -1,7 +1,6 @@
 package org.idp.server.handler.token;
 
-import static org.idp.server.type.oauth.GrantType.authorization_code;
-import static org.idp.server.type.oauth.GrantType.refresh_token;
+import static org.idp.server.type.oauth.GrantType.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,10 +18,12 @@ import org.idp.server.token.OAuthToken;
 import org.idp.server.token.TokenRequestContext;
 import org.idp.server.token.TokenRequestParameters;
 import org.idp.server.token.repository.OAuthTokenRepository;
+import org.idp.server.token.service.ClientCredentialsGrantService;
 import org.idp.server.token.service.OAuthTokenCreationService;
 import org.idp.server.token.service.RefreshTokenGrantService;
 import org.idp.server.token.service.TokenCreationCodeGrantService;
 import org.idp.server.token.validator.TokenRequestValidator;
+import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ClientSecretBasic;
 import org.idp.server.type.oauth.GrantType;
@@ -48,9 +49,11 @@ public class TokenRequestHandler {
         authorization_code,
         new TokenCreationCodeGrantService(
             authorizationRequestRepository,
+            oAuthTokenRepository,
             authorizationCodeGrantRepository,
             authorizationGrantedRepository));
     map.put(refresh_token, new RefreshTokenGrantService(oAuthTokenRepository));
+    map.put(client_credentials, new ClientCredentialsGrantService(oAuthTokenRepository));
     this.tokenRequestValidator = new TokenRequestValidator();
     this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
     this.oAuthTokenRepository = oAuthTokenRepository;
@@ -63,13 +66,18 @@ public class TokenRequestHandler {
     TokenRequestParameters parameters = tokenRequest.toParameters();
     ClientSecretBasic clientSecretBasic = tokenRequest.clientSecretBasic();
     ClientId clientId = tokenRequest.clientId();
+    CustomProperties customProperties = tokenRequest.toCustomProperties();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tokenIssuer, clientId);
     // TODO request validate
     TokenRequestContext tokenRequestContext =
         new TokenRequestContext(
-            clientSecretBasic, parameters, serverConfiguration, clientConfiguration);
+            clientSecretBasic,
+            parameters,
+            customProperties,
+            serverConfiguration,
+            clientConfiguration);
     tokenRequestValidator.validate(tokenRequestContext);
 
     clientAuthenticatorHandler.authenticate(tokenRequestContext);
@@ -80,9 +88,6 @@ public class TokenRequestHandler {
       throw new RuntimeException(String.format("unsupported grant_type (%s)", grantType.name()));
     }
 
-    OAuthToken oAuthToken = oAuthTokenCreationService.create(tokenRequestContext);
-    oAuthTokenRepository.register(oAuthToken);
-
-    return oAuthToken;
+    return oAuthTokenCreationService.create(tokenRequestContext);
   }
 }

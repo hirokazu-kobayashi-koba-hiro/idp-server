@@ -9,6 +9,7 @@
 1. RFC6749 The OAuth 2.0 Authorization Framework
    1. authorization code flow
    2. implicit flow
+   3. client credentials flow
 2. OpenID Connect Core 1.0 incorporating errata set 1
    1. authorization code flow
    2. implicit flow

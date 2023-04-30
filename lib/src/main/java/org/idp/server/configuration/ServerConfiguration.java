@@ -13,7 +13,6 @@ public class ServerConfiguration implements JsonReadable {
   String userinfoEndpoint = "";
   String jwks;
   String jwksUri;
-
   String registrationEndpoint = "";
   List<String> scopesSupported = new ArrayList<>();
   List<String> responseTypesSupported = new ArrayList<>();
