@@ -2,8 +2,8 @@ package org.idp.server.handler.discovery;
 
 import java.util.Map;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.dyscovery.JwksResponseCreator;
-import org.idp.server.dyscovery.ServerConfigurationResponseCreator;
+import org.idp.server.discovery.JwksResponseCreator;
+import org.idp.server.discovery.ServerConfigurationResponseCreator;
 import org.idp.server.handler.discovery.io.JwksRequestResponse;
 import org.idp.server.handler.discovery.io.JwksRequestStatus;
 import org.idp.server.handler.discovery.io.ServerConfigurationRequestResponse;

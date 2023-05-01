@@ -1,4 +1,4 @@
-package org.idp.server.dyscovery;
+package org.idp.server.discovery;
 
 import java.util.Map;
 import org.idp.server.basic.jose.JwkInvalidException;
