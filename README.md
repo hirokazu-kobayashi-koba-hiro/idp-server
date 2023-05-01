@@ -17,6 +17,7 @@
    4. request object
    5. userinfo
 3. RFC7009 OAuth 2.0 Token Revocation
+4. RFC7636 Proof Key for Code Exchange by OAuth Public Clients
 4. RFC7662 OAuth 2.0 Token Introspection
 
 ## supported client authentication
