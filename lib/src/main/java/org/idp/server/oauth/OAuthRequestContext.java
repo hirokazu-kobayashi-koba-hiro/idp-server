@@ -134,4 +134,8 @@ public class OAuthRequestContext {
   public boolean hasRedirectUri() {
     return authorizationRequest.hasRedirectUri();
   }
+
+  public boolean isPckeRequest() {
+    return authorizationRequest.hasCodeChallenge();
+  }
 }

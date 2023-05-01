@@ -8,4 +8,6 @@ public interface AuthorizationRequestRepository {
   void register(AuthorizationRequest authorizationRequest);
 
   AuthorizationRequest get(AuthorizationRequestIdentifier authorizationRequestIdentifier);
+
+  AuthorizationRequest find(AuthorizationRequestIdentifier authorizationRequestIdentifier);
 }

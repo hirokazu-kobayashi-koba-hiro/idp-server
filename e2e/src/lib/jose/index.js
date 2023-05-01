@@ -1,10 +1,11 @@
 // eslint-disable-next-line no-undef
-import { re } from "@babel/core/lib/vendor/import-meta-resolve";
-
 const jwt = require("jsonwebtoken");
 import jwkToPem from "jwk-to-pem";
 import jwt_decode from "jwt-decode";
-
+import { v4 as uuidv4 } from "uuid";
+export const generateJti = () => {
+  return uuidv4();
+};
 export const createJwt = ({ payload, secret, options }) => {
   return jwt.sign(payload, secret, options);
 };

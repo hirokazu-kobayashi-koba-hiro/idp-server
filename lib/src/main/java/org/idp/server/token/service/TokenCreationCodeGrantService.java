@@ -18,6 +18,7 @@ import org.idp.server.oauth.token.*;
 import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.token.validator.TokenRequestCodeGrantValidator;
+import org.idp.server.token.verifier.TokenRequestCodeGrantVerifier;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
 
@@ -32,6 +33,7 @@ public class TokenCreationCodeGrantService
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
   TokenRequestCodeGrantValidator validator;
+  TokenRequestCodeGrantVerifier verifier;
 
   public TokenCreationCodeGrantService(
       AuthorizationRequestRepository authorizationRequestRepository,
@@ -43,6 +45,7 @@ public class TokenCreationCodeGrantService
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
     this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.validator = new TokenRequestCodeGrantValidator();
+    this.verifier = new TokenRequestCodeGrantVerifier();
   }
 
   @Override
@@ -52,8 +55,10 @@ public class TokenCreationCodeGrantService
     AuthorizationCode code = tokenRequestContext.code();
     AuthorizationCodeGrant authorizationCodeGrant = authorizationCodeGrantRepository.find(code);
     AuthorizationRequest authorizationRequest =
-        authorizationRequestRepository.get(authorizationCodeGrant.authorizationRequestIdentifier());
+        authorizationRequestRepository.find(
+            authorizationCodeGrant.authorizationRequestIdentifier());
 
+    verifier.verify(tokenRequestContext, authorizationRequest, authorizationCodeGrant);
     ServerConfiguration serverConfiguration = tokenRequestContext.serverConfiguration();
     ClientConfiguration clientConfiguration = tokenRequestContext.clientConfiguration();
     AccessTokenPayload accessTokenPayload =
@@ -102,6 +107,7 @@ public class TokenCreationCodeGrantService
             authorizationCodeGrant.authorizationGrant());
 
     oAuthTokenRepository.register(oAuthToken);
+    authorizationCodeGrantRepository.delete(authorizationCodeGrant);
 
     return oAuthToken;
   }

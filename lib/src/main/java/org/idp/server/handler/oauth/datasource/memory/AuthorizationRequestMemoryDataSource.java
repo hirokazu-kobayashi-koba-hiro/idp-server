@@ -30,4 +30,13 @@ public class AuthorizationRequestMemoryDataSource implements AuthorizationReques
     }
     return authorizationRequest;
   }
+
+  @Override
+  public AuthorizationRequest find(AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+    AuthorizationRequest authorizationRequest = map.get(authorizationRequestIdentifier);
+    if (Objects.isNull(authorizationRequest)) {
+      return new AuthorizationRequest();
+    }
+    return authorizationRequest;
+  }
 }

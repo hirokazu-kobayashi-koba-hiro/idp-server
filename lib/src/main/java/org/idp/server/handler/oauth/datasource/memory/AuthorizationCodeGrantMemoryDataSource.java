@@ -24,4 +24,9 @@ public class AuthorizationCodeGrantMemoryDataSource implements AuthorizationCode
     }
     return authorizationCodeGrant;
   }
+
+  @Override
+  public void delete(AuthorizationCodeGrant authorizationCodeGrant) {
+    map.remove(authorizationCodeGrant.authorizationCode());
+  }
 }

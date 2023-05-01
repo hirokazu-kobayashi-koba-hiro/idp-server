@@ -11,7 +11,8 @@ import org.idp.server.type.oauth.ExpiredAt;
 /** AuthorizationCodeGrant */
 public class AuthorizationCodeGrant {
 
-  AuthorizationRequestIdentifier authorizationRequestIdentifier;
+  AuthorizationRequestIdentifier authorizationRequestIdentifier =
+      new AuthorizationRequestIdentifier();
   AuthorizationGrant authorizationGrant;
   AuthorizationCode authorizationCode;
   ExpiredAt expiredAt;

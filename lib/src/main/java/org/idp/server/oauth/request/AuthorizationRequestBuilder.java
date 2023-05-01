@@ -4,6 +4,8 @@ import org.idp.server.oauth.AuthorizationProfile;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
+import org.idp.server.type.pkce.CodeChallenge;
+import org.idp.server.type.pkce.CodeChallengeMethod;
 
 /** AuthorizationRequestBuilder */
 public class AuthorizationRequestBuilder {
@@ -29,6 +31,8 @@ public class AuthorizationRequestBuilder {
   RequestObject requestObject;
   RequestUri requestUri;
   ClaimsPayload claimsPayload;
+  CodeChallenge codeChallenge;
+  CodeChallengeMethod codeChallengeMethod;
 
   public AuthorizationRequestBuilder() {}
 
@@ -137,6 +141,16 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
+  public AuthorizationRequestBuilder add(CodeChallenge codeChallenge) {
+    this.codeChallenge = codeChallenge;
+    return this;
+  }
+
+  public AuthorizationRequestBuilder add(CodeChallengeMethod codeChallengeMethod) {
+    this.codeChallengeMethod = codeChallengeMethod;
+    return this;
+  }
+
   public AuthorizationRequest build() {
     return new AuthorizationRequest(
         identifier,
@@ -159,6 +173,8 @@ public class AuthorizationRequestBuilder {
         claimsValue,
         requestObject,
         requestUri,
-        claimsPayload);
+        claimsPayload,
+        codeChallenge,
+        codeChallengeMethod);
   }
 }

@@ -8,6 +8,8 @@ import org.idp.server.type.ArrayValueMap;
 import org.idp.server.type.OAuthRequestKey;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
+import org.idp.server.type.pkce.CodeChallenge;
+import org.idp.server.type.pkce.CodeChallengeMethod;
 
 /** OAuthRequestParameters */
 public class OAuthRequestParameters {
@@ -163,6 +165,22 @@ public class OAuthRequestParameters {
 
   public boolean hasRequestUri() {
     return contains(request_uri);
+  }
+
+  public CodeChallenge codeChallenge() {
+    return new CodeChallenge(getString(code_challenge));
+  }
+
+  public boolean hasCodeChallenge() {
+    return contains(code_challenge);
+  }
+
+  public CodeChallengeMethod codeChallengeMethod() {
+    return CodeChallengeMethod.of(getString(code_challenge_method));
+  }
+
+  public boolean hasCodeChallengeMethod() {
+    return contains(code_challenge_method);
   }
 
   public String getString(OAuthRequestKey key) {

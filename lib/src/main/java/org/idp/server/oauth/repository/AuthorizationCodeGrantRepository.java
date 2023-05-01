@@ -7,4 +7,6 @@ public interface AuthorizationCodeGrantRepository {
   void register(AuthorizationCodeGrant authorizationCodeGrant);
 
   AuthorizationCodeGrant find(AuthorizationCode authorizationCode);
+
+  void delete(AuthorizationCodeGrant authorizationCodeGrant);
 }

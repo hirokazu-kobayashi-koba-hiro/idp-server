@@ -6,7 +6,7 @@ public class PckeVerifier implements AuthorizationRequestExtensionVerifier {
 
   @Override
   public boolean shouldNotVerify(OAuthRequestContext context) {
-    return true;
+    return !context.isPckeRequest();
   }
 
   @Override

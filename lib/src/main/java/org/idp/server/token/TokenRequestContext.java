@@ -6,6 +6,7 @@ import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.type.OAuthRequestKey;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.*;
+import org.idp.server.type.pkce.CodeVerifier;
 
 public class TokenRequestContext implements BackchannelRequestContext {
 
@@ -113,5 +114,21 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public Scopes scopes() {
     return parameters.scopes();
+  }
+
+  public boolean hasClientId() {
+    return parameters.hasClientId();
+  }
+
+  public RedirectUri redirectUri() {
+    return parameters.redirectUri();
+  }
+
+  public boolean hasCodeVerifier() {
+    return parameters.hasCodeVerifier();
+  }
+
+  public CodeVerifier codeVerifier() {
+    return parameters.codeVerifier();
   }
 }

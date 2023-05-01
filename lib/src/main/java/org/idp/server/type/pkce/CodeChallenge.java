@@ -1,14 +1,13 @@
-package org.idp.server.oauth.request;
+package org.idp.server.type.pkce;
 
 import java.util.Objects;
 
-/** AuthorizationRequestIdentifier */
-public class AuthorizationRequestIdentifier {
+public class CodeChallenge {
   String value;
 
-  public AuthorizationRequestIdentifier() {}
+  public CodeChallenge() {}
 
-  public AuthorizationRequestIdentifier(String value) {
+  public CodeChallenge(String value) {
     this.value = value;
   }
 
@@ -20,7 +19,7 @@ public class AuthorizationRequestIdentifier {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    AuthorizationRequestIdentifier that = (AuthorizationRequestIdentifier) o;
+    CodeChallenge that = (CodeChallenge) o;
     return Objects.equals(value, that.value);
   }
 

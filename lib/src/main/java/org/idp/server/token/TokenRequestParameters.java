@@ -6,6 +6,7 @@ import org.idp.server.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.type.ArrayValueMap;
 import org.idp.server.type.OAuthRequestKey;
 import org.idp.server.type.oauth.*;
+import org.idp.server.type.pkce.CodeVerifier;
 
 /** TokenRequestParameters */
 public class TokenRequestParameters implements BackchannelRequestParameters {
@@ -101,6 +102,14 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
 
   public Scopes scopes() {
     return new Scopes(getString(OAuthRequestKey.scope));
+  }
+
+  public CodeVerifier codeVerifier() {
+    return new CodeVerifier(getString(OAuthRequestKey.code_verifier));
+  }
+
+  public boolean hasCodeVerifier() {
+    return contains(OAuthRequestKey.code_verifier);
   }
 
   public String getString(OAuthRequestKey key) {

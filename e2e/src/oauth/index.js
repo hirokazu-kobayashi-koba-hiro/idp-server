@@ -21,6 +21,8 @@ export const requestAuthorizations = async ({
   claims,
   request,
   requestUri,
+  codeChallenge,
+  codeChallengeMethod,
   enabledSsr = false,
 }) => {
   const response = await getAuthorizations({
@@ -42,6 +44,8 @@ export const requestAuthorizations = async ({
     claims,
     request,
     requestUri,
+    codeChallenge,
+    codeChallengeMethod,
   });
   console.log(response.data);
   if (enabledSsr) {

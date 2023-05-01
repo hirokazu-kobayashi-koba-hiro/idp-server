@@ -7,9 +7,10 @@ import org.idp.server.type.oauth.GrantType;
 public class TokenRequestCodeGrantValidator {
 
   public void validate(TokenRequestContext tokenRequestContext) {
-    throwIfNotContainsAuthorizationCode(tokenRequestContext);
     throwIfUnSupportedGrantTypeWithServer(tokenRequestContext);
     throwIfUnSupportedGrantTypeWithClient(tokenRequestContext);
+    throwIfNotContainsAuthorizationCode(tokenRequestContext);
+    throwIfNotContainsClientId(tokenRequestContext);
   }
 
   void throwIfUnSupportedGrantTypeWithClient(TokenRequestContext tokenRequestContext) {
@@ -30,6 +31,16 @@ public class TokenRequestCodeGrantValidator {
     if (!tokenRequestContext.hasCode()) {
       throw new TokenBadRequestException(
           "token request does not contains code, authorization_code grant must contains code");
+    }
+  }
+
+  void throwIfNotContainsClientId(TokenRequestContext tokenRequestContext) {
+    if (tokenRequestContext.hasClientSecretBasic()) {
+      return;
+    }
+    if (!tokenRequestContext.hasClientId()) {
+      throw new TokenBadRequestException(
+          "token request does not contains client_id, authorization_code grant must contains client_id");
     }
   }
 }

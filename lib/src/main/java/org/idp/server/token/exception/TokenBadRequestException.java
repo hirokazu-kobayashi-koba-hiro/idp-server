@@ -1,11 +1,30 @@
 package org.idp.server.token.exception;
 
+import org.idp.server.type.oauth.Error;
+import org.idp.server.type.oauth.ErrorDescription;
+
 public class TokenBadRequestException extends RuntimeException {
-  public TokenBadRequestException(String message) {
-    super(message);
+
+  String error;
+  String errorDescription;
+
+  public TokenBadRequestException(String errorDescription) {
+    super(errorDescription);
+    this.error = "invalid_request";
+    this.errorDescription = errorDescription;
   }
 
-  public TokenBadRequestException(String message, Throwable throwable) {
-    super(message, throwable);
+  public TokenBadRequestException(String errorDescription, Throwable throwable) {
+    super(errorDescription, throwable);
+    this.error = "invalid_request";
+    this.errorDescription = errorDescription;
+  }
+
+  public Error error() {
+    return new Error(error);
+  }
+
+  public ErrorDescription errorDescription() {
+    return new ErrorDescription(errorDescription);
   }
 }

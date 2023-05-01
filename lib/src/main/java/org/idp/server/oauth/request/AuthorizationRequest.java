@@ -4,11 +4,13 @@ import org.idp.server.oauth.AuthorizationProfile;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
+import org.idp.server.type.pkce.CodeChallenge;
+import org.idp.server.type.pkce.CodeChallengeMethod;
 
 /** AuthorizationRequest */
 public class AuthorizationRequest {
 
-  AuthorizationRequestIdentifier identifier;
+  AuthorizationRequestIdentifier identifier = new AuthorizationRequestIdentifier();
   TokenIssuer tokenIssuer;
   AuthorizationProfile profile;
   Scopes scopes;
@@ -31,6 +33,10 @@ public class AuthorizationRequest {
   RequestObject requestObject;
   RequestUri requestUri;
   ClaimsPayload claimsPayload;
+  CodeChallenge codeChallenge;
+  CodeChallengeMethod codeChallengeMethod;
+
+  public AuthorizationRequest() {}
 
   AuthorizationRequest(
       AuthorizationRequestIdentifier identifier,
@@ -53,7 +59,9 @@ public class AuthorizationRequest {
       ClaimsValue claimsValue,
       RequestObject requestObject,
       RequestUri requestUri,
-      ClaimsPayload claimsPayload) {
+      ClaimsPayload claimsPayload,
+      CodeChallenge codeChallenge,
+      CodeChallengeMethod codeChallengeMethod) {
     this.identifier = identifier;
     this.tokenIssuer = tokenIssuer;
     this.profile = profile;
@@ -75,6 +83,8 @@ public class AuthorizationRequest {
     this.requestObject = requestObject;
     this.requestUri = requestUri;
     this.claimsPayload = claimsPayload;
+    this.codeChallenge = codeChallenge;
+    this.codeChallengeMethod = codeChallengeMethod;
   }
 
   public AuthorizationRequestIdentifier identifier() {
@@ -161,6 +171,14 @@ public class AuthorizationRequest {
     return claimsPayload;
   }
 
+  public CodeChallenge codeChallenge() {
+    return codeChallenge;
+  }
+
+  public CodeChallengeMethod codeChallengeMethod() {
+    return codeChallengeMethod;
+  }
+
   public boolean hasRedirectUri() {
     return redirectUri.exists();
   }
@@ -187,5 +205,21 @@ public class AuthorizationRequest {
 
   public boolean isOidcProfile() {
     return scopes.contains("openid");
+  }
+
+  public boolean hasCodeChallenge() {
+    return codeChallenge.exists();
+  }
+
+  public boolean exists() {
+    return identifier.exists();
+  }
+
+  public boolean isPkceRequest() {
+    return hasCodeChallenge();
+  }
+
+  public boolean isPkceWithS256() {
+    return codeChallengeMethod.isS256();
   }
 }
