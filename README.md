@@ -1,6 +1,13 @@
 # idp-server
 
-## architecture
+## Overview
+This library provides java api supported OAuth2.0 and OIDC spec.
+
+## License
+
+Apache License, Version 2.0
+
+## Architecture
 
 ![architecture](./architecture.svg)
 
