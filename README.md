@@ -16,9 +16,10 @@
    3. hybrid flow
    4. request object
    5. userinfo
-3. RFC7009 OAuth 2.0 Token Revocation
-4. RFC7636 Proof Key for Code Exchange by OAuth Public Clients
-4. RFC7662 OAuth 2.0 Token Introspection
+3. OpenID Connect Discovery 1.0 incorporating errata set 1
+4. RFC7009 OAuth 2.0 Token Revocation
+5. RFC7636 Proof Key for Code Exchange by OAuth Public Clients
+6.RFC7662 OAuth 2.0 Token Introspection
 
 ## supported client authentication
 
