@@ -110,7 +110,9 @@ public class CibaRequestContext implements BackchannelRequestContext {
   }
 
   public ExpiresIn expiresIn() {
-    // FIXME
+    if (backchannelAuthenticationRequest.hasRequestedExpiry()) {
+      return new ExpiresIn(backchannelAuthenticationRequest.requestedExpiry().toIntValue());
+    }
     return new ExpiresIn(300);
   }
 

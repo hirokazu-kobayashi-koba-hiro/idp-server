@@ -8,10 +8,7 @@ import org.idp.server.IdpServerApplication;
 import org.idp.server.ciba.CibaRequestDelegate;
 import org.idp.server.ciba.UserCriteria;
 import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.handler.ciba.io.CibaAuthorizeRequest;
-import org.idp.server.handler.ciba.io.CibaAuthorizeResponse;
-import org.idp.server.handler.ciba.io.CibaRequest;
-import org.idp.server.handler.ciba.io.CibaRequestResponse;
+import org.idp.server.handler.ciba.io.*;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.type.ciba.UserCode;
 import org.springframework.http.HttpHeaders;
@@ -94,12 +91,14 @@ public class CibaV1Api implements ParameterTransformable {
       @RequestParam("action") String action,
       @PathVariable("tenant-id") String tenantId) {
     Tenant tenant = Tenant.of(tenantId);
-    CibaAuthorizeRequest cibaAuthorizeRequest =
-        new CibaAuthorizeRequest(authReqId, tenant.issuer());
     if (action.equals("allow")) {
+      CibaAuthorizeRequest cibaAuthorizeRequest =
+          new CibaAuthorizeRequest(authReqId, tenant.issuer());
       CibaAuthorizeResponse authorizeResponse = cibaApi.authorize(cibaAuthorizeRequest);
       return new ResponseEntity<>(HttpStatus.valueOf(authorizeResponse.statusCode()));
     }
-    return new ResponseEntity<>(HttpStatus.OK);
+    CibaDenyRequest cibaDenyRequest = new CibaDenyRequest(authReqId, tenant.issuer());
+    CibaDenyResponse cibaDenyResponse = cibaApi.deny(cibaDenyRequest);
+    return new ResponseEntity<>(HttpStatus.valueOf(cibaDenyResponse.statusCode()));
   }
 }

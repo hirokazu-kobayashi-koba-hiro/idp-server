@@ -1,10 +1,10 @@
 package org.idp.server.handler.token;
 
-import static org.idp.server.handler.token.io.TokenRequestStatus.BAD_REQUEST;
-import static org.idp.server.handler.token.io.TokenRequestStatus.SERVER_ERROR;
+import static org.idp.server.handler.token.io.TokenRequestStatus.*;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.idp.server.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.handler.token.io.TokenRequestResponse;
 import org.idp.server.token.TokenErrorResponse;
 import org.idp.server.token.exception.TokenBadRequestException;
@@ -20,6 +20,13 @@ public class TokenRequestErrorHandler {
       log.log(Level.WARNING, exception.getMessage(), exception);
       return new TokenRequestResponse(
           BAD_REQUEST, new TokenErrorResponse(badRequest.error(), badRequest.errorDescription()));
+    }
+    if (exception instanceof ClientUnAuthorizedException) {
+      log.log(Level.WARNING, exception.getMessage(), exception);
+      return new TokenRequestResponse(
+          UNAUTHORIZE,
+          new TokenErrorResponse(
+              new Error("invalid_client"), new ErrorDescription(exception.getLocalizedMessage())));
     }
     Error error = new Error("server_error");
     ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());

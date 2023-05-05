@@ -15,6 +15,10 @@ public class RequestedExpiry {
     return value;
   }
 
+  public int toIntValue() {
+    return Integer.parseInt(value);
+  }
+
   public boolean exists() {
     return Objects.nonNull(value) && !value.isEmpty();
   }

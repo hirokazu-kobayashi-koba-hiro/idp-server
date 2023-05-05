@@ -2,6 +2,7 @@ package org.idp.server;
 
 import java.util.List;
 import org.idp.server.handler.ciba.CibaAuthorizeHandler;
+import org.idp.server.handler.ciba.CibaDenyHandler;
 import org.idp.server.handler.ciba.CibaRequestHandler;
 import org.idp.server.handler.ciba.datasource.memory.BackchannelAuthenticationMemoryDataSource;
 import org.idp.server.handler.ciba.datasource.memory.CibaGrantMemoryDataSource;
@@ -91,6 +92,10 @@ public class IdpServerApplication {
                 serverConfigurationMemoryDataSource,
                 clientConfigurationMemoryDataSource),
             new CibaAuthorizeHandler(
+                cibaGrantMemoryDataSource,
+                serverConfigurationMemoryDataSource,
+                clientConfigurationMemoryDataSource),
+            new CibaDenyHandler(
                 cibaGrantMemoryDataSource,
                 serverConfigurationMemoryDataSource,
                 clientConfigurationMemoryDataSource));

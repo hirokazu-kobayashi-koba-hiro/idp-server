@@ -15,6 +15,7 @@ public class CibaGrantVerifier {
       TokenRequestContext context, BackchannelAuthenticationRequest request, CibaGrant cibaGrant) {
     throwIfExpired(cibaGrant);
     throwIfAuthorizedPending(cibaGrant);
+    throwIfAccessDenied(cibaGrant);
   }
 
   void throwIfExpired(CibaGrant cibaGrant) {
@@ -31,6 +32,14 @@ public class CibaGrantVerifier {
       throw new TokenBadRequestException(
           "authorization_pending",
           "The authorization request is still pending as the end-user hasn't yet been authenticated.");
+    }
+  }
+
+  void throwIfAccessDenied(CibaGrant cibaGrant) {
+    if (cibaGrant.isAccessDenied()) {
+      throw new TokenBadRequestException(
+              "access_denied",
+              "The end-user denied the authorization request.");
     }
   }
 }
