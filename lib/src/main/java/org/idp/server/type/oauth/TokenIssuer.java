@@ -28,4 +28,8 @@ public class TokenIssuer {
   public int hashCode() {
     return Objects.hash(value);
   }
+
+  public boolean exists() {
+    return Objects.nonNull(value) && !value.isEmpty();
+  }
 }

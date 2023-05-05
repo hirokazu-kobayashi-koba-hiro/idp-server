@@ -1,4 +1,4 @@
-package org.idp.server.oauth.request;
+package org.idp.server.oauth.service;
 
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;

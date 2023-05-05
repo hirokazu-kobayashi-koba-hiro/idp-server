@@ -6,6 +6,7 @@ import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.ClaimsPayload;
+import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.type.extension.CustomProperties;
@@ -81,5 +82,9 @@ public class OAuthAuthorizeContext {
     LocalDateTime localDateTime = SystemDateTime.now();
     int duration = serverConfiguration.authorizationCodeValidDuration();
     return new ExpiredAt(localDateTime.plusMinutes(duration));
+  }
+
+  public IdTokenClaims idTokenClaims() {
+    return authorizationRequest.claimsPayload().idToken();
   }
 }

@@ -2,6 +2,8 @@ package org.idp.server;
 
 import java.util.List;
 import org.idp.server.handler.ciba.CibaRequestHandler;
+import org.idp.server.handler.ciba.datasource.memory.BackchannelAuthenticationMemoryDataSource;
+import org.idp.server.handler.ciba.datasource.memory.CibaGrantMemoryDataSource;
 import org.idp.server.handler.config.MemoryDataSourceConfig;
 import org.idp.server.handler.discovery.DiscoveryHandler;
 import org.idp.server.handler.grantmanagment.datasource.AuthorizationGrantedMemoryDataSource;
@@ -58,15 +60,7 @@ public class IdpServerApplication {
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
     this.oAuthApi = new OAuthApi(oAuthRequestHandler, oAuthAuthorizeHandler);
-    TokenRequestHandler tokenRequestHandler =
-        new TokenRequestHandler(
-            authorizationRequestMemoryDataSource,
-            authorizationCodeGrantMemoryDataSource,
-            authorizationGrantedMemoryDataSource,
-            oAuthTokenMemoryDataSource,
-            serverConfigurationMemoryDataSource,
-            clientConfigurationMemoryDataSource);
-    this.tokenApi = new TokenApi(tokenRequestHandler);
+
     TokenIntrospectionHandler tokenIntrospectionHandler =
         new TokenIntrospectionHandler(oAuthTokenMemoryDataSource);
     this.tokenIntrospectionApi = new TokenIntrospectionApi(tokenIntrospectionHandler);
@@ -85,7 +79,27 @@ public class IdpServerApplication {
     DiscoveryHandler discoveryHandler = new DiscoveryHandler(serverConfigurationMemoryDataSource);
     this.discoveryApi = new DiscoveryApi(discoveryHandler);
     this.jwksApi = new JwksApi(discoveryHandler);
-    this.cibaApi = new CibaApi(new CibaRequestHandler());
+    BackchannelAuthenticationMemoryDataSource backchannelAuthenticationMemoryDataSource =
+        new BackchannelAuthenticationMemoryDataSource();
+    CibaGrantMemoryDataSource cibaGrantMemoryDataSource = new CibaGrantMemoryDataSource();
+    this.cibaApi =
+        new CibaApi(
+            new CibaRequestHandler(
+                backchannelAuthenticationMemoryDataSource,
+                cibaGrantMemoryDataSource,
+                serverConfigurationMemoryDataSource,
+                clientConfigurationMemoryDataSource));
+    TokenRequestHandler tokenRequestHandler =
+        new TokenRequestHandler(
+            authorizationRequestMemoryDataSource,
+            authorizationCodeGrantMemoryDataSource,
+            authorizationGrantedMemoryDataSource,
+            backchannelAuthenticationMemoryDataSource,
+            cibaGrantMemoryDataSource,
+            oAuthTokenMemoryDataSource,
+            serverConfigurationMemoryDataSource,
+            clientConfigurationMemoryDataSource);
+    this.tokenApi = new TokenApi(tokenRequestHandler);
   }
 
   public OAuthApi oAuthApi() {

@@ -5,6 +5,8 @@ import static org.idp.server.type.oauth.GrantType.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.ciba.repository.BackchannelAuthenticationRequestRepository;
+import org.idp.server.ciba.repository.CibaGrantRepository;
 import org.idp.server.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
@@ -18,10 +20,7 @@ import org.idp.server.token.OAuthToken;
 import org.idp.server.token.TokenRequestContext;
 import org.idp.server.token.TokenRequestParameters;
 import org.idp.server.token.repository.OAuthTokenRepository;
-import org.idp.server.token.service.ClientCredentialsGrantService;
-import org.idp.server.token.service.OAuthTokenCreationService;
-import org.idp.server.token.service.RefreshTokenGrantService;
-import org.idp.server.token.service.TokenCreationCodeGrantService;
+import org.idp.server.token.service.*;
 import org.idp.server.token.validator.TokenRequestValidator;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
@@ -42,6 +41,8 @@ public class TokenRequestHandler {
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
+      BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
+      CibaGrantRepository cibaGrantRepository,
       OAuthTokenRepository oAuthTokenRepository,
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
@@ -54,6 +55,13 @@ public class TokenRequestHandler {
             authorizationGrantedRepository));
     map.put(refresh_token, new RefreshTokenGrantService(oAuthTokenRepository));
     map.put(client_credentials, new ClientCredentialsGrantService(oAuthTokenRepository));
+    map.put(
+        ciba,
+        new CibaGrantService(
+            backchannelAuthenticationRequestRepository,
+            cibaGrantRepository,
+            oAuthTokenRepository,
+            authorizationGrantedRepository));
     this.tokenRequestValidator = new TokenRequestValidator();
     this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
     this.oAuthTokenRepository = oAuthTokenRepository;

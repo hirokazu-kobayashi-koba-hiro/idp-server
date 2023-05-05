@@ -38,7 +38,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     expect(tokenResponse.status).toBe(200);
     expect(tokenResponse.data).toHaveProperty("id_token");
 
-    const jwksResponse = await getJwks({endpoint: serverConfig.jwksEndpoint});
+    const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
     console.log(jwksResponse.data);
     expect(jwksResponse.status).toBe(200);
 

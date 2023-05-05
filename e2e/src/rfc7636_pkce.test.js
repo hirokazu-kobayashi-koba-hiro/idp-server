@@ -33,7 +33,6 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
     });
     console.log(tokenResponse.data);
     expect(tokenResponse.status).toBe(200);
-
   });
 
   it("success pattern s256", async () => {
@@ -63,7 +62,5 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
     });
     console.log(tokenResponse.data);
     expect(tokenResponse.status).toBe(200);
-
   });
-
 });

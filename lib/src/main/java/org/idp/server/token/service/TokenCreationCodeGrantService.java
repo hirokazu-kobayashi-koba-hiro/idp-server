@@ -10,7 +10,8 @@ import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.IdTokenCreatable;
-import org.idp.server.oauth.identity.User;
+import org.idp.server.oauth.identity.IdTokenCustomClaims;
+import org.idp.server.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.request.AuthorizationRequest;
@@ -76,14 +77,19 @@ public class TokenCreationCodeGrantService
     if (authorizationRequest.isOidcProfile()) {
       AuthorizationCode authorizationCode = authorizationCodeGrant.authorizationCode();
       AuthorizationGrant authorizationGrant = authorizationCodeGrant.authorizationGrant();
-      User user = authorizationGrant.user();
+      IdTokenCustomClaims idTokenCustomClaims =
+          new IdTokenCustomClaimsBuilder()
+              .add(authorizationCodeGrant.authorizationCode())
+              .add(authorizationRequest.nonce())
+              .add(authorizationRequest.state())
+              .build();
       IdToken idToken =
           createIdToken(
-              authorizationRequest,
-              authorizationCode,
-              accessToken.accessTokenValue(),
-              user,
+              authorizationGrant.user(),
               new Authentication(),
+              authorizationCodeGrant.scopes(),
+              authorizationCodeGrant.idTokenClaims(),
+              idTokenCustomClaims,
               serverConfiguration,
               clientConfiguration);
       tokenResponseBuilder.add(idToken);

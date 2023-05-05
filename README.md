@@ -3,9 +3,6 @@
 ## Overview
 This library provides java api supported OAuth2.0 and OIDC spec.
 
-## License
-
-Apache License, Version 2.0
 
 ## Architecture
 
@@ -26,7 +23,7 @@ Apache License, Version 2.0
 3. OpenID Connect Discovery 1.0 incorporating errata set 1
 4. RFC7009 OAuth 2.0 Token Revocation
 5. RFC7636 Proof Key for Code Exchange by OAuth Public Clients
-6.RFC7662 OAuth 2.0 Token Introspection
+6. RFC7662 OAuth 2.0 Token Introspection
 
 ## supported client authentication
 
@@ -35,3 +32,6 @@ Apache License, Version 2.0
 3. client_secret_jwt
 4. private_key_jwt
 
+## License
+
+Apache License, Version 2.0

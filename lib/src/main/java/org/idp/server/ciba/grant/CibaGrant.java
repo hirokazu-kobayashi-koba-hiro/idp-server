@@ -1,0 +1,68 @@
+package org.idp.server.ciba.grant;
+
+import java.time.LocalDateTime;
+import org.idp.server.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.oauth.grant.AuthorizationGrant;
+import org.idp.server.oauth.identity.User;
+import org.idp.server.type.ciba.AuthReqId;
+import org.idp.server.type.ciba.Interval;
+import org.idp.server.type.oauth.ClientId;
+import org.idp.server.type.oauth.ExpiredAt;
+import org.idp.server.type.oauth.Scopes;
+
+public class CibaGrant {
+
+  BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier =
+      new BackchannelAuthenticationRequestIdentifier();
+  AuthorizationGrant authorizationGrant;
+  AuthReqId authReqId;
+  ExpiredAt expiredAt;
+  Interval interval;
+
+  public CibaGrant() {}
+
+  public CibaGrant(
+      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier,
+      AuthorizationGrant authorizationGrant,
+      AuthReqId authReqId,
+      ExpiredAt expiredAt,
+      Interval interval) {
+    this.backchannelAuthenticationRequestIdentifier = backchannelAuthenticationRequestIdentifier;
+    this.authorizationGrant = authorizationGrant;
+    this.authReqId = authReqId;
+    this.expiredAt = expiredAt;
+    this.interval = interval;
+  }
+
+  public BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier() {
+    return backchannelAuthenticationRequestIdentifier;
+  }
+
+  public User user() {
+    return authorizationGrant.user();
+  }
+
+  public AuthorizationGrant authorizationGrant() {
+    return authorizationGrant;
+  }
+
+  public AuthReqId authReqId() {
+    return authReqId;
+  }
+
+  public boolean isGrantedClient(ClientId clientId) {
+    return authorizationGrant.isGranted(clientId);
+  }
+
+  public boolean isExpire(LocalDateTime other) {
+    return expiredAt.isExpire(other);
+  }
+
+  public boolean exists() {
+    return backchannelAuthenticationRequestIdentifier.exists();
+  }
+
+  public Scopes scopes() {
+    return authorizationGrant.scopes();
+  }
+}

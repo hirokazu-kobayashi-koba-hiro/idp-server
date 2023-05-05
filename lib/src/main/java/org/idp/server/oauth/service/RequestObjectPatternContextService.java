@@ -14,7 +14,6 @@ import org.idp.server.oauth.OAuthRequestPattern;
 import org.idp.server.oauth.exception.OAuthBadRequestException;
 import org.idp.server.oauth.factory.RequestObjectPatternFactory;
 import org.idp.server.oauth.request.AuthorizationRequest;
-import org.idp.server.oauth.request.OAuthRequestContextService;
 
 /** RequestObjectPatternContextService */
 public class RequestObjectPatternContextService

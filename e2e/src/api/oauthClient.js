@@ -161,6 +161,7 @@ export const requestToken = async ({
   redirectUri,
   refreshToken,
   codeVerifier,
+  authReqId,
   clientId,
   clientSecret,
   clientAssertion,
@@ -182,6 +183,9 @@ export const requestToken = async ({
   }
   if (codeVerifier) {
     params.append("code_verifier", codeVerifier);
+  }
+  if (authReqId) {
+    params.append("auth_req_id", authReqId);
   }
   if (clientId) {
     params.append("client_id", clientId);
@@ -269,14 +273,84 @@ export const postUserinfo = async ({ endpoint, authorizationHeader }) => {
   });
 };
 
-export const getConfiguration = async ({ endpoint}) => {
+export const getConfiguration = async ({ endpoint }) => {
   return await get({
-    url: endpoint
+    url: endpoint,
   });
 };
 
 export const getJwks = async ({ endpoint }) => {
   return await get({
     url: endpoint,
+  });
+};
+
+export const requestBackchannelAuthentications = async ({
+  endpoint,
+  scope,
+  clientNotificationToken,
+  acrValues,
+  loginHintToken,
+  bindingMessage,
+  userCode,
+  idTokenHint,
+  loginHint,
+  requestedExpiry,
+  request,
+  clientId,
+  clientSecret,
+  clientAssertion,
+  clientAssertionType,
+  basicAuth,
+}) => {
+  let params = new URLSearchParams();
+  if (scope) {
+    params.append("scope", scope);
+  }
+  if (clientNotificationToken) {
+    params.append("client_notification_token", clientNotificationToken);
+  }
+  if (acrValues) {
+    params.append("acr_values", acrValues);
+  }
+  if (loginHintToken) {
+    params.append("login_hint_token", loginHintToken);
+  }
+  if (bindingMessage) {
+    params.append("binding_message", bindingMessage);
+  }
+  if (userCode) {
+    params.append("user_code", userCode);
+  }
+  if (idTokenHint) {
+    params.append("id_token_hint", idTokenHint);
+  }
+  if (loginHint) {
+    params.append("login_hint", loginHint);
+  }
+  if (requestedExpiry) {
+    params.append("requested_expiry", requestedExpiry);
+  }
+  if (request) {
+    params.append("request", request);
+  }
+  if (clientId) {
+    params.append("client_id", clientId);
+  }
+  if (clientSecret) {
+    params.append("client_secret", clientSecret);
+  }
+  if (clientAssertion) {
+    params.append("client_assertion", clientAssertion);
+  }
+  if (clientAssertionType) {
+    params.append("client_assertion_type", clientAssertionType);
+  }
+  console.log(params.toString());
+  const headers = basicAuth ? basicAuth : {};
+  return await post({
+    url: endpoint,
+    body: params,
+    headers,
   });
 };

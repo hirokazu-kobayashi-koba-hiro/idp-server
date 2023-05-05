@@ -28,12 +28,12 @@ export const createJwtWithPrivateKey = ({
   });
 };
 
-export const verifyAndDecodeIdToken = ({idToken, jwks}) => {
+export const verifyAndDecodeIdToken = ({ idToken, jwks }) => {
   const header = jwt_decode(idToken, { header: true });
   const payload = jwt_decode(idToken);
-  const jwk = jwks.keys.filter(jwk => jwk.kid === header.kid)[0];
+  const jwk = jwks.keys.filter((jwk) => jwk.kid === header.kid)[0];
   const publicKey = jwkToPem(jwk);
-  const verifyResult = verifySignature({idToken, publicKey});
+  const verifyResult = verifySignature({ idToken, publicKey });
   return {
     header,
     payload,
@@ -41,7 +41,7 @@ export const verifyAndDecodeIdToken = ({idToken, jwks}) => {
   };
 };
 
-export const verifySignature = ({idToken, publicKey}) => {
+export const verifySignature = ({ idToken, publicKey }) => {
   try {
     jwt.verify(idToken, publicKey);
     return true;

@@ -4,7 +4,8 @@ import org.idp.server.oauth.OAuthAuthorizeContext;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.IdTokenCreatable;
-import org.idp.server.oauth.identity.User;
+import org.idp.server.oauth.identity.IdTokenCustomClaims;
+import org.idp.server.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenCreatable;
@@ -23,7 +24,6 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     AuthorizationCode authorizationCode = createAuthorizationCode();
-    User user = context.user();
     AuthorizationGrant authorizationGrant = context.toAuthorizationGranted();
     AccessTokenPayload accessTokenPayload =
         createAccessTokenPayload(
@@ -31,13 +31,19 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
     AccessToken accessToken =
         createAccessToken(
             accessTokenPayload, context.serverConfiguration(), context.clientConfiguration());
+    IdTokenCustomClaims idTokenCustomClaims =
+        new IdTokenCustomClaimsBuilder()
+            .add(authorizationRequest.state())
+            .add(authorizationRequest.nonce())
+            .add(accessToken.accessTokenValue())
+            .build();
     IdToken idToken =
         createIdToken(
-            authorizationRequest,
-            authorizationCode,
-            accessToken.accessTokenValue(),
-            user,
+            context.user(),
             new Authentication(),
+            context.scopes(),
+            context.idTokenClaims(),
+            idTokenCustomClaims,
             context.serverConfiguration(),
             context.clientConfiguration());
     AuthorizationResponseBuilder authorizationResponseBuilder =

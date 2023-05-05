@@ -30,4 +30,10 @@ public enum OAuthRequestKey {
   client_assertion,
   client_assertion_type,
   refresh_token,
+  client_notification_token,
+  login_hint_token,
+  binding_message,
+  user_code,
+  requested_expiry,
+  auth_req_id,
 }

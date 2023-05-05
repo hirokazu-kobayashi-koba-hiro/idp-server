@@ -11,7 +11,6 @@ import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.OAuthRequestPattern;
 import org.idp.server.oauth.factory.NormalRequestFactory;
 import org.idp.server.oauth.request.AuthorizationRequest;
-import org.idp.server.oauth.request.OAuthRequestContextService;
 
 /** NormalPatternContextService */
 public class NormalPatternContextService

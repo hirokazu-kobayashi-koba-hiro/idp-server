@@ -5,6 +5,7 @@ import java.util.Map;
 import org.idp.server.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.type.ArrayValueMap;
 import org.idp.server.type.OAuthRequestKey;
+import org.idp.server.type.ciba.AuthReqId;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.pkce.CodeVerifier;
 
@@ -110,6 +111,14 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
 
   public boolean hasCodeVerifier() {
     return contains(OAuthRequestKey.code_verifier);
+  }
+
+  public AuthReqId authReqId() {
+    return new AuthReqId(getString(OAuthRequestKey.auth_req_id));
+  }
+
+  public boolean hasAuthReqId() {
+    return contains(OAuthRequestKey.auth_req_id);
   }
 
   public String getString(OAuthRequestKey key) {

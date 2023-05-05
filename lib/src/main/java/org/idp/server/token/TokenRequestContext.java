@@ -4,6 +4,7 @@ import org.idp.server.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.type.OAuthRequestKey;
+import org.idp.server.type.ciba.AuthReqId;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.pkce.CodeVerifier;
@@ -130,5 +131,13 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public CodeVerifier codeVerifier() {
     return parameters.codeVerifier();
+  }
+
+  public boolean hasAuthReqId() {
+    return parameters.hasAuthReqId();
+  }
+
+  public AuthReqId authReqId() {
+    return parameters.authReqId();
   }
 }

@@ -39,7 +39,4 @@ describe("The OAuth 2.0 Authorization Framework refresh token", () => {
     console.log(refreshTokenResponse.data);
     expect(refreshTokenResponse.status).toBe(200);
   });
-
-
-
 });

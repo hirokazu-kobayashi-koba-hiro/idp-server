@@ -2,11 +2,13 @@ package org.idp.server.oauth.grant;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.oauth.AuthorizationCode;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ExpiredAt;
+import org.idp.server.type.oauth.Scopes;
 
 /** AuthorizationCodeGrant */
 public class AuthorizationCodeGrant {
@@ -56,5 +58,13 @@ public class AuthorizationCodeGrant {
 
   public boolean exists() {
     return Objects.nonNull(authorizationCode) && authorizationCode.exists();
+  }
+
+  public Scopes scopes() {
+    return authorizationGrant.scopes();
+  }
+
+  public IdTokenClaims idTokenClaims() {
+    return authorizationGrant.idTokenClaims();
   }
 }

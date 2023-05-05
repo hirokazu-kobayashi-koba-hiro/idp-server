@@ -1,6 +1,7 @@
 package org.idp.server.oauth.grant;
 
 import org.idp.server.oauth.identity.ClaimsPayload;
+import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
@@ -70,5 +71,9 @@ public class AuthorizationGrant {
 
   public boolean hasUser() {
     return user.exists();
+  }
+
+  public IdTokenClaims idTokenClaims() {
+    return claimsPayload.idToken();
   }
 }
