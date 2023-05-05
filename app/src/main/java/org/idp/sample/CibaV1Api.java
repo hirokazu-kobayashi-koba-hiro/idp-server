@@ -8,6 +8,8 @@ import org.idp.server.IdpServerApplication;
 import org.idp.server.ciba.CibaRequestDelegate;
 import org.idp.server.ciba.UserCriteria;
 import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
+import org.idp.server.handler.ciba.io.CibaAuthorizeRequest;
+import org.idp.server.handler.ciba.io.CibaAuthorizeResponse;
 import org.idp.server.handler.ciba.io.CibaRequest;
 import org.idp.server.handler.ciba.io.CibaRequestResponse;
 import org.idp.server.oauth.identity.User;
@@ -84,5 +86,20 @@ public class CibaV1Api implements ParameterTransformable {
     httpHeaders.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/automated-complete")
+  public ResponseEntity<?> complete(
+      @RequestParam("auth_req_id") String authReqId,
+      @RequestParam("action") String action,
+      @PathVariable("tenant-id") String tenantId) {
+    Tenant tenant = Tenant.of(tenantId);
+    CibaAuthorizeRequest cibaAuthorizeRequest =
+        new CibaAuthorizeRequest(authReqId, tenant.issuer());
+    if (action.equals("allow")) {
+      CibaAuthorizeResponse authorizeResponse = cibaApi.authorize(cibaAuthorizeRequest);
+      return new ResponseEntity<>(HttpStatus.valueOf(authorizeResponse.statusCode()));
+    }
+    return new ResponseEntity<>(HttpStatus.OK);
   }
 }

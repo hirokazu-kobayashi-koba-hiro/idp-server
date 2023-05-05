@@ -6,8 +6,8 @@ import java.util.Objects;
 import java.util.UUID;
 import org.idp.server.ciba.*;
 import org.idp.server.ciba.exception.BackchannelAuthenticationBadRequestException;
-import org.idp.server.ciba.grant.CIbaGrantFactory;
 import org.idp.server.ciba.grant.CibaGrant;
+import org.idp.server.ciba.grant.CibaGrantFactory;
 import org.idp.server.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.ciba.repository.CibaGrantRepository;
 import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
@@ -38,7 +38,7 @@ public class CibaRequestHandler {
   Map<CibaRequestPattern, CibaRequestContextService> contextServices;
   CibaRequestValidator validator;
   CibaRequestVerifier verifier;
-  CIbaGrantFactory cIbaGrantFactory;
+  CibaGrantFactory cibaGrantFactory;
   ClientAuthenticatorHandler clientAuthenticatorHandler;
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
@@ -57,7 +57,7 @@ public class CibaRequestHandler {
         CibaRequestPattern.REQUEST_OBJECT, new RequestObjectPatternContextService());
     this.validator = new CibaRequestValidator();
     this.verifier = new CibaRequestVerifier();
-    this.cIbaGrantFactory = new CIbaGrantFactory();
+    this.cibaGrantFactory = new CibaGrantFactory();
     this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
@@ -111,7 +111,7 @@ public class CibaRequestHandler {
             .build();
 
     backchannelAuthenticationRequestRepository.register(backchannelAuthenticationRequest);
-    CibaGrant cibaGrant = cIbaGrantFactory.create(context, response, user);
+    CibaGrant cibaGrant = cibaGrantFactory.create(context, response, user);
     cibaGrantRepository.register(cibaGrant);
 
     return new CibaRequestResponse(CibaRequestStatus.OK, response);

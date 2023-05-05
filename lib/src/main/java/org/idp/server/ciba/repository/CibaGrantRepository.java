@@ -7,6 +7,8 @@ public interface CibaGrantRepository {
 
   void register(CibaGrant cibaGrant);
 
+  void update(CibaGrant cibaGrant);
+
   CibaGrant find(AuthReqId authReqId);
 
   void delete(CibaGrant cibaGrant);

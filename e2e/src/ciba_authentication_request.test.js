@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { requestBackchannelAuthentications, requestToken } from "./api/oauthClient";
+import { completeBackchannelAuthentications, requestBackchannelAuthentications, requestToken } from "./api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
 import { createJwt, createJwtWithPrivateKey } from "./lib/jose";
@@ -22,7 +22,12 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
     console.log(backchannelAuthenticationResponse.data);
     expect(backchannelAuthenticationResponse.status).toBe(200);
 
-    //TODO authorize api
+    const completeResponse = await completeBackchannelAuthentications({
+      endpoint: serverConfig.backchannelAuthenticationAutomatedCompleteEndpoint,
+      authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+      action: "allow",
+    });
+    expect(completeResponse.status).toBe(200);
 
     const tokenResponse = await requestToken({
       endpoint: serverConfig.tokenEndpoint,

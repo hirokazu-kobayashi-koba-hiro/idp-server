@@ -354,3 +354,13 @@ export const requestBackchannelAuthentications = async ({
     headers,
   });
 };
+
+export const completeBackchannelAuthentications = async ({
+  endpoint,
+  authReqId,
+  action,
+}) => {
+  return await post({
+    url: `${endpoint}?auth_req_id=${authReqId}&action=${action}`,
+  });
+};

@@ -17,6 +17,11 @@ public class CibaGrantMemoryDataSource implements CibaGrantRepository {
   }
 
   @Override
+  public void update(CibaGrant cibaGrant) {
+    map.put(cibaGrant.authReqId(), cibaGrant);
+  }
+
+  @Override
   public CibaGrant find(AuthReqId authReqId) {
     CibaGrant cibaGrant = map.get(authReqId);
     if (Objects.isNull(cibaGrant)) {

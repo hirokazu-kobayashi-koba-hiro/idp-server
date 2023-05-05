@@ -18,6 +18,7 @@ public class CibaGrant {
   AuthReqId authReqId;
   ExpiredAt expiredAt;
   Interval interval;
+  CibaGrantStatus status;
 
   public CibaGrant() {}
 
@@ -26,12 +27,14 @@ public class CibaGrant {
       AuthorizationGrant authorizationGrant,
       AuthReqId authReqId,
       ExpiredAt expiredAt,
-      Interval interval) {
+      Interval interval,
+      CibaGrantStatus status) {
     this.backchannelAuthenticationRequestIdentifier = backchannelAuthenticationRequestIdentifier;
     this.authorizationGrant = authorizationGrant;
     this.authReqId = authReqId;
     this.expiredAt = expiredAt;
     this.interval = interval;
+    this.status = status;
   }
 
   public BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier() {
@@ -64,5 +67,31 @@ public class CibaGrant {
 
   public Scopes scopes() {
     return authorizationGrant.scopes();
+  }
+
+  public CibaGrantStatus status() {
+    return status;
+  }
+
+  public boolean isAuthorizationPending() {
+    return status.isAuthorizationPending();
+  }
+
+  public boolean isAuthorized() {
+    return status.isAuthorized();
+  }
+
+  public boolean isAccessDenied() {
+    return status.isAccessDenied();
+  }
+
+  public CibaGrant update(CibaGrantStatus cibaGrantStatus) {
+    return new CibaGrant(
+        backchannelAuthenticationRequestIdentifier,
+        authorizationGrant,
+        authReqId,
+        expiredAt,
+        interval,
+        cibaGrantStatus);
   }
 }

@@ -15,7 +15,7 @@ import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ExpiredAt;
 import org.idp.server.type.oauth.Scopes;
 
-public class CIbaGrantFactory {
+public class CibaGrantFactory {
 
   public CibaGrant create(
       CibaRequestContext context, BackchannelAuthenticationResponse response, User user) {
@@ -29,6 +29,12 @@ public class CIbaGrantFactory {
     LocalDateTime now = SystemDateTime.now();
     ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(context.expiresIn().value()));
     Interval interval = context.interval();
-    return new CibaGrant(identifier, authorizationGrant, authReqId, expiredAt, interval);
+    return new CibaGrant(
+        identifier,
+        authorizationGrant,
+        authReqId,
+        expiredAt,
+        interval,
+        CibaGrantStatus.authorization_pending);
   }
 }

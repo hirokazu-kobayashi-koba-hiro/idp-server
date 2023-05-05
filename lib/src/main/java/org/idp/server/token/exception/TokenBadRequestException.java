@@ -20,6 +20,12 @@ public class TokenBadRequestException extends RuntimeException {
     this.errorDescription = errorDescription;
   }
 
+  public TokenBadRequestException(String error, String errorDescription) {
+    super(errorDescription);
+    this.error = error;
+    this.errorDescription = errorDescription;
+  }
+
   public Error error() {
     return new Error(error);
   }

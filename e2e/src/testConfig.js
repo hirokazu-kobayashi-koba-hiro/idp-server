@@ -12,6 +12,8 @@ export const serverConfig = {
   jwksEndpoint: "http://localhost:8080/123/api/v1/jwks",
   backchannelAuthenticationEndpoint:
     "http://localhost:8080/123/api/v1/backchannel/authentications",
+  backchannelAuthenticationAutomatedCompleteEndpoint:
+    "http://localhost:8080/123/api/v1/backchannel/authentications/automated-complete",
   discoveryEndpoint:
     "http://localhost:8080/123/.well-known/openid-configuration",
   enabledSsr: false,
