@@ -12,7 +12,6 @@ export const get = async ({ url, headers }) => {
 
 export const post = async ({ url, headers, body }) => {
   try {
-    console.log(headers);
     return await axios.post(url, body, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",

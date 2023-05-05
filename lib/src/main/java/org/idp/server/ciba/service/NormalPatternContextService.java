@@ -39,6 +39,7 @@ public class NormalPatternContextService
         pattern,
         clientSecretBasic,
         parameters,
+        new CibaRequestObjectParameters(),
         joseContext,
         backchannelAuthenticationRequest,
         serverConfiguration,

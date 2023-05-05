@@ -15,6 +15,12 @@ export const serverConfig = {
   discoveryEndpoint:
     "http://localhost:8080/123/.well-known/openid-configuration",
   enabledSsr: false,
+  ciba: {
+    loginHint: "001",
+    userCode: "successUserCode",
+    bindingMessage: "999",
+    invalidLoginHint: "invalid",
+  },
 };
 export const clientSecretPostClient = {
   clientId: "clientSecretPost",

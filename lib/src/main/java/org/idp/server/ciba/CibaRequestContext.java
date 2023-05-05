@@ -16,6 +16,8 @@ public class CibaRequestContext implements BackchannelRequestContext {
   CibaRequestPattern pattern;
   ClientSecretBasic clientSecretBasic;
   CibaRequestParameters parameters;
+  CibaRequestObjectParameters requestObjectParameters;
+  CibaRequestAssembleParameters assembleParameters;
   JoseContext joseContext;
   BackchannelAuthenticationRequest backchannelAuthenticationRequest;
   ServerConfiguration serverConfiguration;
@@ -27,6 +29,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
       CibaRequestPattern pattern,
       ClientSecretBasic clientSecretBasic,
       CibaRequestParameters parameters,
+      CibaRequestObjectParameters requestObjectParameters,
       JoseContext joseContext,
       BackchannelAuthenticationRequest backchannelAuthenticationRequest,
       ServerConfiguration serverConfiguration,
@@ -34,6 +37,9 @@ public class CibaRequestContext implements BackchannelRequestContext {
     this.pattern = pattern;
     this.clientSecretBasic = clientSecretBasic;
     this.parameters = parameters;
+    this.requestObjectParameters = requestObjectParameters;
+    this.assembleParameters =
+        new CibaRequestAssembleParameters(parameters, requestObjectParameters);
     this.joseContext = joseContext;
     this.backchannelAuthenticationRequest = backchannelAuthenticationRequest;
     this.serverConfiguration = serverConfiguration;
@@ -50,7 +56,15 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   @Override
   public BackchannelRequestParameters parameters() {
+    return assembleParameters;
+  }
+
+  public CibaRequestParameters cibaRequestParameters() {
     return parameters;
+  }
+
+  public CibaRequestObjectParameters cibaRequestObjectParameters() {
+    return requestObjectParameters;
   }
 
   public JoseContext joseContext() {
@@ -114,5 +128,17 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   public Scopes scopes() {
     return backchannelAuthenticationRequest.scopes();
+  }
+
+  public CibaProfile profile() {
+    return backchannelAuthenticationRequest.profile();
+  }
+
+  public boolean hasOpenidScope() {
+    return scopes().contains("openid");
+  }
+
+  public boolean hasAnyHint() {
+    return backchannelAuthenticationRequest.hasAnyHint();
   }
 }

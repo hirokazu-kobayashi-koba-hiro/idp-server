@@ -27,7 +27,7 @@ public class BackchannelAuthenticationErrorResponse {
         """
                 {
                   "error": "%s",
-                  "error_description": "%s",
+                  "error_description": "%s"
                 }
                 """;
     return String.format(format, error.value(), errorDescription.value());

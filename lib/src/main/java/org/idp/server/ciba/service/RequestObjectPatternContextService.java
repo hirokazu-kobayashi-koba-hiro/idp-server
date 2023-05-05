@@ -5,7 +5,7 @@ import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JoseHandler;
 import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.ciba.*;
-import org.idp.server.ciba.exception.BackchannelAuthenticationBadRequest;
+import org.idp.server.ciba.exception.BackchannelAuthenticationBadRequestException;
 import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.ciba.request.RequestObjectPatternFactory;
 import org.idp.server.configuration.ClientConfiguration;
@@ -49,13 +49,14 @@ public class RequestObjectPatternContextService
           pattern,
           clientSecretBasic,
           parameters,
+          new CibaRequestObjectParameters(joseContext.claims().payload()),
           joseContext,
           backchannelAuthenticationRequest,
           serverConfiguration,
           clientConfiguration);
     } catch (JoseInvalidException exception) {
-      throw new BackchannelAuthenticationBadRequest(
-          "invalid_request", exception.getMessage(), exception);
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request_object", exception.getMessage(), exception);
     }
   }
 }

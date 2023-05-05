@@ -5,11 +5,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.idp.server.ciba.*;
-import org.idp.server.ciba.exception.BackchannelAuthenticationBadRequest;
+import org.idp.server.ciba.exception.BackchannelAuthenticationBadRequestException;
 import org.idp.server.ciba.grant.CIbaGrantFactory;
 import org.idp.server.ciba.grant.CibaGrant;
 import org.idp.server.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.ciba.repository.CibaGrantRepository;
+import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.ciba.response.BackchannelAuthenticationResponseBuilder;
 import org.idp.server.ciba.service.CibaRequestContextService;
@@ -81,20 +82,27 @@ public class CibaRequestHandler {
     verifier.verify(context);
     clientAuthenticatorHandler.authenticate(context);
 
-    User user = delegate.find(new UserCriteria());
+    BackchannelAuthenticationRequest backchannelAuthenticationRequest =
+        context.backchannelAuthenticationRequest();
+    User user =
+        delegate.find(
+            new UserCriteria(
+                backchannelAuthenticationRequest.loginHint(),
+                backchannelAuthenticationRequest.loginHintToken(),
+                backchannelAuthenticationRequest.idTokenHint()));
     if (!user.exists()) {
-      throw new BackchannelAuthenticationBadRequest(
+      throw new BackchannelAuthenticationBadRequestException(
           "unknown_user_id",
           "The OpenID Provider is not able to identify which end-user the Client wishes to be authenticated by means of the hint provided in the request (login_hint_token, id_token_hint, or login_hint).");
     }
     if (context.hasUserCode()) {
       boolean authenticationResult = delegate.authenticate(user, context.userCode());
       if (!authenticationResult) {
-        throw new BackchannelAuthenticationBadRequest(
+        throw new BackchannelAuthenticationBadRequestException(
             "invalid_user_code", "backchannel authentication request user_code is invalid");
       }
     }
-    delegate.notify(user, context.backchannelAuthenticationRequest());
+    delegate.notify(user, backchannelAuthenticationRequest);
     BackchannelAuthenticationResponse response =
         new BackchannelAuthenticationResponseBuilder()
             .add(new AuthReqId(UUID.randomUUID().toString()))
@@ -102,7 +110,7 @@ public class CibaRequestHandler {
             .add(context.interval())
             .build();
 
-    backchannelAuthenticationRequestRepository.register(context.backchannelAuthenticationRequest());
+    backchannelAuthenticationRequestRepository.register(backchannelAuthenticationRequest);
     CibaGrant cibaGrant = cIbaGrantFactory.create(context, response, user);
     cibaGrantRepository.register(cibaGrant);
 

@@ -2,28 +2,26 @@ package org.idp.server.ciba;
 
 import static org.idp.server.type.OAuthRequestKey.*;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import org.idp.server.clientauthenticator.BackchannelRequestParameters;
-import org.idp.server.type.ArrayValueMap;
 import org.idp.server.type.OAuthRequestKey;
 import org.idp.server.type.ciba.*;
 import org.idp.server.type.oauth.*;
-import org.idp.server.type.oidc.*;
+import org.idp.server.type.oidc.AcrValues;
+import org.idp.server.type.oidc.IdTokenHint;
+import org.idp.server.type.oidc.LoginHint;
+import org.idp.server.type.oidc.RequestObject;
 
-public class CibaRequestParameters implements BackchannelRequestParameters {
-  ArrayValueMap values;
+public class CibaRequestAssembleParameters implements BackchannelRequestParameters {
+  Map<String, Object> values;
 
-  public CibaRequestParameters() {
-    this.values = new ArrayValueMap();
-  }
-
-  public CibaRequestParameters(ArrayValueMap values) {
-    this.values = values;
-  }
-
-  public CibaRequestParameters(Map<String, String[]> values) {
-    this.values = new ArrayValueMap(values);
+  public CibaRequestAssembleParameters(
+      CibaRequestParameters parameters, CibaRequestObjectParameters requestObjectParameters) {
+    Map<String, Object> map = new HashMap<>(parameters.singleValues());
+    map.putAll(requestObjectParameters.values());
+    this.values = map;
   }
 
   public boolean isEmpty() {
@@ -118,6 +116,14 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
     return contains(request);
   }
 
+  public RequestUri requestUri() {
+    return new RequestUri(getString(request_uri));
+  }
+
+  public boolean hasRequestUri() {
+    return contains(request_uri);
+  }
+
   @Override
   public ClientSecret clientSecret() {
     return new ClientSecret(getString(client_secret));
@@ -148,22 +154,15 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
     return contains(client_assertion_type);
   }
 
-  public String getString(OAuthRequestKey key) {
-    if (!values.contains(key.name())) {
+  String getString(OAuthRequestKey key) {
+    Object value = values.get(key.name());
+    if (Objects.isNull(value)) {
       return "";
     }
-    return values.getFirst(key.name());
+    return (String) value;
   }
 
   boolean contains(OAuthRequestKey key) {
-    return values.contains(key.name());
-  }
-
-  public List<String> multiValueKeys() {
-    return values.multiValueKeys();
-  }
-
-  public Map<String, String> singleValues() {
-    return values.singleValueMap();
+    return values.containsKey(key.name());
   }
 }

@@ -166,4 +166,8 @@ public class CibaRequestObjectParameters implements BackchannelRequestParameters
   boolean contains(OAuthRequestKey key) {
     return values.containsKey(key.name());
   }
+
+  Map<String, Object> values() {
+    return values;
+  }
 }

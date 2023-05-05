@@ -66,3 +66,15 @@ const isArray = (value) => {
   }
   return Array.isArray(value);
 };
+
+export const isString = (value) => {
+  return typeof value === "string" || value instanceof String;
+};
+
+export const isNumber = (value) => {
+  return typeof value === "number" || value instanceof Number;
+};
+
+export const isBoolean = (value) => {
+  return typeof value === "boolean" || value instanceof Boolean;
+};

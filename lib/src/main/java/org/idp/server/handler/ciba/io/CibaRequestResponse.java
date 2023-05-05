@@ -29,6 +29,6 @@ public class CibaRequestResponse {
     if (status.isOK()) {
       return response.contents();
     }
-    return "";
+    return errorResponse.contents();
   }
 }

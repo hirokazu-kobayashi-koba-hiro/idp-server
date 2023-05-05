@@ -45,6 +45,9 @@ public class CibaV1Api implements ParameterTransformable {
               @Override
               public User find(UserCriteria criteria) {
                 // TODO official implementation
+                if (!"001".equals(criteria.loginHint().value())) {
+                  return new User();
+                }
                 return new User()
                     .setSub("001")
                     .setName("ito ichiro")
@@ -78,7 +81,7 @@ public class CibaV1Api implements ParameterTransformable {
               }
             });
     HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+    httpHeaders.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }

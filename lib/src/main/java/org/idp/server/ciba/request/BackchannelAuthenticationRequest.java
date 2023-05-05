@@ -152,4 +152,8 @@ public class BackchannelAuthenticationRequest {
   public RequestObject requestObject() {
     return requestObject;
   }
+
+  public boolean hasAnyHint() {
+    return hasLoginHint() || hasIdTokenHint() || hasIdTokenHint();
+  }
 }
