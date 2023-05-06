@@ -15,11 +15,11 @@
   "userinfo_endpoint": "http://localhost:8080/123/api/v1/userinfo",
   "jwks_uri": "http://localhost:8080/123/api/v1/jwks",
   "jwks": "{\n    \"keys\": [\n        {\n            \"kty\": \"EC\",\n            \"d\": \"yIWDrlhnCy3yL9xLuqZGOBFFq4PWGsCeM7Sc_lfeaQQ\",\n            \"use\": \"sig\",\n            \"crv\": \"P-256\",\n            \"kid\": \"access_token\",\n            \"x\": \"iWJINqt0ySv3kVEvlHbvNkPKY2pPSf1cG1PSx3tRfw0\",\n            \"y\": \"rW1FdfXK5AQcv-Go6Xho0CR5AbLai7Gp9IdLTIXTSIQ\",\n            \"alg\": \"ES256\"\n        }\n    ]\n}",
-
   "grant_types_supported": [
     "authorization_code",
     "refresh_token",
-    "client_credentials"
+    "client_credentials",
+    "urn:openid:params:grant-type:ciba"
   ],
   "token_signed_key_id": "access_token",
   "id_token_signed_key_id": "access_token",

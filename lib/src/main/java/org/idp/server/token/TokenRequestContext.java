@@ -81,13 +81,11 @@ public class TokenRequestContext implements BackchannelRequestContext {
   }
 
   public boolean isSupportedGrantTypeWithServer(GrantType grantType) {
-    // FIXME server and client isSupportedGrantType
-    return true;
+    return serverConfiguration.isSupportedGrantType(grantType);
   }
 
   public boolean isSupportedGrantTypeWithClient(GrantType grantType) {
-    // FIXME server and client isSupportedGrantType
-    return true;
+    return clientConfiguration.isSupportedGrantType(grantType);
   }
 
   public boolean matchClientSecret(ClientSecret clientSecret) {

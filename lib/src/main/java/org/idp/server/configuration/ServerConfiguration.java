@@ -2,6 +2,7 @@ package org.idp.server.configuration;
 
 import java.util.*;
 import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.type.oauth.GrantType;
 import org.idp.server.type.oauth.ResponseType;
 import org.idp.server.type.oauth.TokenIssuer;
 
@@ -443,5 +444,9 @@ public class ServerConfiguration implements JsonReadable {
 
   public boolean hasBackchannelUserCodeParameterSupported() {
     return Objects.nonNull(backchannelUserCodeParameterSupported);
+  }
+
+  public boolean isSupportedGrantType(GrantType grantType) {
+    return grantTypesSupported.contains(grantType.value());
   }
 }

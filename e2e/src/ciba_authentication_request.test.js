@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { completeBackchannelAuthentications, requestBackchannelAuthentications, requestToken } from "./api/oauthClient";
-import { clientSecretPostClient, serverConfig } from "./testConfig";
+import { clientSecretPostClient, privateKeyJwtClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
 import { createJwt, createJwtWithPrivateKey, generateJti } from "./lib/jose";
 import { isNumber, isString, toEpocTime } from "./lib/util";
@@ -382,6 +382,60 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       if (backchannelAuthenticationResponse.data.interval) {
         expect(isNumber(backchannelAuthenticationResponse.data.interval)).toBe(true);
       }
+    });
+  });
+
+  describe("13. Authentication Error Response", () => {
+
+    it("error REQUIRED. A single ASCII error code from one present in the list below.", async () => {
+      const backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        bindingMessage: ciba.bindingMessage,
+        userCode: ciba.userCode,
+        loginHint: ciba.invalidLoginHint,
+        scope: "openid profile phone email" + clientSecretPostClient.scope,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(400);
+
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("error");
+    });
+
+    it("error_description OPTIONAL. Human-readable ASCII [USASCII] text providing additional information, used to assist the client developer in understanding the error that occurred. Values for the \"error_description\" parameter MUST NOT include characters outside the set %x20-21 / %x23-5B / %x5D-7E.", async () => {
+      const backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        bindingMessage: ciba.bindingMessage,
+        userCode: ciba.userCode,
+        loginHint: ciba.invalidLoginHint,
+        scope: "openid profile phone email" + clientSecretPostClient.scope,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(400);
+
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("error");
+      expect(/^[\x20-\x21\x23-\x5B\x5D-\x7E]*$/.test(backchannelAuthenticationResponse.data.error_description)).toBe(true);
+    });
+
+    it("unauthorized_client The Client is not authorized to use this authentication flow.", async () => {
+      const backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: privateKeyJwtClient.clientId,
+        bindingMessage: ciba.bindingMessage,
+        userCode: ciba.userCode,
+        loginHint: ciba.loginHint,
+        scope: "openid profile phone email" + privateKeyJwtClient.scope,
+      });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(400);
+
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("error");
+      expect(backchannelAuthenticationResponse.data.error).toEqual("unauthorized_client");
+      expect(/^[\x20-\x21\x23-\x5B\x5D-\x7E]*$/.test(backchannelAuthenticationResponse.data.error_description)).toBe(true);
+      expect(backchannelAuthenticationResponse.data.error_description).toEqual("client is unsupported ciba grant");
     });
   });
 });

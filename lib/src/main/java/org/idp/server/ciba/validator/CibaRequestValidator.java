@@ -4,5 +4,7 @@ import org.idp.server.ciba.CibaRequestParameters;
 
 public class CibaRequestValidator {
 
-  public void validate(CibaRequestParameters parameters) {}
+  public void validate(CibaRequestParameters parameters) {
+
+  }
 }

@@ -29,4 +29,8 @@ public enum GrantType {
     }
     return unknown;
   }
+
+  public String value() {
+    return value;
+  }
 }

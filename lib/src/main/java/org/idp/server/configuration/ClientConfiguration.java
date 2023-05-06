@@ -4,10 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.type.ciba.BackchannelTokenDeliveryMode;
-import org.idp.server.type.oauth.ClientAuthenticationType;
-import org.idp.server.type.oauth.ClientId;
-import org.idp.server.type.oauth.ResponseType;
-import org.idp.server.type.oauth.TokenIssuer;
+import org.idp.server.type.oauth.*;
 
 /** ClientConfiguration */
 public class ClientConfiguration implements JsonReadable {
@@ -184,5 +181,9 @@ public class ClientConfiguration implements JsonReadable {
 
   public boolean hasBackchannelUserCodeParameter() {
     return Objects.nonNull(backchannelUserCodeParameter);
+  }
+
+  public boolean isSupportedGrantType(GrantType grantType) {
+    return grantTypes.contains(grantType.value());
   }
 }
