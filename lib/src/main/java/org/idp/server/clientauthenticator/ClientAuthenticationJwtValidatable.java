@@ -1,6 +1,7 @@
 package org.idp.server.clientauthenticator;
 
 import java.util.Date;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.clientauthenticator.exception.ClientUnAuthorizedException;
@@ -74,7 +75,7 @@ public interface ClientAuthenticationJwtValidatable {
       throw new ClientUnAuthorizedException(
           "client assertion is invalid, must contains exp claim in jwt payload");
     }
-    if (claims.getExp().before(new Date())) {
+    if (claims.getExp().before(new Date(SystemDateTime.epochMilliSecond()))) {
       throw new ClientUnAuthorizedException("client assertion is invalid, jwt is expired");
     }
   }

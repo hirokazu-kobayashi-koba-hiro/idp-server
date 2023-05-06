@@ -140,4 +140,8 @@ public class TokenRequestContext implements BackchannelRequestContext {
   public AuthReqId authReqId() {
     return parameters.authReqId();
   }
+
+    public ClientId clientId() {
+    return clientConfiguration.clientId();
+    }
 }

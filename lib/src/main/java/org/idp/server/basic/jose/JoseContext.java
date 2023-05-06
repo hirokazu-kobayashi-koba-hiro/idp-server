@@ -43,4 +43,8 @@ public class JoseContext {
   public boolean exists() {
     return claims.exists();
   }
+
+  public boolean isSymmetricKey() {
+    return jsonWebSignature.isSymmetricType();
+  }
 }

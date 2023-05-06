@@ -143,4 +143,8 @@ public class CibaRequestContext implements BackchannelRequestContext {
   public boolean hasAnyHint() {
     return backchannelAuthenticationRequest.hasAnyHint();
   }
+
+  public boolean isRequestObjectPattern() {
+    return pattern.isRequestParameter();
+  }
 }

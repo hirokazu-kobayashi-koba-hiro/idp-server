@@ -17,4 +17,8 @@ public class SystemDateTime {
   public static long toEpochSecond(LocalDateTime localDateTime) {
     return localDateTime.toEpochSecond(zoneOffset);
   }
+
+  public static long epochMilliSecond() {
+    return now().toEpochSecond(zoneOffset) * 1000;
+  }
 }

@@ -52,6 +52,9 @@ public class ServerConfiguration implements JsonReadable {
   boolean requireSignedRequestObject = false;
   boolean authorizationResponseIssParameterSupported = false;
 
+  String backchannelAuthenticationEndpoint = "";
+  List<String> backchannelAuthenticationRequestSigningAlgValuesSupported = new ArrayList<>();
+  Boolean backchannelUserCodeParameterSupported;
   // extension
   List<String> fapiBaselineScopes = new ArrayList<>();
   List<String> fapiAdvanceScopes = new ArrayList<>();
@@ -415,5 +418,30 @@ public class ServerConfiguration implements JsonReadable {
 
   public boolean hasCodeChallengeMethodsSupported() {
     return !codeChallengeMethodsSupported.isEmpty();
+  }
+
+  public String backchannelAuthenticationEndpoint() {
+    return backchannelAuthenticationEndpoint;
+  }
+
+  public boolean hasBackchannelAuthenticationEndpoint() {
+    return Objects.nonNull(backchannelAuthenticationEndpoint)
+        && !backchannelAuthenticationEndpoint.isEmpty();
+  }
+
+  public List<String> backchannelAuthenticationRequestSigningAlgValuesSupported() {
+    return backchannelAuthenticationRequestSigningAlgValuesSupported;
+  }
+
+  public boolean hasBackchannelAuthenticationRequestSigningAlgValuesSupported() {
+    return !backchannelAuthenticationRequestSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean backchannelUserCodeParameterSupported() {
+    return backchannelUserCodeParameterSupported;
+  }
+
+  public boolean hasBackchannelUserCodeParameterSupported() {
+    return Objects.nonNull(backchannelUserCodeParameterSupported);
   }
 }
