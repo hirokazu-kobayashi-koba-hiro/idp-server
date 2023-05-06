@@ -3,6 +3,7 @@ package org.idp.server.configuration;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.type.oauth.ClientAuthenticationType;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ResponseType;
@@ -16,19 +17,22 @@ public class ClientConfiguration implements JsonReadable {
   String tokenEndpointAuthMethod;
   List<String> grantTypes = new ArrayList<>();
   List<String> responseTypes = new ArrayList<>();
-  String clientName;
-  String clientUri;
-  String logoUri;
+  String clientName = "";
+  String clientUri = "";
+  String logoUri = "";
   String scope;
-  String contacts;
-  String tosUri;
-  String policyUri;
+  String contacts = "";
+  String tosUri = "";
+  String policyUri = "";
   String jwksUri;
   String jwks;
-  String softwareId;
-  String softwareVersion;
+  String softwareId = "";
+  String softwareVersion = "";
   List<String> requestUris = new ArrayList<>();
-
+  String backchannelTokenDeliveryMode = "";
+  String backchannelClientNotificationEndpoint = "";
+  String backchannelAuthenticationRequestSigningAlg = "";
+  Boolean backchannelUserCodeParameter;
   // extension
   boolean supportedJar;
   String issuer;
@@ -148,5 +152,37 @@ public class ClientConfiguration implements JsonReadable {
 
   public ClientAuthenticationType clientAuthenticationType() {
     return ClientAuthenticationType.valueOf(tokenEndpointAuthMethod);
+  }
+
+  public BackchannelTokenDeliveryMode backchannelTokenDeliveryMode() {
+    return BackchannelTokenDeliveryMode.of(backchannelTokenDeliveryMode);
+  }
+
+  public boolean hasBackchannelTokenDeliveryMode() {
+    return backchannelTokenDeliveryMode().isDefined();
+  }
+
+  public String backchannelClientNotificationEndpoint() {
+    return backchannelClientNotificationEndpoint;
+  }
+
+  public boolean hasBackchannelClientNotificationEndpoint() {
+    return !backchannelClientNotificationEndpoint.isEmpty();
+  }
+
+  public String backchannelAuthenticationRequestSigningAlg() {
+    return backchannelAuthenticationRequestSigningAlg;
+  }
+
+  public boolean hasBackchannelAuthenticationRequestSigningAlg() {
+    return !backchannelAuthenticationRequestSigningAlg.isEmpty();
+  }
+
+  public Boolean backchannelUserCodeParameter() {
+    return backchannelUserCodeParameter;
+  }
+
+  public boolean hasBackchannelUserCodeParameter() {
+    return Objects.nonNull(backchannelUserCodeParameter);
   }
 }

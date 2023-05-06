@@ -1,10 +1,11 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { completeBackchannelAuthentications, requestBackchannelAuthentications, requestToken } from "./api/oauthClient";
-import { clientSecretPostClient, serverConfig } from "./testConfig";
+import { clientSecretJwtClient, clientSecretPostClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
 import { createJwt, createJwtWithPrivateKey } from "./lib/jose";
 import { isNumber, isString, sleep } from "./lib/util";
+import { createClientAssertion } from "./lib/oauth";
 
 describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0", () => {
   const ciba = serverConfig.ciba;
@@ -94,6 +95,46 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(400);
       expect(tokenResponse.data.error).toEqual("access_denied");
+    });
+
+    it("unauthorized_client The Client is not authorized as it is configured in Push Mode", async () => {
+      const clientAssertion = createClientAssertion({
+        client: clientSecretJwtClient,
+        issuer: serverConfig.issuer,
+      });
+
+      const backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: clientSecretJwtClient.clientId,
+        scope: "openid profile phone email" + clientSecretJwtClient.scope,
+        bindingMessage: ciba.bindingMessage,
+        userCode: ciba.userCode,
+        loginHint: ciba.loginHint,
+        clientAssertion,
+        clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+      });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+
+      const completeResponse = await completeBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationAutomatedCompleteEndpoint,
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        action: "allow",
+      });
+      expect(completeResponse.status).toBe(200);
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: clientSecretJwtClient.clientId,
+        clientAssertion,
+        clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("unauthorized_client");
+      expect(tokenResponse.data.error_description).toEqual("backchannel delivery mode is push. token request must not allowed");
     });
   });
 

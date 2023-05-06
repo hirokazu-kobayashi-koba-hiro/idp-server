@@ -5,6 +5,7 @@ import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.type.OAuthRequestKey;
 import org.idp.server.type.ciba.AuthReqId;
+import org.idp.server.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.pkce.CodeVerifier;
@@ -141,7 +142,15 @@ public class TokenRequestContext implements BackchannelRequestContext {
     return parameters.authReqId();
   }
 
-    public ClientId clientId() {
+  public ClientId clientId() {
     return clientConfiguration.clientId();
-    }
+  }
+
+  public BackchannelTokenDeliveryMode deliveryMode() {
+    return clientConfiguration.backchannelTokenDeliveryMode();
+  }
+
+  public boolean isPushMode() {
+    return deliveryMode().isPushMode();
+  }
 }

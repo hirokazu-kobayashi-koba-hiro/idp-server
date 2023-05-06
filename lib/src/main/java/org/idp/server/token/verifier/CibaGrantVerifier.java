@@ -26,6 +26,7 @@ public class CibaGrantVerifier {
   public void verify(
       TokenRequestContext context, BackchannelAuthenticationRequest request, CibaGrant cibaGrant) {
     throwIfInvalidAuthReqId(context, cibaGrant);
+    throwIfPushMode(context);
     throwIfExpired(cibaGrant);
     throwIfAuthorizedPending(cibaGrant);
     throwIfAccessDenied(cibaGrant);
@@ -34,19 +35,38 @@ public class CibaGrantVerifier {
   /**
    * invalid_grant
    *
-   * <p>If the auth_req_id is invalid or was issued to another Client, an invalid_grant error MUST be returned as described in Section 5.2 of [RFC6749].
+   * <p>If the auth_req_id is invalid or was issued to another Client, an invalid_grant error MUST
+   * be returned as described in Section 5.2 of [RFC6749].
    *
    * @param context
    * @param cibaGrant
    */
   void throwIfInvalidAuthReqId(TokenRequestContext context, CibaGrant cibaGrant) {
     if (!cibaGrant.exists()) {
-      throw new TokenBadRequestException("invalid_grant",
-              String.format("auth_req_id is invalid (%s)", context.authReqId().value()));
+      throw new TokenBadRequestException(
+          "invalid_grant",
+          String.format("auth_req_id is invalid (%s)", context.authReqId().value()));
     }
     if (!cibaGrant.isGrantedClient(context.clientId())) {
-      throw new TokenBadRequestException("invalid_grant",
-              String.format("auth_req_id is invalid (%s)", context.authReqId().value()));
+      throw new TokenBadRequestException(
+          "invalid_grant",
+          String.format("auth_req_id is invalid (%s)", context.authReqId().value()));
+    }
+  }
+
+  /**
+   * unauthorized_client
+   *
+   * <p>If the Client is registered to use the Push Mode then it MUST NOT call the Token Endpoint
+   * with the CIBA Grant Type and the following error is returned.
+   *
+   * @param context
+   */
+  void throwIfPushMode(TokenRequestContext context) {
+    if (context.isPushMode()) {
+      throw new TokenBadRequestException(
+          "unauthorized_client",
+          "backchannel delivery mode is push. token request must not allowed");
     }
   }
 
