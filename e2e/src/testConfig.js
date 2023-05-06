@@ -26,7 +26,8 @@ export const serverConfig = {
 };
 export const clientSecretPostClient = {
   clientId: "clientSecretPost",
-  clientSecret: "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
+  clientSecret:
+    "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
   redirectUri: "https://client.example.org/callback",
   scope: "account transfers",
   fapiBaselineScope: "read",

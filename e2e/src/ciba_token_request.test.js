@@ -1,27 +1,33 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { completeBackchannelAuthentications, requestBackchannelAuthentications, requestToken } from "./api/oauthClient";
-import { clientSecretJwtClient, clientSecretPostClient, serverConfig } from "./testConfig";
-import { requestAuthorizations } from "./oauth";
-import { createJwt, createJwtWithPrivateKey } from "./lib/jose";
-import { isNumber, isString, sleep } from "./lib/util";
+import {
+  completeBackchannelAuthentications,
+  requestBackchannelAuthentications,
+  requestToken,
+} from "./api/oauthClient";
+import {
+  clientSecretJwtClient,
+  clientSecretPostClient,
+  serverConfig,
+} from "./testConfig";
+import { sleep } from "./lib/util";
 import { createClientAssertion } from "./lib/oauth";
 
 describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0", () => {
   const ciba = serverConfig.ciba;
 
-
   describe("11. Token Error Response", () => {
     it("authorization_pending The authorization request is still pending as the end-user hasn't yet been authenticated.", async () => {
-      const backchannelAuthenticationResponse = await requestBackchannelAuthentications({
-        endpoint: serverConfig.backchannelAuthenticationEndpoint,
-        clientId: clientSecretPostClient.clientId,
-        scope: "openid profile phone email" + clientSecretPostClient.scope,
-        bindingMessage: ciba.bindingMessage,
-        userCode: ciba.userCode,
-        loginHint: ciba.loginHint,
-        clientSecret: clientSecretPostClient.clientSecret,
-      });
+      const backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHint,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(200);
 
@@ -38,16 +44,17 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
     });
 
     it("expired_token The auth_req_id has expired. The Client will need to make a new Authentication Request.", async () => {
-      const backchannelAuthenticationResponse = await requestBackchannelAuthentications({
-        endpoint: serverConfig.backchannelAuthenticationEndpoint,
-        clientId: clientSecretPostClient.clientId,
-        scope: "openid profile phone email" + clientSecretPostClient.scope,
-        bindingMessage: ciba.bindingMessage,
-        userCode: ciba.userCode,
-        loginHint: ciba.loginHint,
-        requestedExpiry: 1,
-        clientSecret: clientSecretPostClient.clientSecret,
-      });
+      const backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHint,
+          requestedExpiry: 1,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(200);
 
@@ -66,20 +73,22 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
     });
 
     it("access_denied The end-user denied the authorization request.", async () => {
-      const backchannelAuthenticationResponse = await requestBackchannelAuthentications({
-        endpoint: serverConfig.backchannelAuthenticationEndpoint,
-        clientId: clientSecretPostClient.clientId,
-        scope: "openid profile phone email" + clientSecretPostClient.scope,
-        bindingMessage: ciba.bindingMessage,
-        userCode: ciba.userCode,
-        loginHint: ciba.loginHint,
-        clientSecret: clientSecretPostClient.clientSecret,
-      });
+      const backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHint,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(200);
 
       const completeResponse = await completeBackchannelAuthentications({
-        endpoint: serverConfig.backchannelAuthenticationAutomatedCompleteEndpoint,
+        endpoint:
+          serverConfig.backchannelAuthenticationAutomatedCompleteEndpoint,
         authReqId: backchannelAuthenticationResponse.data.auth_req_id,
         action: "deny",
       });
@@ -103,21 +112,24 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         issuer: serverConfig.issuer,
       });
 
-      const backchannelAuthenticationResponse = await requestBackchannelAuthentications({
-        endpoint: serverConfig.backchannelAuthenticationEndpoint,
-        clientId: clientSecretJwtClient.clientId,
-        scope: "openid profile phone email" + clientSecretJwtClient.scope,
-        bindingMessage: ciba.bindingMessage,
-        userCode: ciba.userCode,
-        loginHint: ciba.loginHint,
-        clientAssertion,
-        clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-      });
+      const backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretJwtClient.clientId,
+          scope: "openid profile phone email" + clientSecretJwtClient.scope,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHint,
+          clientAssertion,
+          clientAssertionType:
+            "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+        });
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(200);
 
       const completeResponse = await completeBackchannelAuthentications({
-        endpoint: serverConfig.backchannelAuthenticationAutomatedCompleteEndpoint,
+        endpoint:
+          serverConfig.backchannelAuthenticationAutomatedCompleteEndpoint,
         authReqId: backchannelAuthenticationResponse.data.auth_req_id,
         action: "allow",
       });
@@ -129,13 +141,15 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         authReqId: backchannelAuthenticationResponse.data.auth_req_id,
         clientId: clientSecretJwtClient.clientId,
         clientAssertion,
-        clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+        clientAssertionType:
+          "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(400);
       expect(tokenResponse.data.error).toEqual("unauthorized_client");
-      expect(tokenResponse.data.error_description).toEqual("backchannel delivery mode is push. token request must not allowed");
+      expect(tokenResponse.data.error_description).toEqual(
+        "backchannel delivery mode is push. token request must not allowed"
+      );
     });
   });
-
 });
