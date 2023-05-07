@@ -5,7 +5,13 @@ import org.idp.server.tokenintrospection.exception.TokenIntrospectionBadRequestE
 
 public class TokenIntrospectionValidator {
 
-  public void validate(TokenIntrospectionRequestParameters parameters) {
+  TokenIntrospectionRequestParameters parameters;
+
+  public TokenIntrospectionValidator(TokenIntrospectionRequestParameters parameters) {
+    this.parameters = parameters;
+  }
+
+  public void validate() {
     if (!parameters.hasToken()) {
       throw new TokenIntrospectionBadRequestException(
           "invalid_request", "token introspection request must contains token parameters");

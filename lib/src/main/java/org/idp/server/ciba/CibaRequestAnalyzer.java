@@ -2,7 +2,13 @@ package org.idp.server.ciba;
 
 public class CibaRequestAnalyzer {
 
-  public CibaRequestPattern analyze(CibaRequestParameters parameters) {
+  CibaRequestParameters parameters;
+
+  public CibaRequestAnalyzer(CibaRequestParameters parameters) {
+    this.parameters = parameters;
+  }
+
+  public CibaRequestPattern analyze() {
     if (parameters.hasRequest()) {
       return CibaRequestPattern.REQUEST_OBJECT;
     }

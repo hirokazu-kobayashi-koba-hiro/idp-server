@@ -2,9 +2,6 @@ package org.idp.server.handler.token;
 
 import static org.idp.server.type.oauth.GrantType.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import org.idp.server.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.ciba.repository.CibaGrantRepository;
 import org.idp.server.clientauthenticator.ClientAuthenticatorHandler;
@@ -30,8 +27,7 @@ import org.idp.server.type.oauth.TokenIssuer;
 
 public class TokenRequestHandler {
 
-  Map<GrantType, OAuthTokenCreationService> map = new HashMap<>();
-  TokenRequestValidator tokenRequestValidator;
+  OAuthTokenCreationServices oAuthTokenCreationServices;
   ClientAuthenticatorHandler clientAuthenticatorHandler;
   OAuthTokenRepository oAuthTokenRepository;
   ServerConfigurationRepository serverConfigurationRepository;
@@ -46,23 +42,14 @@ public class TokenRequestHandler {
       OAuthTokenRepository oAuthTokenRepository,
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
-    map.put(
-        authorization_code,
-        new TokenCreationCodeGrantService(
+    this.oAuthTokenCreationServices =
+        new OAuthTokenCreationServices(
             authorizationRequestRepository,
-            oAuthTokenRepository,
             authorizationCodeGrantRepository,
-            authorizationGrantedRepository));
-    map.put(refresh_token, new RefreshTokenGrantService(oAuthTokenRepository));
-    map.put(client_credentials, new ClientCredentialsGrantService(oAuthTokenRepository));
-    map.put(
-        ciba,
-        new CibaGrantService(
+            authorizationGrantedRepository,
             backchannelAuthenticationRequestRepository,
             cibaGrantRepository,
-            oAuthTokenRepository,
-            authorizationGrantedRepository));
-    this.tokenRequestValidator = new TokenRequestValidator();
+            oAuthTokenRepository);
     this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
@@ -86,15 +73,13 @@ public class TokenRequestHandler {
             customProperties,
             serverConfiguration,
             clientConfiguration);
-    tokenRequestValidator.validate(tokenRequestContext);
+    TokenRequestValidator tokenRequestValidator = new TokenRequestValidator(tokenRequestContext);
+    tokenRequestValidator.validate();
 
     clientAuthenticatorHandler.authenticate(tokenRequestContext);
 
     GrantType grantType = tokenRequestContext.grantType();
-    OAuthTokenCreationService oAuthTokenCreationService = map.get(grantType);
-    if (Objects.isNull(oAuthTokenCreationService)) {
-      throw new RuntimeException(String.format("unsupported grant_type (%s)", grantType.name()));
-    }
+    OAuthTokenCreationService oAuthTokenCreationService = oAuthTokenCreationServices.get(grantType);
 
     return oAuthTokenCreationService.create(tokenRequestContext);
   }

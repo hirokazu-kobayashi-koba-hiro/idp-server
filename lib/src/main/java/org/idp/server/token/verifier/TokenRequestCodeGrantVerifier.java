@@ -9,16 +9,18 @@ public class TokenRequestCodeGrantVerifier {
   TokenRequestCodeGrantBaseVerifier baseVerifier;
   TokenRequestPkceVerifier pkceVerifier;
 
-  public TokenRequestCodeGrantVerifier() {
-    this.baseVerifier = new TokenRequestCodeGrantBaseVerifier();
-    this.pkceVerifier = new TokenRequestPkceVerifier();
-  }
-
-  public void verify(
+  public TokenRequestCodeGrantVerifier(
       TokenRequestContext tokenRequestContext,
       AuthorizationRequest authorizationRequest,
       AuthorizationCodeGrant authorizationCodeGrant) {
-    baseVerifier.verify(tokenRequestContext, authorizationRequest, authorizationCodeGrant);
-    pkceVerifier.verify(tokenRequestContext, authorizationRequest);
+    this.baseVerifier =
+        new TokenRequestCodeGrantBaseVerifier(
+            tokenRequestContext, authorizationRequest, authorizationCodeGrant);
+    this.pkceVerifier = new TokenRequestPkceVerifier(tokenRequestContext, authorizationRequest);
+  }
+
+  public void verify() {
+    baseVerifier.verify();
+    pkceVerifier.verify();
   }
 }

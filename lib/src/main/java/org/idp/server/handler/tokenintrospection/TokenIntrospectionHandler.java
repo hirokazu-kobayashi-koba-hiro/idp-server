@@ -17,20 +17,19 @@ import org.idp.server.type.oauth.TokenIssuer;
 public class TokenIntrospectionHandler {
 
   OAuthTokenRepository oAuthTokenRepository;
-  TokenIntrospectionValidator validator;
-  TokenIntrospectionVerifier verifier;
 
   public TokenIntrospectionHandler(OAuthTokenRepository oAuthTokenRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
-    this.validator = new TokenIntrospectionValidator();
-    this.verifier = new TokenIntrospectionVerifier();
   }
 
   public TokenIntrospectionResponse handle(TokenIntrospectionRequest request) {
-    validator.validate(request.toParameters());
+    TokenIntrospectionValidator validator = new TokenIntrospectionValidator(request.toParameters());
+    validator.validate();
 
     OAuthToken oAuthToken = find(request);
-    verifier.verify(oAuthToken);
+    TokenIntrospectionVerifier verifier = new TokenIntrospectionVerifier(oAuthToken);
+    verifier.verify();
+
     Map<String, Object> contents =
         TokenIntrospectionContentsCreator.createSuccessContents(oAuthToken.accessTokenPayload());
     return new TokenIntrospectionResponse(

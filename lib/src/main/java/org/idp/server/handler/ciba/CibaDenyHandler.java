@@ -1,7 +1,6 @@
 package org.idp.server.handler.ciba;
 
 import org.idp.server.ciba.grant.CibaGrant;
-import org.idp.server.ciba.grant.CibaGrantFactory;
 import org.idp.server.ciba.grant.CibaGrantStatus;
 import org.idp.server.ciba.repository.CibaGrantRepository;
 import org.idp.server.handler.ciba.io.*;
@@ -13,7 +12,6 @@ import org.idp.server.type.oauth.TokenIssuer;
 public class CibaDenyHandler {
 
   CibaGrantRepository cibaGrantRepository;
-  CibaGrantFactory cibaGrantFactory;
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
@@ -22,8 +20,6 @@ public class CibaDenyHandler {
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
     this.cibaGrantRepository = cibaGrantRepository;
-
-    this.cibaGrantFactory = new CibaGrantFactory();
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }

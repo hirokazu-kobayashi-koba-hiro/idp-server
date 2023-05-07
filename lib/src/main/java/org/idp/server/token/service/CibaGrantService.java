@@ -32,8 +32,6 @@ public class CibaGrantService
   CibaGrantRepository cibaGrantRepository;
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
-  CibaGrantValidator validator;
-  CibaGrantVerifier verifier;
 
   public CibaGrantService(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
@@ -44,13 +42,12 @@ public class CibaGrantService
     this.cibaGrantRepository = cibaGrantRepository;
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.authorizationGrantedRepository = authorizationGrantedRepository;
-    this.validator = new CibaGrantValidator();
-    this.verifier = new CibaGrantVerifier();
   }
 
   @Override
   public OAuthToken create(TokenRequestContext tokenRequestContext) {
-    validator.validate(tokenRequestContext);
+    CibaGrantValidator validator = new CibaGrantValidator(tokenRequestContext);
+    validator.validate();
 
     AuthReqId authReqId = tokenRequestContext.authReqId();
     CibaGrant cibaGrant = cibaGrantRepository.find(authReqId);
@@ -58,7 +55,9 @@ public class CibaGrantService
         backchannelAuthenticationRequestRepository.find(
             cibaGrant.backchannelAuthenticationRequestIdentifier());
 
-    verifier.verify(tokenRequestContext, backchannelAuthenticationRequest, cibaGrant);
+    CibaGrantVerifier verifier =
+        new CibaGrantVerifier(tokenRequestContext, backchannelAuthenticationRequest, cibaGrant);
+    verifier.verify();
 
     ServerConfiguration serverConfiguration = tokenRequestContext.serverConfiguration();
     ClientConfiguration clientConfiguration = tokenRequestContext.clientConfiguration();

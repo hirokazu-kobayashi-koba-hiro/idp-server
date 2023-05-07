@@ -1,8 +1,5 @@
 package org.idp.server.handler.oauth;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.handler.oauth.io.OAuthRequest;
@@ -14,19 +11,15 @@ import org.idp.server.oauth.gateway.RequestObjectGateway;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.repository.ClientConfigurationRepository;
 import org.idp.server.oauth.repository.ServerConfigurationRepository;
-import org.idp.server.oauth.service.NormalPatternContextService;
-import org.idp.server.oauth.service.OAuthRequestContextService;
-import org.idp.server.oauth.service.RequestObjectPatternContextService;
-import org.idp.server.oauth.service.RequestUriPatternContextService;
+import org.idp.server.oauth.service.*;
 import org.idp.server.oauth.validator.OAuthRequestValidator;
 import org.idp.server.oauth.verifier.OAuthRequestVerifier;
 import org.idp.server.type.oauth.TokenIssuer;
 
 /** OAuthRequestHandler */
 public class OAuthRequestHandler {
-  Map<OAuthRequestPattern, OAuthRequestContextService> map = new HashMap<>();
-  OAuthRequestValidator requestValidator;
-  OAuthRequestAnalyzer requestAnalyzer;
+
+  OAuthRequestContextServices oAuthRequestContextServices;
   OAuthRequestVerifier verifier;
   AuthorizationRequestRepository authorizationRequestRepository;
   ServerConfigurationRepository serverConfigurationRepository;
@@ -37,32 +30,28 @@ public class OAuthRequestHandler {
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository,
       RequestObjectGateway requestObjectGateway) {
-    this.requestValidator = new OAuthRequestValidator();
-    this.requestAnalyzer = new OAuthRequestAnalyzer();
+    this.oAuthRequestContextServices = new OAuthRequestContextServices(requestObjectGateway);
     this.verifier = new OAuthRequestVerifier();
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
-    map.put(OAuthRequestPattern.NORMAL, new NormalPatternContextService());
-    map.put(OAuthRequestPattern.REQUEST_OBJECT, new RequestObjectPatternContextService());
-    map.put(
-        OAuthRequestPattern.REQUEST_URI, new RequestUriPatternContextService(requestObjectGateway));
   }
 
   public OAuthRequestContext handle(OAuthRequest oAuthRequest) {
     OAuthRequestParameters parameters = oAuthRequest.toParameters();
     TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
-    requestValidator.validate(parameters);
+    OAuthRequestValidator validator = new OAuthRequestValidator(parameters);
+    validator.validate();
 
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tokenIssuer, parameters.clientId());
 
-    OAuthRequestPattern oAuthRequestPattern = requestAnalyzer.analyzePattern(parameters);
-    OAuthRequestContextService oAuthRequestContextService = map.get(oAuthRequestPattern);
-    if (Objects.isNull(oAuthRequestContextService)) {
-      throw new RuntimeException("not support request pattern");
-    }
+    OAuthRequestAnalyzer analyzer = new OAuthRequestAnalyzer(parameters);
+    OAuthRequestPattern oAuthRequestPattern = analyzer.analyzePattern();
+    OAuthRequestContextService oAuthRequestContextService =
+        oAuthRequestContextServices.get(oAuthRequestPattern);
+
     OAuthRequestContext context =
         oAuthRequestContextService.create(parameters, serverConfiguration, clientConfiguration);
     verifier.verify(context);

@@ -21,15 +21,23 @@ import org.idp.server.token.exception.TokenBadRequestException;
  */
 public class CibaGrantVerifier {
 
-  public CibaGrantVerifier() {}
+  TokenRequestContext context;
+  BackchannelAuthenticationRequest request;
+  CibaGrant cibaGrant;
 
-  public void verify(
+  public CibaGrantVerifier(
       TokenRequestContext context, BackchannelAuthenticationRequest request, CibaGrant cibaGrant) {
-    throwIfInvalidAuthReqId(context, cibaGrant);
-    throwIfPushMode(context);
-    throwIfExpired(cibaGrant);
-    throwIfAuthorizedPending(cibaGrant);
-    throwIfAccessDenied(cibaGrant);
+    this.context = context;
+    this.request = request;
+    this.cibaGrant = cibaGrant;
+  }
+
+  public void verify() {
+    throwIfInvalidAuthReqId();
+    throwIfPushMode();
+    throwIfExpired();
+    throwIfAuthorizedPending();
+    throwIfAccessDenied();
   }
 
   /**
@@ -37,11 +45,8 @@ public class CibaGrantVerifier {
    *
    * <p>If the auth_req_id is invalid or was issued to another Client, an invalid_grant error MUST
    * be returned as described in Section 5.2 of [RFC6749].
-   *
-   * @param context
-   * @param cibaGrant
    */
-  void throwIfInvalidAuthReqId(TokenRequestContext context, CibaGrant cibaGrant) {
+  void throwIfInvalidAuthReqId() {
     if (!cibaGrant.exists()) {
       throw new TokenBadRequestException(
           "invalid_grant",
@@ -59,10 +64,8 @@ public class CibaGrantVerifier {
    *
    * <p>If the Client is registered to use the Push Mode then it MUST NOT call the Token Endpoint
    * with the CIBA Grant Type and the following error is returned.
-   *
-   * @param context
    */
-  void throwIfPushMode(TokenRequestContext context) {
+  void throwIfPushMode() {
     if (context.isPushMode()) {
       throw new TokenBadRequestException(
           "unauthorized_client",
@@ -74,10 +77,8 @@ public class CibaGrantVerifier {
    * expired_token
    *
    * <p>The auth_req_id has expired. The Client will need to make a new Authentication Request.
-   *
-   * @param cibaGrant
    */
-  void throwIfExpired(CibaGrant cibaGrant) {
+  void throwIfExpired() {
     LocalDateTime now = SystemDateTime.now();
     if (cibaGrant.isExpire(now)) {
       throw new TokenBadRequestException(
@@ -90,10 +91,8 @@ public class CibaGrantVerifier {
    * authorization_pending
    *
    * <p>The authorization request is still pending as the end-user hasn't yet been authenticated.
-   *
-   * @param cibaGrant
    */
-  void throwIfAuthorizedPending(CibaGrant cibaGrant) {
+  void throwIfAuthorizedPending() {
     if (cibaGrant.isAuthorizationPending()) {
       throw new TokenBadRequestException(
           "authorization_pending",
@@ -105,10 +104,8 @@ public class CibaGrantVerifier {
    * access_denied
    *
    * <p>The end-user denied the authorization request.
-   *
-   * @param cibaGrant
    */
-  void throwIfAccessDenied(CibaGrant cibaGrant) {
+  void throwIfAccessDenied() {
     if (cibaGrant.isAccessDenied()) {
       throw new TokenBadRequestException(
           "access_denied", "The end-user denied the authorization request.");

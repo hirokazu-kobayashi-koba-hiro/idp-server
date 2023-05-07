@@ -18,7 +18,6 @@ import org.idp.server.userinfo.verifier.UserinfoVerifier;
 public class UserinfoHandler {
 
   OAuthTokenRepository oAuthTokenRepository;
-  UserinfoVerifier verifier;
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
@@ -27,7 +26,6 @@ public class UserinfoHandler {
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
-    this.verifier = new UserinfoVerifier();
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
@@ -37,7 +35,10 @@ public class UserinfoHandler {
     TokenIssuer tokenIssuer = request.toTokenIssuer();
     serverConfigurationRepository.get(tokenIssuer);
     OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenValue);
-    verifier.verify(oAuthToken);
+
+    UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken);
+    verifier.verify();
+
     User user = delegate.getUser(oAuthToken.subject());
     UserinfoClaimsCreator claimsCreator = new UserinfoClaimsCreator();
     Map<String, Object> claims = claimsCreator.createClaims(user, oAuthToken.authorizationGrant());

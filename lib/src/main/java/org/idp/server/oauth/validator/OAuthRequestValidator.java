@@ -7,19 +7,25 @@ import org.idp.server.oauth.exception.OAuthBadRequestException;
 /** OAuthRequestInitialValidator */
 public class OAuthRequestValidator {
 
-  public void validate(OAuthRequestParameters oAuthRequestParameters) {
-    throwIfNotContainsClientId(oAuthRequestParameters);
-    throwIfDuplicateValue(oAuthRequestParameters);
+  OAuthRequestParameters oAuthRequestParameters;
+
+  public OAuthRequestValidator(OAuthRequestParameters oAuthRequestParameters) {
+    this.oAuthRequestParameters = oAuthRequestParameters;
   }
 
-  void throwIfNotContainsClientId(OAuthRequestParameters oAuthRequestParameters) {
+  public void validate() {
+    throwIfNotContainsClientId();
+    throwIfDuplicateValue();
+  }
+
+  void throwIfNotContainsClientId() {
     if (!oAuthRequestParameters.hasClientId()) {
       throw new OAuthBadRequestException(
           "invalid_request", "authorization request must contains client_id");
     }
   }
 
-  void throwIfDuplicateValue(OAuthRequestParameters oAuthRequestParameters) {
+  void throwIfDuplicateValue() {
     List<String> keys = oAuthRequestParameters.multiValueKeys();
     List<String> filteredKeys = keys.stream().filter(key -> !key.equals("resource")).toList();
     if (!filteredKeys.isEmpty()) {

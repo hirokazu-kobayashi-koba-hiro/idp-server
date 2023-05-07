@@ -17,8 +17,18 @@ import org.idp.server.type.oauth.Scopes;
 
 public class CibaGrantFactory {
 
-  public CibaGrant create(
+  CibaRequestContext context;
+  BackchannelAuthenticationResponse response;
+  User user;
+
+  public CibaGrantFactory(
       CibaRequestContext context, BackchannelAuthenticationResponse response, User user) {
+    this.context = context;
+    this.response = response;
+    this.user = user;
+  }
+
+  public CibaGrant create() {
     BackchannelAuthenticationRequestIdentifier identifier =
         context.backchannelAuthenticationRequestIdentifier();
     ClientId clientId = context.clientId();

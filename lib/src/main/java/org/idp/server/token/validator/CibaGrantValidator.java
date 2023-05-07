@@ -6,35 +6,41 @@ import org.idp.server.type.oauth.GrantType;
 
 public class CibaGrantValidator {
 
-  public void validate(TokenRequestContext tokenRequestContext) {
-    throwIfUnSupportedGrantTypeWithServer(tokenRequestContext);
-    throwIfUnSupportedGrantTypeWithClient(tokenRequestContext);
-    throwIfNotContainsAuthReqId(tokenRequestContext);
-    throwIfNotContainsClientId(tokenRequestContext);
+  TokenRequestContext tokenRequestContext;
+
+  public CibaGrantValidator(TokenRequestContext tokenRequestContext) {
+    this.tokenRequestContext = tokenRequestContext;
   }
 
-  void throwIfUnSupportedGrantTypeWithClient(TokenRequestContext tokenRequestContext) {
+  public void validate() {
+    throwIfUnSupportedGrantTypeWithServer();
+    throwIfUnSupportedGrantTypeWithClient();
+    throwIfNotContainsAuthReqId();
+    throwIfNotContainsClientId();
+  }
+
+  void throwIfUnSupportedGrantTypeWithClient() {
     if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.ciba)) {
       throw new TokenBadRequestException(
           "this request grant_type is ciba, but client does not support");
     }
   }
 
-  void throwIfUnSupportedGrantTypeWithServer(TokenRequestContext tokenRequestContext) {
+  void throwIfUnSupportedGrantTypeWithServer() {
     if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.ciba)) {
       throw new TokenBadRequestException(
           "this request grant_type is ciba, but authorization server does not support");
     }
   }
 
-  void throwIfNotContainsAuthReqId(TokenRequestContext tokenRequestContext) {
+  void throwIfNotContainsAuthReqId() {
     if (!tokenRequestContext.hasAuthReqId()) {
       throw new TokenBadRequestException(
           "token request does not contains code, ciba grant must contains auth_req_id");
     }
   }
 
-  void throwIfNotContainsClientId(TokenRequestContext tokenRequestContext) {
+  void throwIfNotContainsClientId() {
     if (tokenRequestContext.hasClientSecretBasic()) {
       return;
     }

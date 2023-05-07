@@ -2,11 +2,7 @@ package org.idp.server.ciba.verifier;
 
 import org.idp.server.ciba.CibaRequestContext;
 import org.idp.server.ciba.exception.BackchannelAuthenticationBadRequestException;
-import org.idp.server.oauth.OAuthRequestContext;
-import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.type.oauth.GrantType;
-import org.idp.server.type.oauth.ResponseType;
-
 
 public class CibaRequestBaseVerifier {
 
@@ -19,13 +15,11 @@ public class CibaRequestBaseVerifier {
   void throwIfUnSupportedGrantType(CibaRequestContext context) {
     if (!context.isSupportedGrantTypeWithServer(GrantType.ciba)) {
       throw new BackchannelAuthenticationBadRequestException(
-              "unauthorized_client",
-                      "authorization server is unsupported ciba grant");
+          "unauthorized_client", "authorization server is unsupported ciba grant");
     }
     if (!context.isSupportedGrantTypeWithClient(GrantType.ciba)) {
       throw new BackchannelAuthenticationBadRequestException(
-              "unauthorized_client",
-              "client is unsupported ciba grant");
+          "unauthorized_client", "client is unsupported ciba grant");
     }
   }
 

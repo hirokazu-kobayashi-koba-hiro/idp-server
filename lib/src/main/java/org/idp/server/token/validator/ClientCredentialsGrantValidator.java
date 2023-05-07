@@ -6,19 +6,25 @@ import org.idp.server.type.oauth.GrantType;
 
 public class ClientCredentialsGrantValidator {
 
-  public void validate(TokenRequestContext tokenRequestContext) {
-    throwIfUnSupportedGrantTypeWithServer(tokenRequestContext);
-    throwIfUnSupportedGrantTypeWithClient(tokenRequestContext);
+  TokenRequestContext tokenRequestContext;
+
+  public ClientCredentialsGrantValidator(TokenRequestContext tokenRequestContext) {
+    this.tokenRequestContext = tokenRequestContext;
   }
 
-  void throwIfUnSupportedGrantTypeWithClient(TokenRequestContext tokenRequestContext) {
+  public void validate() {
+    throwIfUnSupportedGrantTypeWithServer();
+    throwIfUnSupportedGrantTypeWithClient();
+  }
+
+  void throwIfUnSupportedGrantTypeWithClient() {
     if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.client_credentials)) {
       throw new TokenBadRequestException(
           "this request grant_type is client_credentials, but client does not support");
     }
   }
 
-  void throwIfUnSupportedGrantTypeWithServer(TokenRequestContext tokenRequestContext) {
+  void throwIfUnSupportedGrantTypeWithServer() {
     if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.client_credentials)) {
       throw new TokenBadRequestException(
           "this request grant_type is client_credentials, but authorization server does not support");

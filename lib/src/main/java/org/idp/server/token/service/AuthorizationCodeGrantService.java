@@ -18,12 +18,12 @@ import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.token.*;
 import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
-import org.idp.server.token.validator.TokenRequestCodeGrantValidator;
+import org.idp.server.token.validator.TokenRequestValidator;
 import org.idp.server.token.verifier.TokenRequestCodeGrantVerifier;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
 
-public class TokenCreationCodeGrantService
+public class AuthorizationCodeGrantService
     implements OAuthTokenCreationService,
         AccessTokenCreatable,
         RefreshTokenCreatable,
@@ -33,10 +33,8 @@ public class TokenCreationCodeGrantService
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
-  TokenRequestCodeGrantValidator validator;
-  TokenRequestCodeGrantVerifier verifier;
 
-  public TokenCreationCodeGrantService(
+  public AuthorizationCodeGrantService(
       AuthorizationRequestRepository authorizationRequestRepository,
       OAuthTokenRepository oAuthTokenRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
@@ -45,13 +43,12 @@ public class TokenCreationCodeGrantService
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
     this.authorizationGrantedRepository = authorizationGrantedRepository;
-    this.validator = new TokenRequestCodeGrantValidator();
-    this.verifier = new TokenRequestCodeGrantVerifier();
   }
 
   @Override
   public OAuthToken create(TokenRequestContext tokenRequestContext) {
-    validator.validate(tokenRequestContext);
+    TokenRequestValidator validator = new TokenRequestValidator(tokenRequestContext);
+    validator.validate();
 
     AuthorizationCode code = tokenRequestContext.code();
     AuthorizationCodeGrant authorizationCodeGrant = authorizationCodeGrantRepository.find(code);
@@ -59,7 +56,11 @@ public class TokenCreationCodeGrantService
         authorizationRequestRepository.find(
             authorizationCodeGrant.authorizationRequestIdentifier());
 
-    verifier.verify(tokenRequestContext, authorizationRequest, authorizationCodeGrant);
+    TokenRequestCodeGrantVerifier verifier =
+        new TokenRequestCodeGrantVerifier(
+            tokenRequestContext, authorizationRequest, authorizationCodeGrant);
+    verifier.verify();
+
     ServerConfiguration serverConfiguration = tokenRequestContext.serverConfiguration();
     ClientConfiguration clientConfiguration = tokenRequestContext.clientConfiguration();
     AccessTokenPayload accessTokenPayload =

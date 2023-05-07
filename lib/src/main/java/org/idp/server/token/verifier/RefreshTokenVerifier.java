@@ -7,13 +7,20 @@ import org.idp.server.token.TokenRequestContext;
 import org.idp.server.token.exception.TokenInvalidGrantException;
 
 public class RefreshTokenVerifier {
+  TokenRequestContext context;
+  OAuthToken oAuthToken;
 
-  public void verify(TokenRequestContext context, OAuthToken oAuthToken) {
-    throwINotFoundToken(context, oAuthToken);
-    throwIfExpiredToken(context, oAuthToken);
+  public RefreshTokenVerifier(TokenRequestContext context, OAuthToken oAuthToken) {
+    this.context = context;
+    this.oAuthToken = oAuthToken;
   }
 
-  void throwINotFoundToken(TokenRequestContext context, OAuthToken oAuthToken) {
+  public void verify() {
+    throwINotFoundToken();
+    throwIfExpiredToken();
+  }
+
+  void throwINotFoundToken() {
     if (!oAuthToken.exists()) {
       throw new TokenInvalidGrantException(
           "invalid_grant",
@@ -21,7 +28,7 @@ public class RefreshTokenVerifier {
     }
   }
 
-  void throwIfExpiredToken(TokenRequestContext context, OAuthToken oAuthToken) {
+  void throwIfExpiredToken() {
     LocalDateTime now = SystemDateTime.now();
     if (oAuthToken.isExpire(now)) {
       throw new TokenInvalidGrantException(

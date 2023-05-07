@@ -4,5 +4,11 @@ import org.idp.server.token.TokenRequestContext;
 
 public class TokenRequestValidator {
 
-  public void validate(TokenRequestContext tokenRequestContext) {}
+  TokenRequestContext tokenRequestContext;
+
+  public TokenRequestValidator(TokenRequestContext tokenRequestContext) {
+    this.tokenRequestContext = tokenRequestContext;
+  }
+
+  public void validate() {}
 }

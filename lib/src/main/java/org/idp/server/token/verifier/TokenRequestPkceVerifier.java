@@ -9,14 +9,18 @@ import org.idp.server.type.pkce.CodeVerifier;
 
 public class TokenRequestPkceVerifier {
 
+  TokenRequestContext tokenRequestContext;
+  AuthorizationRequest authorizationRequest;
   CodeChallengeCalculator codeChallengeCalculator;
 
-  public TokenRequestPkceVerifier() {
+  public TokenRequestPkceVerifier(
+      TokenRequestContext tokenRequestContext, AuthorizationRequest authorizationRequest) {
+    this.tokenRequestContext = tokenRequestContext;
+    this.authorizationRequest = authorizationRequest;
     this.codeChallengeCalculator = new CodeChallengeCalculator();
   }
 
-  public void verify(
-      TokenRequestContext tokenRequestContext, AuthorizationRequest authorizationRequest) {
+  public void verify() {
     if (!authorizationRequest.isPkceRequest()) {
       return;
     }

@@ -16,24 +16,25 @@ public class RefreshTokenGrantService
     implements OAuthTokenCreationService, AccessTokenCreatable, RefreshTokenCreatable {
 
   OAuthTokenRepository oAuthTokenRepository;
-  RefreshTokenGrantValidator validator;
-  RefreshTokenVerifier verifier;
 
   public RefreshTokenGrantService(OAuthTokenRepository oAuthTokenRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
-    this.validator = new RefreshTokenGrantValidator();
-    this.verifier = new RefreshTokenVerifier();
   }
 
   @Override
   public OAuthToken create(TokenRequestContext context) {
-    validator.validate(context);
+    RefreshTokenGrantValidator validator = new RefreshTokenGrantValidator(context);
+    validator.validate();
+
     RefreshTokenValue refreshTokenValue = context.refreshToken();
     ServerConfiguration serverConfiguration = context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
     OAuthToken oAuthToken =
         oAuthTokenRepository.find(serverConfiguration.tokenIssuer(), refreshTokenValue);
-    verifier.verify(context, oAuthToken);
+
+    RefreshTokenVerifier verifier = new RefreshTokenVerifier(context, oAuthToken);
+    verifier.verify();
+
     AccessTokenPayload accessTokenPayload =
         createAccessTokenPayload(
             oAuthToken.authorizationGrant(), serverConfiguration, clientConfiguration);

@@ -5,36 +5,41 @@ import org.idp.server.token.exception.TokenBadRequestException;
 import org.idp.server.type.oauth.GrantType;
 
 public class TokenRequestCodeGrantValidator {
+  TokenRequestContext tokenRequestContext;
 
-  public void validate(TokenRequestContext tokenRequestContext) {
-    throwIfUnSupportedGrantTypeWithServer(tokenRequestContext);
-    throwIfUnSupportedGrantTypeWithClient(tokenRequestContext);
-    throwIfNotContainsAuthorizationCode(tokenRequestContext);
-    throwIfNotContainsClientId(tokenRequestContext);
+  public TokenRequestCodeGrantValidator(TokenRequestContext tokenRequestContext) {
+    this.tokenRequestContext = tokenRequestContext;
   }
 
-  void throwIfUnSupportedGrantTypeWithClient(TokenRequestContext tokenRequestContext) {
+  public void validate() {
+    throwIfUnSupportedGrantTypeWithServer();
+    throwIfUnSupportedGrantTypeWithClient();
+    throwIfNotContainsAuthorizationCode();
+    throwIfNotContainsClientId();
+  }
+
+  void throwIfUnSupportedGrantTypeWithClient() {
     if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.authorization_code)) {
       throw new TokenBadRequestException(
           "this request grant_type is authorization_code, but client does not support");
     }
   }
 
-  void throwIfUnSupportedGrantTypeWithServer(TokenRequestContext tokenRequestContext) {
+  void throwIfUnSupportedGrantTypeWithServer() {
     if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.authorization_code)) {
       throw new TokenBadRequestException(
           "this request grant_type is authorization_code, but authorization server does not support");
     }
   }
 
-  void throwIfNotContainsAuthorizationCode(TokenRequestContext tokenRequestContext) {
+  void throwIfNotContainsAuthorizationCode() {
     if (!tokenRequestContext.hasCode()) {
       throw new TokenBadRequestException(
           "token request does not contains code, authorization_code grant must contains code");
     }
   }
 
-  void throwIfNotContainsClientId(TokenRequestContext tokenRequestContext) {
+  void throwIfNotContainsClientId() {
     if (tokenRequestContext.hasClientSecretBasic()) {
       return;
     }

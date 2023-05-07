@@ -7,7 +7,13 @@ import org.idp.server.configuration.ServerConfiguration;
 
 public class JwksResponseCreator {
 
-  public Map<String, Object> create(ServerConfiguration serverConfiguration) {
+  ServerConfiguration serverConfiguration;
+
+  public JwksResponseCreator(ServerConfiguration serverConfiguration) {
+    this.serverConfiguration = serverConfiguration;
+  }
+
+  public Map<String, Object> create() {
     try {
       String jwks = serverConfiguration.jwks();
       return JwkParser.parsePublicKeys(jwks);

@@ -22,7 +22,6 @@ public class TokenRevocationHandler {
   OAuthTokenRepository oAuthTokenRepository;
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
-  TokenRevocationValidator validator;
   ClientAuthenticatorHandler clientAuthenticatorHandler;
 
   public TokenRevocationHandler(
@@ -32,12 +31,13 @@ public class TokenRevocationHandler {
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
-    this.validator = new TokenRevocationValidator();
     this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
   }
 
   public TokenRevocationResponse handle(TokenRevocationRequest request) {
-    validator.validate(request.toParameters());
+    TokenRevocationValidator validator = new TokenRevocationValidator(request.toParameters());
+    validator.validate();
+
     TokenIssuer tokenIssuer = request.toTokenIssuer();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
     ClientConfiguration clientConfiguration =

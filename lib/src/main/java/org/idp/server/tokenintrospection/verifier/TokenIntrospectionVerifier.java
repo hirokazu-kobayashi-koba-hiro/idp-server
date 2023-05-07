@@ -7,7 +7,13 @@ import org.idp.server.tokenintrospection.exception.TokenInvalidException;
 
 public class TokenIntrospectionVerifier {
 
-  public void verify(OAuthToken oAuthToken) {
+  OAuthToken oAuthToken;
+
+  public TokenIntrospectionVerifier(OAuthToken oAuthToken) {
+    this.oAuthToken = oAuthToken;
+  }
+
+  public void verify() {
     if (!oAuthToken.exists()) {
       throw new TokenInvalidException("not found token");
     }

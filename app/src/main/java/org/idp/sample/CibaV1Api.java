@@ -82,7 +82,7 @@ public class CibaV1Api implements ParameterTransformable {
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
     return new ResponseEntity<>(
-        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @PostMapping("/automated-complete")

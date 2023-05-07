@@ -13,10 +13,6 @@ import org.idp.server.type.oauth.TokenIssuer;
 
 public class DiscoveryHandler {
 
-  ServerConfigurationResponseCreator serverConfigurationResponseCreator =
-      new ServerConfigurationResponseCreator();
-  JwksResponseCreator jwksResponseCreator = new JwksResponseCreator();
-
   ServerConfigurationRepository serverConfigurationRepository;
 
   public DiscoveryHandler(ServerConfigurationRepository serverConfigurationRepository) {
@@ -26,14 +22,21 @@ public class DiscoveryHandler {
   public ServerConfigurationRequestResponse getConfiguration(String issuer) {
     ServerConfiguration serverConfiguration =
         serverConfigurationRepository.get(new TokenIssuer(issuer));
-    Map<String, Object> content = serverConfigurationResponseCreator.create(serverConfiguration);
+
+    ServerConfigurationResponseCreator serverConfigurationResponseCreator =
+        new ServerConfigurationResponseCreator(serverConfiguration);
+    Map<String, Object> content = serverConfigurationResponseCreator.create();
+
     return new ServerConfigurationRequestResponse(ServerConfigurationRequestStatus.OK, content);
   }
 
   public JwksRequestResponse getJwks(String issuer) {
     ServerConfiguration serverConfiguration =
         serverConfigurationRepository.get(new TokenIssuer(issuer));
-    Map<String, Object> content = jwksResponseCreator.create(serverConfiguration);
+
+    JwksResponseCreator jwksResponseCreator = new JwksResponseCreator(serverConfiguration);
+    Map<String, Object> content = jwksResponseCreator.create();
+
     return new JwksRequestResponse(JwksRequestStatus.OK, content);
   }
 }

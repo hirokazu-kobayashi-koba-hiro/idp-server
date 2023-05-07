@@ -3,7 +3,13 @@ package org.idp.server.oauth;
 /** OAuthRequestAnalyzer */
 public class OAuthRequestAnalyzer {
 
-  public OAuthRequestPattern analyzePattern(OAuthRequestParameters parameters) {
+  OAuthRequestParameters parameters;
+
+  public OAuthRequestAnalyzer(OAuthRequestParameters parameters) {
+    this.parameters = parameters;
+  }
+
+  public OAuthRequestPattern analyzePattern() {
     if (parameters.hasRequest()) {
       return OAuthRequestPattern.REQUEST_OBJECT;
     }
@@ -13,7 +19,7 @@ public class OAuthRequestAnalyzer {
     return OAuthRequestPattern.NORMAL;
   }
 
-  public AuthorizationProfile analyzeProfile(OAuthRequestParameters parameters) {
+  public AuthorizationProfile analyzeProfile() {
 
     return AuthorizationProfile.OAUTH2;
   }

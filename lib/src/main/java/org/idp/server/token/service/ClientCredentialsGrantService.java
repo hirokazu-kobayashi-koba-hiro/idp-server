@@ -21,18 +21,17 @@ import org.idp.server.type.oauth.TokenType;
 
 public class ClientCredentialsGrantService
     implements OAuthTokenCreationService, AccessTokenCreatable {
-
-  ClientCredentialsGrantValidator validator;
   OAuthTokenRepository oAuthTokenRepository;
 
   public ClientCredentialsGrantService(OAuthTokenRepository oAuthTokenRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
-    this.validator = new ClientCredentialsGrantValidator();
   }
 
   @Override
   public OAuthToken create(TokenRequestContext context) {
-    validator.validate(context);
+    ClientCredentialsGrantValidator validator = new ClientCredentialsGrantValidator(context);
+    validator.validate();
+
     ServerConfiguration serverConfiguration = context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
     User user = new User();

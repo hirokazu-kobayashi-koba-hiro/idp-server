@@ -5,7 +5,13 @@ import org.idp.server.tokenrevocation.exception.TokenRevocationBadRequestExcepti
 
 public class TokenRevocationValidator {
 
-  public void validate(TokenRevocationRequestParameters parameters) {
+  TokenRevocationRequestParameters parameters;
+
+  public TokenRevocationValidator(TokenRevocationRequestParameters parameters) {
+    this.parameters = parameters;
+  }
+
+  public void validate() {
     if (!parameters.hasToken()) {
       throw new TokenRevocationBadRequestException(
           "invalid_request", "token revocation request must contains token parameters");

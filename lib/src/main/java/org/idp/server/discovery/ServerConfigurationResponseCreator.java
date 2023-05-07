@@ -5,8 +5,13 @@ import java.util.Map;
 import org.idp.server.configuration.ServerConfiguration;
 
 public class ServerConfigurationResponseCreator {
+  ServerConfiguration serverConfiguration;
 
-  public Map<String, Object> create(ServerConfiguration serverConfiguration) {
+  public ServerConfigurationResponseCreator(ServerConfiguration serverConfiguration) {
+    this.serverConfiguration = serverConfiguration;
+  }
+
+  public Map<String, Object> create() {
     Map<String, Object> map = new HashMap<>();
     map.put("issuer", serverConfiguration.issuer());
     map.put("authorization_endpoint", serverConfiguration.authorizationEndpoint());

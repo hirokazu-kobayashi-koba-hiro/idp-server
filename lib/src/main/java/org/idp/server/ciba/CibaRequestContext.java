@@ -151,9 +151,8 @@ public class CibaRequestContext implements BackchannelRequestContext {
   public boolean isSupportedGrantTypeWithServer(GrantType grantType) {
     return serverConfiguration.isSupportedGrantType(grantType);
   }
+
   public boolean isSupportedGrantTypeWithClient(GrantType grantType) {
     return clientConfiguration.isSupportedGrantType(grantType);
   }
-
-
 }
