@@ -53,6 +53,7 @@ public class ServerConfiguration implements JsonReadable {
   boolean requireSignedRequestObject = false;
   boolean authorizationResponseIssParameterSupported = false;
 
+  List<String> backchannelTokenDeliveryModesSupported = new ArrayList<>();
   String backchannelAuthenticationEndpoint = "";
   List<String> backchannelAuthenticationRequestSigningAlgValuesSupported = new ArrayList<>();
   Boolean backchannelUserCodeParameterSupported;
@@ -419,6 +420,14 @@ public class ServerConfiguration implements JsonReadable {
 
   public boolean hasCodeChallengeMethodsSupported() {
     return !codeChallengeMethodsSupported.isEmpty();
+  }
+
+  public List<String> backchannelTokenDeliveryModesSupported() {
+    return backchannelTokenDeliveryModesSupported;
+  }
+
+  public boolean hasBackchannelTokenDeliveryModesSupported() {
+    return !backchannelTokenDeliveryModesSupported.isEmpty();
   }
 
   public String backchannelAuthenticationEndpoint() {

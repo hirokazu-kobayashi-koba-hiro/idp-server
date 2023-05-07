@@ -104,6 +104,19 @@ public class ServerConfigurationResponseCreator {
     map.put("request_uri_parameter_supported", serverConfiguration.requestUriParameterSupported());
     map.put(
         "require_request_uri_registration", serverConfiguration.requireRequestUriRegistration());
+
+    if (serverConfiguration.hasBackchannelTokenDeliveryModesSupported()) {
+      map.put("backchannel_token_delivery_modes_supported", serverConfiguration.backchannelTokenDeliveryModesSupported());
+    }
+    if (serverConfiguration.hasBackchannelAuthenticationEndpoint()) {
+      map.put("backchannel_authentication_endpoint", serverConfiguration.hasBackchannelAuthenticationEndpoint());
+    }
+    if (serverConfiguration.hasBackchannelAuthenticationRequestSigningAlgValuesSupported()) {
+      map.put("backchannel_authentication_request_signing_alg_values_supported", serverConfiguration.backchannelAuthenticationRequestSigningAlgValuesSupported());
+    }
+    if (serverConfiguration.hasBackchannelUserCodeParameterSupported()) {
+      map.put("backchannel_user_code_parameter_supported", serverConfiguration.backchannelUserCodeParameterSupported());
+    }
     return map;
   }
 }

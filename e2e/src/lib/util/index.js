@@ -60,7 +60,7 @@ const isObject = (value) => {
   return value !== null && typeof value === "object" && !isArray(value);
 };
 
-const isArray = (value) => {
+export const isArray = (value) => {
   if (!value) {
     return false;
   }
