@@ -1,31 +1,43 @@
 package org.idp.server.handler.token.io;
 
-import java.util.Map;
+import org.idp.server.handler.io.ContentType;
 import org.idp.server.token.TokenErrorResponse;
 import org.idp.server.token.TokenResponse;
+import org.idp.server.token.TokenResponseBuilder;
 
 public class TokenRequestResponse {
   TokenRequestStatus status;
   TokenResponse tokenResponse;
   TokenErrorResponse errorResponse;
+  ContentType contentType;
 
   public TokenRequestResponse(TokenRequestStatus status, TokenResponse tokenResponse) {
     this.status = status;
     this.tokenResponse = tokenResponse;
     this.errorResponse = new TokenErrorResponse();
+    this.contentType = ContentType.application_json;
   }
 
   public TokenRequestResponse(TokenRequestStatus status, TokenErrorResponse errorResponse) {
     this.status = status;
-    this.tokenResponse = new TokenResponse();
+    this.tokenResponse = new TokenResponseBuilder().build();
     this.errorResponse = errorResponse;
+    this.contentType = ContentType.application_json;
   }
 
-  public Map<String, Object> response() {
+  public String contents() {
     if (status.isOK()) {
-      return tokenResponse.response();
+      return tokenResponse.contents();
     }
-    return errorResponse.response();
+    return errorResponse.contents();
+  }
+
+  public ContentType contentType() {
+    return contentType;
+  }
+
+  public String contentTypeValue() {
+    return contentType.value();
   }
 
   public TokenResponse tokenResponse() {

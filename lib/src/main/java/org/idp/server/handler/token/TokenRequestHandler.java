@@ -1,7 +1,5 @@
 package org.idp.server.handler.token;
 
-import static org.idp.server.type.oauth.GrantType.*;
-
 import org.idp.server.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.ciba.repository.CibaGrantRepository;
 import org.idp.server.clientauthenticator.ClientAuthenticatorHandler;
@@ -9,6 +7,8 @@ import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.handler.token.io.TokenRequest;
+import org.idp.server.handler.token.io.TokenRequestResponse;
+import org.idp.server.handler.token.io.TokenRequestStatus;
 import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.repository.ClientConfigurationRepository;
@@ -56,7 +56,7 @@ public class TokenRequestHandler {
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
-  public OAuthToken handle(TokenRequest tokenRequest) {
+  public TokenRequestResponse handle(TokenRequest tokenRequest) {
     TokenIssuer tokenIssuer = tokenRequest.toTokenIssuer();
     TokenRequestParameters parameters = tokenRequest.toParameters();
     ClientSecretBasic clientSecretBasic = tokenRequest.clientSecretBasic();
@@ -81,6 +81,8 @@ public class TokenRequestHandler {
     GrantType grantType = tokenRequestContext.grantType();
     OAuthTokenCreationService oAuthTokenCreationService = oAuthTokenCreationServices.get(grantType);
 
-    return oAuthTokenCreationService.create(tokenRequestContext);
+    OAuthToken oAuthToken = oAuthTokenCreationService.create(tokenRequestContext);
+
+    return new TokenRequestResponse(TokenRequestStatus.OK, oAuthToken.tokenResponse());
   }
 }

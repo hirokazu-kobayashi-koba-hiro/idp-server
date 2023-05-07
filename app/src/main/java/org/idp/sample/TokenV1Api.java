@@ -5,6 +5,7 @@ import org.idp.server.IdpServerApplication;
 import org.idp.server.TokenApi;
 import org.idp.server.handler.token.io.TokenRequest;
 import org.idp.server.handler.token.io.TokenRequestResponse;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
@@ -29,6 +30,8 @@ public class TokenV1Api implements ParameterTransformable {
     Tenant tenant = Tenant.of(tenantId);
     TokenRequest tokenRequest = new TokenRequest(authorizationHeader, request, tenant.issuer());
     TokenRequestResponse response = tokenApi.request(tokenRequest);
-    return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", response.contentTypeValue());
+    return new ResponseEntity<>(response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }

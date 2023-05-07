@@ -2,6 +2,7 @@ package org.idp.server.token;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.basic.json.JsonParser;
 import org.idp.server.type.oauth.AccessTokenValue;
 import org.idp.server.type.oauth.ExpiresIn;
 import org.idp.server.type.oauth.RefreshTokenValue;
@@ -15,6 +16,7 @@ public class TokenResponseBuilder {
   RefreshTokenValue refreshTokenValue = new RefreshTokenValue();
   IdToken idToken = new IdToken();
   Map<String, Object> values = new HashMap<>();
+  JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
 
   public TokenResponseBuilder() {}
 
@@ -49,7 +51,8 @@ public class TokenResponseBuilder {
   }
 
   public TokenResponse build() {
+    String contents = jsonParser.write(values);
     return new TokenResponse(
-        accessTokenValue, tokenType, expiresIn, refreshTokenValue, idToken, values);
+        accessTokenValue, tokenType, expiresIn, refreshTokenValue, idToken, contents);
   }
 }

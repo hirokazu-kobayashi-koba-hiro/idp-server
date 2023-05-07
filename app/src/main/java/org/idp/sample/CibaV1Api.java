@@ -13,7 +13,6 @@ import org.idp.server.oauth.identity.User;
 import org.idp.server.type.ciba.UserCode;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
@@ -80,7 +79,7 @@ public class CibaV1Api implements ParameterTransformable {
               }
             });
     HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
+    httpHeaders.add("Content-Type", response.contentTypeValue());
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }

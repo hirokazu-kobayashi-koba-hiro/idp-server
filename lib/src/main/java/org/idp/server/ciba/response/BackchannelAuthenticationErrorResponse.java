@@ -2,8 +2,9 @@ package org.idp.server.ciba.response;
 
 import org.idp.server.type.oauth.Error;
 import org.idp.server.type.oauth.ErrorDescription;
+import org.idp.server.type.oauth.ErrorResponseCreatable;
 
-public class BackchannelAuthenticationErrorResponse {
+public class BackchannelAuthenticationErrorResponse implements ErrorResponseCreatable {
   Error error;
   ErrorDescription errorDescription;
 
@@ -23,13 +24,6 @@ public class BackchannelAuthenticationErrorResponse {
   }
 
   public String contents() {
-    String format =
-        """
-                {
-                  "error": "%s",
-                  "error_description": "%s"
-                }
-                """;
-    return String.format(format, error.value(), errorDescription.value());
+    return toErrorResponse(error, errorDescription);
   }
 }

@@ -1,10 +1,10 @@
 package org.idp.server.token;
 
-import java.util.Map;
 import org.idp.server.type.oauth.Error;
 import org.idp.server.type.oauth.ErrorDescription;
+import org.idp.server.type.oauth.ErrorResponseCreatable;
 
-public class TokenErrorResponse {
+public class TokenErrorResponse implements ErrorResponseCreatable {
   Error error;
   ErrorDescription errorDescription;
 
@@ -15,7 +15,7 @@ public class TokenErrorResponse {
     this.errorDescription = errorDescription;
   }
 
-  public Map<String, Object> response() {
-    return Map.of("error", error.value(), "error_description", errorDescription.value());
+  public String contents() {
+    return toErrorResponse(error, errorDescription);
   }
 }

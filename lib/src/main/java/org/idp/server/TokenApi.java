@@ -4,8 +4,6 @@ import org.idp.server.handler.token.TokenRequestErrorHandler;
 import org.idp.server.handler.token.TokenRequestHandler;
 import org.idp.server.handler.token.io.TokenRequest;
 import org.idp.server.handler.token.io.TokenRequestResponse;
-import org.idp.server.handler.token.io.TokenRequestStatus;
-import org.idp.server.token.OAuthToken;
 
 public class TokenApi {
 
@@ -19,8 +17,7 @@ public class TokenApi {
 
   public TokenRequestResponse request(TokenRequest tokenRequest) {
     try {
-      OAuthToken oAuthToken = tokenRequestHandler.handle(tokenRequest);
-      return new TokenRequestResponse(TokenRequestStatus.OK, oAuthToken.tokenResponse());
+      return tokenRequestHandler.handle(tokenRequest);
     } catch (Exception exception) {
       return errorHandler.handle(exception);
     }
