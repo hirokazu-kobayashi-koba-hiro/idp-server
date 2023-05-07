@@ -21,9 +21,11 @@ This library provides java api supported OAuth2.0 and OIDC spec.
    4. request object
    5. userinfo
 3. OpenID Connect Discovery 1.0 incorporating errata set 1
-4. RFC7009 OAuth 2.0 Token Revocation
-5. RFC7636 Proof Key for Code Exchange by OAuth Public Clients
-6. RFC7662 OAuth 2.0 Token Introspection
+4. OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0
+   1. poll mode
+5. RFC7009 OAuth 2.0 Token Revocation
+6. RFC7636 Proof Key for Code Exchange by OAuth Public Clients
+7. RFC7662 OAuth 2.0 Token Introspection
 
 ## supported client authentication
 
@@ -35,3 +37,18 @@ This library provides java api supported OAuth2.0 and OIDC spec.
 ## License
 
 Apache License, Version 2.0
+
+## sample server
+
+### bootRun
+
+```shell
+./gradlew bootRun
+```
+
+### e2e
+
+```shell
+cd e2e
+jest test
+```
