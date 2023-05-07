@@ -32,6 +32,7 @@ public class TokenV1Api implements ParameterTransformable {
     TokenRequestResponse response = tokenApi.request(tokenRequest);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", response.contentTypeValue());
-    return new ResponseEntity<>(response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }

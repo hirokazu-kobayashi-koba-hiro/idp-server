@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
-
 import org.idp.server.ciba.grant.CibaGrant;
 import org.idp.server.ciba.repository.CibaGrantRepository;
 import org.idp.server.type.ciba.AuthReqId;
