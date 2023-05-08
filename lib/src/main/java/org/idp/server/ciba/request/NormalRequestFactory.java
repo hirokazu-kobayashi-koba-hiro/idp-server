@@ -24,6 +24,7 @@ public class NormalRequestFactory implements BackchannelAuthenticationRequestFac
     builder.add(createIdentifier());
     builder.add(serverConfiguration.tokenIssuer());
     builder.add(profile);
+    builder.add(clientConfiguration.backchannelTokenDeliveryMode());
     builder.add(new Scopes(filteredScopes));
     builder.add(clientConfiguration.clientId());
     builder.add(parameters.idTokenHint());

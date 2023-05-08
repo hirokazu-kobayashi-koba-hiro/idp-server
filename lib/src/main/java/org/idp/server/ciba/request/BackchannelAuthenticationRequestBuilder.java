@@ -10,6 +10,7 @@ public class BackchannelAuthenticationRequestBuilder {
   BackchannelAuthenticationRequestIdentifier identifier;
   TokenIssuer tokenIssuer;
   CibaProfile profile;
+  BackchannelTokenDeliveryMode deliveryMode;
   Scopes scopes;
   ClientId clientId;
   IdTokenHint idTokenHint;
@@ -37,6 +38,11 @@ public class BackchannelAuthenticationRequestBuilder {
 
   public BackchannelAuthenticationRequestBuilder add(CibaProfile profile) {
     this.profile = profile;
+    return this;
+  }
+
+  public BackchannelAuthenticationRequestBuilder add(BackchannelTokenDeliveryMode deliveryMode) {
+    this.deliveryMode = deliveryMode;
     return this;
   }
 
@@ -101,6 +107,7 @@ public class BackchannelAuthenticationRequestBuilder {
         identifier,
         tokenIssuer,
         profile,
+        deliveryMode,
         scopes,
         clientId,
         idTokenHint,

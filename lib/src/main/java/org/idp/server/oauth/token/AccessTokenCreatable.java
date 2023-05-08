@@ -16,7 +16,32 @@ import org.idp.server.type.oauth.ExpiredAt;
 
 public interface AccessTokenCreatable {
 
-  default AccessTokenPayload createAccessTokenPayload(
+  default AccessToken createAccessToken(
+      AuthorizationGrant authorizationGrant,
+      ServerConfiguration serverConfiguration,
+      ClientConfiguration clientConfiguration) {
+    try {
+      AccessTokenPayload accessTokenPayload =
+          createAccessTokenPayload(authorizationGrant, serverConfiguration, clientConfiguration);
+      JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
+      JsonWebSignature jsonWebSignature =
+          jsonWebSignatureFactory.createWithAsymmetricKey(
+              accessTokenPayload.values(),
+              Map.of(),
+              serverConfiguration.jwks(),
+              serverConfiguration.tokenSignedKeyId());
+      AccessTokenValue accessTokenValue = new AccessTokenValue(jsonWebSignature.serialize());
+      return new AccessToken(
+          accessTokenValue,
+          accessTokenPayload,
+          accessTokenPayload.createdAt(),
+          accessTokenPayload.expiredAt());
+    } catch (JwkInvalidException jwkInvalidException) {
+      throw new ConfigurationInvalidException(jwkInvalidException);
+    }
+  }
+
+  private AccessTokenPayload createAccessTokenPayload(
       AuthorizationGrant authorizationGrant,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
@@ -35,28 +60,5 @@ public interface AccessTokenCreatable {
     builder.add(createdAt);
     builder.add(expiredAt);
     return builder.build();
-  }
-
-  default AccessToken createAccessToken(
-      AccessTokenPayload accessTokenPayload,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
-    try {
-      JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
-      JsonWebSignature jsonWebSignature =
-          jsonWebSignatureFactory.createWithAsymmetricKey(
-              accessTokenPayload.values(),
-              Map.of(),
-              serverConfiguration.jwks(),
-              serverConfiguration.tokenSignedKeyId());
-      AccessTokenValue accessTokenValue = new AccessTokenValue(jsonWebSignature.serialize());
-      return new AccessToken(
-          accessTokenValue,
-          accessTokenPayload,
-          accessTokenPayload.createdAt(),
-          accessTokenPayload.expiredAt());
-    } catch (JwkInvalidException jwkInvalidException) {
-      throw new ConfigurationInvalidException(jwkInvalidException);
-    }
   }
 }

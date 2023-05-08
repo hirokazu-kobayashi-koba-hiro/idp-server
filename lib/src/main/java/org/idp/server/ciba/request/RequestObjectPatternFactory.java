@@ -79,6 +79,7 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
     builder.add(createIdentifier());
     builder.add(serverConfiguration.tokenIssuer());
     builder.add(profile);
+    builder.add(clientConfiguration.backchannelTokenDeliveryMode());
     builder.add(scopes);
     builder.add(clientId);
     builder.add(idTokenHint);

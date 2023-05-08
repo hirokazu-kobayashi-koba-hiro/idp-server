@@ -14,6 +14,7 @@ public class BackchannelAuthenticationRequest {
   BackchannelAuthenticationRequestIdentifier identifier;
   TokenIssuer tokenIssuer;
   CibaProfile profile;
+  BackchannelTokenDeliveryMode deliveryMode;
   Scopes scopes;
   ClientId clientId;
   IdTokenHint idTokenHint;
@@ -30,6 +31,7 @@ public class BackchannelAuthenticationRequest {
       BackchannelAuthenticationRequestIdentifier identifier,
       TokenIssuer tokenIssuer,
       CibaProfile profile,
+      BackchannelTokenDeliveryMode deliveryMode,
       Scopes scopes,
       ClientId clientId,
       IdTokenHint idTokenHint,
@@ -44,6 +46,7 @@ public class BackchannelAuthenticationRequest {
     this.identifier = identifier;
     this.tokenIssuer = tokenIssuer;
     this.profile = profile;
+    this.deliveryMode = deliveryMode;
     this.scopes = scopes;
     this.clientId = clientId;
     this.idTokenHint = idTokenHint;
@@ -67,6 +70,10 @@ public class BackchannelAuthenticationRequest {
 
   public CibaProfile profile() {
     return profile;
+  }
+
+  public BackchannelTokenDeliveryMode deliveryMode() {
+    return deliveryMode;
   }
 
   public Scopes scopes() {
@@ -155,5 +162,13 @@ public class BackchannelAuthenticationRequest {
 
   public boolean hasAnyHint() {
     return hasLoginHint() || hasIdTokenHint() || hasIdTokenHint();
+  }
+
+  public boolean isPingMode() {
+    return deliveryMode.isPingMode();
+  }
+
+  public boolean isPushMode() {
+    return deliveryMode.isPushMode();
   }
 }

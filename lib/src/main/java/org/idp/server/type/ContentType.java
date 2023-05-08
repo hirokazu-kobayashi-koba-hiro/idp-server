@@ -1,4 +1,4 @@
-package org.idp.server.handler.io;
+package org.idp.server.type;
 
 public enum ContentType {
   application_json("application/json"),

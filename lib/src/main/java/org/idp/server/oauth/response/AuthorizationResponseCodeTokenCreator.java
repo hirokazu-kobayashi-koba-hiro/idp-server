@@ -5,7 +5,6 @@ import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenCreatable;
-import org.idp.server.oauth.token.AccessTokenPayload;
 import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
 
@@ -17,12 +16,10 @@ public class AuthorizationResponseCodeTokenCreator
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     AuthorizationCode authorizationCode = createAuthorizationCode();
     AuthorizationGrant authorizationGrant = context.toAuthorizationGranted();
-    AccessTokenPayload accessTokenPayload =
-        createAccessTokenPayload(
-            authorizationGrant, context.serverConfiguration(), context.clientConfiguration());
+
     AccessToken accessToken =
         createAccessToken(
-            accessTokenPayload, context.serverConfiguration(), context.clientConfiguration());
+            authorizationGrant, context.serverConfiguration(), context.clientConfiguration());
 
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(

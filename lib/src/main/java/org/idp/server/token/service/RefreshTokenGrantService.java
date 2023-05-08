@@ -35,11 +35,9 @@ public class RefreshTokenGrantService
     RefreshTokenVerifier verifier = new RefreshTokenVerifier(context, oAuthToken);
     verifier.verify();
 
-    AccessTokenPayload accessTokenPayload =
-        createAccessTokenPayload(
-            oAuthToken.authorizationGrant(), serverConfiguration, clientConfiguration);
     AccessToken accessToken =
-        createAccessToken(accessTokenPayload, serverConfiguration, clientConfiguration);
+        createAccessToken(
+            oAuthToken.authorizationGrant(), serverConfiguration, clientConfiguration);
     RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
     OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
 

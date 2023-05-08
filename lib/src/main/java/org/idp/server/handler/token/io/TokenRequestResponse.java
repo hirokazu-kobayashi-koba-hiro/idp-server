@@ -1,9 +1,9 @@
 package org.idp.server.handler.token.io;
 
-import org.idp.server.handler.io.ContentType;
 import org.idp.server.token.TokenErrorResponse;
 import org.idp.server.token.TokenResponse;
 import org.idp.server.token.TokenResponseBuilder;
+import org.idp.server.type.ContentType;
 
 public class TokenRequestResponse {
   TokenRequestStatus status;

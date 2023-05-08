@@ -9,7 +9,6 @@ import org.idp.server.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenCreatable;
-import org.idp.server.oauth.token.AccessTokenPayload;
 import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
@@ -21,12 +20,10 @@ public class AuthorizationResponseTokenIdTokenCreator
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     AuthorizationGrant authorizationGrant = context.toAuthorizationGranted();
-    AccessTokenPayload accessTokenPayload =
-        createAccessTokenPayload(
-            authorizationGrant, context.serverConfiguration(), context.clientConfiguration());
+
     AccessToken accessToken =
         createAccessToken(
-            accessTokenPayload, context.serverConfiguration(), context.clientConfiguration());
+            authorizationGrant, context.serverConfiguration(), context.clientConfiguration());
     IdTokenCustomClaims idTokenCustomClaims =
         new IdTokenCustomClaimsBuilder()
             .add(authorizationRequest.state())

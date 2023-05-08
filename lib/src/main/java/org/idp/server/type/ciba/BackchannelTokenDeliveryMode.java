@@ -28,4 +28,8 @@ public enum BackchannelTokenDeliveryMode {
   public boolean isPushMode() {
     return this == push;
   }
+
+  public boolean isPingMode() {
+    return this == ping;
+  }
 }

@@ -6,6 +6,7 @@ import org.idp.server.handler.ciba.CibaDenyHandler;
 import org.idp.server.handler.ciba.CibaRequestHandler;
 import org.idp.server.handler.ciba.datasource.memory.BackchannelAuthenticationMemoryDataSource;
 import org.idp.server.handler.ciba.datasource.memory.CibaGrantMemoryDataSource;
+import org.idp.server.handler.ciba.httpclient.NotificationClient;
 import org.idp.server.handler.config.MemoryDataSourceConfig;
 import org.idp.server.handler.discovery.DiscoveryHandler;
 import org.idp.server.handler.grantmanagment.datasource.AuthorizationGrantedMemoryDataSource;
@@ -84,6 +85,7 @@ public class IdpServerApplication {
     BackchannelAuthenticationMemoryDataSource backchannelAuthenticationMemoryDataSource =
         new BackchannelAuthenticationMemoryDataSource();
     CibaGrantMemoryDataSource cibaGrantMemoryDataSource = new CibaGrantMemoryDataSource();
+    NotificationClient notificationClient = new NotificationClient();
     this.cibaApi =
         new CibaApi(
             new CibaRequestHandler(
@@ -92,7 +94,11 @@ public class IdpServerApplication {
                 serverConfigurationMemoryDataSource,
                 clientConfigurationMemoryDataSource),
             new CibaAuthorizeHandler(
+                backchannelAuthenticationMemoryDataSource,
                 cibaGrantMemoryDataSource,
+                authorizationGrantedMemoryDataSource,
+                oAuthTokenMemoryDataSource,
+                notificationClient,
                 serverConfigurationMemoryDataSource,
                 clientConfigurationMemoryDataSource),
             new CibaDenyHandler(

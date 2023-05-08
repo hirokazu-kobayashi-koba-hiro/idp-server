@@ -8,7 +8,6 @@ import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenCreatable;
-import org.idp.server.oauth.token.AccessTokenPayload;
 import org.idp.server.oauth.token.RefreshToken;
 import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
@@ -41,10 +40,9 @@ public class ClientCredentialsGrantService
     CustomProperties customProperties = context.customProperties();
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrant(user, clientId, scopes, claimsPayload, customProperties);
-    AccessTokenPayload accessTokenPayload =
-        createAccessTokenPayload(authorizationGrant, serverConfiguration, clientConfiguration);
+
     AccessToken accessToken =
-        createAccessToken(accessTokenPayload, serverConfiguration, clientConfiguration);
+        createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);
     TokenResponseBuilder tokenResponseBuilder =
         new TokenResponseBuilder()
             .add(accessToken.accessTokenValue())

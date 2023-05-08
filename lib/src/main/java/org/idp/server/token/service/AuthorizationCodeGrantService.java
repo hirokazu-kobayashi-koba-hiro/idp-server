@@ -63,11 +63,10 @@ public class AuthorizationCodeGrantService
 
     ServerConfiguration serverConfiguration = tokenRequestContext.serverConfiguration();
     ClientConfiguration clientConfiguration = tokenRequestContext.clientConfiguration();
-    AccessTokenPayload accessTokenPayload =
-        createAccessTokenPayload(
-            authorizationCodeGrant.authorizationGrant(), serverConfiguration, clientConfiguration);
+
     AccessToken accessToken =
-        createAccessToken(accessTokenPayload, serverConfiguration, clientConfiguration);
+        createAccessToken(
+            authorizationCodeGrant.authorizationGrant(), serverConfiguration, clientConfiguration);
     RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
     TokenResponseBuilder tokenResponseBuilder =
         new TokenResponseBuilder()

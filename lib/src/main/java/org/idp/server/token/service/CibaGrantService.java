@@ -61,11 +61,9 @@ public class CibaGrantService
 
     ServerConfiguration serverConfiguration = tokenRequestContext.serverConfiguration();
     ClientConfiguration clientConfiguration = tokenRequestContext.clientConfiguration();
-    AccessTokenPayload accessTokenPayload =
-        createAccessTokenPayload(
-            cibaGrant.authorizationGrant(), serverConfiguration, clientConfiguration);
+
     AccessToken accessToken =
-        createAccessToken(accessTokenPayload, serverConfiguration, clientConfiguration);
+        createAccessToken(cibaGrant.authorizationGrant(), serverConfiguration, clientConfiguration);
     RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
     TokenResponseBuilder tokenResponseBuilder =
         new TokenResponseBuilder()
