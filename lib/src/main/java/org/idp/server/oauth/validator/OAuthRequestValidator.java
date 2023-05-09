@@ -4,7 +4,16 @@ import java.util.List;
 import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.exception.OAuthBadRequestException;
 
-/** OAuthRequestInitialValidator */
+/**
+ * validator
+ *
+ * <p>If an authorization request fails validation due to a missing, invalid, or mismatching
+ * redirection URI, the authorization server SHOULD inform the resource owner of the error and MUST
+ * NOT automatically redirect the user-agent to the invalid redirection URI.
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2.4">3.1.2.4. Invalid
+ *     Endpoint</a>
+ */
 public class OAuthRequestValidator {
 
   OAuthRequestParameters oAuthRequestParameters;

@@ -5,9 +5,9 @@ import java.util.Objects;
 import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.AuthorizationCode;
 import org.idp.server.type.oauth.ClientId;
-import org.idp.server.type.oauth.ExpiredAt;
 import org.idp.server.type.oauth.Scopes;
 
 /** AuthorizationCodeGrant */

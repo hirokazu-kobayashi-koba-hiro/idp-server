@@ -5,8 +5,8 @@ import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.random.RandomStringGenerator;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.type.oauth.CreatedAt;
-import org.idp.server.type.oauth.ExpiredAt;
+import org.idp.server.type.extension.CreatedAt;
+import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.RefreshTokenValue;
 
 public interface RefreshTokenCreatable {

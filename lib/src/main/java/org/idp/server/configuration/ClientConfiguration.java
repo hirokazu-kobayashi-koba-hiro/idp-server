@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.type.ciba.BackchannelTokenDeliveryMode;
+import org.idp.server.type.extension.RegisteredRedirectUris;
 import org.idp.server.type.oauth.*;
 
 /** ClientConfiguration */
@@ -46,6 +47,10 @@ public class ClientConfiguration implements JsonReadable {
 
   public List<String> redirectUris() {
     return redirectUris;
+  }
+
+  public RegisteredRedirectUris registeredRedirectUris() {
+    return new RegisteredRedirectUris(redirectUris);
   }
 
   public String tokenEndpointAuthMethod() {

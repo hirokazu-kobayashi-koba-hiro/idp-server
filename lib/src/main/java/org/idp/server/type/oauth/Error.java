@@ -2,7 +2,13 @@ package org.idp.server.type.oauth;
 
 import java.util.Objects;
 
-/** error */
+/**
+ * error
+ *
+ * <p>REQUIRED. A single ASCII [USASCII] error code from the following:
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2.1">4.1.2.1. Error Response</a>
+ */
 public class Error {
   String value;
 

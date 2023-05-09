@@ -1,20 +1,24 @@
-package org.idp.server.type.oauth;
+package org.idp.server.type.extension;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-/** CreatedAt */
-public class CreatedAt {
+/** ExpiredAt */
+public class ExpiredAt {
   LocalDateTime value;
 
-  public CreatedAt() {}
+  public ExpiredAt() {}
 
-  public CreatedAt(LocalDateTime value) {
+  public ExpiredAt(LocalDateTime value) {
     this.value = value;
   }
 
   public LocalDateTime value() {
     return value;
+  }
+
+  public boolean isExpire(LocalDateTime other) {
+    return value.isBefore(other);
   }
 
   public long toEpochSecondWithUtc() {

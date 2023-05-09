@@ -10,6 +10,7 @@ import org.idp.server.basic.jose.JwkInvalidException;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.authentication.Authentication;
+import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
 

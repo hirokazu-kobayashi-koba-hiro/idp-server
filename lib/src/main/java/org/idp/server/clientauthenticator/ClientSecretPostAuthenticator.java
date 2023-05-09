@@ -4,6 +4,18 @@ import org.idp.server.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.type.oauth.ClientSecret;
 
+/**
+ * client secret post
+ *
+ * <p>Alternatively, the authorization server MAY support including the client credentials in the
+ * request-body using the following parameters:
+ *
+ * <p>client_id REQUIRED. The client identifier issued to the client during the registration process
+ * described by Section 2.2.
+ *
+ * <p>client_secret REQUIRED. The client secret. The client MAY omit the parameter if the client
+ * secret is an empty string.
+ */
 class ClientSecretPostAuthenticator implements ClientAuthenticator {
 
   @Override

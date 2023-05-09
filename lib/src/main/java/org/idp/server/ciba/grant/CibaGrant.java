@@ -6,8 +6,8 @@ import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.type.ciba.AuthReqId;
 import org.idp.server.type.ciba.Interval;
+import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.ClientId;
-import org.idp.server.type.oauth.ExpiredAt;
 import org.idp.server.type.oauth.Scopes;
 
 public class CibaGrant {

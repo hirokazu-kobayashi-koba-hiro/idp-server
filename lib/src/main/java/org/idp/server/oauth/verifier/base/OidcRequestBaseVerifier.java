@@ -12,9 +12,9 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
 
   @Override
   public void verify(OAuthRequestContext context) {
+    baseVerifier.verify(context);
     throwIfNotContainsRedirectUri(context);
     throwIfInvalidRedirectUri(context);
-    baseVerifier.verify(context);
     throwIfInvalidDisplay(context);
     throwIfInvalidPrompt(context);
     throwIfInvalidMaxAge(context);

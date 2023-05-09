@@ -31,6 +31,17 @@ public class OAuthApi {
     this.authAuthorizeHandler = authAuthorizeHandler;
   }
 
+  /**
+   * request
+   *
+   * <p>The authorization endpoint is used to interact with the resource owner and obtain an
+   * authorization grant. The authorization server MUST first verify the identity of the resource
+   * owner. The way in which the authorization server authenticates the resource owner (e.g.,
+   * username and password login, session cookies) is beyond the scope of this specification.
+   *
+   * @param oAuthRequest
+   * @return
+   */
   public OAuthRequestResponse request(OAuthRequest oAuthRequest) {
 
     try {

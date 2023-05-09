@@ -1,7 +1,9 @@
 package org.idp.server.oauth.token;
 
 import java.util.Map;
+import org.idp.server.type.extension.CreatedAt;
 import org.idp.server.type.extension.CustomProperties;
+import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.*;
 
 public class AccessTokenPayload {

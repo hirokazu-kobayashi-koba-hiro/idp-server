@@ -2,9 +2,9 @@ package org.idp.server.oauth.token;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.idp.server.type.extension.CreatedAt;
+import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.AccessTokenValue;
-import org.idp.server.type.oauth.CreatedAt;
-import org.idp.server.type.oauth.ExpiredAt;
 
 public class AccessToken {
   AccessTokenValue accessTokenValue;

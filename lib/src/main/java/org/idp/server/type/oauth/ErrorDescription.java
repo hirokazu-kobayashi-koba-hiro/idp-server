@@ -2,7 +2,15 @@ package org.idp.server.type.oauth;
 
 import java.util.Objects;
 
-/** ErrorDescription */
+/**
+ * error_description OPTIONAL.
+ *
+ * <p>Human-readable ASCII [USASCII] text providing additional information, used to assist the
+ * client developer in understanding the error that occurred. Values for the "error_description"
+ * parameter MUST NOT include characters outside the set %x20-21 / %x23-5B / %x5D-7E.
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2.1">4.1.2.1. Error Response</a>
+ */
 public class ErrorDescription {
   String value;
 

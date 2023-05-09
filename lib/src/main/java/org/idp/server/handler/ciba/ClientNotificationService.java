@@ -27,6 +27,7 @@ import org.idp.server.type.oauth.ExpiresIn;
 import org.idp.server.type.oauth.TokenType;
 import org.idp.server.type.oidc.IdToken;
 
+// FIXME consider
 public class ClientNotificationService
     implements AccessTokenCreatable, IdTokenCreatable, RefreshTokenCreatable {
 

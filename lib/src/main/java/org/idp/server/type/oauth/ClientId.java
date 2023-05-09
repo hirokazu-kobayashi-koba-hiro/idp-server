@@ -2,7 +2,20 @@ package org.idp.server.type.oauth;
 
 import java.util.Objects;
 
-/** ClientId */
+/**
+ * ClientIdentifier
+ *
+ * <p>The authorization server issues the registered client a client identifier -- a unique string
+ * representing the registration information provided by the client. The client identifier is not a
+ * secret; it is exposed to the resource owner and MUST NOT be used alone for client authentication.
+ * The client identifier is unique to the authorization server.
+ *
+ * <p>The client identifier string size is left undefined by this specification. The client should
+ * avoid making assumptions about the identifier size. The authorization server SHOULD document the
+ * size of any identifier it issues.
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-2.2">2.2. Client Identifier</a>
+ */
 public class ClientId {
   String value;
 

@@ -10,6 +10,7 @@ import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.type.extension.CustomProperties;
+import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.*;
 
 /** OAuthAuthorizeContext */

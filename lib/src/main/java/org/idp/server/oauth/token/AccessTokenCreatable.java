@@ -10,9 +10,9 @@ import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ConfigurationInvalidException;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.grant.AuthorizationGrant;
+import org.idp.server.type.extension.CreatedAt;
+import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.AccessTokenValue;
-import org.idp.server.type.oauth.CreatedAt;
-import org.idp.server.type.oauth.ExpiredAt;
 
 public interface AccessTokenCreatable {
 
