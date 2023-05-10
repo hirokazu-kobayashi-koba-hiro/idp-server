@@ -143,4 +143,8 @@ public class OAuthRequestContext {
   public RegisteredRedirectUris registeredRedirectUris() {
     return clientConfiguration.registeredRedirectUris();
   }
+
+  public boolean isMultiRegisteredRedirectUri() {
+    return clientConfiguration.isMultiRegisteredRedirectUri();
+  }
 }

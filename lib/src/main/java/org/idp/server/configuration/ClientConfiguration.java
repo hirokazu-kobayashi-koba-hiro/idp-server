@@ -49,6 +49,14 @@ public class ClientConfiguration implements JsonReadable {
     return redirectUris;
   }
 
+  public boolean isMultiRegisteredRedirectUri() {
+    return redirectUris.size() >= 2;
+  }
+
+  public String getFirstRedirectUri() {
+    return redirectUris.get(0);
+  }
+
   public RegisteredRedirectUris registeredRedirectUris() {
     return new RegisteredRedirectUris(redirectUris);
   }

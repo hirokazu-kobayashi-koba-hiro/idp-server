@@ -38,8 +38,12 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
    *     Endpoint</a>
    */
   void throwIfInvalidRedirectUri(OAuthRequestContext context) {
-    throwIfRedirectUriContainsFragment(context);
-    throwIfUnMatchRedirectUri(context);
+    if (context.hasRedirectUri()) {
+      throwIfRedirectUriContainsFragment(context);
+      throwIfUnMatchRedirectUri(context);
+    } else {
+      throwIfMultiRegisteredRedirectUri(context);
+    }
   }
 
   /**
@@ -71,6 +75,10 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
   /**
    * 3.1.2.3. Dynamic Configuration
    *
+   * <p>If multiple redirection URIs have been registered, if only part of the redirection URI has
+   * been registered, or if no redirection URI has been registered, the client MUST include a
+   * redirection URI with the authorization request using the "redirect_uri" request parameter.
+   *
    * <p>When a redirection URI is included in an authorization request, the authorization server
    * MUST compare and match the value received against at least one of the registered redirection
    * URIs (or URI components) as defined in [RFC3986] Section 6, if any redirection URIs were
@@ -92,6 +100,25 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
           String.format(
               "authorization request redirect_uri does not match registered redirect uris (%s)",
               context.redirectUri().value()));
+    }
+  }
+
+  /**
+   * 3.1.2.3. Dynamic Configuration
+   *
+   * <p>If multiple redirection URIs have been registered, if only part of the redirection URI has
+   * been registered, or if no redirection URI has been registered, the client MUST include a
+   * redirection URI with the authorization request using the "redirect_uri" request parameter.
+   *
+   * @param context
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2.3">3.1.2.3. Dynamic
+   *     Configuration</a>
+   */
+  void throwIfMultiRegisteredRedirectUri(OAuthRequestContext context) {
+    if (context.isMultiRegisteredRedirectUri()) {
+      throw new OAuthBadRequestException(
+          "invalid_request",
+          "on multiple registered redirect uris, authorization request redirect_uri must contains");
     }
   }
 
