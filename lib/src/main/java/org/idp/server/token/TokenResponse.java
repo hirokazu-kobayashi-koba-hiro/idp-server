@@ -1,9 +1,6 @@
 package org.idp.server.token;
 
-import org.idp.server.type.oauth.AccessTokenValue;
-import org.idp.server.type.oauth.ExpiresIn;
-import org.idp.server.type.oauth.RefreshTokenValue;
-import org.idp.server.type.oauth.TokenType;
+import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
 
 public class TokenResponse {
@@ -11,6 +8,7 @@ public class TokenResponse {
   TokenType tokenType;
   ExpiresIn expiresIn;
   RefreshTokenValue refreshTokenValue;
+  Scopes scopes;
   IdToken idToken;
   String contents;
 
@@ -19,12 +17,14 @@ public class TokenResponse {
       TokenType tokenType,
       ExpiresIn expiresIn,
       RefreshTokenValue refreshTokenValue,
+      Scopes scopes,
       IdToken idToken,
       String contents) {
     this.accessTokenValue = accessTokenValue;
     this.tokenType = tokenType;
     this.expiresIn = expiresIn;
     this.refreshTokenValue = refreshTokenValue;
+    this.scopes = scopes;
     this.idToken = idToken;
     this.contents = contents;
   }
@@ -47,6 +47,10 @@ public class TokenResponse {
 
   public IdToken idToken() {
     return idToken;
+  }
+
+  public Scopes scopes() {
+    return scopes;
   }
 
   public String contents() {

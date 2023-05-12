@@ -21,7 +21,8 @@ public class OAuthTokenFactory {
         new TokenResponseBuilder()
             .add(accessToken.accessTokenValue())
             .add(tokenType)
-            .add(expiresIn);
+            .add(expiresIn)
+            .add(authorizationGrant.scopes());
     TokenResponse tokenResponse = tokenResponseBuilder.build();
     return new OAuthToken(
         oAuthTokenIdentifier, tokenResponse, accessToken, new RefreshToken(), authorizationGrant);

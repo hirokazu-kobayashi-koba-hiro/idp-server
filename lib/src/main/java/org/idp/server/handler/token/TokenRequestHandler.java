@@ -59,13 +59,16 @@ public class TokenRequestHandler {
   public TokenRequestResponse handle(TokenRequest tokenRequest) {
     TokenIssuer tokenIssuer = tokenRequest.toTokenIssuer();
     TokenRequestParameters parameters = tokenRequest.toParameters();
+    TokenRequestValidator baseValidator = new TokenRequestValidator(parameters);
+    baseValidator.validate();
+
     ClientSecretBasic clientSecretBasic = tokenRequest.clientSecretBasic();
     ClientId clientId = tokenRequest.clientId();
     CustomProperties customProperties = tokenRequest.toCustomProperties();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tokenIssuer, clientId);
-    // TODO request validate
+
     TokenRequestContext tokenRequestContext =
         new TokenRequestContext(
             clientSecretBasic,
@@ -73,8 +76,6 @@ public class TokenRequestHandler {
             customProperties,
             serverConfiguration,
             clientConfiguration);
-    TokenRequestValidator tokenRequestValidator = new TokenRequestValidator(tokenRequestContext);
-    tokenRequestValidator.validate();
 
     clientAuthenticatorHandler.authenticate(tokenRequestContext);
 

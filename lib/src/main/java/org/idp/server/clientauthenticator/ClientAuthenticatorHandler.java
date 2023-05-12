@@ -18,6 +18,7 @@ public class ClientAuthenticatorHandler {
     map.put(private_key_jwt, new PrivateKeyJwtAuthenticator());
     map.put(tls_client_auth, new TlsClientAuthAuthenticator());
     map.put(self_signed_tls_client_auth, new SelfSignedTlsClientAuthAuthenticator());
+    map.put(none, context -> {});
   }
 
   public void authenticate(BackchannelRequestContext context) {

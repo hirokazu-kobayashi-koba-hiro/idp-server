@@ -3,10 +3,7 @@ package org.idp.server.token;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.json.JsonParser;
-import org.idp.server.type.oauth.AccessTokenValue;
-import org.idp.server.type.oauth.ExpiresIn;
-import org.idp.server.type.oauth.RefreshTokenValue;
-import org.idp.server.type.oauth.TokenType;
+import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
 
 public class TokenResponseBuilder {
@@ -14,6 +11,7 @@ public class TokenResponseBuilder {
   TokenType tokenType;
   ExpiresIn expiresIn;
   RefreshTokenValue refreshTokenValue = new RefreshTokenValue();
+  Scopes scopes = new Scopes();
   IdToken idToken = new IdToken();
   Map<String, Object> values = new HashMap<>();
   JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
@@ -44,6 +42,12 @@ public class TokenResponseBuilder {
     return this;
   }
 
+  public TokenResponseBuilder add(Scopes scopes) {
+    this.scopes = scopes;
+    values.put("scope", scopes.toStringValues());
+    return this;
+  }
+
   public TokenResponseBuilder add(IdToken idToken) {
     this.idToken = idToken;
     values.put("id_token", idToken.value());
@@ -53,6 +57,6 @@ public class TokenResponseBuilder {
   public TokenResponse build() {
     String contents = jsonParser.write(values);
     return new TokenResponse(
-        accessTokenValue, tokenType, expiresIn, refreshTokenValue, idToken, contents);
+        accessTokenValue, tokenType, expiresIn, refreshTokenValue, scopes, idToken, contents);
   }
 }

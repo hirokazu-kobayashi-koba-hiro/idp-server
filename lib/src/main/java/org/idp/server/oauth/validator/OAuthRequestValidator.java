@@ -34,6 +34,14 @@ public class OAuthRequestValidator {
     }
   }
 
+  /**
+   * 3.1. Authorization Endpoint validation
+   *
+   * <p>Request and response parameters MUST NOT be included more than once.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1">3.1. Authorization
+   *     Endpoint</a>
+   */
   void throwIfDuplicateValue() {
     List<String> keys = oAuthRequestParameters.multiValueKeys();
     List<String> filteredKeys = keys.stream().filter(key -> !key.equals("resource")).toList();

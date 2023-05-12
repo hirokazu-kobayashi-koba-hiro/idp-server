@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.TokenRequestContext;
-import org.idp.server.token.exception.TokenInvalidGrantException;
+import org.idp.server.token.exception.TokenBadRequestException;
 
 public class RefreshTokenVerifier {
   TokenRequestContext context;
@@ -22,7 +22,7 @@ public class RefreshTokenVerifier {
 
   void throwINotFoundToken() {
     if (!oAuthToken.exists()) {
-      throw new TokenInvalidGrantException(
+      throw new TokenBadRequestException(
           "invalid_grant",
           String.format("refresh token does not exists (%s)", context.refreshToken().value()));
     }
@@ -31,7 +31,7 @@ public class RefreshTokenVerifier {
   void throwIfExpiredToken() {
     LocalDateTime now = SystemDateTime.now();
     if (oAuthToken.isExpire(now)) {
-      throw new TokenInvalidGrantException(
+      throw new TokenBadRequestException(
           "invalid_grant",
           String.format("refresh token is expired (%s)", context.refreshToken().value()));
     }

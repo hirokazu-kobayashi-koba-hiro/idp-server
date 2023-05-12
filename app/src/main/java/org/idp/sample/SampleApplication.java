@@ -21,12 +21,17 @@ public class SampleApplication {
 
   @Bean
   public IdpServerApplication idpServerApplication() {
-    List<String> serverPaths = List.of(configurationBasePath + "/server.json");
+    List<String> serverPaths = new ArrayList<>();
+    serverPaths.add(configurationBasePath + "/server.json");
+    serverPaths.add(configurationBasePath + "/unsupportedServer.json");
+
     List<String> clientPaths = new ArrayList<>();
     clientPaths.add(configurationBasePath + "/clients/clientSecretBasic.json");
     clientPaths.add(configurationBasePath + "/clients/clientSecretPost.json");
     clientPaths.add(configurationBasePath + "/clients/clientSecretJwt.json");
     clientPaths.add(configurationBasePath + "/clients/privateKeyJwt.json");
+    clientPaths.add(configurationBasePath + "/clients/unsupportedClient.json");
+    clientPaths.add(configurationBasePath + "/clients/unsupportedServerUnsupportedClient.json");
     return new IdpServerApplication(new MemoryDataSourceConfig(serverPaths, clientPaths));
   }
 }

@@ -24,6 +24,33 @@ export const serverConfig = {
     invalidLoginHint: "invalid",
   },
 };
+
+export const unsupportedServerConfig = {
+  issuer: "https://server.example.com/999",
+  authorizationEndpoint:
+    "http://localhost:8080/999/api/debug/v1/authorizations",
+  authorizeEndpoint:
+    "http://localhost:8080/999/api/debug/v1/authorizations/{id}/authorize",
+  tokenEndpoint: "http://localhost:8080/999/api/v1/tokens",
+  tokenIntrospectionEndpoint:
+    "http://localhost:8080/999/api/v1/tokens/introspection",
+  tokenRevocationEndpoint: "http://localhost:8080/999/api/v1/tokens/revocation",
+  userinfoEndpoint: "http://localhost:8080/999/api/v1/userinfo",
+  jwksEndpoint: "http://localhost:8080/999/api/v1/jwks",
+  backchannelAuthenticationEndpoint:
+    "http://localhost:8080/999/api/v1/backchannel/authentications",
+  backchannelAuthenticationAutomatedCompleteEndpoint:
+    "http://localhost:8080/999/api/v1/backchannel/authentications/automated-complete",
+  discoveryEndpoint:
+    "http://localhost:8080/999/.well-known/openid-configuration",
+  enabledSsr: false,
+  ciba: {
+    loginHint: "001",
+    userCode: "successUserCode",
+    bindingMessage: "999",
+    invalidLoginHint: "invalid",
+  },
+};
 export const clientSecretPostClient = {
   clientId: "clientSecretPost",
   clientSecret:
@@ -84,4 +111,13 @@ export const privateKeyJwtClient = {
     dq: "FRGo3IAn53s9-d7P-bj_fgYtCqa5vWrOa_vWp6gebUd7wamxjFFYqkTLtEPaAPM1amHOBJ3IrWkeHb875Z14Pigs4aZfDAU0tyAUb9cTATRRlo7_LvyhB4o0wMsbn1mnCo8o5c6QDGu9VsNfnMsJimvi0NvzqlT392eam1IMIHc",
     n: "sFSqsWu2koU69oG67L5wsVGwzkye80Bd9lmOfiSkSTXyc8IKl4gwmj9tjzxxA1pGYi4SKEQaBYNl8JrGhttBcbtraqwaS5Q6jpG24C1z9njUumJWJneA3EJ9Lpun9d3uCA3b_71XnK5Pr-VtwzpU6z8VGNMZhl8rZ5p1L0syMpZ03y5tSWVMntceiqNaFuJCFXGMVSlp6vrVCqpcM4r035tUR-PwjSynpxe7OGlQpHVSvBCbXJJufi0QxIIjdPx2ka586TlvFjVu0QBEcEon_BMrPDWPD1aaAEcSPM9U7fWzlK6btJ8d37TXZ0_rRPQ_tVeZAlDnRclehHkKflkNjw",
   },
+};
+
+export const unsupportedClient = {
+  clientId: "unsupportedClient",
+  clientSecret: "unsupportedClientSecret",
+  redirectUri: "https://client.example.org/callback",
+  scope: "account transfers",
+  fapiBaselineScope: "read",
+  fapiAdvanceScope: "write",
 };

@@ -18,7 +18,6 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
   const ciba = serverConfig.ciba;
 
   describe("10.3. Push Callback", () => {
-
     it("10.3.1. Successful Token Delivery", async () => {
       const clientAssertion = createClientAssertion({
         client: clientSecretJwtClient,
@@ -33,7 +32,8 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
           userCode: ciba.userCode,
           loginHint: ciba.loginHint,
           clientAssertion,
-          clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+          clientAssertionType:
+            "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
         });
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(200);
@@ -45,9 +45,6 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         action: "allow",
       });
       expect(completeResponse.status).toBe(200);
-
-
     });
-
   });
 });

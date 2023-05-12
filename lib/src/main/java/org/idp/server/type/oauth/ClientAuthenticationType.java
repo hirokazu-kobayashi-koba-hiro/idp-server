@@ -7,4 +7,5 @@ public enum ClientAuthenticationType {
   private_key_jwt,
   tls_client_auth,
   self_signed_tls_client_auth,
+  none
 }

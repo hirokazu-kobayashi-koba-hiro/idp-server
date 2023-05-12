@@ -18,11 +18,10 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
   const ciba = serverConfig.ciba;
 
   describe("10.2. Ping Callback", () => {
-
     it("success pattern", async () => {
       const basicAuth = createBasicAuthHeader({
         username: clientSecretBasicClient.clientId,
-        password: clientSecretBasicClient.clientSecret
+        password: clientSecretBasicClient.clientSecret,
       });
       const backchannelAuthenticationResponse =
         await requestBackchannelAuthentications({
@@ -53,6 +52,5 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
     });
-
   });
 });
