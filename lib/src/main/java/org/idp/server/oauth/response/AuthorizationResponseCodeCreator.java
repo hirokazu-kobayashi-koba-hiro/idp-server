@@ -19,7 +19,7 @@ import org.idp.server.type.oauth.AuthorizationCode;
  *     Response</a>
  */
 public class AuthorizationResponseCodeCreator
-    implements AuthorizationResponseCreator, AuthorizationCodeCreatable {
+    implements AuthorizationResponseCreator, AuthorizationCodeCreatable, RedirectUriDecidable {
 
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
@@ -27,7 +27,7 @@ public class AuthorizationResponseCodeCreator
     AuthorizationCode authorizationCode = createAuthorizationCode();
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(
-                authorizationRequest.redirectUri(),
+                decideRedirectUri(authorizationRequest, context.clientConfiguration()),
                 new ResponseModeValue("?"),
                 context.tokenIssuer())
             .add(authorizationRequest.state())

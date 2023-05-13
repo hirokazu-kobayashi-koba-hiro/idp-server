@@ -17,7 +17,7 @@ public class OAuthRequestExceptionHandler {
     OAuthRequestContext context = exception.oAuthRequestContext();
     RedirectUri redirectUri = context.redirectUri();
     TokenIssuer tokenIssuer = context.tokenIssuer();
-    ResponseModeValue responseModeValue = new ResponseModeValue("?");
+    ResponseModeValue responseModeValue = context.responseModeValue();
     State state = context.state();
     AuthorizationErrorResponseBuilder builder =
         new AuthorizationErrorResponseBuilder(redirectUri, responseModeValue, tokenIssuer)

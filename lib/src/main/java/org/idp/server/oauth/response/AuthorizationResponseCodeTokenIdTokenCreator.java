@@ -17,7 +17,8 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
     implements AuthorizationResponseCreator,
         AuthorizationCodeCreatable,
         AccessTokenCreatable,
-        IdTokenCreatable {
+        IdTokenCreatable,
+        RedirectUriDecidable {
 
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
@@ -45,7 +46,7 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
             context.clientConfiguration());
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(
-                authorizationRequest.redirectUri(),
+                decideRedirectUri(authorizationRequest, context.clientConfiguration()),
                 new ResponseModeValue("#"),
                 context.tokenIssuer())
             .add(authorizationRequest.state())
@@ -53,6 +54,7 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
             .add(TokenType.Bearer)
             .add(new ExpiresIn(context.serverConfiguration().accessTokenDuration()))
             .add(accessToken)
+            .add(authorizationGrant.scopes())
             .add(idToken);
 
     return authorizationResponseBuilder.build();

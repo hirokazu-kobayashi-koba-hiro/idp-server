@@ -4,7 +4,8 @@ import org.idp.server.oauth.OAuthAuthorizeContext;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.type.extension.ResponseModeValue;
 
-public class AuthorizationResponseNoneCreator implements AuthorizationResponseCreator {
+public class AuthorizationResponseNoneCreator
+    implements AuthorizationResponseCreator, RedirectUriDecidable {
 
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
@@ -12,7 +13,7 @@ public class AuthorizationResponseNoneCreator implements AuthorizationResponseCr
 
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(
-                authorizationRequest.redirectUri(),
+                decideRedirectUri(authorizationRequest, context.clientConfiguration()),
                 new ResponseModeValue("?"),
                 context.tokenIssuer())
             .add(authorizationRequest.state());

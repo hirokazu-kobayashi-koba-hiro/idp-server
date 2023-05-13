@@ -14,6 +14,7 @@ public class AuthorizationResponseBuilder {
   AccessToken accessToken = new AccessToken();
   TokenType tokenType = TokenType.undefined;
   ExpiresIn expiresIn = new ExpiresIn();
+  Scopes scopes = new Scopes();
   IdToken idToken = new IdToken();
   TokenIssuer tokenIssuer;
   QueryParams queryParams;
@@ -59,6 +60,12 @@ public class AuthorizationResponseBuilder {
     return this;
   }
 
+  public AuthorizationResponseBuilder add(Scopes scopes) {
+    this.scopes = scopes;
+    this.queryParams.add("scope", scopes.toStringValues());
+    return this;
+  }
+
   public AuthorizationResponseBuilder add(IdToken idToken) {
     this.idToken = idToken;
     this.queryParams.add("id_token", idToken.value());
@@ -74,6 +81,7 @@ public class AuthorizationResponseBuilder {
         accessToken,
         tokenType,
         expiresIn,
+        scopes,
         idToken,
         tokenIssuer,
         queryParams);

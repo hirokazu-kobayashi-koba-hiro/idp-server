@@ -4,7 +4,6 @@ import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.type.oauth.Error;
 import org.idp.server.type.oauth.ErrorDescription;
 
-/** OAuthRedirectableBadRequestException */
 public class OAuthRedirectableBadRequestException extends RuntimeException {
 
   String error;

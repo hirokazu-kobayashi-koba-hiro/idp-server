@@ -14,6 +14,7 @@ public class AuthorizationResponse {
   AccessToken accessToken;
   TokenType tokenType;
   ExpiresIn expiresIn;
+  Scopes scopes;
   IdToken idToken;
   TokenIssuer tokenIssuer;
   QueryParams queryParams;
@@ -26,6 +27,7 @@ public class AuthorizationResponse {
       AccessToken accessToken,
       TokenType tokenType,
       ExpiresIn expiresIn,
+      Scopes scopes,
       IdToken idToken,
       TokenIssuer tokenIssuer,
       QueryParams queryParams) {
@@ -36,6 +38,7 @@ public class AuthorizationResponse {
     this.accessToken = accessToken;
     this.tokenType = tokenType;
     this.expiresIn = expiresIn;
+    this.scopes = scopes;
     this.idToken = idToken;
     this.tokenIssuer = tokenIssuer;
     this.queryParams = queryParams;
@@ -71,6 +74,10 @@ public class AuthorizationResponse {
 
   public ExpiresIn expiresIn() {
     return expiresIn;
+  }
+
+  public Scopes scopes() {
+    return scopes;
   }
 
   public IdToken idToken() {

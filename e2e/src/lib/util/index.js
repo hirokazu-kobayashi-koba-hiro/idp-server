@@ -11,6 +11,7 @@ export const convertToAuthorizationResponse = (redirectUri) => {
     refreshToken: params.get("refresh_token"),
     idToken: params.get("id_token"),
     expiresIn: params.get("expires_in"),
+    scope: params.get("scope"),
     state: params.get("state"),
     iss: params.get("iss"),
     error: params.get("error"),

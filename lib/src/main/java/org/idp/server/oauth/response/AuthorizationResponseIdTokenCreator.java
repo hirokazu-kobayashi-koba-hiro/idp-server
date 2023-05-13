@@ -11,7 +11,7 @@ import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
 
 public class AuthorizationResponseIdTokenCreator
-    implements AuthorizationResponseCreator, IdTokenCreatable {
+    implements AuthorizationResponseCreator, IdTokenCreatable, RedirectUriDecidable {
 
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
@@ -32,7 +32,7 @@ public class AuthorizationResponseIdTokenCreator
             context.clientConfiguration());
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(
-                authorizationRequest.redirectUri(),
+                decideRedirectUri(authorizationRequest, context.clientConfiguration()),
                 new ResponseModeValue("#"),
                 context.tokenIssuer())
             .add(authorizationRequest.state())

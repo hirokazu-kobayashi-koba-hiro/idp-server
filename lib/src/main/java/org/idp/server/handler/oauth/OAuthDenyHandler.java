@@ -13,9 +13,7 @@ import org.idp.server.oauth.repository.ServerConfigurationRepository;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.oauth.response.*;
-import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
-import org.idp.server.type.oauth.Error;
 
 public class OAuthDenyHandler {
 
@@ -42,18 +40,12 @@ public class OAuthDenyHandler {
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tokenIssuer, clientId);
-    RedirectUri redirectUri =
-        authorizationRequest.hasRedirectUri()
-            ? authorizationRequest.redirectUri()
-            : clientConfiguration.getFirstRedirectUri();
-    ResponseModeValue responseModeValue = new ResponseModeValue("?");
+    AuthorizationErrorResponseCreator authorizationErrorResponseCreator =
+        new AuthorizationErrorResponseCreator(
+            authorizationRequest, request.denyReason(), serverConfiguration, clientConfiguration);
 
-    AuthorizationErrorResponse errorResponse =
-        new AuthorizationErrorResponseBuilder(redirectUri, responseModeValue, tokenIssuer)
-                .add(authorizationRequest.state())
-                .add(new Error(request.denyReason().name()))
-            .add(new ErrorDescription(request.denyReason().errorDescription()))
-            .build();
+    AuthorizationErrorResponse errorResponse = authorizationErrorResponseCreator.create();
+
     return new OAuthDenyResponse(OAuthDenyStatus.OK, errorResponse);
   }
 }

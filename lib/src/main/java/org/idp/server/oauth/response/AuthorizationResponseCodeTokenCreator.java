@@ -9,7 +9,10 @@ import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
 
 public class AuthorizationResponseCodeTokenCreator
-    implements AuthorizationResponseCreator, AuthorizationCodeCreatable, AccessTokenCreatable {
+    implements AuthorizationResponseCreator,
+        AuthorizationCodeCreatable,
+        AccessTokenCreatable,
+        RedirectUriDecidable {
 
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
@@ -23,13 +26,14 @@ public class AuthorizationResponseCodeTokenCreator
 
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(
-                authorizationRequest.redirectUri(),
+                decideRedirectUri(authorizationRequest, context.clientConfiguration()),
                 new ResponseModeValue("#"),
                 context.tokenIssuer())
             .add(authorizationRequest.state())
             .add(authorizationCode)
             .add(TokenType.Bearer)
             .add(new ExpiresIn(context.serverConfiguration().accessTokenDuration()))
+            .add(authorizationGrant.scopes())
             .add(accessToken);
 
     return authorizationResponseBuilder.build();
