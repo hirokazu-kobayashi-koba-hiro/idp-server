@@ -50,7 +50,8 @@ public class OAuthDenyHandler {
 
     AuthorizationErrorResponse errorResponse =
         new AuthorizationErrorResponseBuilder(redirectUri, responseModeValue, tokenIssuer)
-            .add(new Error(request.denyReason().name()))
+                .add(authorizationRequest.state())
+                .add(new Error(request.denyReason().name()))
             .add(new ErrorDescription(request.denyReason().errorDescription()))
             .build();
     return new OAuthDenyResponse(OAuthDenyStatus.OK, errorResponse);

@@ -253,6 +253,39 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
       expect(authorizationResponse.errorDescription).toEqual("authorization request does not contains valid scope (clientSecretPostClient.scope)");
       expect(matchWithUSASCII(authorizationResponse.errorDescription)).toBe(true);
     });
+
+    it("state REQUIRED if a \"state\" parameter was present in the client authorization request.  The exact value received from the client.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        state: "aiueo",
+        responseType: "code",
+        scope: "clientSecretPostClient.scope",
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.error).not.toBeNull();
+      expect(matchWithUSASCII(authorizationResponse.error)).toBe(true);
+      expect(authorizationResponse.error).toEqual("invalid_scope");
+      expect(authorizationResponse.errorDescription).toEqual("authorization request does not contains valid scope (clientSecretPostClient.scope)");
+      expect(matchWithUSASCII(authorizationResponse.errorDescription)).toBe(true);
+      expect(authorizationResponse.state).toEqual("aiueo");
+
+      const { authorizationResponse: reAuthorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        scope: "clientSecretPostClient.scope",
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      console.log(reAuthorizationResponse);
+      expect(reAuthorizationResponse.error).not.toBeNull();
+      expect(matchWithUSASCII(reAuthorizationResponse.error)).toBe(true);
+      expect(reAuthorizationResponse.error).toEqual("invalid_scope");
+      expect(reAuthorizationResponse.errorDescription).toEqual("authorization request does not contains valid scope (clientSecretPostClient.scope)");
+      expect(matchWithUSASCII(reAuthorizationResponse.errorDescription)).toBe(true);
+      expect(reAuthorizationResponse.state).toBeNull();
+    });
   });
 
   describe("4.1.3.  Access Token Request", () => {
