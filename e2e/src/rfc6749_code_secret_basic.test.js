@@ -63,7 +63,7 @@ describe("The OAuth 2.0 Authorization Framework code client_secret_basic", () =>
 
       expect(authorizationResponse.error).toEqual("invalid_request");
       expect(authorizationResponse.errorDescription).toEqual(
-        "response type is required on authorization request"
+        "response type is required in authorization request"
       );
     });
 

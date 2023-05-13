@@ -137,7 +137,7 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
     ResponseType responseType = context.responseType();
     if (responseType.isUndefined()) {
       throw new OAuthRedirectableBadRequestException(
-          "invalid_request", "response type is required on authorization request", context);
+          "invalid_request", "response type is required in authorization request", context);
     }
   }
 
@@ -178,7 +178,7 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
     ResponseType responseType = context.responseType();
     if (!context.isSupportedResponseTypeWithServer()) {
       throw new OAuthRedirectableBadRequestException(
-          "unauthorized_client",
+          "unsupported_response_type",
           String.format(
               "authorization server is unsupported response_type (%s)", responseType.name()),
           context);
@@ -187,7 +187,7 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
     if (!context.isSupportedResponseTypeWithClient()) {
       throw new OAuthRedirectableBadRequestException(
           "unauthorized_client",
-          String.format("client is unsupported response_type (%s)", responseType.name()),
+          String.format("client is unauthorized response_type (%s)", responseType.name()),
           context);
     }
   }

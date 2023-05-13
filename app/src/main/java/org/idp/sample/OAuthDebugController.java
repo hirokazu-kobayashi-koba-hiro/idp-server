@@ -5,11 +5,9 @@ import java.time.ZoneOffset;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.OAuthApi;
-import org.idp.server.handler.oauth.io.OAuthAuthorizeRequest;
-import org.idp.server.handler.oauth.io.OAuthAuthorizeResponse;
-import org.idp.server.handler.oauth.io.OAuthRequest;
-import org.idp.server.handler.oauth.io.OAuthRequestResponse;
+import org.idp.server.handler.oauth.io.*;
 import org.idp.server.oauth.identity.User;
+import org.idp.server.type.extension.OAuthDenyReason;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -84,6 +82,17 @@ public class OAuthDebugController implements ParameterTransformable {
         new OAuthAuthorizeRequest(id, tenant.issuer(), user);
     OAuthAuthorizeResponse authAuthorizeResponse = oAuthApi.authorize(authAuthorizeRequest);
     Map<String, String> response = Map.of("redirect_uri", authAuthorizeResponse.redirectUriValue());
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @PostMapping("/{id}/deny")
+  public ResponseEntity<?> deny(
+      @PathVariable String id, @PathVariable("tenant-id") String tenantId) {
+    Tenant tenant = Tenant.of(tenantId);
+    OAuthDenyRequest denyRequest =
+        new OAuthDenyRequest(id, tenant.issuer(), OAuthDenyReason.access_denied);
+    OAuthDenyResponse oAuthDenyResponse = oAuthApi.deny(denyRequest);
+    Map<String, String> response = Map.of("redirect_uri", oAuthDenyResponse.redirectUriValue());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 }

@@ -19,7 +19,7 @@ public class CibaRequestBaseVerifier {
     }
     if (!context.isSupportedGrantTypeWithClient(GrantType.ciba)) {
       throw new BackchannelAuthenticationBadRequestException(
-          "unauthorized_client", "client is unsupported ciba grant");
+          "unauthorized_client", "client is unauthorized ciba grant");
     }
   }
 

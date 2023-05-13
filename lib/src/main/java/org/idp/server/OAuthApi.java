@@ -5,30 +5,30 @@ import java.util.logging.Logger;
 import org.idp.server.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.handler.oauth.OAuthAuthorizeHandler;
+import org.idp.server.handler.oauth.OAuthDenyHandler;
 import org.idp.server.handler.oauth.OAuthRequestExceptionHandler;
 import org.idp.server.handler.oauth.OAuthRequestHandler;
-import org.idp.server.handler.oauth.io.OAuthAuthorizeRequest;
-import org.idp.server.handler.oauth.io.OAuthAuthorizeResponse;
-import org.idp.server.handler.oauth.io.OAuthAuthorizeStatus;
-import org.idp.server.handler.oauth.io.OAuthRequest;
-import org.idp.server.handler.oauth.io.OAuthRequestResponse;
-import org.idp.server.handler.oauth.io.OAuthRequestStatus;
+import org.idp.server.handler.oauth.io.*;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.exception.OAuthBadRequestException;
 import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
-import org.idp.server.oauth.response.AuthorizationResponse;
 
 /** OAuthApi */
 public class OAuthApi {
   OAuthRequestHandler requestHandler;
   OAuthRequestExceptionHandler oAuthRequestExceptionHandler;
   OAuthAuthorizeHandler authAuthorizeHandler;
+  OAuthDenyHandler oAuthDenyHandler;
   Logger log = Logger.getLogger(OAuthApi.class.getName());
 
-  OAuthApi(OAuthRequestHandler requestHandler, OAuthAuthorizeHandler authAuthorizeHandler) {
+  OAuthApi(
+      OAuthRequestHandler requestHandler,
+      OAuthAuthorizeHandler authAuthorizeHandler,
+      OAuthDenyHandler oAuthDenyHandler) {
     this.requestHandler = requestHandler;
     this.oAuthRequestExceptionHandler = new OAuthRequestExceptionHandler();
     this.authAuthorizeHandler = authAuthorizeHandler;
+    this.oAuthDenyHandler = oAuthDenyHandler;
   }
 
   /**
@@ -68,12 +68,19 @@ public class OAuthApi {
 
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
     try {
-      AuthorizationResponse authorizationResponse = authAuthorizeHandler.handle(request);
-
-      return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, authorizationResponse);
+      return authAuthorizeHandler.handle(request);
     } catch (Exception exception) {
       log.log(Level.SEVERE, exception.getMessage(), exception);
       return new OAuthAuthorizeResponse();
+    }
+  }
+
+  public OAuthDenyResponse deny(OAuthDenyRequest request) {
+    try {
+      return oAuthDenyHandler.handle(request);
+    } catch (Exception exception) {
+      log.log(Level.SEVERE, exception.getMessage(), exception);
+      return new OAuthDenyResponse();
     }
   }
 }

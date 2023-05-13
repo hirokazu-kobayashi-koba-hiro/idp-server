@@ -547,7 +547,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         )
       ).toBe(true);
       expect(backchannelAuthenticationResponse.data.error_description).toEqual(
-        "client is unsupported ciba grant"
+        "client is unauthorized ciba grant"
       );
     });
   });

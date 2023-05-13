@@ -1,4 +1,4 @@
-import { authorize, getAuthorizations } from "../api/oauthClient";
+import { authorize, deny, getAuthorizations } from "../api/oauthClient";
 import { serverConfig } from "../testConfig";
 import { convertToAuthorizationResponse } from "../lib/util";
 
@@ -23,6 +23,7 @@ export const requestAuthorizations = async ({
   requestUri,
   codeChallenge,
   codeChallengeMethod,
+  action = "authorize",
   enabledSsr = false,
 }) => {
   const response = await getAuthorizations({
@@ -69,17 +70,33 @@ export const requestAuthorizations = async ({
       };
     }
 
-    const authorizeResponse = await authorize({
-      endpoint: serverConfig.authorizeEndpoint,
-      id: response.data.id,
-    });
-    console.log(authorizeResponse.data);
-    const authorizationResponse = convertToAuthorizationResponse(
-      authorizeResponse.data.redirect_uri
-    );
-    return {
-      status: authorizeResponse.status,
-      authorizationResponse,
-    };
+    if (action === "authorize") {
+      const authorizeResponse = await authorize({
+        endpoint: serverConfig.authorizeEndpoint,
+        id: response.data.id,
+      });
+      console.log(authorizeResponse.data);
+      const authorizationResponse = convertToAuthorizationResponse(
+        authorizeResponse.data.redirect_uri
+      );
+      return {
+        status: authorizeResponse.status,
+        authorizationResponse,
+      };
+    } else {
+
+      const denyResponse = await deny({
+        endpoint: serverConfig.denyEndpoint,
+        id: response.data.id,
+      });
+      console.log(denyResponse.data);
+      const authorizationResponse = convertToAuthorizationResponse(
+        denyResponse.data.redirect_uri
+      );
+      return {
+        status: denyResponse.status,
+        authorizationResponse,
+      };
+    }
   }
 };

@@ -4,6 +4,8 @@ export const serverConfig = {
     "http://localhost:8080/123/api/debug/v1/authorizations",
   authorizeEndpoint:
     "http://localhost:8080/123/api/debug/v1/authorizations/{id}/authorize",
+  denyEndpoint:
+    "http://localhost:8080/123/api/debug/v1/authorizations/{id}/deny",
   tokenEndpoint: "http://localhost:8080/123/api/v1/tokens",
   tokenIntrospectionEndpoint:
     "http://localhost:8080/123/api/v1/tokens/introspection",

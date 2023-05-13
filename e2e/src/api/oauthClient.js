@@ -154,6 +154,13 @@ export const authorize = async ({ endpoint, id }) => {
   });
 };
 
+export const deny = async ({endpoint, id}) => {
+  const url = endpoint.replace("{id}", id);
+  return await post({
+    url,
+  });
+};
+
 export const requestToken = async ({
   endpoint,
   code,

@@ -2,12 +2,11 @@ package org.idp.server.handler.oauth;
 
 import static org.idp.server.type.oauth.ResponseType.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.handler.oauth.io.OAuthAuthorizeRequest;
+import org.idp.server.handler.oauth.io.OAuthAuthorizeResponse;
+import org.idp.server.handler.oauth.io.OAuthAuthorizeStatus;
 import org.idp.server.oauth.OAuthAuthorizeContext;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.grant.AuthorizationCodeGrantCreator;
@@ -21,13 +20,12 @@ import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
-import org.idp.server.type.oauth.ResponseType;
 import org.idp.server.type.oauth.TokenIssuer;
 
 /** OAuthAuthorizeHandler */
 public class OAuthAuthorizeHandler {
 
-  Map<ResponseType, AuthorizationResponseCreator> map = new HashMap<>();
+  AuthorizationResponseCreators creators;
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
   OAuthTokenRepository oAuthTokenRepository;
@@ -45,17 +43,10 @@ public class OAuthAuthorizeHandler {
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
-    map.put(code, new AuthorizationResponseCodeCreator());
-    map.put(token, new AuthorizationResponseTokenCreator());
-    map.put(id_token, new AuthorizationResponseIdTokenCreator());
-    map.put(code_token, new AuthorizationResponseCodeTokenCreator());
-    map.put(code_token_id_token, new AuthorizationResponseCodeTokenIdTokenCreator());
-    map.put(code_id_token, new AuthorizationResponseCodeIdTokenCreator());
-    map.put(token_id_token, new AuthorizationResponseTokenIdTokenCreator());
-    map.put(none, new AuthorizationResponseNoneCreator());
+    this.creators = new AuthorizationResponseCreators();
   }
 
-  public AuthorizationResponse handle(OAuthAuthorizeRequest request) {
+  public OAuthAuthorizeResponse handle(OAuthAuthorizeRequest request) {
     TokenIssuer tokenIssuer = request.toTokenIssuer();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
     User user = request.user();
@@ -71,10 +62,8 @@ public class OAuthAuthorizeHandler {
         new OAuthAuthorizeContext(
             authorizationRequest, user, customProperties, serverConfiguration, clientConfiguration);
 
-    AuthorizationResponseCreator authorizationResponseCreator = map.get(context.responseType());
-    if (Objects.isNull(authorizationResponseCreator)) {
-      throw new RuntimeException("not support request type");
-    }
+    AuthorizationResponseCreator authorizationResponseCreator =
+        creators.get(context.responseType());
 
     AuthorizationResponse authorizationResponse = authorizationResponseCreator.create(context);
     AuthorizationGrant authorizationGrant = context.toAuthorizationGranted();
@@ -89,6 +78,6 @@ public class OAuthAuthorizeHandler {
       oAuthTokenRepository.register(oAuthToken);
     }
 
-    return authorizationResponse;
+    return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, authorizationResponse);
   }
 }

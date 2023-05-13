@@ -82,3 +82,9 @@ export const isBoolean = (value) => {
 export const sleep = (m) => {
   return new Promise((resolve) => setTimeout(resolve, m));
 };
+
+export const matchWithUSASCII = (value) => {
+  // eslint-disable-next-line no-control-regex
+  const asciiRegex = new RegExp("^[\x00-\x7F]*$");
+  return asciiRegex.test(value);
+};
