@@ -76,4 +76,8 @@ public class AuthorizationGrant {
   public IdTokenClaims idTokenClaims() {
     return claimsPayload.idToken();
   }
+
+  public boolean hasOpenidScope() {
+    return scopes.contains("openid");
+  }
 }

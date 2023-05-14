@@ -13,11 +13,11 @@ class ClientSecretJwtAuthenticator
 
   @Override
   public void authenticate(BackchannelRequestContext context) {
-    throwIfNotContainsClientAssertion(context);
-    throwIfUnMatchClientAssertion(context);
+    throwExceptionIfNotContainsClientAssertion(context);
+    throwExceptionIfUnMatchClientAssertion(context);
   }
 
-  void throwIfNotContainsClientAssertion(BackchannelRequestContext context) {
+  void throwExceptionIfNotContainsClientAssertion(BackchannelRequestContext context) {
     BackchannelRequestParameters parameters = context.parameters();
     if (!parameters.hasClientAssertion()) {
       throw new ClientUnAuthorizedException(
@@ -29,7 +29,7 @@ class ClientSecretJwtAuthenticator
     }
   }
 
-  void throwIfUnMatchClientAssertion(BackchannelRequestContext context) {
+  void throwExceptionIfUnMatchClientAssertion(BackchannelRequestContext context) {
     try {
       BackchannelRequestParameters parameters = context.parameters();
       ClientConfiguration clientConfiguration = context.clientConfiguration();

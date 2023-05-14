@@ -33,6 +33,7 @@ public class OAuthTokenCreationServices {
             authorizationCodeGrantRepository,
             authorizationGrantedRepository));
     values.put(refresh_token, new RefreshTokenGrantService(oAuthTokenRepository));
+    values.put(password, new ResourceOwnerPasswordCredentialsGrantService(oAuthTokenRepository));
     values.put(client_credentials, new ClientCredentialsGrantService(oAuthTokenRepository));
     values.put(
         ciba,

@@ -14,6 +14,7 @@ import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.repository.ClientConfigurationRepository;
 import org.idp.server.oauth.repository.ServerConfigurationRepository;
 import org.idp.server.token.OAuthToken;
+import org.idp.server.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.token.TokenRequestContext;
 import org.idp.server.token.TokenRequestParameters;
 import org.idp.server.token.repository.OAuthTokenRepository;
@@ -56,7 +57,7 @@ public class TokenRequestHandler {
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
-  public TokenRequestResponse handle(TokenRequest tokenRequest) {
+  public TokenRequestResponse handle(TokenRequest tokenRequest, PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
     TokenIssuer tokenIssuer = tokenRequest.toTokenIssuer();
     TokenRequestParameters parameters = tokenRequest.toParameters();
     TokenRequestValidator baseValidator = new TokenRequestValidator(parameters);
@@ -74,6 +75,7 @@ public class TokenRequestHandler {
             clientSecretBasic,
             parameters,
             customProperties,
+            passwordCredentialsGrantDelegate,
             serverConfiguration,
             clientConfiguration);
 

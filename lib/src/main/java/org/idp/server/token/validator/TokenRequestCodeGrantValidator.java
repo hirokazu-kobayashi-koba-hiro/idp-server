@@ -11,10 +11,10 @@ public class TokenRequestCodeGrantValidator {
   }
 
   public void validate() {
-    throwIfNotContainsAuthorizationCode();
+    throwExceptionIfNotContainsAuthorizationCode();
   }
 
-  void throwIfNotContainsAuthorizationCode() {
+  void throwExceptionIfNotContainsAuthorizationCode() {
     if (!parameters.hasCode()) {
       throw new TokenBadRequestException(
           "token request does not contains code, authorization_code grant must contains code");

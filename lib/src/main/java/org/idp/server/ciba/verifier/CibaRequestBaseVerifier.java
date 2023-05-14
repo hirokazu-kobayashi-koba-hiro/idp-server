@@ -7,12 +7,12 @@ import org.idp.server.type.oauth.GrantType;
 public class CibaRequestBaseVerifier {
 
   public void verify(CibaRequestContext context) {
-    throwIfUnSupportedGrantType(context);
-    throwIfNotContainsOpenidScope(context);
-    throwIfNotContainsAnyHint(context);
+    throwExceptionIfUnSupportedGrantType(context);
+    throwExceptionIfNotContainsOpenidScope(context);
+    throwExceptionIfNotContainsAnyHint(context);
   }
 
-  void throwIfUnSupportedGrantType(CibaRequestContext context) {
+  void throwExceptionIfUnSupportedGrantType(CibaRequestContext context) {
     if (!context.isSupportedGrantTypeWithServer(GrantType.ciba)) {
       throw new BackchannelAuthenticationBadRequestException(
           "unauthorized_client", "authorization server is unsupported ciba grant");
@@ -23,7 +23,7 @@ public class CibaRequestBaseVerifier {
     }
   }
 
-  void throwIfNotContainsOpenidScope(CibaRequestContext context) {
+  void throwExceptionIfNotContainsOpenidScope(CibaRequestContext context) {
     if (!context.hasOpenidScope()) {
       throw new BackchannelAuthenticationBadRequestException(
           "invalid_scope",
@@ -31,7 +31,7 @@ public class CibaRequestBaseVerifier {
     }
   }
 
-  void throwIfNotContainsAnyHint(CibaRequestContext context) {
+  void throwExceptionIfNotContainsAnyHint(CibaRequestContext context) {
     if (!context.hasAnyHint()) {
       throw new BackchannelAuthenticationBadRequestException(
           "invalid_request",

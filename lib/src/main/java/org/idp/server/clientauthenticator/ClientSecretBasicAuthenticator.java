@@ -24,11 +24,11 @@ class ClientSecretBasicAuthenticator implements ClientAuthenticator {
 
   @Override
   public void authenticate(BackchannelRequestContext context) {
-    throwIfNotContainsClientSecretBasic(context);
-    throwIfUnMatchClientSecret(context);
+    throwExceptionIfNotContainsClientSecretBasic(context);
+    throwExceptionIfUnMatchClientSecret(context);
   }
 
-  void throwIfUnMatchClientSecret(BackchannelRequestContext context) {
+  void throwExceptionIfUnMatchClientSecret(BackchannelRequestContext context) {
     ClientSecretBasic clientSecretBasic = context.clientSecretBasic();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
     if (!clientConfiguration.matchClientSecret(clientSecretBasic.clientSecret().value())) {
@@ -37,7 +37,7 @@ class ClientSecretBasicAuthenticator implements ClientAuthenticator {
     }
   }
 
-  void throwIfNotContainsClientSecretBasic(BackchannelRequestContext context) {
+  void throwExceptionIfNotContainsClientSecretBasic(BackchannelRequestContext context) {
     if (!context.hasClientSecretBasic()) {
       throw new ClientUnAuthorizedException(
           "client authentication type is client_secret_basic, but request does not contains client_secret_basic");

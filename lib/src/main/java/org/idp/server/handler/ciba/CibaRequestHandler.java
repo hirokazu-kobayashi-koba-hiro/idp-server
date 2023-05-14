@@ -1,6 +1,8 @@
 package org.idp.server.handler.ciba;
 
 import java.util.UUID;
+
+import com.nimbusds.jose.util.Pair;
 import org.idp.server.ciba.*;
 import org.idp.server.ciba.grant.CibaGrant;
 import org.idp.server.ciba.grant.CibaGrantFactory;
@@ -22,6 +24,7 @@ import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.repository.ClientConfigurationRepository;
 import org.idp.server.oauth.repository.ServerConfigurationRepository;
 import org.idp.server.type.ciba.AuthReqId;
+import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public class CibaRequestHandler {
@@ -66,7 +69,7 @@ public class CibaRequestHandler {
     clientAuthenticatorHandler.authenticate(context);
 
     UserService userService = new UserService(delegate, context);
-    User user = userService.handle();
+    Pair<User, CustomProperties> pair = userService.handle();
 
     BackchannelAuthenticationResponse response =
         new BackchannelAuthenticationResponseBuilder()
@@ -76,7 +79,7 @@ public class CibaRequestHandler {
             .build();
 
     backchannelAuthenticationRequestRepository.register(context.backchannelAuthenticationRequest());
-    CibaGrantFactory cibaGrantFactory = new CibaGrantFactory(context, response, user);
+    CibaGrantFactory cibaGrantFactory = new CibaGrantFactory(context, response, pair.getLeft(), pair.getRight());
     CibaGrant cibaGrant = cibaGrantFactory.create();
     cibaGrantRepository.register(cibaGrant);
 

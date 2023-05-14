@@ -13,21 +13,21 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
   @Override
   public void verify(OAuthRequestContext context) {
     baseVerifier.verify(context);
-    throwIfNotContainsRedirectUri(context);
-    throwIfInvalidRedirectUri(context);
-    throwIfInvalidDisplay(context);
-    throwIfInvalidPrompt(context);
-    throwIfInvalidMaxAge(context);
+    throwExceptionIfNotContainsRedirectUri(context);
+    throwExceptionIfInvalidRedirectUri(context);
+    throwExceptionIfInvalidDisplay(context);
+    throwExceptionIfInvalidPrompt(context);
+    throwExceptionIfInvalidMaxAge(context);
   }
 
-  void throwIfNotContainsRedirectUri(OAuthRequestContext context) {
+  void throwExceptionIfNotContainsRedirectUri(OAuthRequestContext context) {
     if (!context.hasRedirectUri()) {
       throw new OAuthBadRequestException(
           "invalid_request", "oidc profile authorization request must contains redirect_uri param");
     }
   }
 
-  void throwIfInvalidRedirectUri(OAuthRequestContext context) {
+  void throwExceptionIfInvalidRedirectUri(OAuthRequestContext context) {
     if (!context.isRegisteredRedirectUri()) {
       throw new OAuthBadRequestException(
           "invalid_request",
@@ -37,7 +37,7 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
     }
   }
 
-  void throwIfInvalidDisplay(OAuthRequestContext context) {
+  void throwExceptionIfInvalidDisplay(OAuthRequestContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     if (authorizationRequest.isInvalidDisplay()) {
       throw new OAuthRedirectableBadRequestException(
@@ -49,7 +49,7 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
     }
   }
 
-  void throwIfInvalidPrompt(OAuthRequestContext context) {
+  void throwExceptionIfInvalidPrompt(OAuthRequestContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     if (authorizationRequest.isInvalidPrompt()) {
       throw new OAuthRedirectableBadRequestException(
@@ -61,7 +61,7 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
     }
   }
 
-  void throwIfInvalidMaxAge(OAuthRequestContext context) {
+  void throwExceptionIfInvalidMaxAge(OAuthRequestContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     if (authorizationRequest.isInvalidMaxAge()) {
       throw new OAuthRedirectableBadRequestException(

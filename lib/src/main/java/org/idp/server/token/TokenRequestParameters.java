@@ -105,6 +105,22 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
     return new Scopes(getString(OAuthRequestKey.scope));
   }
 
+  public Username username() {
+    return new Username(getString(OAuthRequestKey.username));
+  }
+
+  public boolean hasUsername() {
+    return contains(OAuthRequestKey.username);
+  }
+
+  public Password password() {
+    return new Password(getString(OAuthRequestKey.password));
+  }
+
+  public boolean hasPassword() {
+    return contains(OAuthRequestKey.password);
+  }
+
   public CodeVerifier codeVerifier() {
     return new CodeVerifier(getString(OAuthRequestKey.code_verifier));
   }

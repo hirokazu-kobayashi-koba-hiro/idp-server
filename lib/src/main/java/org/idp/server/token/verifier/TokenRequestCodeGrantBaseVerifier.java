@@ -22,10 +22,10 @@ public class TokenRequestCodeGrantBaseVerifier {
   }
 
   public void verify() {
-    throwIfUnSupportedGrantTypeWithServer();
-    throwIfUnSupportedGrantTypeWithClient();
-    throwIfNotFoundAuthorizationCode();
-    throwIfUnMatchRedirectUri();
+    throwExceptionIfUnSupportedGrantTypeWithServer();
+    throwExceptionIfUnSupportedGrantTypeWithClient();
+    throwExceptionIfNotFoundAuthorizationCode();
+    throwExceptionIfUnMatchRedirectUri();
   }
 
   /**
@@ -35,7 +35,7 @@ public class TokenRequestCodeGrantBaseVerifier {
    *
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-5.2">5.2. Error Response</a>
    */
-  void throwIfUnSupportedGrantTypeWithServer() {
+  void throwExceptionIfUnSupportedGrantTypeWithServer() {
     if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.authorization_code)) {
       throw new TokenBadRequestException(
           "unsupported_grant_type",
@@ -50,7 +50,7 @@ public class TokenRequestCodeGrantBaseVerifier {
    *
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-5.2">5.2. Error Response</a>
    */
-  void throwIfUnSupportedGrantTypeWithClient() {
+  void throwExceptionIfUnSupportedGrantTypeWithClient() {
     if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.authorization_code)) {
       throw new TokenBadRequestException(
           "unauthorized_client",
@@ -69,7 +69,7 @@ public class TokenRequestCodeGrantBaseVerifier {
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3">4.1.3. Access Token
    *     Request</a>
    */
-  void throwIfNotFoundAuthorizationCode() {
+  void throwExceptionIfNotFoundAuthorizationCode() {
     if (!authorizationCodeGrant.exists()) {
       throw new TokenBadRequestException(
           "invalid_grant",
@@ -97,7 +97,7 @@ public class TokenRequestCodeGrantBaseVerifier {
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3">4.1.3. Access Token
    *     Request</a>
    */
-  void throwIfUnMatchRedirectUri() {
+  void throwExceptionIfUnMatchRedirectUri() {
     if (!authorizationRequest.hasRedirectUri()) {
       return;
     }

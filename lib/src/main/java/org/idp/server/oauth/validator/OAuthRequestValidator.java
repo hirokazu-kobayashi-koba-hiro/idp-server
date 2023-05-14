@@ -23,11 +23,11 @@ public class OAuthRequestValidator {
   }
 
   public void validate() {
-    throwIfNotContainsClientId();
-    throwIfDuplicateValue();
+    throwExceptionIfNotContainsClientId();
+    throwExceptionIfDuplicateValue();
   }
 
-  void throwIfNotContainsClientId() {
+  void throwExceptionIfNotContainsClientId() {
     if (!oAuthRequestParameters.hasClientId()) {
       throw new OAuthBadRequestException(
           "invalid_request", "authorization request must contains client_id");
@@ -42,7 +42,7 @@ public class OAuthRequestValidator {
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1">3.1. Authorization
    *     Endpoint</a>
    */
-  void throwIfDuplicateValue() {
+  void throwExceptionIfDuplicateValue() {
     List<String> keys = oAuthRequestParameters.multiValueKeys();
     List<String> filteredKeys = keys.stream().filter(key -> !key.equals("resource")).toList();
     if (!filteredKeys.isEmpty()) {

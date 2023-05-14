@@ -13,34 +13,36 @@ public class CibaGrantValidator {
   }
 
   public void validate() {
-    throwIfUnSupportedGrantTypeWithServer();
-    throwIfUnSupportedGrantTypeWithClient();
-    throwIfNotContainsAuthReqId();
-    throwIfNotContainsClientId();
+    throwExceptionIfUnSupportedGrantTypeWithServer();
+    throwExceptionIfUnSupportedGrantTypeWithClient();
+    throwExceptionIfNotContainsAuthReqId();
+    throwExceptionIfNotContainsClientId();
   }
 
-  void throwIfUnSupportedGrantTypeWithClient() {
+  void throwExceptionIfUnSupportedGrantTypeWithClient() {
     if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.ciba)) {
       throw new TokenBadRequestException(
-          "this request grant_type is ciba, but client does not support");
+           "unauthorized_client",
+          "this request grant_type is ciba, but client does not authorize");
     }
   }
 
-  void throwIfUnSupportedGrantTypeWithServer() {
+  void throwExceptionIfUnSupportedGrantTypeWithServer() {
     if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.ciba)) {
       throw new TokenBadRequestException(
+          "unsupported_grant_type",
           "this request grant_type is ciba, but authorization server does not support");
     }
   }
 
-  void throwIfNotContainsAuthReqId() {
+  void throwExceptionIfNotContainsAuthReqId() {
     if (!tokenRequestContext.hasAuthReqId()) {
       throw new TokenBadRequestException(
-          "token request does not contains code, ciba grant must contains auth_req_id");
+          "token request does not contains auth_req_id, ciba grant must contains auth_req_id");
     }
   }
 
-  void throwIfNotContainsClientId() {
+  void throwExceptionIfNotContainsClientId() {
     if (tokenRequestContext.hasClientSecretBasic()) {
       return;
     }

@@ -24,18 +24,18 @@ public class TokenRequestPkceVerifier {
     if (!authorizationRequest.isPkceRequest()) {
       return;
     }
-    throwIfNotContainsCodeVerifier(tokenRequestContext);
-    throwIfUnMatchCodeVerifier(tokenRequestContext, authorizationRequest);
+    throwExceptionIfNotContainsCodeVerifier(tokenRequestContext);
+    throwExceptionIfUnMatchCodeVerifier(tokenRequestContext, authorizationRequest);
   }
 
-  void throwIfNotContainsCodeVerifier(TokenRequestContext tokenRequestContext) {
+  void throwExceptionIfNotContainsCodeVerifier(TokenRequestContext tokenRequestContext) {
     if (!tokenRequestContext.hasCodeVerifier()) {
       throw new TokenBadRequestException(
           "authorization request has code_challenge, but token request does not contains code verifier");
     }
   }
 
-  void throwIfUnMatchCodeVerifier(
+  void throwExceptionIfUnMatchCodeVerifier(
       TokenRequestContext tokenRequestContext, AuthorizationRequest authorizationRequest) {
     if (authorizationRequest.isPkceWithS256()) {
       CodeVerifier codeVerifier = tokenRequestContext.codeVerifier();

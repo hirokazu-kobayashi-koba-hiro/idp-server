@@ -10,9 +10,9 @@ public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
 
   @Override
   public void verify(OAuthRequestContext context) {
-    throwIfInvalidRedirectUri(context);
+    throwExceptionIfInvalidRedirectUri(context);
     baseVerifier.verify(context);
   }
 
-  void throwIfInvalidRedirectUri(OAuthRequestContext context) {}
+  void throwExceptionIfInvalidRedirectUri(OAuthRequestContext context) {}
 }

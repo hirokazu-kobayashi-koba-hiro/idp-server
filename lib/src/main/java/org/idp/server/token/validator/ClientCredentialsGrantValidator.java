@@ -13,21 +13,30 @@ public class ClientCredentialsGrantValidator {
   }
 
   public void validate() {
-    throwIfUnSupportedGrantTypeWithServer();
-    throwIfUnSupportedGrantTypeWithClient();
+    throwExceptionIfUnSupportedGrantTypeWithServer();
+    throwExceptionIfUnSupportedGrantTypeWithClient();
   }
 
-  void throwIfUnSupportedGrantTypeWithClient() {
-    if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.client_credentials)) {
+  void throwExceptionIfUnSupportedGrantTypeWithClient() {
+    if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.password)) {
       throw new TokenBadRequestException(
-          "this request grant_type is client_credentials, but client does not support");
+          "unsupported_grant_type",
+          "this request grant_type is password, but client does not support");
+    }
+    if (!tokenRequestContext.isSupportedPasswordGrant()) {
+      throw new TokenBadRequestException(
+              "unsupported_grant_type",
+              "this request grant_type is password, but client does not support");
     }
   }
 
-  void throwIfUnSupportedGrantTypeWithServer() {
-    if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.client_credentials)) {
+  void throwExceptionIfUnSupportedGrantTypeWithServer() {
+    if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.password)) {
       throw new TokenBadRequestException(
-          "this request grant_type is client_credentials, but authorization server does not support");
+          "unauthorized_client",
+          "this request grant_type is password, but authorization server does not authorize");
     }
   }
+
+
 }

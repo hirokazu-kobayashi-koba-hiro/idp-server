@@ -20,12 +20,14 @@ public class CibaGrantFactory {
   CibaRequestContext context;
   BackchannelAuthenticationResponse response;
   User user;
+  CustomProperties customProperties;
 
   public CibaGrantFactory(
-      CibaRequestContext context, BackchannelAuthenticationResponse response, User user) {
+      CibaRequestContext context, BackchannelAuthenticationResponse response, User user, CustomProperties customProperties) {
     this.context = context;
     this.response = response;
     this.user = user;
+    this.customProperties = customProperties;
   }
 
   public CibaGrant create() {
@@ -34,7 +36,7 @@ public class CibaGrantFactory {
     ClientId clientId = context.clientId();
     Scopes scopes = context.scopes();
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrant(user, clientId, scopes, new ClaimsPayload(), new CustomProperties());
+        new AuthorizationGrant(user, clientId, scopes, new ClaimsPayload(), customProperties);
     AuthReqId authReqId = response.authReqId();
     LocalDateTime now = SystemDateTime.now();
     ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(context.expiresIn().value()));

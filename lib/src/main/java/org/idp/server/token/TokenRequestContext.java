@@ -10,11 +10,14 @@ import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.pkce.CodeVerifier;
 
+import java.util.Objects;
+
 public class TokenRequestContext implements BackchannelRequestContext {
 
   ClientSecretBasic clientSecretBasic;
   TokenRequestParameters parameters;
   CustomProperties customProperties;
+  PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
 
@@ -22,11 +25,13 @@ public class TokenRequestContext implements BackchannelRequestContext {
       ClientSecretBasic clientSecretBasic,
       TokenRequestParameters parameters,
       CustomProperties customProperties,
+      PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     this.clientSecretBasic = clientSecretBasic;
     this.parameters = parameters;
     this.customProperties = customProperties;
+    this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
   }
@@ -150,5 +155,21 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public boolean isPushMode() {
     return deliveryMode().isPushMode();
+  }
+
+  public PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate() {
+    return passwordCredentialsGrantDelegate;
+  }
+
+  public boolean isSupportedPasswordGrant() {
+    return Objects.nonNull(passwordCredentialsGrantDelegate);
+  }
+
+  public boolean hasUsername() {
+    return parameters.hasUsername();
+  }
+
+  public boolean hasPassword() {
+    return parameters.hasPassword();
   }
 }

@@ -19,11 +19,11 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
 
   @Override
   public void verify(OAuthRequestContext context) {
-    throwIfInvalidRedirectUri(context);
-    throwIfMissingResponseType(context);
-    throwIfInvalidResponseType(context);
-    throwIfUnSupportedResponseType(context);
-    throwIfNotContainsValidScope(context);
+    throwExceptionIfInvalidRedirectUri(context);
+    throwExceptionIfMissingResponseType(context);
+    throwExceptionIfInvalidResponseType(context);
+    throwExceptionIfUnSupportedResponseType(context);
+    throwExceptionIfNotContainsValidScope(context);
   }
 
   /**
@@ -37,12 +37,12 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2.4">3.1.2.4. Invalid
    *     Endpoint</a>
    */
-  void throwIfInvalidRedirectUri(OAuthRequestContext context) {
+  void throwExceptionIfInvalidRedirectUri(OAuthRequestContext context) {
     if (context.hasRedirectUri()) {
-      throwIfRedirectUriContainsFragment(context);
-      throwIfUnMatchRedirectUri(context);
+      throwExceptionIfRedirectUriContainsFragment(context);
+      throwExceptionIfUnMatchRedirectUri(context);
     } else {
-      throwIfMultiRegisteredRedirectUri(context);
+      throwExceptionIfMultiRegisteredRedirectUri(context);
     }
   }
 
@@ -56,7 +56,7 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2">3.1.2. Redirection
    *     Endpoint</a>
    */
-  void throwIfRedirectUriContainsFragment(OAuthRequestContext context) {
+  void throwExceptionIfRedirectUriContainsFragment(OAuthRequestContext context) {
     try {
       UriWrapper uri = new UriWrapper(context.redirectUri().value());
       if (uri.hasFragment()) {
@@ -91,7 +91,7 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
    *     Configuration</a>
    * @see <a href="https://www.rfc-editor.org/rfc/rfc3986.html">rfc3986</a>
    */
-  void throwIfUnMatchRedirectUri(OAuthRequestContext context) {
+  void throwExceptionIfUnMatchRedirectUri(OAuthRequestContext context) {
     RegisteredRedirectUris registeredRedirectUris = context.registeredRedirectUris();
     if (!registeredRedirectUris.containsWithNormalizationAndComparison(
         context.redirectUri().value())) {
@@ -114,7 +114,7 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2.3">3.1.2.3. Dynamic
    *     Configuration</a>
    */
-  void throwIfMultiRegisteredRedirectUri(OAuthRequestContext context) {
+  void throwExceptionIfMultiRegisteredRedirectUri(OAuthRequestContext context) {
     if (context.isMultiRegisteredRedirectUri()) {
       throw new OAuthBadRequestException(
           "invalid_request",
@@ -133,7 +133,7 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
    *
    * @param context
    */
-  void throwIfMissingResponseType(OAuthRequestContext context) {
+  void throwExceptionIfMissingResponseType(OAuthRequestContext context) {
     ResponseType responseType = context.responseType();
     if (responseType.isUndefined()) {
       throw new OAuthRedirectableBadRequestException(
@@ -149,7 +149,7 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
    *
    * @param context
    */
-  void throwIfInvalidResponseType(OAuthRequestContext context) {
+  void throwExceptionIfInvalidResponseType(OAuthRequestContext context) {
     ResponseType responseType = context.responseType();
     if (responseType.isUnknown()) {
       throw new OAuthRedirectableBadRequestException(
@@ -174,7 +174,7 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2.1">4.1.2.1. Error
    *     Response</a>
    */
-  void throwIfUnSupportedResponseType(OAuthRequestContext context) {
+  void throwExceptionIfUnSupportedResponseType(OAuthRequestContext context) {
     ResponseType responseType = context.responseType();
     if (!context.isSupportedResponseTypeWithServer()) {
       throw new OAuthRedirectableBadRequestException(
@@ -206,7 +206,7 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.3">3.3. Access Token Scope</a>
    * @see <a herf="https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2.1">invalid_scope</a>
    */
-  void throwIfNotContainsValidScope(OAuthRequestContext context) {
+  void throwExceptionIfNotContainsValidScope(OAuthRequestContext context) {
     Scopes scopes = context.scopes();
     if (!scopes.exists()) {
       throw new OAuthRedirectableBadRequestException(

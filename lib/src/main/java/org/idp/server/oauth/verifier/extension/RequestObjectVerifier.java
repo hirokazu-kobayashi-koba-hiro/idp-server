@@ -11,8 +11,8 @@ public class RequestObjectVerifier implements AuthorizationRequestExtensionVerif
 
   @Override
   public void verify(OAuthRequestContext oAuthRequestContext) {
-    throwIfExceed(oAuthRequestContext);
+    throwExceptionIfExceed(oAuthRequestContext);
   }
 
-  void throwIfExceed(OAuthRequestContext oAuthRequestContext) {}
+  void throwExceptionIfExceed(OAuthRequestContext oAuthRequestContext) {}
 }

@@ -14,8 +14,8 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
   String authorizationHeaders;
   Map<String, String[]> params;
   String issuer;
-
   Map<String, Object> customProperties = new HashMap<>();
+
 
   public TokenRequest(String authorizationHeaders, Map<String, String[]> params, String issuer) {
     this.authorizationHeaders = authorizationHeaders;

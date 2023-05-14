@@ -13,29 +13,56 @@ public class RefreshTokenGrantValidator {
   }
 
   public void validate() {
-    throwIfNotContainsRefreshToken();
-    throwIfUnSupportedGrantTypeWithServer();
-    throwIfUnSupportedGrantTypeWithClient();
+    throwExceptionIfNotContainsRefreshToken();
+    throwExceptionIfUnSupportedGrantTypeWithServer();
+    throwExceptionIfUnSupportedGrantTypeWithClient();
+    throwExceptionIfNotContainsUsername();
+    throwExceptionIfNotContainsPassword();
+    throwExceptionIfNotContainsClientId();
   }
 
-  void throwIfUnSupportedGrantTypeWithClient() {
+  void throwExceptionIfUnSupportedGrantTypeWithClient() {
     if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.refresh_token)) {
       throw new TokenBadRequestException(
           "this request grant_type is refresh_token, but client does not support");
     }
   }
 
-  void throwIfUnSupportedGrantTypeWithServer() {
+  void throwExceptionIfUnSupportedGrantTypeWithServer() {
     if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.refresh_token)) {
       throw new TokenBadRequestException(
           "this request grant_type is refresh_token, but authorization server does not support");
     }
   }
 
-  void throwIfNotContainsRefreshToken() {
+  void throwExceptionIfNotContainsRefreshToken() {
     if (!tokenRequestContext.hasRefreshToken()) {
       throw new TokenBadRequestException(
           "token request does not contains code, authorization_code grant must contains code");
+    }
+  }
+
+  void throwExceptionIfNotContainsUsername() {
+    if (!tokenRequestContext.hasUsername()) {
+      throw new TokenBadRequestException(
+              "token request does not contains username, password grant must contains username");
+    }
+  }
+
+  void throwExceptionIfNotContainsPassword() {
+    if (!tokenRequestContext.hasPassword()) {
+      throw new TokenBadRequestException(
+              "token request does not contains password, password grant must contains password");
+    }
+  }
+
+  void throwExceptionIfNotContainsClientId() {
+    if (tokenRequestContext.hasClientSecretBasic()) {
+      return;
+    }
+    if (!tokenRequestContext.hasClientId()) {
+      throw new TokenBadRequestException(
+              "token request does not contains client_id, password must contains client_id");
     }
   }
 }

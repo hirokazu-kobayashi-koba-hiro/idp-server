@@ -12,11 +12,11 @@ public class TokenRequestValidator {
   }
 
   public void validate() {
-    throwIfNotContainsGrantType();
-    throwIfDuplicateValue();
+    throwExceptionIfNotContainsGrantType();
+    throwExceptionIfDuplicateValue();
   }
 
-  void throwIfNotContainsGrantType() {
+  void throwExceptionIfNotContainsGrantType() {
     if (!parameters.hasGrantType()) {
       throw new TokenBadRequestException(
           "token request must contains grant_type, but this request does not contains grant_type");
@@ -31,7 +31,7 @@ public class TokenRequestValidator {
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.2">3.2. Authorization
    *     Endpoint</a>
    */
-  void throwIfDuplicateValue() {
+  void throwExceptionIfDuplicateValue() {
     List<String> keys = parameters.multiValueKeys();
     if (!keys.isEmpty()) {
       String keysValue = String.join(" ", keys);

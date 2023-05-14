@@ -20,11 +20,11 @@ class ClientSecretPostAuthenticator implements ClientAuthenticator {
 
   @Override
   public void authenticate(BackchannelRequestContext context) {
-    throwIfNotContainsClientSecretPost(context);
-    throwIfUnMatchClientSecret(context);
+    throwExceptionIfNotContainsClientSecretPost(context);
+    throwExceptionIfUnMatchClientSecret(context);
   }
 
-  void throwIfUnMatchClientSecret(BackchannelRequestContext context) {
+  void throwExceptionIfUnMatchClientSecret(BackchannelRequestContext context) {
     BackchannelRequestParameters parameters = context.parameters();
     ClientSecret clientSecret = parameters.clientSecret();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
@@ -34,7 +34,7 @@ class ClientSecretPostAuthenticator implements ClientAuthenticator {
     }
   }
 
-  void throwIfNotContainsClientSecretPost(BackchannelRequestContext context) {
+  void throwExceptionIfNotContainsClientSecretPost(BackchannelRequestContext context) {
     BackchannelRequestParameters parameters = context.parameters();
     if (!parameters.hasClientSecret()) {
       throw new ClientUnAuthorizedException(

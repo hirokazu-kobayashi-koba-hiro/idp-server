@@ -36,4 +36,6 @@ public enum OAuthRequestKey {
   user_code,
   requested_expiry,
   auth_req_id,
+  username,
+  password
 }

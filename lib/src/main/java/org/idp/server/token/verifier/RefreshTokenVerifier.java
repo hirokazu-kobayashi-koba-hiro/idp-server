@@ -17,7 +17,7 @@ public class RefreshTokenVerifier {
 
   public void verify() {
     throwINotFoundToken();
-    throwIfExpiredToken();
+    throwExceptionIfExpiredToken();
   }
 
   void throwINotFoundToken() {
@@ -28,7 +28,7 @@ public class RefreshTokenVerifier {
     }
   }
 
-  void throwIfExpiredToken() {
+  void throwExceptionIfExpiredToken() {
     LocalDateTime now = SystemDateTime.now();
     if (oAuthToken.isExpire(now)) {
       throw new TokenBadRequestException(
