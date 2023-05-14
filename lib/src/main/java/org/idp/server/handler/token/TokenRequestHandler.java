@@ -57,7 +57,9 @@ public class TokenRequestHandler {
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
-  public TokenRequestResponse handle(TokenRequest tokenRequest, PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
+  public TokenRequestResponse handle(
+      TokenRequest tokenRequest,
+      PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
     TokenIssuer tokenIssuer = tokenRequest.toTokenIssuer();
     TokenRequestParameters parameters = tokenRequest.toParameters();
     TokenRequestValidator baseValidator = new TokenRequestValidator(parameters);

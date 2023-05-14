@@ -29,8 +29,7 @@ public class AuthorizationResponseTokenCreator
             .add(TokenType.Bearer)
             .add(new ExpiresIn(context.serverConfiguration().accessTokenDuration()))
             .add(accessToken)
-            .add(authorizationGrant.scopes())
-            ;
+            .add(authorizationGrant.scopes());
 
     return authorizationResponseBuilder.build();
   }

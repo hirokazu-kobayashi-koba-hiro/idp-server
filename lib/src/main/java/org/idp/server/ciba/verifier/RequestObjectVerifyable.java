@@ -19,7 +19,8 @@ public interface RequestObjectVerifyable {
     throwExceptionIfInvalidExp(joseContext, context);
   }
 
-  default void throwExceptionIfSymmetricKey(JoseContext joseContext, BackchannelRequestContext context) {
+  default void throwExceptionIfSymmetricKey(
+      JoseContext joseContext, BackchannelRequestContext context) {
     if (joseContext.isSymmetricKey()) {
       throw new BackchannelAuthenticationBadRequestException(
           "invalid_request_object",
@@ -27,7 +28,8 @@ public interface RequestObjectVerifyable {
     }
   }
 
-  default void throwExceptionIfInvalidIss(JoseContext joseContext, BackchannelRequestContext context) {
+  default void throwExceptionIfInvalidIss(
+      JoseContext joseContext, BackchannelRequestContext context) {
     JsonWebTokenClaims claims = joseContext.claims();
     if (!claims.hasIss()) {
       throw new BackchannelAuthenticationBadRequestException(
@@ -41,7 +43,8 @@ public interface RequestObjectVerifyable {
     }
   }
 
-  default void throwExceptionIfInvalidAud(JoseContext joseContext, BackchannelRequestContext context) {
+  default void throwExceptionIfInvalidAud(
+      JoseContext joseContext, BackchannelRequestContext context) {
     JsonWebTokenClaims claims = joseContext.claims();
     if (!claims.hasAud()) {
       throw new BackchannelAuthenticationBadRequestException(
@@ -56,7 +59,8 @@ public interface RequestObjectVerifyable {
         "invalid_request_object", "request object is invalid, aud claim must be issuer");
   }
 
-  default void throwExceptionIfInvalidJti(JoseContext joseContext, BackchannelRequestContext context) {
+  default void throwExceptionIfInvalidJti(
+      JoseContext joseContext, BackchannelRequestContext context) {
     JsonWebTokenClaims claims = joseContext.claims();
     if (!claims.hasJti()) {
       throw new BackchannelAuthenticationBadRequestException(
@@ -65,7 +69,8 @@ public interface RequestObjectVerifyable {
     }
   }
 
-  default void throwExceptionIfInvalidExp(JoseContext joseContext, BackchannelRequestContext context) {
+  default void throwExceptionIfInvalidExp(
+      JoseContext joseContext, BackchannelRequestContext context) {
     JsonWebTokenClaims claims = joseContext.claims();
     if (!claims.hasExp()) {
       throw new BackchannelAuthenticationBadRequestException(

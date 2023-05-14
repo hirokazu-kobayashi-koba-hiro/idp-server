@@ -25,7 +25,8 @@ public class TokenApi {
     }
   }
 
-  public void setPasswordCredentialsGrantDelegate(PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
+  public void setPasswordCredentialsGrantDelegate(
+      PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
   }
 }

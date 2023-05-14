@@ -23,7 +23,10 @@ public class CibaGrantFactory {
   CustomProperties customProperties;
 
   public CibaGrantFactory(
-      CibaRequestContext context, BackchannelAuthenticationResponse response, User user, CustomProperties customProperties) {
+      CibaRequestContext context,
+      BackchannelAuthenticationResponse response,
+      User user,
+      CustomProperties customProperties) {
     this.context = context;
     this.response = response;
     this.user = user;

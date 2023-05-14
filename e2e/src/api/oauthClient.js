@@ -169,6 +169,8 @@ export const requestToken = async ({
   refreshToken,
   codeVerifier,
   scope,
+  username,
+  password,
   authReqId,
   clientId,
   clientSecret,
@@ -191,6 +193,12 @@ export const requestToken = async ({
   }
   if (scope) {
     params.append("scope", scope);
+  }
+  if (username) {
+    params.append("username", username);
+  }
+  if (password) {
+    params.append("password", password);
   }
   if (codeVerifier) {
     params.append("code_verifier", codeVerifier);

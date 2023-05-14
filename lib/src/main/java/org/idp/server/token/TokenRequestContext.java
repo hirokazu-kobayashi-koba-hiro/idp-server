@@ -1,5 +1,6 @@
 package org.idp.server.token;
 
+import java.util.Objects;
 import org.idp.server.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
@@ -9,8 +10,6 @@ import org.idp.server.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.pkce.CodeVerifier;
-
-import java.util.Objects;
 
 public class TokenRequestContext implements BackchannelRequestContext {
 
@@ -165,8 +164,16 @@ public class TokenRequestContext implements BackchannelRequestContext {
     return Objects.nonNull(passwordCredentialsGrantDelegate);
   }
 
+  public Username username() {
+    return parameters.username();
+  }
+
   public boolean hasUsername() {
     return parameters.hasUsername();
+  }
+
+  public Password password() {
+    return parameters.password();
   }
 
   public boolean hasPassword() {

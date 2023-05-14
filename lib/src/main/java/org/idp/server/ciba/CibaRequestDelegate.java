@@ -5,8 +5,6 @@ import org.idp.server.oauth.identity.User;
 import org.idp.server.type.ciba.UserCode;
 import org.idp.server.type.extension.CustomProperties;
 
-import java.util.Optional;
-
 public interface CibaRequestDelegate {
   User find(UserCriteria criteria);
 
@@ -14,5 +12,6 @@ public interface CibaRequestDelegate {
 
   void notify(User user, BackchannelAuthenticationRequest request);
 
-  CustomProperties getCustomProperties(User user, BackchannelAuthenticationRequest backchannelAuthenticationRequest);
+  CustomProperties getCustomProperties(
+      User user, BackchannelAuthenticationRequest backchannelAuthenticationRequest);
 }

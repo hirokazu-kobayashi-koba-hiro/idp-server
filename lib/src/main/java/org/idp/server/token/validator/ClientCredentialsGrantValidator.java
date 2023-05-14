@@ -25,8 +25,8 @@ public class ClientCredentialsGrantValidator {
     }
     if (!tokenRequestContext.isSupportedPasswordGrant()) {
       throw new TokenBadRequestException(
-              "unsupported_grant_type",
-              "this request grant_type is password, but client does not support");
+          "unsupported_grant_type",
+          "this request grant_type is client_credentials, but client does not support");
     }
   }
 
@@ -34,9 +34,7 @@ public class ClientCredentialsGrantValidator {
     if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.password)) {
       throw new TokenBadRequestException(
           "unauthorized_client",
-          "this request grant_type is password, but authorization server does not authorize");
+          "this request grant_type is client_credentials, but authorization server does not authorize");
     }
   }
-
-
 }

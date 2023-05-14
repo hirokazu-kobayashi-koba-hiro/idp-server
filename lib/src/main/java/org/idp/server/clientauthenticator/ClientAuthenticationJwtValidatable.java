@@ -18,7 +18,8 @@ public interface ClientAuthenticationJwtValidatable {
     throwExceptionIfInvalidExp(joseContext, context);
   }
 
-  default void throwExceptionIfInvalidIss(JoseContext joseContext, BackchannelRequestContext context) {
+  default void throwExceptionIfInvalidIss(
+      JoseContext joseContext, BackchannelRequestContext context) {
     JsonWebTokenClaims claims = joseContext.claims();
     if (!claims.hasIss()) {
       throw new ClientUnAuthorizedException(
@@ -31,7 +32,8 @@ public interface ClientAuthenticationJwtValidatable {
     }
   }
 
-  default void throwExceptionIfInvalidSub(JoseContext joseContext, BackchannelRequestContext context) {
+  default void throwExceptionIfInvalidSub(
+      JoseContext joseContext, BackchannelRequestContext context) {
     JsonWebTokenClaims claims = joseContext.claims();
     if (!claims.hasSub()) {
       throw new ClientUnAuthorizedException(
@@ -44,7 +46,8 @@ public interface ClientAuthenticationJwtValidatable {
     }
   }
 
-  default void throwExceptionIfInvalidAud(JoseContext joseContext, BackchannelRequestContext context) {
+  default void throwExceptionIfInvalidAud(
+      JoseContext joseContext, BackchannelRequestContext context) {
     JsonWebTokenClaims claims = joseContext.claims();
     if (!claims.hasAud()) {
       throw new ClientUnAuthorizedException(
@@ -61,7 +64,8 @@ public interface ClientAuthenticationJwtValidatable {
         "client assertion is invalid, aud claim must be issuer or tokenEndpoint");
   }
 
-  default void throwExceptionIfInvalidJti(JoseContext joseContext, BackchannelRequestContext context) {
+  default void throwExceptionIfInvalidJti(
+      JoseContext joseContext, BackchannelRequestContext context) {
     JsonWebTokenClaims claims = joseContext.claims();
     if (!claims.hasJti()) {
       throw new ClientUnAuthorizedException(
@@ -69,7 +73,8 @@ public interface ClientAuthenticationJwtValidatable {
     }
   }
 
-  default void throwExceptionIfInvalidExp(JoseContext joseContext, BackchannelRequestContext context) {
+  default void throwExceptionIfInvalidExp(
+      JoseContext joseContext, BackchannelRequestContext context) {
     JsonWebTokenClaims claims = joseContext.claims();
     if (!claims.hasExp()) {
       throw new ClientUnAuthorizedException(

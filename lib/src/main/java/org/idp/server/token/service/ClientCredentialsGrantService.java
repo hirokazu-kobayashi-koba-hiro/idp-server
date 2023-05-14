@@ -48,8 +48,7 @@ public class ClientCredentialsGrantService
             .add(accessToken.accessTokenValue())
             .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
             .add(TokenType.Bearer)
-            .add(scopes)
-            ;
+            .add(scopes);
     TokenResponse tokenResponse = tokenResponseBuilder.build();
 
     OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());

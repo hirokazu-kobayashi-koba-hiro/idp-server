@@ -22,8 +22,7 @@ public class CibaGrantValidator {
   void throwExceptionIfUnSupportedGrantTypeWithClient() {
     if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.ciba)) {
       throw new TokenBadRequestException(
-           "unauthorized_client",
-          "this request grant_type is ciba, but client does not authorize");
+          "unauthorized_client", "this request grant_type is ciba, but client does not authorize");
     }
   }
 

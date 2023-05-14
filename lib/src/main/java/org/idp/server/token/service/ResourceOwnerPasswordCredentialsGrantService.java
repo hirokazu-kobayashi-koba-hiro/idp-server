@@ -1,5 +1,6 @@
 package org.idp.server.token.service;
 
+import java.util.UUID;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.authentication.Authentication;
@@ -11,7 +12,8 @@ import org.idp.server.oauth.token.RefreshToken;
 import org.idp.server.oauth.token.RefreshTokenCreatable;
 import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
-import org.idp.server.token.validator.ClientCredentialsGrantValidator;
+import org.idp.server.token.validator.ResourceOwnerPasswordGrantValidator;
+import org.idp.server.token.verifier.ResourceOwnerPasswordGrantVerifier;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ExpiresIn;
@@ -19,10 +21,27 @@ import org.idp.server.type.oauth.Scopes;
 import org.idp.server.type.oauth.TokenType;
 import org.idp.server.type.oidc.IdToken;
 
-import java.util.UUID;
-
+/**
+ * ResourceOwnerPasswordCredentialsGrantService
+ *
+ * <p>The authorization server MUST:
+ *
+ * <p>o require client authentication for confidential clients or for any client that was issued
+ * client credentials (or with other authentication requirements),
+ *
+ * <p>o authenticate the client if client authentication is included, and
+ *
+ * <p>o validate the resource owner password credentials using its existing password validation
+ * algorithm.
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-4.3.2">4.3.2. Access Token
+ *     Request</a>
+ */
 public class ResourceOwnerPasswordCredentialsGrantService
-    implements OAuthTokenCreationService, AccessTokenCreatable, IdTokenCreatable, RefreshTokenCreatable {
+    implements OAuthTokenCreationService,
+        AccessTokenCreatable,
+        IdTokenCreatable,
+        RefreshTokenCreatable {
   OAuthTokenRepository oAuthTokenRepository;
 
   public ResourceOwnerPasswordCredentialsGrantService(OAuthTokenRepository oAuthTokenRepository) {
@@ -31,15 +50,24 @@ public class ResourceOwnerPasswordCredentialsGrantService
 
   @Override
   public OAuthToken create(TokenRequestContext context) {
-    ClientCredentialsGrantValidator validator = new ClientCredentialsGrantValidator(context);
+    ResourceOwnerPasswordGrantValidator validator =
+        new ResourceOwnerPasswordGrantValidator(context);
     validator.validate();
 
     ServerConfiguration serverConfiguration = context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
+
     PasswordCredentialsGrantDelegate delegate = context.passwordCredentialsGrantDelegate();
-    User user = delegate.findAndAuthenticate("", "");
+    User user =
+        delegate.findAndAuthenticate(context.username().value(), context.password().value());
+    Scopes scopes =
+        new Scopes(clientConfiguration.filteredScope(context.scopes().toStringValues()));
+    ResourceOwnerPasswordGrantVerifier verifier =
+        new ResourceOwnerPasswordGrantVerifier(user, scopes);
+    verifier.verify();
+
     ClientId clientId = clientConfiguration.clientId();
-    Scopes scopes = context.scopes();
+
     ClaimsPayload claimsPayload = new ClaimsPayload();
     CustomProperties customProperties = context.customProperties();
     AuthorizationGrant authorizationGrant =
@@ -54,22 +82,19 @@ public class ResourceOwnerPasswordCredentialsGrantService
             .add(scopes)
             .add(TokenType.Bearer);
     if (authorizationGrant.hasOpenidScope()) {
-      IdTokenCustomClaims idTokenCustomClaims =
-              new IdTokenCustomClaimsBuilder()
-                      .build();
+      IdTokenCustomClaims idTokenCustomClaims = new IdTokenCustomClaimsBuilder().build();
       IdToken idToken =
-              createIdToken(
-                      authorizationGrant.user(),
-                      new Authentication(),
-                      scopes,
-                      new IdTokenClaims(),
-                      idTokenCustomClaims,
-                      serverConfiguration,
-                      clientConfiguration);
+          createIdToken(
+              authorizationGrant.user(),
+              new Authentication(),
+              scopes,
+              new IdTokenClaims(),
+              idTokenCustomClaims,
+              serverConfiguration,
+              clientConfiguration);
       tokenResponseBuilder.add(idToken);
     }
     TokenResponse tokenResponse = tokenResponseBuilder.build();
-
 
     OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
     OAuthToken oAuthToken =

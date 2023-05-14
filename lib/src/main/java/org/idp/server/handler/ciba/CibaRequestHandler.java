@@ -1,8 +1,7 @@
 package org.idp.server.handler.ciba;
 
-import java.util.UUID;
-
 import com.nimbusds.jose.util.Pair;
+import java.util.UUID;
 import org.idp.server.ciba.*;
 import org.idp.server.ciba.grant.CibaGrant;
 import org.idp.server.ciba.grant.CibaGrantFactory;
@@ -79,7 +78,8 @@ public class CibaRequestHandler {
             .build();
 
     backchannelAuthenticationRequestRepository.register(context.backchannelAuthenticationRequest());
-    CibaGrantFactory cibaGrantFactory = new CibaGrantFactory(context, response, pair.getLeft(), pair.getRight());
+    CibaGrantFactory cibaGrantFactory =
+        new CibaGrantFactory(context, response, pair.getLeft(), pair.getRight());
     CibaGrant cibaGrant = cibaGrantFactory.create();
     cibaGrantRepository.register(cibaGrant);
 

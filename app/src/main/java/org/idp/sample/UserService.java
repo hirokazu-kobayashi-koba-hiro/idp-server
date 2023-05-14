@@ -3,9 +3,7 @@ package org.idp.sample;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
-
 import org.idp.server.ciba.CibaRequestDelegate;
 import org.idp.server.ciba.UserCriteria;
 import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
@@ -73,24 +71,24 @@ public class UserService implements CibaRequestDelegate, PasswordCredentialsGran
       return new User();
     }
     return new User()
-            .setSub("001")
-            .setName("ito ichiro")
-            .setGivenName("ichiro")
-            .setFamilyName("ito")
-            .setNickname("ito")
-            .setPreferredUsername("ichiro")
-            .setProfile("https://example.com/profiles/123")
-            .setPicture("https://example.com/pictures/123")
-            .setWebsite("https://example.com")
-            .setEmail("ito.ichiro@gmail.com")
-            .setEmailVerified(true)
-            .setGender("other")
-            .setBirthdate("2000-02-02")
-            .setZoneinfo("ja-jp")
-            .setLocale("locale")
-            .setPhoneNumber("09012345678")
-            .setPhoneNumberVerified(false)
-            .setUpdateAt(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC));
+        .setSub("001")
+        .setName("ito ichiro")
+        .setGivenName("ichiro")
+        .setFamilyName("ito")
+        .setNickname("ito")
+        .setPreferredUsername("ichiro")
+        .setProfile("https://example.com/profiles/123")
+        .setPicture("https://example.com/pictures/123")
+        .setWebsite("https://example.com")
+        .setEmail("ito.ichiro@gmail.com")
+        .setEmailVerified(true)
+        .setGender("other")
+        .setBirthdate("2000-02-02")
+        .setZoneinfo("ja-jp")
+        .setLocale("locale")
+        .setPhoneNumber("09012345678")
+        .setPhoneNumberVerified(false)
+        .setUpdateAt(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC));
   }
 
   @Override

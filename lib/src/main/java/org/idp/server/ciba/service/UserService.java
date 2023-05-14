@@ -9,8 +9,6 @@ import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.type.extension.CustomProperties;
 
-import java.util.Optional;
-
 public class UserService {
   CibaRequestDelegate cibaRequestDelegate;
   CibaRequestContext context;
@@ -41,7 +39,8 @@ public class UserService {
             "invalid_user_code", "backchannel authentication request user_code is invalid");
       }
     }
-    CustomProperties customProperties = cibaRequestDelegate.getCustomProperties(user, backchannelAuthenticationRequest);
+    CustomProperties customProperties =
+        cibaRequestDelegate.getCustomProperties(user, backchannelAuthenticationRequest);
     cibaRequestDelegate.notify(user, backchannelAuthenticationRequest);
     return Pair.of(user, customProperties);
   }
