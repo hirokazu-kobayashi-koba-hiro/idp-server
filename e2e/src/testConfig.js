@@ -25,6 +25,10 @@ export const serverConfig = {
     bindingMessage: "999",
     invalidLoginHint: "invalid",
   },
+  oauth: {
+    username: "001",
+    password: "successUserCode",
+  }
 };
 
 export const unsupportedServerConfig = {

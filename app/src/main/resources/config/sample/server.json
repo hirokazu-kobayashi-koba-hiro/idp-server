@@ -18,6 +18,7 @@
   "grant_types_supported": [
     "authorization_code",
     "refresh_token",
+    "password",
     "client_credentials",
     "urn:openid:params:grant-type:ciba"
   ],

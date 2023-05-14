@@ -1,11 +1,15 @@
 package org.idp.server.ciba.service;
 
+import com.nimbusds.jose.util.Pair;
 import org.idp.server.ciba.CibaRequestContext;
 import org.idp.server.ciba.CibaRequestDelegate;
 import org.idp.server.ciba.UserCriteria;
 import org.idp.server.ciba.exception.BackchannelAuthenticationBadRequestException;
 import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.oauth.identity.User;
+import org.idp.server.type.extension.CustomProperties;
+
+import java.util.Optional;
 
 public class UserService {
   CibaRequestDelegate cibaRequestDelegate;
@@ -16,7 +20,7 @@ public class UserService {
     this.context = context;
   }
 
-  public User handle() {
+  public Pair<User, CustomProperties> handle() {
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
         context.backchannelAuthenticationRequest();
     User user =
@@ -37,7 +41,8 @@ public class UserService {
             "invalid_user_code", "backchannel authentication request user_code is invalid");
       }
     }
+    CustomProperties customProperties = cibaRequestDelegate.getCustomProperties(user, backchannelAuthenticationRequest);
     cibaRequestDelegate.notify(user, backchannelAuthenticationRequest);
-    return user;
+    return Pair.of(user, customProperties);
   }
 }

@@ -168,6 +168,7 @@ export const requestToken = async ({
   redirectUri,
   refreshToken,
   codeVerifier,
+  scope,
   authReqId,
   clientId,
   clientSecret,
@@ -187,6 +188,9 @@ export const requestToken = async ({
   }
   if (refreshToken) {
     params.append("refresh_token", refreshToken);
+  }
+  if (scope) {
+    params.append("scope", scope);
   }
   if (codeVerifier) {
     params.append("code_verifier", codeVerifier);

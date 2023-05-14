@@ -21,6 +21,7 @@
   "grant_types": [
     "authorization_code",
     "refresh_token",
+    "password",
     "client_credentials"
   ],
   "scope": "openid profile email address phone offline_access account transfers",
