@@ -59,7 +59,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
 
     PasswordCredentialsGrantDelegate delegate = context.passwordCredentialsGrantDelegate();
     User user =
-        delegate.findAndAuthenticate(context.username().value(), context.password().value());
+        delegate.findAndAuthenticate(context.tokenIssuer(), context.username(), context.password());
     Scopes scopes =
         new Scopes(clientConfiguration.filteredScope(context.scopes().toStringValues()));
     ResourceOwnerPasswordGrantVerifier verifier =

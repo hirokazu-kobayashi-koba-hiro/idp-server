@@ -1,6 +1,5 @@
 package org.idp.server.ciba.service;
 
-import com.nimbusds.jose.util.Pair;
 import org.idp.server.ciba.CibaRequestContext;
 import org.idp.server.ciba.CibaRequestDelegate;
 import org.idp.server.ciba.UserCriteria;
@@ -8,6 +7,7 @@ import org.idp.server.ciba.exception.BackchannelAuthenticationBadRequestExceptio
 import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.type.extension.CustomProperties;
+import org.idp.server.type.extension.Pairs;
 
 public class UserService {
   CibaRequestDelegate cibaRequestDelegate;
@@ -18,11 +18,12 @@ public class UserService {
     this.context = context;
   }
 
-  public Pair<User, CustomProperties> handle() {
+  public Pairs<User, CustomProperties> getAndNotify() {
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
         context.backchannelAuthenticationRequest();
     User user =
         cibaRequestDelegate.find(
+            context.tokenIssuer(),
             new UserCriteria(
                 backchannelAuthenticationRequest.loginHint(),
                 backchannelAuthenticationRequest.loginHintToken(),
@@ -33,15 +34,17 @@ public class UserService {
           "The OpenID Provider is not able to identify which end-user the Client wishes to be authenticated by means of the hint provided in the request (login_hint_token, id_token_hint, or login_hint).");
     }
     if (context.hasUserCode()) {
-      boolean authenticationResult = cibaRequestDelegate.authenticate(user, context.userCode());
+      boolean authenticationResult =
+          cibaRequestDelegate.authenticate(context.tokenIssuer(), user, context.userCode());
       if (!authenticationResult) {
         throw new BackchannelAuthenticationBadRequestException(
             "invalid_user_code", "backchannel authentication request user_code is invalid");
       }
     }
     CustomProperties customProperties =
-        cibaRequestDelegate.getCustomProperties(user, backchannelAuthenticationRequest);
-    cibaRequestDelegate.notify(user, backchannelAuthenticationRequest);
-    return Pair.of(user, customProperties);
+        cibaRequestDelegate.getCustomProperties(
+            context.tokenIssuer(), user, backchannelAuthenticationRequest);
+    cibaRequestDelegate.notify(context.tokenIssuer(), user, backchannelAuthenticationRequest);
+    return Pairs.of(user, customProperties);
   }
 }

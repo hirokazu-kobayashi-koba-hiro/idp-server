@@ -11,13 +11,16 @@ import org.idp.server.oauth.identity.User;
 import org.idp.server.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.type.ciba.UserCode;
 import org.idp.server.type.extension.CustomProperties;
+import org.idp.server.type.oauth.Password;
+import org.idp.server.type.oauth.TokenIssuer;
+import org.idp.server.type.oauth.Username;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserService implements CibaRequestDelegate, PasswordCredentialsGrantDelegate {
 
   @Override
-  public User find(UserCriteria criteria) {
+  public User find(TokenIssuer tokenIssuer, UserCriteria criteria) {
     // TODO official implementation
     if (!"001".equals(criteria.loginHint().value())) {
       return new User();
@@ -44,30 +47,31 @@ public class UserService implements CibaRequestDelegate, PasswordCredentialsGran
   }
 
   @Override
-  public boolean authenticate(User user, UserCode userCode) {
+  public boolean authenticate(TokenIssuer tokenIssuer, User user, UserCode userCode) {
     // TODO official implementation
     return "successUserCode".equals(userCode.value());
   }
 
   @Override
-  public CustomProperties getCustomProperties(User user, BackchannelAuthenticationRequest request) {
+  public CustomProperties getCustomProperties(
+      TokenIssuer tokenIssuer, User user, BackchannelAuthenticationRequest request) {
     // TODO official implementation
     Map<String, Object> values = Map.of("custom", UUID.randomUUID().toString());
     return new CustomProperties(values);
   }
 
   @Override
-  public void notify(User user, BackchannelAuthenticationRequest request) {
+  public void notify(TokenIssuer tokenIssuer, User user, BackchannelAuthenticationRequest request) {
     // TODO official implementation
   }
 
   @Override
-  public User findAndAuthenticate(String username, String password) {
+  public User findAndAuthenticate(TokenIssuer tokenIssuer, Username username, Password password) {
     // TODO official implementation
-    if (!"001".equals(username)) {
+    if (!"001".equals(username.value())) {
       return new User();
     }
-    if (!"successUserCode".equals(password)) {
+    if (!"successUserCode".equals(password.value())) {
       return new User();
     }
     return new User()
@@ -92,7 +96,7 @@ public class UserService implements CibaRequestDelegate, PasswordCredentialsGran
   }
 
   @Override
-  public CustomProperties getCustomProperties(User user) {
+  public CustomProperties getCustomProperties(TokenIssuer tokenIssuer, User user) {
     // TODO official implementation
     Map<String, Object> values = Map.of("custom", UUID.randomUUID().toString());
     return new CustomProperties(values);

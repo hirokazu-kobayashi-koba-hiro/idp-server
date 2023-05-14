@@ -1,6 +1,5 @@
 package org.idp.server.handler.ciba;
 
-import com.nimbusds.jose.util.Pair;
 import java.util.UUID;
 import org.idp.server.ciba.*;
 import org.idp.server.ciba.grant.CibaGrant;
@@ -24,6 +23,7 @@ import org.idp.server.oauth.repository.ClientConfigurationRepository;
 import org.idp.server.oauth.repository.ServerConfigurationRepository;
 import org.idp.server.type.ciba.AuthReqId;
 import org.idp.server.type.extension.CustomProperties;
+import org.idp.server.type.extension.Pairs;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public class CibaRequestHandler {
@@ -68,7 +68,7 @@ public class CibaRequestHandler {
     clientAuthenticatorHandler.authenticate(context);
 
     UserService userService = new UserService(delegate, context);
-    Pair<User, CustomProperties> pair = userService.handle();
+    Pairs<User, CustomProperties> pair = userService.getAndNotify();
 
     BackchannelAuthenticationResponse response =
         new BackchannelAuthenticationResponseBuilder()
