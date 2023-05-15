@@ -12,8 +12,8 @@ import org.idp.server.oauth.token.RefreshToken;
 import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.token.validator.ClientCredentialsGrantValidator;
+import org.idp.server.token.verifier.ClientCredentialsGrantVerifier;
 import org.idp.server.type.extension.CustomProperties;
-import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ExpiresIn;
 import org.idp.server.type.oauth.Scopes;
 import org.idp.server.type.oauth.TokenType;
@@ -33,13 +33,20 @@ public class ClientCredentialsGrantService
 
     ServerConfiguration serverConfiguration = context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
-    User user = new User();
-    ClientId clientId = clientConfiguration.clientId();
-    Scopes scopes = context.scopes();
-    ClaimsPayload claimsPayload = new ClaimsPayload();
+
+    Scopes scopes =
+        new Scopes(clientConfiguration.filteredScope(context.scopes().toStringValues()));
+    ClientCredentialsGrantVerifier verifier = new ClientCredentialsGrantVerifier(scopes);
+    verifier.verify();
+
     CustomProperties customProperties = context.customProperties();
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrant(user, clientId, scopes, claimsPayload, customProperties);
+        new AuthorizationGrant(
+            new User(),
+            clientConfiguration.clientId(),
+            scopes,
+            new ClaimsPayload(),
+            customProperties);
 
     AccessToken accessToken =
         createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);

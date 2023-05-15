@@ -38,7 +38,7 @@ public class RefreshTokenGrantValidator {
   void throwExceptionIfNotContainsRefreshToken() {
     if (!tokenRequestContext.hasRefreshToken()) {
       throw new TokenBadRequestException(
-          "token request does not contains code, authorization_code grant must contains code");
+          "token request does not contains refresh_token, refresh_token grant must contains refresh_token");
     }
   }
 

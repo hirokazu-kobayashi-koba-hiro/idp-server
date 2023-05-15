@@ -46,7 +46,8 @@ public class RefreshTokenGrantService
             .add(accessToken.accessTokenValue())
             .add(refreshToken.refreshTokenValue())
             .add(TokenType.Bearer)
-            .add(new ExpiresIn(serverConfiguration.accessTokenDuration()));
+            .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
+            .add(oAuthToken.authorizationGrant().scopes());
     TokenResponse tokenResponse = tokenResponseBuilder.build();
 
     oAuthTokenRepository.delete(oAuthToken);
