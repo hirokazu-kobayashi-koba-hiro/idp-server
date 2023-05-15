@@ -3,6 +3,8 @@ package org.idp.server.handler.oauth;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.handler.oauth.io.OAuthRequest;
+import org.idp.server.handler.oauth.io.OAuthRequestResponse;
+import org.idp.server.handler.oauth.io.OAuthRequestStatus;
 import org.idp.server.oauth.OAuthRequestAnalyzer;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.OAuthRequestParameters;
@@ -37,7 +39,7 @@ public class OAuthRequestHandler {
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
-  public OAuthRequestContext handle(OAuthRequest oAuthRequest) {
+  public OAuthRequestResponse handle(OAuthRequest oAuthRequest) {
     OAuthRequestParameters parameters = oAuthRequest.toParameters();
     TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
     OAuthRequestValidator validator = new OAuthRequestValidator(parameters);
@@ -57,6 +59,6 @@ public class OAuthRequestHandler {
     verifier.verify(context);
     authorizationRequestRepository.register(context.authorizationRequest());
 
-    return context;
+    return new OAuthRequestResponse(OAuthRequestStatus.OK, context);
   }
 }
