@@ -222,4 +222,8 @@ public class AuthorizationRequest {
   public boolean isPkceWithS256() {
     return codeChallengeMethod.isS256();
   }
+
+  public boolean isPromptNone() {
+    return prompt.isNone();
+  }
 }

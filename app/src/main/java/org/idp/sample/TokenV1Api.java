@@ -17,9 +17,9 @@ public class TokenV1Api implements ParameterTransformable {
 
   TokenApi tokenApi;
 
-  public TokenV1Api(IdpServerApplication idpServerApplication, UserService userService) {
+  public TokenV1Api(IdpServerApplication idpServerApplication, UserMockService userMockService) {
     this.tokenApi = idpServerApplication.tokenApi();
-    tokenApi.setPasswordCredentialsGrantDelegate(userService);
+    tokenApi.setPasswordCredentialsGrantDelegate(userMockService);
   }
 
   @PostMapping

@@ -56,4 +56,8 @@ public enum Prompt {
   public boolean isUnknown() {
     return this == unknown;
   }
+
+  public boolean isNone() {
+    return this == none;
+  }
 }

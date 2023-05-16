@@ -30,6 +30,33 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
     expect(tokenResponse.data).toHaveProperty("id_token");
   });
 
+  it("success pattern prompt none", async () => {
+    const { authorizationResponse } = await requestAuthorizations({
+      endpoint: serverConfig.authorizationEndpoint,
+      clientId: clientSecretPostClient.clientId,
+      responseType: "code",
+      prompt: "none",
+      state: "aiueo",
+      scope: "openid profile phone email" + clientSecretPostClient.scope,
+      redirectUri: clientSecretPostClient.redirectUri,
+    });
+    console.log(authorizationResponse);
+    expect(authorizationResponse.code).not.toBeNull();
+
+    const tokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      code: authorizationResponse.code,
+      grantType: "authorization_code",
+      redirectUri: clientSecretPostClient.redirectUri,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    console.log(tokenResponse.data);
+    expect(tokenResponse.status).toBe(200);
+    expect(tokenResponse.data).toHaveProperty("id_token");
+  });
+
+
   describe("3.1.2.1.  Authentication Request", () => {
     it("scope REQUIRED. OpenID Connect requests MUST contain the openid scope value. If the openid scope value is not present, the behavior is entirely unspecified. Other scope values MAY be present. Scope values used that are not understood by an implementation SHOULD be ignored. See Sections 5.4 and 11 for additional scope values defined by this specification.", async () => {
       const { status, authorizationResponse } = await requestAuthorizations({

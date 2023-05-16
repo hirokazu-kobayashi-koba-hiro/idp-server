@@ -63,6 +63,10 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     return authorizationRequest;
   }
 
+  public AuthorizationRequestIdentifier authorizationRequestIdentifier() {
+    return authorizationRequest.identifier();
+  }
+
   public ServerConfiguration serverConfiguration() {
     return serverConfiguration;
   }
@@ -152,5 +156,9 @@ public class OAuthRequestContext implements ResponseModeDecidable {
 
   public ResponseModeValue responseModeValue() {
     return decideResponseModeValue(responseType(), responseMode());
+  }
+
+  public boolean isPromptNone() {
+    return authorizationRequest.isPromptNone();
   }
 }

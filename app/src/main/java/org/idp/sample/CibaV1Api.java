@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.*;
 public class CibaV1Api implements ParameterTransformable {
 
   CibaApi cibaApi;
-  UserService userService;
+  UserMockService userMockService;
 
-  public CibaV1Api(IdpServerApplication idpServerApplication, UserService userService) {
+  public CibaV1Api(IdpServerApplication idpServerApplication, UserMockService userMockService) {
     this.cibaApi = idpServerApplication.cibaApi();
-    this.userService = userService;
+    this.userMockService = userMockService;
   }
 
   @PostMapping
@@ -30,7 +30,7 @@ public class CibaV1Api implements ParameterTransformable {
     Map<String, String[]> params = transform(body);
     Tenant tenant = Tenant.of(tenantId);
     CibaRequest cibaRequest = new CibaRequest(authorizationHeader, params, tenant.issuer());
-    CibaRequestResponse response = cibaApi.request(cibaRequest, userService);
+    CibaRequestResponse response = cibaApi.request(cibaRequest, userMockService);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", response.contentTypeValue());
     return new ResponseEntity<>(

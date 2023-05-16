@@ -1,7 +1,5 @@
 package org.idp.sample;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.OAuthApi;
@@ -23,9 +21,13 @@ public class OAuthDebugController implements ParameterTransformable {
   Logger log = LoggerFactory.getLogger(OAuthDebugController.class);
 
   OAuthApi oAuthApi;
+  UserMockService userMockService;
 
-  public OAuthDebugController(IdpServerApplication idpServerApplication) {
+  public OAuthDebugController(
+      IdpServerApplication idpServerApplication, UserMockService userMockService) {
     this.oAuthApi = idpServerApplication.oAuthApi();
+    oAuthApi.setOAuthRequestDelegate(userMockService);
+    this.userMockService = userMockService;
   }
 
   @GetMapping
@@ -40,7 +42,7 @@ public class OAuthDebugController implements ParameterTransformable {
       case OK -> {
         return new ResponseEntity<>(response.contents(), HttpStatus.OK);
       }
-      case REDIRECABLE_BAD_REQUEST -> {
+      case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("location", response.redirectUri());
         return new ResponseEntity<>(httpHeaders, HttpStatus.FOUND);
@@ -58,26 +60,7 @@ public class OAuthDebugController implements ParameterTransformable {
   public ResponseEntity<?> authorize(
       @PathVariable String id, @PathVariable("tenant-id") String tenantId) {
     Tenant tenant = Tenant.of(tenantId);
-    User user =
-        new User()
-            .setSub("001")
-            .setName("ito ichiro")
-            .setGivenName("ichiro")
-            .setFamilyName("ito")
-            .setNickname("ito")
-            .setPreferredUsername("ichiro")
-            .setProfile("https://example.com/profiles/123")
-            .setPicture("https://example.com/pictures/123")
-            .setWebsite("https://example.com")
-            .setEmail("ito.ichiro@gmail.com")
-            .setEmailVerified(true)
-            .setGender("other")
-            .setBirthdate("2000-02-02")
-            .setZoneinfo("ja-jp")
-            .setLocale("locale")
-            .setPhoneNumber("09012345678")
-            .setPhoneNumberVerified(false)
-            .setUpdateAt(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC));
+    User user = userMockService.getUser();
     OAuthAuthorizeRequest authAuthorizeRequest =
         new OAuthAuthorizeRequest(id, tenant.issuer(), user);
     OAuthAuthorizeResponse authAuthorizeResponse = oAuthApi.authorize(authAuthorizeRequest);

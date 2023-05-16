@@ -5,8 +5,6 @@ import static org.idp.server.type.oauth.ResponseType.*;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.handler.oauth.io.OAuthAuthorizeRequest;
-import org.idp.server.handler.oauth.io.OAuthAuthorizeResponse;
-import org.idp.server.handler.oauth.io.OAuthAuthorizeStatus;
 import org.idp.server.oauth.OAuthAuthorizeContext;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.grant.AuthorizationCodeGrantCreator;
@@ -46,7 +44,7 @@ public class OAuthAuthorizeHandler {
     this.creators = new AuthorizationResponseCreators();
   }
 
-  public OAuthAuthorizeResponse handle(OAuthAuthorizeRequest request) {
+  public AuthorizationResponse handle(OAuthAuthorizeRequest request) {
     TokenIssuer tokenIssuer = request.toTokenIssuer();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
     User user = request.user();
@@ -78,6 +76,6 @@ public class OAuthAuthorizeHandler {
       oAuthTokenRepository.register(oAuthToken);
     }
 
-    return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, authorizationResponse);
+    return authorizationResponse;
   }
 }

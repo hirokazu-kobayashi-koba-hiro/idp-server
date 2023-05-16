@@ -1,5 +1,6 @@
 package org.idp.server;
 
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.idp.server.handler.oauth.OAuthAuthorizeHandler;
@@ -7,6 +8,14 @@ import org.idp.server.handler.oauth.OAuthDenyHandler;
 import org.idp.server.handler.oauth.OAuthRequestErrorHandler;
 import org.idp.server.handler.oauth.OAuthRequestHandler;
 import org.idp.server.handler.oauth.io.*;
+import org.idp.server.oauth.OAuthRequestContext;
+import org.idp.server.oauth.OAuthRequestDelegate;
+import org.idp.server.oauth.identity.User;
+import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.response.AuthorizationResponse;
+import org.idp.server.type.extension.CustomProperties;
+import org.idp.server.type.extension.SessionIdentifier;
+import org.idp.server.type.oauth.TokenIssuer;
 
 /** OAuthApi */
 public class OAuthApi {
@@ -14,6 +23,7 @@ public class OAuthApi {
   OAuthRequestErrorHandler oAuthRequestErrorHandler;
   OAuthAuthorizeHandler authAuthorizeHandler;
   OAuthDenyHandler oAuthDenyHandler;
+  OAuthRequestDelegate oAuthRequestDelegate;
   Logger log = Logger.getLogger(OAuthApi.class.getName());
 
   OAuthApi(
@@ -39,7 +49,24 @@ public class OAuthApi {
    */
   public OAuthRequestResponse request(OAuthRequest oAuthRequest) {
     try {
-      return requestHandler.handle(oAuthRequest);
+      OAuthRequestContext context = requestHandler.handle(oAuthRequest);
+      if (requestHandler.isAuthorizable(oAuthRequest, context, oAuthRequestDelegate)) {
+        SessionIdentifier sessionIdentifier = oAuthRequest.toSessionIdentifier();
+        TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
+        AuthorizationRequest authorizationRequest = context.authorizationRequest();
+        User user =
+            oAuthRequestDelegate.getUser(sessionIdentifier, tokenIssuer, authorizationRequest);
+        CustomProperties customProperties =
+            oAuthRequestDelegate.getCustomProperties(
+                sessionIdentifier, tokenIssuer, user, authorizationRequest);
+        OAuthAuthorizeRequest oAuthAuthorizeRequest =
+            new OAuthAuthorizeRequest(
+                    context.authorizationRequestIdentifier().value(), tokenIssuer.value(), user)
+                .setCustomProperties(customProperties.values());
+        AuthorizationResponse response = authAuthorizeHandler.handle(oAuthAuthorizeRequest);
+        return new OAuthRequestResponse(OAuthRequestStatus.NO_INTERACTION_OK, response);
+      }
+      return new OAuthRequestResponse(OAuthRequestStatus.OK, context);
     } catch (Exception exception) {
       return oAuthRequestErrorHandler.handle(exception);
     }
@@ -47,7 +74,8 @@ public class OAuthApi {
 
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
     try {
-      return authAuthorizeHandler.handle(request);
+      AuthorizationResponse response = authAuthorizeHandler.handle(request);
+      return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, response);
     } catch (Exception exception) {
       log.log(Level.SEVERE, exception.getMessage(), exception);
       return new OAuthAuthorizeResponse();
@@ -61,5 +89,9 @@ public class OAuthApi {
       log.log(Level.SEVERE, exception.getMessage(), exception);
       return new OAuthDenyResponse();
     }
+  }
+
+  public void setOAuthRequestDelegate(OAuthRequestDelegate oAuthRequestDelegate) {
+    this.oAuthRequestDelegate = oAuthRequestDelegate;
   }
 }

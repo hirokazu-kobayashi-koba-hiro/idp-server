@@ -6,6 +6,7 @@ import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.response.AuthorizationErrorResponse;
+import org.idp.server.oauth.response.AuthorizationResponse;
 import org.idp.server.type.oauth.Error;
 import org.idp.server.type.oauth.ErrorDescription;
 
@@ -15,6 +16,7 @@ public class OAuthRequestResponse {
   AuthorizationRequest authorizationRequest;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
+  AuthorizationResponse response;
   AuthorizationErrorResponse errorResponse;
   Map<String, String> contents;
   String redirectUri;
@@ -37,6 +39,12 @@ public class OAuthRequestResponse {
       OAuthRequestStatus status, Error error, ErrorDescription errorDescription) {
     this.status = status;
     this.contents = Map.of("error", error.value(), "error_description", errorDescription.value());
+  }
+
+  public OAuthRequestResponse(OAuthRequestStatus status, AuthorizationResponse response) {
+    this.status = status;
+    this.response = response;
+    this.redirectUri = response.redirectUriValue();
   }
 
   public OAuthRequestResponse(OAuthRequestStatus status, AuthorizationErrorResponse errorResponse) {
