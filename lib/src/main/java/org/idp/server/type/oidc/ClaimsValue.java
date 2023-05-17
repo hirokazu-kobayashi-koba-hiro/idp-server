@@ -2,7 +2,12 @@ package org.idp.server.type.oidc;
 
 import java.util.Objects;
 
-/** Claims */
+/**
+ * Claims
+ *
+ * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">3.1.2.1.
+ *     Authentication Request</a>
+ */
 public class ClaimsValue {
   String value;
 

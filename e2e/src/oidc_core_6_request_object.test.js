@@ -3,7 +3,8 @@ import { describe, expect, it } from "@jest/globals";
 import { getJwks, requestToken } from "./api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
-import { createJwtWithPrivateKey, verifyAndDecodeIdToken } from "./lib/jose";
+import { createJwtWithPrivateKey, generateJti, verifyAndDecodeIdToken } from "./lib/jose";
+import { toEpocTime } from "./lib/util";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", () => {
   it("success pattern", async () => {
@@ -14,6 +15,12 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
         state: "aiueo",
         scope: "openid profile phone email " + clientSecretPostClient.scope,
         redirect_uri: clientSecretPostClient.redirectUri,
+        aud: serverConfig.issuer,
+        iss: clientSecretPostClient.clientId,
+        exp: toEpocTime({ plus: 3000 }),
+        iat: toEpocTime({}),
+        nbf: toEpocTime({}),
+        jti: generateJti(),
       },
       privateKey: clientSecretPostClient.requestKey,
     });

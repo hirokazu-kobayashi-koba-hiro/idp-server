@@ -14,6 +14,9 @@ import java.util.Objects;
  * <p>(The max_age request parameter corresponds to the OpenID 2.0 PAPE [OpenID.PAPE] max_auth_age
  * request parameter.) When max_age is used, the ID Token returned MUST include an auth_time Claim
  * Value.
+ *
+ * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">3.1.2.1.
+ *     Authentication Request</a>
  */
 public class MaxAge {
   String value;

@@ -32,6 +32,9 @@ import java.util.Objects;
  * <p>The prompt parameter can be used by the Client to make sure that the End-User is still present
  * for the current session or to bring attention to the request. If this parameter contains none
  * with any other value, an error is returned.
+ *
+ * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">3.1.2.1.
+ *     Authentication Request</a>
  */
 public enum Prompt {
   none,

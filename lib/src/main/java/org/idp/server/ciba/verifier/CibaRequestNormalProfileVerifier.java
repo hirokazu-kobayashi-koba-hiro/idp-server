@@ -12,7 +12,7 @@ public class CibaRequestNormalProfileVerifier implements CibaVerifier {
   public CibaRequestNormalProfileVerifier() {
     this.baseVerifier = new CibaRequestBaseVerifier();
     this.extensionVerifiers = new ArrayList<>();
-    extensionVerifiers.add(new RequestObjectVerifier());
+    extensionVerifiers.add(new CibaRequestObjectVerifier());
   }
 
   @Override

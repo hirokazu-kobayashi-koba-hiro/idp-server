@@ -5,6 +5,8 @@ import java.util.Objects;
 /**
  * ResponseMode
  *
+ * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">3.1.2.1.
+ *     Authentication Request</a>
  * @see <a href="https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html">OAuth 2.0
  *     Multiple Response Type Encoding Practices</a>
  * @see <a href="https://openid.net/specs/openid-financial-api-jarm.html">Financial-grade API: JWT

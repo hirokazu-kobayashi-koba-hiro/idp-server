@@ -1,6 +1,5 @@
 package org.idp.server;
 
-import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.idp.server.handler.oauth.OAuthAuthorizeHandler;

@@ -15,6 +15,9 @@ import java.util.Objects;
  *
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests">reqyest
  *     object</a>
+ *     <p>* @see <a
+ *     href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">3.1.2.1.
+ *     Authentication Request</a>
  */
 public class RequestObject {
   String value;

@@ -1,8 +1,8 @@
 package org.idp.server.handler.oauth;
 
+import java.util.Objects;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.handler.oauth.io.OAuthDenyRequest;
 import org.idp.server.handler.oauth.io.OAuthRequest;
 import org.idp.server.oauth.*;
 import org.idp.server.oauth.gateway.RequestObjectGateway;
@@ -13,8 +13,6 @@ import org.idp.server.oauth.service.*;
 import org.idp.server.oauth.validator.OAuthRequestValidator;
 import org.idp.server.oauth.verifier.OAuthRequestVerifier;
 import org.idp.server.type.oauth.TokenIssuer;
-
-import java.util.Objects;
 
 /** OAuthRequestHandler */
 public class OAuthRequestHandler {
@@ -60,10 +58,13 @@ public class OAuthRequestHandler {
     return context;
   }
 
-  public boolean isAuthorizable(OAuthRequest oAuthRequest, OAuthRequestContext context, OAuthRequestDelegate oAuthRequestDelegate) {
+  public boolean isAuthorizable(
+      OAuthRequest oAuthRequest,
+      OAuthRequestContext context,
+      OAuthRequestDelegate oAuthRequestDelegate) {
     return context.isPromptNone()
-            && Objects.nonNull(oAuthRequestDelegate)
-            && oAuthRequestDelegate.isValidSession(
+        && Objects.nonNull(oAuthRequestDelegate)
+        && oAuthRequestDelegate.isValidSession(
             oAuthRequest.toSessionIdentifier(),
             oAuthRequest.toTokenIssuer(),
             context.authorizationRequest());

@@ -72,7 +72,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         );
       });
 
-      it('Because in the CIBA flow, the OP does not have an interaction with the end-user through the consumption device, it is REQUIRED that the Client provides one (and only one) of the hints specified above in the authentication request, that is "login_hint_token", "id_token_hint" or "login_hint".', async () => {
+      it("Because in the CIBA flow, the OP does not have an interaction with the end-user through the consumption device, it is REQUIRED that the Client provides one (and only one) of the hints specified above in the authentication request, that is \"login_hint_token\", \"id_token_hint\" or \"login_hint\".", async () => {
         const backchannelAuthenticationResponse =
           await requestBackchannelAuthentications({
             endpoint: serverConfig.backchannelAuthenticationEndpoint,
@@ -312,7 +312,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         );
       });
 
-      it('3. Validate all the authentication request parameters. In the event the request contains more than one of the hints specified in Authentication Request, the OpenID Provider MUST return an "invalid_request" error response as per Section 13.', async () => {
+      it("3. Validate all the authentication request parameters. In the event the request contains more than one of the hints specified in Authentication Request, the OpenID Provider MUST return an \"invalid_request\" error response as per Section 13.", async () => {
         const backchannelAuthenticationResponse =
           await requestBackchannelAuthentications({
             endpoint: serverConfig.backchannelAuthenticationEndpoint,
@@ -427,7 +427,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       ).toBe(true);
     });
 
-    it('expires_in REQUIRED. A JSON number with a positive integer value indicating the expiration time of the "auth_req_id" in seconds since the authentication request was received. A Client calling the token endpoint with an expired auth_req_id will receive an error, see Token Error Response.', async () => {
+    it("expires_in REQUIRED. A JSON number with a positive integer value indicating the expiration time of the \"auth_req_id\" in seconds since the authentication request was received. A Client calling the token endpoint with an expired auth_req_id will receive an error, see Token Error Response.", async () => {
       const backchannelAuthenticationResponse =
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
@@ -502,7 +502,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       expect(backchannelAuthenticationResponse.data).toHaveProperty("error");
     });
 
-    it('error_description OPTIONAL. Human-readable ASCII [USASCII] text providing additional information, used to assist the client developer in understanding the error that occurred. Values for the "error_description" parameter MUST NOT include characters outside the set %x20-21 / %x23-5B / %x5D-7E.', async () => {
+    it("error_description OPTIONAL. Human-readable ASCII [USASCII] text providing additional information, used to assist the client developer in understanding the error that occurred. Values for the \"error_description\" parameter MUST NOT include characters outside the set %x20-21 / %x23-5B / %x5D-7E.", async () => {
       const backchannelAuthenticationResponse =
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
