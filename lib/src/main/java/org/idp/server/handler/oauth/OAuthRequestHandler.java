@@ -5,6 +5,7 @@ import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.handler.oauth.io.OAuthRequest;
 import org.idp.server.oauth.*;
+import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.oauth.gateway.RequestObjectGateway;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.repository.ClientConfigurationRepository;
@@ -62,11 +63,17 @@ public class OAuthRequestHandler {
       OAuthRequest oAuthRequest,
       OAuthRequestContext context,
       OAuthRequestDelegate oAuthRequestDelegate) {
-    return context.isPromptNone()
-        && Objects.nonNull(oAuthRequestDelegate)
+    if (!context.isPromptNone()) {
+      return false;
+    }
+
+    if (Objects.nonNull(oAuthRequestDelegate)
         && oAuthRequestDelegate.isValidSession(
             oAuthRequest.toSessionIdentifier(),
             oAuthRequest.toTokenIssuer(),
-            context.authorizationRequest());
+            context.authorizationRequest())) {
+      return true;
+    }
+    throw new OAuthRedirectableBadRequestException("login_required", "invalid session", context);
   }
 }

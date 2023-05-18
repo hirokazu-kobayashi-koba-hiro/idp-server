@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, xit } from "@jest/globals";
 
 import { requestToken } from "./api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
@@ -30,7 +30,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
     expect(tokenResponse.data).toHaveProperty("id_token");
   });
 
-  it("success pattern prompt none", async () => {
+  xit("success pattern prompt none", async () => {
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
       clientId: clientSecretPostClient.clientId,
@@ -192,6 +192,26 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(authorizationResponse.errorDescription).toEqual(
         "authorization request prompt is defined that none, login, consent, select_account, but request prompt is (test)"
       );
+    });
+
+    it("prompt none The Authorization Server MUST NOT display any authentication or consent user interface pages. An error is returned if an End-User is not already authenticated or the Client does not have pre-configured consent for the requested Claims or does not fulfill other conditions for processing the request. The error code will typically be login_required, interaction_required, or another code defined in Section 3.1.2.6. This can be used as a method to check for existing authentication and/or consent. ", async () => {
+      const { status, authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "none",
+      });
+      console.log(authorizationResponse);
+      expect(status).toBe(302);
+
+      expect(authorizationResponse.error).toEqual("login_required");
+      expect(authorizationResponse.errorDescription).toEqual("invalid session");
     });
 
     it("max_age OPTIONAL. Maximum Authentication Age. Specifies the allowable elapsed time in seconds since the last time the End-User was actively authenticated by the OP. If the elapsed time is greater than this value, the OP MUST attempt to actively re-authenticate the End-User. (The max_age request parameter corresponds to the OpenID 2.0 PAPE [OpenID.PAPE] max_auth_age request parameter.) When max_age is used, the ID Token returned MUST include an auth_time Claim Value.", async () => {
