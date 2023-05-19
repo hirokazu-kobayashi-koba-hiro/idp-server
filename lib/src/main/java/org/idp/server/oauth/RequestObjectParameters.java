@@ -91,8 +91,8 @@ public class RequestObjectParameters {
     return contains(display);
   }
 
-  public Prompt prompt() {
-    return Prompt.of(getString(prompt));
+  public Prompts prompts() {
+    return Prompts.of(getString(prompt));
   }
 
   public boolean hasPrompt() {

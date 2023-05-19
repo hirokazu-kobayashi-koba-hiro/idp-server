@@ -5,6 +5,7 @@ import org.idp.server.oauth.exception.OAuthBadRequestException;
 import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.type.OAuthRequestKey;
+import org.idp.server.type.oidc.Prompts;
 
 /**
  * 3.1.2.2. Authentication Request Validation
@@ -43,6 +44,7 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
     baseVerifier.verify(context);
     throwExceptionIfInvalidDisplay(context);
     throwExceptionIfInvalidPrompt(context);
+    throwExceptionIfInvalidPromptNonePattern(context);
     throwExceptionIfInvalidMaxAge(context);
   }
 
@@ -125,6 +127,23 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
               "authorization request prompt is defined that none, login, consent, select_account, but request prompt is (%s)",
               context.getParams(OAuthRequestKey.prompt)),
           context);
+    }
+  }
+
+  /**
+   * The prompt parameter can be used by the Client to make sure that the End-User is still present for the current session or to bring attention to the request. If this parameter contains none with any other value, an error is returned.
+   * @param context
+   */
+  void throwExceptionIfInvalidPromptNonePattern(OAuthRequestContext context) {
+    AuthorizationRequest authorizationRequest = context.authorizationRequest();
+    Prompts prompts = authorizationRequest.prompts();
+    if (prompts.hasNone() && prompts.isMultiValue()) {
+      throw new OAuthRedirectableBadRequestException(
+              "invalid_request",
+              String.format(
+                      "authorization request must not contains none with any other (%s)",
+                      context.getParams(OAuthRequestKey.prompt)),
+              context);
     }
   }
 

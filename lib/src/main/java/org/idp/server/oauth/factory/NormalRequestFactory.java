@@ -34,7 +34,7 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
     builder.add(parameters.responseMode());
     builder.add(parameters.nonce());
     builder.add(parameters.display());
-    builder.add(parameters.prompt());
+    builder.add(parameters.prompts());
     builder.add(parameters.maxAge());
     builder.add(parameters.uiLocales());
     builder.add(parameters.idTokenHint());

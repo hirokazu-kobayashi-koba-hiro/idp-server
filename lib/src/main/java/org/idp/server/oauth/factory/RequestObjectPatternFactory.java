@@ -66,10 +66,10 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
         requestObjectParameters.hasDisplay()
             ? requestObjectParameters.display()
             : parameters.display();
-    Prompt prompt =
+    Prompts prompts =
         requestObjectParameters.hasPrompt()
-            ? requestObjectParameters.prompt()
-            : parameters.prompt();
+            ? requestObjectParameters.prompts()
+            : parameters.prompts();
     MaxAge maxAge =
         requestObjectParameters.hasMaxAge()
             ? requestObjectParameters.maxAge()
@@ -117,7 +117,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
     builder.add(responseMode);
     builder.add(nonce);
     builder.add(display);
-    builder.add(prompt);
+    builder.add(prompts);
     builder.add(maxAge);
     builder.add(uiLocales);
     builder.add(idTokenHint);

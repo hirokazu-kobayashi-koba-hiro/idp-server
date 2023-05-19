@@ -21,9 +21,7 @@ public class AuthorizationRequest {
   ResponseMode responseMode;
   Nonce nonce;
   Display display;
-
-  // FIXME consider space delimited request pattern
-  Prompt prompt;
+  Prompts prompts;
   MaxAge maxAge;
   UiLocales uiLocales;
   IdTokenHint idTokenHint;
@@ -50,7 +48,7 @@ public class AuthorizationRequest {
       ResponseMode responseMode,
       Nonce nonce,
       Display display,
-      Prompt prompt,
+      Prompts prompts,
       MaxAge maxAge,
       UiLocales uiLocales,
       IdTokenHint idTokenHint,
@@ -73,7 +71,7 @@ public class AuthorizationRequest {
     this.responseMode = responseMode;
     this.nonce = nonce;
     this.display = display;
-    this.prompt = prompt;
+    this.prompts = prompts;
     this.maxAge = maxAge;
     this.uiLocales = uiLocales;
     this.idTokenHint = idTokenHint;
@@ -131,8 +129,8 @@ public class AuthorizationRequest {
     return display;
   }
 
-  public Prompt prompt() {
-    return prompt;
+  public Prompts prompts() {
+    return prompts;
   }
 
   public MaxAge maxAge() {
@@ -188,7 +186,7 @@ public class AuthorizationRequest {
   }
 
   public boolean isInvalidPrompt() {
-    return prompt.isUnknown();
+    return prompts.hasUnknown();
   }
 
   public boolean isInvalidMaxAge() {
@@ -224,6 +222,6 @@ public class AuthorizationRequest {
   }
 
   public boolean isPromptNone() {
-    return prompt.isNone();
+    return prompts().hasNone();
   }
 }

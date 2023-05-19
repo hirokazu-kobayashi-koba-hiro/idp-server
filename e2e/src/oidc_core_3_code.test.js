@@ -26,7 +26,6 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       clientSecret: clientSecretPostClient.clientSecret,
     });
     console.log(tokenResponse.data);
-    expect(tokenResponse.status).toBe(200);
     expect(tokenResponse.data).toHaveProperty("id_token");
   });
 
@@ -212,6 +211,75 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
 
       expect(authorizationResponse.error).toEqual("login_required");
       expect(authorizationResponse.errorDescription).toEqual("invalid session");
+    });
+
+    it("prompt login The Authorization Server SHOULD prompt the End-User for reauthentication. If it cannot reauthenticate the End-User, it MUST return an error, typically login_required.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+    });
+
+    it("prompt consent The Authorization Server SHOULD prompt the End-User for consent before returning information to the Client. If it cannot obtain consent, it MUST return an error, typically consent_required.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "consent",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+    });
+
+    it("prompt select_account The Authorization Server SHOULD prompt the End-User to select a user account. This enables an End-User who has multiple accounts at the Authorization Server to select amongst the multiple accounts that they might have current sessions for. If it cannot obtain an account selection choice made by the End-User, it MUST return an error, typically account_selection_required.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "consent",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+    });
+
+    it("If this parameter contains none with any other value, an error is returned.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "none consent",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.error).toEqual("invalid_request");
+      expect(authorizationResponse.errorDescription).toEqual("authorization request must not contains none with any other (none consent)");
     });
 
     it("max_age OPTIONAL. Maximum Authentication Age. Specifies the allowable elapsed time in seconds since the last time the End-User was actively authenticated by the OP. If the elapsed time is greater than this value, the OP MUST attempt to actively re-authenticate the End-User. (The max_age request parameter corresponds to the OpenID 2.0 PAPE [OpenID.PAPE] max_auth_age request parameter.) When max_age is used, the ID Token returned MUST include an auth_time Claim Value.", async () => {

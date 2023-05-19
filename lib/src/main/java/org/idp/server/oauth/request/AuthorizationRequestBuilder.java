@@ -21,7 +21,7 @@ public class AuthorizationRequestBuilder {
   ResponseMode responseMode;
   Nonce nonce;
   Display display;
-  Prompt prompt;
+  Prompts prompts;
   MaxAge maxAge;
   UiLocales uiLocales;
   IdTokenHint idTokenHint;
@@ -91,8 +91,8 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
-  public AuthorizationRequestBuilder add(Prompt prompt) {
-    this.prompt = prompt;
+  public AuthorizationRequestBuilder add(Prompts prompts) {
+    this.prompts = prompts;
     return this;
   }
 
@@ -164,7 +164,7 @@ public class AuthorizationRequestBuilder {
         responseMode,
         nonce,
         display,
-        prompt,
+        prompts,
         maxAge,
         uiLocales,
         idTokenHint,
