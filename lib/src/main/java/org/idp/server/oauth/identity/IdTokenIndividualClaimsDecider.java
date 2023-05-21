@@ -1,6 +1,7 @@
 package org.idp.server.oauth.identity;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.idp.server.type.oauth.Scopes;
 import org.idp.server.type.oidc.Claims;
@@ -8,12 +9,17 @@ import org.idp.server.type.oidc.Claims;
 public class IdTokenIndividualClaimsDecider {
   Scopes scopes;
   IdTokenClaims idTokenClaims;
+  List<String> supportedClaims;
   boolean enabledStrictMode;
 
   public IdTokenIndividualClaimsDecider(
-      Scopes scopes, IdTokenClaims idTokenClaims, boolean enabledStrictMode) {
+      Scopes scopes,
+      IdTokenClaims idTokenClaims,
+      List<String> supportedClaims,
+      boolean enabledStrictMode) {
     this.scopes = scopes;
     this.idTokenClaims = idTokenClaims;
+    this.supportedClaims = supportedClaims;
     this.enabledStrictMode = enabledStrictMode;
   }
 
@@ -27,6 +33,9 @@ public class IdTokenIndividualClaimsDecider {
     }
     if (shouldAddMiddleName()) {
       claimValues.add("middle_name");
+    }
+    if (shouldAddFamilyName()) {
+      claimValues.add("family_name");
     }
     if (shouldAddNickname()) {
       claimValues.add("nickname");
@@ -97,6 +106,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddName() {
+    if (!supportedClaims.contains("name")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasName();
     }
@@ -104,6 +116,19 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddGivenName() {
+    if (!supportedClaims.contains("given_name")) {
+      return false;
+    }
+    if (enabledStrictMode) {
+      return idTokenClaims.hasGivenName();
+    }
+    return scopes.contains("profile");
+  }
+
+  public boolean shouldAddFamilyName() {
+    if (!supportedClaims.contains("family_name")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasGivenName();
     }
@@ -111,6 +136,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddMiddleName() {
+    if (!supportedClaims.contains("middle_name")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasMiddleName();
     }
@@ -118,6 +146,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddNickname() {
+    if (!supportedClaims.contains("nickname")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasNickname();
     }
@@ -125,6 +156,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddPreferredUsername() {
+    if (!supportedClaims.contains("preferred_username")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasPreferredUsername();
     }
@@ -132,6 +166,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddProfile() {
+    if (!supportedClaims.contains("profile")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasProfile();
     }
@@ -139,6 +176,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddPicture() {
+    if (!supportedClaims.contains("picture")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasPicture();
     }
@@ -146,6 +186,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddWebsite() {
+    if (!supportedClaims.contains("website")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasProfile();
     }
@@ -153,6 +196,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddEmail() {
+    if (!supportedClaims.contains("email")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasEmail();
     }
@@ -160,6 +206,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddEmailVerified() {
+    if (!supportedClaims.contains("email_verified")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasEmailVerified();
     }
@@ -167,6 +216,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddGender() {
+    if (!supportedClaims.contains("gender")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasGender();
     }
@@ -174,6 +226,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddBirthdate() {
+    if (!supportedClaims.contains("birthdate")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasBirthdate();
     }
@@ -181,6 +236,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddZoneinfo() {
+    if (!supportedClaims.contains("zoneinfo")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasZoneinfo();
     }
@@ -188,6 +246,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddLocale() {
+    if (!supportedClaims.contains("locale")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasLocale();
     }
@@ -195,6 +256,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddPhoneNumber() {
+    if (!supportedClaims.contains("phone_number")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasName();
     }
@@ -202,6 +266,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddPhoneNumberVerified() {
+    if (!supportedClaims.contains("phone_number_verified")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasPhoneNumberVerified();
     }
@@ -209,6 +276,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddAddress() {
+    if (!supportedClaims.contains("address")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasAddress();
     }
@@ -216,6 +286,9 @@ public class IdTokenIndividualClaimsDecider {
   }
 
   public boolean shouldAddUpdatedAt() {
+    if (!supportedClaims.contains("updated_at")) {
+      return false;
+    }
     if (enabledStrictMode) {
       return idTokenClaims.hasUpdatedAt();
     }

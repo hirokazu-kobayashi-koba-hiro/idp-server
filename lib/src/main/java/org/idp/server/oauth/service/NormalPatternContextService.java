@@ -5,7 +5,6 @@ import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.AuthorizationProfile;
-import org.idp.server.oauth.AuthorizationProfileAnalyzable;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.OAuthRequestPattern;

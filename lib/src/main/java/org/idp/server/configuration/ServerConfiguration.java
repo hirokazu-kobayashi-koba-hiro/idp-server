@@ -52,11 +52,11 @@ public class ServerConfiguration implements JsonReadable {
   boolean tlsClientCertificateBoundAccessTokens = false;
   boolean requireSignedRequestObject = false;
   boolean authorizationResponseIssParameterSupported = false;
-
   List<String> backchannelTokenDeliveryModesSupported = new ArrayList<>();
   String backchannelAuthenticationEndpoint = "";
   List<String> backchannelAuthenticationRequestSigningAlgValuesSupported = new ArrayList<>();
   Boolean backchannelUserCodeParameterSupported;
+
   // extension
   List<String> fapiBaselineScopes = new ArrayList<>();
   List<String> fapiAdvanceScopes = new ArrayList<>();
@@ -64,8 +64,9 @@ public class ServerConfiguration implements JsonReadable {
   String tokenSignedKeyId = "";
   String idTokenSignedKeyId = "";
   long accessTokenDuration = 1800;
-
   long refreshTokenDuration = 3600;
+  long idTokenDuration = 3600;
+  boolean idTokenStrictMode = false;
 
   public ServerConfiguration() {}
 
@@ -284,6 +285,14 @@ public class ServerConfiguration implements JsonReadable {
 
   public long refreshTokenDuration() {
     return refreshTokenDuration;
+  }
+
+  public long idTokenDuration() {
+    return idTokenDuration;
+  }
+
+  public boolean idTokenStrictMode() {
+    return idTokenStrictMode;
   }
 
   public boolean hasTokenEndpoint() {

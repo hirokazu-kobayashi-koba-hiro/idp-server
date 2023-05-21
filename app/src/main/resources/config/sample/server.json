@@ -22,8 +22,6 @@
     "client_credentials",
     "urn:openid:params:grant-type:ciba"
   ],
-  "token_signed_key_id": "access_token",
-  "id_token_signed_key_id": "access_token",
   "scopes_supported": [
     "openid",
     "profile",
@@ -131,5 +129,9 @@
     "ES256"
   ],
   "backchannel_user_code_parameter_supported": true,
-  "access_token_duration": 3600
+  "token_signed_key_id": "access_token",
+  "id_token_signed_key_id": "access_token",
+  "access_token_duration": 3600,
+  "id_token_duration": 3600,
+  "id_token_strict_mode": false
 }

@@ -1,7 +1,5 @@
 package org.idp.server.handler.oauth;
 
-import static org.idp.server.type.oauth.ResponseType.*;
-
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.handler.oauth.io.OAuthDenyRequest;

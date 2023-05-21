@@ -1,10 +1,13 @@
-package org.idp.server.oauth;
+package org.idp.server.oauth.service;
 
 import java.util.Set;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.oauth.AuthorizationProfile;
+import org.idp.server.oauth.OAuthRequestParameters;
+import org.idp.server.oauth.OAuthRequestPattern;
 import org.idp.server.type.OAuthRequestKey;
 
 /** AuthorizationProfileAnalyzable */

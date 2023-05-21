@@ -2,6 +2,7 @@ package org.idp.server.oauth.identity;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.jose.JsonWebSignature;
@@ -34,7 +35,9 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
               idTokenClaims,
               serverConfiguration.tokenIssuer(),
               clientConfiguration.clientId(),
-              3600);
+              serverConfiguration.idTokenDuration(),
+              serverConfiguration.claimsSupported(),
+              serverConfiguration.idTokenStrictMode());
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
       JsonWebSignature jsonWebSignature =
           jsonWebSignatureFactory.createWithAsymmetricKey(
@@ -54,7 +57,9 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       IdTokenClaims idTokenClaims,
       TokenIssuer tokenIssuer,
       ClientId clientId,
-      int idTokenDuration) {
+      long idTokenDuration,
+      List<String> supportedClaims,
+      boolean enableStrictMode) {
     LocalDateTime now = SystemDateTime.now();
     ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(idTokenDuration));
     HashMap<String, Object> claims = new HashMap<>();
@@ -75,9 +80,19 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
     if (idTokenCustomClaims.hasAccessTokenValue()) {
       claims.put("at_hash", hash(idTokenCustomClaims.accessTokenValue().value(), "ES256"));
     }
+    if (authentication.hasAuthenticationTime()) {
+      claims.put("auth_time", authentication.time().toEpochSecond(SystemDateTime.zoneOffset));
+    }
+    if (authentication.hasMethod()) {
+      claims.put("amr", authentication.methods());
+    }
+    if (authentication.hasAcrValues()) {
+      claims.put("acr", authentication.toStringAcrValue());
+    }
 
     IdTokenIndividualClaimsDecider idTokenIndividualClaimsDecider =
-        new IdTokenIndividualClaimsDecider(scopes, idTokenClaims, false);
+        new IdTokenIndividualClaimsDecider(
+            scopes, idTokenClaims, supportedClaims, enableStrictMode);
     Map<String, Object> individualClaims =
         createIndividualClaims(user, idTokenIndividualClaimsDecider);
     claims.putAll(individualClaims);

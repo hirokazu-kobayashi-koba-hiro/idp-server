@@ -131,7 +131,10 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
   }
 
   /**
-   * The prompt parameter can be used by the Client to make sure that the End-User is still present for the current session or to bring attention to the request. If this parameter contains none with any other value, an error is returned.
+   * The prompt parameter can be used by the Client to make sure that the End-User is still present
+   * for the current session or to bring attention to the request. If this parameter contains none
+   * with any other value, an error is returned.
+   *
    * @param context
    */
   void throwExceptionIfInvalidPromptNonePattern(OAuthRequestContext context) {
@@ -139,11 +142,11 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
     Prompts prompts = authorizationRequest.prompts();
     if (prompts.hasNone() && prompts.isMultiValue()) {
       throw new OAuthRedirectableBadRequestException(
-              "invalid_request",
-              String.format(
-                      "authorization request must not contains none with any other (%s)",
-                      context.getParams(OAuthRequestKey.prompt)),
-              context);
+          "invalid_request",
+          String.format(
+              "authorization request must not contains none with any other (%s)",
+              context.getParams(OAuthRequestKey.prompt)),
+          context);
     }
   }
 

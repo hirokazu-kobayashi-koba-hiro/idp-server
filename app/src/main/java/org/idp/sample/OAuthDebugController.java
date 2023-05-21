@@ -1,9 +1,12 @@
 package org.idp.sample;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.OAuthApi;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.handler.oauth.io.*;
+import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.type.extension.OAuthDenyReason;
 import org.slf4j.Logger;
@@ -61,8 +64,14 @@ public class OAuthDebugController implements ParameterTransformable {
       @PathVariable String id, @PathVariable("tenant-id") String tenantId) {
     Tenant tenant = Tenant.of(tenantId);
     User user = userMockService.getUser();
+    Authentication authentication =
+        new Authentication()
+            .setTime(SystemDateTime.now())
+            .setMethods(List.of("password"))
+            .setAcrValues(List.of("urn:mace:incommon:iap:silver"));
+
     OAuthAuthorizeRequest authAuthorizeRequest =
-        new OAuthAuthorizeRequest(id, tenant.issuer(), user);
+        new OAuthAuthorizeRequest(id, tenant.issuer(), user).setAuthentication(authentication);
     OAuthAuthorizeResponse authAuthorizeResponse = oAuthApi.authorize(authAuthorizeRequest);
     Map<String, String> response = Map.of("redirect_uri", authAuthorizeResponse.redirectUriValue());
     return new ResponseEntity<>(response, HttpStatus.OK);

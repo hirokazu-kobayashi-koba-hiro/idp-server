@@ -1,5 +1,6 @@
 package org.idp.server.oauth.grant;
 
+import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.User;
@@ -11,6 +12,7 @@ import org.idp.server.type.oauth.Subject;
 public class AuthorizationGrant {
 
   User user;
+  Authentication authentication;
   ClientId clientId;
   Scopes scopes;
   ClaimsPayload claimsPayload;
@@ -18,11 +20,13 @@ public class AuthorizationGrant {
 
   public AuthorizationGrant(
       User user,
+      Authentication authentication,
       ClientId clientId,
       Scopes scopes,
       ClaimsPayload claimsPayload,
       CustomProperties customProperties) {
     this.user = user;
+    this.authentication = authentication;
     this.clientId = clientId;
     this.scopes = scopes;
     this.claimsPayload = claimsPayload;
@@ -31,6 +35,10 @@ public class AuthorizationGrant {
 
   public User user() {
     return user;
+  }
+
+  public Authentication authentication() {
+    return authentication;
   }
 
   public String subjectValue() {

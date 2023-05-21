@@ -71,7 +71,8 @@ public class ResourceOwnerPasswordCredentialsGrantService
     ClaimsPayload claimsPayload = new ClaimsPayload();
     CustomProperties customProperties = context.customProperties();
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrant(user, clientId, scopes, claimsPayload, customProperties);
+        new AuthorizationGrant(
+            user, new Authentication(), clientId, scopes, claimsPayload, customProperties);
 
     AccessToken accessToken =
         createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);

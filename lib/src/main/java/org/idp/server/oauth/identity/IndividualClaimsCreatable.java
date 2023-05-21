@@ -17,6 +17,9 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     if (claimsDecider.shouldAddGivenName()) {
       claims.put("given_name", user.givenName());
     }
+    if (claimsDecider.shouldAddFamilyName()) {
+      claims.put("family_name", user.familyName());
+    }
     if (claimsDecider.shouldAddMiddleName()) {
       claims.put("middle_name", user.middleName());
     }
@@ -82,6 +85,9 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     }
     if (claimsDecider.shouldAddMiddleName()) {
       claims.put("middle_name", user.middleName());
+    }
+    if (claimsDecider.shouldAddFamilyName()) {
+      claims.put("family_name", user.familyName());
     }
     if (claimsDecider.shouldAddNickname()) {
       claims.put("nickname", user.nickname());

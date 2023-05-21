@@ -1,11 +1,10 @@
 package org.idp.server.handler.oauth;
 
-import static org.idp.server.type.oauth.ResponseType.*;
-
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.handler.oauth.io.OAuthAuthorizeRequest;
 import org.idp.server.oauth.OAuthAuthorizeContext;
+import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.grant.AuthorizationCodeGrantCreator;
 import org.idp.server.oauth.grant.AuthorizationGrant;
@@ -48,6 +47,7 @@ public class OAuthAuthorizeHandler {
     TokenIssuer tokenIssuer = request.toTokenIssuer();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
     User user = request.user();
+    Authentication authentication = request.authentication();
     CustomProperties customProperties = request.toCustomProperties();
 
     AuthorizationRequest authorizationRequest =
@@ -58,7 +58,12 @@ public class OAuthAuthorizeHandler {
         clientConfigurationRepository.get(tokenIssuer, clientId);
     OAuthAuthorizeContext context =
         new OAuthAuthorizeContext(
-            authorizationRequest, user, customProperties, serverConfiguration, clientConfiguration);
+            authorizationRequest,
+            user,
+            authentication,
+            customProperties,
+            serverConfiguration,
+            clientConfiguration);
 
     AuthorizationResponseCreator authorizationResponseCreator =
         creators.get(context.responseType());
