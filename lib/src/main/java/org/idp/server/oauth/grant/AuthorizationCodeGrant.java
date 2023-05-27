@@ -2,6 +2,7 @@ package org.idp.server.oauth.grant;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
@@ -66,5 +67,9 @@ public class AuthorizationCodeGrant {
 
   public IdTokenClaims idTokenClaims() {
     return authorizationGrant.idTokenClaims();
+  }
+
+  public Authentication authentication() {
+    return authorizationGrant.authentication();
   }
 }

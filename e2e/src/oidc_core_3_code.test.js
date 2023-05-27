@@ -1,8 +1,11 @@
 import { describe, expect, it, xit } from "@jest/globals";
 
-import { requestToken } from "./api/oauthClient";
-import { clientSecretPostClient, serverConfig } from "./testConfig";
+import { getJwks, requestToken } from "./api/oauthClient";
+import { clientSecretBasicClient, clientSecretPostClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
+import { createJwtWithPrivateKey, verifyAndDecodeIdToken } from "./lib/jose";
+import { createBasicAuthHeader, toEpocTime } from "./lib/util";
+import { calculateAtHashWithS256 } from "./lib/oauth";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
   it("success pattern", async () => {
@@ -385,4 +388,678 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(authorizationResponse.code).not.toBeNull();
     });
   });
+
+  describe("3.1.2.3.  Authorization Server Authenticates End-User", () => {
+    describe("The Authorization Server MUST attempt to Authenticate the End-User in the following cases:", () =>{
+      it("The End-User is not already Authenticated.", async () => {
+        const { authorizationResponse } = await requestAuthorizations({
+          endpoint: serverConfig.authorizationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          redirectUri: clientSecretPostClient.redirectUri,
+          responseType: "code",
+          scope: "openid " + clientSecretPostClient.scope,
+          state: "state",
+          responseMode: "query",
+          nonce: "nonce",
+          display: "page",
+        });
+        console.log(authorizationResponse);
+        expect(authorizationResponse.code).not.toBeNull();
+      });
+
+      it("The Authentication Request contains the prompt parameter with the value login. In this case, the Authorization Server MUST reauthenticate the End-User even if the End-User is already authenticated.\n", async () => {
+        const { authorizationResponse } = await requestAuthorizations({
+          endpoint: serverConfig.authorizationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          redirectUri: clientSecretPostClient.redirectUri,
+          responseType: "code",
+          scope: "openid " + clientSecretPostClient.scope,
+          state: "state",
+          responseMode: "query",
+          nonce: "nonce",
+          display: "page",
+          prompt: "login",
+        });
+        console.log(authorizationResponse);
+        expect(authorizationResponse.code).not.toBeNull();
+      });
+    });
+
+    describe("The Authorization Server MUST NOT interact with the End-User in the following case:", () => {
+      it("The Authentication Request contains the prompt parameter with the value none. In this case, the Authorization Server MUST return an error if an End-User is not already Authenticated or could not be silently Authenticated.", async () => {
+        const { status, authorizationResponse } = await requestAuthorizations({
+          endpoint: serverConfig.authorizationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          redirectUri: clientSecretPostClient.redirectUri,
+          responseType: "code",
+          scope: "openid " + clientSecretPostClient.scope,
+          state: "state",
+          responseMode: "query",
+          nonce: "nonce",
+          display: "page",
+          prompt: "none",
+        });
+        console.log(authorizationResponse);
+        expect(status).toBe(302);
+
+        expect(authorizationResponse.error).toEqual("login_required");
+        expect(authorizationResponse.errorDescription).toEqual("invalid session");
+      });
+    });
+  });
+
+  describe("3.1.2.5.  Successful Authentication Response", () => {
+    it("When using the Authorization Code Flow, the Authorization Response MUST return the parameters defined in Section 4.1.2 of OAuth 2.0 [RFC6749] by adding them as query parameters to the redirect_uri specified in the Authorization Request using the application/x-www-form-urlencoded format, unless a different Response Mode was specified.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+    });
+  });
+
+  describe("3.1.2.6.  Authentication Error Response", () => {
+    it("login_required The Authorization Server requires End-User authentication. This error MAY be returned when the prompt parameter value in the Authentication Request is none, but the Authentication Request cannot be completed without displaying a user interface for End-User authentication.", async () => {
+      const { status, authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "none",
+      });
+      console.log(authorizationResponse);
+      expect(status).toBe(302);
+
+      expect(authorizationResponse.error).toEqual("login_required");
+      expect(authorizationResponse.errorDescription).toEqual("invalid session");
+    });
+
+    it("invalid_request_object The request parameter contains an invalid Request Object.", async () => {
+      const request = createJwtWithPrivateKey({
+        payload: {
+          client_id: clientSecretPostClient.clientId,
+          response_type: "code",
+          state: "aiueo",
+          scope: "openid profile phone email " + clientSecretPostClient.scope,
+          redirect_uri: clientSecretPostClient.redirectUri,
+          aud: "aud",
+          iss: clientSecretPostClient.clientId,
+        },
+        privateKey: clientSecretPostClient.requestKey,
+      });
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        request,
+        clientId: clientSecretPostClient.clientId,
+      });
+      console.log(authorizationResponse);
+      console.log(authorizationResponse.data);
+      expect(authorizationResponse.error).toEqual(
+        "invalid_request_object"
+      );
+      expect(
+        authorizationResponse.errorDescription
+      ).toEqual("request object is invalid, aud claim must be issuer");
+    });
+  });
+
+  describe("3.1.3.1.  Token Request", () => {
+    it ("A Client makes a Token Request by presenting its Authorization Grant (in the form of an Authorization Code) to the Token Endpoint using the grant_type value authorization_code, as described in Section 4.1.3 of OAuth 2.0 [RFC6749]. If the Client is a Confidential Client, then it MUST authenticate to the Token Endpoint using the authentication method registered for its client_id, as described in Section 9.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.data).toHaveProperty("id_token");
+    });
+  });
+
+  describe("3.1.3.2.  Token Request Validation", () => {
+    //The Authorization Server MUST validate the Token Request as follows:
+    it ("Authenticate the Client if it was issued Client Credentials or if it uses another Client Authentication method, per Section 9.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: "clientSecretPostClient.clientSecret",
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(401);
+      expect(tokenResponse.data.error).toEqual("invalid_client");
+      expect(tokenResponse.data.error_description).toEqual("client authentication type is client_secret_post, but request client_secret does not match client_secret");
+    });
+
+    it ("Ensure the Authorization Code was issued to the authenticated Client.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const basicAuth = createBasicAuthHeader({
+        username: clientSecretBasicClient.clientId,
+        password: clientSecretBasicClient.clientSecret,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        basicAuth,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("invalid_grant");
+      expect(tokenResponse.data.error_description).toContain("not found authorization code");
+    });
+
+    it ("Verify that the Authorization Code is valid.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: "authorizationResponse.code",
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("invalid_grant");
+      expect(tokenResponse.data.error_description).toContain("not found authorization code");
+    });
+
+    it ("If possible, verify that the Authorization Code has not been previously used.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+
+      const reTokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(reTokenResponse.data);
+
+      expect(reTokenResponse.status).toBe(400);
+      expect(reTokenResponse.data.error).toEqual("invalid_grant");
+      expect(reTokenResponse.data.error_description).toContain("not found authorization code");
+    });
+
+    it ("Ensure that the redirect_uri parameter value is identical to the redirect_uri parameter value that was included in the initial Authorization Request. If the redirect_uri parameter value is not present when there is only one registered redirect_uri value, the Authorization Server MAY return an error (since the Client should have included the parameter) or MAY proceed without an error (since OAuth 2.0 permits the parameter to be omitted in this case).", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: "clientSecretPostClient.redirectUri",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("invalid_request");
+      expect(tokenResponse.data.error_description).toEqual("token request redirect_uri does not equals to authorization request redirect_uri (clientSecretPostClient.redirectUri)");
+    });
+
+    it ("Verify that the Authorization Code used was issued in response to an OpenID Connect Authentication Request (so that an ID Token will be returned from the Token Endpoint).", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: "authorizationResponse.code",
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("invalid_grant");
+      expect(tokenResponse.data.error_description).toEqual("not found authorization code (authorizationResponse.code)");
+    });
+  });
+
+  describe("3.1.3.3.  Successful Token Response", () => {
+    it ("In addition to the response parameters specified by OAuth 2.0, the following parameters MUST be included in the response: id_token ID Token value associated with the authenticated session.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data.token_type).toEqual("Bearer");
+      expect(tokenResponse.data).toHaveProperty("expires_in");
+      expect(tokenResponse.data).toHaveProperty("scope");
+      expect(tokenResponse.data).toHaveProperty("id_token");
+    });
+  });
+
+  describe("3.1.3.6.  ID Token", () => {
+    it ("at_hash　OPTIONAL. Access Token hash value. Its value is the base64url encoding of the left-most half of the hash of the octets of the ASCII representation of the access_token value, where the hash algorithm used is the hash algorithm used in the alg Header Parameter of the ID Token's JOSE Header. For instance, if the alg is RS256, hash the access_token value with SHA-256, then take the left-most 128 bits and base64url encode them. The at_hash value is a case sensitive string.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data.token_type).toEqual("Bearer");
+      expect(tokenResponse.data).toHaveProperty("expires_in");
+      expect(tokenResponse.data).toHaveProperty("scope");
+      expect(tokenResponse.data).toHaveProperty("id_token");
+
+      const jwkResponse = await getJwks({
+        endpoint: serverConfig.jwksEndpoint,
+      });
+      const decodedIdToken = verifyAndDecodeIdToken({
+        idToken: tokenResponse.data.id_token,
+        jwks: jwkResponse.data,
+      });
+      console.log(decodedIdToken);
+      if (decodedIdToken.payload.at_hash) {
+        expect(decodedIdToken.payload.at_hash).toEqual(calculateAtHashWithS256(tokenResponse.data.access_token));
+      }
+    });
+  });
+
+  describe("3.1.3.7.  ID Token Validation", () => {
+    //Clients MUST validate the ID Token in the Token Response in the following manner:
+    it ("1. If the ID Token is encrypted, decrypt it using the keys and algorithms that the Client specified during Registration that the OP was to use to encrypt the ID Token. If encryption was negotiated with the OP at Registration time and the ID Token is not encrypted, the RP SHOULD reject it.", async () => {
+
+    });
+
+    it ("2. The Issuer Identifier for the OpenID Provider (which is typically obtained during Discovery) MUST exactly match the value of the iss (issuer) Claim.", async () => {
+      const {  payload} = await getIdToken({client: clientSecretPostClient});
+      expect(payload.iss).toEqual(serverConfig.issuer);
+    });
+
+    it ("3. The Client MUST validate that the aud (audience) Claim contains its client_id value registered at the Issuer identified by the iss (issuer) Claim as an audience. The aud (audience) Claim MAY contain an array with more than one element. The ID Token MUST be rejected if the ID Token does not list the Client as a valid audience, or if it contains additional audiences not trusted by the Client.", async () => {
+      const {  payload} = await getIdToken({ client: clientSecretPostClient});
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.aud).toContain(clientSecretPostClient.clientId);
+    });
+
+    it ("4. If the ID Token contains multiple audiences, the Client SHOULD verify that an azp Claim is present.", async () => {
+      const {  payload} = await getIdToken({ client: clientSecretPostClient});
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.aud).toContain(clientSecretPostClient.clientId);
+      if (payload.azp) {
+        expect(payload.azp).toContain(clientSecretPostClient.clientId);
+      }
+
+    });
+
+    it ("5. If an azp (authorized party) Claim is present, the Client SHOULD verify that its client_id is the Claim Value.", async () => {
+      const {  payload} = await getIdToken({ client: clientSecretPostClient});
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.aud).toContain(clientSecretPostClient.clientId);
+      if (payload.azp) {
+        expect(payload.azp).toContain(clientSecretPostClient.clientId);
+      }
+    });
+
+    it ("6. If the ID Token is received via direct communication between the Client and the Token Endpoint (which it is in this flow), the TLS server validation MAY be used to validate the issuer in place of checking the token signature. The Client MUST validate the signature of all other ID Tokens according to JWS [JWS] using the algorithm specified in the JWT alg Header Parameter. The Client MUST use the keys provided by the Issuer.", async () => {
+      const { payload, verifyResult } = await getIdToken({ client: clientSecretPostClient});
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.aud).toContain(clientSecretPostClient.clientId);
+      if (payload.azp) {
+        expect(payload.azp).toContain(clientSecretPostClient.clientId);
+      }
+      expect(verifyResult).toBe(true);
+    });
+
+    it ("7. The alg value SHOULD be the default of RS256 or the algorithm sent by the Client in the id_token_signed_response_alg parameter during Registration.", async () => {
+      const { header, payload, verifyResult } = await getIdToken({ client: clientSecretPostClient});
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.aud).toContain(clientSecretPostClient.clientId);
+      if (payload.azp) {
+        expect(payload.azp).toContain(clientSecretPostClient.clientId);
+      }
+      expect(verifyResult).toBe(true);
+      expect(header.alg).toEqual(clientSecretPostClient.idTokenAlg);
+    });
+
+    it ("8. If the JWT alg Header Parameter uses a MAC based algorithm such as HS256, HS384, or HS512, the octets of the UTF-8 representation of the client_secret corresponding to the client_id contained in the aud (audience) Claim are used as the key to validate the signature. For MAC based algorithms, the behavior is unspecified if the aud is multi-valued or if an azp value is present that is different than the aud value.", async () => {
+      const { header, payload, verifyResult } = await getIdToken({ client: clientSecretPostClient});
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.aud).toContain(clientSecretPostClient.clientId);
+      if (payload.azp) {
+        expect(payload.azp).toContain(clientSecretPostClient.clientId);
+      }
+      expect(verifyResult).toBe(true);
+      expect(header.alg).toEqual(clientSecretPostClient.idTokenAlg);
+
+    });
+
+    it ("9. The current time MUST be before the time represented by the exp Claim.", async () => {
+      const { header, payload, verifyResult } = await getIdToken({ client: clientSecretPostClient});
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.aud).toContain(clientSecretPostClient.clientId);
+      if (payload.azp) {
+        expect(payload.azp).toContain(clientSecretPostClient.clientId);
+      }
+      expect(verifyResult).toBe(true);
+      expect(header.alg).toEqual(clientSecretPostClient.idTokenAlg);
+      expect(payload.exp > toEpocTime({})).toBe(true);
+    });
+
+    it ("10. The iat Claim can be used to reject tokens that were issued too far away from the current time, limiting the amount of time that nonces need to be stored to prevent attacks. The acceptable range is Client specific.", async () => {
+      const { header, payload, verifyResult } = await getIdToken({ client: clientSecretPostClient});
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.aud).toContain(clientSecretPostClient.clientId);
+      if (payload.azp) {
+        expect(payload.azp).toContain(clientSecretPostClient.clientId);
+      }
+      expect(verifyResult).toBe(true);
+      expect(header.alg).toEqual(clientSecretPostClient.idTokenAlg);
+      expect(payload.exp > toEpocTime({})).toBe(true);
+      expect(payload.iat > toEpocTime({ adjusted: -10000000})).toBe(true);
+    });
+
+    it ("11. If a nonce value was sent in the Authentication Request, a nonce Claim MUST be present and its value checked to verify that it is the same value as the one that was sent in the Authentication Request. The Client SHOULD check the nonce value for replay attacks. The precise method for detecting replay attacks is Client specific.", async () => {
+      const nonce = "123";
+      const { header, payload, verifyResult } = await getIdToken({ client: clientSecretPostClient, nonce });
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.aud).toContain(clientSecretPostClient.clientId);
+      if (payload.azp) {
+        expect(payload.azp).toContain(clientSecretPostClient.clientId);
+      }
+      expect(verifyResult).toBe(true);
+      expect(header.alg).toEqual(clientSecretPostClient.idTokenAlg);
+      expect(payload.exp > toEpocTime({})).toBe(true);
+      expect(payload.iat > toEpocTime({ adjusted: -10000000})).toBe(true);
+      expect(payload.nonce).toEqual(nonce);
+    });
+
+    it ("12. If the acr Claim was requested, the Client SHOULD check that the asserted Claim Value is appropriate. The meaning and processing of acr Claim Values is out of scope for this specification.", async () => {
+      const nonce = "123";
+      const acrValues = serverConfig.acr;
+      const { header, payload, verifyResult } = await getIdToken({ client: clientSecretPostClient, nonce, acrValues });
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.aud).toContain(clientSecretPostClient.clientId);
+      if (payload.azp) {
+        expect(payload.azp).toContain(clientSecretPostClient.clientId);
+      }
+      expect(verifyResult).toBe(true);
+      expect(header.alg).toEqual(clientSecretPostClient.idTokenAlg);
+      expect(payload.exp > toEpocTime({})).toBe(true);
+      expect(payload.iat > toEpocTime({ adjusted: -10000000})).toBe(true);
+      expect(payload.nonce).toEqual(nonce);
+      expect(payload.acr).toEqual(acrValues);
+    });
+
+    it ("13. If the auth_time Claim was requested, either through a specific request for this Claim or by using the max_age parameter, the Client SHOULD check the auth_time Claim value and request re-authentication if it determines too much time has elapsed since the last End-User authentication.", async () => {
+      const nonce = "123";
+      const acrValues = serverConfig.acr;
+      const maxAge = 1000;
+      const { header, payload, verifyResult } = await getIdToken({ client: clientSecretPostClient, nonce, acrValues, maxAge });
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.aud).toContain(clientSecretPostClient.clientId);
+      if (payload.azp) {
+        expect(payload.azp).toContain(clientSecretPostClient.clientId);
+      }
+      expect(verifyResult).toBe(true);
+      expect(header.alg).toEqual(clientSecretPostClient.idTokenAlg);
+      expect(payload.exp > toEpocTime({})).toBe(true);
+      expect(payload.iat > toEpocTime({ adjusted: -10000000})).toBe(true);
+      expect(payload.nonce).toEqual(nonce);
+      expect(payload.acr).toEqual(acrValues);
+      expect(payload).toHaveProperty("auth_time");
+    });
+
+    describe("3.1.3.8.  Access Token Validation", () => {
+      it ("When using the Authorization Code Flow, if the ID Token contains an at_hash Claim, the Client MAY use it to validate the Access Token in the same manner as for the Implicit Flow, as defined in Section 3.2.2.9, but using the ID Token and Access Token returned from the Token Endpoint.", async () => {
+        const { authorizationResponse } = await requestAuthorizations({
+          endpoint: serverConfig.authorizationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          redirectUri: clientSecretPostClient.redirectUri,
+          responseType: "code",
+          scope: "openid " + clientSecretPostClient.scope,
+          state: "state",
+          responseMode: "query",
+          nonce: "nonce",
+          display: "page",
+          prompt: "login",
+        });
+        console.log(authorizationResponse);
+        expect(authorizationResponse.code).not.toBeNull();
+
+        const tokenResponse = await requestToken({
+          endpoint: serverConfig.tokenEndpoint,
+          code: authorizationResponse.code,
+          grantType: "authorization_code",
+          redirectUri: clientSecretPostClient.redirectUri,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+        console.log(tokenResponse.data);
+        expect(tokenResponse.status).toBe(200);
+
+        const jwkResponse = await getJwks({
+          endpoint: serverConfig.jwksEndpoint,
+        });
+        const decodedIdToken = verifyAndDecodeIdToken({
+          idToken: tokenResponse.data.id_token,
+          jwks: jwkResponse.data,
+        });
+        console.log(decodedIdToken);
+        if (decodedIdToken.payload.at_hash) {
+          expect(decodedIdToken.payload.at_hash).toEqual(calculateAtHashWithS256(tokenResponse.data.access_token));
+        }
+      });
+    });
+  });
 });
+
+const getIdToken = async ({ client, nonce, acrValues, maxAge }) => {
+  const { authorizationResponse } = await requestAuthorizations({
+    endpoint: serverConfig.authorizationEndpoint,
+    clientId: client.clientId,
+    redirectUri: client.redirectUri,
+    responseType: "code",
+    scope: "openid " + client.scope,
+    state: "state",
+    responseMode: "query",
+    nonce,
+    display: "page",
+    prompt: "login",
+    acrValues,
+    maxAge,
+  });
+  console.log(authorizationResponse);
+  expect(authorizationResponse.code).not.toBeNull();
+
+  const tokenResponse = await requestToken({
+    endpoint: serverConfig.tokenEndpoint,
+    code: authorizationResponse.code,
+    grantType: "authorization_code",
+    redirectUri: client.redirectUri,
+    clientId: client.clientId,
+    clientSecret: client.clientSecret,
+  });
+  console.log(tokenResponse.data);
+  expect(tokenResponse.status).toBe(200);
+  expect(tokenResponse.status).toBe(200);
+  expect(tokenResponse.data).toHaveProperty("access_token");
+  expect(tokenResponse.data.token_type).toEqual("Bearer");
+  expect(tokenResponse.data).toHaveProperty("expires_in");
+  expect(tokenResponse.data).toHaveProperty("scope");
+  expect(tokenResponse.data).toHaveProperty("id_token");
+
+  const jwkResponse = await getJwks({
+    endpoint: serverConfig.jwksEndpoint,
+  });
+  const decodedIdToken = verifyAndDecodeIdToken({
+    idToken: tokenResponse.data.id_token,
+    jwks: jwkResponse.data,
+  });
+  console.log(decodedIdToken);
+  return decodedIdToken;
+};

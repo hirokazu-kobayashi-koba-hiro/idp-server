@@ -28,7 +28,8 @@ export const serverConfig = {
   oauth: {
     username: "001",
     password: "successUserCode",
-  }
+  },
+  acr: "urn:mace:incommon:iap:silver",
 };
 
 export const unsupportedServerConfig = {
@@ -65,6 +66,7 @@ export const clientSecretPostClient = {
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  idTokenAlg: "ES256",
   requestKey: {
     kty: "EC",
     d: "uj7jNVQIfSCBdiV4A_yVnY8htLZS7nskIXAGIVDb9oM",
@@ -75,6 +77,8 @@ export const clientSecretPostClient = {
     y: "413NbE2n5PeQJlG1Nfq_nCbqR_ZKbVAzsyyrmYph7Fs",
     alg: "ES256",
   },
+  requestUri: "",
+  invalidRequestUri: "https://invalid.request.uri/request",
 };
 
 export const clientSecretBasicClient = {
@@ -84,6 +88,7 @@ export const clientSecretBasicClient = {
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  idTokenAlg: "ES256",
 };
 
 export const clientSecretJwtClient = {
@@ -94,6 +99,7 @@ export const clientSecretJwtClient = {
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  idTokenAlg: "ES256",
 };
 
 export const privateKeyJwtClient = {
@@ -103,6 +109,7 @@ export const privateKeyJwtClient = {
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  idTokenAlg: "ES256",
   clientSecretKey: {
     p: "5tYV_YB0h-OATLkIJlh12EvU1eZj0Q_ttbzCS4b9fAsSYB2w6qMA_0LRT_upIZm_tPm-HmMLec-5b7enPjKj9N1iqADf_8j50tVcp60Ns9zqX4nXtFZ0w39iHJnMEhbmkBAU5oKLP0m_vYcwtExJ_9EC8aV6MrNOHHnQhaCdRZE",
     kty: "RSA",

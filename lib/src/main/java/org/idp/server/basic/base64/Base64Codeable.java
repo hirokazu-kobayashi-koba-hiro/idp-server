@@ -17,7 +17,7 @@ public interface Base64Codeable {
     return Base64URL.encode(input).toString();
   }
 
-  default String decodeWithUrlSage(String input) {
+  default String decodeWithUrlSafe(String input) {
     return Base64URL.from(input).decodeToString();
   }
 }

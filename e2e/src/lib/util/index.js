@@ -32,8 +32,8 @@ export const createBearerHeader = (accessToken) => {
   };
 };
 
-export const toEpocTime = ({ plus = 0 }) => {
-  return Math.floor(new Date().getTime() / 1000) + plus;
+export const toEpocTime = ({ adjusted = 0 }) => {
+  return Math.floor(new Date().getTime() / 1000) + adjusted;
 };
 
 export const convertToSnake = (params) => {
@@ -88,4 +88,13 @@ export const matchWithUSASCII = (value) => {
   // eslint-disable-next-line no-control-regex
   const asciiRegex = new RegExp("^[\x00-\x7F]*$");
   return asciiRegex.test(value);
+};
+
+export const base64UrlEncode = (input) => {
+  if (Buffer.isEncoding("base64url")) {
+    return input.toString("base64url");
+  } else {
+    const fromBase64 = (base64) => base64.replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+    return fromBase64(input.toString("base64"));
+  }
 };

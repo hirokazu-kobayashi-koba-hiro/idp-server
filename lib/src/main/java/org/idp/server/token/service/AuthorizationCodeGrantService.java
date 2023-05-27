@@ -6,7 +6,6 @@ import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.grantmangment.AuthorizationGranted;
 import org.idp.server.grantmangment.AuthorizationGrantedIdentifier;
 import org.idp.server.grantmangment.AuthorizationGrantedRepository;
-import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.IdTokenCreatable;
@@ -126,18 +125,18 @@ public class AuthorizationCodeGrantService
             .add(refreshToken.refreshTokenValue())
             .add(authorizationRequest.scope());
     if (authorizationRequest.isOidcProfile()) {
-      AuthorizationCode authorizationCode = authorizationCodeGrant.authorizationCode();
       AuthorizationGrant authorizationGrant = authorizationCodeGrant.authorizationGrant();
       IdTokenCustomClaims idTokenCustomClaims =
           new IdTokenCustomClaimsBuilder()
               .add(authorizationCodeGrant.authorizationCode())
+              .add(accessToken.accessTokenValue())
               .add(authorizationRequest.nonce())
               .add(authorizationRequest.state())
               .build();
       IdToken idToken =
           createIdToken(
               authorizationGrant.user(),
-              new Authentication(),
+              authorizationCodeGrant.authentication(),
               authorizationCodeGrant.scopes(),
               authorizationCodeGrant.idTokenClaims(),
               idTokenCustomClaims,

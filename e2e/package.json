@@ -26,6 +26,7 @@
     "uuid": "^9.0.0"
   },
   "dependencies": {
-    "jest-html-reporters": "^3.1.4"
+    "jest-html-reporters": "^3.1.4",
+    "openid-client": "^5.4.2"
   }
 }
