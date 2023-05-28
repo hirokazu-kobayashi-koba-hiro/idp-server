@@ -34,7 +34,7 @@ export const calculateCodeChallengeWithS256 = (codeVerifier) => {
   return codeChallenge;
 };
 
-export const calculateAtHashWithS256 = (token) => {
-  const digest = createHash("sha256").update(token).digest();
+export const calculateIdTokenClaimHashWithS256 = (input) => {
+  const digest = createHash("sha256").update(input).digest();
   return base64UrlEncode(digest.slice(0, digest.length / 2));
 };

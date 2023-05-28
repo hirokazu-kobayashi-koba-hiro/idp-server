@@ -1,28 +1,120 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { getJwks } from "./api/oauthClient";
+import { getJwks, requestToken } from "./api/oauthClient";
 import {
+  clientSecretBasicClient,
   clientSecretPostClient,
   serverConfig,
 } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
-import { verifyAndDecodeIdToken } from "./lib/jose";
+import { createJwtWithPrivateKey, verifyAndDecodeIdToken } from "./lib/jose";
+import { createBasicAuthHeader, toEpocTime } from "./lib/util";
 import { calculateIdTokenClaimHashWithS256 } from "./lib/oauth";
 
-describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
-  it("success pattern", async () => {
-    const { authorizationResponse } = await requestAuthorizations({
-      endpoint: serverConfig.authorizationEndpoint,
-      clientId: clientSecretPostClient.clientId,
-      responseType: "token id_token",
-      state: "aiueo",
-      scope: "openid profile phone email" + clientSecretPostClient.scope,
-      redirectUri: clientSecretPostClient.redirectUri,
-      nonce: "nonce",
+describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () => {
+  describe("success pattern", () => {
+    it("code token", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code token",
+        state: "aiueo",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        nonce: "nonce",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+      expect(authorizationResponse.accessToken).not.toBeNull();
+      expect(authorizationResponse.tokenType).toEqual("Bearer");
+      expect(authorizationResponse.expiresIn).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        nonce: "nonce",
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("id_token");
     });
-    console.log(authorizationResponse);
-    expect(authorizationResponse.accessToken).not.toBeNull();
-    expect(authorizationResponse.idToken).not.toBeNull();
+
+    it("code token id_token", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code token id_token",
+        state: "aiueo",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        nonce: "nonce",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+      expect(authorizationResponse.accessToken).not.toBeNull();
+      expect(authorizationResponse.tokenType).toEqual("Bearer");
+      expect(authorizationResponse.expiresIn).not.toBeNull();
+      expect(authorizationResponse.idToken).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        nonce: "nonce",
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("id_token");
+    });
+
+    it("code id_token", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code id_token",
+        state: "aiueo",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        nonce: "nonce",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+      expect(authorizationResponse.idToken).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("id_token");
+    });
+
+    it("none", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "none",
+        state: "aiueo",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).toBeNull();
+      expect(authorizationResponse.accessToken).toBeNull();
+      expect(authorizationResponse.idToken).toBeNull();
+    });
   });
 
   describe("3.2.2.1.  Authentication Request", () => {
@@ -49,7 +141,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         scope: "openid " + clientSecretPostClient.scope,
-        responseType: "token id_token",
+        responseType: "code token id_token",
       });
       console.log(error);
       expect(status).toBe(400);
@@ -65,7 +157,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         redirectUri: clientSecretPostClient.redirectUri + "/aiueo",
         scope: "openid " + clientSecretPostClient.scope,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         clientId: clientSecretPostClient.clientId,
       });
       console.log(error);
@@ -77,28 +169,11 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       );
     });
 
-    it("redirect_uri When using this flow, the Redirection URI MUST NOT use the http scheme unless the Client is a native application, in which case it MAY use the http: scheme with localhost as the hostname.", async () => {
-      const { status, error } = await requestAuthorizations({
-        endpoint: serverConfig.authorizationEndpoint,
-        redirectUri: clientSecretPostClient.httpRedirectUri,
-        scope: "openid " + clientSecretPostClient.scope,
-        responseType: "token id_token",
-        clientId: clientSecretPostClient.clientId,
-      });
-      console.log(error);
-      expect(status).toBe(400);
-
-      expect(error.error).toEqual("invalid_request");
-      expect(error.error_description).toContain(
-        "When using this flow and client application is web application, the Redirection URI MUST NOT use the http scheme"
-      );
-    });
-
     it("nonce REQUIRED. String value used to associate a Client session with an ID Token, and to mitigate replay attacks. The value is passed through unmodified from the Authentication Request to the ID Token. Sufficient entropy MUST be present in the nonce values used to prevent attackers from guessing values. For implementation notes, see Section 15.5.2.", async () => {
       const { status, error } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         redirectUri: clientSecretPostClient.redirectUri,
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
@@ -140,7 +215,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: "https://client.example.org:443/callback",
-        responseType: "token id_token",
+        responseType: "code token id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -161,7 +236,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         state: "state",
         responseMode: "query",
         nonce: "nonce",
@@ -181,7 +256,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -194,13 +269,14 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
     });
   });
 
-  describe("3.2.2.5.  Successful Authentication Response", () => {
-    it("When using the Implicit Flow, all response parameters are added to the fragment component of the Redirection URI, as specified in OAuth 2.0 Multiple Response Type Encoding Practices [OAuth.Responses], unless a different Response Mode was specified.", async () => {
+  describe("3.3.2.5.  Successful Authentication Response", () => {
+    //When using the Hybrid Flow, Authentication Responses are made in the same manner as for the Implicit Flow, as defined in Section 3.2.2.5, with the exception of the differences specified in this section.
+    it("code Authorization Code. This is always returned when using the Hybrid Flow.", async () => {
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -209,6 +285,29 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.responseMode).toEqual("#");
+      expect(authorizationResponse.code).not.toBeNull();
+      expect(authorizationResponse.accessToken).not.toBeNull();
+      expect(authorizationResponse.tokenType).toEqual("Bearer");
+      expect(authorizationResponse.idToken).not.toBeNull();
+      expect(authorizationResponse.state).toEqual("state");
+      expect(authorizationResponse.expiresIn).not.toBeNull();
+    });
+
+    it("When using the Implicit Flow, all response parameters are added to the fragment component of the Redirection URI, as specified in OAuth 2.0 Multiple Response Type Encoding Practices [OAuth.Responses], unless a different Response Mode was specified.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code token id_token",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.responseMode).toEqual("#");
+      expect(authorizationResponse.code).not.toBeNull();
     });
 
     it("access_token OAuth 2.0 Access Token.", async () => {
@@ -216,7 +315,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -225,6 +324,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.responseMode).toEqual("#");
+      expect(authorizationResponse.code).not.toBeNull();
       expect(authorizationResponse.accessToken).not.toBeNull();
     });
 
@@ -233,7 +333,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "id_token",
+        responseType: "code id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -242,6 +342,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.responseMode).toEqual("#");
+      expect(authorizationResponse.code).not.toBeNull();
       expect(authorizationResponse.accessToken).toBeNull();
     });
 
@@ -250,7 +351,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -259,6 +360,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.responseMode).toEqual("#");
+      expect(authorizationResponse.code).not.toBeNull();
       expect(authorizationResponse.accessToken).not.toBeNull();
       expect(authorizationResponse.tokenType).toEqual("Bearer");
     });
@@ -268,7 +370,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -277,6 +379,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.responseMode).toEqual("#");
+      expect(authorizationResponse.code).not.toBeNull();
       expect(authorizationResponse.accessToken).not.toBeNull();
       expect(authorizationResponse.tokenType).toEqual("Bearer");
       expect(authorizationResponse.idToken).not.toBeNull();
@@ -287,7 +390,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -296,6 +399,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.responseMode).toEqual("#");
+      expect(authorizationResponse.code).not.toBeNull();
       expect(authorizationResponse.accessToken).not.toBeNull();
       expect(authorizationResponse.tokenType).toEqual("Bearer");
       expect(authorizationResponse.idToken).not.toBeNull();
@@ -307,7 +411,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -316,12 +420,14 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.responseMode).toEqual("#");
+      expect(authorizationResponse.code).not.toBeNull();
       expect(authorizationResponse.accessToken).not.toBeNull();
       expect(authorizationResponse.tokenType).toEqual("Bearer");
       expect(authorizationResponse.idToken).not.toBeNull();
       expect(authorizationResponse.state).toEqual("state");
       expect(authorizationResponse.expiresIn).not.toBeNull();
     });
+
   });
 
   describe("3.2.2.9.  Access Token Validation", () => {
@@ -333,7 +439,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -363,14 +469,14 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
     });
   });
 
-  describe("3.2.2.10.  ID Token", () => {
+  describe("3.3.2.11.  ID Token", () => {
     //The contents of the ID Token are as described in Section 2. When using the Implicit Flow, these additional requirements for the following ID Token Claims apply:
     it("nonce Use of the nonce Claim is REQUIRED for this flow.", async () => {
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -402,7 +508,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "token id_token",
+        responseType: "code token id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -437,7 +543,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         redirectUri: clientSecretPostClient.redirectUri,
-        responseType: "id_token",
+        responseType: "code id_token",
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
         responseMode: "query",
@@ -461,9 +567,42 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(decodedIdToken.payload).toHaveProperty("nonce");
       expect(decodedIdToken.payload).not.toHaveProperty("at_hash");
     });
+
+    it("c_hash Code hash value. Its value is the base64url encoding of the left-most half of the hash of the octets of the ASCII representation of the code value, where the hash algorithm used is the hash algorithm used in the alg Header Parameter of the ID Token's JOSE Header. For instance, if the alg is HS512, hash the code value with SHA-512, then take the left-most 256 bits and base64url encode them. The c_hash value is a case sensitive string.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code id_token",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.responseMode).toEqual("#");
+      expect(authorizationResponse.idToken).not.toBeNull();
+      expect(authorizationResponse.state).toEqual("state");
+
+      const jwksResponse = await getJwks({
+        endpoint: serverConfig.jwksEndpoint,
+      });
+
+      const decodedIdToken = verifyAndDecodeIdToken({
+        idToken: authorizationResponse.idToken,
+        jwks: jwksResponse.data,
+      });
+      console.log(decodedIdToken);
+
+      expect(decodedIdToken.payload).toHaveProperty("nonce");
+      expect(decodedIdToken.payload).not.toHaveProperty("at_hash");
+      expect(decodedIdToken.payload).toHaveProperty("c_hash");
+      expect(decodedIdToken.payload.c_hash).toEqual(calculateIdTokenClaimHashWithS256(authorizationResponse.code));
+    });
   });
 
-  describe("3.2.2.11.  ID Token Validation", () => {
+  describe("3.3.2.12.  ID Token Validation", () => {
     //When using the Implicit Flow, the contents of the ID Token MUST be validated in the same manner as for the Authorization Code Flow, as defined in Section 3.1.3.7, with the exception of the differences specified in this section.
     it("1. The Client MUST validate the signature of the ID Token according to JWS [JWS] using the algorithm specified in the alg Header Parameter of the JOSE Header.", async () => {
       const { authorizationResponse } = await requestAuthorizations({
@@ -525,4 +664,165 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(decodedIdToken.payload.nonce).toEqual(nonce);
     });
   });
+
+  describe("3.3.3.6.  ID Token", () => {
+    //When using the Hybrid Flow, the contents of an ID Token returned from the Token Endpoint are the same as for an ID Token returned from the Authorization Endpoint, as defined in Section 3.3.2.11, with the exception of the differences specified in this section.
+    it("If an ID Token is returned from both the Authorization Endpoint and from the Token Endpoint, which is the case for the response_type values code id_token and code id_token token, the iss and sub Claim Values MUST be identical in both ID Tokens. ", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code token id_token",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        clientSecretPostClient,
+        display: "page",
+        prompt: "login",
+        nonce: "nonce",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+      expect(authorizationResponse.idToken).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("id_token");
+
+      const jwkResponse = await getJwks({
+        endpoint: serverConfig.jwksEndpoint,
+      });
+
+      const decodedIdToken = verifyAndDecodeIdToken({
+        idToken: authorizationResponse.idToken,
+        jwks: jwkResponse.data,
+      });
+
+      const decodedIdTokenTokenResponse = verifyAndDecodeIdToken({
+        idToken: tokenResponse.data.id_token,
+        jwks: jwkResponse.data,
+      });
+
+      expect(decodedIdToken.payload.iss).toEqual(decodedIdTokenTokenResponse.payload.iss);
+      expect(decodedIdToken.payload.sub).toEqual(decodedIdTokenTokenResponse.payload.sub);
+    });
+  });
+
+  describe("3.3.3.7.  ID Token Validation", () => {
+    it("When using the Hybrid Flow, the contents of an ID Token returned from the Token Endpoint MUST be validated in the same manner as for the Authorization Code Flow, as defined in Section 3.1.3.7.", async () => {
+      const nonce = "1234";
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code token id_token",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        clientSecretPostClient,
+        display: "page",
+        prompt: "login",
+        nonce,
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+      expect(authorizationResponse.idToken).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("id_token");
+
+      const jwkResponse = await getJwks({
+        endpoint: serverConfig.jwksEndpoint,
+      });
+
+      const decodedIdToken = verifyAndDecodeIdToken({
+        idToken: authorizationResponse.idToken,
+        jwks: jwkResponse.data,
+      });
+
+      const decodedIdTokenTokenResponse = verifyAndDecodeIdToken({
+        idToken: tokenResponse.data.id_token,
+        jwks: jwkResponse.data,
+      });
+
+      expect(decodedIdToken.payload.iss).toEqual(decodedIdTokenTokenResponse.payload.iss);
+      expect(decodedIdToken.payload.sub).toEqual(decodedIdTokenTokenResponse.payload.sub);
+      expect(decodedIdToken.verifyResult).toEqual(true);
+      expect(decodedIdToken.payload.nonce).toEqual(nonce);
+    });
+  });
+
+  describe("3.3.3.9.  Access Token Validation", () => {
+    it("When using the Hybrid Flow, the Access Token returned from the Token Endpoint is validated in the same manner as for the Authorization Code Flow, as defined in Section 3.1.3.8.", async () => {
+      const nonce = "1234";
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code token id_token",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "state",
+        responseMode: "query",
+        clientSecretPostClient,
+        display: "page",
+        prompt: "login",
+        nonce,
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+      expect(authorizationResponse.idToken).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("id_token");
+
+      const jwkResponse = await getJwks({
+        endpoint: serverConfig.jwksEndpoint,
+      });
+
+      const decodedIdToken = verifyAndDecodeIdToken({
+        idToken: authorizationResponse.idToken,
+        jwks: jwkResponse.data,
+      });
+
+      const decodedIdTokenTokenResponse = verifyAndDecodeIdToken({
+        idToken: tokenResponse.data.id_token,
+        jwks: jwkResponse.data,
+      });
+
+      expect(decodedIdToken.payload.iss).toEqual(decodedIdTokenTokenResponse.payload.iss);
+      expect(decodedIdToken.payload.sub).toEqual(decodedIdTokenTokenResponse.payload.sub);
+      expect(decodedIdToken.verifyResult).toEqual(true);
+      expect(decodedIdTokenTokenResponse.payload.nonce).toEqual(nonce);
+      expect(decodedIdTokenTokenResponse.payload.at_hash).toEqual(
+        calculateIdTokenClaimHashWithS256(tokenResponse.data.access_token)
+      );
+    });
+  });
 });
+

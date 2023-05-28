@@ -9,7 +9,7 @@ import {
 import { requestAuthorizations } from "./oauth";
 import { createJwtWithPrivateKey, verifyAndDecodeIdToken } from "./lib/jose";
 import { createBasicAuthHeader, toEpocTime } from "./lib/util";
-import { calculateAtHashWithS256 } from "./lib/oauth";
+import { calculateIdTokenClaimHashWithS256 } from "./lib/oauth";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
   it("success pattern", async () => {
@@ -842,7 +842,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       console.log(decodedIdToken);
       if (decodedIdToken.payload.at_hash) {
         expect(decodedIdToken.payload.at_hash).toEqual(
-          calculateAtHashWithS256(tokenResponse.data.access_token)
+          calculateIdTokenClaimHashWithS256(tokenResponse.data.access_token)
         );
       }
     });
@@ -1049,7 +1049,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         console.log(decodedIdToken);
         if (decodedIdToken.payload.at_hash) {
           expect(decodedIdToken.payload.at_hash).toEqual(
-            calculateAtHashWithS256(tokenResponse.data.access_token)
+            calculateIdTokenClaimHashWithS256(tokenResponse.data.access_token)
           );
         }
       });

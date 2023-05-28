@@ -42,7 +42,7 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
     throwExceptionIfNotContainsRedirectUri(context);
     throwExceptionIfUnRegisteredRedirectUri(context);
     throwExceptionIfHttpRedirectUriAndImplicitFlow(context);
-    throwExceptionIfNotContainsNonceAndImplicitFlow(context);
+    throwExceptionIfNotContainsNonceAndImplicitFlowOrHybridFlow(context);
     baseVerifier.verify(context);
     throwExceptionIfInvalidDisplay(context);
     throwExceptionIfInvalidPrompt(context);
@@ -99,13 +99,13 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
     }
   }
 
-  void throwExceptionIfNotContainsNonceAndImplicitFlow(OAuthRequestContext context) {
-    if (!context.isOidcImplicitFlow()) {
+  void throwExceptionIfNotContainsNonceAndImplicitFlowOrHybridFlow(OAuthRequestContext context) {
+    if (!context.isOidcImplicitFlowOrHybridFlow()) {
       return;
     }
     if (!context.authorizationRequest().hasNonce()) {
       throw new OAuthBadRequestException(
-          "invalid_request", "When using this flow, authorization request must contains nonce.");
+          "invalid_request", "When using implicit flow or hybrid flow, authorization request must contains nonce.");
     }
   }
 

@@ -20,6 +20,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
         state: "aiueo",
         scope: "openid profile phone email" + clientSecretPostClient.scope,
         redirectUri: clientSecretPostClient.redirectUri,
+        nonce: "nonce",
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.idToken).not.toBeNull();
@@ -47,6 +48,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
         state: "aiueo",
         scope: "openid profile phone email" + clientSecretPostClient.scope,
         redirectUri: clientSecretPostClient.redirectUri,
+        nonce: "nonce",
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.idToken).not.toBeNull();
@@ -78,6 +80,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
         state: "aiueo",
         scope: "openid profile phone email" + clientSecretPostClient.scope,
         redirectUri: clientSecretPostClient.redirectUri,
+        nonce: "nonce",
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.idToken).not.toBeNull();
@@ -111,6 +114,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
         state: "aiueo",
         scope: "openid profile phone email" + clientSecretPostClient.scope,
         redirectUri: clientSecretPostClient.redirectUri,
+        nonce: "nonce",
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.idToken).not.toBeNull();
@@ -146,6 +150,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
         state: "aiueo",
         scope: "openid profile phone email" + clientSecretPostClient.scope,
         redirectUri: clientSecretPostClient.redirectUri,
+        nonce: "nonce",
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.idToken).not.toBeNull();
@@ -183,6 +188,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
         state: "aiueo",
         scope: "openid profile phone email" + clientSecretPostClient.scope,
         redirectUri: clientSecretPostClient.redirectUri,
+        nonce: "nonce",
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.idToken).not.toBeNull();

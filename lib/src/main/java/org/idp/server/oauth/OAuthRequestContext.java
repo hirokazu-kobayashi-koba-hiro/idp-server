@@ -162,6 +162,10 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     return authorizationRequest.isPromptNone();
   }
 
+  public boolean isOidcImplicitFlowOrHybridFlow() {
+    return responseType().isOidcImplicitFlow() || responseType().isHybridFlow();
+  }
+
   public boolean isOidcImplicitFlow() {
     return responseType().isOidcImplicitFlow();
   }
