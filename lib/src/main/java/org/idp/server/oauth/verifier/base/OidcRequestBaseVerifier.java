@@ -105,7 +105,8 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
     }
     if (!context.authorizationRequest().hasNonce()) {
       throw new OAuthBadRequestException(
-          "invalid_request", "When using implicit flow or hybrid flow, authorization request must contains nonce.");
+          "invalid_request",
+          "When using implicit flow or hybrid flow, authorization request must contains nonce.");
     }
   }
 

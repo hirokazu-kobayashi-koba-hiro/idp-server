@@ -77,6 +77,16 @@ export const clientSecretPostClient = {
     y: "413NbE2n5PeQJlG1Nfq_nCbqR_ZKbVAzsyyrmYph7Fs",
     alg: "ES256",
   },
+  requestEncKey: {
+    kty: "EC",
+    use: "enc",
+    crv: "P-256",
+    kid: "request_enc_key",
+    x: "PM6be42POiKdNzRKGeZ1Gia8908XfmSSbS4cwPasWTo",
+    y: "wksaan9a4h3L8R1UMmvc9w6rPB_F07IA-VHx7n7Add4",
+    alg: "ECDH-ES"
+  },
+  requestEnc: "A256GCM",
   requestUri: "",
   invalidRequestUri: "https://invalid.request.uri/request",
   httpRedirectUri: "http://localhost:8081/callback",

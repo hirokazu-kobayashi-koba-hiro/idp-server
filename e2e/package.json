@@ -23,10 +23,9 @@
     "jwk-to-pem": "^2.0.5",
     "jwt-decode": "^3.1.2",
     "prettier": "2.8.4",
-    "uuid": "^9.0.0"
-  },
-  "dependencies": {
+    "uuid": "^9.0.0",
     "jest-html-reporters": "^3.1.4",
+    "jose": "^4.14.4",
     "openid-client": "^5.4.2"
   }
 }

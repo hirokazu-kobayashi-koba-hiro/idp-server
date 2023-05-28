@@ -14,7 +14,7 @@
   ],
   "userinfo_endpoint": "http://localhost:8080/123/api/v1/userinfo",
   "jwks_uri": "http://localhost:8080/123/api/v1/jwks",
-  "jwks": "{\n    \"keys\": [\n        {\n            \"kty\": \"EC\",\n            \"d\": \"yIWDrlhnCy3yL9xLuqZGOBFFq4PWGsCeM7Sc_lfeaQQ\",\n            \"use\": \"sig\",\n            \"crv\": \"P-256\",\n            \"kid\": \"access_token\",\n            \"x\": \"iWJINqt0ySv3kVEvlHbvNkPKY2pPSf1cG1PSx3tRfw0\",\n            \"y\": \"rW1FdfXK5AQcv-Go6Xho0CR5AbLai7Gp9IdLTIXTSIQ\",\n            \"alg\": \"ES256\"\n        }\n    ]\n}",
+  "jwks": "{\n    \"keys\": [\n        {\n            \"kty\": \"EC\",\n            \"d\": \"yIWDrlhnCy3yL9xLuqZGOBFFq4PWGsCeM7Sc_lfeaQQ\",\n            \"use\": \"sig\",\n            \"crv\": \"P-256\",\n            \"kid\": \"access_token\",\n            \"x\": \"iWJINqt0ySv3kVEvlHbvNkPKY2pPSf1cG1PSx3tRfw0\",\n            \"y\": \"rW1FdfXK5AQcv-Go6Xho0CR5AbLai7Gp9IdLTIXTSIQ\",\n            \"alg\": \"ES256\"\n        }\n,{\n    \"kty\": \"EC\",\n    \"d\": \"HrgT4zqM2BvrlwUWagyeNnZ40nZ7rTY4gYG9k99oGJg\",\n    \"use\": \"enc\",\n    \"crv\": \"P-256\",\n    \"kid\": \"request_enc_key\",\n    \"x\": \"PM6be42POiKdNzRKGeZ1Gia8908XfmSSbS4cwPasWTo\",\n    \"y\": \"wksaan9a4h3L8R1UMmvc9w6rPB_F07IA-VHx7n7Add4\",\n    \"alg\": \"ECDH-ES\"\n}]\n}",
   "grant_types_supported": [
     "authorization_code",
     "refresh_token",

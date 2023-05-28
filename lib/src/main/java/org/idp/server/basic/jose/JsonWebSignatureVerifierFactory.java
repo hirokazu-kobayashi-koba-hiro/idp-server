@@ -8,15 +8,20 @@ import com.nimbusds.jwt.SignedJWT;
 
 public class JsonWebSignatureVerifierFactory {
 
+  JsonWebSignature jsonWebSignature;
+  String publicJwks;
+  String secret;
   DefaultJWSVerifierFactory defaultJWSVerifierFactory;
 
-  public JsonWebSignatureVerifierFactory() {
+  public JsonWebSignatureVerifierFactory(
+      JsonWebSignature jsonWebSignature, String publicJwks, String secret) {
+    this.jsonWebSignature = jsonWebSignature;
+    this.publicJwks = publicJwks;
+    this.secret = secret;
     this.defaultJWSVerifierFactory = new DefaultJWSVerifierFactory();
   }
 
-  public JsonWebSignatureVerifier create(
-      JsonWebSignature jsonWebSignature, String publicJwks, String secret)
-      throws JwkInvalidException, JoseInvalidException {
+  public JsonWebSignatureVerifier create() throws JwkInvalidException, JoseInvalidException {
     try {
       if (jsonWebSignature.isSymmetricType()) {
         MACVerifier macVerifier = new MACVerifier(secret);

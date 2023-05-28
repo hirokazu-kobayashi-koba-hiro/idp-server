@@ -12,7 +12,7 @@ public class JoseHandler {
     creators = new HashMap<>();
     creators.put(JoseType.plain, new JwsContextCreator());
     creators.put(JoseType.signature, new JwsContextCreator());
-    creators.put(JoseType.encryption, new JwsContextCreator());
+    creators.put(JoseType.encryption, new JweContextCreator());
   }
 
   public JoseContext handle(String jose, String publicJwks, String privateJwks, String secret)
