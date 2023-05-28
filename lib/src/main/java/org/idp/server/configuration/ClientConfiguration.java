@@ -31,6 +31,7 @@ public class ClientConfiguration implements JsonReadable {
   String backchannelClientNotificationEndpoint = "";
   String backchannelAuthenticationRequestSigningAlg = "";
   Boolean backchannelUserCodeParameter;
+  String applicationType = "web";
   // extension
   boolean supportedJar;
   String issuer;
@@ -198,5 +199,9 @@ public class ClientConfiguration implements JsonReadable {
 
   public boolean isSupportedGrantType(GrantType grantType) {
     return grantTypes.contains(grantType.value());
+  }
+
+  public boolean isWebApplication() {
+    return applicationType.equals("web");
   }
 }

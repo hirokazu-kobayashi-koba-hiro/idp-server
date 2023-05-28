@@ -30,6 +30,6 @@
   "token_endpoint_auth_method": "private_key_jwt",
   "logo_uri": "https://client.example.org/logo.png",
   "jwks_uri": "https://client.example.org/my_public_keys.jwks",
-  "example_extension_parameter": "example_value",
+  "application_type": "web",
   "jwks": "{\n    \"keys\": [\n        {\n            \"kty\": \"RSA\",\n            \"e\": \"AQAB\",\n            \"use\": \"sig\",\n            \"kid\": \"client_secret_key\",\n            \"alg\": \"RS256\",\n            \"n\": \"sFSqsWu2koU69oG67L5wsVGwzkye80Bd9lmOfiSkSTXyc8IKl4gwmj9tjzxxA1pGYi4SKEQaBYNl8JrGhttBcbtraqwaS5Q6jpG24C1z9njUumJWJneA3EJ9Lpun9d3uCA3b_71XnK5Pr-VtwzpU6z8VGNMZhl8rZ5p1L0syMpZ03y5tSWVMntceiqNaFuJCFXGMVSlp6vrVCqpcM4r035tUR-PwjSynpxe7OGlQpHVSvBCbXJJufi0QxIIjdPx2ka586TlvFjVu0QBEcEon_BMrPDWPD1aaAEcSPM9U7fWzlK6btJ8d37TXZ0_rRPQ_tVeZAlDnRclehHkKflkNjw\"\n        }\n    ]\n}"
 }

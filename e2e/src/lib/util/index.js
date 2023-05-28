@@ -94,7 +94,8 @@ export const base64UrlEncode = (input) => {
   if (Buffer.isEncoding("base64url")) {
     return input.toString("base64url");
   } else {
-    const fromBase64 = (base64) => base64.replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+    const fromBase64 = (base64) =>
+      base64.replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
     return fromBase64(input.toString("base64"));
   }
 };

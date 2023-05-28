@@ -79,6 +79,7 @@ export const clientSecretPostClient = {
   },
   requestUri: "",
   invalidRequestUri: "https://invalid.request.uri/request",
+  httpRedirectUri: "http://localhost:8081/callback",
 };
 
 export const clientSecretBasicClient = {

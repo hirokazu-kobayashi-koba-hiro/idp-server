@@ -41,6 +41,8 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
   public void verify(OAuthRequestContext context) {
     throwExceptionIfNotContainsRedirectUri(context);
     throwExceptionIfUnRegisteredRedirectUri(context);
+    throwExceptionIfHttpRedirectUriAndImplicitFlow(context);
+    throwExceptionIfNotContainsNonceAndImplicitFlow(context);
     baseVerifier.verify(context);
     throwExceptionIfInvalidDisplay(context);
     throwExceptionIfInvalidPrompt(context);
@@ -78,6 +80,32 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
           String.format(
               "authorization request redirect_uri does not register in client configuration (%s)",
               context.redirectUri().value()));
+    }
+  }
+
+  void throwExceptionIfHttpRedirectUriAndImplicitFlow(OAuthRequestContext context) {
+    if (!context.isOidcImplicitFlow()) {
+      return;
+    }
+    if (!context.isWebApplication()) {
+      return;
+    }
+    if (context.redirectUri().isHttp()) {
+      throw new OAuthBadRequestException(
+          "invalid_request",
+          String.format(
+              "When using this flow and client application is web application, the Redirection URI MUST NOT use the http scheme (%s)",
+              context.redirectUri().value()));
+    }
+  }
+
+  void throwExceptionIfNotContainsNonceAndImplicitFlow(OAuthRequestContext context) {
+    if (!context.isOidcImplicitFlow()) {
+      return;
+    }
+    if (!context.authorizationRequest().hasNonce()) {
+      throw new OAuthBadRequestException(
+          "invalid_request", "When using this flow, authorization request must contains nonce.");
     }
   }
 

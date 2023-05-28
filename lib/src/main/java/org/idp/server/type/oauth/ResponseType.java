@@ -5,7 +5,17 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** ResponseType */
+/**
+ * ResponseType
+ *
+ * <p>All but the code Response Type value, which is defined by OAuth 2.0 [RFC6749], are defined in
+ * the OAuth 2.0 Multiple Response Type Encoding Practices [OAuth.Responses] specification. NOTE:
+ * While OAuth 2.0 also defines the token Response Type value for the Implicit Flow, OpenID Connect
+ * does not use this Response Type, since no ID Token would be returned.
+ *
+ * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#Authentication">3.
+ *     Authentication</a>
+ */
 public enum ResponseType {
   code(Set.of("code"), "code"),
   token(Set.of("token"), "token"),
@@ -32,7 +42,8 @@ public enum ResponseType {
     }
     Set<String> inputValues = Arrays.stream(input.split(" ")).collect(Collectors.toSet());
     for (ResponseType responseType : ResponseType.values()) {
-      if (responseType.values.containsAll(inputValues)) {
+      if (responseType.values.size() == inputValues.size()
+          && responseType.values.containsAll(inputValues)) {
         return responseType;
       }
     }
@@ -43,8 +54,12 @@ public enum ResponseType {
     return this == code;
   }
 
-  public boolean isImplicitFlow() {
-    return this == token || this == id_token || this == token_id_token;
+  public boolean isOAuthImplicitFlow() {
+    return this == token;
+  }
+
+  public boolean isOidcImplicitFlow() {
+    return this == id_token || this == token_id_token;
   }
 
   public boolean isHybridFlow() {

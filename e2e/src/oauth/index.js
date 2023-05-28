@@ -84,7 +84,6 @@ export const requestAuthorizations = async ({
         authorizationResponse,
       };
     } else {
-
       const denyResponse = await deny({
         endpoint: serverConfig.denyEndpoint,
         id: response.data.id,

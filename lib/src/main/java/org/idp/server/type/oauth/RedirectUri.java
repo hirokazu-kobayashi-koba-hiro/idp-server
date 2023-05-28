@@ -32,4 +32,8 @@ public class RedirectUri {
   public int hashCode() {
     return Objects.hash(value);
   }
+
+  public boolean isHttp() {
+    return value.startsWith("http://");
+  }
 }
