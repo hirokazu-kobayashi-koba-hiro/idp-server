@@ -21,6 +21,8 @@ public class OAuthRequestResponse {
   AuthorizationErrorResponse errorResponse;
   Map<String, String> contents;
   String redirectUri;
+  String error;
+  String errorDescription;
 
   public OAuthRequestResponse() {}
 
@@ -39,6 +41,8 @@ public class OAuthRequestResponse {
   public OAuthRequestResponse(
       OAuthRequestStatus status, Error error, ErrorDescription errorDescription) {
     this.status = status;
+    this.error = error.value();
+    this.errorDescription = errorDescription.value();
     this.contents = Map.of("error", error.value(), "error_description", errorDescription.value());
   }
 
@@ -84,5 +88,13 @@ public class OAuthRequestResponse {
 
   public List<String> scopeList() {
     return authorizationRequest.scope().toStringList();
+  }
+
+  public String error() {
+    return error;
+  }
+
+  public String errorDescription() {
+    return errorDescription;
   }
 }

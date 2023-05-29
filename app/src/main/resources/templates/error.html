@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authorization Page</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+      /* Add any custom styles here */
+  </style>
+</head>
+<body class="bg-gray-100">
+<div class="min-h-screen flex items-center justify-center">
+  <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+    <h2 class="text-2xl mb-4">Error</h2>
+    <p class="text-red-500 mb-4">authorization request is error:</p>
+    <p th:text="${error}"></p>
+    <p th:text="${errorDescription}"></p>
+  </div>
+</div>
+</body>
+</html>

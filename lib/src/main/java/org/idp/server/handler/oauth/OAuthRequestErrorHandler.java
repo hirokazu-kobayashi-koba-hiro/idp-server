@@ -12,9 +12,8 @@ import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.oauth.response.AuthorizationErrorResponse;
 import org.idp.server.oauth.response.AuthorizationErrorResponseBuilder;
 import org.idp.server.type.extension.ResponseModeValue;
-import org.idp.server.type.oauth.RedirectUri;
-import org.idp.server.type.oauth.State;
-import org.idp.server.type.oauth.TokenIssuer;
+import org.idp.server.type.oauth.*;
+import org.idp.server.type.oauth.Error;
 
 public class OAuthRequestErrorHandler {
 
@@ -45,14 +44,20 @@ public class OAuthRequestErrorHandler {
     if (exception instanceof ClientConfigurationNotFoundException) {
       log.log(Level.WARNING, "not found configuration");
       log.log(Level.WARNING, exception.getMessage(), exception);
-      return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST);
+      Error error = new Error("invalid_request");
+      ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
+      return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST, error, errorDescription);
     }
     if (exception instanceof ServerConfigurationNotFoundException) {
       log.log(Level.WARNING, "not found configuration");
       log.log(Level.WARNING, exception.getMessage(), exception);
-      return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST);
+      Error error = new Error("invalid_request");
+      ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
+      return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST, error, errorDescription);
     }
+    Error error = new Error("server_error");
+    ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
     log.log(Level.SEVERE, exception.getMessage(), exception);
-    return new OAuthRequestResponse(OAuthRequestStatus.SERVER_ERROR);
+    return new OAuthRequestResponse(OAuthRequestStatus.SERVER_ERROR, error, errorDescription);
   }
 }

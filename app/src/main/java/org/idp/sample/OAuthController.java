@@ -53,8 +53,9 @@ public class OAuthController implements ParameterTransformable {
         return "redirect:" + response.redirectUri();
       }
       default -> {
-        // TODO
-        return "authorizations";
+        model.addAttribute("error", response.error());
+        model.addAttribute("errorDescription", response.errorDescription());
+        return "error";
       }
     }
   }
