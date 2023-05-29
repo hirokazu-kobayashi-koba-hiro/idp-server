@@ -1,5 +1,6 @@
 package org.idp.server.handler.oauth.io;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
@@ -75,5 +76,13 @@ public class OAuthRequestResponse {
 
   public String redirectUri() {
     return redirectUri;
+  }
+
+  public String authorizationRequestId() {
+    return authorizationRequest.identifier().value();
+  }
+
+  public List<String> scopeList() {
+    return authorizationRequest.scope().toStringList();
   }
 }

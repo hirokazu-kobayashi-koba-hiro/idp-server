@@ -57,4 +57,8 @@ public class Scopes {
   public boolean contains(String scope) {
     return values.contains(scope);
   }
+
+  public List<String> toStringList() {
+    return values.stream().toList();
+  }
 }
