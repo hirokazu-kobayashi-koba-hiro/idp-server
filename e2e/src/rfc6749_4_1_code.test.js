@@ -212,7 +212,6 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
         responseType: "code",
         scope: unsupportedClient.scope,
         redirectUri: unsupportedClient.redirectUri,
-        action: "deny",
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.error).not.toBeNull();

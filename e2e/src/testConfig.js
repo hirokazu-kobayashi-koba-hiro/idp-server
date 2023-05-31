@@ -1,7 +1,7 @@
 export const serverConfig = {
   issuer: "https://server.example.com/123",
   authorizationEndpoint:
-    "http://localhost:8080/123/api/debug/v1/authorizations",
+    "http://localhost:8080/123/v1/authorizations",
   authorizeEndpoint:
     "http://localhost:8080/123/api/debug/v1/authorizations/{id}/authorize",
   denyEndpoint:
@@ -18,7 +18,7 @@ export const serverConfig = {
     "http://localhost:8080/123/api/v1/backchannel/authentications/automated-complete",
   discoveryEndpoint:
     "http://localhost:8080/123/.well-known/openid-configuration",
-  enabledSsr: false,
+  enabledSsr: true,
   ciba: {
     loginHint: "001",
     userCode: "successUserCode",
@@ -62,7 +62,7 @@ export const clientSecretPostClient = {
   clientId: "clientSecretPost",
   clientSecret:
     "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
-  redirectUri: "https://client.example.org/callback",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
@@ -95,7 +95,7 @@ export const clientSecretPostClient = {
 export const clientSecretBasicClient = {
   clientId: "s6BhdRkqt3",
   clientSecret: "cf136dc3c1fc93f31185e5885805d",
-  redirectUri: "https://client.example.org/callback",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
@@ -106,7 +106,7 @@ export const clientSecretJwtClient = {
   clientId: "clientSecretJwt",
   clientSecret:
     "clientSecretJwtSecret1234567890123456789012345678901234567890123456789012345678901234567890",
-  redirectUri: "https://client.example.org/callback",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
@@ -116,7 +116,7 @@ export const clientSecretJwtClient = {
 export const privateKeyJwtClient = {
   clientId: "privateKeyJwt",
   clientSecret: "privateKeyJwtSecret",
-  redirectUri: "https://client.example.org/callback",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
@@ -140,7 +140,7 @@ export const privateKeyJwtClient = {
 export const unsupportedClient = {
   clientId: "unsupportedClient",
   clientSecret: "unsupportedClientSecret",
-  redirectUri: "https://client.example.org/callback",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",

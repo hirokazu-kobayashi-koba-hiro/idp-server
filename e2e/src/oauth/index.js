@@ -1,6 +1,7 @@
-import { authorize, deny, getAuthorizations } from "../api/oauthClient";
+import { authorize, createAuthorizationRequest, deny, getAuthorizations } from "../api/oauthClient";
 import { serverConfig } from "../testConfig";
-import { convertToAuthorizationResponse } from "../lib/util";
+import { convertToAuthorizationResponse, sleep } from "../lib/util";
+import puppeteer from "puppeteer-core";
 
 export const requestAuthorizations = async ({
   endpoint,
@@ -24,34 +25,112 @@ export const requestAuthorizations = async ({
   codeChallenge,
   codeChallengeMethod,
   action = "authorize",
-  enabledSsr = false,
 }) => {
-  const response = await getAuthorizations({
-    endpoint,
-    scope,
-    responseType,
-    clientId,
-    redirectUri,
-    state,
-    responseMode,
-    nonce,
-    display,
-    prompt,
-    maxAge,
-    uiLocales,
-    idTokenHint,
-    loginHint,
-    acrValues,
-    claims,
-    request,
-    requestUri,
-    codeChallenge,
-    codeChallengeMethod,
-  });
-  console.log(response.data);
-  if (enabledSsr) {
-    return {};
+  if (serverConfig.enabledSsr) {
+    const requestUrl = await createAuthorizationRequest({
+      endpoint,
+      scope,
+      responseType,
+      clientId,
+      redirectUri,
+      state,
+      responseMode,
+      nonce,
+      display,
+      prompt,
+      maxAge,
+      uiLocales,
+      idTokenHint,
+      loginHint,
+      acrValues,
+      claims,
+      request,
+      requestUri,
+      codeChallenge,
+      codeChallengeMethod,
+    });
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+
+    await page.goto(requestUrl);
+
+    // Wait and click on first result
+    try {
+      const buttonSelector = action === "authorize" ? "#authorize-button" : "#deny-button";
+      const button = await page.waitForSelector(buttonSelector, {
+        timeout: 100
+      });
+      await button.click();
+      console.log("click");
+      await page.waitForNavigation({
+        timeout: 1000,
+      });
+      const url = page.url();
+      console.log(url);
+
+      const authorizationResponse = convertToAuthorizationResponse(
+        url,
+      );
+      return {
+        status: 302,
+        authorizationResponse,
+      };
+    } catch (e) {
+      try {
+        console.log("error");
+        const errorElement = await page.waitForSelector("#error", {
+          timeout: 100
+        });
+        console.log("errorDescription");
+        const errorDescriptionElement = await page.waitForSelector("#errorDescription", {
+          timeout: 100
+        });
+        console.log("jsonValue");
+        const error = await (await errorElement.getProperty("textContent")).jsonValue();
+        const errorDescription = await ((await errorDescriptionElement.getProperty("textContent")).jsonValue());
+        return {
+          status: 400,
+          error: {
+            error,
+            error_description: errorDescription,
+          }
+        };
+      } catch (e) {
+        const url = page.url();
+        console.log(url);
+        const authorizationResponse = convertToAuthorizationResponse(
+          url,
+        );
+        return {
+          status: 302,
+          authorizationResponse,
+        };
+      }
+    }
   } else {
+    const response = await getAuthorizations({
+      endpoint,
+      scope,
+      responseType,
+      clientId,
+      redirectUri,
+      state,
+      responseMode,
+      nonce,
+      display,
+      prompt,
+      maxAge,
+      uiLocales,
+      idTokenHint,
+      loginHint,
+      acrValues,
+      claims,
+      request,
+      requestUri,
+      codeChallenge,
+      codeChallengeMethod,
+    });
+    console.log(response.data);
     if (response.status === 302) {
       console.debug("redirect");
       console.log(response.headers);

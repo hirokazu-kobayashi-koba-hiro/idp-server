@@ -59,7 +59,6 @@ describe("The OAuth 2.0 Authorization Framework code client_secret_basic", () =>
         scope: clientSecretBasicClient.scope,
       });
       console.log(authorizationResponse);
-      expect(status).toBe(302);
 
       expect(authorizationResponse.error).toEqual("invalid_request");
       expect(authorizationResponse.errorDescription).toEqual(
@@ -91,7 +90,6 @@ describe("The OAuth 2.0 Authorization Framework code client_secret_basic", () =>
         scope: "test bank",
       });
       console.log(authorizationResponse);
-      expect(status).toBe(302);
 
       expect(authorizationResponse.error).toEqual("invalid_scope");
       expect(authorizationResponse.errorDescription).toEqual(

@@ -123,7 +123,10 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   }
 
   public RedirectUri redirectUri() {
-    return authorizationRequest.redirectUri();
+    if (authorizationRequest.hasRedirectUri()) {
+      return authorizationRequest.redirectUri();
+    }
+    return clientConfiguration.getFirstRedirectUri();
   }
 
   public TokenIssuer tokenIssuer() {

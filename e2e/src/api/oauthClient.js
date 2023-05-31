@@ -1,27 +1,27 @@
 import { get, post } from "../lib/http";
 import { convertToSnake } from "../lib/util";
 
-export const getAuthorizations = async ({
-  endpoint,
-  scope,
-  responseType,
-  clientId,
-  redirectUri,
-  state,
-  responseMode,
-  nonce,
-  display,
-  prompt,
-  maxAge,
-  uiLocales,
-  idTokenHint,
-  loginHint,
-  acrValues,
-  claims,
-  request,
-  requestUri,
-  codeChallenge,
-  codeChallengeMethod,
+export const createAuthorizationRequest = ({
+ endpoint,
+ scope,
+ responseType,
+ clientId,
+ redirectUri,
+ state,
+ responseMode,
+ nonce,
+ display,
+ prompt,
+ maxAge,
+ uiLocales,
+ idTokenHint,
+ loginHint,
+ acrValues,
+ claims,
+ request,
+ requestUri,
+ codeChallenge,
+ codeChallengeMethod,
 }) => {
   let params = {};
   if (scope) {
@@ -141,6 +141,53 @@ export const getAuthorizations = async ({
   const query = new URLSearchParams(convertToSnake(params)).toString();
   const url = `${endpoint}?${query}`;
   console.log(url);
+  return url;
+};
+
+export const getAuthorizations = async ({
+  endpoint,
+  scope,
+  responseType,
+  clientId,
+  redirectUri,
+  state,
+  responseMode,
+  nonce,
+  display,
+  prompt,
+  maxAge,
+  uiLocales,
+  idTokenHint,
+  loginHint,
+  acrValues,
+  claims,
+  request,
+  requestUri,
+  codeChallenge,
+  codeChallengeMethod,
+}) => {
+  const url = createAuthorizationRequest({
+    endpoint,
+    scope,
+    responseType,
+    clientId,
+    redirectUri,
+    state,
+    responseMode,
+    nonce,
+    display,
+    prompt,
+    maxAge,
+    uiLocales,
+    idTokenHint,
+    loginHint,
+    acrValues,
+    claims,
+    request,
+    requestUri,
+    codeChallenge,
+    codeChallengeMethod,
+  });
   return await get({
     url: url,
     headers: {},

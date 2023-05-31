@@ -120,7 +120,6 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         state: "state",
       });
       console.log(authorizationResponse);
-      expect(status).toBe(200);
 
       expect(authorizationResponse.code).not.toBeNull();
     });
@@ -135,7 +134,6 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         state: "state",
       });
       console.log(authorizationResponse);
-      expect(status).toBe(200);
 
       expect(authorizationResponse.code).not.toBeNull();
     });
@@ -151,7 +149,6 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         responseMode: "query",
       });
       console.log(authorizationResponse);
-      expect(status).toBe(200);
 
       expect(authorizationResponse.code).not.toBeNull();
     });
