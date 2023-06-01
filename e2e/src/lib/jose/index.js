@@ -26,6 +26,17 @@ export const createJwe = async ({ text, key, enc }) => {
   return jwe;
 };
 
+export const createJwtWithNoneSignature = ({
+ payload,
+ additionalOptions,
+}) => {
+  const none = jwt.sign(payload, "", {
+    ...additionalOptions,
+    algorithm: "none",
+  });
+  console.log(none);
+  return none;
+};
 export const createJwtWithPrivateKey = ({
   payload,
   privateKey,

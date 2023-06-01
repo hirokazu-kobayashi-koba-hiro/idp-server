@@ -1,7 +1,7 @@
 export const serverConfig = {
   issuer: "https://server.example.com/123",
   authorizationEndpoint:
-    "http://localhost:8080/123/v1/authorizations",
+    "http://localhost:8080/123/api/debug/v1/authorizations",
   authorizeEndpoint:
     "http://localhost:8080/123/api/debug/v1/authorizations/{id}/authorize",
   denyEndpoint:
@@ -18,7 +18,7 @@ export const serverConfig = {
     "http://localhost:8080/123/api/v1/backchannel/authentications/automated-complete",
   discoveryEndpoint:
     "http://localhost:8080/123/.well-known/openid-configuration",
-  enabledSsr: true,
+  enabledSsr: false,
   ciba: {
     loginHint: "001",
     userCode: "successUserCode",

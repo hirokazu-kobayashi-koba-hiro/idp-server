@@ -10,7 +10,7 @@ public class JoseHandler {
 
   public JoseHandler() {
     creators = new HashMap<>();
-    creators.put(JoseType.plain, new JwsContextCreator());
+    creators.put(JoseType.plain, new JwtContextCreator());
     creators.put(JoseType.signature, new JwsContextCreator());
     creators.put(JoseType.encryption, new JweContextCreator());
   }

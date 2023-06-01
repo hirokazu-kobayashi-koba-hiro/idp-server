@@ -61,6 +61,9 @@ public class JsonWebSignature {
   }
 
   public boolean isSymmetricType() {
+    if (!exists()) {
+      return false;
+    }
     JWSAlgorithm algorithm = value.getHeader().getAlgorithm();
     return algorithm.equals(JWSAlgorithm.HS256)
         || algorithm.equals(JWSAlgorithm.HS384)
