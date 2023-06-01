@@ -3,15 +3,11 @@ import { describe, expect, it } from "@jest/globals";
 import {
   completeBackchannelAuthentications,
   requestBackchannelAuthentications,
-  requestToken,
 } from "./api/oauthClient";
 import {
-  clientSecretBasicClient,
   clientSecretJwtClient,
-  clientSecretPostClient,
   serverConfig,
 } from "./testConfig";
-import { createBasicAuthHeader, sleep } from "./lib/util";
 import { createClientAssertion } from "./lib/oauth";
 
 describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0", () => {

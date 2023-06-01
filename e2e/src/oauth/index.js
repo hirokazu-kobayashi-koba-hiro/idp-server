@@ -1,8 +1,7 @@
 import { authorize, createAuthorizationRequest, deny, getAuthorizations } from "../api/oauthClient";
 import { serverConfig } from "../testConfig";
-import { convertToAuthorizationResponse, sleep } from "../lib/util";
+import { convertToAuthorizationResponse } from "../lib/util";
 import puppeteer from "puppeteer-core";
-
 export const requestAuthorizations = async ({
   endpoint,
   scope,
@@ -49,13 +48,14 @@ export const requestAuthorizations = async ({
       codeChallenge,
       codeChallengeMethod,
     });
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
 
     await page.goto(requestUrl);
 
     // Wait and click on first result
     try {
+
       const buttonSelector = action === "authorize" ? "#authorize-button" : "#deny-button";
       const button = await page.waitForSelector(buttonSelector, {
         timeout: 100
@@ -106,6 +106,9 @@ export const requestAuthorizations = async ({
           authorizationResponse,
         };
       }
+    } finally {
+      console.log("finally");
+      await browser.close();
     }
   } else {
     const response = await getAuthorizations({

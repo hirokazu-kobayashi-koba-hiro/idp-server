@@ -7,12 +7,10 @@ import {
 } from "./api/oauthClient";
 import {
   clientSecretBasicClient,
-  clientSecretJwtClient,
-  clientSecretPostClient,
   serverConfig,
 } from "./testConfig";
-import { createBasicAuthHeader, sleep } from "./lib/util";
-import { createClientAssertion } from "./lib/oauth";
+import { createBasicAuthHeader } from "./lib/util";
+
 
 describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0", () => {
   const ciba = serverConfig.ciba;

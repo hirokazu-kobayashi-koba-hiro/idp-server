@@ -56,7 +56,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     console.log(decodedIdToken);
   });
 
-  it("success pattern jew", async () => {
+  it("success pattern jwe", async () => {
     const requestObject = createJwtWithPrivateKey({
       payload: {
         client_id: clientSecretPostClient.clientId,
