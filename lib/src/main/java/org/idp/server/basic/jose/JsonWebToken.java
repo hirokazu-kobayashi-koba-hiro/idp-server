@@ -2,7 +2,6 @@ package org.idp.server.basic.jose;
 
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
-
 import java.text.ParseException;
 import java.util.Objects;
 
@@ -36,8 +35,6 @@ public class JsonWebToken {
     return Objects.nonNull(value);
   }
 
-
-
   public JsonWebTokenClaims claims() {
     try {
       JWTClaimsSet jwtClaimsSet = value.getJWTClaimsSet();
@@ -46,5 +43,4 @@ public class JsonWebToken {
       throw new RuntimeException(e);
     }
   }
-
 }
