@@ -1,5 +1,5 @@
 {
-  "issuer": "https://server.example.com/999",
+  "issuer": "http://localhost:8080/999",
   "authorization_endpoint": "http://localhost:8080/999/api/debug/v1/authorizations",
   "token_endpoint": "http://localhost:8080/999/api/v1/tokens",
   "token_endpoint_auth_methods_supported": [],

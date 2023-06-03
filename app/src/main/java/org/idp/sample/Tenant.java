@@ -1,8 +1,8 @@
 package org.idp.sample;
 
 public enum Tenant {
-  sample("123", "https://server.example.com/123"),
-  unsupported("999", "https://server.example.com/999");
+  sample("123", "http://localhost:8080/123"),
+  unsupported("999", "http://localhost:8080/999");
 
   String id;
   String issuer;

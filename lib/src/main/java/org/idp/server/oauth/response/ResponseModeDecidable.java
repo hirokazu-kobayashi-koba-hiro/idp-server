@@ -10,9 +10,12 @@ public interface ResponseModeDecidable {
       ResponseType responseType, ResponseMode responseMode) {
     if (responseMode.isDefinedResponseModeValue()) {
       return new ResponseModeValue(responseMode.responseModeValue());
+    } else if (responseType.isAuthorizationCodeFlow()
+        || responseType.isUndefined()
+        || responseType.isUnknown()) {
+      return new ResponseModeValue("?");
     } else {
-      String value = responseType.isAuthorizationCodeFlow() ? "?" : "#";
-      return new ResponseModeValue(value);
+      return new ResponseModeValue("#");
     }
   }
 }

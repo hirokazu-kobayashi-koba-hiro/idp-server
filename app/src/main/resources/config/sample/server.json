@@ -1,5 +1,5 @@
 {
-  "issuer": "https://server.example.com/123",
+  "issuer": "http://localhost:8080/123",
   "authorization_endpoint": "http://localhost:8080/123/api/debug/v1/authorizations",
   "token_endpoint": "http://localhost:8080/123/api/v1/tokens",
   "token_endpoint_auth_methods_supported": [
@@ -105,7 +105,14 @@
     "email_verified",
     "locale",
     "zoneinfo",
-    "http://example.info/claims/groups"
+    "birthdate",
+    "gender",
+    "preferred_username",
+    "middle_name",
+    "updated_at",
+    "address",
+    "phone_number",
+    "phone_number_verified"
   ],
   "claims_parameter_supported": true,
   "service_documentation": "http://server.example.com/connect/service_documentation.html",
@@ -133,5 +140,5 @@
   "id_token_signed_key_id": "access_token",
   "access_token_duration": 3600,
   "id_token_duration": 3600,
-  "id_token_strict_mode": false
+  "id_token_strict_mode": true
 }

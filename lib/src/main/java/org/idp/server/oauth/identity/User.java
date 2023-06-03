@@ -14,15 +14,16 @@ public class User {
   String picture;
   String website;
   String email;
-  boolean emailVerified;
+  Boolean emailVerified;
   String gender;
   String birthdate;
   String zoneinfo;
   String locale;
   String phoneNumber;
-  boolean phoneNumberVerified;
+  Boolean phoneNumberVerified;
   // address
-  long updateAt;
+  Address address;
+  Long updatedAt;
 
   public String sub() {
     return sub;
@@ -186,16 +187,101 @@ public class User {
     return this;
   }
 
-  public long updateAt() {
-    return updateAt;
+  public Address address() {
+    return address;
   }
 
-  public User setUpdateAt(long updateAt) {
-    this.updateAt = updateAt;
+  public User setAddress(Address address) {
+    this.address = address;
+    return this;
+  }
+
+  public long updateAt() {
+    return updatedAt;
+  }
+
+  public User setUpdatedAt(long updatedAt) {
+    this.updatedAt = updatedAt;
     return this;
   }
 
   public boolean exists() {
     return Objects.nonNull(sub) && !sub.isEmpty();
+  }
+
+  public boolean hasName() {
+    return Objects.nonNull(name) && !name.isEmpty();
+  }
+
+  public boolean hasGivenName() {
+    return Objects.nonNull(givenName) && !givenName.isEmpty();
+  }
+
+  public boolean hasFamilyName() {
+    return Objects.nonNull(familyName) && !familyName.isEmpty();
+  }
+
+  public boolean hasMiddleName() {
+    return Objects.nonNull(middleName) && !middleName.isEmpty();
+  }
+
+  public boolean hasNickname() {
+    return Objects.nonNull(nickname) && !nickname.isEmpty();
+  }
+
+  public boolean hasPreferredUsername() {
+    return Objects.nonNull(preferredUsername) && !preferredUsername.isEmpty();
+  }
+
+  public boolean hasProfile() {
+    return Objects.nonNull(profile) && !profile.isEmpty();
+  }
+
+  public boolean hasPicture() {
+    return Objects.nonNull(picture) && !picture.isEmpty();
+  }
+
+  public boolean hasWebsite() {
+    return Objects.nonNull(website) && !website.isEmpty();
+  }
+
+  public boolean hasEmail() {
+    return Objects.nonNull(email) && !email.isEmpty();
+  }
+
+  public boolean hasEmailVerified() {
+    return Objects.nonNull(emailVerified);
+  }
+
+  public boolean hasGender() {
+    return Objects.nonNull(gender) && !gender.isEmpty();
+  }
+
+  public boolean hasBirthdate() {
+    return Objects.nonNull(birthdate) && !birthdate.isEmpty();
+  }
+
+  public boolean hasZoneinfo() {
+    return Objects.nonNull(zoneinfo) && !zoneinfo.isEmpty();
+  }
+
+  public boolean hasLocale() {
+    return Objects.nonNull(locale) && !locale.isEmpty();
+  }
+
+  public boolean hasPhoneNumber() {
+    return Objects.nonNull(phoneNumber) && !phoneNumber.isEmpty();
+  }
+
+  public boolean hasPhoneNumberVerified() {
+    return Objects.nonNull(phoneNumberVerified);
+  }
+
+  public boolean hasAddress() {
+    return Objects.nonNull(address) && address.exists();
+  }
+
+  public boolean hasUpdatedAt() {
+    return Objects.nonNull(updatedAt);
   }
 }

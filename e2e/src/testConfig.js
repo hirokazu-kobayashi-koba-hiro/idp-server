@@ -1,5 +1,5 @@
 export const serverConfig = {
-  issuer: "https://server.example.com/123",
+  issuer: "http://localhost:8080/123",
   authorizationEndpoint:
     "http://localhost:8080/123/api/debug/v1/authorizations",
   authorizeEndpoint:

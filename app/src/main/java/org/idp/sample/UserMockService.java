@@ -4,10 +4,13 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.UUID;
+
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.ciba.CibaRequestDelegate;
 import org.idp.server.ciba.UserCriteria;
 import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.oauth.OAuthRequestDelegate;
+import org.idp.server.oauth.identity.Address;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.token.PasswordCredentialsGrantDelegate;
@@ -105,6 +108,7 @@ public class UserMockService
         .setSub("001")
         .setName("ito ichiro")
         .setGivenName("ichiro")
+        .setMiddleName("mac")
         .setFamilyName("ito")
         .setNickname("ito")
         .setPreferredUsername("ichiro")
@@ -119,6 +123,7 @@ public class UserMockService
         .setLocale("locale")
         .setPhoneNumber("09012345678")
         .setPhoneNumberVerified(false)
-        .setUpdateAt(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC));
+        .setAddress(new Address().setStreetAddress("street"))
+        .setUpdatedAt(SystemDateTime.now().toEpochSecond(ZoneOffset.UTC));
   }
 }

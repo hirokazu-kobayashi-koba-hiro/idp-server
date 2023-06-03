@@ -4,9 +4,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.UserinfoApi;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.handler.userinfo.UserinfoDelegate;
 import org.idp.server.handler.userinfo.io.UserinfoRequest;
 import org.idp.server.handler.userinfo.io.UserinfoRequestResponse;
+import org.idp.server.oauth.identity.Address;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.type.oauth.Subject;
 import org.springframework.http.HttpStatus;
@@ -18,9 +20,11 @@ import org.springframework.web.bind.annotation.*;
 public class UserinfoV1Api implements ParameterTransformable, UserinfoDelegate {
 
   UserinfoApi userinfoApi;
+  UserMockService userMockService;
 
-  public UserinfoV1Api(IdpServerApplication idpServerApplication) {
+  public UserinfoV1Api(IdpServerApplication idpServerApplication, UserMockService userMockService) {
     this.userinfoApi = idpServerApplication.userinfoApi();
+    this.userMockService = userMockService;
   }
 
   @GetMapping
@@ -45,24 +49,6 @@ public class UserinfoV1Api implements ParameterTransformable, UserinfoDelegate {
 
   @Override
   public User getUser(Subject subject) {
-    return new User()
-        .setSub("001")
-        .setName("ito ichiro")
-        .setGivenName("ichiro")
-        .setFamilyName("ito")
-        .setNickname("ito")
-        .setPreferredUsername("ichiro")
-        .setProfile("https://example.com/profiles/123")
-        .setPicture("https://example.com/pictures/123")
-        .setWebsite("https://example.com")
-        .setEmail("ito.ichiro@gmail.com")
-        .setEmailVerified(true)
-        .setGender("other")
-        .setBirthdate("2000-02-02")
-        .setZoneinfo("ja-jp")
-        .setLocale("locale")
-        .setPhoneNumber("09012345678")
-        .setPhoneNumberVerified(false)
-        .setUpdateAt(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC));
+    return userMockService.getUser();
   }
 }

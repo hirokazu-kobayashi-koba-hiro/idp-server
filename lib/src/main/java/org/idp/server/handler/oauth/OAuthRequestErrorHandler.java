@@ -39,6 +39,7 @@ public class OAuthRequestErrorHandler {
               .add(redirectableBadRequestException.error())
               .add(redirectableBadRequestException.errorDescription());
       AuthorizationErrorResponse errorResponse = builder.build();
+      log.log(Level.WARNING, redirectableBadRequestException.getMessage(), exception);
       return new OAuthRequestResponse(OAuthRequestStatus.REDIRECABLE_BAD_REQUEST, errorResponse);
     }
     if (exception instanceof ClientConfigurationNotFoundException) {
