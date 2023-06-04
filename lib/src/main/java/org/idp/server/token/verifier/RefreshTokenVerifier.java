@@ -26,6 +26,11 @@ public class RefreshTokenVerifier {
           "invalid_grant",
           String.format("refresh token does not exists (%s)", context.refreshToken().value()));
     }
+    if (!oAuthToken.authorizationGrant().isGranted(context.clientId())) {
+      throw new TokenBadRequestException(
+          "invalid_grant",
+          String.format("refresh token does not exists (%s)", context.refreshToken().value()));
+    }
   }
 
   void throwExceptionIfExpiredToken() {

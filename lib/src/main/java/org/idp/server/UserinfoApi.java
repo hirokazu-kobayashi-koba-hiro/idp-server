@@ -1,5 +1,7 @@
 package org.idp.server;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.idp.server.handler.userinfo.UserinfoDelegate;
 import org.idp.server.handler.userinfo.UserinfoHandler;
 import org.idp.server.handler.userinfo.io.UserinfoRequest;
@@ -8,9 +10,6 @@ import org.idp.server.handler.userinfo.io.UserinfoRequestStatus;
 import org.idp.server.type.oauth.Error;
 import org.idp.server.type.oauth.ErrorDescription;
 import org.idp.server.userinfo.UserinfoErrorResponse;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class UserinfoApi {
 

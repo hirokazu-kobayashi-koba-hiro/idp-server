@@ -52,7 +52,11 @@ public class RefreshTokenGrantService
 
     oAuthTokenRepository.delete(oAuthToken);
 
-    return new OAuthToken(
-        identifier, tokenResponse, accessToken, refreshToken, oAuthToken.authorizationGrant());
+    OAuthToken refresh =
+        new OAuthToken(
+            identifier, tokenResponse, accessToken, refreshToken, oAuthToken.authorizationGrant());
+    oAuthTokenRepository.register(refresh);
+
+    return refresh;
   }
 }

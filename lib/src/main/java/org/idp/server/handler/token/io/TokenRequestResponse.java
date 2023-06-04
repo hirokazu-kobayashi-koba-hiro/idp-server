@@ -3,26 +3,36 @@ package org.idp.server.handler.token.io;
 import org.idp.server.token.TokenErrorResponse;
 import org.idp.server.token.TokenResponse;
 import org.idp.server.token.TokenResponseBuilder;
-import org.idp.server.type.ContentType;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class TokenRequestResponse {
   TokenRequestStatus status;
   TokenResponse tokenResponse;
   TokenErrorResponse errorResponse;
-  ContentType contentType;
+  Map<String, String> headers;
 
   public TokenRequestResponse(TokenRequestStatus status, TokenResponse tokenResponse) {
     this.status = status;
     this.tokenResponse = tokenResponse;
     this.errorResponse = new TokenErrorResponse();
-    this.contentType = ContentType.application_json;
+    Map<String, String> values = new HashMap<>();
+    values.put("Content-Typ", "application/json");
+    values.put("Cache-Control", "no-store");
+    values.put("Pragma", "no-cache");
+    this.headers = values;
   }
 
   public TokenRequestResponse(TokenRequestStatus status, TokenErrorResponse errorResponse) {
     this.status = status;
     this.tokenResponse = new TokenResponseBuilder().build();
     this.errorResponse = errorResponse;
-    this.contentType = ContentType.application_json;
+    Map<String, String> values = new HashMap<>();
+    values.put("Content-Typ", "application/json");
+    values.put("Cache-Control", "no-store");
+    values.put("Pragma", "no-cache");
+    this.headers = values;
   }
 
   public String contents() {
@@ -32,13 +42,9 @@ public class TokenRequestResponse {
     return errorResponse.contents();
   }
 
-  public ContentType contentType() {
-    return contentType;
-  }
-
-  public String contentTypeValue() {
-    return contentType.value();
-  }
+ public Map<String, String> responseHeaders() {
+    return headers;
+ }
 
   public TokenResponse tokenResponse() {
     return tokenResponse;
