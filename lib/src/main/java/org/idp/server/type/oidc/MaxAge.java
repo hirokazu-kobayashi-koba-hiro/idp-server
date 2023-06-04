@@ -27,6 +27,10 @@ public class MaxAge {
     this.value = value;
   }
 
+  public MaxAge(long value) {
+    this.value = String.valueOf(value);
+  }
+
   public String value() {
     return value;
   }

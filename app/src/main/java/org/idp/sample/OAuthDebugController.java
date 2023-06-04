@@ -71,7 +71,7 @@ public class OAuthDebugController implements ParameterTransformable {
             .setAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     OAuthAuthorizeRequest authAuthorizeRequest =
-        new OAuthAuthorizeRequest(id, tenant.issuer(), user).setAuthentication(authentication);
+        new OAuthAuthorizeRequest(id, tenant.issuer(), user, authentication);
     OAuthAuthorizeResponse authAuthorizeResponse = oAuthApi.authorize(authAuthorizeRequest);
     Map<String, String> response = Map.of("redirect_uri", authAuthorizeResponse.redirectUriValue());
     return new ResponseEntity<>(response, HttpStatus.OK);

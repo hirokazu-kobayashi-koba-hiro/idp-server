@@ -67,6 +67,7 @@ public class ServerConfiguration implements JsonReadable {
   long refreshTokenDuration = 3600;
   long idTokenDuration = 3600;
   boolean idTokenStrictMode = false;
+  long defaultMaxAge = 86400;
 
   public ServerConfiguration() {}
 
@@ -466,5 +467,9 @@ public class ServerConfiguration implements JsonReadable {
 
   public boolean isSupportedGrantType(GrantType grantType) {
     return grantTypesSupported.contains(grantType.value());
+  }
+
+  public long defaultMaxAge() {
+    return defaultMaxAge;
   }
 }

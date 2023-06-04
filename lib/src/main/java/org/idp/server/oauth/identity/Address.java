@@ -1,9 +1,10 @@
 package org.idp.server.oauth.identity;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Address {
+public class Address implements Serializable {
   String formatted;
   String streetAddress;
   String locality;

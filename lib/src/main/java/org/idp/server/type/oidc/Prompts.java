@@ -1,6 +1,7 @@
 package org.idp.server.type.oidc;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * prompt OPTIONAL. Space delimited,
@@ -43,5 +44,13 @@ public class Prompts implements Iterable<Prompt> {
 
   public boolean isMultiValue() {
     return values.size() >= 2;
+  }
+
+  public String toStringValues() {
+    if (values.isEmpty()) {
+      return "";
+    }
+    Set<String> setValues = values.stream().map(Enum::name).collect(Collectors.toSet());
+    return String.join(" ", setValues);
   }
 }

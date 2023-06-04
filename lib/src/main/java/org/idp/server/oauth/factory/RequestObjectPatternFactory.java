@@ -118,7 +118,11 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
     builder.add(nonce);
     builder.add(display);
     builder.add(prompts);
-    builder.add(maxAge);
+    if (maxAge.exists()) {
+      builder.add(maxAge);
+    } else {
+      builder.add(new MaxAge(serverConfiguration.defaultMaxAge()));
+    }
     builder.add(uiLocales);
     builder.add(idTokenHint);
     builder.add(loginHint);

@@ -176,4 +176,8 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   public boolean isWebApplication() {
     return clientConfiguration.isWebApplication();
   }
+
+  public ClientId clientId() {
+    return clientConfiguration.clientId();
+  }
 }

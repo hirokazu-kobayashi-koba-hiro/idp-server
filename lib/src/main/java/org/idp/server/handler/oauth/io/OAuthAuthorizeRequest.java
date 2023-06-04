@@ -16,15 +16,12 @@ public class OAuthAuthorizeRequest {
   Authentication authentication;
   Map<String, Object> customProperties = new HashMap<>();
 
-  public OAuthAuthorizeRequest(String id, String tokenIssuer, User user) {
+  public OAuthAuthorizeRequest(
+      String id, String tokenIssuer, User user, Authentication authentication) {
     this.id = id;
     this.tokenIssuer = tokenIssuer;
     this.user = user;
-  }
-
-  public OAuthAuthorizeRequest setAuthentication(Authentication authentication) {
     this.authentication = authentication;
-    return this;
   }
 
   public OAuthAuthorizeRequest setCustomProperties(Map<String, Object> customProperties) {

@@ -46,4 +46,8 @@ public class UiLocales {
   public boolean exists() {
     return !values.isEmpty();
   }
+
+  public String toStringValues() {
+    return String.join(" ", values);
+  }
 }

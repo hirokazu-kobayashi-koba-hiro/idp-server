@@ -224,4 +224,8 @@ public class AuthorizationRequest {
   public boolean isPromptNone() {
     return prompts().hasNone();
   }
+
+  public boolean hasMaxAge() {
+    return maxAge.exists();
+  }
 }

@@ -69,9 +69,7 @@ public class OAuthRequestHandler {
 
     if (Objects.nonNull(oAuthRequestDelegate)
         && oAuthRequestDelegate.isValidSession(
-            oAuthRequest.toSessionIdentifier(),
-            oAuthRequest.toTokenIssuer(),
-            context.authorizationRequest())) {
+            oAuthRequest.toTokenIssuer(), context.clientId(), context.authorizationRequest())) {
       return true;
     }
     throw new OAuthRedirectableBadRequestException("login_required", "invalid session", context);

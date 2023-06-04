@@ -1,5 +1,6 @@
 package org.idp.sample;
 
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
@@ -21,15 +22,18 @@ import org.springframework.web.bind.annotation.*;
 public class OAuthController implements ParameterTransformable {
 
   Logger log = LoggerFactory.getLogger(OAuthController.class);
-
+  HttpSession httpSession;
   OAuthApi oAuthApi;
   UserMockService userMockService;
 
   public OAuthController(
-      IdpServerApplication idpServerApplication, UserMockService userMockService) {
+      IdpServerApplication idpServerApplication,
+      UserMockService userMockService,
+      HttpSession httpSession) {
     this.oAuthApi = idpServerApplication.oAuthApi();
     oAuthApi.setOAuthRequestDelegate(userMockService);
     this.userMockService = userMockService;
+    this.httpSession = httpSession;
   }
 
   @GetMapping("{tenant-id}/v1/authorizations")
@@ -75,7 +79,8 @@ public class OAuthController implements ParameterTransformable {
             .setAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     OAuthAuthorizeRequest authAuthorizeRequest =
-        new OAuthAuthorizeRequest(id, tenant.issuer(), user).setAuthentication(authentication);
+        new OAuthAuthorizeRequest(id, tenant.issuer(), user, authentication);
+    httpSession.setAttribute("id", httpSession.getId());
     OAuthAuthorizeResponse authAuthorizeResponse = oAuthApi.authorize(authAuthorizeRequest);
     return "redirect:" + authAuthorizeResponse.redirectUriValue();
   }

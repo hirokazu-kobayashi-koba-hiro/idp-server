@@ -9,6 +9,7 @@ import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestBuilder;
 import org.idp.server.type.oauth.Scopes;
+import org.idp.server.type.oidc.MaxAge;
 
 /** NormalRequestFactory */
 public class NormalRequestFactory implements AuthorizationRequestFactory {
@@ -35,7 +36,11 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
     builder.add(parameters.nonce());
     builder.add(parameters.display());
     builder.add(parameters.prompts());
-    builder.add(parameters.maxAge());
+    if (parameters.hasMaxAge()) {
+      builder.add(parameters.maxAge());
+    } else {
+      builder.add(new MaxAge(serverConfiguration.defaultMaxAge()));
+    }
     builder.add(parameters.uiLocales());
     builder.add(parameters.idTokenHint());
     builder.add(parameters.loginHint());

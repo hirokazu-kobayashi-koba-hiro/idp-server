@@ -1,11 +1,12 @@
 package org.idp.server.oauth.authentication;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class Authentication {
+public class Authentication implements Serializable {
   LocalDateTime time;
   List<String> methods = new ArrayList<>();
   List<String> acrValues = new ArrayList<>();

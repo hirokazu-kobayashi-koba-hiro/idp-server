@@ -1,8 +1,9 @@
 package org.idp.server.oauth.identity;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class User {
+public class User implements Serializable {
   String sub;
   String name;
   String givenName;
