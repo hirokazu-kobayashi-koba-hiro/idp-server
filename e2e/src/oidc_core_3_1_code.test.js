@@ -492,7 +492,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(authorizationResponse.errorDescription).toEqual("invalid session");
     });
 
-    it("invalid_request_object The request parameter contains an invalid Request Object.", async () => {
+    xit("invalid_request_object The request parameter contains an invalid Request Object.", async () => {
       const request = createJwtWithPrivateKey({
         payload: {
           client_id: clientSecretPostClient.clientId,

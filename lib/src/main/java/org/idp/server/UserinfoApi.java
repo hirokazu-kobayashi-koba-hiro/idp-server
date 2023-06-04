@@ -9,9 +9,13 @@ import org.idp.server.type.oauth.Error;
 import org.idp.server.type.oauth.ErrorDescription;
 import org.idp.server.userinfo.UserinfoErrorResponse;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class UserinfoApi {
 
   UserinfoHandler userinfoHandler;
+  Logger log = Logger.getLogger(UserinfoApi.class.getName());
 
   UserinfoApi(UserinfoHandler userinfoHandler) {
     this.userinfoHandler = userinfoHandler;
@@ -23,6 +27,7 @@ public class UserinfoApi {
     } catch (Exception exception) {
       Error error = new Error("server_error");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
+      log.log(Level.SEVERE, exception.getMessage(), exception);
       return new UserinfoRequestResponse(
           UserinfoRequestStatus.SERVER_ERROR, new UserinfoErrorResponse(error, errorDescription));
     }

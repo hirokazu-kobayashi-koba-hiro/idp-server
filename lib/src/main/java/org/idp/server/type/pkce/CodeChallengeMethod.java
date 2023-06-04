@@ -4,7 +4,7 @@ import java.util.Objects;
 
 public enum CodeChallengeMethod {
   plain,
-  s256,
+  S256,
   unknown,
   undefined;
 
@@ -21,6 +21,6 @@ public enum CodeChallengeMethod {
   }
 
   public boolean isS256() {
-    return this == s256;
+    return this == S256;
   }
 }

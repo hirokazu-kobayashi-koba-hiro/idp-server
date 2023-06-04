@@ -63,6 +63,7 @@ describe("The OAuth 2.0 Authorization Framework implicit", () => {
         responseType: "token",
         state: "aiueo",
         scope: clientSecretBasicClient.scope,
+        redirectUri: clientSecretBasicClient.redirectUri,
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.accessToken).not.toBeNull();
@@ -76,6 +77,7 @@ describe("The OAuth 2.0 Authorization Framework implicit", () => {
         clientId: clientSecretBasicClient.clientId,
         responseType: "token",
         state: "aiueo",
+        redirectUri: clientSecretBasicClient.redirectUri,
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.error).toEqual("invalid_scope");
@@ -91,6 +93,7 @@ describe("The OAuth 2.0 Authorization Framework implicit", () => {
         responseType: "token",
         state: "aiueo",
         scope: clientSecretBasicClient.scope,
+        redirectUri: clientSecretBasicClient.redirectUri,
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.accessToken).not.toBeNull();
@@ -103,6 +106,7 @@ describe("The OAuth 2.0 Authorization Framework implicit", () => {
         responseType: "token",
         state: "aiueo",
         scope: clientSecretBasicClient.scope,
+        redirectUri: clientSecretBasicClient.redirectUri,
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.accessToken).not.toBeNull();
@@ -116,6 +120,7 @@ describe("The OAuth 2.0 Authorization Framework implicit", () => {
         responseType: "token",
         state: "aiueo",
         scope: clientSecretBasicClient.scope,
+        redirectUri: clientSecretBasicClient.redirectUri,
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.accessToken).not.toBeNull();
@@ -130,6 +135,7 @@ describe("The OAuth 2.0 Authorization Framework implicit", () => {
         responseType: "token",
         state: "aiueo",
         scope: clientSecretBasicClient.scope,
+        redirectUri: clientSecretBasicClient.redirectUri,
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.accessToken).not.toBeNull();
@@ -145,6 +151,7 @@ describe("The OAuth 2.0 Authorization Framework implicit", () => {
         responseType: "token",
         state: "aiueo",
         scope: clientSecretBasicClient.scope,
+        redirectUri: clientSecretBasicClient.redirectUri,
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.accessToken).not.toBeNull();
@@ -158,6 +165,7 @@ describe("The OAuth 2.0 Authorization Framework implicit", () => {
         clientId: clientSecretBasicClient.clientId,
         responseType: "token",
         scope: clientSecretBasicClient.scope,
+        redirectUri: clientSecretBasicClient.redirectUri,
       });
       console.log(reAuthorizationResponse);
       expect(reAuthorizationResponse.accessToken).not.toBeNull();
@@ -174,6 +182,7 @@ describe("The OAuth 2.0 Authorization Framework implicit", () => {
         responseType: "token",
         state: "aiueo",
         scope: clientSecretBasicClient.scope,
+        redirectUri: clientSecretBasicClient.redirectUri,
       });
       console.log(authorizationResponse);
       expect(authorizationResponse.accessToken).not.toBeNull();

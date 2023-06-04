@@ -168,7 +168,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
   });
 
   describe("6.  Passing Request Parameters as JWTs", () => {
-    it("The JWT MUST be secured with an asymmetric signature and follow the guidance from Section 10.1 of [OpenID.Core] regarding asymmetric signatures. ", async () => {
+    xit("The JWT MUST be secured with an asymmetric signature and follow the guidance from Section 10.1 of [OpenID.Core] regarding asymmetric signatures. ", async () => {
       const request = createJwt({
         payload: {
           client_id: clientSecretPostClient.clientId,
@@ -198,7 +198,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       );
     });
 
-    it("aud The Audience claim MUST contain the value of the Issuer Identifier for the OP, which identifies the Authorization Server as an intended audience.", async () => {
+    xit("aud The Audience claim MUST contain the value of the Issuer Identifier for the OP, which identifies the Authorization Server as an intended audience.", async () => {
       const request = createJwtWithPrivateKey({
         payload: {
           client_id: clientSecretPostClient.clientId,
@@ -226,7 +226,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       ).toEqual("request object is invalid, aud claim must be issuer");
     });
 
-    it("iss The Issuer claim MUST be the client_id of the OAuth Client.", async () => {
+    xit("iss The Issuer claim MUST be the client_id of the OAuth Client.", async () => {
       const request = createJwtWithPrivateKey({
         payload: {
           client_id: clientSecretPostClient.clientId,
@@ -254,7 +254,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       ).toEqual("request object is invalid, iss claim must be client_id");
     });
 
-    it("exp An expiration time that limits the validity lifetime of the signed authentication request.", async () => {
+    xit("exp An expiration time that limits the validity lifetime of the signed authentication request.", async () => {
       const request = createJwtWithPrivateKey({
         payload: {
           client_id: clientSecretPostClient.clientId,

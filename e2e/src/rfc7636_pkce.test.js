@@ -35,7 +35,7 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
     expect(tokenResponse.status).toBe(200);
   });
 
-  it("success pattern s256", async () => {
+  it("success pattern S256", async () => {
     const codeVerifier = "aiueo12345678";
     const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
     const { authorizationResponse } = await requestAuthorizations({
@@ -46,7 +46,7 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
       scope: clientSecretPostClient.scope,
       redirectUri: clientSecretPostClient.redirectUri,
       codeChallenge,
-      codeChallengeMethod: "s256",
+      codeChallengeMethod: "S256",
     });
     console.log(authorizationResponse);
     expect(authorizationResponse.code).not.toBeNull();
