@@ -15,6 +15,7 @@ import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.token.validator.ResourceOwnerPasswordGrantValidator;
 import org.idp.server.token.verifier.ResourceOwnerPasswordGrantVerifier;
 import org.idp.server.type.extension.CustomProperties;
+import org.idp.server.type.extension.GrantFlow;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ExpiresIn;
 import org.idp.server.type.oauth.Scopes;
@@ -88,6 +89,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
           createIdToken(
               authorizationGrant.user(),
               new Authentication(),
+              GrantFlow.resource_owner_password,
               scopes,
               new IdTokenClaims(),
               idTokenCustomClaims,

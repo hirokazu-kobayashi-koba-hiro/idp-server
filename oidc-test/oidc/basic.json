@@ -1,0 +1,27 @@
+{
+  "consent": {},
+  "alias": "idp_oidc_basic",
+  "description": "idp_oidc_basic",
+  "publish": "summary",
+  "server": {
+    "login_hint": "123",
+    "issuer": "http://localhost:8080/123",
+    "jwks_uri": "http://host.docker.internal:8080/123/api/v1/jwks",
+    "authorization_endpoint": "http://localhost:8080/123/v1/authorizations",
+    "token_endpoint": "http://host.docker.internal:8080/123/api/v1/tokens",
+    "userinfo_endpoint": "http://host.docker.internal:8080/123/api/v1/userinfo",
+    "acr_values": "urn:mace:incommon:iap:silver"
+  },
+  "client": {
+    "client_id": "s6BhdRkqt3",
+    "client_secret": "cf136dc3c1fc93f31185e5885805d"
+  },
+  "client_secret_post": {
+    "client_id": "clientSecretPost",
+    "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890"
+  },
+  "client2": {
+    "client_id": "clientSecretBasic2",
+    "client_secret": "clientSecretBasic2cf136dc3c1fc93f31185e5885805d1222333gogoggubaoaugaladufal2cf136dc3c1fc93f31185e5885805d1222333gogoggubaoaugaladufal"
+  }
+}

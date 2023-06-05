@@ -8,6 +8,7 @@ import org.idp.server.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenCreatable;
+import org.idp.server.type.extension.GrantFlow;
 import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
@@ -36,6 +37,7 @@ public class AuthorizationResponseTokenIdTokenCreator
         createIdToken(
             context.user(),
             context.authentication(),
+            GrantFlow.oidc_implicit,
             context.scopes(),
             context.idTokenClaims(),
             idTokenCustomClaims,

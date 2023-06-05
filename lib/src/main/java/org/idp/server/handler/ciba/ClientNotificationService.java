@@ -23,7 +23,9 @@ import org.idp.server.token.OAuthTokenIdentifier;
 import org.idp.server.token.TokenResponse;
 import org.idp.server.token.TokenResponseBuilder;
 import org.idp.server.token.repository.OAuthTokenRepository;
+import org.idp.server.type.extension.GrantFlow;
 import org.idp.server.type.oauth.ExpiresIn;
+import org.idp.server.type.oauth.ResponseType;
 import org.idp.server.type.oauth.TokenType;
 import org.idp.server.type.oidc.IdToken;
 
@@ -75,6 +77,7 @@ public class ClientNotificationService
           createIdToken(
               cibaGrant.user(),
               new Authentication(),
+              GrantFlow.ciba,
               cibaGrant.scopes(),
               new IdTokenClaims(),
               idTokenCustomClaims,

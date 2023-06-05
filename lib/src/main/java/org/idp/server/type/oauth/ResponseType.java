@@ -66,6 +66,10 @@ public enum ResponseType {
     return this == code_token || this == code_id_token || this == code_token_id_token;
   }
 
+  public boolean isOidcHybridFlow() {
+    return this == code_id_token || this == code_token_id_token;
+  }
+
   public boolean isUndefined() {
     return this == undefined;
   }

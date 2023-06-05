@@ -91,11 +91,12 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
       return;
     }
     if (context.redirectUri().isHttp()) {
-      throw new OAuthBadRequestException(
+      throw new OAuthRedirectableBadRequestException(
           "invalid_request",
           String.format(
               "When using this flow and client application is web application, the Redirection URI MUST NOT use the http scheme (%s)",
-              context.redirectUri().value()));
+              context.redirectUri().value()),
+          context);
     }
   }
 
@@ -104,9 +105,10 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
       return;
     }
     if (!context.authorizationRequest().hasNonce()) {
-      throw new OAuthBadRequestException(
+      throw new OAuthRedirectableBadRequestException(
           "invalid_request",
-          "When using implicit flow or hybrid flow, authorization request must contains nonce.");
+          "When using implicit flow or hybrid flow, authorization request must contains nonce.",
+          context);
     }
   }
 

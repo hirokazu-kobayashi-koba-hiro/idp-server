@@ -1,11 +1,10 @@
 package org.idp.server.handler.token.io;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.token.TokenErrorResponse;
 import org.idp.server.token.TokenResponse;
 import org.idp.server.token.TokenResponseBuilder;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class TokenRequestResponse {
   TokenRequestStatus status;
@@ -42,9 +41,9 @@ public class TokenRequestResponse {
     return errorResponse.contents();
   }
 
- public Map<String, String> responseHeaders() {
+  public Map<String, String> responseHeaders() {
     return headers;
- }
+  }
 
   public TokenResponse tokenResponse() {
     return tokenResponse;

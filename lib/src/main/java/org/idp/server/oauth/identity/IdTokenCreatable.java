@@ -12,6 +12,7 @@ import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.type.extension.ExpiredAt;
+import org.idp.server.type.extension.GrantFlow;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
 
@@ -20,6 +21,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
   default IdToken createIdToken(
       User user,
       Authentication authentication,
+      GrantFlow grantFlow,
       Scopes scopes,
       IdTokenClaims idTokenClaims,
       IdTokenCustomClaims customClaims,
@@ -30,6 +32,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
           createClaims(
               user,
               authentication,
+              grantFlow,
               customClaims,
               scopes,
               idTokenClaims,
@@ -52,6 +55,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
   private Map<String, Object> createClaims(
       User user,
       Authentication authentication,
+      GrantFlow grantFlow,
       IdTokenCustomClaims idTokenCustomClaims,
       Scopes scopes,
       IdTokenClaims idTokenClaims,
@@ -91,7 +95,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
     }
 
     IdTokenIndividualClaimsDecider idTokenIndividualClaimsDecider =
-        new IdTokenIndividualClaimsDecider(
+        new IdTokenIndividualClaimsDecider(grantFlow,
             scopes, idTokenClaims, supportedClaims, enableStrictMode);
     Map<String, Object> individualClaims =
         createIndividualClaims(user, idTokenIndividualClaimsDecider);

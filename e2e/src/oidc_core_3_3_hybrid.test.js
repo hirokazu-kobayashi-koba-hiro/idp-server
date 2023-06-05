@@ -170,7 +170,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
     });
 
     it("nonce REQUIRED. String value used to associate a Client session with an ID Token, and to mitigate replay attacks. The value is passed through unmodified from the Authentication Request to the ID Token. Sufficient entropy MUST be present in the nonce values used to prevent attackers from guessing values. For implementation notes, see Section 15.5.2.", async () => {
-      const { status, error } = await requestAuthorizations({
+      const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         responseType: "code token id_token",
@@ -178,10 +178,9 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         scope: "openid " + clientSecretPostClient.scope,
         state: "state",
       });
-      expect(status).toBe(400);
 
-      expect(error.error).toEqual("invalid_request");
-      expect(error.error_description).toContain(
+      expect(authorizationResponse.error).toEqual("invalid_request");
+      expect(authorizationResponse.errorDescription).toContain(
         "When using implicit flow or hybrid flow, authorization request must contains nonce."
       );
     });
