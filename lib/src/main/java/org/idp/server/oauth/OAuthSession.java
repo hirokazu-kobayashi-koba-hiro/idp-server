@@ -47,6 +47,9 @@ public class OAuthSession implements Serializable {
   }
 
   public boolean isValid(AuthorizationRequest request) {
+    if (request.isPromptLogin()) {
+      return false;
+    }
     LocalDateTime authenticationTime = authentication.time();
     LocalDateTime now = SystemDateTime.now();
     if (now.isAfter(authenticationTime.plusSeconds(request.maxAge().toLongValue()))) {

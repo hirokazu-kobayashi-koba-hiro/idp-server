@@ -225,6 +225,10 @@ public class AuthorizationRequest {
     return prompts().hasNone();
   }
 
+  public boolean isPromptLogin() {
+    return prompts().hasLogin();
+  }
+
   public boolean hasMaxAge() {
     return maxAge.exists();
   }

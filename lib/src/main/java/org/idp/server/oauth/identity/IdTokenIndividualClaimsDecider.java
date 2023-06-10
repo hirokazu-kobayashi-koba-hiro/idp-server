@@ -114,7 +114,7 @@ public class IdTokenIndividualClaimsDecider {
       return false;
     }
     if (grantFlow.isOidcIdTokenOnlyImplicitFlow()) {
-      return scopes.contains("profile");
+      return scopes.contains("profile") || idTokenClaims.hasName();
     }
     if (enabledStrictMode) {
       return idTokenClaims.hasName();

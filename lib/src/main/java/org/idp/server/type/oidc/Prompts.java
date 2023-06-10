@@ -53,4 +53,8 @@ public class Prompts implements Iterable<Prompt> {
     Set<String> setValues = values.stream().map(Enum::name).collect(Collectors.toSet());
     return String.join(" ", setValues);
   }
+
+  public boolean hasLogin() {
+    return values.contains(Prompt.login);
+  }
 }
