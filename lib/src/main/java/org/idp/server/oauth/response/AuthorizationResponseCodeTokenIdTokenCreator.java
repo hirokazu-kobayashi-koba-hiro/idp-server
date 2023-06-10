@@ -1,7 +1,6 @@
 package org.idp.server.oauth.response;
 
 import org.idp.server.oauth.OAuthAuthorizeContext;
-import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.IdTokenCreatable;
 import org.idp.server.oauth.identity.IdTokenCustomClaims;
@@ -40,7 +39,7 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
     IdToken idToken =
         createIdToken(
             context.user(),
-            new Authentication(),
+            context.authentication(),
             GrantFlow.hybrid,
             context.scopes(),
             context.idTokenClaims(),
