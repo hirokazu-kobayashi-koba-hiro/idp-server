@@ -95,8 +95,8 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
     }
 
     IdTokenIndividualClaimsDecider idTokenIndividualClaimsDecider =
-        new IdTokenIndividualClaimsDecider(grantFlow,
-            scopes, idTokenClaims, supportedClaims, enableStrictMode);
+        new IdTokenIndividualClaimsDecider(
+            grantFlow, scopes, idTokenClaims, supportedClaims, enableStrictMode);
     Map<String, Object> individualClaims =
         createIndividualClaims(user, idTokenIndividualClaimsDecider);
     claims.putAll(individualClaims);

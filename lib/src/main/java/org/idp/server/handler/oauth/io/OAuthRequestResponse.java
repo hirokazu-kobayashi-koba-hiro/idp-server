@@ -5,6 +5,7 @@ import java.util.Map;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.OAuthRequestContext;
+import org.idp.server.oauth.OAuthSession;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.response.AuthorizationErrorResponse;
 import org.idp.server.oauth.response.AuthorizationResponse;
@@ -18,24 +19,25 @@ public class OAuthRequestResponse {
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
   AuthorizationResponse response;
+  OAuthSession session;
   AuthorizationErrorResponse errorResponse;
   Map<String, String> contents;
   String redirectUri;
   String error;
   String errorDescription;
+  String sessionKey;
 
   public OAuthRequestResponse() {}
 
-  public OAuthRequestResponse(OAuthRequestStatus status) {
-    this.status = status;
-  }
-
-  public OAuthRequestResponse(OAuthRequestStatus status, OAuthRequestContext context) {
+  public OAuthRequestResponse(
+      OAuthRequestStatus status, OAuthRequestContext context, OAuthSession session) {
     this.status = status;
     this.authorizationRequest = context.authorizationRequest();
     this.serverConfiguration = context.serverConfiguration();
     this.clientConfiguration = context.clientConfiguration();
+    this.session = session;
     this.contents = Map.of("id", context.identifier().value());
+    this.sessionKey = context.sessionKeyValue();
   }
 
   public OAuthRequestResponse(
@@ -96,5 +98,9 @@ public class OAuthRequestResponse {
 
   public String errorDescription() {
     return errorDescription;
+  }
+
+  public String sessionKey() {
+    return sessionKey;
   }
 }

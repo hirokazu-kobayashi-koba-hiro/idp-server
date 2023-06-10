@@ -9,8 +9,7 @@ import org.idp.server.handler.oauth.OAuthRequestHandler;
 import org.idp.server.handler.oauth.io.*;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.OAuthRequestDelegate;
-import org.idp.server.oauth.interaction.UserInteraction;
-import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.OAuthSession;
 import org.idp.server.oauth.response.AuthorizationResponse;
 import org.idp.server.type.oauth.TokenIssuer;
 
@@ -40,31 +39,25 @@ public class OAuthApi {
    * authorization grant. The authorization server MUST first verify the identity of the resource
    * owner. The way in which the authorization server authenticates the resource owner (e.g.,
    * username and password login, session cookies) is beyond the scope of this specification.
-   *
-   * @param oAuthRequest
-   * @return
    */
   public OAuthRequestResponse request(OAuthRequest oAuthRequest) {
     try {
       OAuthRequestContext context = requestHandler.handle(oAuthRequest);
-      if (requestHandler.isAuthorizable(oAuthRequest, context, oAuthRequestDelegate)) {
+      OAuthSession session = oAuthRequestDelegate.findSession(context.sessionKey());
+      if (requestHandler.isAuthorizable(context, session, oAuthRequestDelegate)) {
         TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
-        AuthorizationRequest authorizationRequest = context.authorizationRequest();
-        UserInteraction interaction =
-            oAuthRequestDelegate.getUserInteraction(
-                tokenIssuer, context.clientId(), authorizationRequest);
         OAuthAuthorizeRequest oAuthAuthorizeRequest =
             new OAuthAuthorizeRequest(
                     context.authorizationRequestIdentifier().value(),
                     tokenIssuer.value(),
-                    interaction.user(),
-                    interaction.authentication())
-                .setCustomProperties(interaction.customProperties().values());
+                    session.user(),
+                    session.authentication())
+                .setCustomProperties(session.customProperties());
         AuthorizationResponse response =
             authAuthorizeHandler.handle(oAuthAuthorizeRequest, oAuthRequestDelegate);
         return new OAuthRequestResponse(OAuthRequestStatus.NO_INTERACTION_OK, response);
       }
-      return new OAuthRequestResponse(OAuthRequestStatus.OK, context);
+      return requestHandler.handleResponse(context, session);
     } catch (Exception exception) {
       return oAuthRequestErrorHandler.handle(exception);
     }
@@ -73,7 +66,6 @@ public class OAuthApi {
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
     try {
       AuthorizationResponse response = authAuthorizeHandler.handle(request, oAuthRequestDelegate);
-      ;
       return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, response);
     } catch (Exception exception) {
       log.log(Level.SEVERE, exception.getMessage(), exception);

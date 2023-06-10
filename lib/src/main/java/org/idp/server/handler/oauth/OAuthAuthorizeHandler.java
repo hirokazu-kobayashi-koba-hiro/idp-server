@@ -7,6 +7,7 @@ import org.idp.server.handler.oauth.io.OAuthAuthorizeRequest;
 import org.idp.server.oauth.OAuthAuthorizeContext;
 import org.idp.server.oauth.OAuthRequestDelegate;
 import org.idp.server.oauth.OAuthSession;
+import org.idp.server.oauth.OAuthSessionKey;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.grant.AuthorizationCodeGrantCreator;
@@ -85,8 +86,9 @@ public class OAuthAuthorizeHandler {
       oAuthTokenRepository.register(oAuthToken);
     }
     if (Objects.nonNull(delegate)) {
-      OAuthSession session = new OAuthSession(user, authentication);
-      delegate.registerSession(tokenIssuer, clientId, session);
+      OAuthSessionKey oAuthSessionKey = new OAuthSessionKey(tokenIssuer.value(), clientId.value());
+      OAuthSession session = new OAuthSession(oAuthSessionKey, user, authentication);
+      delegate.registerSession(session);
     }
 
     return authorizationResponse;

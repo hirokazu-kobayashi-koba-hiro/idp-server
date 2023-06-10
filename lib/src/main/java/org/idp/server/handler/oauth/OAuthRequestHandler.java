@@ -4,6 +4,8 @@ import java.util.Objects;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.handler.oauth.io.OAuthRequest;
+import org.idp.server.handler.oauth.io.OAuthRequestResponse;
+import org.idp.server.handler.oauth.io.OAuthRequestStatus;
 import org.idp.server.oauth.*;
 import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.oauth.gateway.RequestObjectGateway;
@@ -60,18 +62,31 @@ public class OAuthRequestHandler {
   }
 
   public boolean isAuthorizable(
-      OAuthRequest oAuthRequest,
       OAuthRequestContext context,
+      OAuthSession session,
       OAuthRequestDelegate oAuthRequestDelegate) {
     if (!context.isPromptNone()) {
       return false;
     }
-
-    if (Objects.nonNull(oAuthRequestDelegate)
-        && oAuthRequestDelegate.isValidSession(
-            oAuthRequest.toTokenIssuer(), context.clientId(), context.authorizationRequest())) {
-      return true;
+    if (Objects.isNull(oAuthRequestDelegate)) {
+      throw new OAuthRedirectableBadRequestException(
+          "login_required", "invalid session, session registration function is disable", context);
     }
-    throw new OAuthRedirectableBadRequestException("login_required", "invalid session", context);
+    if (Objects.isNull(session)) {
+      throw new OAuthRedirectableBadRequestException(
+          "login_required", "invalid session, session is not registered", context);
+    }
+    if (!session.isValid(context.authorizationRequest())) {
+      throw new OAuthRedirectableBadRequestException(
+          "login_required", "invalid session, session is invalid", context);
+    }
+    return true;
+  }
+
+  public OAuthRequestResponse handleResponse(OAuthRequestContext context, OAuthSession session) {
+    if (Objects.isNull(session) || !session.isValid(context.authorizationRequest())) {
+      return new OAuthRequestResponse(OAuthRequestStatus.OK, context, session);
+    }
+    return new OAuthRequestResponse(OAuthRequestStatus.OK_SESSION_ENABLE, context, session);
   }
 }

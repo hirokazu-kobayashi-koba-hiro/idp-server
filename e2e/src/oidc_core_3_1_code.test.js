@@ -213,7 +213,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(status).toBe(302);
 
       expect(authorizationResponse.error).toEqual("login_required");
-      expect(authorizationResponse.errorDescription).toEqual("invalid session");
+      expect(authorizationResponse.errorDescription).toEqual("invalid session, session is not registered");
     });
 
     it("prompt login The Authorization Server SHOULD prompt the End-User for reauthentication. If it cannot reauthenticate the End-User, it MUST return an error, typically login_required.", async () => {
@@ -446,7 +446,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
 
         expect(authorizationResponse.error).toEqual("login_required");
         expect(authorizationResponse.errorDescription).toEqual(
-          "invalid session"
+          "invalid session, session is not registered"
         );
       });
     });
@@ -489,7 +489,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(status).toBe(302);
 
       expect(authorizationResponse.error).toEqual("login_required");
-      expect(authorizationResponse.errorDescription).toEqual("invalid session");
+      expect(authorizationResponse.errorDescription).toEqual("invalid session, session is not registered");
     });
 
     xit("invalid_request_object The request parameter contains an invalid Request Object.", async () => {

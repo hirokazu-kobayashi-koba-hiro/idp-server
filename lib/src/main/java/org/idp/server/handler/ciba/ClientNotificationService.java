@@ -25,7 +25,6 @@ import org.idp.server.token.TokenResponseBuilder;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.type.extension.GrantFlow;
 import org.idp.server.type.oauth.ExpiresIn;
-import org.idp.server.type.oauth.ResponseType;
 import org.idp.server.type.oauth.TokenType;
 import org.idp.server.type.oidc.IdToken;
 

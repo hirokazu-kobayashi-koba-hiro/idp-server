@@ -21,6 +21,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   AuthorizationRequest authorizationRequest;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
+  OAuthSessionKey oAuthSessionKey;
 
   public OAuthRequestContext() {}
 
@@ -37,6 +38,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     this.authorizationRequest = authorizationRequest;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
+    this.oAuthSessionKey = new OAuthSessionKey(tokenIssuer().value(), clientId().value());
   }
 
   public AuthorizationRequestIdentifier identifier() {
@@ -179,5 +181,13 @@ public class OAuthRequestContext implements ResponseModeDecidable {
 
   public ClientId clientId() {
     return clientConfiguration.clientId();
+  }
+
+  public OAuthSessionKey sessionKey() {
+    return oAuthSessionKey;
+  }
+
+  public String sessionKeyValue() {
+    return oAuthSessionKey.key();
   }
 }

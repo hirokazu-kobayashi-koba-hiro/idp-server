@@ -42,7 +42,7 @@ public class OAuthDebugController implements ParameterTransformable {
     OAuthRequest oAuthRequest = new OAuthRequest(params, tenant.issuer());
     OAuthRequestResponse response = oAuthApi.request(oAuthRequest);
     switch (response.status()) {
-      case OK -> {
+      case OK, OK_SESSION_ENABLE -> {
         return new ResponseEntity<>(response.contents(), HttpStatus.OK);
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {

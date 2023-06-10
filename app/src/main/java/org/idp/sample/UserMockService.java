@@ -2,6 +2,7 @@ package org.idp.sample;
 
 import jakarta.servlet.http.HttpSession;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -11,15 +12,14 @@ import org.idp.server.ciba.UserCriteria;
 import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.oauth.OAuthRequestDelegate;
 import org.idp.server.oauth.OAuthSession;
+import org.idp.server.oauth.OAuthSessionKey;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.Address;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.interaction.UserInteraction;
-import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.type.ciba.UserCode;
 import org.idp.server.type.extension.CustomProperties;
-import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.Password;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.idp.server.type.oauth.Username;
@@ -79,30 +79,14 @@ public class UserMockService
   }
 
   @Override
-  public boolean isValidSession(
-      TokenIssuer tokenIssuer, ClientId clientId, AuthorizationRequest authorizationRequest) {
-    String sessionKey = sessionKey(tokenIssuer, clientId);
-    OAuthSession session = (OAuthSession) httpSession.getAttribute(sessionKey);
-    if (Objects.isNull(session)) {
-      return false;
-    }
-    return session.isValid(authorizationRequest);
+  public OAuthSession findSession(OAuthSessionKey oAuthSessionKey) {
+    String sessionKey = oAuthSessionKey.key();
+    return (OAuthSession) httpSession.getAttribute(sessionKey);
   }
 
   @Override
-  public UserInteraction getUserInteraction(
-      TokenIssuer tokenIssuer, ClientId clientId, AuthorizationRequest authorizationRequest) {
-    String sessionKey = sessionKey(tokenIssuer, clientId);
-    OAuthSession session = (OAuthSession) httpSession.getAttribute(sessionKey);
-    User user = session.user();
-    Authentication authentication = session.authentication();
-    return new UserInteraction(user, authentication);
-  }
-
-  @Override
-  public void registerSession(
-      TokenIssuer tokenIssuer, ClientId clientId, OAuthSession oAuthSession) {
-    String sessionKey = sessionKey(tokenIssuer, clientId);
+  public void registerSession(OAuthSession oAuthSession) {
+    String sessionKey = oAuthSession.sessionKeyValue();
     String id = httpSession.getId();
     httpSession.getId();
     httpSession.setAttribute(sessionKey, oAuthSession);
@@ -133,7 +117,18 @@ public class UserMockService
         .setUpdatedAt(SystemDateTime.now().toEpochSecond(ZoneOffset.UTC));
   }
 
-  String sessionKey(TokenIssuer tokenIssuer, ClientId clientId) {
-    return tokenIssuer.value() + ":" + clientId.value();
+  public UserInteraction getUserInteraction(String sessionKey, String username, String password) {
+    OAuthSession session = (OAuthSession) httpSession.getAttribute(sessionKey);
+    if (Objects.nonNull(session) && password.isEmpty()) {
+      Authentication authentication = session.authentication();
+      return new UserInteraction(getUser(), authentication);
+    }
+
+    Authentication authentication =
+        new Authentication()
+            .setTime(SystemDateTime.now())
+            .setMethods(List.of("password"))
+            .setAcrValues(List.of("urn:mace:incommon:iap:silver"));
+    return new UserInteraction(getUser(), authentication);
   }
 }

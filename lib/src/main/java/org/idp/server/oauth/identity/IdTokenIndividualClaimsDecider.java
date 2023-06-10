@@ -3,7 +3,6 @@ package org.idp.server.oauth.identity;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.idp.server.type.extension.GrantFlow;
 import org.idp.server.type.oauth.Scopes;
 import org.idp.server.type.oidc.Claims;
