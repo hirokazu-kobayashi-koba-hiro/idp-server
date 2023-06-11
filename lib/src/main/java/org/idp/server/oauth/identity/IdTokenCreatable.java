@@ -8,6 +8,7 @@ import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.jose.JsonWebSignature;
 import org.idp.server.basic.jose.JsonWebSignatureFactory;
 import org.idp.server.basic.jose.JwkInvalidException;
+import org.idp.server.basic.jose.NestedJsonWebEncryptionCreator;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.authentication.Authentication;
@@ -45,13 +46,22 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       JsonWebSignature jsonWebSignature =
           jsonWebSignatureFactory.createWithAsymmetricKey(
               claims, Map.of(), serverConfiguration.jwks(), serverConfiguration.tokenSignedKeyId());
+      if (clientConfiguration.hasEncryptedIdTokenMeta()) {
+        NestedJsonWebEncryptionCreator nestedJsonWebEncryptionCreator =
+            new NestedJsonWebEncryptionCreator(
+                jsonWebSignature,
+                clientConfiguration.idTokenEncryptedResponseAlg(),
+                clientConfiguration.idTokenEncryptedResponseEnc(),
+                clientConfiguration.jwks());
+        String jwe = nestedJsonWebEncryptionCreator.create();
+        return new IdToken(jwe);
+      }
       return new IdToken(jsonWebSignature.serialize());
     } catch (JwkInvalidException e) {
       throw new RuntimeException(e);
     }
   }
 
-  // FIXME user claim
   private Map<String, Object> createClaims(
       User user,
       Authentication authentication,

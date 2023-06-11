@@ -20,6 +20,9 @@ This library provides java api supported OAuth2.0 and OIDC spec.
    2. implicit flow
    3. hybrid flow
    4. request object
+      1. signature
+      2. encryption
+      3. signature none
    5. userinfo
 3. OpenID Connect Discovery 1.0 incorporating errata set 1
 4. OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0

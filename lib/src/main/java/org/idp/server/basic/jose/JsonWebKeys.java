@@ -32,4 +32,11 @@ public class JsonWebKeys implements Iterable<JsonWebKey> {
         .findFirst()
         .orElse(new JsonWebKey());
   }
+
+  public JsonWebKey findFirst(String algorithm) {
+    return values.stream()
+        .filter(value -> value.algorithm().equals(algorithm))
+        .findFirst()
+        .orElse(new JsonWebKey());
+  }
 }

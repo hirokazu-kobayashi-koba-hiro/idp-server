@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-undef
 const jwt = require("jsonwebtoken");
-const jose = require("jose")
+// eslint-disable-next-line no-undef
+const jose = require("jose");
 import jwkToPem from "jwk-to-pem";
 import jwt_decode from "jwt-decode";
 import { v4 as uuidv4 } from "uuid";
@@ -52,6 +53,17 @@ export const createJwtWithPrivateKey = ({
     payload,
     secret,
     options,
+  });
+};
+
+export const decryptAndVerifyAndDecodeIdToken = async ({ idToken, privateKey, jwks }) => {
+  const keyObject = await jose.importJWK(privateKey);
+  console.log(keyObject);
+  const { plaintext, protectedHeader } = await jose.compactDecrypt(new TextEncoder().encode(idToken), keyObject);
+  console.log(protectedHeader);
+  return verifyAndDecodeIdToken({
+    idToken: new TextDecoder().decode(plaintext),
+    jwks,
   });
 };
 

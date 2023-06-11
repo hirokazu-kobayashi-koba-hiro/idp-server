@@ -32,6 +32,8 @@ public class ClientConfiguration implements JsonReadable {
   String backchannelAuthenticationRequestSigningAlg = "";
   Boolean backchannelUserCodeParameter;
   String applicationType = "web";
+  String idTokenEncryptedResponseAlg;
+  String idTokenEncryptedResponseEnc;
   // extension
   boolean supportedJar;
   String issuer;
@@ -203,5 +205,18 @@ public class ClientConfiguration implements JsonReadable {
 
   public boolean isWebApplication() {
     return applicationType.equals("web");
+  }
+
+  public String idTokenEncryptedResponseAlg() {
+    return idTokenEncryptedResponseAlg;
+  }
+
+  public String idTokenEncryptedResponseEnc() {
+    return idTokenEncryptedResponseEnc;
+  }
+
+  public boolean hasEncryptedIdTokenMeta() {
+    return Objects.nonNull(idTokenEncryptedResponseAlg)
+        && Objects.nonNull(idTokenEncryptedResponseEnc);
   }
 }

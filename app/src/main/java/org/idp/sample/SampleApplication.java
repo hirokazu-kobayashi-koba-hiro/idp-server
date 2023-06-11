@@ -29,6 +29,7 @@ public class SampleApplication {
     clientPaths.add(configurationBasePath + "/clients/clientSecretBasic.json");
     clientPaths.add(configurationBasePath + "/clients/clientSecretBasic2.json");
     clientPaths.add(configurationBasePath + "/clients/clientSecretPost.json");
+    clientPaths.add(configurationBasePath + "/clients/clientSecretPostWithIdTokenEnc.json");
     clientPaths.add(configurationBasePath + "/clients/clientSecretJwt.json");
     clientPaths.add(configurationBasePath + "/clients/privateKeyJwt.json");
     clientPaths.add(configurationBasePath + "/clients/unsupportedClient.json");

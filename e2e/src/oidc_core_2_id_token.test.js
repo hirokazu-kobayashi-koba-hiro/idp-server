@@ -1,10 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { getJwks } from "./api/oauthClient";
-import { clientSecretPostClient, serverConfig } from "./testConfig";
+import { clientSecretPostClient, clientSecretPostWithIdTokenEncClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
 import { isArray, isNumber, isString, matchWithUSASCII } from "./lib/util";
-import { verifyAndDecodeIdToken } from "./lib/jose";
+import { decryptAndVerifyAndDecodeIdToken, verifyAndDecodeIdToken } from "./lib/jose";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
 
@@ -333,6 +333,57 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
 
       const decodedIdToken = verifyAndDecodeIdToken({
         idToken: authorizationResponse.idToken,
+        jwks: jwksResponse.data,
+      });
+      console.log(decodedIdToken);
+      const payload = decodedIdToken.payload;
+      expect(decodedIdToken.verifyResult).toBe(true);
+      expect(payload.iss).not.toBeNull();
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.sub).not.toBeNull();
+      expect(payload.sub.length <= 255).toBe(true);
+      expect(matchWithUSASCII(payload.sub)).toEqual(true);
+      expect(payload.aud).not.toBeNull();
+      expect(payload.aud).toContain(clientSecretPostClient.clientId);
+      expect(payload.exp).not.toBeNull();
+      expect(isNumber(payload.exp)).toBe(true);
+      expect(payload.iat).not.toBeNull();
+      expect(isNumber(payload.iat)).toBe(true);
+      if (payload.auth_time) {
+        expect(isNumber(payload.auth_time)).toBe(true);
+      }
+      expect(payload.nonce).not.toBeNull();
+      expect(payload.nonce).toEqual(nonce);
+      if (payload.acr) {
+        expect(isString(payload.acr)).toBe(true);
+      }
+
+      if (payload.amr) {
+        expect(isArray(payload.amr)).toBe(true);
+      }
+    });
+
+    it("If the ID Token is encrypted, it MUST be signed then encrypted, with the result being a Nested JWT, as defined in [JWT]. ID Tokens MUST NOT use none as the alg value unless the Response Type used returns no ID Token from the Authorization Endpoint (such as when using the Authorization Code Flow) and the Client explicitly requested the use of none at Registration time.", async () => {
+      const nonce = "nonce_value";
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostWithIdTokenEncClient.clientId,
+        responseType: "id_token",
+        state: "aiueo",
+        nonce,
+        scope: "openid profile phone email" + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.idToken).not.toBeNull();
+
+      const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+      console.log(jwksResponse.data);
+      expect(jwksResponse.status).toBe(200);
+
+      const decodedIdToken = await decryptAndVerifyAndDecodeIdToken({
+        idToken: authorizationResponse.idToken,
+        privateKey: clientSecretPostWithIdTokenEncClient.idTokenEncKey,
         jwks: jwksResponse.data,
       });
       console.log(decodedIdToken);

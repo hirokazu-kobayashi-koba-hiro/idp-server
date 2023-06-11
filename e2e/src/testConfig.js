@@ -92,6 +92,54 @@ export const clientSecretPostClient = {
   httpRedirectUri: "http://localhost:8081/callback",
 };
 
+export const clientSecretPostWithIdTokenEncClient = {
+  clientId: "clientSecretPostWithIdTokenEnc",
+  clientSecret:
+    "clientSecretPostWithIdTokenEncPassword1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "account transfers",
+  fapiBaselineScope: "read",
+  fapiAdvanceScope: "write",
+  idTokenAlg: "ES256",
+  requestKey: {
+    kty: "EC",
+    d: "uj7jNVQIfSCBdiV4A_yVnY8htLZS7nskIXAGIVDb9oM",
+    use: "sig",
+    crv: "P-256",
+    kid: "request_secret_post",
+    x: "H4E6D5GqxTrZshUvkG-z0sAWNkbixERVSpm3YjcIU1U",
+    y: "413NbE2n5PeQJlG1Nfq_nCbqR_ZKbVAzsyyrmYph7Fs",
+    alg: "ES256",
+  },
+  requestEncKey: {
+    kty: "EC",
+    use: "enc",
+    crv: "P-256",
+    kid: "request_enc_key",
+    x: "PM6be42POiKdNzRKGeZ1Gia8908XfmSSbS4cwPasWTo",
+    y: "wksaan9a4h3L8R1UMmvc9w6rPB_F07IA-VHx7n7Add4",
+    alg: "ECDH-ES"
+  },
+  idTokenEncKey: {
+    p: "6EbwM4mQBqW-ytGVm-73h0VhXEijFRh317Ye4aCPWboMjg5fJRcqRTNxY-xln-k5f2kcLhEDoEsiVlAdNIbZeQhFFVHcmYE7qkOBch4deicPuevvtgqF-bNbH70T1FAGh7EZCK-l-CLzTt0jgRRi-pvRQla3nH5lgGpJ1piyhzU",
+    kty: "RSA",
+    q: "wcjXiEPd7c8qjrnnaTl_ALtJeeC3UzJS_ZX_D1Fu6T8WtD4CidF34cdsOW_QEAcgNL2y6Yg_HM32XCQbZPENGMxHBfE_RVQ_PYmHJnhgYDYETc6yy9rV_rCdS-GAAmSzbOYzm8GG6Z2rwPNqM9NrGXOnBKvEqtFTLE9bf7P1R6c",
+    d: "nQBW241LoMW27oOy4LWrBTplGUhh-4V29MqG-QX6m_aHmrTotCzf-AZ-NuL0EW3dE5tQNPvOu9SkjtGmtwmRXpacJY--JvUZzriWdezQBMR5D_RBGBUyV3Dv_Feg9FbZKsRvsk879FE--dnkgDvdd1qo9gisrueGk9-PMMz4eq1T6qHQnoJr4J1vvI3Ib0mjgAVxc3oumhJL1pr4LEVqlrwwXZGOx8ZbS9CajcYd1PvRxd2fy4dCh9M6twBHp0YQlrFshoxjxqTejSP5l3tbIScxySHaf7BFfRbvcE88uH8gjjgqDJAZ4-eRnRisiKTbiSMx5HuN_0NJybVUIBT1QQ",
+    e: "AQAB",
+    use: "enc",
+    kid: "rsa_enc",
+    qi: "faOGV_1Hxj3Nts7o-x5utKYYt8VrpPEGKekX36gUMTK-gBPTOgNmuNOJPz2fbLKRwcJqkOJfPUnzJhZj_C1f4MNfktORVWHX-mqhJIfzLqoCfk2LrEMSEIBlnc8jlogNlmDNlW0aDUbx2TXN2yMw13lGr09YCw_Pkd5JMSwSuOY",
+    dp: "buF2RtPzSgkTNBSqm56O0SdAm-Ic37QneXT59vFDnSygU6vupXESf6hYB8BQnu6hwP23MxJyLbHQOW3TE0EQTaOx_sRuT2UOy2-gOo6_uZEuA63qZ3dMj2-cH2GONrrg8yOKdMgMrZBZn5sXGMZXnZSGZ2moCu-Xmp6ikuufxcU",
+    alg: "RSA1_5",
+    dq: "WPFV-7Uqp3vujJPHIwTAxhUwJEB_5C-0569w4hb-URAj25aak6cQ3xApHDO1y6V5ortu4sEmNpJSAPiRmkMJP9iCwLd50thYLmZxIbcehQpF73BvoCFRFxT5HVri5jZSJCmEhnjM82zq6CTRGfhvr77lab9tBPoOsse5t2NhsQE",
+    n: "r9O2Ebn331GuRDhH1Q_DyJbPec_k3BdRjUmmNtx-jl7_D3z82uSdpWMaRV5LMRvQ1L71QeGRuWREVBbFoPNVQJqFmabqOff0QgOXojk13dzshrmgX5F01sDdGLS15QRLLgKQxn71wvQmi3cWDqFS_bDWz-MI4yVvcakm4f27Fxg7H08La81mqe_lS4D2Kq1HMjoDl1QMD01TiLDZ-_TpnC50Ng_qTcLRSGZxtl0k6TfkPoi0La1Ua1Qh5JK-qvNgt0OSmbHFXqJweKr5gi4kZq1u3YrUonU5t7OaF3MshDP1R4KkrDlVd_mNVTNaRSWfg1aE2OX6pW8C8ZEHlK7mkw"
+  },
+  requestEnc: "A256GCM",
+  requestUri: "",
+  invalidRequestUri: "https://invalid.request.uri/request",
+  httpRedirectUri: "http://localhost:8081/callback",
+};
+
 export const clientSecretBasicClient = {
   clientId: "s6BhdRkqt3",
   clientSecret: "cf136dc3c1fc93f31185e5885805d",
