@@ -3,6 +3,7 @@ package org.idp.server.oauth;
 import static org.idp.server.type.OAuthRequestKey.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.type.OAuthRequestKey;
@@ -10,6 +11,7 @@ import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;
 import org.idp.server.type.pkce.CodeChallengeMethod;
+import org.idp.server.type.rar.AuthorizationDetailsValue;
 
 /** RequestObjectParameters */
 public class RequestObjectParameters {
@@ -187,7 +189,23 @@ public class RequestObjectParameters {
     return (String) value;
   }
 
+  List<String> getList(OAuthRequestKey key) {
+    Object value = values.get(key.name());
+    if (Objects.isNull(value)) {
+      return List.of();
+    }
+    return (List<String>) value;
+  }
+
   boolean contains(OAuthRequestKey key) {
     return values.containsKey(key.name());
+  }
+
+  public boolean hasAuthorizationDetailsValue() {
+    return contains(authorization_details);
+  }
+
+  public AuthorizationDetailsValue authorizationDetailsValue() {
+    return new AuthorizationDetailsValue(getList(authorization_details));
   }
 }

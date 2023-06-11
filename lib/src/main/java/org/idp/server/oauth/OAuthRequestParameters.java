@@ -10,6 +10,7 @@ import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;
 import org.idp.server.type.pkce.CodeChallengeMethod;
+import org.idp.server.type.rar.AuthorizationDetailsValue;
 
 /** OAuthRequestParameters */
 public class OAuthRequestParameters {
@@ -196,5 +197,9 @@ public class OAuthRequestParameters {
 
   public List<String> multiValueKeys() {
     return values.multiValueKeys();
+  }
+
+  public AuthorizationDetailsValue authorizationDetailsValue() {
+    return new AuthorizationDetailsValue(getString(authorization_details));
   }
 }

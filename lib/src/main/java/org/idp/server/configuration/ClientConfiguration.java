@@ -34,6 +34,7 @@ public class ClientConfiguration implements JsonReadable {
   String applicationType = "web";
   String idTokenEncryptedResponseAlg;
   String idTokenEncryptedResponseEnc;
+  List<String> authorizationDetailsTypes = new ArrayList<>();
   // extension
   boolean supportedJar;
   String issuer;
@@ -218,5 +219,13 @@ public class ClientConfiguration implements JsonReadable {
   public boolean hasEncryptedIdTokenMeta() {
     return Objects.nonNull(idTokenEncryptedResponseAlg)
         && Objects.nonNull(idTokenEncryptedResponseEnc);
+  }
+
+  public List<String> authorizationDetailsTypes() {
+    return authorizationDetailsTypes;
+  }
+
+  public boolean isAuthorizedAuthorizationDetailsType(String type) {
+    return authorizationDetailsTypes.contains(type);
   }
 }

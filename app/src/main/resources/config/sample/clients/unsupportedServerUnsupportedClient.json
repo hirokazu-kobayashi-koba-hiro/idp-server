@@ -20,5 +20,9 @@
   "token_endpoint_auth_method": "client_secret_post",
   "logo_uri": "https://client.example.org/logo.png",
   "jwks_uri": "https://client.example.org/my_public_keys.jwks",
-  "application_type": "web"
+  "application_type": "web",
+  "authorization_details_types":[
+    "payment_initiation",
+    "account_information"
+  ]
 }

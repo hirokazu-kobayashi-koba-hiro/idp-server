@@ -4,6 +4,7 @@ import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.User;
+import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.Scopes;
@@ -17,6 +18,7 @@ public class AuthorizationGrant {
   Scopes scopes;
   ClaimsPayload claimsPayload;
   CustomProperties customProperties;
+  AuthorizationDetails authorizationDetails;
 
   public AuthorizationGrant(
       User user,
@@ -24,13 +26,15 @@ public class AuthorizationGrant {
       ClientId clientId,
       Scopes scopes,
       ClaimsPayload claimsPayload,
-      CustomProperties customProperties) {
+      CustomProperties customProperties,
+      AuthorizationDetails authorizationDetails) {
     this.user = user;
     this.authentication = authentication;
     this.clientId = clientId;
     this.scopes = scopes;
     this.claimsPayload = claimsPayload;
     this.customProperties = customProperties;
+    this.authorizationDetails = authorizationDetails;
   }
 
   public User user() {
@@ -87,5 +91,13 @@ public class AuthorizationGrant {
 
   public boolean hasOpenidScope() {
     return scopes.contains("openid");
+  }
+
+  public AuthorizationDetails authorizationDetails() {
+    return authorizationDetails;
+  }
+
+  public boolean hasAuthorizationDetails() {
+    return authorizationDetails.exists();
   }
 }

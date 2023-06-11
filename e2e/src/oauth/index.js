@@ -23,6 +23,7 @@ export const requestAuthorizations = async ({
   requestUri,
   codeChallenge,
   codeChallengeMethod,
+  authorizationDetails,
   action = "authorize",
 }) => {
   if (serverConfig.enabledSsr) {
@@ -47,6 +48,7 @@ export const requestAuthorizations = async ({
       requestUri,
       codeChallenge,
       codeChallengeMethod,
+      authorizationDetails,
     });
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
@@ -132,6 +134,7 @@ export const requestAuthorizations = async ({
       requestUri,
       codeChallenge,
       codeChallengeMethod,
+      authorizationDetails,
     });
     console.log(response.data);
     if (response.status === 302) {

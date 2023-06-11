@@ -2,6 +2,7 @@ package org.idp.server.oauth.request;
 
 import org.idp.server.oauth.AuthorizationProfile;
 import org.idp.server.oauth.identity.ClaimsPayload;
+import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;
@@ -33,6 +34,7 @@ public class AuthorizationRequest {
   ClaimsPayload claimsPayload;
   CodeChallenge codeChallenge;
   CodeChallengeMethod codeChallengeMethod;
+  AuthorizationDetails authorizationDetails;
 
   public AuthorizationRequest() {}
 
@@ -59,7 +61,8 @@ public class AuthorizationRequest {
       RequestUri requestUri,
       ClaimsPayload claimsPayload,
       CodeChallenge codeChallenge,
-      CodeChallengeMethod codeChallengeMethod) {
+      CodeChallengeMethod codeChallengeMethod,
+      AuthorizationDetails authorizationDetails) {
     this.identifier = identifier;
     this.tokenIssuer = tokenIssuer;
     this.profile = profile;
@@ -83,6 +86,7 @@ public class AuthorizationRequest {
     this.claimsPayload = claimsPayload;
     this.codeChallenge = codeChallenge;
     this.codeChallengeMethod = codeChallengeMethod;
+    this.authorizationDetails = authorizationDetails;
   }
 
   public AuthorizationRequestIdentifier identifier() {
@@ -177,6 +181,10 @@ public class AuthorizationRequest {
     return codeChallengeMethod;
   }
 
+  public AuthorizationDetails authorizationDetails() {
+    return authorizationDetails;
+  }
+
   public boolean hasRedirectUri() {
     return redirectUri.exists();
   }
@@ -207,6 +215,10 @@ public class AuthorizationRequest {
 
   public boolean hasCodeChallenge() {
     return codeChallenge.exists();
+  }
+
+  public boolean hasAuthorizationDetails() {
+    return authorizationDetails.exists();
   }
 
   public boolean exists() {

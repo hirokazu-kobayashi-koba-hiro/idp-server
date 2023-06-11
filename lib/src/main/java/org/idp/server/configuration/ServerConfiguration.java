@@ -56,6 +56,7 @@ public class ServerConfiguration implements JsonReadable {
   String backchannelAuthenticationEndpoint = "";
   List<String> backchannelAuthenticationRequestSigningAlgValuesSupported = new ArrayList<>();
   Boolean backchannelUserCodeParameterSupported;
+  List<String> authorizationDetailsTypesSupported = new ArrayList<>();
 
   // extension
   List<String> fapiBaselineScopes = new ArrayList<>();
@@ -471,5 +472,13 @@ public class ServerConfiguration implements JsonReadable {
 
   public long defaultMaxAge() {
     return defaultMaxAge;
+  }
+
+  public List<String> authorizationDetailsTypesSupported() {
+    return authorizationDetailsTypesSupported;
+  }
+
+  public boolean isSupportedAuthorizationDetailsType(String type) {
+    return authorizationDetailsTypesSupported.contains(type);
   }
 }

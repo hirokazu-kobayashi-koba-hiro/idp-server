@@ -136,6 +136,10 @@
     "ES256"
   ],
   "backchannel_user_code_parameter_supported": true,
+  "authorization_details_types_supported":[
+    "payment_initiation",
+    "account_information"
+  ],
   "token_signed_key_id": "access_token",
   "id_token_signed_key_id": "access_token",
   "access_token_duration": 3600,

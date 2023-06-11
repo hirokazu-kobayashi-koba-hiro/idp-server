@@ -3,6 +3,7 @@ package org.idp.server.token.service;
 import java.util.UUID;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.token.*;
 import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
@@ -34,10 +35,9 @@ public class RefreshTokenGrantService
 
     RefreshTokenVerifier verifier = new RefreshTokenVerifier(context, oAuthToken);
     verifier.verify();
-
+    AuthorizationGrant authorizationGrant = oAuthToken.authorizationGrant();
     AccessToken accessToken =
-        createAccessToken(
-            oAuthToken.authorizationGrant(), serverConfiguration, clientConfiguration);
+        createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);
     RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
     OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
 
@@ -48,6 +48,9 @@ public class RefreshTokenGrantService
             .add(TokenType.Bearer)
             .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
             .add(oAuthToken.authorizationGrant().scopes());
+    if (authorizationGrant.hasAuthorizationDetails()) {
+      tokenResponseBuilder.add(authorizationGrant.authorizationDetails());
+    }
     TokenResponse tokenResponse = tokenResponseBuilder.build();
 
     oAuthTokenRepository.delete(oAuthToken);

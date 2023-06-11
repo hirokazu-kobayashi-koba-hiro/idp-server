@@ -22,6 +22,7 @@ export const createAuthorizationRequest = ({
  requestUri,
  codeChallenge,
  codeChallengeMethod,
+ authorizationDetails,
 }) => {
   let params = {};
   if (scope) {
@@ -138,6 +139,12 @@ export const createAuthorizationRequest = ({
       codeChallengeMethod,
     };
   }
+  if (authorizationDetails) {
+    params = {
+      ...params,
+      authorizationDetails,
+    };
+  }
   const query = new URLSearchParams(convertToSnake(params)).toString();
   const url = `${endpoint}?${query}`;
   console.log(url);
@@ -165,6 +172,7 @@ export const getAuthorizations = async ({
   requestUri,
   codeChallenge,
   codeChallengeMethod,
+  authorizationDetails,
 }) => {
   const url = createAuthorizationRequest({
     endpoint,
@@ -187,6 +195,7 @@ export const getAuthorizations = async ({
     requestUri,
     codeChallenge,
     codeChallengeMethod,
+    authorizationDetails,
   });
   return await get({
     url: url,

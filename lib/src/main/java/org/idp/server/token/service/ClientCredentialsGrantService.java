@@ -7,6 +7,7 @@ import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.identity.User;
+import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenCreatable;
 import org.idp.server.oauth.token.RefreshToken;
@@ -41,6 +42,7 @@ public class ClientCredentialsGrantService
     verifier.verify();
 
     CustomProperties customProperties = context.customProperties();
+    // TODO
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrant(
             new User(),
@@ -48,7 +50,8 @@ public class ClientCredentialsGrantService
             clientConfiguration.clientId(),
             scopes,
             new ClaimsPayload(),
-            customProperties);
+            customProperties,
+            new AuthorizationDetails());
 
     AccessToken accessToken =
         createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);

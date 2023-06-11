@@ -9,6 +9,7 @@ import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.User;
+import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.extension.ExpiredAt;
@@ -64,8 +65,15 @@ public class OAuthAuthorizeContext {
     ClientId clientId = clientConfiguration.clientId();
     Scopes scopes = authorizationRequest.scope();
     ClaimsPayload claimsPayload = authorizationRequest.claimsPayload();
+    AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
     return new AuthorizationGrant(
-        user, authentication, clientId, scopes, claimsPayload, customProperties);
+        user,
+        authentication,
+        clientId,
+        scopes,
+        claimsPayload,
+        customProperties,
+        authorizationDetails);
   }
 
   public CustomProperties customProperties() {

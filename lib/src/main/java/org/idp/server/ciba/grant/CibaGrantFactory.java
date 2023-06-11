@@ -9,6 +9,7 @@ import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.identity.User;
+import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.type.ciba.AuthReqId;
 import org.idp.server.type.ciba.Interval;
 import org.idp.server.type.extension.CustomProperties;
@@ -42,9 +43,16 @@ public class CibaGrantFactory {
         context.backchannelAuthenticationRequestIdentifier();
     ClientId clientId = context.clientId();
     Scopes scopes = context.scopes();
+    // TODO authorization_details
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrant(
-            user, authentication, clientId, scopes, new ClaimsPayload(), customProperties);
+            user,
+            authentication,
+            clientId,
+            scopes,
+            new ClaimsPayload(),
+            customProperties,
+            new AuthorizationDetails());
     AuthReqId authReqId = response.authReqId();
     LocalDateTime now = SystemDateTime.now();
     ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(context.expiresIn().value()));

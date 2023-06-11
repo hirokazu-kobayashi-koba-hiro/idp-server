@@ -1,5 +1,6 @@
 package org.idp.server.token;
 
+import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
 
@@ -10,6 +11,7 @@ public class TokenResponse {
   RefreshTokenValue refreshTokenValue;
   Scopes scopes;
   IdToken idToken;
+  AuthorizationDetails authorizationDetails;
   String contents;
 
   TokenResponse(
@@ -19,6 +21,7 @@ public class TokenResponse {
       RefreshTokenValue refreshTokenValue,
       Scopes scopes,
       IdToken idToken,
+      AuthorizationDetails authorizationDetails,
       String contents) {
     this.accessTokenValue = accessTokenValue;
     this.tokenType = tokenType;
@@ -26,6 +29,7 @@ public class TokenResponse {
     this.refreshTokenValue = refreshTokenValue;
     this.scopes = scopes;
     this.idToken = idToken;
+    this.authorizationDetails = authorizationDetails;
     this.contents = contents;
   }
 
@@ -51,6 +55,10 @@ public class TokenResponse {
 
   public Scopes scopes() {
     return scopes;
+  }
+
+  public AuthorizationDetails authorizationDetails() {
+    return authorizationDetails;
   }
 
   public String contents() {

@@ -14,6 +14,7 @@ import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;
 import org.idp.server.type.pkce.CodeChallengeMethod;
+import org.idp.server.type.rar.AuthorizationDetailsValue;
 
 /**
  * RequestObjectPatternFactory
@@ -104,6 +105,10 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
         requestObjectParameters.hasCodeChallengeMethod()
             ? requestObjectParameters.codeChallengeMethod()
             : parameters.codeChallengeMethod();
+    AuthorizationDetailsValue authorizationDetailsValue =
+        requestObjectParameters.hasAuthorizationDetailsValue()
+            ? requestObjectParameters.authorizationDetailsValue()
+            : parameters.authorizationDetailsValue();
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());
@@ -133,6 +138,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
     builder.add(convertClaimsPayload(claimsValue));
     builder.add(codeChallenge);
     builder.add(codeChallengeMethod);
+    builder.add(convertAuthorizationDetails(authorizationDetailsValue));
     return builder.build();
   }
 }

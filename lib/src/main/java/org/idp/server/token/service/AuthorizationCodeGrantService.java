@@ -125,8 +125,8 @@ public class AuthorizationCodeGrantService
             .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
             .add(refreshToken.refreshTokenValue())
             .add(authorizationRequest.scope());
+    AuthorizationGrant authorizationGrant = authorizationCodeGrant.authorizationGrant();
     if (authorizationRequest.isOidcProfile()) {
-      AuthorizationGrant authorizationGrant = authorizationCodeGrant.authorizationGrant();
       IdTokenCustomClaims idTokenCustomClaims =
           new IdTokenCustomClaimsBuilder()
               .add(authorizationCodeGrant.authorizationCode())
@@ -145,6 +145,9 @@ public class AuthorizationCodeGrantService
               serverConfiguration,
               clientConfiguration);
       tokenResponseBuilder.add(idToken);
+    }
+    if (authorizationGrant.hasAuthorizationDetails()) {
+      tokenResponseBuilder.add(authorizationGrant.authorizationDetails());
     }
     TokenResponse tokenResponse = tokenResponseBuilder.build();
     OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());

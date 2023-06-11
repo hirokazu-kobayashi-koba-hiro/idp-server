@@ -5,6 +5,7 @@ import org.idp.server.oauth.AuthorizationProfile;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.verifier.base.AuthorizationRequestVerifier;
 import org.idp.server.oauth.verifier.extension.AuthorizationRequestExtensionVerifier;
+import org.idp.server.oauth.verifier.extension.OAuthAuthorizationDetailsVerifier;
 import org.idp.server.oauth.verifier.extension.PckeVerifier;
 import org.idp.server.oauth.verifier.extension.RequestObjectVerifier;
 
@@ -21,6 +22,7 @@ public class OAuthRequestVerifier {
     baseVerifiers.put(AuthorizationProfile.FAPI_ADVANCE, new FapiAdvanceVerifier());
     extensionVerifiers.add(new PckeVerifier());
     extensionVerifiers.add(new RequestObjectVerifier());
+    extensionVerifiers.add(new OAuthAuthorizationDetailsVerifier());
   }
 
   public void verify(OAuthRequestContext context) {

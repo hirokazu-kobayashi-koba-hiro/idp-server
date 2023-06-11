@@ -11,6 +11,7 @@ import org.idp.server.grantmangment.AuthorizationGranted;
 import org.idp.server.grantmangment.AuthorizationGrantedIdentifier;
 import org.idp.server.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.oauth.authentication.Authentication;
+import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.*;
 import org.idp.server.oauth.token.*;
 import org.idp.server.token.*;
@@ -63,8 +64,9 @@ public class CibaGrantService
     ServerConfiguration serverConfiguration = tokenRequestContext.serverConfiguration();
     ClientConfiguration clientConfiguration = tokenRequestContext.clientConfiguration();
 
+    AuthorizationGrant authorizationGrant = cibaGrant.authorizationGrant();
     AccessToken accessToken =
-        createAccessToken(cibaGrant.authorizationGrant(), serverConfiguration, clientConfiguration);
+        createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);
     RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
     TokenResponseBuilder tokenResponseBuilder =
         new TokenResponseBuilder()
@@ -84,6 +86,9 @@ public class CibaGrantService
             serverConfiguration,
             clientConfiguration);
     tokenResponseBuilder.add(idToken);
+    if (authorizationGrant.hasAuthorizationDetails()) {
+      tokenResponseBuilder.add(authorizationGrant.authorizationDetails());
+    }
 
     TokenResponse tokenResponse = tokenResponseBuilder.build();
     OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
