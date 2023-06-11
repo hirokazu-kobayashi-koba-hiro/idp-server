@@ -59,7 +59,7 @@ export const createJwtWithPrivateKey = ({
 export const decryptAndVerifyAndDecodeIdToken = async ({ idToken, privateKey, jwks }) => {
   const keyObject = await jose.importJWK(privateKey);
   console.log(keyObject);
-  const { plaintext, protectedHeader } = await jose.compactDecrypt(new TextEncoder().encode(idToken), keyObject);
+  const { plaintext, protectedHeader } = await jose.compactDecrypt(idToken, keyObject);
   console.log(protectedHeader);
   return verifyAndDecodeIdToken({
     idToken: new TextDecoder().decode(plaintext),
