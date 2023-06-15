@@ -21,15 +21,15 @@ public class AuthorizationDetail {
   }
 
   public List<String> locations() {
-    return getListOrEmptyList("locations");
+    return getListOrEmpty("locations");
   }
 
   public List<String> actions() {
-    return getListOrEmptyList("actions");
+    return getListOrEmpty("actions");
   }
 
   public List<String> datatypes() {
-    return getListOrEmptyList("datatypes");
+    return getListOrEmpty("datatypes");
   }
 
   public String identifier() {
@@ -37,10 +37,10 @@ public class AuthorizationDetail {
   }
 
   public List<String> privileges() {
-    return getListOrEmptyList("privileges");
+    return getListOrEmpty("privileges");
   }
 
-  public List<String> getListOrEmptyList(String key) {
+  public List<String> getListOrEmpty(String key) {
     Object value = values.get(key);
     if (Objects.isNull(value)) {
       return List.of();
@@ -54,6 +54,14 @@ public class AuthorizationDetail {
       return "";
     }
     return (String) value;
+  }
+
+  public Map<String, Object> getMapOrEmpty(String key) {
+    Object value = values.get(key);
+    if (Objects.isNull(value)) {
+      return Map.of();
+    }
+    return (Map<String, Object>) value;
   }
 
   public boolean hasType() {

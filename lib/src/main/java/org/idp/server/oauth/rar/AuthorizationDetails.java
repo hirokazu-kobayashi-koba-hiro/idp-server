@@ -26,7 +26,11 @@ public class AuthorizationDetails implements Iterable<AuthorizationDetail> {
     return !values.isEmpty();
   }
 
-  public List<Map<String, Object>> values() {
+  public List<AuthorizationDetail> values() {
+    return values;
+  }
+
+  public List<Map<String, Object>> toMapValues() {
     return values.stream().map(AuthorizationDetail::values).toList();
   }
 }

@@ -15,6 +15,8 @@ import { toEpocTime } from "./lib/util";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", () => {
   it("success pattern normal", async () => {
+    const codeVerifier = "aiueo12345678";
+    const codeChallenge = codeVerifier;
     const authorizationDetails = [{
       "type": "account_information",
       "actions": [
@@ -56,6 +58,12 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       iss: clientSecretPostClient.clientId,
       endpoint: serverConfig.authorizationEndpoint,
       clientId: clientSecretPostClient.clientId,
+      responseMode: "query",
+      nonce: "nonce",
+      display: "page",
+      prompt: "login",
+      codeChallenge,
+      codeChallengeMethod: "plain",
       authorizationDetails: JSON.stringify(authorizationDetails),
     });
     console.log(authorizationResponse);
@@ -68,6 +76,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       redirectUri: clientSecretPostClient.redirectUri,
       clientId: clientSecretPostClient.clientId,
       clientSecret: clientSecretPostClient.clientSecret,
+      codeVerifier,
     });
     console.log(JSON.stringify(tokenResponse.data));
     expect(tokenResponse.status).toBe(200);
@@ -85,6 +94,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
   });
 
   it("success pattern request object", async () => {
+    const codeVerifier = "aiueo12345678";
+    const codeChallenge = codeVerifier;
     const requestObject = createJwtWithPrivateKey({
       payload: {
         client_id: clientSecretPostClient.clientId,
@@ -98,6 +109,14 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
         iat: toEpocTime({}),
         nbf: toEpocTime({}),
         jti: generateJti(),
+        response_mode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+        code_challenge: codeChallenge,
+        code_challenge_method: "plain",
+        login_hint: serverConfig.oauth.username,
+        acr_values: serverConfig.acr,
         authorization_details: [{
           "type": "account_information",
           "actions": [
@@ -148,6 +167,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       redirectUri: clientSecretPostClient.redirectUri,
       clientId: clientSecretPostClient.clientId,
       clientSecret: clientSecretPostClient.clientSecret,
+      codeVerifier,
     });
     console.log(JSON.stringify(tokenResponse.data));
     expect(tokenResponse.status).toBe(200);

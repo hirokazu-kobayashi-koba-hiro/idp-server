@@ -51,4 +51,8 @@ public enum Display {
   public boolean isUnknown() {
     return this == unknown;
   }
+
+  public boolean isDefined() {
+    return this != undefined;
+  }
 }

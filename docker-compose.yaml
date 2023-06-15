@@ -6,3 +6,12 @@ services:
     image: fapi-nginx
     ports:
       - 443:443
+  postgresql:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=idpserver
+      - POSTGRES_PASSWORD=idpserver
+      - POSTGRES_DB=idpserver
+    ports:
+      - 5432:5432

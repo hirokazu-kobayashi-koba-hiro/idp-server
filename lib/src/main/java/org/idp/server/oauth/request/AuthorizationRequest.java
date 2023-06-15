@@ -97,96 +97,184 @@ public class AuthorizationRequest {
     return tokenIssuer;
   }
 
+  public boolean hasTokenIssuer() {
+    return tokenIssuer.exists();
+  }
+
   public AuthorizationProfile profile() {
     return profile;
+  }
+
+  public boolean hasProfile() {
+    return profile.isDefined();
   }
 
   public Scopes scope() {
     return scopes;
   }
 
+  public boolean hasScope() {
+    return scopes.exists();
+  }
+
   public ResponseType responseType() {
     return responseType;
+  }
+
+  public boolean hasResponseType() {
+    return !responseType.isUndefined();
   }
 
   public ClientId clientId() {
     return clientId;
   }
 
+  public boolean hasClientId() {
+    return clientId.exists();
+  }
+
   public RedirectUri redirectUri() {
     return redirectUri;
+  }
+
+  public boolean hasRedirectUri() {
+    return redirectUri.exists();
   }
 
   public State state() {
     return state;
   }
 
+  public boolean hasState() {
+    return state.exists();
+  }
+
   public ResponseMode responseMode() {
     return responseMode;
+  }
+
+  public boolean hasResponseMode() {
+    return responseMode.isDefined();
   }
 
   public Nonce nonce() {
     return nonce;
   }
 
+  public boolean hasNonce() {
+    return nonce.exists();
+  }
+
   public Display display() {
     return display;
+  }
+
+  public boolean hasDisplay() {
+    return display.isDefined();
   }
 
   public Prompts prompts() {
     return prompts;
   }
 
+  public boolean hasPrompts() {
+    return prompts.exists();
+  }
+
   public MaxAge maxAge() {
     return maxAge;
+  }
+
+  public boolean hasMaxAge() {
+    return maxAge.exists();
   }
 
   public UiLocales uiLocales() {
     return uiLocales;
   }
 
+  public boolean hasUilocales() {
+    return uiLocales.exists();
+  }
+
   public IdTokenHint idTokenHint() {
     return idTokenHint;
+  }
+
+  public boolean hasIdTokenHint() {
+    return idTokenHint.exists();
   }
 
   public LoginHint loginHint() {
     return loginHint;
   }
 
+  public boolean hasLoginHint() {
+    return loginHint.exists();
+  }
+
   public AcrValues acrValues() {
     return acrValues;
+  }
+
+  public boolean hasAcrValues() {
+    return acrValues.exists();
   }
 
   public ClaimsValue claims() {
     return claimsValue;
   }
 
+  public boolean hasClaims() {
+    return claimsValue.exists();
+  }
+
   public RequestObject request() {
     return requestObject;
+  }
+
+  public boolean hasRequest() {
+    return requestObject.exists();
   }
 
   public RequestUri requestUri() {
     return requestUri;
   }
 
+  public boolean hasRequestUri() {
+    return requestUri.exists();
+  }
+
   public ClaimsPayload claimsPayload() {
     return claimsPayload;
+  }
+
+  public boolean hasClaimsPayload() {
+    return claimsPayload.exists();
   }
 
   public CodeChallenge codeChallenge() {
     return codeChallenge;
   }
 
+  public boolean hasCodeChallenge() {
+    return codeChallenge.exists();
+  }
+
   public CodeChallengeMethod codeChallengeMethod() {
     return codeChallengeMethod;
+  }
+
+  public boolean hasCodeChallengeMethod() {
+    return codeChallengeMethod.isDefined();
   }
 
   public AuthorizationDetails authorizationDetails() {
     return authorizationDetails;
   }
 
-  public boolean hasRedirectUri() {
-    return redirectUri.exists();
+  public boolean hasAuthorizationDetails() {
+    return authorizationDetails.exists();
   }
 
   public boolean isInvalidDisplay() {
@@ -201,24 +289,8 @@ public class AuthorizationRequest {
     return !maxAge.isValid();
   }
 
-  public boolean hasState() {
-    return state.exists();
-  }
-
-  public boolean hasNonce() {
-    return nonce.exists();
-  }
-
   public boolean isOidcProfile() {
     return scopes.contains("openid");
-  }
-
-  public boolean hasCodeChallenge() {
-    return codeChallenge.exists();
-  }
-
-  public boolean hasAuthorizationDetails() {
-    return authorizationDetails.exists();
   }
 
   public boolean exists() {
@@ -239,9 +311,5 @@ public class AuthorizationRequest {
 
   public boolean isPromptLogin() {
     return prompts().hasLogin();
-  }
-
-  public boolean hasMaxAge() {
-    return maxAge.exists();
   }
 }

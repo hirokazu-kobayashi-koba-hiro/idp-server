@@ -1,0 +1,23 @@
+plugins {
+    id "java"
+    id "org.flywaydb.flyway"  version "9.19.3"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    runtimeOnly "org.postgresql:postgresql:42.6.0"
+}
+
+flyway {
+    def env = System.env
+    url = "jdbc:postgresql://${env.DB_ENDPOINT ?: "localhost:5432"}/${env.DB_NAME ?: "idpserver"}"
+    user = "${env.DB_USER ?: "idpserver"}"
+    password = "${env.DB_PASSWORD ?: "idpserver"}"
+    encoding = "UTF-8"
+    schemas = ["public"]
+    locations = ["filesystem:./migration", "filesystem:./record"]
+    cleanDisabled = false
+}

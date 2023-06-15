@@ -44,6 +44,7 @@ public class TokenRequestErrorHandler {
           new TokenErrorResponse(
               new Error("invalid_request"), new ErrorDescription(exception.getMessage())));
     }
+    log.log(Level.SEVERE, exception.getMessage(), exception);
     Error error = new Error("server_error");
     ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
     TokenErrorResponse tokenErrorResponse = new TokenErrorResponse(error, errorDescription);

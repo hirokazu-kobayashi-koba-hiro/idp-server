@@ -5,7 +5,8 @@ public enum AuthorizationProfile {
   OAUTH2,
   OIDC,
   FAPI_BASELINE,
-  FAPI_ADVANCE;
+  FAPI_ADVANCE,
+  UNDEFINED;
 
   public boolean isOAuth2() {
     return this == OAUTH2;
@@ -21,5 +22,9 @@ public enum AuthorizationProfile {
 
   public boolean isFapiAdvance() {
     return this == FAPI_ADVANCE;
+  }
+
+  public boolean isDefined() {
+    return this != UNDEFINED;
   }
 }

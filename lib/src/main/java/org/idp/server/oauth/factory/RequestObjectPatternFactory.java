@@ -95,8 +95,8 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
         requestObjectParameters.hasClaims()
             ? requestObjectParameters.claims()
             : parameters.claims();
-    RequestObject requestObject = new RequestObject();
-    RequestUri requestUri = new RequestUri();
+    RequestObject requestObject = parameters.request();
+    RequestUri requestUri = parameters.requestUri();
     CodeChallenge codeChallenge =
         requestObjectParameters.hasCodeChallenge()
             ? requestObjectParameters.codeChallenge()

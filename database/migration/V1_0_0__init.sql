@@ -1,0 +1,27 @@
+CREATE TABLE authorization_request
+(
+    id                    varchar(256)            NOT NULL PRIMARY KEY,
+    token_issuer          text                    NOT NULL,
+    profile               varchar(256)            NOT NULL,
+    scopes                text                    NOT NULL,
+    response_type         varchar(256)            NOT NULL,
+    client_id             varchar(256)            NOT NULL,
+    redirect_uri          text                    NOT NULL,
+    state                 text                    NOT NULL,
+    response_mode         varchar(256)            NOT NULL,
+    nonce                 text                    NOT NULL,
+    display               varchar(256)            NOT NULL,
+    prompts               varchar(256)            NOT NULL,
+    max_age               varchar(256)            NOT NULL,
+    ui_locales            text                    NOT NULL,
+    id_token_hint         text                    NOT NULL,
+    login_hint            text                    NOT NULL,
+    acr_values            text                    NOT NULL,
+    claims_value          text                    NOT NULL,
+    request_object        text                    NOT NULL,
+    request_uri           text                    NOT NULL,
+    code_challenge        text                    NOT NULL,
+    code_challenge_method varchar(10)             NOT NULL,
+    authorization_details text                    NOT NULL,
+    created_at            timestamp default now() NOT NULL
+);

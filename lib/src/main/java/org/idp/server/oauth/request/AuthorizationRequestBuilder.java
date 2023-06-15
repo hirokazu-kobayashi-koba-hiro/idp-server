@@ -11,30 +11,30 @@ import org.idp.server.type.pkce.CodeChallengeMethod;
 /** AuthorizationRequestBuilder */
 public class AuthorizationRequestBuilder {
 
-  AuthorizationRequestIdentifier identifier;
-  TokenIssuer tokenIssuer;
-  AuthorizationProfile profile;
-  Scopes scopes;
-  ResponseType responseType;
-  ClientId clientId;
-  RedirectUri redirectUri;
-  State state;
-  ResponseMode responseMode;
-  Nonce nonce;
-  Display display;
-  Prompts prompts;
-  MaxAge maxAge;
-  UiLocales uiLocales;
-  IdTokenHint idTokenHint;
-  LoginHint loginHint;
-  AcrValues acrValues;
-  ClaimsValue claimsValue;
-  RequestObject requestObject;
-  RequestUri requestUri;
-  ClaimsPayload claimsPayload;
-  CodeChallenge codeChallenge;
-  CodeChallengeMethod codeChallengeMethod;
-  AuthorizationDetails authorizationDetails;
+  AuthorizationRequestIdentifier identifier = new AuthorizationRequestIdentifier();
+  TokenIssuer tokenIssuer = new TokenIssuer();
+  AuthorizationProfile profile = AuthorizationProfile.UNDEFINED;
+  Scopes scopes = new Scopes();
+  ResponseType responseType = ResponseType.undefined;
+  ClientId clientId = new ClientId();
+  RedirectUri redirectUri = new RedirectUri();
+  State state = new State();
+  ResponseMode responseMode = ResponseMode.undefined;
+  Nonce nonce = new Nonce();
+  Display display = Display.undefined;
+  Prompts prompts = new Prompts();
+  MaxAge maxAge = new MaxAge();
+  UiLocales uiLocales = new UiLocales();
+  IdTokenHint idTokenHint = new IdTokenHint();
+  LoginHint loginHint = new LoginHint();
+  AcrValues acrValues = new AcrValues();
+  ClaimsValue claimsValue = new ClaimsValue();
+  RequestObject requestObject = new RequestObject();
+  RequestUri requestUri = new RequestUri();
+  ClaimsPayload claimsPayload = new ClaimsPayload();
+  CodeChallenge codeChallenge = new CodeChallenge();
+  CodeChallengeMethod codeChallengeMethod = CodeChallengeMethod.undefined;
+  AuthorizationDetails authorizationDetails = new AuthorizationDetails();
 
   public AuthorizationRequestBuilder() {}
 

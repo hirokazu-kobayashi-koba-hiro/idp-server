@@ -57,4 +57,8 @@ public class Prompts implements Iterable<Prompt> {
   public boolean hasLogin() {
     return values.contains(Prompt.login);
   }
+
+  public boolean exists() {
+    return !values.isEmpty();
+  }
 }

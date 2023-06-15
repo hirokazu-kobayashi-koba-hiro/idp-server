@@ -50,4 +50,8 @@ public enum ResponseMode {
   public boolean isDefinedResponseModeValue() {
     return !responseModeValue.isEmpty();
   }
+
+  public boolean isDefined() {
+    return this != undefined;
+  }
 }

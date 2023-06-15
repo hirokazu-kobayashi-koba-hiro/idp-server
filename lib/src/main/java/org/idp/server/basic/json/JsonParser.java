@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import java.util.Map;
 
 /** JsonParser */
 public class JsonParser {
@@ -39,7 +38,7 @@ public class JsonParser {
     }
   }
 
-  public String write(Map<String, Object> value) {
+  public String write(Object value) {
     try {
       return objectMapper.writeValueAsString(value);
     } catch (JsonProcessingException exception) {

@@ -58,7 +58,7 @@ public class TokenResponseBuilder {
 
   public TokenResponseBuilder add(AuthorizationDetails authorizationDetails) {
     this.authorizationDetails = authorizationDetails;
-    values.put("authorization_details", authorizationDetails.values());
+    values.put("authorization_details", authorizationDetails.toMapValues());
     return this;
   }
 

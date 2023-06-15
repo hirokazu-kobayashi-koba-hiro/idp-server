@@ -23,4 +23,8 @@ public enum CodeChallengeMethod {
   public boolean isS256() {
     return this == S256;
   }
+
+  public boolean isDefined() {
+    return this != undefined;
+  }
 }

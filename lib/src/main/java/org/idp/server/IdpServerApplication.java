@@ -1,6 +1,7 @@
 package org.idp.server;
 
 import java.util.List;
+import org.idp.server.basic.sql.SqlConnection;
 import org.idp.server.handler.ciba.CibaAuthorizeHandler;
 import org.idp.server.handler.ciba.CibaDenyHandler;
 import org.idp.server.handler.ciba.CibaRequestHandler;
@@ -13,8 +14,8 @@ import org.idp.server.handler.grantmanagment.datasource.AuthorizationGrantedMemo
 import org.idp.server.handler.oauth.OAuthAuthorizeHandler;
 import org.idp.server.handler.oauth.OAuthDenyHandler;
 import org.idp.server.handler.oauth.OAuthRequestHandler;
+import org.idp.server.handler.oauth.datasource.database.AuthorizationRequestDataSource;
 import org.idp.server.handler.oauth.datasource.memory.AuthorizationCodeGrantMemoryDataSource;
-import org.idp.server.handler.oauth.datasource.memory.AuthorizationRequestMemoryDataSource;
 import org.idp.server.handler.oauth.datasource.memory.ClientConfigurationMemoryDataSource;
 import org.idp.server.handler.oauth.datasource.memory.ServerConfigurationMemoryDataSource;
 import org.idp.server.handler.oauth.httpclient.RequestObjectHttpClient;
@@ -39,8 +40,10 @@ public class IdpServerApplication {
   public IdpServerApplication(MemoryDataSourceConfig memoryDataSourceConfig) {
     List<String> serverConfigurations = memoryDataSourceConfig.serverConfigurations();
     List<String> clientConfigurations = memoryDataSourceConfig.clientConfigurations();
-    AuthorizationRequestMemoryDataSource authorizationRequestMemoryDataSource =
-        new AuthorizationRequestMemoryDataSource();
+    SqlConnection sqlConnection =
+        new SqlConnection("jdbc:postgresql://localhost:5432/idpserver", "idpserver", "idpserver");
+    AuthorizationRequestDataSource authorizationRequestMemoryDataSource =
+        new AuthorizationRequestDataSource(sqlConnection);
     AuthorizationCodeGrantMemoryDataSource authorizationCodeGrantMemoryDataSource =
         new AuthorizationCodeGrantMemoryDataSource();
     AuthorizationGrantedMemoryDataSource authorizationGrantedMemoryDataSource =
