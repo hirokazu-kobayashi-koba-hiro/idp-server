@@ -40,7 +40,9 @@ public class TokenResponseBuilder {
 
   public TokenResponseBuilder add(RefreshTokenValue refreshTokenValue) {
     this.refreshTokenValue = refreshTokenValue;
-    values.put("refresh_token", refreshTokenValue.value());
+    if (refreshTokenValue.exists()) {
+      values.put("refresh_token", refreshTokenValue.value());
+    }
     return this;
   }
 
@@ -52,13 +54,17 @@ public class TokenResponseBuilder {
 
   public TokenResponseBuilder add(IdToken idToken) {
     this.idToken = idToken;
-    values.put("id_token", idToken.value());
+    if (idToken.exists()) {
+      values.put("id_token", idToken.value());
+    }
     return this;
   }
 
   public TokenResponseBuilder add(AuthorizationDetails authorizationDetails) {
     this.authorizationDetails = authorizationDetails;
-    values.put("authorization_details", authorizationDetails.toMapValues());
+    if (authorizationDetails.exists()) {
+      values.put("authorization_details", authorizationDetails.toMapValues());
+    }
     return this;
   }
 

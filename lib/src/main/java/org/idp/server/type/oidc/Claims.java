@@ -1,7 +1,10 @@
 package org.idp.server.type.oidc;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /** Claims */
 public class Claims {
@@ -13,6 +16,14 @@ public class Claims {
 
   public Claims(Set<String> values) {
     this.values = values;
+  }
+
+  public Claims(String value) {
+    if (Objects.isNull(value) || value.isEmpty()) {
+      this.values = new HashSet<>();
+      return;
+    }
+    this.values = Arrays.stream(value.split(" ")).collect(Collectors.toSet());
   }
 
   public boolean exists() {

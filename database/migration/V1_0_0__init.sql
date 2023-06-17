@@ -25,3 +25,48 @@ CREATE TABLE authorization_request
     authorization_details text                    NOT NULL,
     created_at            timestamp default now() NOT NULL
 );
+
+CREATE TABLE authorization_code_grant
+(
+    authorization_request_id varchar(256)            NOT NULL PRIMARY KEY,
+    authorization_code       varchar(256)            NOT NULL,
+    user_id                  varchar(256)            NOT NULL,
+    user_payload             text                    NOT NULL,
+    authentication           text                    NOT NULL,
+    client_id                varchar(256)            NOT NULL,
+    scopes                   text                    NOT NULL,
+    claims                   text                    NOT NULL,
+    custom_properties        text                    NOT NULL,
+    authorization_details    text                    NOT NULL,
+    expired_at               text                    NOT NULL,
+    created_at               timestamp default now() NOT NULL,
+    CONSTRAINT fk_authorization_code_grant_authorization_request_id
+        FOREIGN KEY (authorization_request_id)
+            REFERENCES authorization_request (id)
+            ON DELETE CASCADE
+);
+
+CREATE TABLE oauth_token
+(
+    id                       varchar(256)            NOT NULL PRIMARY KEY,
+    token_issuer             text                    NOT NULL,
+    token_type               varchar(10)             NOT NULL,
+    access_token             text                    NOT NULL,
+    user_id                  varchar(256)            NOT NULL,
+    user_payload             text                    NOT NULL,
+    authentication           text                    NOT NULL,
+    client_id                varchar(256)            NOT NULL,
+    scopes                   text                    NOT NULL,
+    claims                   text                    NOT NULL,
+    custom_properties        text                    NOT NULL,
+    authorization_details    text                    NOT NULL,
+    expires_in               text                    NOT NULL,
+    access_token_expired_at  text                    NOT NULL,
+    access_token_created_at  text                    NOT NULL,
+    refresh_token            text                    NOT NULL,
+    refresh_token_expired_at text                    NOT NULL,
+    refresh_token_created_at text                    NOT NULL,
+    id_token                 text                    NOT NULL,
+    created_at               timestamp default now() NOT NULL,
+    updated_at               timestamp default now() NOT NULL
+);

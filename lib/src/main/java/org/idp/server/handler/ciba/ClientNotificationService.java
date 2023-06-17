@@ -19,9 +19,8 @@ import org.idp.server.oauth.identity.IdTokenCustomClaims;
 import org.idp.server.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.oauth.token.*;
 import org.idp.server.token.OAuthToken;
+import org.idp.server.token.OAuthTokenBuilder;
 import org.idp.server.token.OAuthTokenIdentifier;
-import org.idp.server.token.TokenResponse;
-import org.idp.server.token.TokenResponseBuilder;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.type.extension.GrantFlow;
 import org.idp.server.type.oauth.ExpiresIn;
@@ -103,18 +102,9 @@ public class ClientNotificationService
       AuthorizationGranted authorizationGranted =
           new AuthorizationGranted(authorizationGrantedIdentifier, cibaGrant.authorizationGrant());
       authorizationGrantedRepository.register(authorizationGranted);
-      TokenResponse tokenResponse =
-          new TokenResponseBuilder()
-              .add(accessToken.accessTokenValue())
-              .add(accessToken.accessTokenValue())
-              .add(TokenType.Bearer)
-              .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
-              .add(idToken)
-              .build();
 
       OAuthToken oAuthToken =
-          new OAuthToken(
-              identifier, tokenResponse, accessToken, refreshToken, cibaGrant.authorizationGrant());
+          new OAuthTokenBuilder(identifier).add(accessToken).add(refreshToken).add(idToken).build();
       oAuthTokenRepository.register(oAuthToken);
     }
   }

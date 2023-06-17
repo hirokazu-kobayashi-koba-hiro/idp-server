@@ -118,13 +118,10 @@ public class AuthorizationCodeGrantService
     AccessToken accessToken =
         createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);
     RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
-    TokenResponseBuilder tokenResponseBuilder =
-        new TokenResponseBuilder()
-            .add(accessToken.accessTokenValue())
-            .add(TokenType.Bearer)
-            .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
-            .add(refreshToken.refreshTokenValue())
-            .add(authorizationRequest.scope());
+    OAuthTokenBuilder oAuthTokenBuilder =
+        new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))
+            .add(accessToken)
+            .add(refreshToken);
 
     if (authorizationRequest.isOidcProfile()) {
       IdTokenCustomClaims idTokenCustomClaims =
@@ -140,17 +137,12 @@ public class AuthorizationCodeGrantService
               authorizationCodeGrant.authentication(),
               GrantFlow.authorization_code,
               authorizationCodeGrant.scopes(),
-              authorizationCodeGrant.idTokenClaims(),
+              authorizationRequest.claimsPayload().idToken(),
               idTokenCustomClaims,
               serverConfiguration,
               clientConfiguration);
-      tokenResponseBuilder.add(idToken);
+      oAuthTokenBuilder.add(idToken);
     }
-    if (authorizationGrant.hasAuthorizationDetails()) {
-      tokenResponseBuilder.add(authorizationGrant.authorizationDetails());
-    }
-    TokenResponse tokenResponse = tokenResponseBuilder.build();
-    OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
 
     AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
         new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
@@ -159,8 +151,7 @@ public class AuthorizationCodeGrantService
             authorizationGrantedIdentifier, authorizationCodeGrant.authorizationGrant());
     authorizationGrantedRepository.register(authorizationGranted);
 
-    OAuthToken oAuthToken =
-        new OAuthToken(identifier, tokenResponse, accessToken, refreshToken, authorizationGrant);
+    OAuthToken oAuthToken = oAuthTokenBuilder.build();
 
     oAuthTokenRepository.register(oAuthToken);
     authorizationCodeGrantRepository.delete(authorizationCodeGrant);

@@ -17,6 +17,7 @@ targetCompatibility = JavaVersion.VERSION_17
 dependencies {
 	//json
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
 	//jose
 	implementation 'com.nimbusds:nimbus-jose-jwt:9.30.2'
 

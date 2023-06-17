@@ -88,6 +88,6 @@ public class TokenRequestHandler {
 
     OAuthToken oAuthToken = oAuthTokenCreationService.create(tokenRequestContext);
 
-    return new TokenRequestResponse(TokenRequestStatus.OK, oAuthToken.tokenResponse());
+    return new TokenRequestResponse(TokenRequestStatus.OK, oAuthToken);
   }
 }

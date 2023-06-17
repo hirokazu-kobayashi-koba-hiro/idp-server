@@ -13,6 +13,10 @@ public class ExpiredAt {
     this.value = value;
   }
 
+  public ExpiredAt(String value) {
+    this.value = LocalDateTime.parse(value);
+  }
+
   public LocalDateTime value() {
     return value;
   }
@@ -23,5 +27,9 @@ public class ExpiredAt {
 
   public long toEpochSecondWithUtc() {
     return value.toEpochSecond(ZoneOffset.UTC);
+  }
+
+  public String toStringValue() {
+    return value.toString();
   }
 }

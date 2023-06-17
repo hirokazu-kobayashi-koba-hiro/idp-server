@@ -1,11 +1,9 @@
-package org.idp.server.handler.oauth.datasource.database;
+package org.idp.server.handler.oauth.datasource.database.request;
 
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.sql.SqlConnection;
 import org.idp.server.basic.sql.SqlExecutor;
-import org.idp.server.handler.oauth.datasource.database.model.AuthorizationRequestConverter;
-import org.idp.server.handler.oauth.datasource.database.model.AuthorizationRequestSqlCreator;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
@@ -21,7 +19,7 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
   @Override
   public void register(AuthorizationRequest authorizationRequest) {
     SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
-    String sql = AuthorizationRequestSqlCreator.createInsert(authorizationRequest);
+    String sql = InsertSqlCreator.createInsert(authorizationRequest);
     sqlExecutor.execute(sql);
   }
 
@@ -40,7 +38,7 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
       throw new RuntimeException(
           String.format("not found oauth request (%s)", authorizationRequestIdentifier.value()));
     }
-    return AuthorizationRequestConverter.convert(stringMap);
+    return ModelConverter.convert(stringMap);
   }
 
   @Override
@@ -57,6 +55,6 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
       return new AuthorizationRequest();
     }
-    return AuthorizationRequestConverter.convert(stringMap);
+    return ModelConverter.convert(stringMap);
   }
 }

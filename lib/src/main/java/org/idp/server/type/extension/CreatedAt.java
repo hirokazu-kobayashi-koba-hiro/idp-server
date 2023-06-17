@@ -13,11 +13,19 @@ public class CreatedAt {
     this.value = value;
   }
 
+  public CreatedAt(String value) {
+    this.value = LocalDateTime.parse(value);
+  }
+
   public LocalDateTime value() {
     return value;
   }
 
   public long toEpochSecondWithUtc() {
     return value.toEpochSecond(ZoneOffset.UTC);
+  }
+
+  public String toStringValue() {
+    return value.toString();
   }
 }

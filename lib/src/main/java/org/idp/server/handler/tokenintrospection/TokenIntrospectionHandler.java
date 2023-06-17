@@ -31,9 +31,8 @@ public class TokenIntrospectionHandler {
     verifier.verify();
 
     Map<String, Object> contents =
-        TokenIntrospectionContentsCreator.createSuccessContents(oAuthToken.accessTokenPayload());
-    return new TokenIntrospectionResponse(
-        TokenIntrospectionRequestStatus.OK, oAuthToken.accessTokenPayload(), contents);
+        TokenIntrospectionContentsCreator.createSuccessContents(oAuthToken);
+    return new TokenIntrospectionResponse(TokenIntrospectionRequestStatus.OK, oAuthToken, contents);
   }
 
   OAuthToken find(TokenIntrospectionRequest request) {

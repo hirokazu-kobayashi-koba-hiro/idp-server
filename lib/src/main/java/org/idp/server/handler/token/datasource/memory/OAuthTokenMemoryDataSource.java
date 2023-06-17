@@ -1,4 +1,4 @@
-package org.idp.server.handler.token.datasource;
+package org.idp.server.handler.token.datasource.memory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,12 +28,12 @@ public class OAuthTokenMemoryDataSource implements OAuthTokenRepository {
   }
 
   void registerWithAccessTokenKey(OAuthToken oAuthToken) {
-    String key = accessTokenKey(oAuthToken.tokenIssuer(), oAuthToken.accessToken());
+    String key = accessTokenKey(oAuthToken.tokenIssuer(), oAuthToken.accessTokenValue());
     accessTokens.put(key, oAuthToken);
   }
 
   void registerWithRefreshTokenKey(OAuthToken oAuthToken) {
-    String key = refreshTokenKey(oAuthToken.tokenIssuer(), oAuthToken.refreshToken());
+    String key = refreshTokenKey(oAuthToken.tokenIssuer(), oAuthToken.refreshTokenValue());
     refreshTokens.put(key, oAuthToken);
   }
 
@@ -64,12 +64,12 @@ public class OAuthTokenMemoryDataSource implements OAuthTokenRepository {
   }
 
   void deleteWithAccessTokenKey(OAuthToken oAuthToken) {
-    String key = accessTokenKey(oAuthToken.tokenIssuer(), oAuthToken.accessToken());
+    String key = accessTokenKey(oAuthToken.tokenIssuer(), oAuthToken.accessTokenValue());
     accessTokens.remove(key);
   }
 
   void deleteWithRefreshTokenKey(OAuthToken oAuthToken) {
-    String key = refreshTokenKey(oAuthToken.tokenIssuer(), oAuthToken.refreshToken());
+    String key = refreshTokenKey(oAuthToken.tokenIssuer(), oAuthToken.refreshTokenValue());
     refreshTokens.remove(key);
   }
 

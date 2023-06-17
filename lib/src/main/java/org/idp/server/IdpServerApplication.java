@@ -14,13 +14,13 @@ import org.idp.server.handler.grantmanagment.datasource.AuthorizationGrantedMemo
 import org.idp.server.handler.oauth.OAuthAuthorizeHandler;
 import org.idp.server.handler.oauth.OAuthDenyHandler;
 import org.idp.server.handler.oauth.OAuthRequestHandler;
-import org.idp.server.handler.oauth.datasource.database.AuthorizationRequestDataSource;
-import org.idp.server.handler.oauth.datasource.memory.AuthorizationCodeGrantMemoryDataSource;
+import org.idp.server.handler.oauth.datasource.database.code.AuthorizationCodeGrantDataSource;
+import org.idp.server.handler.oauth.datasource.database.request.AuthorizationRequestDataSource;
 import org.idp.server.handler.oauth.datasource.memory.ClientConfigurationMemoryDataSource;
 import org.idp.server.handler.oauth.datasource.memory.ServerConfigurationMemoryDataSource;
 import org.idp.server.handler.oauth.httpclient.RequestObjectHttpClient;
 import org.idp.server.handler.token.TokenRequestHandler;
-import org.idp.server.handler.token.datasource.OAuthTokenMemoryDataSource;
+import org.idp.server.handler.token.datasource.database.OAuthTokenDataSource;
 import org.idp.server.handler.tokenintrospection.TokenIntrospectionHandler;
 import org.idp.server.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.handler.userinfo.UserinfoHandler;
@@ -44,11 +44,11 @@ public class IdpServerApplication {
         new SqlConnection("jdbc:postgresql://localhost:5432/idpserver", "idpserver", "idpserver");
     AuthorizationRequestDataSource authorizationRequestMemoryDataSource =
         new AuthorizationRequestDataSource(sqlConnection);
-    AuthorizationCodeGrantMemoryDataSource authorizationCodeGrantMemoryDataSource =
-        new AuthorizationCodeGrantMemoryDataSource();
+    AuthorizationCodeGrantDataSource authorizationCodeGrantMemoryDataSource =
+        new AuthorizationCodeGrantDataSource(sqlConnection);
     AuthorizationGrantedMemoryDataSource authorizationGrantedMemoryDataSource =
         new AuthorizationGrantedMemoryDataSource();
-    OAuthTokenMemoryDataSource oAuthTokenMemoryDataSource = new OAuthTokenMemoryDataSource();
+    OAuthTokenDataSource oAuthTokenMemoryDataSource = new OAuthTokenDataSource(sqlConnection);
     ServerConfigurationMemoryDataSource serverConfigurationMemoryDataSource =
         new ServerConfigurationMemoryDataSource(serverConfigurations);
     ClientConfigurationMemoryDataSource clientConfigurationMemoryDataSource =

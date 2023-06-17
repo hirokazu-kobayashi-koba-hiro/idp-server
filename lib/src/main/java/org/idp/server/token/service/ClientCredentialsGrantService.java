@@ -10,15 +10,12 @@ import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenCreatable;
-import org.idp.server.oauth.token.RefreshToken;
 import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.token.validator.ClientCredentialsGrantValidator;
 import org.idp.server.token.verifier.ClientCredentialsGrantVerifier;
 import org.idp.server.type.extension.CustomProperties;
-import org.idp.server.type.oauth.ExpiresIn;
 import org.idp.server.type.oauth.Scopes;
-import org.idp.server.type.oauth.TokenType;
 
 public class ClientCredentialsGrantService
     implements OAuthTokenCreationService, AccessTokenCreatable {
@@ -55,18 +52,11 @@ public class ClientCredentialsGrantService
 
     AccessToken accessToken =
         createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);
-    TokenResponseBuilder tokenResponseBuilder =
-        new TokenResponseBuilder()
-            .add(accessToken.accessTokenValue())
-            .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
-            .add(TokenType.Bearer)
-            .add(scopes);
-    TokenResponse tokenResponse = tokenResponseBuilder.build();
 
-    OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
     OAuthToken oAuthToken =
-        new OAuthToken(
-            identifier, tokenResponse, accessToken, new RefreshToken(), authorizationGrant);
+        new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))
+            .add(accessToken)
+            .build();
 
     oAuthTokenRepository.register(oAuthToken);
     return oAuthToken;

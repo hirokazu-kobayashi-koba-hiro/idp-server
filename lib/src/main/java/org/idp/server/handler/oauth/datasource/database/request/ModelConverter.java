@@ -1,4 +1,4 @@
-package org.idp.server.handler.oauth.datasource.database.model;
+package org.idp.server.handler.oauth.datasource.database.request;
 
 import java.util.List;
 import java.util.Map;
@@ -15,9 +15,9 @@ import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;
 import org.idp.server.type.pkce.CodeChallengeMethod;
 
-public class AuthorizationRequestConverter {
+class ModelConverter {
 
-  public static AuthorizationRequest convert(Map<String, String> stringMap) {
+  static AuthorizationRequest convert(Map<String, String> stringMap) {
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(new AuthorizationRequestIdentifier(stringMap.get("id")));
     builder.add(new TokenIssuer(stringMap.get("token_issuer")));

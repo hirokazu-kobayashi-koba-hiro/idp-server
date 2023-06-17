@@ -20,6 +20,8 @@ public class AuthorizationGrant {
   CustomProperties customProperties;
   AuthorizationDetails authorizationDetails;
 
+  public AuthorizationGrant() {}
+
   public AuthorizationGrant(
       User user,
       Authentication authentication,
@@ -77,6 +79,10 @@ public class AuthorizationGrant {
     return customProperties;
   }
 
+  public boolean hasCustomProperties() {
+    return customProperties.exists();
+  }
+
   public boolean isGranted(ClientId clientId) {
     return this.clientId.equals(clientId);
   }
@@ -99,5 +105,9 @@ public class AuthorizationGrant {
 
   public boolean hasAuthorizationDetails() {
     return authorizationDetails.exists();
+  }
+
+  public boolean hasClaim() {
+    return claimsPayload.exists();
   }
 }

@@ -1,14 +1,13 @@
-package org.idp.server.handler.oauth.datasource.database.model;
+package org.idp.server.handler.oauth.datasource.database.request;
 
 import org.idp.server.basic.json.JsonParser;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.request.AuthorizationRequest;
 
-public class AuthorizationRequestSqlCreator {
+public class InsertSqlCreator {
 
-  public static String createInsert(AuthorizationRequest authorizationRequest) {
-    AuthorizationRequestInsertBuilder builder =
-        new AuthorizationRequestInsertBuilder(authorizationRequest.identifier().value());
+  static String createInsert(AuthorizationRequest authorizationRequest) {
+    InsertSqlBuilder builder = new InsertSqlBuilder(authorizationRequest.identifier().value());
     if (authorizationRequest.hasTokenIssuer()) {
       builder.setTokenIssuer(authorizationRequest.tokenIssuer().value());
     }

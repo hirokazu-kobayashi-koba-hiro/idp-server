@@ -2,6 +2,7 @@ package org.idp.server.handler.token.io;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.token.OAuthToken;
 import org.idp.server.token.TokenErrorResponse;
 import org.idp.server.token.TokenResponse;
 import org.idp.server.token.TokenResponseBuilder;
@@ -12,9 +13,18 @@ public class TokenRequestResponse {
   TokenErrorResponse errorResponse;
   Map<String, String> headers;
 
-  public TokenRequestResponse(TokenRequestStatus status, TokenResponse tokenResponse) {
+  public TokenRequestResponse(TokenRequestStatus status, OAuthToken oAuthToken) {
     this.status = status;
-    this.tokenResponse = tokenResponse;
+    this.tokenResponse =
+        new TokenResponseBuilder()
+            .add(oAuthToken.accessTokenValue())
+            .add(oAuthToken.refreshTokenValue())
+            .add(oAuthToken.scopes())
+            .add(oAuthToken.tokenType())
+            .add(oAuthToken.expiresIn())
+            .add(oAuthToken.idToken())
+            .add(oAuthToken.authorizationDetails())
+            .build();
     this.errorResponse = new TokenErrorResponse();
     Map<String, String> values = new HashMap<>();
     values.put("Content-Typ", "application/json");

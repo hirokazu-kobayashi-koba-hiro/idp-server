@@ -5,6 +5,10 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /** JsonParser */
 public class JsonParser {
@@ -23,10 +27,15 @@ public class JsonParser {
   }
 
   public static JsonParser createWithSnakeCaseStrategy() {
+    JavaTimeModule javaTimeModule = new JavaTimeModule();
+    javaTimeModule.addDeserializer(
+        LocalDateTime.class,
+        new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
     objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
     objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+    objectMapper.registerModule(javaTimeModule);
     return new JsonParser(objectMapper);
   }
 

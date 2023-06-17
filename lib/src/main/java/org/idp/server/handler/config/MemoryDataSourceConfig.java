@@ -4,7 +4,7 @@ import java.util.List;
 
 public class MemoryDataSourceConfig {
 
-  java.util.List<String> serverConfigurations;
+  List<String> serverConfigurations;
   List<String> clientConfigurations;
 
   public MemoryDataSourceConfig(

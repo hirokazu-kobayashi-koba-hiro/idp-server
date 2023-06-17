@@ -3,34 +3,29 @@ package org.idp.server.token;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import org.idp.server.oauth.grant.AuthorizationGrant;
+import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.token.AccessToken;
-import org.idp.server.oauth.token.AccessTokenPayload;
 import org.idp.server.oauth.token.RefreshToken;
-import org.idp.server.type.oauth.AccessTokenValue;
-import org.idp.server.type.oauth.RefreshTokenValue;
-import org.idp.server.type.oauth.Subject;
-import org.idp.server.type.oauth.TokenIssuer;
+import org.idp.server.type.oauth.*;
+import org.idp.server.type.oidc.IdToken;
 
 public class OAuthToken {
   OAuthTokenIdentifier identifier;
-  TokenResponse tokenResponse;
   AccessToken accessToken;
   RefreshToken refreshToken;
-  AuthorizationGrant authorizationGrant;
+  IdToken idToken;
 
   public OAuthToken() {}
 
   public OAuthToken(
       OAuthTokenIdentifier identifier,
-      TokenResponse tokenResponse,
       AccessToken accessToken,
       RefreshToken refreshToken,
-      AuthorizationGrant authorizationGrant) {
+      IdToken idToken) {
     this.identifier = identifier;
-    this.tokenResponse = tokenResponse;
     this.accessToken = accessToken;
     this.refreshToken = refreshToken;
-    this.authorizationGrant = authorizationGrant;
+    this.idToken = idToken;
   }
 
   public OAuthTokenIdentifier identifier() {
@@ -38,19 +33,11 @@ public class OAuthToken {
   }
 
   public TokenIssuer tokenIssuer() {
-    return accessTokenPayload().tokenIssuer();
-  }
-
-  public TokenResponse tokenResponse() {
-    return tokenResponse;
-  }
-
-  public AccessTokenPayload accessTokenPayload() {
-    return accessToken.accessTokenPayload();
+    return accessToken.tokenIssuer();
   }
 
   public AuthorizationGrant authorizationGrant() {
-    return authorizationGrant;
+    return accessToken.authorizationGrant();
   }
 
   public boolean exists() {
@@ -61,23 +48,55 @@ public class OAuthToken {
     return accessToken.isExpired(other);
   }
 
-  public AccessTokenValue accessToken() {
-    return tokenResponse.accessToken();
+  public AccessTokenValue accessTokenValue() {
+    return accessToken.accessTokenValue();
   }
 
-  public RefreshTokenValue refreshToken() {
-    return tokenResponse.refreshToken();
+  public AccessToken accessToken() {
+    return accessToken;
+  }
+
+  public RefreshToken refreshToken() {
+    return refreshToken;
+  }
+
+  public RefreshTokenValue refreshTokenValue() {
+    return refreshToken.refreshTokenValue();
+  }
+
+  public IdToken idToken() {
+    return idToken;
   }
 
   public boolean hasRefreshToken() {
-    return tokenResponse.hasRefreshToken();
+    return refreshToken.exists();
   }
 
   public Subject subject() {
-    return accessTokenPayload().subject();
+    return authorizationGrant().subject();
   }
 
   public boolean hasOpenidScope() {
-    return accessTokenPayload().hasOpenidScope();
+    return authorizationGrant().hasOpenidScope();
+  }
+
+  public Scopes scopes() {
+    return accessToken.scopes();
+  }
+
+  public TokenType tokenType() {
+    return accessToken.tokenType();
+  }
+
+  public ExpiresIn expiresIn() {
+    return accessToken.expiresIn();
+  }
+
+  public AuthorizationDetails authorizationDetails() {
+    return authorizationGrant().authorizationDetails();
+  }
+
+  public boolean hasIdToken() {
+    return idToken.exists();
   }
 }

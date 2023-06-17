@@ -2,13 +2,26 @@ package org.idp.server.tokenintrospection;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.oauth.token.AccessTokenPayload;
+import org.idp.server.oauth.token.AccessToken;
+import org.idp.server.token.OAuthToken;
 
 public class TokenIntrospectionContentsCreator {
 
-  public static Map<String, Object> createSuccessContents(AccessTokenPayload accessTokenPayload) {
-    Map<String, Object> contents = new HashMap<>(accessTokenPayload.values());
+  public static Map<String, Object> createSuccessContents(OAuthToken oAuthToken) {
+    Map<String, Object> contents = new HashMap<>();
+    AccessToken accessToken = oAuthToken.accessToken();
     contents.put("active", true);
+    contents.put("iss", accessToken.tokenIssuer().value());
+    if (accessToken.hasSubject()) {
+      contents.put("sub", accessToken.subject().value());
+    }
+    contents.put("client_id", accessToken.clientId().value());
+    contents.put("scope", accessToken.scopes().toStringValues());
+    if (accessToken.hasCustomProperties()) {
+      contents.putAll(accessToken.customProperties().values());
+    }
+    contents.put("iat", accessToken.createdAt().toEpochSecondWithUtc());
+    contents.put("exp", accessToken.expiredAt().toEpochSecondWithUtc());
     return contents;
   }
 

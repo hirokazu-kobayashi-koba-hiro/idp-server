@@ -20,8 +20,6 @@ import org.idp.server.token.validator.CibaGrantValidator;
 import org.idp.server.token.verifier.CibaGrantVerifier;
 import org.idp.server.type.ciba.AuthReqId;
 import org.idp.server.type.extension.GrantFlow;
-import org.idp.server.type.oauth.ExpiresIn;
-import org.idp.server.type.oauth.TokenType;
 import org.idp.server.type.oidc.IdToken;
 
 public class CibaGrantService
@@ -68,12 +66,10 @@ public class CibaGrantService
     AccessToken accessToken =
         createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);
     RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
-    TokenResponseBuilder tokenResponseBuilder =
-        new TokenResponseBuilder()
-            .add(accessToken.accessTokenValue())
-            .add(TokenType.Bearer)
-            .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
-            .add(refreshToken.refreshTokenValue());
+    OAuthTokenBuilder oAuthTokenBuilder =
+        new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))
+            .add(accessToken)
+            .add(refreshToken);
     IdTokenCustomClaims idTokenCustomClaims = new IdTokenCustomClaimsBuilder().build();
     IdToken idToken =
         createIdToken(
@@ -85,13 +81,7 @@ public class CibaGrantService
             idTokenCustomClaims,
             serverConfiguration,
             clientConfiguration);
-    tokenResponseBuilder.add(idToken);
-    if (authorizationGrant.hasAuthorizationDetails()) {
-      tokenResponseBuilder.add(authorizationGrant.authorizationDetails());
-    }
-
-    TokenResponse tokenResponse = tokenResponseBuilder.build();
-    OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
+    oAuthTokenBuilder.add(idToken);
 
     AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
         new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
@@ -99,9 +89,7 @@ public class CibaGrantService
         new AuthorizationGranted(authorizationGrantedIdentifier, cibaGrant.authorizationGrant());
     authorizationGrantedRepository.register(authorizationGranted);
 
-    OAuthToken oAuthToken =
-        new OAuthToken(
-            identifier, tokenResponse, accessToken, refreshToken, cibaGrant.authorizationGrant());
+    OAuthToken oAuthToken = oAuthTokenBuilder.build();
 
     oAuthTokenRepository.register(oAuthToken);
     cibaGrantRepository.delete(cibaGrant);

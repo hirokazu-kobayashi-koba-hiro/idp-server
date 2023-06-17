@@ -7,7 +7,7 @@ import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.RefreshTokenValue;
 
 public class RefreshToken {
-  RefreshTokenValue refreshTokenValue;
+  RefreshTokenValue refreshTokenValue = new RefreshTokenValue();
   CreatedAt createdAt;
   ExpiredAt expiredAt;
 

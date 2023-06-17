@@ -18,9 +18,7 @@ import org.idp.server.token.verifier.ResourceOwnerPasswordGrantVerifier;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.extension.GrantFlow;
 import org.idp.server.type.oauth.ClientId;
-import org.idp.server.type.oauth.ExpiresIn;
 import org.idp.server.type.oauth.Scopes;
-import org.idp.server.type.oauth.TokenType;
 import org.idp.server.type.oidc.IdToken;
 
 /**
@@ -85,12 +83,12 @@ public class ResourceOwnerPasswordCredentialsGrantService
 
     AccessToken accessToken =
         createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);
-    TokenResponseBuilder tokenResponseBuilder =
-        new TokenResponseBuilder()
-            .add(accessToken.accessTokenValue())
-            .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
-            .add(scopes)
-            .add(TokenType.Bearer);
+    RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
+    OAuthTokenBuilder oAuthTokenBuilder =
+        new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))
+            .add(accessToken)
+            .add(refreshToken);
+
     if (authorizationGrant.hasOpenidScope()) {
       IdTokenCustomClaims idTokenCustomClaims = new IdTokenCustomClaimsBuilder().build();
       IdToken idToken =
@@ -103,15 +101,9 @@ public class ResourceOwnerPasswordCredentialsGrantService
               idTokenCustomClaims,
               serverConfiguration,
               clientConfiguration);
-      tokenResponseBuilder.add(idToken);
+      oAuthTokenBuilder.add(idToken);
     }
-    TokenResponse tokenResponse = tokenResponseBuilder.build();
-
-    OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
-    OAuthToken oAuthToken =
-        new OAuthToken(
-            identifier, tokenResponse, accessToken, new RefreshToken(), authorizationGrant);
-
+    OAuthToken oAuthToken = oAuthTokenBuilder.build();
     oAuthTokenRepository.register(oAuthToken);
     return oAuthToken;
   }

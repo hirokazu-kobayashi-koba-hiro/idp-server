@@ -7,9 +7,7 @@ import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.extension.ExpiredAt;
-import org.idp.server.type.oauth.AuthorizationCode;
-import org.idp.server.type.oauth.ClientId;
-import org.idp.server.type.oauth.Scopes;
+import org.idp.server.type.oauth.*;
 
 /** AuthorizationCodeGrant */
 public class AuthorizationCodeGrant {
@@ -65,11 +63,15 @@ public class AuthorizationCodeGrant {
     return authorizationGrant.scopes();
   }
 
-  public IdTokenClaims idTokenClaims() {
-    return authorizationGrant.idTokenClaims();
-  }
-
   public Authentication authentication() {
     return authorizationGrant.authentication();
+  }
+
+  public ClientId clientId() {
+    return authorizationGrant.clientId();
+  }
+
+  public ExpiredAt expiredAt() {
+    return expiredAt;
   }
 }

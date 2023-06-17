@@ -13,6 +13,10 @@ public class ExpiresIn {
     this.value = value;
   }
 
+  public ExpiresIn(String value) {
+    this.value = Long.parseLong(value);
+  }
+
   public long value() {
     return value;
   }

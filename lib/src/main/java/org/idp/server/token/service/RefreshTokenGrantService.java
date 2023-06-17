@@ -9,9 +9,7 @@ import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.token.validator.RefreshTokenGrantValidator;
 import org.idp.server.token.verifier.RefreshTokenVerifier;
-import org.idp.server.type.oauth.ExpiresIn;
 import org.idp.server.type.oauth.RefreshTokenValue;
-import org.idp.server.type.oauth.TokenType;
 
 public class RefreshTokenGrantService
     implements OAuthTokenCreationService, AccessTokenCreatable, RefreshTokenCreatable {
@@ -39,25 +37,14 @@ public class RefreshTokenGrantService
     AccessToken accessToken =
         createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);
     RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
-    OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
-
-    TokenResponseBuilder tokenResponseBuilder =
-        new TokenResponseBuilder()
-            .add(accessToken.accessTokenValue())
-            .add(refreshToken.refreshTokenValue())
-            .add(TokenType.Bearer)
-            .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
-            .add(oAuthToken.authorizationGrant().scopes());
-    if (authorizationGrant.hasAuthorizationDetails()) {
-      tokenResponseBuilder.add(authorizationGrant.authorizationDetails());
-    }
-    TokenResponse tokenResponse = tokenResponseBuilder.build();
+    OAuthTokenBuilder oAuthTokenBuilder =
+        new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))
+            .add(accessToken)
+            .add(refreshToken);
 
     oAuthTokenRepository.delete(oAuthToken);
 
-    OAuthToken refresh =
-        new OAuthToken(
-            identifier, tokenResponse, accessToken, refreshToken, oAuthToken.authorizationGrant());
+    OAuthToken refresh = oAuthTokenBuilder.build();
     oAuthTokenRepository.register(refresh);
 
     return refresh;

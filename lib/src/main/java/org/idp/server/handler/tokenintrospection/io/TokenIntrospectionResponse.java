@@ -1,19 +1,17 @@
 package org.idp.server.handler.tokenintrospection.io;
 
 import java.util.Map;
-import org.idp.server.oauth.token.AccessTokenPayload;
+import org.idp.server.token.OAuthToken;
 
 public class TokenIntrospectionResponse {
   TokenIntrospectionRequestStatus status;
-  AccessTokenPayload accessTokenPayload;
+  OAuthToken oAuthToken;
   Map<String, Object> response;
 
   public TokenIntrospectionResponse(
-      TokenIntrospectionRequestStatus status,
-      AccessTokenPayload accessTokenPayload,
-      Map<String, Object> contents) {
+      TokenIntrospectionRequestStatus status, OAuthToken oAuthToken, Map<String, Object> contents) {
     this.status = status;
-    this.accessTokenPayload = accessTokenPayload;
+    this.oAuthToken = oAuthToken;
     this.response = contents;
   }
 
@@ -31,8 +29,8 @@ public class TokenIntrospectionResponse {
     return status.statusCode();
   }
 
-  public AccessTokenPayload accessTokenPayload() {
-    return accessTokenPayload;
+  public OAuthToken oAuthToken() {
+    return oAuthToken;
   }
 
   public Map<String, Object> response() {
