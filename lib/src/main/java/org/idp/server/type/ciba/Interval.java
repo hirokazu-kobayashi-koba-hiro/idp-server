@@ -9,7 +9,15 @@ public class Interval {
     this.value = value;
   }
 
+  public Interval(String value) {
+    this.value = Integer.parseInt(value);
+  }
+
   public int value() {
     return value;
+  }
+
+  public String toStringValue() {
+    return String.valueOf(value);
   }
 }

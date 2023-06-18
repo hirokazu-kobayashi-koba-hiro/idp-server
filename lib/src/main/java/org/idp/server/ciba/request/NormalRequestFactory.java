@@ -20,20 +20,23 @@ public class NormalRequestFactory implements BackchannelAuthenticationRequestFac
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
 
-    BackchannelAuthenticationRequestBuilder builder = new BackchannelAuthenticationRequestBuilder();
-    builder.add(createIdentifier());
-    builder.add(serverConfiguration.tokenIssuer());
-    builder.add(profile);
-    builder.add(clientConfiguration.backchannelTokenDeliveryMode());
-    builder.add(new Scopes(filteredScopes));
-    builder.add(clientConfiguration.clientId());
-    builder.add(parameters.idTokenHint());
-    builder.add(parameters.loginHint());
-    builder.add(parameters.acrValues());
-    builder.add(parameters.request());
-    builder.add(parameters.clientNotificationToken());
-    builder.add(parameters.userCode());
-    builder.add(parameters.requestedExpiry());
+    BackchannelAuthenticationRequestBuilder builder =
+        new BackchannelAuthenticationRequestBuilder()
+            .add(createIdentifier())
+            .add(serverConfiguration.tokenIssuer())
+            .add(profile)
+            .add(clientConfiguration.backchannelTokenDeliveryMode())
+            .add(new Scopes(filteredScopes))
+            .add(clientConfiguration.clientId())
+            .add(parameters.idTokenHint())
+            .add(parameters.loginHint())
+            .add(parameters.loginHintToken())
+            .add(parameters.acrValues())
+            .add(parameters.bindingMessage())
+            .add(parameters.request())
+            .add(parameters.clientNotificationToken())
+            .add(parameters.userCode())
+            .add(parameters.requestedExpiry());
     return builder.build();
   }
 }

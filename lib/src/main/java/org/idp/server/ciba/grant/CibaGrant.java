@@ -69,6 +69,14 @@ public class CibaGrant {
     return authorizationGrant.scopes();
   }
 
+  public ExpiredAt expiredAt() {
+    return expiredAt;
+  }
+
+  public Interval interval() {
+    return interval;
+  }
+
   public CibaGrantStatus status() {
     return status;
   }

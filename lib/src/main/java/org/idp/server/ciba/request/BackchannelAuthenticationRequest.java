@@ -1,6 +1,7 @@
 package org.idp.server.ciba.request;
 
 import org.idp.server.ciba.CibaProfile;
+import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.type.ciba.*;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.Scopes;
@@ -26,6 +27,7 @@ public class BackchannelAuthenticationRequest {
   BindingMessage bindingMessage;
   RequestedExpiry requestedExpiry;
   RequestObject requestObject;
+  AuthorizationDetails authorizationDetails;
 
   BackchannelAuthenticationRequest(
       BackchannelAuthenticationRequestIdentifier identifier,
@@ -42,7 +44,8 @@ public class BackchannelAuthenticationRequest {
       ClientNotificationToken clientNotificationToken,
       BindingMessage bindingMessage,
       RequestedExpiry requestedExpiry,
-      RequestObject requestObject) {
+      RequestObject requestObject,
+      AuthorizationDetails authorizationDetails) {
     this.identifier = identifier;
     this.tokenIssuer = tokenIssuer;
     this.profile = profile;
@@ -58,6 +61,7 @@ public class BackchannelAuthenticationRequest {
     this.bindingMessage = bindingMessage;
     this.requestedExpiry = requestedExpiry;
     this.requestObject = requestObject;
+    this.authorizationDetails = authorizationDetails;
   }
 
   public BackchannelAuthenticationRequestIdentifier identifier() {
@@ -170,5 +174,17 @@ public class BackchannelAuthenticationRequest {
 
   public boolean isPushMode() {
     return deliveryMode.isPushMode();
+  }
+
+  public boolean hasRequest() {
+    return requestObject.exists();
+  }
+
+  public AuthorizationDetails authorizationDetails() {
+    return authorizationDetails;
+  }
+
+  public boolean hasAuthorizationDetails() {
+    return authorizationDetails.exists();
   }
 }

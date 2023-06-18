@@ -1,6 +1,7 @@
 package org.idp.server.ciba.request;
 
 import org.idp.server.ciba.CibaProfile;
+import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.type.ciba.*;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
@@ -22,6 +23,7 @@ public class BackchannelAuthenticationRequestBuilder {
   BindingMessage bindingMessage;
   RequestedExpiry requestedExpiry;
   RequestObject requestObject;
+  AuthorizationDetails authorizationDetails = new AuthorizationDetails();
 
   public BackchannelAuthenticationRequestBuilder() {}
 
@@ -102,6 +104,11 @@ public class BackchannelAuthenticationRequestBuilder {
     return this;
   }
 
+  public BackchannelAuthenticationRequestBuilder add(AuthorizationDetails authorizationDetails) {
+    this.authorizationDetails = authorizationDetails;
+    return this;
+  }
+
   public BackchannelAuthenticationRequest build() {
     return new BackchannelAuthenticationRequest(
         identifier,
@@ -118,6 +125,7 @@ public class BackchannelAuthenticationRequestBuilder {
         clientNotificationToken,
         bindingMessage,
         requestedExpiry,
-        requestObject);
+        requestObject,
+        authorizationDetails);
   }
 }

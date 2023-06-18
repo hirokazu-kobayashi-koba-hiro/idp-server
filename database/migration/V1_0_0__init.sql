@@ -16,7 +16,6 @@ CREATE TABLE client_configuration
     CONSTRAINT pk_client_configuration PRIMARY KEY (token_issuer, client_id)
 );
 
-
 CREATE TABLE authorization_request
 (
     id                    varchar(256)            NOT NULL PRIMARY KEY,
@@ -88,4 +87,47 @@ CREATE TABLE oauth_token
     id_token                 text                    NOT NULL,
     created_at               timestamp default now() NOT NULL,
     updated_at               timestamp default now() NOT NULL
+);
+
+CREATE TABLE backchannel_authentication_request
+(
+    id                        varchar(256)            NOT NULL PRIMARY KEY,
+    token_issuer              text                    NOT NULL,
+    profile                   varchar(256)            NOT NULL,
+    delivery_mode             varchar(10)             NOT NULL,
+    scopes                    text                    NOT NULL,
+    client_id                 varchar(256)            NOT NULL,
+    id_token_hint             text                    NOT NULL,
+    login_hint                text                    NOT NULL,
+    login_hint_token          text                    NOT NULL,
+    acr_values                text                    NOT NULL,
+    user_code                 text                    NOT NULL,
+    client_notification_token text                    NOT NULL,
+    binding_message           text                    NOT NULL,
+    requested_expiry          text                    NOT NULL,
+    request_object            text                    NOT NULL,
+    authorization_details     text                    NOT NULL,
+    created_at                timestamp default now() NOT NULL
+);
+
+CREATE TABLE ciba_grant
+(
+    backchannel_authentication_request_id varchar(256)            NOT NULL PRIMARY KEY,
+    auth_req_id                           varchar(256)            NOT NULL,
+    expired_at                            text                    NOT NULL,
+    interval                              text                    NOT NULL,
+    status                                varchar(100)             NOT NULL,
+    user_id                               varchar(256)            NOT NULL,
+    user_payload                          text                    NOT NULL,
+    authentication                        text                    NOT NULL,
+    client_id                             varchar(256)            NOT NULL,
+    scopes                                text                    NOT NULL,
+    claims                                text                    NOT NULL,
+    custom_properties                     text                    NOT NULL,
+    authorization_details                 text                    NOT NULL,
+    created_at                            timestamp default now() NOT NULL,
+    CONSTRAINT fk_ciba_grant_backchannel_authentication_request_id
+        FOREIGN KEY (backchannel_authentication_request_id)
+            REFERENCES backchannel_authentication_request (id)
+            ON DELETE CASCADE
 );

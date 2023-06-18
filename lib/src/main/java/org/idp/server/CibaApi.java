@@ -1,5 +1,7 @@
 package org.idp.server;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.idp.server.ciba.CibaRequestDelegate;
 import org.idp.server.handler.ciba.CibaAuthorizeHandler;
 import org.idp.server.handler.ciba.CibaDenyHandler;
@@ -13,6 +15,7 @@ public class CibaApi {
   CibaAuthorizeHandler cibaAuthorizeHandler;
   CibaDenyHandler cibaDenyHandler;
   CibaRequestErrorHandler errorHandler;
+  Logger log = Logger.getLogger(CibaApi.class.getName());
 
   CibaApi(
       CibaRequestHandler cibaRequestHandler,
@@ -36,6 +39,7 @@ public class CibaApi {
     try {
       return cibaAuthorizeHandler.handle(request);
     } catch (Exception exception) {
+      log.log(Level.SEVERE, exception.getMessage(), exception);
       return new CibaAuthorizeResponse(CibaAuthorizeStatus.SERVER_ERROR);
     }
   }
@@ -44,6 +48,7 @@ public class CibaApi {
     try {
       return cibaDenyHandler.handle(request);
     } catch (Exception exception) {
+      log.log(Level.SEVERE, exception.getMessage(), exception);
       return new CibaDenyResponse(CibaDenyStatus.SERVER_ERROR);
     }
   }

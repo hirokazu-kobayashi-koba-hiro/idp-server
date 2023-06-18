@@ -9,6 +9,7 @@ import org.idp.server.type.oauth.TokenIssuer;
 public class CibaAuthorizeRequest {
   String authReqId;
   String tokenIssuer;
+  // TODO authentication
   Map<String, Object> customProperties = new HashMap<>();
 
   public CibaAuthorizeRequest(String authReqId, String tokenIssuer) {
