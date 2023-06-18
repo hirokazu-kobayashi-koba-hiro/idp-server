@@ -3,7 +3,6 @@ package org.idp.server.oauth.grant;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import org.idp.server.oauth.authentication.Authentication;
-import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.extension.ExpiredAt;

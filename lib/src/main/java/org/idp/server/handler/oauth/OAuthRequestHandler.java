@@ -2,7 +2,9 @@ package org.idp.server.handler.oauth;
 
 import java.util.Objects;
 import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.configuration.ClientConfigurationRepository;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.configuration.ServerConfigurationRepository;
 import org.idp.server.handler.oauth.io.OAuthRequest;
 import org.idp.server.handler.oauth.io.OAuthRequestResponse;
 import org.idp.server.handler.oauth.io.OAuthRequestStatus;
@@ -10,8 +12,6 @@ import org.idp.server.oauth.*;
 import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.oauth.gateway.RequestObjectGateway;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
-import org.idp.server.oauth.repository.ClientConfigurationRepository;
-import org.idp.server.oauth.repository.ServerConfigurationRepository;
 import org.idp.server.oauth.service.*;
 import org.idp.server.oauth.validator.OAuthRequestValidator;
 import org.idp.server.oauth.verifier.OAuthRequestVerifier;

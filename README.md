@@ -52,6 +52,10 @@ Apache License, Version 2.0
 ./gradlew bootRun
 ```
 
+```shell
+./init.sh
+```
+
 ### e2e
 
 ```shell

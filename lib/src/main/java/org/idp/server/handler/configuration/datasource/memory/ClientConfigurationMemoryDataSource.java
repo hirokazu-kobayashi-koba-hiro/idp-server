@@ -1,4 +1,4 @@
-package org.idp.server.handler.oauth.datasource.memory;
+package org.idp.server.handler.configuration.datasource.memory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -9,7 +9,8 @@ import org.idp.server.basic.json.JsonParser;
 import org.idp.server.basic.resource.ResourceReadable;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ClientConfigurationNotFoundException;
-import org.idp.server.oauth.repository.ClientConfigurationRepository;
+import org.idp.server.configuration.ClientConfigurationRepository;
+import org.idp.server.handler.oauth.datasource.memory.IdpServerFailedInitializationException;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.TokenIssuer;
 
@@ -22,6 +23,9 @@ public class ClientConfigurationMemoryDataSource
   public ClientConfigurationMemoryDataSource(List<String> paths) {
     initialize(paths);
   }
+
+  @Override
+  public void register(ClientConfiguration clientConfiguration) {}
 
   @Override
   public ClientConfiguration get(TokenIssuer tokenIssuer, ClientId clientId) {

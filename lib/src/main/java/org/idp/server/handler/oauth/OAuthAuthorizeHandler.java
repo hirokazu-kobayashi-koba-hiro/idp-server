@@ -2,7 +2,9 @@ package org.idp.server.handler.oauth;
 
 import java.util.Objects;
 import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.configuration.ClientConfigurationRepository;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.configuration.ServerConfigurationRepository;
 import org.idp.server.handler.oauth.io.OAuthAuthorizeRequest;
 import org.idp.server.oauth.OAuthAuthorizeContext;
 import org.idp.server.oauth.OAuthRequestDelegate;

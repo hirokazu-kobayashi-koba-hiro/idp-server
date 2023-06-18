@@ -1,4 +1,4 @@
-package org.idp.server.handler.oauth.datasource.memory;
+package org.idp.server.handler.configuration.datasource.memory;
 
 import java.util.Objects;
 import org.idp.server.type.oauth.ClientId;

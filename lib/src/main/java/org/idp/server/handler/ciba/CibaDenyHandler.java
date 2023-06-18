@@ -3,9 +3,9 @@ package org.idp.server.handler.ciba;
 import org.idp.server.ciba.grant.CibaGrant;
 import org.idp.server.ciba.grant.CibaGrantStatus;
 import org.idp.server.ciba.repository.CibaGrantRepository;
+import org.idp.server.configuration.ClientConfigurationRepository;
+import org.idp.server.configuration.ServerConfigurationRepository;
 import org.idp.server.handler.ciba.io.*;
-import org.idp.server.oauth.repository.ClientConfigurationRepository;
-import org.idp.server.oauth.repository.ServerConfigurationRepository;
 import org.idp.server.type.ciba.AuthReqId;
 import org.idp.server.type.oauth.TokenIssuer;
 

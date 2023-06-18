@@ -1,3 +1,22 @@
+CREATE TABLE server_configuration
+(
+    token_issuer text                    NOT NULL PRIMARY KEY,
+    payload      text                    NOT NULL,
+    created_at   timestamp default now() NOT NULL,
+    updated_at   timestamp default now() NOT NULL
+);
+
+CREATE TABLE client_configuration
+(
+    token_issuer text                    NOT NULL,
+    client_id    varchar(256)            NOT NULL,
+    payload      text                    NOT NULL,
+    created_at   timestamp default now() NOT NULL,
+    updated_at   timestamp default now() NOT NULL,
+    CONSTRAINT pk_client_configuration PRIMARY KEY (token_issuer, client_id)
+);
+
+
 CREATE TABLE authorization_request
 (
     id                    varchar(256)            NOT NULL PRIMARY KEY,

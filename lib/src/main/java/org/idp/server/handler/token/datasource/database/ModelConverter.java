@@ -18,8 +18,6 @@ import org.idp.server.type.extension.CreatedAt;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.*;
-import org.idp.server.type.oidc.Claims;
-import org.idp.server.type.oidc.ClaimsValue;
 import org.idp.server.type.oidc.IdToken;
 
 class ModelConverter {

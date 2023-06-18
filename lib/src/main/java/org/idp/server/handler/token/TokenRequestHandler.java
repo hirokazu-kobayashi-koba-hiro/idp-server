@@ -4,15 +4,15 @@ import org.idp.server.ciba.repository.BackchannelAuthenticationRequestRepository
 import org.idp.server.ciba.repository.CibaGrantRepository;
 import org.idp.server.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.configuration.ClientConfigurationRepository;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.configuration.ServerConfigurationRepository;
 import org.idp.server.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.handler.token.io.TokenRequest;
 import org.idp.server.handler.token.io.TokenRequestResponse;
 import org.idp.server.handler.token.io.TokenRequestStatus;
 import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
-import org.idp.server.oauth.repository.ClientConfigurationRepository;
-import org.idp.server.oauth.repository.ServerConfigurationRepository;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.token.TokenRequestContext;

@@ -2,13 +2,13 @@ package org.idp.server.handler.discovery;
 
 import java.util.Map;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.configuration.ServerConfigurationRepository;
 import org.idp.server.discovery.JwksResponseCreator;
 import org.idp.server.discovery.ServerConfigurationResponseCreator;
 import org.idp.server.handler.discovery.io.JwksRequestResponse;
 import org.idp.server.handler.discovery.io.JwksRequestStatus;
 import org.idp.server.handler.discovery.io.ServerConfigurationRequestResponse;
 import org.idp.server.handler.discovery.io.ServerConfigurationRequestStatus;
-import org.idp.server.oauth.repository.ServerConfigurationRepository;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public class DiscoveryHandler {

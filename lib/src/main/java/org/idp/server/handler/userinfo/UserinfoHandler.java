@@ -1,13 +1,13 @@
 package org.idp.server.handler.userinfo;
 
 import java.util.Map;
+import org.idp.server.configuration.ClientConfigurationRepository;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.configuration.ServerConfigurationRepository;
 import org.idp.server.handler.userinfo.io.UserinfoRequest;
 import org.idp.server.handler.userinfo.io.UserinfoRequestResponse;
 import org.idp.server.handler.userinfo.io.UserinfoRequestStatus;
 import org.idp.server.oauth.identity.User;
-import org.idp.server.oauth.repository.ClientConfigurationRepository;
-import org.idp.server.oauth.repository.ServerConfigurationRepository;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.type.oauth.AccessTokenValue;

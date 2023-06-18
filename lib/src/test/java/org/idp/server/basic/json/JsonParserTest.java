@@ -1,5 +1,6 @@
 package org.idp.server.basic.json;
 
+import java.util.List;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.junit.jupiter.api.Assertions;
@@ -16,13 +17,13 @@ public class JsonParserTest {
                     "https://client.example.org/callback",
                     "https://client.example.org/callback2"
                   ],
-                  "scopes": "read write",
+                  "scope": "read write",
                   "example_extension_parameter": "example_value"
                 }
                 """;
     JsonParser jsonParser = JsonParser.create();
     ClientConfiguration clientConfiguration = jsonParser.read(json, ClientConfiguration.class);
-    Assertions.assertEquals("read write", clientConfiguration.scopes());
+    Assertions.assertEquals(List.of("read", "write"), clientConfiguration.scopes());
   }
 
   @Test
@@ -95,6 +96,7 @@ public class JsonParserTest {
     JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
     ServerConfiguration serverConfiguration = jsonParser.read(json, ServerConfiguration.class);
 
-    Assertions.assertEquals("https://server.example.com", serverConfiguration.tokenIssuer());
+    Assertions.assertEquals(
+        "https://server.example.com", serverConfiguration.tokenIssuer().value());
   }
 }
