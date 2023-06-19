@@ -6,13 +6,13 @@ import java.util.*;
 
 public class X509SubjectAlternativeNames {
 
-  Map<String, String> values;
+  Map<X509SubjectAlternativeNameType, String> values;
 
   public X509SubjectAlternativeNames() {
     this.values = new HashMap<>();
   }
 
-  public X509SubjectAlternativeNames(Map<String, String> values) {
+  public X509SubjectAlternativeNames(Map<X509SubjectAlternativeNameType, String> values) {
     this.values = values;
   }
 
@@ -23,100 +23,96 @@ public class X509SubjectAlternativeNames {
       if (Objects.isNull(subjectAlternativeNames) || subjectAlternativeNames.isEmpty()) {
         return new X509SubjectAlternativeNames();
       }
-      Map<String, String> values = new HashMap<>();
-      subjectAlternativeNames.forEach(
-          names -> {
-            values.put((String) names.get(0), (String) names.get(1));
-          });
+      Map<X509SubjectAlternativeNameType, String> values = new HashMap<>();
+      for (List<?> names : subjectAlternativeNames) {
+        X509SubjectAlternativeNameType type =
+            X509SubjectAlternativeNameType.of((Integer) names.get(0));
+        String value = (String) names.get(1);
+        values.put(type, value);
+      }
       return new X509SubjectAlternativeNames(values);
     } catch (CertificateParsingException exception) {
       throw new X509CertInvalidException(exception);
     }
   }
 
-  /**
-   * GeneralName ::= CHOICE { otherName [0] OtherName, rfc822Name [1] IA5String, dNSName [2]
-   * IA5String, x400Address [3] ORAddress, directoryName [4] Name, ediPartyName [5] EDIPartyName,
-   * uniformResourceIdentifier [6] IA5String, iPAddress [7] OCTET STRING, registeredID [8] OBJECT
-   * IDENTIFIER}
-   */
   public String otherName() {
-    return getOrEmpty("otherName");
+    return getOrEmpty(X509SubjectAlternativeNameType.otherName);
   }
 
   public boolean hasOtherName() {
-    return contains("otherName");
+    return contains(X509SubjectAlternativeNameType.otherName);
   }
 
   public String rfc822Name() {
-    return getOrEmpty("rfc822Name");
+    return getOrEmpty(X509SubjectAlternativeNameType.rfc822Name);
   }
 
   public boolean hasRfc822Name() {
-    return contains("rfc822Name");
+    return contains(X509SubjectAlternativeNameType.rfc822Name);
   }
 
   public String dNSName() {
-    return getOrEmpty("dNSName");
+    return getOrEmpty(X509SubjectAlternativeNameType.dNSName);
   }
 
   public boolean hasDNSName() {
-    return contains("dNSName");
+    return contains(X509SubjectAlternativeNameType.dNSName);
   }
 
   public String x400Address() {
-    return getOrEmpty("x400Address");
+    return getOrEmpty(X509SubjectAlternativeNameType.x400Address);
   }
 
   public boolean hasX400Address() {
-    return contains("x400Address");
+    return contains(X509SubjectAlternativeNameType.x400Address);
   }
 
   public String directoryName() {
-    return getOrEmpty("directoryName");
+    return getOrEmpty(X509SubjectAlternativeNameType.directoryName);
   }
 
   public boolean hasDirectoryName() {
-    return contains("directoryName");
+    return contains(X509SubjectAlternativeNameType.directoryName);
   }
 
   public String ediPartyName() {
-    return getOrEmpty("ediPartyName");
+    return getOrEmpty(X509SubjectAlternativeNameType.ediPartyName);
   }
 
   public boolean hasEditPartyName() {
-    return contains("ediPartyName");
+    return contains(X509SubjectAlternativeNameType.ediPartyName);
   }
 
   public String uniformResourceIdentifier() {
-    return getOrEmpty("uniformResourceIdentifier");
+    return getOrEmpty(X509SubjectAlternativeNameType.uniformResourceIdentifier);
   }
 
   public boolean hasUniformResourceIdentifier() {
-    return contains("uniformResourceIdentifier");
+    return contains(X509SubjectAlternativeNameType.uniformResourceIdentifier);
   }
 
   public String registeredID() {
-    return getOrEmpty("registeredID");
+    return getOrEmpty(X509SubjectAlternativeNameType.registeredID);
   }
 
   public boolean hasRegisteredID() {
-    return contains("registeredID");
+    return contains(X509SubjectAlternativeNameType.registeredID);
   }
 
   public String iPAddress() {
-    return getOrEmpty("iPAddress");
+    return getOrEmpty(X509SubjectAlternativeNameType.iPAddress);
   }
 
   public boolean hasIPAddress() {
-    return contains("iPAddress");
+    return contains(X509SubjectAlternativeNameType.iPAddress);
   }
 
-  String getOrEmpty(String key) {
-    return values.getOrDefault(key, "");
+  String getOrEmpty(X509SubjectAlternativeNameType type) {
+    return values.getOrDefault(type, "");
   }
 
-  boolean contains(String key) {
-    return values.containsKey(key);
+  boolean contains(X509SubjectAlternativeNameType type) {
+    return values.containsKey(type);
   }
 }
