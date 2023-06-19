@@ -34,7 +34,7 @@ public interface AuthorizationProfileAnalyzable {
       JoseContext joseContext,
       ClientConfiguration clientConfiguration) {
 
-    String scope = parameters.getString(OAuthRequestKey.scope);
+    String scope = parameters.getOrEmpty(OAuthRequestKey.scope);
     JsonWebTokenClaims claims = joseContext.claims();
     String joseScope = claims.getValue("scope");
     String targetScope =

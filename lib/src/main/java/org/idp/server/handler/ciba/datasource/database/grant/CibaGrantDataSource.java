@@ -50,7 +50,8 @@ public class CibaGrantDataSource implements CibaGrantRepository {
   @Override
   public void delete(CibaGrant cibaGrant) {
     SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
-    String sqlTemplate = """
+    String sqlTemplate =
+        """
             DELETE FROM ciba_grant WHERE backchannel_authentication_request_id = '%s';
             """;
     String sql =

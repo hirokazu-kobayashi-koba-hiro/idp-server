@@ -33,7 +33,7 @@ public class OAuthRequestParameters {
   }
 
   public Scopes scope() {
-    return new Scopes(getString(scope));
+    return new Scopes(getOrEmpty(scope));
   }
 
   public boolean hasScope() {
@@ -41,7 +41,7 @@ public class OAuthRequestParameters {
   }
 
   public ResponseType responseType() {
-    return ResponseType.of(getString(response_type));
+    return ResponseType.of(getOrEmpty(response_type));
   }
 
   public boolean hasResponseType() {
@@ -49,7 +49,7 @@ public class OAuthRequestParameters {
   }
 
   public ClientId clientId() {
-    return new ClientId(getString(client_id));
+    return new ClientId(getOrEmpty(client_id));
   }
 
   public boolean hasClientId() {
@@ -57,7 +57,7 @@ public class OAuthRequestParameters {
   }
 
   public RedirectUri redirectUri() {
-    return new RedirectUri(getString(redirect_uri));
+    return new RedirectUri(getOrEmpty(redirect_uri));
   }
 
   public boolean hasRedirectUri() {
@@ -65,7 +65,7 @@ public class OAuthRequestParameters {
   }
 
   public State state() {
-    return new State(getString(state));
+    return new State(getOrEmpty(state));
   }
 
   public boolean hasState() {
@@ -73,7 +73,7 @@ public class OAuthRequestParameters {
   }
 
   public ResponseMode responseMode() {
-    return ResponseMode.of(getString(response_mode));
+    return ResponseMode.of(getOrEmpty(response_mode));
   }
 
   public boolean hasResponseMode() {
@@ -81,7 +81,7 @@ public class OAuthRequestParameters {
   }
 
   public Nonce nonce() {
-    return new Nonce(getString(nonce));
+    return new Nonce(getOrEmpty(nonce));
   }
 
   public boolean hasNonce() {
@@ -89,7 +89,7 @@ public class OAuthRequestParameters {
   }
 
   public Display display() {
-    return Display.of(getString(display));
+    return Display.of(getOrEmpty(display));
   }
 
   public boolean hasDisplay() {
@@ -97,7 +97,7 @@ public class OAuthRequestParameters {
   }
 
   public Prompts prompts() {
-    return Prompts.of(getString(prompt));
+    return Prompts.of(getOrEmpty(prompt));
   }
 
   public boolean hasPrompt() {
@@ -105,7 +105,7 @@ public class OAuthRequestParameters {
   }
 
   public MaxAge maxAge() {
-    return new MaxAge(getString(max_age));
+    return new MaxAge(getOrEmpty(max_age));
   }
 
   public boolean hasMaxAge() {
@@ -113,7 +113,7 @@ public class OAuthRequestParameters {
   }
 
   public UiLocales uiLocales() {
-    return new UiLocales(getString(ui_locales));
+    return new UiLocales(getOrEmpty(ui_locales));
   }
 
   public boolean hasUiLocales() {
@@ -121,7 +121,7 @@ public class OAuthRequestParameters {
   }
 
   public IdTokenHint idTokenHint() {
-    return new IdTokenHint(getString(id_token_hint));
+    return new IdTokenHint(getOrEmpty(id_token_hint));
   }
 
   public boolean hasIdTokenHint() {
@@ -129,7 +129,7 @@ public class OAuthRequestParameters {
   }
 
   public LoginHint loginHint() {
-    return new LoginHint(getString(login_hint));
+    return new LoginHint(getOrEmpty(login_hint));
   }
 
   public boolean hasLoginHint() {
@@ -137,7 +137,7 @@ public class OAuthRequestParameters {
   }
 
   public AcrValues acrValues() {
-    return new AcrValues(getString(acr_values));
+    return new AcrValues(getOrEmpty(acr_values));
   }
 
   public boolean hasAcrValues() {
@@ -145,7 +145,7 @@ public class OAuthRequestParameters {
   }
 
   public ClaimsValue claims() {
-    return new ClaimsValue(getString(claims));
+    return new ClaimsValue(getOrEmpty(claims));
   }
 
   public boolean hasClaims() {
@@ -153,7 +153,7 @@ public class OAuthRequestParameters {
   }
 
   public RequestObject request() {
-    return new RequestObject(getString(request));
+    return new RequestObject(getOrEmpty(request));
   }
 
   public boolean hasRequest() {
@@ -161,7 +161,7 @@ public class OAuthRequestParameters {
   }
 
   public RequestUri requestUri() {
-    return new RequestUri(getString(request_uri));
+    return new RequestUri(getOrEmpty(request_uri));
   }
 
   public boolean hasRequestUri() {
@@ -169,7 +169,7 @@ public class OAuthRequestParameters {
   }
 
   public CodeChallenge codeChallenge() {
-    return new CodeChallenge(getString(code_challenge));
+    return new CodeChallenge(getOrEmpty(code_challenge));
   }
 
   public boolean hasCodeChallenge() {
@@ -177,14 +177,14 @@ public class OAuthRequestParameters {
   }
 
   public CodeChallengeMethod codeChallengeMethod() {
-    return CodeChallengeMethod.of(getString(code_challenge_method));
+    return CodeChallengeMethod.of(getOrEmpty(code_challenge_method));
   }
 
   public boolean hasCodeChallengeMethod() {
     return contains(code_challenge_method);
   }
 
-  public String getString(OAuthRequestKey key) {
+  public String getOrEmpty(OAuthRequestKey key) {
     if (!values.contains(key.name())) {
       return "";
     }
@@ -200,6 +200,6 @@ public class OAuthRequestParameters {
   }
 
   public AuthorizationDetailsValue authorizationDetailsValue() {
-    return new AuthorizationDetailsValue(getString(authorization_details));
+    return new AuthorizationDetailsValue(getOrEmpty(authorization_details));
   }
 }

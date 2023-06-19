@@ -140,7 +140,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   }
 
   public String getParams(OAuthRequestKey key) {
-    return parameters.getString(key);
+    return parameters.getOrEmpty(key);
   }
 
   public boolean hasRedirectUri() {
