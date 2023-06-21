@@ -3,21 +3,25 @@ package org.idp.server.tokenrevocation;
 import org.idp.server.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.type.mtls.ClientCert;
 import org.idp.server.type.oauth.*;
 
 public class TokenRevocationRequestContext implements BackchannelRequestContext {
 
   ClientSecretBasic clientSecretBasic;
+  ClientCert clientCert;
   TokenRevocationRequestParameters parameters;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
 
   public TokenRevocationRequestContext(
       ClientSecretBasic clientSecretBasic,
+      ClientCert clientCert,
       TokenRevocationRequestParameters parameters,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     this.clientSecretBasic = clientSecretBasic;
+    this.clientCert = clientCert;
     this.parameters = parameters;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
@@ -26,6 +30,11 @@ public class TokenRevocationRequestContext implements BackchannelRequestContext 
   @Override
   public ClientSecretBasic clientSecretBasic() {
     return clientSecretBasic;
+  }
+
+  @Override
+  public ClientCert clientCert() {
+    return clientCert;
   }
 
   @Override

@@ -35,6 +35,12 @@ public class ClientConfiguration implements JsonReadable {
   String idTokenEncryptedResponseAlg;
   String idTokenEncryptedResponseEnc;
   List<String> authorizationDetailsTypes = new ArrayList<>();
+  String tlsClientAuthSubjectDn;
+  String tlsClientAuthSanDns;
+  String tlsClientAuthSanUri;
+  String tlsClientAuthSanIp;
+  String tlsClientAuthSanEmail;
+
   // extension
   boolean supportedJar;
   String issuer;
@@ -227,5 +233,25 @@ public class ClientConfiguration implements JsonReadable {
 
   public boolean isAuthorizedAuthorizationDetailsType(String type) {
     return authorizationDetailsTypes.contains(type);
+  }
+
+  public String tlsClientAuthSubjectDn() {
+    return tlsClientAuthSubjectDn;
+  }
+
+  public String tlsClientAuthSanDns() {
+    return tlsClientAuthSanDns;
+  }
+
+  public String tlsClientAuthSanUri() {
+    return tlsClientAuthSanUri;
+  }
+
+  public String tlsClientAuthSanIp() {
+    return tlsClientAuthSanIp;
+  }
+
+  public String tlsClientAuthSanEmail() {
+    return tlsClientAuthSanEmail;
   }
 }

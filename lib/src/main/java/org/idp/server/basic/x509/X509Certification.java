@@ -50,4 +50,76 @@ public class X509Certification {
   public X509SubjectAlternativeNames subjectAlternativeNames() {
     return subjectAlternativeNames;
   }
+
+  public String otherName() {
+    return subjectAlternativeNames.otherName();
+  }
+
+  public boolean hasOtherName() {
+    return subjectAlternativeNames.hasOtherName();
+  }
+
+  public String rfc822Name() {
+    return subjectAlternativeNames.rfc822Name();
+  }
+
+  public boolean hasRfc822Name() {
+    return subjectAlternativeNames.hasRfc822Name();
+  }
+
+  public String dNSName() {
+    return subjectAlternativeNames.dNSName();
+  }
+
+  public boolean hasDNSName() {
+    return subjectAlternativeNames.hasDNSName();
+  }
+
+  public String x400Address() {
+    return subjectAlternativeNames.x400Address();
+  }
+
+  public boolean hasX400Address() {
+    return subjectAlternativeNames.hasX400Address();
+  }
+
+  public String directoryName() {
+    return subjectAlternativeNames.directoryName();
+  }
+
+  public boolean hasDirectoryName() {
+    return subjectAlternativeNames.hasDirectoryName();
+  }
+
+  public String ediPartyName() {
+    return subjectAlternativeNames.ediPartyName();
+  }
+
+  public boolean hasEditPartyName() {
+    return subjectAlternativeNames.hasEditPartyName();
+  }
+
+  public String uniformResourceIdentifier() {
+    return subjectAlternativeNames.uniformResourceIdentifier();
+  }
+
+  public boolean hasUniformResourceIdentifier() {
+    return subjectAlternativeNames.hasUniformResourceIdentifier();
+  }
+
+  public String registeredID() {
+    return subjectAlternativeNames.registeredID();
+  }
+
+  public boolean hasRegisteredID() {
+    return subjectAlternativeNames.hasRegisteredID();
+  }
+
+  public String iPAddress() {
+    return subjectAlternativeNames.iPAddress();
+  }
+
+  public boolean hasIPAddress() {
+    return subjectAlternativeNames.hasIPAddress();
+  }
 }

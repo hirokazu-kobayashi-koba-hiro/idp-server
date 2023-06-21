@@ -21,6 +21,7 @@ import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.token.service.*;
 import org.idp.server.token.validator.TokenRequestValidator;
 import org.idp.server.type.extension.CustomProperties;
+import org.idp.server.type.mtls.ClientCert;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ClientSecretBasic;
 import org.idp.server.type.oauth.GrantType;
@@ -66,6 +67,7 @@ public class TokenRequestHandler {
     baseValidator.validate();
 
     ClientSecretBasic clientSecretBasic = tokenRequest.clientSecretBasic();
+    ClientCert clientCert = tokenRequest.toClientCert();
     ClientId clientId = tokenRequest.clientId();
     CustomProperties customProperties = tokenRequest.toCustomProperties();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
@@ -75,6 +77,7 @@ public class TokenRequestHandler {
     TokenRequestContext tokenRequestContext =
         new TokenRequestContext(
             clientSecretBasic,
+            clientCert,
             parameters,
             customProperties,
             passwordCredentialsGrantDelegate,

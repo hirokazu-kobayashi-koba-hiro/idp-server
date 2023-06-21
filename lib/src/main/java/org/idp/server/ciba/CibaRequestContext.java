@@ -9,6 +9,7 @@ import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.type.ciba.Interval;
 import org.idp.server.type.ciba.UserCode;
+import org.idp.server.type.mtls.ClientCert;
 import org.idp.server.type.oauth.*;
 
 public class CibaRequestContext implements BackchannelRequestContext {
@@ -78,6 +79,11 @@ public class CibaRequestContext implements BackchannelRequestContext {
   @Override
   public ClientSecretBasic clientSecretBasic() {
     return clientSecretBasic;
+  }
+
+  @Override
+  public ClientCert clientCert() {
+    return null;
   }
 
   @Override

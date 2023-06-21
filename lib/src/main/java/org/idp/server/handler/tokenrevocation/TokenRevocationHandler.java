@@ -45,6 +45,7 @@ public class TokenRevocationHandler {
     TokenRevocationRequestContext tokenRevocationRequestContext =
         new TokenRevocationRequestContext(
             request.clientSecretBasic(),
+            request.toClientCert(),
             request.toParameters(),
             serverConfiguration,
             clientConfiguration);

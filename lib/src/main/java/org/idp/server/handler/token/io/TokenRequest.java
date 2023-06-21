@@ -6,6 +6,7 @@ import org.idp.server.basic.http.BasicAuth;
 import org.idp.server.token.AuthorizationHeaderHandlerable;
 import org.idp.server.token.TokenRequestParameters;
 import org.idp.server.type.extension.CustomProperties;
+import org.idp.server.type.mtls.ClientCert;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ClientSecretBasic;
 import org.idp.server.type.oauth.TokenIssuer;
@@ -14,12 +15,18 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
   String authorizationHeaders;
   Map<String, String[]> params;
   String issuer;
+  String clientCert;
   Map<String, Object> customProperties = new HashMap<>();
 
   public TokenRequest(String authorizationHeaders, Map<String, String[]> params, String issuer) {
     this.authorizationHeaders = authorizationHeaders;
     this.params = params;
     this.issuer = issuer;
+  }
+
+  public TokenRequest setClientCert(String clientCert) {
+    this.clientCert = clientCert;
+    return this;
   }
 
   public String getAuthorizationHeaders() {
@@ -32,6 +39,10 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
 
   public String getIssuer() {
     return issuer;
+  }
+
+  public String getClientCert() {
+    return clientCert;
   }
 
   public Map<String, Object> customProperties() {
@@ -72,5 +83,9 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
 
   public CustomProperties toCustomProperties() {
     return new CustomProperties(customProperties);
+  }
+
+  public ClientCert toClientCert() {
+    return new ClientCert(clientCert);
   }
 }

@@ -8,12 +8,14 @@ import org.idp.server.type.OAuthRequestKey;
 import org.idp.server.type.ciba.AuthReqId;
 import org.idp.server.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.type.extension.CustomProperties;
+import org.idp.server.type.mtls.ClientCert;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.pkce.CodeVerifier;
 
 public class TokenRequestContext implements BackchannelRequestContext {
 
   ClientSecretBasic clientSecretBasic;
+  ClientCert clientCert;
   TokenRequestParameters parameters;
   CustomProperties customProperties;
   PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
@@ -22,12 +24,14 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public TokenRequestContext(
       ClientSecretBasic clientSecretBasic,
+      ClientCert clientCert,
       TokenRequestParameters parameters,
       CustomProperties customProperties,
       PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     this.clientSecretBasic = clientSecretBasic;
+    this.clientCert = clientCert;
     this.parameters = parameters;
     this.customProperties = customProperties;
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
@@ -38,6 +42,11 @@ public class TokenRequestContext implements BackchannelRequestContext {
   @Override
   public ClientSecretBasic clientSecretBasic() {
     return clientSecretBasic;
+  }
+
+  @Override
+  public ClientCert clientCert() {
+    return clientCert;
   }
 
   @Override
