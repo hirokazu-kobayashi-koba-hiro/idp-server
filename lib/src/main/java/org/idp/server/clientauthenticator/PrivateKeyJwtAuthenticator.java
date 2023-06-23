@@ -5,6 +5,12 @@ import org.idp.server.basic.jose.JoseHandler;
 import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.oauth.clientcredentials.ClientAuthenticationPublicKey;
+import org.idp.server.oauth.clientcredentials.ClientCredentials;
+import org.idp.server.oauth.mtls.ClientCertification;
+import org.idp.server.type.oauth.ClientAuthenticationType;
+import org.idp.server.type.oauth.ClientId;
+import org.idp.server.type.oauth.ClientSecret;
 
 class PrivateKeyJwtAuthenticator
     implements ClientAuthenticator, ClientAuthenticationJwtValidatable {
@@ -12,9 +18,17 @@ class PrivateKeyJwtAuthenticator
   JoseHandler joseHandler = new JoseHandler();
 
   @Override
-  public void authenticate(BackchannelRequestContext context) {
+  public ClientCredentials authenticate(BackchannelRequestContext context) {
     throwExceptionIfNotContainsClientAssertion(context);
     throwExceptionIfUnMatchClientAssertion(context);
+    ClientId clientId = context.clientConfiguration().clientId();
+    ClientSecret clientSecret = new ClientSecret();
+    return new ClientCredentials(
+        clientId,
+        ClientAuthenticationType.private_key_jwt,
+        clientSecret,
+        new ClientAuthenticationPublicKey(),
+        new ClientCertification());
   }
 
   void throwExceptionIfNotContainsClientAssertion(BackchannelRequestContext context) {

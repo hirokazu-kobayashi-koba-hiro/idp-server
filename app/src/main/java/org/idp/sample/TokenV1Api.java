@@ -26,10 +26,12 @@ public class TokenV1Api implements ParameterTransformable {
   public ResponseEntity<?> request(
       @RequestBody(required = false) MultiValueMap<String, String> body,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
+      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @PathVariable("tenant-id") String tenantId) {
     Map<String, String[]> request = transform(body);
     Tenant tenant = Tenant.of(tenantId);
     TokenRequest tokenRequest = new TokenRequest(authorizationHeader, request, tenant.issuer());
+    tokenRequest.setClientCert(clientCert);
     TokenRequestResponse response = tokenApi.request(tokenRequest);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.setAll(response.responseHeaders());

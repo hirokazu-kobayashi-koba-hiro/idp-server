@@ -24,11 +24,13 @@ public class TokenRevocationV1Api implements ParameterTransformable {
   public ResponseEntity<?> request(
       @RequestBody(required = false) MultiValueMap<String, String> body,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
+      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @PathVariable("tenant-id") String tenantId) {
     Map<String, String[]> request = transform(body);
     Tenant tenant = Tenant.of(tenantId);
     TokenRevocationRequest revocationRequest =
         new TokenRevocationRequest(authorizationHeader, request, tenant.issuer());
+    revocationRequest.setClientCert(clientCert);
     TokenRevocationResponse response = tokenRevocationApi.revoke(revocationRequest);
     return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
   }

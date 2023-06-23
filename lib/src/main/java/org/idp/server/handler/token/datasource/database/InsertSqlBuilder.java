@@ -2,13 +2,13 @@ package org.idp.server.handler.token.datasource.database;
 
 class InsertSqlBuilder {
   String sql;
-  int columnSize = 19;
+  int columnSize = 20;
 
   InsertSqlBuilder(String identifier) {
     this.sql =
         """
-                INSERT INTO public.oauth_token (id, token_issuer, token_type, access_token, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expires_in, access_token_expired_at, access_token_created_at, refresh_token, refresh_token_expired_at, refresh_token_created_at, id_token)
-                VALUES ('$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$10', '$11', '$12', '$13', '$14', '$15', '$16', '$17', '$18', '$19');
+                INSERT INTO public.oauth_token (id, token_issuer, token_type, access_token, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expires_in, access_token_expired_at, access_token_created_at, refresh_token, refresh_token_expired_at, refresh_token_created_at, id_token, client_certification_thumbprint)
+                VALUES ('$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$10', '$11', '$12', '$13', '$14', '$15', '$16', '$17', '$18', '$19', '$20');
                 """;
     this.sql = replace(1, identifier);
   }
@@ -100,6 +100,11 @@ class InsertSqlBuilder {
 
   InsertSqlBuilder setIdToken(String idToken) {
     this.sql = replace(19, idToken);
+    return this;
+  }
+
+  InsertSqlBuilder setClientCertificationThumbprint(String clientCertificationThumbprint) {
+    this.sql = replace(20, clientCertificationThumbprint);
     return this;
   }
 

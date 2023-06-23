@@ -2,6 +2,11 @@ package org.idp.server.clientauthenticator;
 
 import org.idp.server.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.oauth.clientcredentials.ClientAuthenticationPublicKey;
+import org.idp.server.oauth.clientcredentials.ClientCredentials;
+import org.idp.server.oauth.mtls.ClientCertification;
+import org.idp.server.type.oauth.ClientAuthenticationType;
+import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ClientSecret;
 
 /**
@@ -19,9 +24,17 @@ import org.idp.server.type.oauth.ClientSecret;
 class ClientSecretPostAuthenticator implements ClientAuthenticator {
 
   @Override
-  public void authenticate(BackchannelRequestContext context) {
+  public ClientCredentials authenticate(BackchannelRequestContext context) {
     throwExceptionIfNotContainsClientSecretPost(context);
     throwExceptionIfUnMatchClientSecret(context);
+    ClientId clientId = context.clientConfiguration().clientId();
+    ClientSecret clientSecret = context.parameters().clientSecret();
+    return new ClientCredentials(
+        clientId,
+        ClientAuthenticationType.client_secret_post,
+        clientSecret,
+        new ClientAuthenticationPublicKey(),
+        new ClientCertification());
   }
 
   void throwExceptionIfUnMatchClientSecret(BackchannelRequestContext context) {

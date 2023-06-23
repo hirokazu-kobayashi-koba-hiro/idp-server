@@ -42,6 +42,10 @@ class InsertSqlCreator {
     if (oAuthToken.hasIdToken()) {
       builder.setIdToken(oAuthToken.idToken().value());
     }
+    if (oAuthToken.hasClientCertification()) {
+      builder.setClientCertificationThumbprint(
+          oAuthToken.accessToken().clientCertificationThumbprint().value());
+    }
     return builder.build();
   }
 

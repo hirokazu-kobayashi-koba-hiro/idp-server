@@ -2,6 +2,8 @@ package org.idp.server.oauth.token;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.oauth.mtls.ClientCertificationThumbprint;
+import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.type.extension.CreatedAt;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.extension.ExpiredAt;
@@ -18,7 +20,9 @@ public class AccessTokenPayloadBuilder {
   }
 
   public AccessTokenPayloadBuilder add(Subject subject) {
-    values.put("sub", subject.value());
+    if (subject.exists()) {
+      values.put("sub", subject.value());
+    }
     return this;
   }
 
@@ -46,6 +50,20 @@ public class AccessTokenPayloadBuilder {
 
   public AccessTokenPayloadBuilder add(ExpiredAt expiredAt) {
     values.put("exp", expiredAt.toEpochSecondWithUtc());
+    return this;
+  }
+
+  public AccessTokenPayloadBuilder add(AuthorizationDetails authorizationDetails) {
+    if (authorizationDetails.exists()) {
+      values.put("authorization_details", authorizationDetails.toMapValues());
+    }
+    return this;
+  }
+
+  public AccessTokenPayloadBuilder add(ClientCertificationThumbprint thumbprint) {
+    if (thumbprint.exists()) {
+      values.put("cnf", Map.of("x5t#S256", thumbprint.value()));
+    }
     return this;
   }
 

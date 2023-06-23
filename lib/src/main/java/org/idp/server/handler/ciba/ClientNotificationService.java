@@ -13,6 +13,7 @@ import org.idp.server.grantmangment.AuthorizationGranted;
 import org.idp.server.grantmangment.AuthorizationGrantedIdentifier;
 import org.idp.server.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.oauth.authentication.Authentication;
+import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.IdTokenCreatable;
 import org.idp.server.oauth.identity.IdTokenCustomClaims;
@@ -67,7 +68,10 @@ public class ClientNotificationService
     if (backchannelAuthenticationRequest.isPushMode()) {
       AccessToken accessToken =
           createAccessToken(
-              cibaGrant.authorizationGrant(), serverConfiguration, clientConfiguration);
+              cibaGrant.authorizationGrant(),
+              serverConfiguration,
+              clientConfiguration,
+              new ClientCredentials());
       RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
 
       IdTokenCustomClaims idTokenCustomClaims = new IdTokenCustomClaimsBuilder().build();

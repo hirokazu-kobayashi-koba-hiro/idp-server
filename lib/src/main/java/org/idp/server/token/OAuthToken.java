@@ -99,4 +99,8 @@ public class OAuthToken {
   public boolean hasIdToken() {
     return idToken.exists();
   }
+
+  public boolean hasClientCertification() {
+    return accessToken.hasClientCertification();
+  }
 }

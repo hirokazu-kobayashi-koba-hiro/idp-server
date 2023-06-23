@@ -7,6 +7,7 @@ import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.identity.User;
+import org.idp.server.oauth.mtls.ClientCertificationThumbprint;
 import org.idp.server.oauth.rar.AuthorizationDetail;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.token.AccessToken;
@@ -47,6 +48,8 @@ class ModelConverter {
             claimsPayload,
             customProperties,
             authorizationDetails);
+    ClientCertificationThumbprint thumbprint =
+        new ClientCertificationThumbprint(stringMap.get("client_certification_thumbprint"));
     ExpiresIn expiresIn = new ExpiresIn(stringMap.get("expires_in"));
     ExpiredAt accessTokenExpiredAt = new ExpiredAt(stringMap.get("access_token_expired_at"));
     CreatedAt accessTokenCreatedAt = new CreatedAt(stringMap.get("access_token_created_at"));
@@ -56,6 +59,7 @@ class ModelConverter {
             tokenType,
             accessTokenValue,
             authorizationGrant,
+            thumbprint,
             accessTokenCreatedAt,
             expiresIn,
             accessTokenExpiredAt);

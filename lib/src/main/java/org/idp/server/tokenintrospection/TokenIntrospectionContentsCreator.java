@@ -20,6 +20,12 @@ public class TokenIntrospectionContentsCreator {
     if (accessToken.hasCustomProperties()) {
       contents.putAll(accessToken.customProperties().values());
     }
+    if (accessToken.hasAuthorizationDetails()) {
+      contents.put("authorization_details", accessToken.authorizationDetails().toMapValues());
+    }
+    if (accessToken.hasClientCertification()) {
+      contents.put("cnf", Map.of("x5t#S256", accessToken.clientCertificationThumbprint().value()));
+    }
     contents.put("iat", accessToken.createdAt().toEpochSecondWithUtc());
     contents.put("exp", accessToken.expiredAt().toEpochSecondWithUtc());
     return contents;

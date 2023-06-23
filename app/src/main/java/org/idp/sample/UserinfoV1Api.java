@@ -26,9 +26,11 @@ public class UserinfoV1Api implements ParameterTransformable, UserinfoDelegate {
   @GetMapping
   public ResponseEntity<?> get(
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
+      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @PathVariable("tenant-id") String tenantId) {
     Tenant tenant = Tenant.of(tenantId);
     UserinfoRequest userinfoRequest = new UserinfoRequest(authorizationHeader, tenant.issuer());
+    userinfoRequest.setClientCert(clientCert);
     UserinfoRequestResponse response = userinfoApi.request(userinfoRequest, this);
     return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
   }
@@ -36,9 +38,11 @@ public class UserinfoV1Api implements ParameterTransformable, UserinfoDelegate {
   @PostMapping
   public ResponseEntity<?> post(
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
+      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @PathVariable("tenant-id") String tenantId) {
     Tenant tenant = Tenant.of(tenantId);
     UserinfoRequest userinfoRequest = new UserinfoRequest(authorizationHeader, tenant.issuer());
+    userinfoRequest.setClientCert(clientCert);
     UserinfoRequestResponse response = userinfoApi.request(userinfoRequest, this);
     return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
   }

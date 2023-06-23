@@ -4,6 +4,7 @@ import java.util.UUID;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.authentication.Authentication;
+import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.*;
 import org.idp.server.oauth.rar.AuthorizationDetails;
@@ -49,7 +50,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
   }
 
   @Override
-  public OAuthToken create(TokenRequestContext context) {
+  public OAuthToken create(TokenRequestContext context, ClientCredentials clientCredentials) {
     ResourceOwnerPasswordGrantValidator validator =
         new ResourceOwnerPasswordGrantValidator(context);
     validator.validate();
@@ -82,7 +83,8 @@ public class ResourceOwnerPasswordCredentialsGrantService
             new AuthorizationDetails());
 
     AccessToken accessToken =
-        createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);
+        createAccessToken(
+            authorizationGrant, serverConfiguration, clientConfiguration, clientCredentials);
     RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
     OAuthTokenBuilder oAuthTokenBuilder =
         new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))

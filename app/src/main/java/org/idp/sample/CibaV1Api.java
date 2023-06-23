@@ -26,10 +26,12 @@ public class CibaV1Api implements ParameterTransformable {
   public ResponseEntity<?> request(
       @RequestBody(required = false) MultiValueMap<String, String> body,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
+      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @PathVariable("tenant-id") String tenantId) {
     Map<String, String[]> params = transform(body);
     Tenant tenant = Tenant.of(tenantId);
     CibaRequest cibaRequest = new CibaRequest(authorizationHeader, params, tenant.issuer());
+    cibaRequest.setClientCert(clientCert);
     CibaRequestResponse response = cibaApi.request(cibaRequest, userMockService);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", response.contentTypeValue());

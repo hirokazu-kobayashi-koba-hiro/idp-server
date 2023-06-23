@@ -1,6 +1,7 @@
 package org.idp.server.oauth.response;
 
 import org.idp.server.oauth.OAuthAuthorizeContext;
+import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.IdTokenCreatable;
 import org.idp.server.oauth.identity.IdTokenCustomClaims;
@@ -28,7 +29,10 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
 
     AccessToken accessToken =
         createAccessToken(
-            authorizationGrant, context.serverConfiguration(), context.clientConfiguration());
+            authorizationGrant,
+            context.serverConfiguration(),
+            context.clientConfiguration(),
+            new ClientCredentials());
     IdTokenCustomClaims idTokenCustomClaims =
         new IdTokenCustomClaimsBuilder()
             .add(authorizationRequest.state())

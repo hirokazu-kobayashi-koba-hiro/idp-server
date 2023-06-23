@@ -1,5 +1,6 @@
 package org.idp.server.handler.oauth.io;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.type.oauth.TokenIssuer;
@@ -20,6 +21,15 @@ public class OAuthRequest {
   public OAuthRequest(Map<String, String[]> params, String issuer) {
     this.params = params;
     this.issuer = issuer;
+  }
+
+  public static OAuthRequest singleMap(Map<String, String> params, String issuer) {
+    HashMap<String, String[]> map = new HashMap<>();
+    params.forEach(
+        (key, value) -> {
+          map.put(key, new String[] {value});
+        });
+    return new OAuthRequest(map, issuer);
   }
 
   public Map<String, String[]> getParams() {

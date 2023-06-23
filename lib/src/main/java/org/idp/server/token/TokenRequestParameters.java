@@ -31,7 +31,7 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
 
   @Override
   public ClientId clientId() {
-    return new ClientId(getString(OAuthRequestKey.client_id));
+    return new ClientId(getStringOrEmpty(OAuthRequestKey.client_id));
   }
 
   @Override
@@ -41,7 +41,7 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
 
   @Override
   public ClientSecret clientSecret() {
-    return new ClientSecret(getString(OAuthRequestKey.client_secret));
+    return new ClientSecret(getStringOrEmpty(OAuthRequestKey.client_secret));
   }
 
   @Override
@@ -51,7 +51,7 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
 
   @Override
   public ClientAssertion clientAssertion() {
-    return new ClientAssertion(getString(OAuthRequestKey.client_assertion));
+    return new ClientAssertion(getStringOrEmpty(OAuthRequestKey.client_assertion));
   }
 
   @Override
@@ -61,7 +61,7 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
 
   @Override
   public ClientAssertionType clientAssertionType() {
-    return ClientAssertionType.of(getString(OAuthRequestKey.client_assertion_type));
+    return ClientAssertionType.of(getStringOrEmpty(OAuthRequestKey.client_assertion_type));
   }
 
   @Override
@@ -70,7 +70,7 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
   }
 
   public RedirectUri redirectUri() {
-    return new RedirectUri(getString(OAuthRequestKey.redirect_uri));
+    return new RedirectUri(getStringOrEmpty(OAuthRequestKey.redirect_uri));
   }
 
   public boolean hasRedirectUri() {
@@ -78,7 +78,7 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
   }
 
   public AuthorizationCode code() {
-    return new AuthorizationCode(getString(OAuthRequestKey.code));
+    return new AuthorizationCode(getStringOrEmpty(OAuthRequestKey.code));
   }
 
   public boolean hasCode() {
@@ -86,7 +86,7 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
   }
 
   public GrantType grantType() {
-    return GrantType.of(getString(OAuthRequestKey.grant_type));
+    return GrantType.of(getStringOrEmpty(OAuthRequestKey.grant_type));
   }
 
   public boolean hasGrantType() {
@@ -94,7 +94,7 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
   }
 
   public RefreshTokenValue refreshToken() {
-    return new RefreshTokenValue(getString(OAuthRequestKey.refresh_token));
+    return new RefreshTokenValue(getStringOrEmpty(OAuthRequestKey.refresh_token));
   }
 
   public boolean hasRefreshToken() {
@@ -102,11 +102,11 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
   }
 
   public Scopes scopes() {
-    return new Scopes(getString(OAuthRequestKey.scope));
+    return new Scopes(getStringOrEmpty(OAuthRequestKey.scope));
   }
 
   public Username username() {
-    return new Username(getString(OAuthRequestKey.username));
+    return new Username(getStringOrEmpty(OAuthRequestKey.username));
   }
 
   public boolean hasUsername() {
@@ -114,7 +114,7 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
   }
 
   public Password password() {
-    return new Password(getString(OAuthRequestKey.password));
+    return new Password(getStringOrEmpty(OAuthRequestKey.password));
   }
 
   public boolean hasPassword() {
@@ -122,7 +122,7 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
   }
 
   public CodeVerifier codeVerifier() {
-    return new CodeVerifier(getString(OAuthRequestKey.code_verifier));
+    return new CodeVerifier(getStringOrEmpty(OAuthRequestKey.code_verifier));
   }
 
   public boolean hasCodeVerifier() {
@@ -130,18 +130,15 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
   }
 
   public AuthReqId authReqId() {
-    return new AuthReqId(getString(OAuthRequestKey.auth_req_id));
+    return new AuthReqId(getStringOrEmpty(OAuthRequestKey.auth_req_id));
   }
 
   public boolean hasAuthReqId() {
     return contains(OAuthRequestKey.auth_req_id);
   }
 
-  public String getString(OAuthRequestKey key) {
-    if (!values.contains(key.name())) {
-      return "";
-    }
-    return values.getFirst(key.name());
+  public String getStringOrEmpty(OAuthRequestKey key) {
+    return values.getFirstOrEmpty(key.name());
   }
 
   boolean contains(OAuthRequestKey key) {

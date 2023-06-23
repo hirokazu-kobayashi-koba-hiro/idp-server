@@ -31,7 +31,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
   }
 
   public Scopes scope() {
-    return new Scopes(getString(scope));
+    return new Scopes(getStringOrEmpty(scope));
   }
 
   public boolean hasScope() {
@@ -39,7 +39,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
   }
 
   public ClientNotificationToken clientNotificationToken() {
-    return new ClientNotificationToken(getString(client_notification_token));
+    return new ClientNotificationToken(getStringOrEmpty(client_notification_token));
   }
 
   public boolean hasClientNotificationToken() {
@@ -47,7 +47,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
   }
 
   public UserCode userCode() {
-    return new UserCode(getString(user_code));
+    return new UserCode(getStringOrEmpty(user_code));
   }
 
   public boolean hasUserCode() {
@@ -55,7 +55,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
   }
 
   public BindingMessage bindingMessage() {
-    return new BindingMessage(getString(binding_message));
+    return new BindingMessage(getStringOrEmpty(binding_message));
   }
 
   public boolean hasBindingMessage() {
@@ -63,7 +63,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
   }
 
   public LoginHintToken loginHintToken() {
-    return new LoginHintToken(getString(login_hint_token));
+    return new LoginHintToken(getStringOrEmpty(login_hint_token));
   }
 
   public boolean hasLoginHintToken() {
@@ -71,7 +71,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
   }
 
   public RequestedExpiry requestedExpiry() {
-    return new RequestedExpiry(getString(requested_expiry));
+    return new RequestedExpiry(getStringOrEmpty(requested_expiry));
   }
 
   public boolean hasRequestedExpiry() {
@@ -79,7 +79,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
   }
 
   public ClientId clientId() {
-    return new ClientId(getString(client_id));
+    return new ClientId(getStringOrEmpty(client_id));
   }
 
   public boolean hasClientId() {
@@ -87,7 +87,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
   }
 
   public IdTokenHint idTokenHint() {
-    return new IdTokenHint(getString(id_token_hint));
+    return new IdTokenHint(getStringOrEmpty(id_token_hint));
   }
 
   public boolean hasIdTokenHint() {
@@ -95,7 +95,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
   }
 
   public LoginHint loginHint() {
-    return new LoginHint(getString(login_hint));
+    return new LoginHint(getStringOrEmpty(login_hint));
   }
 
   public boolean hasLoginHint() {
@@ -103,7 +103,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
   }
 
   public AcrValues acrValues() {
-    return new AcrValues(getString(acr_values));
+    return new AcrValues(getStringOrEmpty(acr_values));
   }
 
   public boolean hasAcrValues() {
@@ -111,7 +111,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
   }
 
   public RequestObject request() {
-    return new RequestObject(getString(request));
+    return new RequestObject(getStringOrEmpty(request));
   }
 
   public boolean hasRequest() {
@@ -120,7 +120,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
 
   @Override
   public ClientSecret clientSecret() {
-    return new ClientSecret(getString(client_secret));
+    return new ClientSecret(getStringOrEmpty(client_secret));
   }
 
   @Override
@@ -130,7 +130,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
 
   @Override
   public ClientAssertion clientAssertion() {
-    return new ClientAssertion(getString(client_assertion));
+    return new ClientAssertion(getStringOrEmpty(client_assertion));
   }
 
   @Override
@@ -140,7 +140,7 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
 
   @Override
   public ClientAssertionType clientAssertionType() {
-    return ClientAssertionType.of(getString(client_assertion_type));
+    return ClientAssertionType.of(getStringOrEmpty(client_assertion_type));
   }
 
   @Override
@@ -148,11 +148,8 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
     return contains(client_assertion_type);
   }
 
-  public String getString(OAuthRequestKey key) {
-    if (!values.contains(key.name())) {
-      return "";
-    }
-    return values.getFirst(key.name());
+  public String getStringOrEmpty(OAuthRequestKey key) {
+    return values.getFirstOrEmpty(key.name());
   }
 
   boolean contains(OAuthRequestKey key) {

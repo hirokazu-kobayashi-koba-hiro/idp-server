@@ -11,6 +11,7 @@ import org.idp.server.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.handler.token.io.TokenRequest;
 import org.idp.server.handler.token.io.TokenRequestResponse;
 import org.idp.server.handler.token.io.TokenRequestStatus;
+import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.token.OAuthToken;
@@ -24,7 +25,6 @@ import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.mtls.ClientCert;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.ClientSecretBasic;
-import org.idp.server.type.oauth.GrantType;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public class TokenRequestHandler {
@@ -84,12 +84,14 @@ public class TokenRequestHandler {
             serverConfiguration,
             clientConfiguration);
 
-    clientAuthenticatorHandler.authenticate(tokenRequestContext);
+    ClientCredentials clientCredentials =
+        clientAuthenticatorHandler.authenticate(tokenRequestContext);
 
-    GrantType grantType = tokenRequestContext.grantType();
-    OAuthTokenCreationService oAuthTokenCreationService = oAuthTokenCreationServices.get(grantType);
+    OAuthTokenCreationService oAuthTokenCreationService =
+        oAuthTokenCreationServices.get(tokenRequestContext.grantType());
 
-    OAuthToken oAuthToken = oAuthTokenCreationService.create(tokenRequestContext);
+    OAuthToken oAuthToken =
+        oAuthTokenCreationService.create(tokenRequestContext, clientCredentials);
 
     return new TokenRequestResponse(TokenRequestStatus.OK, oAuthToken);
   }

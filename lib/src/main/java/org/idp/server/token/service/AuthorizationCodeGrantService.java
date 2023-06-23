@@ -6,6 +6,7 @@ import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.grantmangment.AuthorizationGranted;
 import org.idp.server.grantmangment.AuthorizationGrantedIdentifier;
 import org.idp.server.grantmangment.AuthorizationGrantedRepository;
+import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.IdTokenCreatable;
@@ -95,7 +96,8 @@ public class AuthorizationCodeGrantService
   }
 
   @Override
-  public OAuthToken create(TokenRequestContext tokenRequestContext) {
+  public OAuthToken create(
+      TokenRequestContext tokenRequestContext, ClientCredentials clientCredentials) {
     TokenRequestCodeGrantValidator validator =
         new TokenRequestCodeGrantValidator(tokenRequestContext.parameters());
     validator.validate();
@@ -116,7 +118,8 @@ public class AuthorizationCodeGrantService
 
     AuthorizationGrant authorizationGrant = authorizationCodeGrant.authorizationGrant();
     AccessToken accessToken =
-        createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration);
+        createAccessToken(
+            authorizationGrant, serverConfiguration, clientConfiguration, clientCredentials);
     RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
     OAuthTokenBuilder oAuthTokenBuilder =
         new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))

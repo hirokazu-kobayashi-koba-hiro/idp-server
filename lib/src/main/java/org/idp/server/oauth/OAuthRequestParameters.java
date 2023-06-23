@@ -185,10 +185,7 @@ public class OAuthRequestParameters {
   }
 
   public String getOrEmpty(OAuthRequestKey key) {
-    if (!values.contains(key.name())) {
-      return "";
-    }
-    return values.getFirst(key.name());
+    return values.getFirstOrEmpty(key.name());
   }
 
   boolean contains(OAuthRequestKey key) {

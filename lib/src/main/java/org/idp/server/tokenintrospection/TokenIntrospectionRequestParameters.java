@@ -27,22 +27,19 @@ public class TokenIntrospectionRequestParameters {
   }
 
   public AccessTokenValue accessToken() {
-    return new AccessTokenValue(getString(OAuthRequestKey.token));
+    return new AccessTokenValue(getStringOrEmpty(OAuthRequestKey.token));
   }
 
   public RefreshTokenValue refreshToken() {
-    return new RefreshTokenValue(getString(OAuthRequestKey.token));
+    return new RefreshTokenValue(getStringOrEmpty(OAuthRequestKey.token));
   }
 
   public boolean hasToken() {
     return contains(OAuthRequestKey.token);
   }
 
-  public String getString(OAuthRequestKey key) {
-    if (!values.contains(key.name())) {
-      return "";
-    }
-    return values.getFirst(key.name());
+  public String getStringOrEmpty(OAuthRequestKey key) {
+    return values.getFirstOrEmpty(key.name());
   }
 
   boolean contains(OAuthRequestKey key) {

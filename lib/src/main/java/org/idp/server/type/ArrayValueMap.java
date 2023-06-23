@@ -17,7 +17,7 @@ public class ArrayValueMap {
     this.values = values;
   }
 
-  public String getFirst(String key) {
+  public String getFirstOrEmpty(String key) {
     if (!values.containsKey(key)) {
       return "";
     }

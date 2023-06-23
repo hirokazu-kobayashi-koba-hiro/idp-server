@@ -9,7 +9,11 @@ import org.idp.server.basic.jose.JwkInvalidException;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ConfigurationInvalidException;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.grant.AuthorizationGrant;
+import org.idp.server.oauth.mtls.ClientCertification;
+import org.idp.server.oauth.mtls.ClientCertificationThumbprint;
+import org.idp.server.oauth.mtls.ClientCertificationThumbprintCalculator;
 import org.idp.server.type.extension.CreatedAt;
 import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.AccessTokenValue;
@@ -21,24 +25,32 @@ public interface AccessTokenCreatable {
   default AccessToken createAccessToken(
       AuthorizationGrant authorizationGrant,
       ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+      ClientConfiguration clientConfiguration,
+      ClientCredentials clientCredentials) {
     try {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
       long accessTokenDuration = serverConfiguration.accessTokenDuration();
       ExpiresIn expiresIn = new ExpiresIn(accessTokenDuration);
       ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(accessTokenDuration));
-      AccessTokenPayloadBuilder builder = new AccessTokenPayloadBuilder();
-      builder.add(serverConfiguration.tokenIssuer());
-      if (authorizationGrant.hasUser()) {
-        builder.add(authorizationGrant.subject());
+      AccessTokenPayloadBuilder payloadBuilder = new AccessTokenPayloadBuilder();
+      payloadBuilder.add(serverConfiguration.tokenIssuer());
+      payloadBuilder.add(authorizationGrant.subject());
+      payloadBuilder.add(authorizationGrant.clientId());
+      payloadBuilder.add(authorizationGrant.scopes());
+      payloadBuilder.add(authorizationGrant.customProperties());
+      payloadBuilder.add(authorizationGrant.authorizationDetails());
+      payloadBuilder.add(createdAt);
+      payloadBuilder.add(expiredAt);
+      ClientCertificationThumbprint thumbprint = new ClientCertificationThumbprint();
+      if (clientCredentials.isTlsClientAuthOrSelfSignedTlsClientAuth()) {
+        ClientCertification clientCertification = clientCredentials.clientCertification();
+        ClientCertificationThumbprintCalculator calculator =
+            new ClientCertificationThumbprintCalculator(clientCertification);
+        thumbprint = calculator.calculate();
+        payloadBuilder.add(thumbprint);
       }
-      builder.add(authorizationGrant.clientId());
-      builder.add(authorizationGrant.scopes());
-      builder.add(authorizationGrant.customProperties());
-      builder.add(createdAt);
-      builder.add(expiredAt);
-      Map<String, Object> accessTokenPayload = builder.build();
+      Map<String, Object> accessTokenPayload = payloadBuilder.build();
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
       JsonWebSignature jsonWebSignature =
           jsonWebSignatureFactory.createWithAsymmetricKey(
@@ -52,6 +64,7 @@ public interface AccessTokenCreatable {
           TokenType.Bearer,
           accessTokenValue,
           authorizationGrant,
+          thumbprint,
           createdAt,
           expiresIn,
           expiredAt);
