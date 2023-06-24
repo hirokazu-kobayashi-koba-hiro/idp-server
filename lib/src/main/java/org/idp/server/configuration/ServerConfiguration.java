@@ -180,6 +180,10 @@ public class ServerConfiguration implements JsonReadable {
     return tokenEndpointAuthMethodsSupported;
   }
 
+  public boolean isSupportedClientAuthenticationType(String value) {
+    return tokenEndpointAuthMethodsSupported.contains(value);
+  }
+
   public List<String> tokenEndpointAuthSigningAlgValuesSupported() {
     return tokenEndpointAuthSigningAlgValuesSupported;
   }
@@ -240,7 +244,7 @@ public class ServerConfiguration implements JsonReadable {
     return codeChallengeMethodsSupported;
   }
 
-  public boolean tlsClientCertificateBoundAccessTokens() {
+  public boolean isTlsClientCertificateBoundAccessTokens() {
     return tlsClientCertificateBoundAccessTokens;
   }
 

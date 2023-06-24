@@ -44,5 +44,6 @@
   "authorization_details_types":[
     "payment_initiation",
     "account_information"
-  ]
+  ],
+  "tls_client_certificate_bound_access_tokens": true
 }

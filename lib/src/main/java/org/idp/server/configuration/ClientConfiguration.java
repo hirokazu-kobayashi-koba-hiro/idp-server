@@ -40,6 +40,7 @@ public class ClientConfiguration implements JsonReadable {
   String tlsClientAuthSanUri;
   String tlsClientAuthSanIp;
   String tlsClientAuthSanEmail;
+  boolean tlsClientCertificateBoundAccessTokens = false;
 
   // extension
   boolean supportedJar;
@@ -253,5 +254,9 @@ public class ClientConfiguration implements JsonReadable {
 
   public String tlsClientAuthSanEmail() {
     return tlsClientAuthSanEmail;
+  }
+
+  public boolean isTlsClientCertificateBoundAccessTokens() {
+    return tlsClientCertificateBoundAccessTokens;
   }
 }

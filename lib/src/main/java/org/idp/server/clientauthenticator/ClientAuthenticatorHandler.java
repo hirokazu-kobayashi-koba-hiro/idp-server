@@ -4,7 +4,6 @@ import static org.idp.server.type.oauth.ClientAuthenticationType.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.type.oauth.ClientAuthenticationType;
 
@@ -24,9 +23,10 @@ public class ClientAuthenticatorHandler {
 
   public ClientCredentials authenticate(BackchannelRequestContext context) {
     ClientAuthenticator clientAuthenticator = map.get(context.clientAuthenticationType());
-    if (Objects.isNull(clientAuthenticator)) {
-      throw new RuntimeException("not supported client authentication type");
-    }
+    ClientAuthenticationVerifier verifier =
+        new ClientAuthenticationVerifier(
+            context.clientAuthenticationType(), clientAuthenticator, context.serverConfiguration());
+    verifier.verify();
     return clientAuthenticator.authenticate(context);
   }
 }

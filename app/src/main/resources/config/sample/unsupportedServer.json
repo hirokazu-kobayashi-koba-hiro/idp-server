@@ -2,7 +2,14 @@
   "issuer": "http://localhost:8080/999",
   "authorization_endpoint": "http://localhost:8080/999/api/debug/v1/authorizations",
   "token_endpoint": "http://localhost:8080/999/api/v1/tokens",
-  "token_endpoint_auth_methods_supported": [],
+  "token_endpoint_auth_methods_supported": [
+    "client_secret_post",
+    "client_secret_basic",
+    "client_secret_jwt",
+    "private_key_jwt",
+    "tls_client_auth",
+    "serlf_signed_tls_client_auth"
+  ],
   "token_endpoint_auth_signing_alg_values_supported": [
     "RS256",
     "ES256"

@@ -43,7 +43,9 @@ public interface AccessTokenCreatable {
       payloadBuilder.add(createdAt);
       payloadBuilder.add(expiredAt);
       ClientCertificationThumbprint thumbprint = new ClientCertificationThumbprint();
-      if (clientCredentials.isTlsClientAuthOrSelfSignedTlsClientAuth()) {
+      if (clientCredentials.isTlsClientAuthOrSelfSignedTlsClientAuth()
+          && serverConfiguration.isTlsClientCertificateBoundAccessTokens()
+          && clientConfiguration.isTlsClientCertificateBoundAccessTokens()) {
         ClientCertification clientCertification = clientCredentials.clientCertification();
         ClientCertificationThumbprintCalculator calculator =
             new ClientCertificationThumbprintCalculator(clientCertification);
