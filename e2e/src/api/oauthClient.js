@@ -1,5 +1,6 @@
 import { get, post } from "../lib/http";
 import { convertToSnake } from "../lib/util";
+import { encodedClientCert } from "./cert/clientCert";
 
 export const createAuthorizationRequest = ({
  endpoint,
@@ -233,6 +234,8 @@ export const requestToken = async ({
   clientAssertion,
   clientAssertionType,
   basicAuth,
+  clientCertFile,
+  clientCertKeyFile,
 }) => {
   let params = new URLSearchParams();
   if (code) {
@@ -275,7 +278,15 @@ export const requestToken = async ({
     params.append("client_assertion_type", clientAssertionType);
   }
   console.log(params.toString());
-  const headers = basicAuth ? basicAuth : {};
+  let headers = basicAuth ? basicAuth : {};
+  if (clientCertFile) {
+    const clientCert = encodedClientCert(clientCertFile);
+    headers = {
+      ...headers,
+      "x-ssl-cert": clientCert,
+    };
+  }
+  console.log(headers);
   return await post({
     url: endpoint,
     body: params,

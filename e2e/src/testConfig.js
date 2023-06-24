@@ -185,6 +185,17 @@ export const privateKeyJwtClient = {
   },
 };
 
+export const selfSignedTlsAuthClient = {
+  clientId: "selfSignedTlsClientAuth",
+  clientSecret: "selfSignedTlsClientAuth1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "account transfers",
+  fapiBaselineScope: "read",
+  fapiAdvanceScope: "write",
+  idTokenAlg: "ES256",
+  clientCertFile: "selfSignedTlsAuth.pem"
+};
+
 export const unsupportedClient = {
   clientId: "unsupportedClient",
   clientSecret: "unsupportedClientSecret",

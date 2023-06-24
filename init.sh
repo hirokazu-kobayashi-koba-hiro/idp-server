@@ -37,6 +37,10 @@ curl -X POST "http://localhost:8080/api/v1/client/registration" \
 
 curl -X POST "http://localhost:8080/api/v1/client/registration" \
 -H "Content-Type:application/json" \
+--data @./app/src/main/resources/config/sample/clients/selfSignedTlsClientAuth.json
+
+curl -X POST "http://localhost:8080/api/v1/client/registration" \
+-H "Content-Type:application/json" \
 --data @./app/src/main/resources/config/sample/clients/unsupportedClient.json
 
 curl -X POST "http://localhost:8080/api/v1/client/registration" \

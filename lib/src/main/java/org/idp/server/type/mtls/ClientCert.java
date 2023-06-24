@@ -1,8 +1,9 @@
 package org.idp.server.type.mtls;
 
 import java.util.Objects;
+import org.idp.server.basic.base64.Base64Codeable;
 
-public class ClientCert {
+public class ClientCert implements Base64Codeable {
   String value;
 
   public ClientCert() {}
@@ -13,6 +14,13 @@ public class ClientCert {
 
   public String value() {
     return value;
+  }
+
+  public String plainValue() {
+    if (value.contains("-----BEGIN CERTIFICATE-----")) {
+      return value.replaceAll("%0A", "\n");
+    }
+    return decodeWithUrlSafe(value);
   }
 
   public boolean exists() {

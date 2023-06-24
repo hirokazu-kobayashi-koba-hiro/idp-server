@@ -1,0 +1,48 @@
+{
+  "issuer": "http://localhost:8080/123",
+  "client_id": "selfSignedTlsClientAuth",
+  "client_secret": "selfSignedTlsClientAuth1234567890123456789012345678901234567890123456789012345678901234567890",
+  "client_id_issued_at": 2893256800,
+  "client_secret_expires_at": 2893276800,
+  "redirect_uris": [
+    "https://client.example.org/callback",
+    "https://client.example.org/callback2",
+    "http://localhost:8081/callback",
+    "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_implicit/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_hybrid/callback"
+  ],
+  "response_types": [
+    "code",
+    "token",
+    "id_token",
+    "code token",
+    "code token id_token",
+    "token id_token",
+    "code id_token",
+    "none"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "password",
+    "client_credentials",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "scope": "openid profile email address phone offline_access account transfers",
+  "client_name": "My Example Client",
+  "client_name#ja-Jpan-JP": "クライアント名",
+  "token_endpoint_auth_method": "self_signed_tls_client_auth",
+  "logo_uri": "https://client.example.org/logo.png",
+  "jwks": "{\n    \"keys\": [{\n  \"kty\": \"EC\",\n  \"crv\": \"P-256\",\n  \"x\": \"deZXhE38Qpky3JLmr9cngUCKL2vQJ-YuZpC1S_B_0OI\",\n  \"y\": \"-kFfCD3JvXkIewWzdncHXjp1wmGiqTiIfAA9bfXd40Y\",\n  \"x5c\": [\n    \"MIIBkDCCATWgAwIBAgIUVQPINRxvMDh3Z/9kigzaHpyRn4gwCgYIKoZIzj0EAwIwHTEbMBkGA1UEAwwSY2xpZW50LmV4YW1wbGUuY29tMB4XDTIzMDYyNDAzMDI0NVoXDTI2MDMyMDAzMDI0NVowHTEbMBkGA1UEAwwSY2xpZW50LmV4YW1wbGUuY29tMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEdeZXhE38Qpky3JLmr9cngUCKL2vQJ+YuZpC1S/B/0OL6QV8IPcm9eQh7BbN2dwdeOnXCYaKpOIh8AD1t9d3jRqNTMFEwHQYDVR0OBBYEFDufGECj+J6ixRKKFZ/myASomjMeMB8GA1UdIwQYMBaAFDufGECj+J6ixRKKFZ/myASomjMeMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhANWsuThXADgq1LFUAoguNo7UQVHwV1E8OPpNHN40UERUAiEAw/fOzFi2RocmC1ngVuIzpr28my691yMbcPsQirfH3Hw=\"\n  ]\n}]\n}",
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_client_notification_endpoint": "",
+  "backchannel_authentication_request_signing_alg": "ES256",
+  "backchannel_user_code_parameter": true,
+  "application_type": "web",
+  "authorization_details_types":[
+    "payment_initiation",
+    "account_information"
+  ]
+}

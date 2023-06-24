@@ -17,7 +17,7 @@ class TlsClientAuthAuthenticator implements ClientAuthenticator {
   @Override
   public ClientCredentials authenticate(BackchannelRequestContext context) {
     throwExceptionIfNotContainsClientCert(context);
-    X509Certification x509Certification = parseAndThrowExceptionIfNoneMatch(context);
+    X509Certification x509Certification = parseOrThrowExceptionIfNoneMatch(context);
     ClientId clientId = context.clientConfiguration().clientId();
     ClientSecret clientSecret = new ClientSecret();
     ClientCertification clientCertification = new ClientCertification(x509Certification);
@@ -37,10 +37,10 @@ class TlsClientAuthAuthenticator implements ClientAuthenticator {
     }
   }
 
-  X509Certification parseAndThrowExceptionIfNoneMatch(BackchannelRequestContext context) {
+  X509Certification parseOrThrowExceptionIfNoneMatch(BackchannelRequestContext context) {
     ClientCert clientCert = context.clientCert();
     try {
-      X509Certification x509Certification = X509Certification.parse(clientCert.value());
+      X509Certification x509Certification = X509Certification.parse(clientCert.plainValue());
       ClientConfiguration clientConfiguration = context.clientConfiguration();
       // tls_client_auth_subject_dn
       if (x509Certification.subject().equals(clientConfiguration.tlsClientAuthSubjectDn())) {

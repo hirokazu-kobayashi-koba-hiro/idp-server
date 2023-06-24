@@ -3,8 +3,9 @@ package org.idp.server.basic.x509;
 import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import org.idp.server.basic.base64.Base64Codeable;
 
-public class X509Certification {
+public class X509Certification implements Base64Codeable {
   X509Certificate x509Certificate;
   byte[] der;
   X509SubjectAlternativeNames subjectAlternativeNames;
@@ -45,6 +46,10 @@ public class X509Certification {
 
   public byte[] der() {
     return der;
+  }
+
+  public String derWithBase64() {
+    return encodeString(der);
   }
 
   public X509SubjectAlternativeNames subjectAlternativeNames() {

@@ -36,4 +36,28 @@ public class X509CertificationTest {
     String subject = x509Certification.subject();
     System.out.println(subject);
   }
+
+  @Test
+  void parseSelf() throws X509CertInvalidException {
+    String self =
+        """
+            -----BEGIN CERTIFICATE-----
+            MIIBkDCCATWgAwIBAgIUVQPINRxvMDh3Z/9kigzaHpyRn4gwCgYIKoZIzj0EAwIw
+            HTEbMBkGA1UEAwwSY2xpZW50LmV4YW1wbGUuY29tMB4XDTIzMDYyNDAzMDI0NVoX
+            DTI2MDMyMDAzMDI0NVowHTEbMBkGA1UEAwwSY2xpZW50LmV4YW1wbGUuY29tMFkw
+            EwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEdeZXhE38Qpky3JLmr9cngUCKL2vQJ+Yu
+            ZpC1S/B/0OL6QV8IPcm9eQh7BbN2dwdeOnXCYaKpOIh8AD1t9d3jRqNTMFEwHQYD
+            VR0OBBYEFDufGECj+J6ixRKKFZ/myASomjMeMB8GA1UdIwQYMBaAFDufGECj+J6i
+            xRKKFZ/myASomjMeMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIh
+            ANWsuThXADgq1LFUAoguNo7UQVHwV1E8OPpNHN40UERUAiEAw/fOzFi2RocmC1ng
+            VuIzpr28my691yMbcPsQirfH3Hw=
+            -----END CERTIFICATE-----
+            """;
+    X509Certification x509Certification = X509Certification.parse(self);
+    X509SubjectAlternativeNames x509SubjectAlternativeNames =
+        x509Certification.subjectAlternativeNames();
+    String subject = x509Certification.subject();
+    System.out.println(subject);
+    System.out.println(x509Certification.derWithBase64());
+  }
 }

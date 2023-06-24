@@ -3,8 +3,10 @@ package org.idp.server.basic.jose;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyType;
+import com.nimbusds.jose.util.Base64;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.List;
 import java.util.Objects;
 
 /** JsonWebKey */
@@ -27,6 +29,16 @@ public class JsonWebKey {
 
   public String keyId() {
     return value.getKeyID();
+  }
+
+  public List<String> x5c() {
+    List<Base64> x509CertChain = value.getX509CertChain();
+    return x509CertChain.stream().map(Base64::toString).toList();
+  }
+
+  public boolean hasX5c() {
+    List<Base64> x509CertChain = value.getX509CertChain();
+    return Objects.nonNull(x509CertChain) && !x509CertChain.isEmpty();
   }
 
   public String algorithm() {

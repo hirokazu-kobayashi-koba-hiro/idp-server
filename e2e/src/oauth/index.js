@@ -2,6 +2,10 @@ import { authorize, createAuthorizationRequest, deny, getAuthorizations } from "
 import { serverConfig } from "../testConfig";
 import { convertToAuthorizationResponse } from "../lib/util";
 import puppeteer from "puppeteer-core";
+import { createHash, X509Certificate } from "node:crypto";
+import { encodeBuffer } from "../lib/bas64";
+import { getClientCert } from "../api/cert/clientCert";
+
 export const requestAuthorizations = async ({
   endpoint,
   scope,
@@ -183,4 +187,24 @@ export const requestAuthorizations = async ({
       };
     }
   }
+};
+
+export const certThumbprint = (clientCertFile) =>{
+  const cert = getClientCert(clientCertFile);
+  let digest;
+  if (cert instanceof X509Certificate) {
+    digest = createHash("sha256").update(cert.raw).digest();
+  } else {
+    digest = createHash("sha256")
+      .update(
+        Buffer.from(
+          cert.replace(/(?:-----(?:BEGIN|END) CERTIFICATE-----|\s|=)/g, ""),
+          "base64",
+        ),
+      )
+      .digest();
+  }
+  const thumbprint = encodeBuffer(digest);
+  console.log(thumbprint);
+  return thumbprint;
 };
