@@ -9,7 +9,7 @@ import {
   createJwtWithNoneSignature,
   createJwtWithPrivateKey,
   generateJti,
-  verifyAndDecodeIdToken,
+  verifyAndDecodeJwt,
 } from "./lib/jose";
 import { toEpocTime } from "./lib/util";
 
@@ -56,8 +56,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     console.log(jwksResponse.data);
     expect(jwksResponse.status).toBe(200);
 
-    const decodedIdToken = verifyAndDecodeIdToken({
-      idToken: tokenResponse.data.id_token,
+    const decodedIdToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.id_token,
       jwks: jwksResponse.data,
     });
     console.log(decodedIdToken);
@@ -105,8 +105,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     console.log(jwksResponse.data);
     expect(jwksResponse.status).toBe(200);
 
-    const decodedIdToken = verifyAndDecodeIdToken({
-      idToken: tokenResponse.data.id_token,
+    const decodedIdToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.id_token,
       jwks: jwksResponse.data,
     });
     console.log(decodedIdToken);
@@ -160,8 +160,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     console.log(jwksResponse.data);
     expect(jwksResponse.status).toBe(200);
 
-    const decodedIdToken = verifyAndDecodeIdToken({
-      idToken: tokenResponse.data.id_token,
+    const decodedIdToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.id_token,
       jwks: jwksResponse.data,
     });
     console.log(decodedIdToken);

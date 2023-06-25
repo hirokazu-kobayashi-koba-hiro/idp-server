@@ -14,6 +14,7 @@ import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.*;
+import org.idp.server.type.oidc.ResponseMode;
 
 /** OAuthAuthorizeContext */
 public class OAuthAuthorizeContext {
@@ -94,6 +95,14 @@ public class OAuthAuthorizeContext {
 
   public ResponseType responseType() {
     return authorizationRequest.responseType();
+  }
+
+  public ResponseMode responseMode() {
+    return authorizationRequest.responseMode();
+  }
+
+  public boolean isJwtMode() {
+    return responseMode().isJwtMode();
   }
 
   public ExpiredAt authorizationCodeGrantExpiresDateTime() {

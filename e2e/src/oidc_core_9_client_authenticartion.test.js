@@ -7,7 +7,7 @@ import {
   serverConfig,
 } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
-import { verifyAndDecodeIdToken } from "./lib/jose";
+import { verifyAndDecodeJwt } from "./lib/jose";
 import { createClientAssertion } from "./lib/oauth";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", () => {
@@ -46,8 +46,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     console.log(jwksResponse.data);
     expect(jwksResponse.status).toBe(200);
 
-    const decodedIdToken = verifyAndDecodeIdToken({
-      idToken: tokenResponse.data.id_token,
+    const decodedIdToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.id_token,
       jwks: jwksResponse.data,
     });
     console.log(decodedIdToken);
@@ -88,8 +88,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     console.log(jwksResponse.data);
     expect(jwksResponse.status).toBe(200);
 
-    const decodedIdToken = verifyAndDecodeIdToken({
-      idToken: tokenResponse.data.id_token,
+    const decodedIdToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.id_token,
       jwks: jwksResponse.data,
     });
     console.log(decodedIdToken);

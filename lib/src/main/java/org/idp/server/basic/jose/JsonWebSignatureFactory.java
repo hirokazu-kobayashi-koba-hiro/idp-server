@@ -13,7 +13,7 @@ import java.security.interfaces.ECPrivateKey;
 import java.text.ParseException;
 import java.util.Map;
 
-/** JsonWebSignatureFactory */
+// FIXME refactor
 public class JsonWebSignatureFactory {
 
   public JsonWebSignatureFactory() {}
@@ -22,7 +22,15 @@ public class JsonWebSignatureFactory {
       Map<String, Object> claims, Map<String, Object> customHeaders, String jwks, String keyId)
       throws JwkInvalidException {
     JsonWebKeys jsonWebKeys = JwkParser.parseKeys(jwks);
-    JsonWebKey jsonWebKey = jsonWebKeys.find(keyId);
+    JsonWebKey jsonWebKey = jsonWebKeys.findBy(keyId);
+    return this.createWithAsymmetricKey(claims, customHeaders, jsonWebKey);
+  }
+
+  public JsonWebSignature createWithAsymmetricKeyByAlgorithm(
+      Map<String, Object> claims, Map<String, Object> customHeaders, String jwks, String algorithm)
+      throws JwkInvalidException {
+    JsonWebKeys jsonWebKeys = JwkParser.parseKeys(jwks);
+    JsonWebKey jsonWebKey = jsonWebKeys.findByAlgorithm(algorithm);
     return this.createWithAsymmetricKey(claims, customHeaders, jsonWebKey);
   }
 
@@ -30,7 +38,7 @@ public class JsonWebSignatureFactory {
       String claims, Map<String, Object> customHeaders, String jwks, String keyId)
       throws JwkInvalidException {
     JsonWebKeys jsonWebKeys = JwkParser.parseKeys(jwks);
-    JsonWebKey jsonWebKey = jsonWebKeys.find(keyId);
+    JsonWebKey jsonWebKey = jsonWebKeys.findBy(keyId);
     return this.createWithAsymmetricKey(claims, customHeaders, jsonWebKey);
   }
 

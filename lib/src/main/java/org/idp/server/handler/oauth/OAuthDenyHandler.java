@@ -38,11 +38,11 @@ public class OAuthDenyHandler {
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tokenIssuer, clientId);
-    AuthorizationErrorResponseCreator authorizationErrorResponseCreator =
-        new AuthorizationErrorResponseCreator(
+    AuthorizationDenyErrorResponseCreator authorizationDenyErrorResponseCreator =
+        new AuthorizationDenyErrorResponseCreator(
             authorizationRequest, request.denyReason(), serverConfiguration, clientConfiguration);
 
-    AuthorizationErrorResponse errorResponse = authorizationErrorResponseCreator.create();
+    AuthorizationErrorResponse errorResponse = authorizationDenyErrorResponseCreator.create();
 
     return new OAuthDenyResponse(OAuthDenyStatus.OK, errorResponse);
   }

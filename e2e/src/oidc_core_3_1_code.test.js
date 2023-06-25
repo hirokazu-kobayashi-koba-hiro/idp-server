@@ -7,7 +7,7 @@ import {
   serverConfig,
 } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
-import { createJwtWithPrivateKey, verifyAndDecodeIdToken } from "./lib/jose";
+import { createJwtWithPrivateKey, verifyAndDecodeJwt } from "./lib/jose";
 import { createBasicAuthHeader, toEpocTime } from "./lib/util";
 import { calculateIdTokenClaimHashWithS256 } from "./lib/oauth";
 
@@ -832,8 +832,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       const jwkResponse = await getJwks({
         endpoint: serverConfig.jwksEndpoint,
       });
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: tokenResponse.data.id_token,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.id_token,
         jwks: jwkResponse.data,
       });
       console.log(decodedIdToken);
@@ -1039,8 +1039,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         const jwkResponse = await getJwks({
           endpoint: serverConfig.jwksEndpoint,
         });
-        const decodedIdToken = verifyAndDecodeIdToken({
-          idToken: tokenResponse.data.id_token,
+        const decodedIdToken = verifyAndDecodeJwt({
+          jwt: tokenResponse.data.id_token,
           jwks: jwkResponse.data,
         });
         console.log(decodedIdToken);
@@ -1092,8 +1092,8 @@ const getIdToken = async ({ client, nonce, acrValues, maxAge }) => {
   const jwkResponse = await getJwks({
     endpoint: serverConfig.jwksEndpoint,
   });
-  const decodedIdToken = verifyAndDecodeIdToken({
-    idToken: tokenResponse.data.id_token,
+  const decodedIdToken = verifyAndDecodeJwt({
+    jwt: tokenResponse.data.id_token,
     jwks: jwkResponse.data,
   });
   console.log(decodedIdToken);

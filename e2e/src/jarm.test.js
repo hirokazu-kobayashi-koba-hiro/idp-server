@@ -8,8 +8,8 @@ import {
 import { requestAuthorizations, certThumbprint } from "./oauth";
 import { verifyAndDecodeJwt } from "./lib/jose";
 
-describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", () => {
-  it("self_signed_tls_client_auth", async () => {
+describe("Financial-grade API: JWT Secured Authorization Response Mode for OAuth 2.0 (JARM)", () => {
+  it("success", async () => {
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
       responseType: "code",
@@ -17,13 +17,23 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       scope: "openid profile phone email " + selfSignedTlsAuthClient.scope,
       redirectUri: selfSignedTlsAuthClient.redirectUri,
       clientId: selfSignedTlsAuthClient.clientId,
+      responseMode: "jwt"
     });
     console.log(authorizationResponse);
-    expect(authorizationResponse.code).not.toBeNull();
+    expect(authorizationResponse.response).not.toBeNull();
+
+    const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+    console.log(jwksResponse.data);
+    expect(jwksResponse.status).toBe(200);
+
+    const decodedResponse = verifyAndDecodeJwt({
+      jwt: authorizationResponse.response,
+      jwks: jwksResponse.data,
+    });
 
     const tokenResponse = await requestToken({
       endpoint: serverConfig.tokenEndpoint,
-      code: authorizationResponse.code,
+      code: decodedResponse.payload.code,
       grantType: "authorization_code",
       redirectUri: selfSignedTlsAuthClient.redirectUri,
       clientId: selfSignedTlsAuthClient.clientId,
@@ -33,9 +43,6 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     expect(tokenResponse.status).toBe(200);
     expect(tokenResponse.data).toHaveProperty("id_token");
 
-    const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
-    console.log(jwksResponse.data);
-    expect(jwksResponse.status).toBe(200);
 
     const decodedIdToken = verifyAndDecodeJwt({
       jwt: tokenResponse.data.id_token,

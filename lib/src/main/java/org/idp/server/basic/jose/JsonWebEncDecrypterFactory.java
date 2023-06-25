@@ -25,7 +25,7 @@ public class JsonWebEncDecrypterFactory {
 
       String keyId = jsonWebEncryption.keyId();
       JsonWebKeys publicKeys = JwkParser.parseKeys(privateJwks);
-      JsonWebKey privateKey = publicKeys.find(keyId);
+      JsonWebKey privateKey = publicKeys.findBy(keyId);
       EncryptedJWT encryptedJWT = jsonWebEncryption.value();
       JWEDecrypter decrypter =
           defaultJWEDecrypterFactory.createJWEDecrypter(

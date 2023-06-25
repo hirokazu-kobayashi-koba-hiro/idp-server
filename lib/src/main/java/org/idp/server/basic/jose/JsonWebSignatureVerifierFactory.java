@@ -44,9 +44,9 @@ public class JsonWebSignatureVerifierFactory {
     String keyId = jsonWebSignature.keyId();
     JsonWebKeys publicKeys = JwkParser.parseKeys(publicJwks);
     if (jsonWebSignature.hasKeyId()) {
-      return publicKeys.find(keyId);
+      return publicKeys.findBy(keyId);
     }
     String algorithm = jsonWebSignature.algorithm();
-    return publicKeys.findFirst(algorithm);
+    return publicKeys.findByAlgorithm(algorithm);
   }
 }

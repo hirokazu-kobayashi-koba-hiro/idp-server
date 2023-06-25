@@ -61,18 +61,18 @@ export const decryptAndVerifyAndDecodeIdToken = async ({ idToken, privateKey, jw
   console.log(keyObject);
   const { plaintext, protectedHeader } = await jose.compactDecrypt(idToken, keyObject);
   console.log(protectedHeader);
-  return verifyAndDecodeIdToken({
-    idToken: new TextDecoder().decode(plaintext),
+  return verifyAndDecodeJwt({
+    jwt: new TextDecoder().decode(plaintext),
     jwks,
   });
 };
 
-export const verifyAndDecodeIdToken = ({ idToken, jwks }) => {
-  const header = jwt_decode(idToken, { header: true });
-  const payload = jwt_decode(idToken);
+export const verifyAndDecodeJwt = ({ jwt, jwks }) => {
+  const header = jwt_decode(jwt, { header: true });
+  const payload = jwt_decode(jwt);
   const jwk = jwks.keys.filter((jwk) => jwk.kid === header.kid)[0];
   const publicKey = jwkToPem(jwk);
-  const verifyResult = verifySignature({ idToken, publicKey });
+  const verifyResult = verifySignature({ jws: jwt, publicKey });
   return {
     header,
     payload,
@@ -80,9 +80,9 @@ export const verifyAndDecodeIdToken = ({ idToken, jwks }) => {
   };
 };
 
-export const verifySignature = ({ idToken, publicKey }) => {
+export const verifySignature = ({ jws, publicKey }) => {
   try {
-    jwt.verify(idToken, publicKey);
+    jwt.verify(jws, publicKey);
     return true;
   } catch (e) {
     console.log(e);

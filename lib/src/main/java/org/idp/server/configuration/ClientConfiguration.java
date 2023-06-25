@@ -41,7 +41,9 @@ public class ClientConfiguration implements JsonReadable {
   String tlsClientAuthSanIp;
   String tlsClientAuthSanEmail;
   boolean tlsClientCertificateBoundAccessTokens = false;
-
+  String authorizationSignedResponseAlg;
+  String authorizationEncryptedResponseAlg;
+  String authorizationEncryptedResponseEnc;
   // extension
   boolean supportedJar;
   String issuer;
@@ -270,5 +272,26 @@ public class ClientConfiguration implements JsonReadable {
 
   public boolean isTlsClientCertificateBoundAccessTokens() {
     return tlsClientCertificateBoundAccessTokens;
+  }
+
+  public String authorizationSignedResponseAlg() {
+    return authorizationSignedResponseAlg;
+  }
+
+  public boolean hasAuthorizationSignedResponseAlg() {
+    return Objects.nonNull(authorizationSignedResponseAlg);
+  }
+
+  public String authorizationEncryptedResponseAlg() {
+    return authorizationEncryptedResponseAlg;
+  }
+
+  public String authorizationEncryptedResponseEnc() {
+    return authorizationEncryptedResponseEnc;
+  }
+
+  public boolean hasEncryptedAuthorizationResponseMeta() {
+    return Objects.nonNull(idTokenEncryptedResponseAlg)
+        && Objects.nonNull(idTokenEncryptedResponseEnc);
   }
 }

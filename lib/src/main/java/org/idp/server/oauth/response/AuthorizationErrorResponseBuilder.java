@@ -1,22 +1,30 @@
 package org.idp.server.oauth.response;
 
 import org.idp.server.basic.http.QueryParams;
+import org.idp.server.type.extension.JarmPayload;
 import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oauth.Error;
+import org.idp.server.type.oidc.ResponseMode;
 
 public class AuthorizationErrorResponseBuilder {
   RedirectUri redirectUri;
+  ResponseMode responseMode;
   ResponseModeValue responseModeValue;
   State state;
   TokenIssuer tokenIssuer;
   Error error;
   ErrorDescription errorDescription;
+  JarmPayload jarmPayload;
   QueryParams queryParams;
 
   public AuthorizationErrorResponseBuilder(
-      RedirectUri redirectUri, ResponseModeValue responseModeValue, TokenIssuer tokenIssuer) {
+      RedirectUri redirectUri,
+      ResponseMode responseMode,
+      ResponseModeValue responseModeValue,
+      TokenIssuer tokenIssuer) {
     this.redirectUri = redirectUri;
+    this.responseMode = responseMode;
     this.responseModeValue = responseModeValue;
     this.tokenIssuer = tokenIssuer;
     this.queryParams = new QueryParams();
@@ -41,8 +49,24 @@ public class AuthorizationErrorResponseBuilder {
     return this;
   }
 
+  public AuthorizationErrorResponseBuilder add(JarmPayload jarmPayload) {
+    this.jarmPayload = jarmPayload;
+    return this;
+  }
+
   public AuthorizationErrorResponse build() {
+    if (responseMode.isJwtMode() && jarmPayload.exists()) {
+      this.queryParams = new QueryParams();
+      this.queryParams.add("response", jarmPayload.value());
+    }
     return new AuthorizationErrorResponse(
-        redirectUri, responseModeValue, state, tokenIssuer, error, errorDescription, queryParams);
+        redirectUri,
+        responseModeValue,
+        state,
+        tokenIssuer,
+        error,
+        errorDescription,
+        jarmPayload,
+        queryParams);
   }
 }

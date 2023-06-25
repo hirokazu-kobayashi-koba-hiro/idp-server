@@ -1,6 +1,7 @@
 package org.idp.server.oauth.response;
 
 import org.idp.server.basic.http.QueryParams;
+import org.idp.server.type.extension.JarmPayload;
 import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oauth.Error;
@@ -12,6 +13,7 @@ public class AuthorizationErrorResponse {
   TokenIssuer tokenIssuer;
   Error error;
   ErrorDescription errorDescription;
+  JarmPayload jarmPayload;
   QueryParams queryParams;
 
   public AuthorizationErrorResponse() {}
@@ -23,6 +25,7 @@ public class AuthorizationErrorResponse {
       TokenIssuer tokenIssuer,
       Error error,
       ErrorDescription errorDescription,
+      JarmPayload jarmPayload,
       QueryParams queryParams) {
     this.redirectUri = redirectUri;
     this.responseModeValue = responseModeValue;
@@ -30,6 +33,7 @@ public class AuthorizationErrorResponse {
     this.tokenIssuer = tokenIssuer;
     this.error = error;
     this.errorDescription = errorDescription;
+    this.jarmPayload = jarmPayload;
     this.queryParams = queryParams;
   }
 
@@ -55,6 +59,10 @@ public class AuthorizationErrorResponse {
 
   public ErrorDescription errorDescription() {
     return errorDescription;
+  }
+
+  public JarmPayload jarmPayload() {
+    return jarmPayload;
   }
 
   QueryParams queryParams() {

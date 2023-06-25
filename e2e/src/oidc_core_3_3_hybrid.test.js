@@ -7,7 +7,7 @@ import {
   serverConfig,
 } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
-import { createJwtWithPrivateKey, verifyAndDecodeIdToken } from "./lib/jose";
+import { createJwtWithPrivateKey, verifyAndDecodeJwt } from "./lib/jose";
 import { createBasicAuthHeader, toEpocTime } from "./lib/util";
 import { calculateIdTokenClaimHashWithS256 } from "./lib/oauth";
 
@@ -457,8 +457,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         endpoint: serverConfig.jwksEndpoint,
       });
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
 
@@ -494,8 +494,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         endpoint: serverConfig.jwksEndpoint,
       });
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
 
@@ -526,8 +526,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         endpoint: serverConfig.jwksEndpoint,
       });
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
 
@@ -558,8 +558,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         endpoint: serverConfig.jwksEndpoint,
       });
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
 
@@ -588,8 +588,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         endpoint: serverConfig.jwksEndpoint,
       });
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
       console.log(decodedIdToken);
@@ -624,8 +624,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         endpoint: serverConfig.jwksEndpoint,
       });
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
 
@@ -654,8 +654,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         endpoint: serverConfig.jwksEndpoint,
       });
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
 
@@ -700,13 +700,13 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         endpoint: serverConfig.jwksEndpoint,
       });
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwkResponse.data,
       });
 
-      const decodedIdTokenTokenResponse = verifyAndDecodeIdToken({
-        idToken: tokenResponse.data.id_token,
+      const decodedIdTokenTokenResponse = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.id_token,
         jwks: jwkResponse.data,
       });
 
@@ -751,13 +751,13 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         endpoint: serverConfig.jwksEndpoint,
       });
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwkResponse.data,
       });
 
-      const decodedIdTokenTokenResponse = verifyAndDecodeIdToken({
-        idToken: tokenResponse.data.id_token,
+      const decodedIdTokenTokenResponse = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.id_token,
         jwks: jwkResponse.data,
       });
 
@@ -804,13 +804,13 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         endpoint: serverConfig.jwksEndpoint,
       });
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwkResponse.data,
       });
 
-      const decodedIdTokenTokenResponse = verifyAndDecodeIdToken({
-        idToken: tokenResponse.data.id_token,
+      const decodedIdTokenTokenResponse = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.id_token,
         jwks: jwkResponse.data,
       });
 

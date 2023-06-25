@@ -2,7 +2,7 @@ package org.idp.server.oauth.response;
 
 import org.idp.server.oauth.OAuthAuthorizeContext;
 import org.idp.server.oauth.request.AuthorizationRequest;
-import org.idp.server.type.extension.ResponseModeValue;
+import org.idp.server.type.extension.JarmPayload;
 import org.idp.server.type.oauth.AuthorizationCode;
 
 /**
@@ -19,7 +19,11 @@ import org.idp.server.type.oauth.AuthorizationCode;
  *     Response</a>
  */
 public class AuthorizationResponseCodeCreator
-    implements AuthorizationResponseCreator, AuthorizationCodeCreatable, RedirectUriDecidable {
+    implements AuthorizationResponseCreator,
+        AuthorizationCodeCreatable,
+        RedirectUriDecidable,
+        ResponseModeDecidable,
+        JarmCreatable {
 
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
@@ -28,10 +32,20 @@ public class AuthorizationResponseCodeCreator
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(
                 decideRedirectUri(authorizationRequest, context.clientConfiguration()),
-                new ResponseModeValue("?"),
+                context.responseMode(),
+                decideResponseModeValue(context.responseType(), context.responseMode()),
                 context.tokenIssuer())
             .add(authorizationRequest.state())
             .add(authorizationCode);
+
+    if (context.isJwtMode()) {
+      AuthorizationResponse authorizationResponse = authorizationResponseBuilder.build();
+      JarmPayload jarmPayload =
+          createResponse(
+              authorizationResponse, context.serverConfiguration(), context.clientConfiguration());
+      authorizationResponseBuilder.add(jarmPayload);
+    }
+
     return authorizationResponseBuilder.build();
   }
 }

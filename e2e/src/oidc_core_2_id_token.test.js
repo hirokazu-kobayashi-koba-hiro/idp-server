@@ -4,7 +4,7 @@ import { getJwks } from "./api/oauthClient";
 import { clientSecretPostClient, clientSecretPostWithIdTokenEncClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
 import { isArray, isNumber, isString, matchWithUSASCII } from "./lib/util";
-import { decryptAndVerifyAndDecodeIdToken, verifyAndDecodeIdToken } from "./lib/jose";
+import { decryptAndVerifyAndDecodeIdToken, verifyAndDecodeJwt } from "./lib/jose";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
 
@@ -29,8 +29,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
       console.log(jwksResponse.data);
       expect(jwksResponse.status).toBe(200);
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
       console.log(decodedIdToken);
@@ -57,8 +57,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
       console.log(jwksResponse.data);
       expect(jwksResponse.status).toBe(200);
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
       console.log(decodedIdToken);
@@ -89,8 +89,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
       console.log(jwksResponse.data);
       expect(jwksResponse.status).toBe(200);
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
       console.log(decodedIdToken);
@@ -123,8 +123,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
       console.log(jwksResponse.data);
       expect(jwksResponse.status).toBe(200);
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
       console.log(decodedIdToken);
@@ -159,8 +159,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
       console.log(jwksResponse.data);
       expect(jwksResponse.status).toBe(200);
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
       console.log(decodedIdToken);
@@ -197,8 +197,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
       console.log(jwksResponse.data);
       expect(jwksResponse.status).toBe(200);
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
       console.log(decodedIdToken);
@@ -239,8 +239,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
       console.log(jwksResponse.data);
       expect(jwksResponse.status).toBe(200);
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
       console.log(decodedIdToken);
@@ -283,8 +283,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
       console.log(jwksResponse.data);
       expect(jwksResponse.status).toBe(200);
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
       console.log(decodedIdToken);
@@ -331,8 +331,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
       console.log(jwksResponse.data);
       expect(jwksResponse.status).toBe(200);
 
-      const decodedIdToken = verifyAndDecodeIdToken({
-        idToken: authorizationResponse.idToken,
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: authorizationResponse.idToken,
         jwks: jwksResponse.data,
       });
       console.log(decodedIdToken);

@@ -25,7 +25,7 @@ public class NestedJsonWebEncryptionCreator {
       JWEAlgorithm algorithm = JWEAlgorithm.parse(jweAlgorithm);
       EncryptionMethod method = EncryptionMethod.parse(encryptionMethod);
       JsonWebKeys jsonWebKeys = JwkParser.parseKeys(publicKeys);
-      JsonWebKey jsonWebKey = jsonWebKeys.findFirst(jweAlgorithm);
+      JsonWebKey jsonWebKey = jsonWebKeys.findByAlgorithm(jweAlgorithm);
       JWEEncrypter jweEncrypter = new JsonWebEncrypterFactory(jsonWebKey).create();
       JWEObject jweObject =
           new JWEObject(

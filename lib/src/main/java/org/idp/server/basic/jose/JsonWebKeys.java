@@ -26,14 +26,14 @@ public class JsonWebKeys implements Iterable<JsonWebKey> {
     return !values.isEmpty();
   }
 
-  public JsonWebKey find(String keyId) {
+  public JsonWebKey findBy(String keyId) {
     return values.stream()
         .filter(value -> value.keyId().equals(keyId))
         .findFirst()
         .orElse(new JsonWebKey());
   }
 
-  public JsonWebKey findFirst(String algorithm) {
+  public JsonWebKey findByAlgorithm(String algorithm) {
     return values.stream()
         .filter(value -> value.algorithm().equals(algorithm))
         .findFirst()

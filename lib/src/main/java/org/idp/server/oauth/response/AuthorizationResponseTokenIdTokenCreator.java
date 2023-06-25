@@ -10,6 +10,7 @@ import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenCreatable;
 import org.idp.server.type.extension.GrantFlow;
+import org.idp.server.type.extension.JarmPayload;
 import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
@@ -18,7 +19,8 @@ public class AuthorizationResponseTokenIdTokenCreator
     implements AuthorizationResponseCreator,
         AccessTokenCreatable,
         IdTokenCreatable,
-        RedirectUriDecidable {
+        RedirectUriDecidable,
+        JarmCreatable {
 
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
@@ -50,6 +52,7 @@ public class AuthorizationResponseTokenIdTokenCreator
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(
                 decideRedirectUri(authorizationRequest, context.clientConfiguration()),
+                context.responseMode(),
                 new ResponseModeValue("#"),
                 context.tokenIssuer())
             .add(authorizationRequest.state())
@@ -58,6 +61,14 @@ public class AuthorizationResponseTokenIdTokenCreator
             .add(accessToken)
             .add(authorizationGrant.scopes())
             .add(idToken);
+
+    if (context.isJwtMode()) {
+      AuthorizationResponse authorizationResponse = authorizationResponseBuilder.build();
+      JarmPayload jarmPayload =
+          createResponse(
+              authorizationResponse, context.serverConfiguration(), context.clientConfiguration());
+      authorizationResponseBuilder.add(jarmPayload);
+    }
 
     return authorizationResponseBuilder.build();
   }

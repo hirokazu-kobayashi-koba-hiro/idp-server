@@ -1,45 +1,43 @@
 package org.idp.server.oauth.response;
 
-import org.idp.server.configuration.ClientConfiguration;
-import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.oauth.request.AuthorizationRequest;
-import org.idp.server.type.extension.OAuthDenyReason;
+import org.idp.server.oauth.OAuthRequestContext;
+import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
+import org.idp.server.type.extension.JarmPayload;
 import org.idp.server.type.extension.ResponseModeValue;
-import org.idp.server.type.oauth.Error;
-import org.idp.server.type.oauth.ErrorDescription;
-import org.idp.server.type.oauth.RedirectUri;
-import org.idp.server.type.oauth.TokenIssuer;
+import org.idp.server.type.oauth.*;
+import org.idp.server.type.oidc.ResponseMode;
 
 public class AuthorizationErrorResponseCreator
-    implements RedirectUriDecidable, ResponseModeDecidable {
+    implements RedirectUriDecidable, ResponseModeDecidable, JarmCreatable {
 
-  AuthorizationRequest authorizationRequest;
-  OAuthDenyReason denyReason;
-  ServerConfiguration serverConfiguration;
-  ClientConfiguration clientConfiguration;
+  OAuthRedirectableBadRequestException exception;
 
-  public AuthorizationErrorResponseCreator(
-      AuthorizationRequest authorizationRequest,
-      OAuthDenyReason denyReason,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
-    this.authorizationRequest = authorizationRequest;
-    this.denyReason = denyReason;
-    this.serverConfiguration = serverConfiguration;
-    this.clientConfiguration = clientConfiguration;
+  public AuthorizationErrorResponseCreator(OAuthRedirectableBadRequestException exception) {
+    this.exception = exception;
   }
 
   public AuthorizationErrorResponse create() {
-    TokenIssuer tokenIssuer = serverConfiguration.tokenIssuer();
-    RedirectUri redirectUri = decideRedirectUri(authorizationRequest, clientConfiguration);
-    ResponseModeValue responseModeValue =
-        decideResponseModeValue(
-            authorizationRequest.responseType(), authorizationRequest.responseMode());
+    OAuthRequestContext context = exception.oAuthRequestContext();
+    RedirectUri redirectUri = context.redirectUri();
+    TokenIssuer tokenIssuer = context.tokenIssuer();
+    ResponseModeValue responseModeValue = context.responseModeValue();
+    ResponseMode responseMode = context.responseMode();
+    ;
+    State state = context.state();
+    AuthorizationErrorResponseBuilder builder =
+        new AuthorizationErrorResponseBuilder(
+                redirectUri, responseMode, responseModeValue, tokenIssuer)
+            .add(state)
+            .add(exception.error())
+            .add(exception.errorDescription());
+    if (responseMode.isJwtMode()) {
+      AuthorizationErrorResponse errorResponse = builder.build();
+      JarmPayload jarmPayload =
+          createResponse(
+              errorResponse, context.serverConfiguration(), context.clientConfiguration());
+      builder.add(jarmPayload);
+    }
 
-    return new AuthorizationErrorResponseBuilder(redirectUri, responseModeValue, tokenIssuer)
-        .add(authorizationRequest.state())
-        .add(new Error(denyReason.name()))
-        .add(new ErrorDescription(denyReason.errorDescription()))
-        .build();
+    return builder.build();
   }
 }
