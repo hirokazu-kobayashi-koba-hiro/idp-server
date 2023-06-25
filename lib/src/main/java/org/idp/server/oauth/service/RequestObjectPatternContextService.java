@@ -32,7 +32,7 @@ public class RequestObjectPatternContextService
               parameters.request().value(),
               clientConfiguration.jwks(),
               serverConfiguration.jwks(),
-              clientConfiguration.clientSecret());
+              clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
       OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_OBJECT;
       Set<String> filteredScopes =

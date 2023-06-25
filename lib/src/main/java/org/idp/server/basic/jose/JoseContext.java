@@ -6,16 +6,19 @@ public class JoseContext {
   JsonWebSignature jsonWebSignature = new JsonWebSignature();
   JsonWebTokenClaims claims = new JsonWebTokenClaims();
   JsonWebSignatureVerifier jwsVerifier = new JsonWebSignatureVerifier();
+  JsonWebKey jsonWebKey = new JsonWebKey();
 
   public JoseContext() {}
 
   public JoseContext(
       JsonWebSignature jsonWebSignature,
       JsonWebTokenClaims claims,
-      JsonWebSignatureVerifier jwsVerifier) {
+      JsonWebSignatureVerifier jwsVerifier,
+      JsonWebKey jsonWebKey) {
     this.jsonWebSignature = jsonWebSignature;
     this.claims = claims;
     this.jwsVerifier = jwsVerifier;
+    this.jsonWebKey = jsonWebKey;
   }
 
   public JsonWebSignature jsonWebSignature() {
@@ -28,6 +31,10 @@ public class JoseContext {
 
   public JsonWebSignatureVerifier jwsVerifier() {
     return jwsVerifier;
+  }
+
+  public JsonWebKey jsonWebKey() {
+    return jsonWebKey;
   }
 
   public void verifySignature() throws JoseInvalidException {

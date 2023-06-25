@@ -8,6 +8,7 @@ import org.idp.server.basic.jose.JwkParser;
 import org.idp.server.basic.x509.X509CertInvalidException;
 import org.idp.server.basic.x509.X509Certification;
 import org.idp.server.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.oauth.clientcredentials.ClientAssertionJwt;
 import org.idp.server.oauth.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.mtls.ClientCertification;
@@ -30,6 +31,7 @@ class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator {
         ClientAuthenticationType.self_signed_tls_client_auth,
         clientSecret,
         new ClientAuthenticationPublicKey(),
+        new ClientAssertionJwt(),
         clientCertification);
   }
 

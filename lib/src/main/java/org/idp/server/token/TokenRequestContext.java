@@ -102,7 +102,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
   }
 
   public boolean matchClientSecret(ClientSecret clientSecret) {
-    return clientConfiguration.clientSecret().equals(clientSecret.value());
+    return clientConfiguration.clientSecretValue().equals(clientSecret.value());
   }
 
   public boolean hasClientSecretWithParams() {

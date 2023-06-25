@@ -31,4 +31,8 @@ public class ClientSecret {
   public boolean exists() {
     return Objects.nonNull(value) && !value.isEmpty();
   }
+
+  public int octetsSize() {
+    return value.getBytes().length;
+  }
 }

@@ -6,6 +6,7 @@ public class JwtContextCreator implements JoseContextCreator {
       throws JoseInvalidException {
     JsonWebToken jsonWebToken = JsonWebToken.parse(jose);
     JsonWebTokenClaims claims = jsonWebToken.claims();
-    return new JoseContext(new JsonWebSignature(), claims, new JsonWebSignatureVerifier());
+    return new JoseContext(
+        new JsonWebSignature(), claims, new JsonWebSignatureVerifier(), new JsonWebKey());
   }
 }

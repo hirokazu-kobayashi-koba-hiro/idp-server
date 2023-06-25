@@ -13,7 +13,7 @@ public class AuthorizationRequest {
 
   AuthorizationRequestIdentifier identifier = new AuthorizationRequestIdentifier();
   TokenIssuer tokenIssuer;
-  AuthorizationProfile profile;
+  AuthorizationProfile profile = AuthorizationProfile.UNDEFINED;
   Scopes scopes;
   ResponseType responseType;
   ClientId clientId;

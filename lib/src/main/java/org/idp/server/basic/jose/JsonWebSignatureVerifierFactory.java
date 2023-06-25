@@ -5,6 +5,7 @@ import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
 import com.nimbusds.jwt.SignedJWT;
+import org.idp.server.type.extension.Pairs;
 
 public class JsonWebSignatureVerifierFactory {
 
@@ -21,22 +22,31 @@ public class JsonWebSignatureVerifierFactory {
     this.defaultJWSVerifierFactory = new DefaultJWSVerifierFactory();
   }
 
-  public JsonWebSignatureVerifier create() throws JwkInvalidException, JoseInvalidException {
+  public Pairs<JsonWebSignatureVerifier, JsonWebKey> create()
+      throws JwkInvalidException, JoseInvalidException {
     try {
       if (jsonWebSignature.isSymmetricType()) {
         MACVerifier macVerifier = new MACVerifier(secret);
-        return new JsonWebSignatureVerifier(macVerifier);
+        return Pairs.of(new JsonWebSignatureVerifier(macVerifier), new JsonWebKey());
       }
-      String keyId = jsonWebSignature.keyId();
-      JsonWebKeys publicKeys = JwkParser.parseKeys(publicJwks);
-      JsonWebKey publicKey = publicKeys.find(keyId);
+      JsonWebKey publicKey = find();
       SignedJWT signedJWT = jsonWebSignature.value();
       JWSVerifier jwsVerifier =
           defaultJWSVerifierFactory.createJWSVerifier(
               signedJWT.getHeader(), publicKey.toPublicKey());
-      return new JsonWebSignatureVerifier(jwsVerifier);
+      return Pairs.of(new JsonWebSignatureVerifier(jwsVerifier), publicKey);
     } catch (JOSEException e) {
       throw new JoseInvalidException(e.getMessage(), e);
     }
+  }
+
+  private JsonWebKey find() throws JwkInvalidException {
+    String keyId = jsonWebSignature.keyId();
+    JsonWebKeys publicKeys = JwkParser.parseKeys(publicJwks);
+    if (jsonWebSignature.hasKeyId()) {
+      return publicKeys.find(keyId);
+    }
+    String algorithm = jsonWebSignature.algorithm();
+    return publicKeys.findFirst(algorithm);
   }
 }

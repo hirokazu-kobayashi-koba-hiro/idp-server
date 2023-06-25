@@ -31,7 +31,7 @@ public class RequestObjectPatternContextService
               parameters.request().value(),
               clientConfiguration.jwks(),
               serverConfiguration.jwks(),
-              clientConfiguration.clientSecret());
+              clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
       CibaRequestPattern pattern = CibaRequestPattern.REQUEST_OBJECT;
       Set<String> filteredScopes =

@@ -26,4 +26,12 @@ public enum JsonWebKeyType {
     }
     return UNKNOWN;
   }
+
+  public boolean isRsa() {
+    return this == RSA;
+  }
+
+  public boolean isEc() {
+    return this == EC;
+  }
 }

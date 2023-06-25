@@ -19,7 +19,7 @@ import org.idp.server.oauth.token.*;
 import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.token.validator.TokenRequestCodeGrantValidator;
-import org.idp.server.token.verifier.TokenRequestCodeGrantVerifier;
+import org.idp.server.token.verifier.AuthorizationCodeGrantVerifier;
 import org.idp.server.type.extension.GrantFlow;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
@@ -108,9 +108,9 @@ public class AuthorizationCodeGrantService
         authorizationRequestRepository.find(
             authorizationCodeGrant.authorizationRequestIdentifier());
 
-    TokenRequestCodeGrantVerifier verifier =
-        new TokenRequestCodeGrantVerifier(
-            tokenRequestContext, authorizationRequest, authorizationCodeGrant);
+    AuthorizationCodeGrantVerifier verifier =
+        new AuthorizationCodeGrantVerifier(
+            tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);
     verifier.verify();
 
     ServerConfiguration serverConfiguration = tokenRequestContext.serverConfiguration();

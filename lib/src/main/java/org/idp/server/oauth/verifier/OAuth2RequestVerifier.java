@@ -30,7 +30,7 @@ public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
    *     Endpoint</a>
    */
   void throwExceptionIfInvalidRedirectUri(OAuthRequestContext context) {
-    if (context.hasRedirectUri()) {
+    if (context.hasRedirectUriInRequest()) {
       throwExceptionIfRedirectUriContainsFragment(context);
       throwExceptionIfUnMatchRedirectUri(context);
     } else {

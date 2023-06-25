@@ -36,4 +36,8 @@ public class RedirectUri {
   public boolean isHttp() {
     return value.startsWith("http://");
   }
+
+  public boolean isHttps() {
+    return value.startsWith("https://");
+  }
 }

@@ -69,4 +69,13 @@ public class JsonWebSignature {
         || algorithm.equals(JWSAlgorithm.HS384)
         || algorithm.equals(JWSAlgorithm.HS512);
   }
+
+  public boolean hasKeyId() {
+    String keyId = keyId();
+    return Objects.nonNull(keyId);
+  }
+
+  public String algorithm() {
+    return value.getHeader().getAlgorithm().getName();
+  }
 }

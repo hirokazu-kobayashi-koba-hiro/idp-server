@@ -61,4 +61,8 @@ public class Scopes {
   public List<String> toStringList() {
     return values.stream().toList();
   }
+
+  public boolean hasOpenidScope() {
+    return values.contains("openid");
+  }
 }

@@ -1,31 +1,24 @@
 package org.idp.server.token.verifier;
 
+import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.token.TokenRequestContext;
 import org.idp.server.token.exception.TokenBadRequestException;
 import org.idp.server.type.oauth.GrantType;
 
-public class TokenRequestCodeGrantBaseVerifier {
+public class AuthorizationCodeGrantBaseVerifier implements AuthorizationCodeGrantVerifierInterface {
 
-  TokenRequestContext tokenRequestContext;
-  AuthorizationRequest authorizationRequest;
-  AuthorizationCodeGrant authorizationCodeGrant;
-
-  public TokenRequestCodeGrantBaseVerifier(
+  public void verify(
       TokenRequestContext tokenRequestContext,
       AuthorizationRequest authorizationRequest,
-      AuthorizationCodeGrant authorizationCodeGrant) {
-    this.tokenRequestContext = tokenRequestContext;
-    this.authorizationRequest = authorizationRequest;
-    this.authorizationCodeGrant = authorizationCodeGrant;
-  }
-
-  public void verify() {
-    throwExceptionIfUnSupportedGrantTypeWithServer();
-    throwExceptionIfUnSupportedGrantTypeWithClient();
-    throwExceptionIfNotFoundAuthorizationCode();
-    throwExceptionIfUnMatchRedirectUri();
+      AuthorizationCodeGrant authorizationCodeGrant,
+      ClientCredentials clientCredentials) {
+    throwExceptionIfUnSupportedGrantTypeWithServer(tokenRequestContext);
+    throwExceptionIfUnSupportedGrantTypeWithClient(tokenRequestContext);
+    throwExceptionIfNotFoundAuthorizationCode(
+        tokenRequestContext, authorizationRequest, authorizationCodeGrant);
+    throwExceptionIfUnMatchRedirectUri(tokenRequestContext, authorizationRequest);
   }
 
   /**
@@ -35,7 +28,7 @@ public class TokenRequestCodeGrantBaseVerifier {
    *
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-5.2">5.2. Error Response</a>
    */
-  void throwExceptionIfUnSupportedGrantTypeWithServer() {
+  void throwExceptionIfUnSupportedGrantTypeWithServer(TokenRequestContext tokenRequestContext) {
     if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.authorization_code)) {
       throw new TokenBadRequestException(
           "unsupported_grant_type",
@@ -50,7 +43,7 @@ public class TokenRequestCodeGrantBaseVerifier {
    *
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-5.2">5.2. Error Response</a>
    */
-  void throwExceptionIfUnSupportedGrantTypeWithClient() {
+  void throwExceptionIfUnSupportedGrantTypeWithClient(TokenRequestContext tokenRequestContext) {
     if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.authorization_code)) {
       throw new TokenBadRequestException(
           "unauthorized_client",
@@ -69,7 +62,10 @@ public class TokenRequestCodeGrantBaseVerifier {
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3">4.1.3. Access Token
    *     Request</a>
    */
-  void throwExceptionIfNotFoundAuthorizationCode() {
+  void throwExceptionIfNotFoundAuthorizationCode(
+      TokenRequestContext tokenRequestContext,
+      AuthorizationRequest authorizationRequest,
+      AuthorizationCodeGrant authorizationCodeGrant) {
     if (!authorizationCodeGrant.exists()) {
       throw new TokenBadRequestException(
           "invalid_grant",
@@ -97,7 +93,8 @@ public class TokenRequestCodeGrantBaseVerifier {
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3">4.1.3. Access Token
    *     Request</a>
    */
-  void throwExceptionIfUnMatchRedirectUri() {
+  void throwExceptionIfUnMatchRedirectUri(
+      TokenRequestContext tokenRequestContext, AuthorizationRequest authorizationRequest) {
     if (!authorizationRequest.hasRedirectUri()) {
       return;
     }

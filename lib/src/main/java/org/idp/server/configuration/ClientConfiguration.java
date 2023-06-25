@@ -52,12 +52,24 @@ public class ClientConfiguration implements JsonReadable {
     return new ClientId(clientId);
   }
 
-  public String clientSecret() {
+  public String clientIdValue() {
+    return clientId;
+  }
+
+  public String clientSecretValue() {
     return clientSecret;
+  }
+
+  public ClientSecret clientSecret() {
+    return new ClientSecret(clientSecret);
   }
 
   public List<String> redirectUris() {
     return redirectUris;
+  }
+
+  public boolean hasRedirectUri() {
+    return !redirectUris.isEmpty();
   }
 
   public boolean isMultiRegisteredRedirectUri() {

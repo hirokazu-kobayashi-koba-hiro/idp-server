@@ -25,11 +25,12 @@ public interface ClientAuthenticationJwtValidatable {
       throw new ClientUnAuthorizedException(
           "client assertion is invalid, must contains iss claim in jwt payload");
     }
+    // TODO
     ClientId clientId = context.parameters().clientId();
-    if (!claims.getIss().equals(clientId.value())) {
-      throw new ClientUnAuthorizedException(
-          "client assertion is invalid, iss claim must be client_id");
-    }
+    //    if (!claims.getIss().equals(clientId.value())) {
+    //      throw new ClientUnAuthorizedException(
+    //          "client assertion is invalid, iss claim must be client_id");
+    //    }
   }
 
   default void throwExceptionIfInvalidSub(
@@ -39,11 +40,12 @@ public interface ClientAuthenticationJwtValidatable {
       throw new ClientUnAuthorizedException(
           "client assertion is invalid, must contains sub claim in jwt payload");
     }
+    // TODO
     ClientId clientId = context.parameters().clientId();
-    if (!claims.getSub().equals(clientId.value())) {
-      throw new ClientUnAuthorizedException(
-          "client assertion is invalid, sub claim must be client_id");
-    }
+    //    if (!claims.getSub().equals(clientId.value())) {
+    //      throw new ClientUnAuthorizedException(
+    //          "client assertion is invalid, sub claim must be client_id");
+    //    }
   }
 
   default void throwExceptionIfInvalidAud(

@@ -2,6 +2,7 @@ package org.idp.server.clientauthenticator;
 
 import org.idp.server.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.oauth.clientcredentials.ClientAssertionJwt;
 import org.idp.server.oauth.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.mtls.ClientCertification;
@@ -34,6 +35,7 @@ class ClientSecretPostAuthenticator implements ClientAuthenticator {
         ClientAuthenticationType.client_secret_post,
         clientSecret,
         new ClientAuthenticationPublicKey(),
+        new ClientAssertionJwt(),
         new ClientCertification());
   }
 

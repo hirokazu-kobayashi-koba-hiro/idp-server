@@ -7,12 +7,12 @@ import org.idp.server.token.exception.TokenBadRequestException;
 import org.idp.server.type.pkce.CodeChallenge;
 import org.idp.server.type.pkce.CodeVerifier;
 
-public class TokenRequestPkceVerifier {
+public class PkceVerifier {
 
   TokenRequestContext tokenRequestContext;
   AuthorizationRequest authorizationRequest;
 
-  public TokenRequestPkceVerifier(
+  public PkceVerifier(
       TokenRequestContext tokenRequestContext, AuthorizationRequest authorizationRequest) {
     this.tokenRequestContext = tokenRequestContext;
     this.authorizationRequest = authorizationRequest;

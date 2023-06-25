@@ -45,7 +45,7 @@ public class RequestUriPatternContextService
               requestObject.value(),
               clientConfiguration.jwks(),
               serverConfiguration.jwks(),
-              clientConfiguration.clientSecret());
+              clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
       OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_URI;
       Set<String> filteredScopes =

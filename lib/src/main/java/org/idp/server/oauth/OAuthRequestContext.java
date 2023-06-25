@@ -143,7 +143,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     return parameters.getOrEmpty(key);
   }
 
-  public boolean hasRedirectUri() {
+  public boolean hasRedirectUriInRequest() {
     return authorizationRequest.hasRedirectUri();
   }
 
@@ -193,5 +193,9 @@ public class OAuthRequestContext implements ResponseModeDecidable {
 
   public String sessionKeyValue() {
     return oAuthSessionKey.key();
+  }
+
+  public boolean isOidcRequest() {
+    return scopes().hasOpenidScope();
   }
 }

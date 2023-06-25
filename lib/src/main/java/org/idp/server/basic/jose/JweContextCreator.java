@@ -1,5 +1,7 @@
 package org.idp.server.basic.jose;
 
+import org.idp.server.type.extension.Pairs;
+
 public class JweContextCreator implements JoseContextCreator {
 
   @Override
@@ -13,9 +15,9 @@ public class JweContextCreator implements JoseContextCreator {
       JsonWebSignature jsonWebSignature = jsonWebEncryptionDecrypter.decrypt(jsonWebEncryption);
       JsonWebSignatureVerifierFactory factory =
           new JsonWebSignatureVerifierFactory(jsonWebSignature, publicJwks, secret);
-      JsonWebSignatureVerifier jwsVerifier = factory.create();
+      Pairs<JsonWebSignatureVerifier, JsonWebKey> pairs = factory.create();
       JsonWebTokenClaims claims = jsonWebSignature.claims();
-      return new JoseContext(jsonWebSignature, claims, jwsVerifier);
+      return new JoseContext(jsonWebSignature, claims, pairs.getLeft(), pairs.getRight());
     } catch (JwkInvalidException e) {
       throw new RuntimeException(e);
     }

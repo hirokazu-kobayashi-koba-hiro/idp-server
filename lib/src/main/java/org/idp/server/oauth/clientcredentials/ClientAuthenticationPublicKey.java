@@ -2,6 +2,7 @@ package org.idp.server.oauth.clientcredentials;
 
 import java.util.Objects;
 import org.idp.server.basic.jose.JsonWebKey;
+import org.idp.server.basic.jose.JsonWebKeyType;
 
 public class ClientAuthenticationPublicKey {
 
@@ -15,5 +16,19 @@ public class ClientAuthenticationPublicKey {
 
   public boolean exists() {
     return Objects.nonNull(jsonWebKey);
+  }
+
+  public boolean isRsa() {
+    JsonWebKeyType jsonWebKeyType = jsonWebKey.keyType();
+    return jsonWebKeyType.isRsa();
+  }
+
+  public boolean isEc() {
+    JsonWebKeyType jsonWebKeyType = jsonWebKey.keyType();
+    return jsonWebKeyType.isEc();
+  }
+
+  public int size() {
+    return jsonWebKey.size();
   }
 }

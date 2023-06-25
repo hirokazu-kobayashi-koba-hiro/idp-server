@@ -11,6 +11,7 @@ public class ClientCredentials {
   ClientAuthenticationType clientAuthenticationType;
   ClientSecret clientSecret;
   ClientAuthenticationPublicKey clientAuthenticationPublicKey;
+  ClientAssertionJwt clientAssertionJwt;
   ClientCertification clientCertification;
 
   public ClientCredentials() {}
@@ -20,11 +21,13 @@ public class ClientCredentials {
       ClientAuthenticationType clientAuthenticationType,
       ClientSecret clientSecret,
       ClientAuthenticationPublicKey clientAuthenticationPublicKey,
+      ClientAssertionJwt clientAssertionJwt,
       ClientCertification clientCertification) {
     this.clientId = clientId;
     this.clientAuthenticationType = clientAuthenticationType;
     this.clientSecret = clientSecret;
     this.clientAuthenticationPublicKey = clientAuthenticationPublicKey;
+    this.clientAssertionJwt = clientAssertionJwt;
     this.clientCertification = clientCertification;
   }
 
@@ -42,6 +45,10 @@ public class ClientCredentials {
 
   public ClientAuthenticationPublicKey clientAuthenticationPublicKey() {
     return clientAuthenticationPublicKey;
+  }
+
+  public ClientAssertionJwt clientAssertionJwt() {
+    return clientAssertionJwt;
   }
 
   public ClientCertification clientCertification() {

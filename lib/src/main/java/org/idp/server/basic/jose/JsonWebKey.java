@@ -19,12 +19,16 @@ public class JsonWebKey {
     this.value = value;
   }
 
-  public JWK value() {
+  JWK value() {
     return value;
   }
 
   public boolean exists() {
     return Objects.nonNull(value);
+  }
+
+  public int size() {
+    return value.size();
   }
 
   public String keyId() {
