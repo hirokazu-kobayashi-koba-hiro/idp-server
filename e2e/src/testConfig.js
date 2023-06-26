@@ -165,6 +165,8 @@ export const privateKeyJwtClient = {
   clientId: "privateKeyJwt",
   clientSecret: "privateKeyJwtSecret",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  redirectUriWithPort: "https://www.certification.openid.net:443/test/a/idp_oidc_basic/callback",
+  redirectUriWithHttp: "http://localhost:8081/callback",
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
@@ -182,6 +184,33 @@ export const privateKeyJwtClient = {
     alg: "RS256",
     dq: "FRGo3IAn53s9-d7P-bj_fgYtCqa5vWrOa_vWp6gebUd7wamxjFFYqkTLtEPaAPM1amHOBJ3IrWkeHb875Z14Pigs4aZfDAU0tyAUb9cTATRRlo7_LvyhB4o0wMsbn1mnCo8o5c6QDGu9VsNfnMsJimvi0NvzqlT392eam1IMIHc",
     n: "sFSqsWu2koU69oG67L5wsVGwzkye80Bd9lmOfiSkSTXyc8IKl4gwmj9tjzxxA1pGYi4SKEQaBYNl8JrGhttBcbtraqwaS5Q6jpG24C1z9njUumJWJneA3EJ9Lpun9d3uCA3b_71XnK5Pr-VtwzpU6z8VGNMZhl8rZ5p1L0syMpZ03y5tSWVMntceiqNaFuJCFXGMVSlp6vrVCqpcM4r035tUR-PwjSynpxe7OGlQpHVSvBCbXJJufi0QxIIjdPx2ka586TlvFjVu0QBEcEon_BMrPDWPD1aaAEcSPM9U7fWzlK6btJ8d37TXZ0_rRPQ_tVeZAlDnRclehHkKflkNjw",
+  },
+  clientSecretKeyWith2040: {
+    p: "DnLMg3mHZY0rKM2Yl3PKbpHTZ_s32vN2N3zi0Kx8yjYNG_4YB_52kM5FrMp4GHiITQ6mVkLCnuGYM108ivKGiBscnCathi_Wm06vEEU_biWeyt97DcVdmIPoOBxXwh1uZvnqQGUPsc5iN8wTtT30tyF741HBY950_2BXkLY4Sdc",
+    kty: "RSA",
+    q: "DKD3GoFNmrQtcCNQ8lfRKCWWjZFaZyZXbTMmg23t_O850LkGw8Iv6AVT521nyGEMB8maWPV7C6IDEsksVoF0UpozWiJvSme-XRDleGa48CsAtAKu1BJTNUtg7IY0sT--gIoZpXQFA8Xv-_PVVREFKTcarpQ9oSEs5jkhCSvSL1c",
+    d: "pNhO5BcEHGC7cCspvzAQIl1PSRPNj6mLIkGHwGu7UYhKCCWmcriPQi8YxqJFNQUgD1l8Tt8NCnljc3UO0fhcXkPEiaYq8u0Xb7d5fmR5auCk7Cxx-WF76iXGhB9hWo4wQUJRyKDXO5VnBiGouoJ2JwQqXzUcEGo9BdXYgFlOneyFkp5v3tPjxMgLd63YDYYTo8avZTj6FX3xehRFAzYDDQAtilbWBwnkcDJqSoam9e_qqzH8U1F_dFbKSKHoCYDuxezGVj3i5J0A8hkTV18w90_AJRRuzy-G8qxuy_sZb0-VQyLsYk7j1LSQTBHaj69IzQ1KqdtfGkhyGELXTHQh",
+    e: "AQAB",
+    use: "sig",
+    kid: "client_secret_key_2040",
+    qi: "BS-56f4yIToZ-fqtOAOHgkgZoRu1vmJAIiVsi7HLOhNe99k6A5phgKaoxm-74llOQleyG4bcF-oBZjdUfn7n5d42AW6g3DfwH4KraGUOXzh71Q9BypFdXSF8itYgBy4lQb-hs7Fj_YBQXBw8rVT4V9nxgglGMTT7FNCnGeTD57Q",
+    dp: "CHkYKE3_sfUch1wyjTbRUxBfms3_Tn6SKC4r0VYmBGu4Ol9DdoSqwXbF83P1A9zDifT6ZQHXolcH669UzuM1M-I6X_RqtJOfVgrJrU_-x7h2K-DtCAFjRwqsByPP7z1VPjx3PHZHwu0WOkSKljIULcUMIx4RvGB72juEfo_t6Jc",
+    alg: "RS256",
+    dq: "BV1CWVHfYv1x55Y4xhgjUghVYSEC45nXvRzjGSTS2IPNbSmLBBAyRT4uG7nPQcBnWc967pqnf5N79rjZSo2GmafCdGD4IQTcSa_pqTEJEYtSqyQQmyiFi7fPHekL7NaE1xjSOAOGNcoYXE-AqLeoF4--l7WEUDNFXS2bKMgiadU",
+    n: "tndIPiYnTw8UlbvU4GSD77tPwePNpu1VYmTWmrOA1etvNV7xeU10lHPscmbr702bbo5adEVwWsqwHkS0lvtBBepb3BKhFwl84_Ffqp-P_rqlduQ3Xnri5BfesreOy6nZQcQ95OSR0M4HYgfhrsMXCxQsA1GCDCI7oiKm43icTxaPoH232qfJFG_rInHBEokO-BCK_0Ct-to6dyRLxlDgCoKR4LnWJ_ETfxzb9LSdp6mO3ccD9r9Qit7tgbv-vBzGtMW9Yd_iwbHMo2qRRMnbQMHHK3Vip2xCEIi1v3HC--UUXuecJ_SYG2D69UKC3hvO54ljWKsIyeGAkcTyDZER"
+  },
+};
+
+export const privateKeyJwtEcKeyClient = {
+  clientId: "privateKeyJwtEcKey",
+  clientSecret: "privateKeyJwtEcKeySecret",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "account transfers",
+  fapiBaselineScope: "read",
+  fapiAdvanceScope: "write",
+  idTokenAlg: "ES256",
+  clientSecretKey: {
+
   },
 };
 

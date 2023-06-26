@@ -127,7 +127,7 @@ public class AuthorizationCodeGrantFapiBaselineVerifier
     ClientAuthenticationType clientAuthenticationType =
         tokenRequestContext.clientAuthenticationType();
     if (!clientAuthenticationType.isClientSecretJwt()
-        || !clientAuthenticationType.isPrivateKeyJwt()) {
+        && !clientAuthenticationType.isPrivateKeyJwt()) {
       return;
     }
     ClientAssertionJwt clientAssertionJwt = clientCredentials.clientAssertionJwt();

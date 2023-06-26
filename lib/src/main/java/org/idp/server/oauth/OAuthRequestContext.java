@@ -198,4 +198,8 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   public boolean isOidcRequest() {
     return scopes().hasOpenidScope();
   }
+
+  public ClientAuthenticationType clientAuthenticationType() {
+    return clientConfiguration.clientAuthenticationType();
+  }
 }

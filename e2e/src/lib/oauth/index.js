@@ -26,9 +26,23 @@ export const createClientAssertion = ({ client, issuer }) => {
   });
 };
 
+export const createInvalidClientAssertionWithPrivateKey = ({ client, issuer, invalidPrivateKey }) => {
+  const payload = {
+    iss: client.clientId,
+    sub: client.clientId,
+    aud: issuer,
+    jti: generateJti(),
+    exp: toEpocTime({ adjusted: 3600 }),
+    iat: toEpocTime({ adjusted: 0 }),
+  };
+  return createJwtWithPrivateKey({
+    payload,
+    privateKey: invalidPrivateKey,
+  });
+};
+
 export const calculateCodeChallengeWithS256 = (codeVerifier) => {
   const s256Hash = digestS256(codeVerifier);
-  console.log(s256Hash);
   const codeChallenge = Base64.stringify(s256Hash);
   console.log(codeChallenge);
   return codeChallenge;

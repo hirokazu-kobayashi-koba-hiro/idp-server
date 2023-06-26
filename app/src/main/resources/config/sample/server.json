@@ -32,7 +32,9 @@
     "phone",
     "offline_access",
     "account",
-    "transfers"
+    "transfers",
+    "read",
+    "write"
   ],
   "response_types_supported": [
     "code",
@@ -161,5 +163,11 @@
   "access_token_duration": 3600,
   "id_token_duration": 3600,
   "id_token_strict_mode": true,
-  "default_max_age": 86400
+  "default_max_age": 86400,
+  "fapi_baseline_scopes" : [
+    "read"
+  ],
+  "fapi_advance_scopes" : [
+    "write"
+  ]
 }

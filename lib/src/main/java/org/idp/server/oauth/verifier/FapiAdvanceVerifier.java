@@ -11,6 +11,7 @@ import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.oauth.verifier.base.AuthorizationRequestVerifier;
 import org.idp.server.oauth.verifier.base.OAuthRequestBaseVerifier;
 import org.idp.server.oauth.verifier.base.OidcRequestBaseVerifier;
+import org.idp.server.type.oauth.ClientAuthenticationType;
 
 public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
 
@@ -29,6 +30,8 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     throwIfNotSenderConstrainedAccessToken(context);
     throwExceptionIfNotContainExpAnd(context);
     throwExceptionIfNotContainsAud(context);
+    throwExceptionIfClientSecretPostOrClientSecretBasicOrClientSecretJwt(context);
+    throwExceptionIfPublicClient(context);
   }
 
   /**
@@ -132,6 +135,46 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
           String.format(
               "When FAPI Advance profile, shall require the aud claim in the request object to be, or to be an array containing, the OP's Issuer Identifier URL (%s)",
               String.join(" ", aud)),
+          context);
+    }
+  }
+
+  /**
+   * shall authenticate the confidential client using one of the following methods (this overrides
+   * FAPI Security Profile 1.0 - Part 1: Baseline clause 5.2.2-4): tls_client_auth or
+   * self_signed_tls_client_auth as specified in section 2 of MTLS, or private_key_jwt as specified
+   * in section 9 of OIDC;
+   */
+  void throwExceptionIfClientSecretPostOrClientSecretBasicOrClientSecretJwt(
+      OAuthRequestContext context) {
+    ClientAuthenticationType clientAuthenticationType = context.clientAuthenticationType();
+    if (clientAuthenticationType.isClientSecretBasic()) {
+      throw new OAuthRedirectableBadRequestException(
+          "unauthorized_client",
+          "When FAPI Advance profile, client_secret_basic MUST not used",
+          context);
+    }
+    if (clientAuthenticationType.isClientSecretPost()) {
+      throw new OAuthRedirectableBadRequestException(
+          "unauthorized_client",
+          "When FAPI Advance profile, client_secret_post MUST not used",
+          context);
+    }
+    if (clientAuthenticationType.isClientSecretJwt()) {
+      throw new OAuthRedirectableBadRequestException(
+          "unauthorized_client",
+          "When FAPI Advance profile, client_secret_jwt MUST not used",
+          context);
+    }
+  }
+
+  /** shall not support public clients; */
+  void throwExceptionIfPublicClient(OAuthRequestContext context) {
+    ClientAuthenticationType clientAuthenticationType = context.clientAuthenticationType();
+    if (clientAuthenticationType.isNone()) {
+      throw new OAuthRedirectableBadRequestException(
+          "unauthorized_client",
+          "When FAPI Advance profile, shall not support public clients",
           context);
     }
   }

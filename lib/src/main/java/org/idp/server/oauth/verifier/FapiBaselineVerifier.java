@@ -3,9 +3,12 @@ package org.idp.server.oauth.verifier;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.exception.OAuthBadRequestException;
+import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
+import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.verifier.base.AuthorizationRequestVerifier;
 import org.idp.server.oauth.verifier.base.OAuthRequestBaseVerifier;
 import org.idp.server.oauth.verifier.base.OidcRequestBaseVerifier;
+import org.idp.server.type.oauth.ClientAuthenticationType;
 import org.idp.server.type.oauth.RedirectUri;
 
 public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
@@ -24,6 +27,8 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
     } else {
       oAuthRequestBaseVerifier.verify(context);
     }
+    throwExceptionIfClientSecretPostOrClientSecretBasic(context);
+    throwExceptionIfNotS256CodeChallengeMethod(context);
   }
 
   /** shall require redirect URIs to be pre-registered; */
@@ -68,6 +73,46 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
           String.format(
               "When FAPI Baseline profile, shall shall require redirect URIs to use the https scheme (%s)",
               context.redirectUri().value()));
+    }
+  }
+
+  /**
+   * shall authenticate the confidential client using one of the following methods: Mutual TLS for
+   * OAuth Client Authentication as specified in Section 2 of MTLS, or client_secret_jwt or
+   * private_key_jwt as specified in Section 9 of OIDC;
+   */
+  void throwExceptionIfClientSecretPostOrClientSecretBasic(OAuthRequestContext context) {
+    ClientAuthenticationType clientAuthenticationType = context.clientAuthenticationType();
+    if (clientAuthenticationType.isClientSecretBasic()) {
+      throw new OAuthRedirectableBadRequestException(
+          "unauthorized_client",
+          "When FAPI Baseline profile, client_secret_basic MUST not used",
+          context);
+    }
+    if (clientAuthenticationType.isClientSecretPost()) {
+      throw new OAuthRedirectableBadRequestException(
+          "unauthorized_client",
+          "When FAPI Baseline profile, client_secret_post MUST not used",
+          context);
+    }
+  }
+
+  /**
+   * shall require RFC7636 with S256 as the code challenge method;
+   */
+  void throwExceptionIfNotS256CodeChallengeMethod(OAuthRequestContext context) {
+    AuthorizationRequest authorizationRequest = context.authorizationRequest();
+    if (!authorizationRequest.hasCodeChallenge() || !authorizationRequest.hasCodeChallengeMethod()) {
+      throw new OAuthRedirectableBadRequestException(
+              "invalid_request",
+              "When FAPI Baseline profile, authorization request must contains code_challenge and code_challenge_method(S256).",
+              context);
+    }
+    if (!authorizationRequest.codeChallengeMethod().isS256()) {
+      throw new OAuthRedirectableBadRequestException(
+              "invalid_request",
+              "When FAPI Baseline profile, shall require RFC7636 with S256 as the code challenge method.",
+              context);
     }
   }
 }

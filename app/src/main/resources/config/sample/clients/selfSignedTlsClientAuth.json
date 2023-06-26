@@ -30,7 +30,7 @@
     "client_credentials",
     "urn:openid:params:grant-type:ciba"
   ],
-  "scope": "openid profile email address phone offline_access account transfers",
+  "scope": "openid profile email address phone offline_access account transfers read write",
   "client_name": "My Example Client",
   "client_name#ja-Jpan-JP": "クライアント名",
   "token_endpoint_auth_method": "self_signed_tls_client_auth",
