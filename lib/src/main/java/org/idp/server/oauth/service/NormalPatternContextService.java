@@ -12,8 +12,7 @@ import org.idp.server.oauth.factory.NormalRequestFactory;
 import org.idp.server.oauth.request.AuthorizationRequest;
 
 /** NormalPatternContextService */
-public class NormalPatternContextService
-    implements OAuthRequestContextService, AuthorizationProfileAnalyzable {
+public class NormalPatternContextService implements OAuthRequestContextService {
 
   NormalRequestFactory normalRequestFactory = new NormalRequestFactory();
 

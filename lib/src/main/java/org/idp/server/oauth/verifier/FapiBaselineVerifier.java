@@ -58,21 +58,7 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
               context.redirectUri().value()));
     }
   }
-  // shall require user authentication to an appropriate Level of Assurance for the operations the
-  // client will be authorized to perform on behalf of the user;
-  // shall require explicit approval by the user to authorize the requested scope if it has not been
-  // previously authorized;
-  // shall reject an authorization code (Section 1.3.1 of RFC6749) if it has been previously used;
-  // shall return token responses that conform to Section 4.1.4 of RFC6749;
-  // shall return the list of granted scopes with the issued access token if the request was passed
-  // in the front channel and was not integrity protected;
-  // shall provide non-guessable access tokens, authorization codes, and refresh token (where
-  // applicable), with sufficient entropy such that the probability of an attacker guessing the
-  // generated token is computationally infeasible as per RFC6749 Section 10.10;
-  // should clearly identify the details of the grant to the user during authorization as in 16.18
-  // of OIDC;
-  // should provide a mechanism for the end-user to revoke access tokens and refresh tokens granted
-  // to a client as in 16.18 of OIDC;
+
   /** shall require redirect URIs to use the https scheme; */
   void throwExceptionIfNotHttpsRedirectUri(OAuthRequestContext context) {
     RedirectUri redirectUri = context.redirectUri();

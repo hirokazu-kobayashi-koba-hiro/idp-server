@@ -11,17 +11,15 @@ import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.OAuthRequestPattern;
 import org.idp.server.oauth.exception.OAuthBadRequestException;
-import org.idp.server.oauth.factory.RequestObjectPatternFactory;
+import org.idp.server.oauth.factory.AuthorizationRequestFactory;
 import org.idp.server.oauth.gateway.RequestObjectGateway;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.type.oidc.RequestObject;
 
 /** RequestUriPatternContextService */
-public class RequestUriPatternContextService
-    implements OAuthRequestContextService, AuthorizationProfileAnalyzable {
+public class RequestUriPatternContextService implements OAuthRequestContextService {
 
   RequestObjectGateway requestObjectGateway;
-  RequestObjectPatternFactory requestObjectPatternFactory = new RequestObjectPatternFactory();
 
   public RequestUriPatternContextService(RequestObjectGateway requestObjectGateway) {
     this.requestObjectGateway = requestObjectGateway;
@@ -51,8 +49,10 @@ public class RequestUriPatternContextService
       Set<String> filteredScopes =
           filterScopes(pattern, parameters, joseContext, clientConfiguration);
       AuthorizationProfile profile = analyze(filteredScopes, serverConfiguration);
+      AuthorizationRequestFactory requestFactory =
+          selectAuthorizationRequestFactory(profile, serverConfiguration, clientConfiguration);
       AuthorizationRequest authorizationRequest =
-          requestObjectPatternFactory.create(
+          requestFactory.create(
               profile,
               parameters,
               joseContext,

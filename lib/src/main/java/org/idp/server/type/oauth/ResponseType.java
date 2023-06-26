@@ -78,7 +78,15 @@ public enum ResponseType {
     return this == unknown;
   }
 
+  public boolean isCodeIdToken() {
+    return this == code_id_token;
+  }
+
   public String value() {
     return value;
+  }
+
+  public boolean isCode() {
+    return this == code;
   }
 }
