@@ -75,7 +75,7 @@ public class UriWrapper {
   }
 
   public boolean hasUserinfo() {
-    return Objects.isNull(value.getUserInfo());
+    return Objects.nonNull(value.getUserInfo());
   }
 
   public String getPath() {
@@ -83,7 +83,7 @@ public class UriWrapper {
   }
 
   public boolean hasPath() {
-    return Objects.isNull(value.getPath());
+    return Objects.nonNull(value.getPath());
   }
 
   public boolean hasFragment() {
