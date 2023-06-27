@@ -26,6 +26,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
       scope: "openid profile phone email " + selfSignedTlsAuthClient.fapiBaselineScope,
       redirectUri: selfSignedTlsAuthClient.redirectUri,
       clientId: selfSignedTlsAuthClient.clientId,
+      nonce: "nonce",
       codeChallenge,
       codeChallengeMethod: "S256",
     });
@@ -79,6 +80,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
         scope: "openid profile phone email " + selfSignedTlsAuthClient.fapiBaselineScope,
         redirectUri: selfSignedTlsAuthClient.redirectUri,
         clientId: selfSignedTlsAuthClient.clientId,
+        nonce: "nonce",
         codeChallenge,
         codeChallengeMethod: "S256",
       });
@@ -104,6 +106,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
         scope: "openid profile phone email " + clientSecretBasicClient.fapiBaselineScope,
         redirectUri: clientSecretBasicClient.redirectUri,
         clientId: clientSecretBasicClient.clientId,
+        nonce: "nonce",
         codeChallenge,
         codeChallengeMethod: "S256",
       });
@@ -122,6 +125,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
         scope: "openid profile phone email " + clientSecretPostClient.fapiBaselineScope,
         redirectUri: clientSecretPostClient.redirectUri,
         clientId: clientSecretPostClient.clientId,
+        nonce: "nonce",
         codeChallenge,
         codeChallengeMethod: "S256",
       });
@@ -140,6 +144,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
         scope: "openid profile phone email " + privateKeyJwtClient.fapiBaselineScope,
         redirectUri: privateKeyJwtClient.redirectUri,
         clientId: privateKeyJwtClient.clientId,
+        nonce: "nonce",
         codeChallenge,
         codeChallengeMethod: "S256",
       });
@@ -158,6 +163,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
         grantType: "authorization_code",
         redirectUri: privateKeyJwtClient.redirectUri,
         clientId: privateKeyJwtClient.clientId,
+        nonce: "nonce",
         codeVerifier,
         clientAssertion,
         clientAssertionType:
@@ -183,6 +189,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
         scope: "openid profile phone email " + privateKeyJwtClient.fapiBaselineScope,
         redirectUri: privateKeyJwtClient.redirectUri,
         clientId: privateKeyJwtClient.clientId,
+        nonce: "nonce",
         codeChallenge,
         codeChallengeMethod: "plain",
       });
@@ -201,6 +208,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
         scope: "profile phone email " + privateKeyJwtClient.fapiBaselineScope,
         redirectUri: privateKeyJwtClient.redirectUriWithPort,
         clientId: privateKeyJwtClient.clientId,
+        nonce: "nonce",
         codeChallenge,
         codeChallengeMethod: "S256",
       });
@@ -218,6 +226,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
         state: "aiueo",
         scope: "profile phone email " + privateKeyJwtClient.fapiBaselineScope,
         clientId: privateKeyJwtClient.clientId,
+        nonce: "nonce",
         codeChallenge,
         codeChallengeMethod: "S256",
       });
@@ -236,6 +245,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
         scope: "profile phone email " + privateKeyJwtClient.fapiBaselineScope,
         clientId: privateKeyJwtClient.clientId,
         redirectUri: privateKeyJwtClient.redirectUriWithPort,
+        nonce: "nonce",
         codeChallenge,
         codeChallengeMethod: "S256",
       });
@@ -254,6 +264,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
         scope: "openid profile phone email " + privateKeyJwtClient.fapiBaselineScope,
         redirectUri: privateKeyJwtClient.redirectUri,
         clientId: privateKeyJwtClient.clientId,
+        nonce: "nonce",
         codeChallenge,
         codeChallengeMethod: "S256",
       });
@@ -299,6 +310,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
         scope: "profile phone email " + privateKeyJwtClient.fapiBaselineScope,
         clientId: privateKeyJwtClient.clientId,
         redirectUri: privateKeyJwtClient.redirectUriWithHttp,
+        nonce: "nonce",
         codeChallenge,
         codeChallengeMethod: "S256",
       });
@@ -306,7 +318,26 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
       expect(error.error).toEqual("invalid_request");
       expect(error.error_description).toContain("When FAPI Baseline profile, shall shall require redirect URIs to use the https scheme");
     });
+  });
 
+  describe("5.2.2.2.  Client requesting openid scope", () => {
+    it("If the client requests the openid scope, the authorization server shall require the nonce parameter defined in Section 3.1.2.1 of OIDC in the authentication request.", async () => {
+      const codeVerifier = "aiueo12345678";
+      const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid profile phone email " + privateKeyJwtClient.fapiBaselineScope,
+        clientId: privateKeyJwtClient.clientId,
+        redirectUri: privateKeyJwtClient.redirectUri,
+        codeChallenge,
+        codeChallengeMethod: "S256",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.error).toEqual("invalid_request");
+      expect(authorizationResponse.errorDescription).toEqual("When FAPI Baseline profile, shall require the nonce parameter defined in Section 3.1.2.1 of OIDC in the authentication request.");
+    });
   });
 
 });

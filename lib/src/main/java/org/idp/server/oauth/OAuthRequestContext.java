@@ -202,4 +202,8 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   public ClientAuthenticationType clientAuthenticationType() {
     return clientConfiguration.clientAuthenticationType();
   }
+
+  public boolean hasOpenidScope() {
+    return scopes().hasOpenidScope();
+  }
 }

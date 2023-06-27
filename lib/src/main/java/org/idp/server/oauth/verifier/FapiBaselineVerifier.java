@@ -29,6 +29,8 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
     }
     throwExceptionIfClientSecretPostOrClientSecretBasic(context);
     throwExceptionIfNotS256CodeChallengeMethod(context);
+    throwExceptionIfHasOpenidScopeAndNotContainsNonce(context);
+    throwExceptionIfNotHasOpenidScopeAndNotContainsState(context);
   }
 
   /** shall require redirect URIs to be pre-registered; */
@@ -97,22 +99,57 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
     }
   }
 
-  /**
-   * shall require RFC7636 with S256 as the code challenge method;
-   */
+  /** shall require RFC7636 with S256 as the code challenge method; */
   void throwExceptionIfNotS256CodeChallengeMethod(OAuthRequestContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
-    if (!authorizationRequest.hasCodeChallenge() || !authorizationRequest.hasCodeChallengeMethod()) {
+    if (!authorizationRequest.hasCodeChallenge()
+        || !authorizationRequest.hasCodeChallengeMethod()) {
       throw new OAuthRedirectableBadRequestException(
-              "invalid_request",
-              "When FAPI Baseline profile, authorization request must contains code_challenge and code_challenge_method(S256).",
-              context);
+          "invalid_request",
+          "When FAPI Baseline profile, authorization request must contains code_challenge and code_challenge_method(S256).",
+          context);
     }
     if (!authorizationRequest.codeChallengeMethod().isS256()) {
       throw new OAuthRedirectableBadRequestException(
-              "invalid_request",
-              "When FAPI Baseline profile, shall require RFC7636 with S256 as the code challenge method.",
-              context);
+          "invalid_request",
+          "When FAPI Baseline profile, shall require RFC7636 with S256 as the code challenge method.",
+          context);
+    }
+  }
+
+  /**
+   * 5.2.2.2. Client requesting openid scope
+   *
+   * <p>If the client requests the openid scope, the authorization server shall require the nonce
+   * parameter defined in Section 3.1.2.1 of OIDC in the authentication request.
+   */
+  void throwExceptionIfHasOpenidScopeAndNotContainsNonce(OAuthRequestContext context) {
+    if (!context.hasOpenidScope()) {
+      return;
+    }
+    if (!context.authorizationRequest().hasNonce()) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request",
+          "When FAPI Baseline profile, shall require the nonce parameter defined in Section 3.1.2.1 of OIDC in the authentication request.",
+          context);
+    }
+  }
+
+  /**
+   * 5.2.2.3. Clients not requesting openid scope
+   *
+   * <p>If the client does not requests the openid scope, the authorization server shall require the
+   * state parameter defined in Section 4.1.1 of RFC6749.
+   */
+  void throwExceptionIfNotHasOpenidScopeAndNotContainsState(OAuthRequestContext context) {
+    if (context.hasOpenidScope()) {
+      return;
+    }
+    if (!context.authorizationRequest().hasState()) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request",
+          "When FAPI Baseline profile, shall require the nonce parameter defined in Section 3.1.2.1 of OIDC in the authentication request.",
+          context);
     }
   }
 }
