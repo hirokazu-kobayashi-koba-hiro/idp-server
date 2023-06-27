@@ -206,4 +206,8 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   public boolean hasOpenidScope() {
     return scopes().hasOpenidScope();
   }
+
+  public boolean isJwtMode() {
+    return isJwtMode(authorizationRequest.profile(), responseType(), responseMode());
+  }
 }

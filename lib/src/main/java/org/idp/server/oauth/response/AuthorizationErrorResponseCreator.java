@@ -22,7 +22,6 @@ public class AuthorizationErrorResponseCreator
     TokenIssuer tokenIssuer = context.tokenIssuer();
     ResponseModeValue responseModeValue = context.responseModeValue();
     ResponseMode responseMode = context.responseMode();
-    ;
     State state = context.state();
     AuthorizationErrorResponseBuilder builder =
         new AuthorizationErrorResponseBuilder(
@@ -30,7 +29,7 @@ public class AuthorizationErrorResponseCreator
             .add(state)
             .add(exception.error())
             .add(exception.errorDescription());
-    if (responseMode.isJwtMode()) {
+    if (context.isJwtMode()) {
       AuthorizationErrorResponse errorResponse = builder.build();
       JarmPayload jarmPayload =
           createResponse(

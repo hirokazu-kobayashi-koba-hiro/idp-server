@@ -15,7 +15,7 @@ public class AuthorizationErrorResponseBuilder {
   TokenIssuer tokenIssuer;
   Error error;
   ErrorDescription errorDescription;
-  JarmPayload jarmPayload;
+  JarmPayload jarmPayload = new JarmPayload();
   QueryParams queryParams;
 
   public AuthorizationErrorResponseBuilder(
@@ -55,7 +55,8 @@ public class AuthorizationErrorResponseBuilder {
   }
 
   public AuthorizationErrorResponse build() {
-    if (responseMode.isJwtMode() && jarmPayload.exists()) {
+    // TODO consider
+    if (jarmPayload.exists()) {
       this.queryParams = new QueryParams();
       this.queryParams.add("response", jarmPayload.value());
     }

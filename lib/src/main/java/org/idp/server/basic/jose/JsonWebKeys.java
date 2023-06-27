@@ -3,6 +3,7 @@ package org.idp.server.basic.jose;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 /** JsonWebKeys */
 public class JsonWebKeys implements Iterable<JsonWebKey> {
@@ -28,7 +29,13 @@ public class JsonWebKeys implements Iterable<JsonWebKey> {
 
   public JsonWebKey findBy(String keyId) {
     return values.stream()
-        .filter(value -> value.keyId().equals(keyId))
+        .filter(
+            value -> {
+              if (Objects.isNull(value.keyId())) {
+                return false;
+              }
+              return value.keyId().equals(keyId);
+            })
         .findFirst()
         .orElse(new JsonWebKey());
   }

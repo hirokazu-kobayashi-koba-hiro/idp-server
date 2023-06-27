@@ -86,7 +86,8 @@ public class AuthorizationResponseBuilder {
   }
 
   public AuthorizationResponse build() {
-    if (responseMode.isJwtMode() && jarmPayload.exists()) {
+    // TODO consider
+    if (jarmPayload.exists()) {
       this.queryParams = new QueryParams();
       this.queryParams.add("response", jarmPayload.value());
     }

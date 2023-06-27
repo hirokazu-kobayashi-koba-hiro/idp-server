@@ -28,10 +28,11 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     throwExceptionIfNotRRequestParameterPattern(context);
     throwExceptionIfInvalidResponseTypeAndResponseMode(context);
     throwIfNotSenderConstrainedAccessToken(context);
-    throwExceptionIfNotContainExpAnd(context);
+    throwExceptionIfNotContainExpAndNbfAndExp60minutesLongerThanNbf(context);
     throwExceptionIfNotContainsAud(context);
     throwExceptionIfClientSecretPostOrClientSecretBasicOrClientSecretJwt(context);
     throwExceptionIfPublicClient(context);
+    throwExceptionIfNotContainNbfAnd60minutesLongerThan(context);
   }
 
   /**
@@ -90,7 +91,8 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
    * shall require the request object to contain an exp claim that has a lifetime of no longer than
    * 60 minutes after the nbf claim;
    */
-  void throwExceptionIfNotContainExpAnd(OAuthRequestContext context) {
+  void throwExceptionIfNotContainExpAndNbfAndExp60minutesLongerThanNbf(
+      OAuthRequestContext context) {
     JoseContext joseContext = context.joseContext();
     JsonWebTokenClaims claims = joseContext.claims();
     if (!claims.hasExp()) {
@@ -175,6 +177,29 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
       throw new OAuthRedirectableBadRequestException(
           "unauthorized_client",
           "When FAPI Advance profile, shall not support public clients",
+          context);
+    }
+  }
+
+  /**
+   * shall require the request object to contain an nbf claim that is no longer than 60 minutes in
+   * the past; and
+   */
+  void throwExceptionIfNotContainNbfAnd60minutesLongerThan(OAuthRequestContext context) {
+    JoseContext joseContext = context.joseContext();
+    JsonWebTokenClaims claims = joseContext.claims();
+    if (!claims.hasNbf()) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request_object",
+          "When FAPI Advance profile, shall require the request object to contain an nbf claim",
+          context);
+    }
+    Date now = new Date();
+    Date nbf = claims.getNbf();
+    if (now.getTime() - nbf.getTime() > 3600001) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request_object",
+          "When FAPI Advance profile, shall require the request object to contain an nbf claim that is no longer than 60 minutes in the past",
           context);
     }
   }
