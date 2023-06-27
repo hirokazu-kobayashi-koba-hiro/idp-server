@@ -7,6 +7,7 @@ import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.OAuthRequestContext;
+import org.idp.server.oauth.exception.OAuthBadRequestException;
 import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.oauth.verifier.base.AuthorizationRequestVerifier;
 import org.idp.server.oauth.verifier.base.OAuthRequestBaseVerifier;
@@ -20,6 +21,7 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
 
   @Override
   public void verify(OAuthRequestContext context) {
+    throwIfExceptionInvalidConfig(context);
     if (context.isOidcRequest()) {
       oidcRequestBaseVerifier.verify(context);
     } else {
@@ -34,6 +36,24 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     throwExceptionIfPublicClient(context);
     throwExceptionIfNotContainNbfAnd60minutesLongerThan(context);
   }
+
+  void throwIfExceptionInvalidConfig(OAuthRequestContext context) {
+    ServerConfiguration serverConfiguration = context.serverConfiguration();
+    ClientConfiguration clientConfiguration = context.clientConfiguration();
+    if (context.isJwtMode()) {
+      if (!clientConfiguration.hasAuthorizationSignedResponseAlg()) {
+        throw new OAuthBadRequestException(
+                "unauthorized_client",
+                "When FAPI Advance profile and jarm mode, client config must have authorization_signed_response_alg");
+      }
+      if (!serverConfiguration.hasKey(clientConfiguration.authorizationSignedResponseAlg())) {
+        throw new OAuthBadRequestException(
+                "unauthorized_client",
+                "When FAPI Advance profile and jarm mode, server jwks must have client authorization_signed_response_alg");
+      }
+    }
+  }
+
 
   /**
    * shall require a JWS signed JWT request object passed by value with the request parameter or by

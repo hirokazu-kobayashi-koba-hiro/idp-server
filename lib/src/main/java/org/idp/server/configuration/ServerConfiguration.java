@@ -490,4 +490,8 @@ public class ServerConfiguration implements JsonReadable {
   public long authorizationResponseDuration() {
     return authorizationResponseDuration;
   }
+
+  public boolean hasKey(String algorithm) {
+    return jwks.contains(algorithm);
+  }
 }

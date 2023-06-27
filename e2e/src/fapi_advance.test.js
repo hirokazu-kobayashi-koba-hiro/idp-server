@@ -88,6 +88,41 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
     expect(introspectionResponse.data.cnf["x5t#S256"]).toEqual(thumbprint);
   });
 
+  it("bad setting client", async () => {
+    const codeVerifier = "aiueo12345678";
+    const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
+    const request = createJwtWithPrivateKey({
+      payload: {
+        response_type: "code",
+        state: "aiueo",
+        scope: "openid profile phone email " + clientSecretPostClient.fapiAdvanceScope,
+        redirect_uri: clientSecretPostClient.redirectUri,
+        client_id: clientSecretPostClient.clientId,
+        nonce: "nonce",
+        aud: serverConfig.issuer,
+        iss: clientSecretPostClient.clientId,
+        sub: clientSecretPostClient.clientId,
+        code_challenge: codeChallenge,
+        code_challenge_method: "S256",
+        response_mode: "jwt",
+        exp: toEpocTime({ adjusted: -200 }),
+        iat: toEpocTime({}),
+        nbf: toEpocTime({ adjusted: -3601}),
+        jti: generateJti(),
+      },
+      privateKey: clientSecretPostClient.requestKey,
+    });
+    const { error } = await requestAuthorizations({
+      endpoint: serverConfig.authorizationEndpoint,
+      request,
+      clientId: clientSecretPostClient.clientId,
+    });
+    console.log(error);
+
+    expect(error.error).toEqual("unauthorized_client");
+    expect(error.error_description).toEqual("When FAPI Advance profile and jarm mode, client config must have authorization_signed_response_alg");
+  });
+
   describe("5.1.1.  ID Token as Detached Signature", () => {
     it("While the name ID Token (as used in the OpenID Connect Hybrid Flow) suggests that it is something that provides the identity of the resource owner (subject), it is not necessarily so. While it does identify the authorization server by including the issuer identifier, it is perfectly fine to have an ephemeral subject identifier. In this case, the ID Token acts as a detached signature of the issuer to the authorization response and it was an explicit design decision of OpenID Connect Core to make the ID Token act as a detached signature.", async () => {
       const codeVerifier = "aiueo12345678";
