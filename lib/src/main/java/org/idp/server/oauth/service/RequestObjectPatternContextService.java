@@ -13,6 +13,7 @@ import org.idp.server.oauth.OAuthRequestPattern;
 import org.idp.server.oauth.exception.OAuthBadRequestException;
 import org.idp.server.oauth.factory.AuthorizationRequestFactory;
 import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.validator.RequestObjectValidator;
 
 /** RequestObjectPatternContextService */
 public class RequestObjectPatternContextService implements OAuthRequestContextService {
@@ -23,6 +24,9 @@ public class RequestObjectPatternContextService implements OAuthRequestContextSe
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
+      RequestObjectValidator validator =
+          new RequestObjectValidator(parameters, serverConfiguration, clientConfiguration);
+      validator.validate();
       JoseHandler joseHandler = new JoseHandler();
       JoseContext joseContext =
           joseHandler.handle(

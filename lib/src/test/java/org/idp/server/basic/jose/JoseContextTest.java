@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 public class JoseContextTest {
 
   @Test
-  void createAndVerify() throws JoseInvalidException, JwkInvalidException {
+  void createAndVerify() throws JoseInvalidException, JsonWebKeyInvalidException {
     JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
     Map<String, Object> claims =
         Map.of(

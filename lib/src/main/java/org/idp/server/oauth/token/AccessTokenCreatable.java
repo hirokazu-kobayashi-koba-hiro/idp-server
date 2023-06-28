@@ -3,9 +3,10 @@ package org.idp.server.oauth.token;
 import java.time.LocalDateTime;
 import java.util.Map;
 import org.idp.server.basic.date.SystemDateTime;
+import org.idp.server.basic.jose.JoseInvalidException;
+import org.idp.server.basic.jose.JsonWebKeyInvalidException;
 import org.idp.server.basic.jose.JsonWebSignature;
 import org.idp.server.basic.jose.JsonWebSignatureFactory;
-import org.idp.server.basic.jose.JwkInvalidException;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ConfigurationInvalidException;
 import org.idp.server.configuration.ServerConfiguration;
@@ -70,8 +71,8 @@ public interface AccessTokenCreatable {
           createdAt,
           expiresIn,
           expiredAt);
-    } catch (JwkInvalidException jwkInvalidException) {
-      throw new ConfigurationInvalidException(jwkInvalidException);
+    } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
+      throw new ConfigurationInvalidException(exception);
     }
   }
 }

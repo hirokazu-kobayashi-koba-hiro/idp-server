@@ -14,8 +14,8 @@ public class JwsContextCreator implements JoseContextCreator {
       Pairs<JsonWebSignatureVerifier, JsonWebKey> pairs = factory.create();
       JsonWebTokenClaims claims = jsonWebSignature.claims();
       return new JoseContext(jsonWebSignature, claims, pairs.getLeft(), pairs.getRight());
-    } catch (JwkInvalidException e) {
-      throw new RuntimeException(e);
+    } catch (JsonWebKeyInvalidException | JsonWebKeyNotFoundException e) {
+      throw new JoseInvalidException(e.getMessage(), e);
     }
   }
 }

@@ -5,11 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.date.SystemDateTime;
-import org.idp.server.basic.jose.JsonWebSignature;
-import org.idp.server.basic.jose.JsonWebSignatureFactory;
-import org.idp.server.basic.jose.JwkInvalidException;
-import org.idp.server.basic.jose.NestedJsonWebEncryptionCreator;
+import org.idp.server.basic.jose.*;
 import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.configuration.ConfigurationInvalidException;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.type.extension.ExpiredAt;
@@ -57,8 +55,8 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
         return new IdToken(jwe);
       }
       return new IdToken(jsonWebSignature.serialize());
-    } catch (JwkInvalidException e) {
-      throw new RuntimeException(e);
+    } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
+      throw new ConfigurationInvalidException(exception);
     }
   }
 

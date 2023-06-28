@@ -2,8 +2,8 @@ package org.idp.server.clientauthenticator;
 
 import java.util.List;
 import org.idp.server.basic.jose.JsonWebKey;
+import org.idp.server.basic.jose.JsonWebKeyInvalidException;
 import org.idp.server.basic.jose.JsonWebKeys;
-import org.idp.server.basic.jose.JwkInvalidException;
 import org.idp.server.basic.jose.JwkParser;
 import org.idp.server.basic.x509.X509CertInvalidException;
 import org.idp.server.basic.x509.X509Certification;
@@ -64,7 +64,7 @@ class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator {
         throw new ClientUnAuthorizedException("client cert does not match registered jwk");
       }
       return new ClientCertification(x509Certification);
-    } catch (JwkInvalidException e) {
+    } catch (JsonWebKeyInvalidException e) {
       throw new ClientUnAuthorizedException("registered jwk is invalid");
     } catch (X509CertInvalidException e) {
       throw new ClientUnAuthorizedException("invalid client cert");

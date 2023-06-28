@@ -2,7 +2,7 @@ import { describe, expect, it, xit } from "@jest/globals";
 
 import { getJwks, inspectToken, requestToken } from "./api/oauthClient";
 import {
-  clientSecretBasicClient, clientSecretPostClient, privateKeyJwtClient,
+  clientSecretBasicClient, clientSecretPostClient, privateKeyJwtClient, publicClient,
   selfSignedTlsAuthClient,
   serverConfig,
 } from "./testConfig";
@@ -477,6 +477,40 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
 
       expect(decodedResponse.payload.error).toEqual("invalid_request_object");
       expect(decodedResponse.payload.error_description).toEqual("When FAPI Advance profile, shall require the request object to contain an aud claim");
+    });
+
+    it("16. shall not support public clients;", async () => {
+      const codeVerifier = "aiueo12345678";
+      const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
+      const request = createJwtWithPrivateKey({
+        payload: {
+          response_type: "code",
+          state: "aiueo",
+          scope: "openid profile phone email " + publicClient.fapiAdvanceScope,
+          redirect_uri: publicClient.redirectUri,
+          client_id: publicClient.clientId,
+          nonce: "nonce",
+          iss: publicClient.clientId,
+          sub: publicClient.clientId,
+          code_challenge: codeChallenge,
+          code_challenge_method: "S256",
+          response_mode: "jwt",
+          exp: toEpocTime({ adjusted: 3000 }),
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: publicClient.requestKey,
+      });
+      const { error } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        request,
+        clientId: publicClient.clientId,
+      });
+      console.log(error);
+
+      expect(error.error).toEqual("unauthorized_client");
+      expect(error.error_description).toEqual("When FAPI Advance profile and jarm mode, client config must have authorization_signed_response_alg");
     });
 
     it("17. shall require the request object to contain an nbf claim that is no longer than 60 minutes in the past; and", async () => {

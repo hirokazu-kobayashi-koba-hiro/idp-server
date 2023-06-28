@@ -15,7 +15,7 @@ public class JsonWebEncrypterFactory {
     this.jsonWebKey = jsonWebKey;
   }
 
-  public JWEEncrypter create() throws JwkInvalidException, JOSEException {
+  public JWEEncrypter create() throws JsonWebKeyInvalidException, JOSEException {
     JsonWebKeyType jsonWebKeyType = jsonWebKey.keyType();
     switch (jsonWebKeyType) {
       case EC -> {

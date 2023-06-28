@@ -20,7 +20,8 @@ public class JsonWebEncDecrypterFactory {
     this.defaultJWEDecrypterFactory = new DefaultJWEDecrypterFactory();
   }
 
-  public JsonWebEncryptionDecrypter create() throws JwkInvalidException, JoseInvalidException {
+  public JsonWebEncryptionDecrypter create()
+      throws JsonWebKeyInvalidException, JoseInvalidException {
     try {
 
       String keyId = jsonWebEncryption.keyId();

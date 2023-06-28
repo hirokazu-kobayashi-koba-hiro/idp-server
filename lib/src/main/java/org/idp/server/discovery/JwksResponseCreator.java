@@ -1,7 +1,7 @@
 package org.idp.server.discovery;
 
 import java.util.Map;
-import org.idp.server.basic.jose.JwkInvalidException;
+import org.idp.server.basic.jose.JsonWebKeyInvalidException;
 import org.idp.server.basic.jose.JwkParser;
 import org.idp.server.configuration.ServerConfiguration;
 
@@ -17,7 +17,7 @@ public class JwksResponseCreator {
     try {
       String jwks = serverConfiguration.jwks();
       return JwkParser.parsePublicKeys(jwks);
-    } catch (JwkInvalidException e) {
+    } catch (JsonWebKeyInvalidException e) {
       throw new RuntimeException(e);
     }
   }

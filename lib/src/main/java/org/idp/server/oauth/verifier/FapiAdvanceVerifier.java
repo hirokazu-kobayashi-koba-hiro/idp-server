@@ -43,17 +43,16 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     if (context.isJwtMode()) {
       if (!clientConfiguration.hasAuthorizationSignedResponseAlg()) {
         throw new OAuthBadRequestException(
-                "unauthorized_client",
-                "When FAPI Advance profile and jarm mode, client config must have authorization_signed_response_alg");
+            "unauthorized_client",
+            "When FAPI Advance profile and jarm mode, client config must have authorization_signed_response_alg");
       }
       if (!serverConfiguration.hasKey(clientConfiguration.authorizationSignedResponseAlg())) {
         throw new OAuthBadRequestException(
-                "unauthorized_client",
-                "When FAPI Advance profile and jarm mode, server jwks must have client authorization_signed_response_alg");
+            "unauthorized_client",
+            "When FAPI Advance profile and jarm mode, server jwks must have client authorization_signed_response_alg");
       }
     }
   }
-
 
   /**
    * shall require a JWS signed JWT request object passed by value with the request parameter or by

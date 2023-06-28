@@ -46,6 +46,9 @@ public class JsonWebKey {
   }
 
   public String algorithm() {
+    if (Objects.isNull(value.getAlgorithm())) {
+      return "";
+    }
     return value.getAlgorithm().getName();
   }
 
@@ -54,7 +57,7 @@ public class JsonWebKey {
     return JsonWebKeyType.of(keyType);
   }
 
-  PublicKey toPublicKey() throws JwkInvalidException {
+  PublicKey toPublicKey() throws JsonWebKeyInvalidException {
     JsonWebKeyType jsonWebKeyType = keyType();
     try {
       switch (jsonWebKeyType) {
@@ -67,14 +70,14 @@ public class JsonWebKey {
         case OCT -> {
           return value.toOctetKeyPair().toPublicKey();
         }
-        default -> throw new JwkInvalidException("unsupported key type");
+        default -> throw new JsonWebKeyInvalidException("unsupported key type");
       }
     } catch (JOSEException e) {
-      throw new JwkInvalidException(e.getMessage(), e);
+      throw new JsonWebKeyInvalidException(e.getMessage(), e);
     }
   }
 
-  PrivateKey toPrivateKey() throws JwkInvalidException {
+  PrivateKey toPrivateKey() throws JsonWebKeyInvalidException {
     JsonWebKeyType jsonWebKeyType = keyType();
     try {
       switch (jsonWebKeyType) {
@@ -87,10 +90,10 @@ public class JsonWebKey {
         case OCT -> {
           return value.toOctetKeyPair().toPrivateKey();
         }
-        default -> throw new JwkInvalidException("unsupported key type");
+        default -> throw new JsonWebKeyInvalidException("unsupported key type");
       }
     } catch (JOSEException e) {
-      throw new JwkInvalidException(e.getMessage(), e);
+      throw new JsonWebKeyInvalidException(e.getMessage(), e);
     }
   }
 }

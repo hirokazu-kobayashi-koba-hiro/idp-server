@@ -47,7 +47,7 @@ public class NestedJsonWebEncryptionCreatorTest {
                     """;
 
   @Test
-  public void createECDH_ES() throws JwkInvalidException {
+  public void createECDH_ES() throws JsonWebKeyInvalidException, JoseInvalidException {
     JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
     Map<String, Object> claims =
         Map.of(
@@ -82,7 +82,7 @@ public class NestedJsonWebEncryptionCreatorTest {
   }
 
   @Test
-  public void createRSA1_5() throws JwkInvalidException {
+  public void createRSA1_5() throws JsonWebKeyInvalidException, JoseInvalidException {
     JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
     Map<String, Object> claims =
         Map.of(

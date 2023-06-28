@@ -247,3 +247,21 @@ export const unsupportedClient = {
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
 };
+
+export const publicClient = {
+  clientId: "publicClient",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "account transfers",
+  fapiBaselineScope: "read",
+  fapiAdvanceScope: "write",
+  requestKey: {
+    kty: "EC",
+    d: "Aaknbn13MHEb4hxvhy4gC1nzHs_s5Uz_Mo0W227nR3CAptwrcHBtLjZt7slvLi8lZ5SfQHLjyJB83rP7XtGPAsHT",
+    use: "sig",
+    crv: "P-521",
+    kid: "request_key_public",
+    x: "AFHdaPWeOuhG36hggrYDabBc353QSconwfUi9lYXTMG1ZIjI-Z5hiX_awx1C0eQ2rJLccBVkCeI7A2DOLR8iaVx7",
+    y: "AbLAhZvzCFBq4huLzupVW_dwGwfcPu4CnJ-TySKaoUWBQW9xvvSlGqLpzAx-9zhMkMVqnx78shcAGmaSV59FSLmU",
+    alg: "ES512"
+  }
+};

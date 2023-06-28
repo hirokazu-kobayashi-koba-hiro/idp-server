@@ -23,13 +23,13 @@ public class JsonWebSignatureVerifierFactory {
   }
 
   public Pairs<JsonWebSignatureVerifier, JsonWebKey> create()
-      throws JwkInvalidException, JoseInvalidException {
+      throws JsonWebKeyInvalidException, JoseInvalidException, JsonWebKeyNotFoundException {
     try {
       if (jsonWebSignature.isSymmetricType()) {
         MACVerifier macVerifier = new MACVerifier(secret);
         return Pairs.of(new JsonWebSignatureVerifier(macVerifier), new JsonWebKey());
       }
-      JsonWebKey publicKey = find();
+      JsonWebKey publicKey = get();
       SignedJWT signedJWT = jsonWebSignature.value();
       JWSVerifier jwsVerifier =
           defaultJWSVerifierFactory.createJWSVerifier(
@@ -40,13 +40,21 @@ public class JsonWebSignatureVerifierFactory {
     }
   }
 
-  private JsonWebKey find() throws JwkInvalidException {
+  private JsonWebKey get() throws JsonWebKeyInvalidException, JsonWebKeyNotFoundException {
     String keyId = jsonWebSignature.keyId();
     JsonWebKeys publicKeys = JwkParser.parseKeys(publicJwks);
     if (jsonWebSignature.hasKeyId()) {
-      return publicKeys.findBy(keyId);
+      JsonWebKey jsonWebKey = publicKeys.findBy(keyId);
+      if (jsonWebKey.exists()) {
+        return jsonWebKey;
+      }
     }
     String algorithm = jsonWebSignature.algorithm();
-    return publicKeys.findByAlgorithm(algorithm);
+    JsonWebKey jsonWebKey = publicKeys.findByAlgorithm(algorithm);
+    if (!jsonWebKey.exists()) {
+      throw new JsonWebKeyNotFoundException(
+          String.format("not found jwk kid (%s) algorithm (%s)", keyId, algorithm));
+    }
+    return jsonWebKey;
   }
 }

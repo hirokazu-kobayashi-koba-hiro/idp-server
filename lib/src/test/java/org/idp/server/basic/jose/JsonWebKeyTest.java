@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 public class JsonWebKeyTest {
 
   @Test
-  void toPublicKeyWIthES256() throws JwkInvalidException {
+  void toPublicKeyWIthES256() throws JsonWebKeyInvalidException {
     String jwkValue =
         """
                 {

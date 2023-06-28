@@ -20,7 +20,7 @@ public class NestedJsonWebEncryptionCreator {
     this.publicKeys = publicKeys;
   }
 
-  public String create() {
+  public String create() throws JoseInvalidException {
     try {
       JWEAlgorithm algorithm = JWEAlgorithm.parse(jweAlgorithm);
       EncryptionMethod method = EncryptionMethod.parse(encryptionMethod);
@@ -33,8 +33,8 @@ public class NestedJsonWebEncryptionCreator {
               new Payload(jsonWebSignature.value()));
       jweObject.encrypt(jweEncrypter);
       return jweObject.serialize();
-    } catch (JwkInvalidException | JOSEException e) {
-      throw new RuntimeException(e);
+    } catch (JsonWebKeyInvalidException | JOSEException e) {
+      throw new JoseInvalidException(e.getMessage(), e);
     }
   }
 }

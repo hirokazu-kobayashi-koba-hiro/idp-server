@@ -42,7 +42,13 @@ public class JsonWebKeys implements Iterable<JsonWebKey> {
 
   public JsonWebKey findByAlgorithm(String algorithm) {
     return values.stream()
-        .filter(value -> value.algorithm().equals(algorithm))
+        .filter(
+            value -> {
+              if (Objects.isNull(value.algorithm())) {
+                return false;
+              }
+              return value.algorithm().equals(algorithm);
+            })
         .findFirst()
         .orElse(new JsonWebKey());
   }
