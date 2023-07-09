@@ -33,4 +33,8 @@ public class AuthorizationDetails implements Iterable<AuthorizationDetail> {
   public List<Map<String, Object>> toMapValues() {
     return values.stream().map(AuthorizationDetail::values).toList();
   }
+
+  public boolean hasVerifiableCredential() {
+    return values.stream().anyMatch(AuthorizationDetail::isVerifiableCredential);
+  }
 }

@@ -38,5 +38,14 @@ public enum OAuthRequestKey {
   auth_req_id,
   username,
   password,
-  authorization_details
+  authorization_details,
+  wallet_issuer,
+  user_hint,
+  issuer_state,
+  // pre-authorized_code
+  pre_authorized_code,
+  user_pin,
+  format,
+  credential_definition,
+  proof,
 }

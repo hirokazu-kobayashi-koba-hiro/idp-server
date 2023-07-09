@@ -120,4 +120,8 @@ public class AccessToken {
   public AuthorizationDetails authorizationDetails() {
     return authorizationGrant.authorizationDetails();
   }
+
+  public boolean matchThumbprint(ClientCertificationThumbprint thumbprint) {
+    return clientCertificationThumbprint.equals(thumbprint);
+  }
 }

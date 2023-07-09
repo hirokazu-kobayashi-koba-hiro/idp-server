@@ -22,7 +22,6 @@ public class User implements Serializable {
   String locale;
   String phoneNumber;
   Boolean phoneNumberVerified;
-  // address
   Address address;
   Long updatedAt;
 

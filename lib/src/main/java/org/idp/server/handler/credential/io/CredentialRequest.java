@@ -1,0 +1,58 @@
+package org.idp.server.handler.credential.io;
+
+import java.util.Map;
+import org.idp.server.token.AuthorizationHeaderHandlerable;
+import org.idp.server.type.mtls.ClientCert;
+import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.TokenIssuer;
+import org.idp.server.verifiablecredential.CredentialRequestParameters;
+
+public class CredentialRequest implements AuthorizationHeaderHandlerable {
+  String authorizationHeaders;
+  Map<String, Object> params;
+  String issuer;
+  String clientCert;
+
+  public CredentialRequest(String authorizationHeaders, Map<String, Object> params, String issuer) {
+    this.authorizationHeaders = authorizationHeaders;
+    this.params = params;
+    this.issuer = issuer;
+  }
+
+  public CredentialRequest setClientCert(String clientCert) {
+    this.clientCert = clientCert;
+    return this;
+  }
+
+  public String getAuthorizationHeaders() {
+    return authorizationHeaders;
+  }
+
+  public Map<String, Object> getParams() {
+    return params;
+  }
+
+  public String getIssuer() {
+    return issuer;
+  }
+
+  public String getClientCert() {
+    return clientCert;
+  }
+
+  public AccessTokenValue toAccessToken() {
+    return extractAccessToken(authorizationHeaders);
+  }
+
+  public CredentialRequestParameters toParameters() {
+    return new CredentialRequestParameters(params);
+  }
+
+  public TokenIssuer toTokenIssuer() {
+    return new TokenIssuer(issuer);
+  }
+
+  public ClientCert toClientCert() {
+    return new ClientCert(clientCert);
+  }
+}

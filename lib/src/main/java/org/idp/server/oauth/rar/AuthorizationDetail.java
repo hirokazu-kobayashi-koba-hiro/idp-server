@@ -40,6 +40,22 @@ public class AuthorizationDetail {
     return getListOrEmpty("privileges");
   }
 
+  public boolean isVerifiableCredential() {
+    return getStringOrEmpty("type").equals("openid_credential");
+  }
+
+  public String format() {
+    return getStringOrEmpty("format");
+  }
+
+  public CredentialDefinition credentialDefinition() {
+    return new CredentialDefinition(getMapOrEmpty("credential_definition"));
+  }
+
+  public String doctype() {
+    return getStringOrEmpty("doctype");
+  }
+
   public List<String> getListOrEmpty(String key) {
     Object value = values.get(key);
     if (Objects.isNull(value)) {

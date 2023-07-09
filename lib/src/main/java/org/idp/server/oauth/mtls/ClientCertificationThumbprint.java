@@ -32,4 +32,17 @@ public class ClientCertificationThumbprint implements Base64Codeable, MessageDig
   public boolean exists() {
     return Objects.nonNull(value) && !value.isEmpty();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ClientCertificationThumbprint that = (ClientCertificationThumbprint) o;
+    return Objects.equals(value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(value);
+  }
 }

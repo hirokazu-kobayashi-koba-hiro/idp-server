@@ -37,6 +37,7 @@
   "application_type": "web",
   "authorization_details_types":[
     "payment_initiation",
-    "account_information"
+    "account_information",
+    "openid_credential"
   ]
 }
