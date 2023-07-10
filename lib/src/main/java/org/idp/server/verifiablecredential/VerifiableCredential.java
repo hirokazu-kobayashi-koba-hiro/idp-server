@@ -104,7 +104,7 @@ public class VerifiableCredential {
   }
 
   public Map<String, Object> credentialSubject() {
-    return getMapOrEmpty("credential_subject");
+    return getMapOrEmpty("credentialSubject");
   }
 
   public Map<String, Object> proof() {
@@ -112,7 +112,7 @@ public class VerifiableCredential {
   }
 
   public boolean hasCredentialSubject() {
-    return values.containsKey("credential_subject");
+    return values.containsKey("credentialSubject");
   }
 
   public String subject() {
@@ -121,7 +121,7 @@ public class VerifiableCredential {
   }
 
   public boolean hasSubject() {
-    if (hasCredentialSubject()) {
+    if (!hasCredentialSubject()) {
       return false;
     }
     Map<String, Object> credentialSubject = credentialSubject();
