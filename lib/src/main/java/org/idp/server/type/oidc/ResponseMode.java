@@ -20,6 +20,7 @@ public enum ResponseMode {
   fragment_jwt("fragment.jwt", "#"),
   form_post_jwt("form_post.jwt", ""),
   jwt("jwt", ""),
+  direct_post("direct_post", ""),
   undefined("", ""),
   unknown("", "");
 

@@ -25,6 +25,8 @@ public enum ResponseType {
   code_id_token(Set.of("code", "id_token"), "code id_token"),
   token_id_token(Set.of("token", "id_token"), "token id_token"),
   none(Set.of("none"), "none"),
+  vp_token(Set.of("vp_token"), "vp_token"),
+  vp_token_id_token(Set.of("vp_token", "id_token"), "vp_token id_token"),
   undefined(Set.of(), ""),
   unknown(Set.of(), "");
 
