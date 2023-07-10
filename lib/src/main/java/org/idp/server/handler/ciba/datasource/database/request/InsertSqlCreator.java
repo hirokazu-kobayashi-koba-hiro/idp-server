@@ -1,6 +1,6 @@
 package org.idp.server.handler.ciba.datasource.database.request;
 
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 
@@ -48,7 +48,7 @@ public class InsertSqlCreator {
   }
 
   private static String convertAuthorizationDetails(AuthorizationDetails authorizationDetails) {
-    JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
-    return jsonParser.write(authorizationDetails.toMapValues());
+    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    return jsonConverter.write(authorizationDetails.toMapValues());
   }
 }

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.resource.ResourceReadable;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ClientConfigurationNotFoundException;
@@ -40,10 +40,11 @@ public class ClientConfigurationMemoryDataSource
 
   void initialize(List<String> paths) {
     try {
-      JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
+      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
       for (String path : paths) {
         String json = read(path);
-        ClientConfiguration clientConfiguration = jsonParser.read(json, ClientConfiguration.class);
+        ClientConfiguration clientConfiguration =
+            jsonConverter.read(json, ClientConfiguration.class);
         TokenIssuer tokenIssuer = clientConfiguration.tokenIssuer();
         ClientId clientId = clientConfiguration.clientId();
         MultiClientIdentifier multiClientIdentifier =

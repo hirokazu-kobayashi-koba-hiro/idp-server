@@ -2,7 +2,7 @@ package org.idp.server.ciba.clientnotification;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.type.ciba.AuthReqId;
 import org.idp.server.type.oauth.AccessTokenValue;
 import org.idp.server.type.oauth.ExpiresIn;
@@ -13,7 +13,7 @@ import org.idp.server.type.oidc.IdToken;
 public class ClientNotificationRequestBodyBuilder {
 
   Map<String, Object> values;
-  JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   public ClientNotificationRequestBodyBuilder() {
     this.values = new HashMap<>();
@@ -50,6 +50,6 @@ public class ClientNotificationRequestBodyBuilder {
   }
 
   public String build() {
-    return jsonParser.write(values);
+    return jsonConverter.write(values);
   }
 }

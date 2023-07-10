@@ -6,7 +6,7 @@ import org.idp.server.configuration.ServerConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class JsonParserTest {
+public class JsonConverterTest {
 
   @Test
   void readable() {
@@ -21,8 +21,8 @@ public class JsonParserTest {
                   "example_extension_parameter": "example_value"
                 }
                 """;
-    JsonParser jsonParser = JsonParser.create();
-    ClientConfiguration clientConfiguration = jsonParser.read(json, ClientConfiguration.class);
+    JsonConverter jsonConverter = JsonConverter.create();
+    ClientConfiguration clientConfiguration = jsonConverter.read(json, ClientConfiguration.class);
     Assertions.assertEquals(List.of("read", "write"), clientConfiguration.scopes());
   }
 
@@ -93,8 +93,8 @@ public class JsonParserTest {
                      ["en-US", "en-GB", "en-CA", "fr-FR", "fr-CA"]
                   }
                 """;
-    JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
-    ServerConfiguration serverConfiguration = jsonParser.read(json, ServerConfiguration.class);
+    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    ServerConfiguration serverConfiguration = jsonConverter.read(json, ServerConfiguration.class);
 
     Assertions.assertEquals(
         "https://server.example.com", serverConfiguration.tokenIssuer().value());

@@ -1,6 +1,6 @@
 package org.idp.server.basic;
 
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -29,8 +29,8 @@ public class ClaimPayloadConverterTest {
                   }
                 """;
 
-    JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
-    ClaimsPayload claimsPayload = jsonParser.read(claimsValue, ClaimsPayload.class);
+    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    ClaimsPayload claimsPayload = jsonConverter.read(claimsValue, ClaimsPayload.class);
     System.out.println(claimsPayload);
     Assertions.assertTrue(claimsPayload.exists());
   }

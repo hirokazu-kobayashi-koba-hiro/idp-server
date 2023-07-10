@@ -1,4 +1,4 @@
-import { get, post } from "../lib/http";
+import { get, post, postWithJson } from "../lib/http";
 import { convertToSnake } from "../lib/util";
 import { encodedClientCert } from "./cert/clientCert";
 
@@ -448,5 +448,18 @@ export const completeBackchannelAuthentications = async ({
 }) => {
   return await post({
     url: `${endpoint}?auth_req_id=${authReqId}&action=${action}`,
+  });
+};
+
+export const requestCredentials = async ({
+  endpoint,
+  params,
+  authorizationHeader,
+}) => {
+
+  return await postWithJson({
+    url: endpoint,
+    body: params,
+    headers: authorizationHeader,
   });
 };

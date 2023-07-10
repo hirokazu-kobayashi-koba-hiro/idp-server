@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.basic.json.JsonConvertable;
 
 /**
  * example
@@ -62,15 +63,19 @@ import java.util.Map;
  *
  * @see <a href="https://www.w3.org/TR/vc-data-model/">vc-data-model</a>
  */
-public class Credential {
+public class VerifiableCredential {
   Map<String, Object> values;
 
-  public Credential() {
+  public VerifiableCredential() {
     this.values = new HashMap<>();
   }
 
-  public Credential(Map<String, Object> values) {
+  public VerifiableCredential(Map<String, Object> values) {
     this.values = values;
+  }
+
+  public static VerifiableCredential parse(String json) {
+    return new VerifiableCredential(JsonConvertable.read(json, Map.class));
   }
 
   public List<String> context() {
@@ -98,12 +103,41 @@ public class Credential {
     return getStringOrEmpty("issuanceDate");
   }
 
+  public Map<String, Object> credentialSubject() {
+    return getMapOrEmpty("credential_subject");
+  }
+
+  public Map<String, Object> proof() {
+    return getMapOrEmpty("proof");
+  }
+
+  public boolean hasCredentialSubject() {
+    return values.containsKey("credential_subject");
+  }
+
+  public String subject() {
+    Map<String, Object> credentialSubject = credentialSubject();
+    return (String) credentialSubject.getOrDefault("id", "");
+  }
+
+  public boolean hasSubject() {
+    if (hasCredentialSubject()) {
+      return false;
+    }
+    Map<String, Object> credentialSubject = credentialSubject();
+    return credentialSubject.containsKey("id");
+  }
+
   public String getStringOrEmpty(String key) {
     return (String) values.getOrDefault(key, "");
   }
 
   public List<String> getListOrEmpty(String key) {
     return (List<String>) values.getOrDefault(key, List.of());
+  }
+
+  public Map<String, Object> getMapOrEmpty(String key) {
+    return (Map<String, Object>) values.getOrDefault(key, Map.of());
   }
 
   public Map<String, Object> values() {

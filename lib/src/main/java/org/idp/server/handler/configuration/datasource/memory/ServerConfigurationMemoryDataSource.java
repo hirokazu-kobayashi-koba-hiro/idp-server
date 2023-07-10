@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.resource.ResourceReadable;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.configuration.ServerConfigurationNotFoundException;
@@ -38,10 +38,11 @@ public class ServerConfigurationMemoryDataSource
 
   void initialize(List<String> paths) {
     try {
-      JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
+      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
       for (String path : paths) {
         String json = read(path);
-        ServerConfiguration serverConfiguration = jsonParser.read(json, ServerConfiguration.class);
+        ServerConfiguration serverConfiguration =
+            jsonConverter.read(json, ServerConfiguration.class);
         map.put(serverConfiguration.tokenIssuer(), serverConfiguration);
       }
     } catch (IOException e) {

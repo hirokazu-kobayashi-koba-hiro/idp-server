@@ -2,7 +2,7 @@ package org.idp.server.handler.oauth.datasource.database.request;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.AuthorizationProfile;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.rar.AuthorizationDetail;
@@ -51,8 +51,8 @@ class ModelConverter {
       return new ClaimsPayload();
     }
     try {
-      JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
-      return jsonParser.read(value, ClaimsPayload.class);
+      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+      return jsonConverter.read(value, ClaimsPayload.class);
     } catch (Exception exception) {
       return new ClaimsPayload();
     }
@@ -63,8 +63,8 @@ class ModelConverter {
       return new AuthorizationDetails();
     }
     try {
-      JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
-      List list = jsonParser.read(value, List.class);
+      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+      List list = jsonConverter.read(value, List.class);
       List<Map> details = (List<Map>) list;
       List<AuthorizationDetail> authorizationDetailsList =
           details.stream().map(detail -> new AuthorizationDetail(detail)).toList();

@@ -1,12 +1,12 @@
 package org.idp.server.handler.ciba.datasource.database.grant;
 
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.ciba.grant.CibaGrant;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 
 class SqlCreator {
 
-  static JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   static String createInsert(CibaGrant cibaGrant) {
     AuthorizationGrant authorizationGrant = cibaGrant.authorizationGrant();
@@ -54,6 +54,6 @@ class SqlCreator {
   }
 
   private static String toJson(Object value) {
-    return jsonParser.write(value);
+    return jsonConverter.write(value);
   }
 }

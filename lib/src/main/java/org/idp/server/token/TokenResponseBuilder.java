@@ -2,7 +2,7 @@ package org.idp.server.token;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
@@ -16,7 +16,7 @@ public class TokenResponseBuilder {
   IdToken idToken = new IdToken();
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
   Map<String, Object> values = new HashMap<>();
-  JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   public TokenResponseBuilder() {}
 
@@ -69,7 +69,7 @@ public class TokenResponseBuilder {
   }
 
   public TokenResponse build() {
-    String contents = jsonParser.write(values);
+    String contents = jsonConverter.write(values);
     return new TokenResponse(
         accessTokenValue,
         tokenType,

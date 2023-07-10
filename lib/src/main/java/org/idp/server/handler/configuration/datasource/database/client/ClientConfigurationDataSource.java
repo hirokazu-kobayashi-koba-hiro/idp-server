@@ -2,7 +2,7 @@ package org.idp.server.handler.configuration.datasource.database.client;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.sql.SqlConnection;
 import org.idp.server.basic.sql.SqlExecutor;
 import org.idp.server.configuration.ClientConfiguration;
@@ -14,11 +14,11 @@ import org.idp.server.type.oauth.TokenIssuer;
 public class ClientConfigurationDataSource implements ClientConfigurationRepository {
 
   SqlConnection sqlConnection;
-  JsonParser jsonParser;
+  JsonConverter jsonConverter;
 
   public ClientConfigurationDataSource(SqlConnection sqlConnection) {
     this.sqlConnection = sqlConnection;
-    this.jsonParser = JsonParser.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   }
 
   @Override
@@ -29,7 +29,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
             INSERT INTO client_configuration (token_issuer, client_id, payload)
             VALUES ('%s', '%s', '%s')
             """;
-    String payload = jsonParser.write(clientConfiguration);
+    String payload = jsonConverter.write(clientConfiguration);
     String sql =
         String.format(
             sqlTemplate,

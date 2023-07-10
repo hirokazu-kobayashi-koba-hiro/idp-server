@@ -1,11 +1,11 @@
 package org.idp.server.handler.oauth.datasource.database.code;
 
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 
 class InsertSqlCreator {
 
-  static JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   static String createInsert(AuthorizationCodeGrant authorizationCodeGrant) {
     InsertSqlBuilder builder =
@@ -34,6 +34,6 @@ class InsertSqlCreator {
   }
 
   private static String toJson(Object value) {
-    return jsonParser.write(value);
+    return jsonConverter.write(value);
   }
 }

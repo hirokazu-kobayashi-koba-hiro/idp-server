@@ -10,23 +10,22 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/** JsonParser */
-public class JsonParser {
+public class JsonConverter {
 
   ObjectMapper objectMapper;
 
-  JsonParser(ObjectMapper objectMapper) {
+  JsonConverter(ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
   }
 
-  public static JsonParser create() {
+  public static JsonConverter create() {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
     objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-    return new JsonParser(objectMapper);
+    return new JsonConverter(objectMapper);
   }
 
-  public static JsonParser createWithSnakeCaseStrategy() {
+  public static JsonConverter createWithSnakeCaseStrategy() {
     JavaTimeModule javaTimeModule = new JavaTimeModule();
     javaTimeModule.addDeserializer(
         LocalDateTime.class,
@@ -36,7 +35,7 @@ public class JsonParser {
     objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
     objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     objectMapper.registerModule(javaTimeModule);
-    return new JsonParser(objectMapper);
+    return new JsonConverter(objectMapper);
   }
 
   public <TYPE> TYPE read(String value, Class<TYPE> typeClass) {

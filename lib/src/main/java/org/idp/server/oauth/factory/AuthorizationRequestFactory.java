@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.idp.server.basic.jose.JoseContext;
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.AuthorizationProfile;
@@ -34,9 +34,9 @@ public interface AuthorizationRequestFactory {
 
   default ClaimsPayload convertClaimsPayload(ClaimsValue claimsValue) {
     try {
-      JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
+      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
       return claimsValue.exists()
-          ? jsonParser.read(claimsValue.value(), ClaimsPayload.class)
+          ? jsonConverter.read(claimsValue.value(), ClaimsPayload.class)
           : new ClaimsPayload();
     } catch (Exception exception) {
       return new ClaimsPayload();
@@ -51,8 +51,8 @@ public interface AuthorizationRequestFactory {
     try {
       Object object = authorizationDetailsValue.value();
       if (object instanceof String string) {
-        JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
-        List list = jsonParser.read(string, List.class);
+        JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+        List list = jsonConverter.read(string, List.class);
         List<Map> details = (List<Map>) list;
         List<AuthorizationDetail> authorizationDetailsList =
             details.stream().map(detail -> new AuthorizationDetail(detail)).toList();

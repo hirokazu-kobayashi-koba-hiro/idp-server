@@ -2,7 +2,7 @@ package org.idp.server.handler.oauth.datasource.database.code;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.oauth.grant.AuthorizationGrant;
@@ -14,18 +14,17 @@ import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.*;
-import org.idp.server.type.oidc.*;
 
 class ModelConverter {
 
-  static JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   static AuthorizationCodeGrant convert(Map<String, String> stringMap) {
     AuthorizationRequestIdentifier id =
         new AuthorizationRequestIdentifier(stringMap.get("authorization_request_id"));
-    User user = jsonParser.read(stringMap.get("user_payload"), User.class);
+    User user = jsonConverter.read(stringMap.get("user_payload"), User.class);
     Authentication authentication =
-        jsonParser.read(stringMap.get("authentication"), Authentication.class);
+        jsonConverter.read(stringMap.get("authentication"), Authentication.class);
     ClientId clientId = new ClientId(stringMap.get("client_id"));
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = new CustomProperties();
@@ -52,8 +51,8 @@ class ModelConverter {
       return new ClaimsPayload();
     }
     try {
-      JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
-      return jsonParser.read(value, ClaimsPayload.class);
+      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+      return jsonConverter.read(value, ClaimsPayload.class);
     } catch (Exception exception) {
       return new ClaimsPayload();
     }
@@ -65,8 +64,8 @@ class ModelConverter {
       return new AuthorizationDetails();
     }
     try {
-      JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
-      List list = jsonParser.read(value, List.class);
+      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+      List list = jsonConverter.read(value, List.class);
       List<Map> details = (List<Map>) list;
       List<AuthorizationDetail> authorizationDetailsList =
           details.stream().map(detail -> new AuthorizationDetail(detail)).toList();

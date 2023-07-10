@@ -47,7 +47,7 @@ public class CredentialBuilder {
     return this;
   }
 
-  public Credential build() {
-    return new Credential(values);
+  public VerifiableCredential build() {
+    return new VerifiableCredential(values);
   }
 }

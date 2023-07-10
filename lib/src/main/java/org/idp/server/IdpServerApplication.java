@@ -18,6 +18,7 @@ import org.idp.server.handler.configuration.datasource.database.client.ClientCon
 import org.idp.server.handler.configuration.datasource.database.server.ServerConfigurationDataSource;
 import org.idp.server.handler.configuration.datasource.memory.ClientConfigurationMemoryDataSource;
 import org.idp.server.handler.configuration.datasource.memory.ServerConfigurationMemoryDataSource;
+import org.idp.server.handler.credential.CredentialHandler;
 import org.idp.server.handler.discovery.DiscoveryHandler;
 import org.idp.server.handler.grantmanagment.datasource.AuthorizationGrantedMemoryDataSource;
 import org.idp.server.handler.oauth.OAuthAuthorizeHandler;
@@ -46,6 +47,7 @@ public class IdpServerApplication {
   DiscoveryApi discoveryApi;
   JwksApi jwksApi;
   CibaApi cibaApi;
+  CredentialApi credentialApi;
   ServerManagementApi serverManagementApi;
   ClientManagementApi clientManagementApi;
 
@@ -230,6 +232,12 @@ public class IdpServerApplication {
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
     this.tokenApi = new TokenApi(tokenRequestHandler);
+    CredentialHandler credentialHandler =
+        new CredentialHandler(
+            oAuthTokenDataSource,
+            serverConfigurationMemoryDataSource,
+            clientConfigurationMemoryDataSource);
+    this.credentialApi = new CredentialApi(credentialHandler);
     this.serverManagementApi =
         new ServerManagementApi(
             new ServerConfigurationHandler(serverConfigurationMemoryDataSource));
@@ -256,6 +264,10 @@ public class IdpServerApplication {
 
   public UserinfoApi userinfoApi() {
     return userinfoApi;
+  }
+
+  public CredentialApi credentialApi() {
+    return credentialApi;
   }
 
   public DiscoveryApi discoveryApi() {

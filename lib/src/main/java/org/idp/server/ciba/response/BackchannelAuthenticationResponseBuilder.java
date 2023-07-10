@@ -2,7 +2,7 @@ package org.idp.server.ciba.response;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.type.ciba.AuthReqId;
 import org.idp.server.type.ciba.Interval;
 import org.idp.server.type.oauth.ExpiresIn;
@@ -13,7 +13,7 @@ public class BackchannelAuthenticationResponseBuilder {
   ExpiresIn expiresIn;
   Interval interval;
   Map<String, Object> values = new HashMap<>();
-  JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   public BackchannelAuthenticationResponseBuilder() {}
 
@@ -36,7 +36,7 @@ public class BackchannelAuthenticationResponseBuilder {
   }
 
   public BackchannelAuthenticationResponse build() {
-    String response = jsonParser.write(values);
+    String response = jsonConverter.write(values);
     return new BackchannelAuthenticationResponse(authReqId, expiresIn, interval, response);
   }
 }

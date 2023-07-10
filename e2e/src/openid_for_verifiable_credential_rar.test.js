@@ -1,6 +1,6 @@
 import { describe, expect, it, xit } from "@jest/globals";
 
-import { getJwks, requestToken } from "./api/oauthClient";
+import { getJwks, requestCredentials, requestToken } from "./api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
 import {
@@ -75,6 +75,17 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       jwks: jwksResponse.data,
     });
     console.log(decodedIdToken);
+    const credentialResponse = await requestCredentials({
+      endpoint: serverConfig.credentialEndpoint,
+      params: {
+        format: "jwt_vc_json",
+      },
+      authorizationHeader: {
+        Authorization: `Bearer ${tokenResponse.data.access_token}`
+      }
+    });
+    console.log(credentialResponse.data);
+    expect(credentialResponse.status).toBe(200);
   });
 
   it("success pattern request object", async () => {

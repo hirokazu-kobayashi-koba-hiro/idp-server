@@ -7,7 +7,7 @@ import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.util.Base64URL;
 import java.text.ParseException;
 import java.util.Map;
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 
 /** JoseType */
 public enum JoseType {
@@ -19,8 +19,8 @@ public enum JoseType {
     try {
       String headerValue = jose.split("\\.")[0];
       Base64URL header = new Base64URL(headerValue);
-      JsonParser jsonParser = JsonParser.create();
-      Map<String, Object> headerPayload = jsonParser.read(header.decodeToString(), Map.class);
+      JsonConverter jsonConverter = JsonConverter.create();
+      Map<String, Object> headerPayload = jsonConverter.read(header.decodeToString(), Map.class);
       Algorithm alg = Header.parseAlgorithm(headerPayload);
 
       if (alg.equals(Algorithm.NONE)) {

@@ -1,12 +1,12 @@
 package org.idp.server.handler.token.datasource.database;
 
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.token.OAuthToken;
 
 class InsertSqlCreator {
 
-  static JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   static String createInsert(OAuthToken oAuthToken) {
     AuthorizationGrant authorizationGrant = oAuthToken.accessToken().authorizationGrant();
@@ -50,6 +50,6 @@ class InsertSqlCreator {
   }
 
   private static String toJson(Object value) {
-    return jsonParser.write(value);
+    return jsonConverter.write(value);
   }
 }

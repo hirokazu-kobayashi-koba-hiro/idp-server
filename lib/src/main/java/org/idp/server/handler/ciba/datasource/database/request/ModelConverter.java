@@ -2,7 +2,7 @@ package org.idp.server.handler.ciba.datasource.database.request;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.json.JsonParser;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.ciba.CibaProfile;
 import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.ciba.request.BackchannelAuthenticationRequestBuilder;
@@ -41,8 +41,8 @@ class ModelConverter {
       return new AuthorizationDetails();
     }
     try {
-      JsonParser jsonParser = JsonParser.createWithSnakeCaseStrategy();
-      List list = jsonParser.read(value, List.class);
+      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+      List list = jsonConverter.read(value, List.class);
       List<Map> details = (List<Map>) list;
       List<AuthorizationDetail> authorizationDetailsList =
           details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
