@@ -6,10 +6,10 @@ import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.AuthorizationProfile;
 import org.idp.server.oauth.OAuthRequestContext;
-import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.OAuthRequestPattern;
 import org.idp.server.oauth.factory.NormalRequestFactory;
 import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.request.OAuthRequestParameters;
 
 /** NormalPatternContextService */
 public class NormalPatternContextService implements OAuthRequestContextService {

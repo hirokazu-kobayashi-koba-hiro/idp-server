@@ -12,6 +12,7 @@ import org.idp.server.oauth.*;
 import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.oauth.gateway.RequestObjectGateway;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
+import org.idp.server.oauth.request.OAuthRequestParameters;
 import org.idp.server.oauth.service.*;
 import org.idp.server.oauth.validator.OAuthRequestValidator;
 import org.idp.server.oauth.verifier.OAuthRequestVerifier;

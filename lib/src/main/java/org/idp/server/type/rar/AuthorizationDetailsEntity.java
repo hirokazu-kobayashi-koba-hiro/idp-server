@@ -7,12 +7,12 @@ import java.util.Objects;
  *     href="https://www.rfc-editor.org/rfc/rfc9396.html#name-authorization-request">Authorization
  *     Details</a>
  */
-public class AuthorizationDetailsValue {
+public class AuthorizationDetailsEntity {
   Object value;
 
-  public AuthorizationDetailsValue() {}
+  public AuthorizationDetailsEntity() {}
 
-  public AuthorizationDetailsValue(Object value) {
+  public AuthorizationDetailsEntity(Object value) {
     this.value = value;
   }
 

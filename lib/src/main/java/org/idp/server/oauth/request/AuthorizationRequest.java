@@ -7,6 +7,8 @@ import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;
 import org.idp.server.type.pkce.CodeChallengeMethod;
+import org.idp.server.type.verifiablepresentation.PresentationDefinitionUri;
+import org.idp.server.verifiablepresentation.request.PresentationDefinition;
 
 /** AuthorizationRequest */
 public class AuthorizationRequest {
@@ -35,6 +37,8 @@ public class AuthorizationRequest {
   CodeChallenge codeChallenge;
   CodeChallengeMethod codeChallengeMethod;
   AuthorizationDetails authorizationDetails;
+  PresentationDefinition presentationDefinition;
+  PresentationDefinitionUri presentationDefinitionUri;
 
   public AuthorizationRequest() {}
 
@@ -62,7 +66,9 @@ public class AuthorizationRequest {
       ClaimsPayload claimsPayload,
       CodeChallenge codeChallenge,
       CodeChallengeMethod codeChallengeMethod,
-      AuthorizationDetails authorizationDetails) {
+      AuthorizationDetails authorizationDetails,
+      PresentationDefinition presentationDefinition,
+      PresentationDefinitionUri presentationDefinitionUri) {
     this.identifier = identifier;
     this.tokenIssuer = tokenIssuer;
     this.profile = profile;
@@ -87,6 +93,8 @@ public class AuthorizationRequest {
     this.codeChallenge = codeChallenge;
     this.codeChallengeMethod = codeChallengeMethod;
     this.authorizationDetails = authorizationDetails;
+    this.presentationDefinition = presentationDefinition;
+    this.presentationDefinitionUri = presentationDefinitionUri;
   }
 
   public AuthorizationRequestIdentifier identifier() {
@@ -275,6 +283,18 @@ public class AuthorizationRequest {
 
   public boolean hasAuthorizationDetails() {
     return authorizationDetails.exists();
+  }
+
+  public PresentationDefinition presentationDefinition() {
+    return presentationDefinition;
+  }
+
+  public boolean hasPresentationDefinition() {
+    return presentationDefinition.exists();
+  }
+
+  public PresentationDefinitionUri presentationDefinitionUri() {
+    return presentationDefinitionUri;
   }
 
   public boolean isInvalidDisplay() {

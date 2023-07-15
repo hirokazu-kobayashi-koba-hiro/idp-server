@@ -6,15 +6,15 @@ import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.AuthorizationProfile;
-import org.idp.server.oauth.OAuthRequestParameters;
-import org.idp.server.oauth.RequestObjectParameters;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestBuilder;
+import org.idp.server.oauth.request.OAuthRequestParameters;
+import org.idp.server.oauth.request.RequestObjectParameters;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;
 import org.idp.server.type.pkce.CodeChallengeMethod;
-import org.idp.server.type.rar.AuthorizationDetailsValue;
+import org.idp.server.type.rar.AuthorizationDetailsEntity;
 
 /**
  * RequestObjectPatternFactory
@@ -105,9 +105,9 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
         requestObjectParameters.hasCodeChallengeMethod()
             ? requestObjectParameters.codeChallengeMethod()
             : parameters.codeChallengeMethod();
-    AuthorizationDetailsValue authorizationDetailsValue =
+    AuthorizationDetailsEntity authorizationDetailsEntity =
         requestObjectParameters.hasAuthorizationDetailsValue()
-            ? requestObjectParameters.authorizationDetailsValue()
+            ? requestObjectParameters.authorizationDetailsEntity()
             : parameters.authorizationDetailsValue();
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
@@ -138,7 +138,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
     builder.add(convertClaimsPayload(claimsValue));
     builder.add(codeChallenge);
     builder.add(codeChallengeMethod);
-    builder.add(convertAuthorizationDetails(authorizationDetailsValue));
+    builder.add(convertAuthorizationDetails(authorizationDetailsEntity));
     return builder.build();
   }
 }

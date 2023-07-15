@@ -8,11 +8,11 @@ import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.AuthorizationProfile;
 import org.idp.server.oauth.OAuthRequestContext;
-import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.OAuthRequestPattern;
 import org.idp.server.oauth.exception.OAuthBadRequestException;
 import org.idp.server.oauth.factory.AuthorizationRequestFactory;
 import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.request.OAuthRequestParameters;
 import org.idp.server.oauth.validator.RequestObjectValidator;
 
 /** RequestObjectPatternContextService */

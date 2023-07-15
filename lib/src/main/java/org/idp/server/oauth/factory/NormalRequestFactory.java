@@ -5,9 +5,9 @@ import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.AuthorizationProfile;
-import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestBuilder;
+import org.idp.server.oauth.request.OAuthRequestParameters;
 import org.idp.server.type.oauth.Scopes;
 import org.idp.server.type.oidc.MaxAge;
 

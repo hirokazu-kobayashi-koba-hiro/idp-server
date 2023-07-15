@@ -9,14 +9,14 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.AuthorizationProfile;
-import org.idp.server.oauth.OAuthRequestParameters;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.rar.AuthorizationDetail;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.oauth.request.OAuthRequestParameters;
 import org.idp.server.type.oidc.ClaimsValue;
-import org.idp.server.type.rar.AuthorizationDetailsValue;
+import org.idp.server.type.rar.AuthorizationDetailsEntity;
 
 /** AuthorizationRequestFactory */
 public interface AuthorizationRequestFactory {
@@ -44,12 +44,12 @@ public interface AuthorizationRequestFactory {
   }
 
   default AuthorizationDetails convertAuthorizationDetails(
-      AuthorizationDetailsValue authorizationDetailsValue) {
-    if (!authorizationDetailsValue.exists()) {
+      AuthorizationDetailsEntity authorizationDetailsEntity) {
+    if (!authorizationDetailsEntity.exists()) {
       return new AuthorizationDetails();
     }
     try {
-      Object object = authorizationDetailsValue.value();
+      Object object = authorizationDetailsEntity.value();
       if (object instanceof String string) {
         JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
         List list = jsonConverter.read(string, List.class);
@@ -58,7 +58,7 @@ public interface AuthorizationRequestFactory {
             details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
         return new AuthorizationDetails(authorizationDetailsList);
       }
-      List<Map> details = (List<Map>) authorizationDetailsValue.value();
+      List<Map> details = (List<Map>) authorizationDetailsEntity.value();
       List<AuthorizationDetail> authorizationDetailsList =
           details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
       return new AuthorizationDetails(authorizationDetailsList);

@@ -1,28 +1,33 @@
-package org.idp.server.oauth;
+package org.idp.server.oauth.request;
 
 import static org.idp.server.type.OAuthRequestKey.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import org.idp.server.type.ArrayValueMap;
 import org.idp.server.type.OAuthRequestKey;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;
 import org.idp.server.type.pkce.CodeChallengeMethod;
-import org.idp.server.type.rar.AuthorizationDetailsValue;
+import org.idp.server.type.rar.AuthorizationDetailsEntity;
+import org.idp.server.type.verifiablepresentation.PresentationDefinitionEntity;
+import org.idp.server.type.verifiablepresentation.PresentationDefinitionUri;
 
-/** RequestObjectParameters */
-public class RequestObjectParameters {
-  Map<String, Object> values;
+/** OAuthRequestParameters */
+public class OAuthRequestParameters {
+  ArrayValueMap values;
 
-  public RequestObjectParameters() {
-    this.values = new HashMap<>();
+  public OAuthRequestParameters() {
+    this.values = new ArrayValueMap();
   }
 
-  public RequestObjectParameters(Map<String, Object> values) {
+  public OAuthRequestParameters(ArrayValueMap values) {
     this.values = values;
+  }
+
+  public OAuthRequestParameters(Map<String, String[]> values) {
+    this.values = new ArrayValueMap(values);
   }
 
   public boolean isEmpty() {
@@ -30,7 +35,7 @@ public class RequestObjectParameters {
   }
 
   public Scopes scope() {
-    return new Scopes(getString(scope));
+    return new Scopes(getValueOrEmpty(scope));
   }
 
   public boolean hasScope() {
@@ -38,7 +43,7 @@ public class RequestObjectParameters {
   }
 
   public ResponseType responseType() {
-    return ResponseType.of(getString(response_type));
+    return ResponseType.of(getValueOrEmpty(response_type));
   }
 
   public boolean hasResponseType() {
@@ -46,7 +51,7 @@ public class RequestObjectParameters {
   }
 
   public ClientId clientId() {
-    return new ClientId(getString(client_id));
+    return new ClientId(getValueOrEmpty(client_id));
   }
 
   public boolean hasClientId() {
@@ -54,7 +59,7 @@ public class RequestObjectParameters {
   }
 
   public RedirectUri redirectUri() {
-    return new RedirectUri(getString(redirect_uri));
+    return new RedirectUri(getValueOrEmpty(redirect_uri));
   }
 
   public boolean hasRedirectUri() {
@@ -62,7 +67,7 @@ public class RequestObjectParameters {
   }
 
   public State state() {
-    return new State(getString(state));
+    return new State(getValueOrEmpty(state));
   }
 
   public boolean hasState() {
@@ -70,7 +75,7 @@ public class RequestObjectParameters {
   }
 
   public ResponseMode responseMode() {
-    return ResponseMode.of(getString(response_mode));
+    return ResponseMode.of(getValueOrEmpty(response_mode));
   }
 
   public boolean hasResponseMode() {
@@ -78,7 +83,7 @@ public class RequestObjectParameters {
   }
 
   public Nonce nonce() {
-    return new Nonce(getString(nonce));
+    return new Nonce(getValueOrEmpty(nonce));
   }
 
   public boolean hasNonce() {
@@ -86,7 +91,7 @@ public class RequestObjectParameters {
   }
 
   public Display display() {
-    return Display.of(getString(display));
+    return Display.of(getValueOrEmpty(display));
   }
 
   public boolean hasDisplay() {
@@ -94,7 +99,7 @@ public class RequestObjectParameters {
   }
 
   public Prompts prompts() {
-    return Prompts.of(getString(prompt));
+    return Prompts.of(getValueOrEmpty(prompt));
   }
 
   public boolean hasPrompt() {
@@ -102,7 +107,7 @@ public class RequestObjectParameters {
   }
 
   public MaxAge maxAge() {
-    return new MaxAge(getString(max_age));
+    return new MaxAge(getValueOrEmpty(max_age));
   }
 
   public boolean hasMaxAge() {
@@ -110,7 +115,7 @@ public class RequestObjectParameters {
   }
 
   public UiLocales uiLocales() {
-    return new UiLocales(getString(ui_locales));
+    return new UiLocales(getValueOrEmpty(ui_locales));
   }
 
   public boolean hasUiLocales() {
@@ -118,7 +123,7 @@ public class RequestObjectParameters {
   }
 
   public IdTokenHint idTokenHint() {
-    return new IdTokenHint(getString(id_token_hint));
+    return new IdTokenHint(getValueOrEmpty(id_token_hint));
   }
 
   public boolean hasIdTokenHint() {
@@ -126,7 +131,7 @@ public class RequestObjectParameters {
   }
 
   public LoginHint loginHint() {
-    return new LoginHint(getString(login_hint));
+    return new LoginHint(getValueOrEmpty(login_hint));
   }
 
   public boolean hasLoginHint() {
@@ -134,7 +139,7 @@ public class RequestObjectParameters {
   }
 
   public AcrValues acrValues() {
-    return new AcrValues(getString(acr_values));
+    return new AcrValues(getValueOrEmpty(acr_values));
   }
 
   public boolean hasAcrValues() {
@@ -142,7 +147,7 @@ public class RequestObjectParameters {
   }
 
   public ClaimsValue claims() {
-    return new ClaimsValue(getString(claims));
+    return new ClaimsValue(getValueOrEmpty(claims));
   }
 
   public boolean hasClaims() {
@@ -150,7 +155,7 @@ public class RequestObjectParameters {
   }
 
   public RequestObject request() {
-    return new RequestObject(getString(request));
+    return new RequestObject(getValueOrEmpty(request));
   }
 
   public boolean hasRequest() {
@@ -158,7 +163,7 @@ public class RequestObjectParameters {
   }
 
   public RequestUri requestUri() {
-    return new RequestUri(getString(request_uri));
+    return new RequestUri(getValueOrEmpty(request_uri));
   }
 
   public boolean hasRequestUri() {
@@ -166,7 +171,7 @@ public class RequestObjectParameters {
   }
 
   public CodeChallenge codeChallenge() {
-    return new CodeChallenge(getString(code_challenge));
+    return new CodeChallenge(getValueOrEmpty(code_challenge));
   }
 
   public boolean hasCodeChallenge() {
@@ -174,38 +179,42 @@ public class RequestObjectParameters {
   }
 
   public CodeChallengeMethod codeChallengeMethod() {
-    return CodeChallengeMethod.of(getString(code_challenge_method));
+    return CodeChallengeMethod.of(getValueOrEmpty(code_challenge_method));
   }
 
   public boolean hasCodeChallengeMethod() {
     return contains(code_challenge_method);
   }
 
-  String getString(OAuthRequestKey key) {
-    Object value = values.get(key.name());
-    if (Objects.isNull(value)) {
-      return "";
-    }
-    return (String) value;
+  public PresentationDefinitionEntity presentationDefinition() {
+    return new PresentationDefinitionEntity(getValueOrEmpty(presentation_definition));
   }
 
-  List<String> getList(OAuthRequestKey key) {
-    Object value = values.get(key.name());
-    if (Objects.isNull(value)) {
-      return List.of();
-    }
-    return (List<String>) value;
+  public boolean hasPresentationDefinition() {
+    return contains(presentation_definition);
+  }
+
+  public PresentationDefinitionUri presentationDefinitionUri() {
+    return new PresentationDefinitionUri(getValueOrEmpty(presentation_definition_uri));
+  }
+
+  public boolean hasPresentationDefinitionUri() {
+    return contains(presentation_definition_uri);
+  }
+
+  public String getValueOrEmpty(OAuthRequestKey key) {
+    return values.getFirstOrEmpty(key.name());
   }
 
   boolean contains(OAuthRequestKey key) {
-    return values.containsKey(key.name());
+    return values.contains(key.name());
   }
 
-  public boolean hasAuthorizationDetailsValue() {
-    return contains(authorization_details);
+  public List<String> multiValueKeys() {
+    return values.multiValueKeys();
   }
 
-  public AuthorizationDetailsValue authorizationDetailsValue() {
-    return new AuthorizationDetailsValue(getList(authorization_details));
+  public AuthorizationDetailsEntity authorizationDetailsValue() {
+    return new AuthorizationDetailsEntity(getValueOrEmpty(authorization_details));
   }
 }

@@ -1,7 +1,9 @@
 package org.idp.server.oauth.identity;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Objects;
+import org.idp.server.verifiablecredential.VerifiableCredential;
 
 public class User implements Serializable {
   String sub;
@@ -24,6 +26,7 @@ public class User implements Serializable {
   Boolean phoneNumberVerified;
   Address address;
   Long updatedAt;
+  List<VerifiableCredential> verifiableCredentials;
 
   public String sub() {
     return sub;
@@ -205,6 +208,15 @@ public class User implements Serializable {
     return this;
   }
 
+  public List<VerifiableCredential> verifiableCredentials() {
+    return verifiableCredentials;
+  }
+
+  public User setVerifiableCredentials(List<VerifiableCredential> verifiableCredentials) {
+    this.verifiableCredentials = verifiableCredentials;
+    return this;
+  }
+
   public boolean exists() {
     return Objects.nonNull(sub) && !sub.isEmpty();
   }
@@ -283,5 +295,9 @@ public class User implements Serializable {
 
   public boolean hasUpdatedAt() {
     return Objects.nonNull(updatedAt);
+  }
+
+  public boolean hasVerifiableCredentials() {
+    return Objects.nonNull(verifiableCredentials) && !verifiableCredentials.isEmpty();
   }
 }

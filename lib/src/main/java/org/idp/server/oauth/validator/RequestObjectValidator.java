@@ -2,7 +2,7 @@ package org.idp.server.oauth.validator;
 
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.oauth.OAuthRequestParameters;
+import org.idp.server.oauth.request.OAuthRequestParameters;
 
 public class RequestObjectValidator {
 

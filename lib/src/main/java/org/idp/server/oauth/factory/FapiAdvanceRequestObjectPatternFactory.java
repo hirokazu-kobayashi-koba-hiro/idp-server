@@ -6,15 +6,15 @@ import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.AuthorizationProfile;
-import org.idp.server.oauth.OAuthRequestParameters;
-import org.idp.server.oauth.RequestObjectParameters;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestBuilder;
+import org.idp.server.oauth.request.OAuthRequestParameters;
+import org.idp.server.oauth.request.RequestObjectParameters;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;
 import org.idp.server.type.pkce.CodeChallengeMethod;
-import org.idp.server.type.rar.AuthorizationDetailsValue;
+import org.idp.server.type.rar.AuthorizationDetailsEntity;
 
 /**
  * shall only use the parameters included in the signed request object passed via the request or
@@ -52,8 +52,8 @@ public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequ
     RequestUri requestUri = parameters.requestUri();
     CodeChallenge codeChallenge = requestObjectParameters.codeChallenge();
     CodeChallengeMethod codeChallengeMethod = requestObjectParameters.codeChallengeMethod();
-    AuthorizationDetailsValue authorizationDetailsValue =
-        requestObjectParameters.authorizationDetailsValue();
+    AuthorizationDetailsEntity authorizationDetailsEntity =
+        requestObjectParameters.authorizationDetailsEntity();
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());
@@ -83,7 +83,7 @@ public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequ
     builder.add(convertClaimsPayload(claimsValue));
     builder.add(codeChallenge);
     builder.add(codeChallengeMethod);
-    builder.add(convertAuthorizationDetails(authorizationDetailsValue));
+    builder.add(convertAuthorizationDetails(authorizationDetailsEntity));
     return builder.build();
   }
 }

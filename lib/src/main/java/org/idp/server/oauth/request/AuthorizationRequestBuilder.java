@@ -7,6 +7,8 @@ import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;
 import org.idp.server.type.pkce.CodeChallengeMethod;
+import org.idp.server.type.verifiablepresentation.PresentationDefinitionUri;
+import org.idp.server.verifiablepresentation.request.PresentationDefinition;
 
 /** AuthorizationRequestBuilder */
 public class AuthorizationRequestBuilder {
@@ -35,6 +37,8 @@ public class AuthorizationRequestBuilder {
   CodeChallenge codeChallenge = new CodeChallenge();
   CodeChallengeMethod codeChallengeMethod = CodeChallengeMethod.undefined;
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
+  PresentationDefinition presentationDefinition = new PresentationDefinition();
+  PresentationDefinitionUri presentationDefinitionUri = new PresentationDefinitionUri();
 
   public AuthorizationRequestBuilder() {}
 
@@ -158,6 +162,16 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
+  public AuthorizationRequestBuilder add(PresentationDefinition presentationDefinition) {
+    this.presentationDefinition = presentationDefinition;
+    return this;
+  }
+
+  public AuthorizationRequestBuilder add(PresentationDefinitionUri presentationDefinitionUri) {
+    this.presentationDefinitionUri = presentationDefinitionUri;
+    return this;
+  }
+
   public AuthorizationRequest build() {
     return new AuthorizationRequest(
         identifier,
@@ -183,6 +197,8 @@ public class AuthorizationRequestBuilder {
         claimsPayload,
         codeChallenge,
         codeChallengeMethod,
-        authorizationDetails);
+        authorizationDetails,
+        presentationDefinition,
+        presentationDefinitionUri);
   }
 }

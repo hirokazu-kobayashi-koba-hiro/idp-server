@@ -7,6 +7,7 @@ import org.idp.server.type.extension.ResponseModeValue;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
 import org.idp.server.type.oidc.ResponseMode;
+import org.idp.server.type.verifiablepresentation.VpToken;
 
 public class AuthorizationResponseBuilder {
   RedirectUri redirectUri;
@@ -19,6 +20,7 @@ public class AuthorizationResponseBuilder {
   ExpiresIn expiresIn = new ExpiresIn();
   Scopes scopes = new Scopes();
   IdToken idToken = new IdToken();
+  VpToken vpToken = new VpToken();
   TokenIssuer tokenIssuer;
   JarmPayload jarmPayload = new JarmPayload();
   QueryParams queryParams;
@@ -77,6 +79,12 @@ public class AuthorizationResponseBuilder {
   public AuthorizationResponseBuilder add(IdToken idToken) {
     this.idToken = idToken;
     this.queryParams.add("id_token", idToken.value());
+    return this;
+  }
+
+  public AuthorizationResponseBuilder add(VpToken vpToken) {
+    this.vpToken = vpToken;
+    this.queryParams.add("vp_token", vpToken.value());
     return this;
   }
 
