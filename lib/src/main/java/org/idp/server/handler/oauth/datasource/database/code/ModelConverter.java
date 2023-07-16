@@ -14,6 +14,7 @@ import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.*;
+import org.idp.server.verifiablepresentation.request.PresentationDefinition;
 
 class ModelConverter {
 
@@ -31,6 +32,8 @@ class ModelConverter {
     ClaimsPayload claimsPayload = convertClaimsPayload(stringMap.get("claims"));
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
+    PresentationDefinition presentationDefinition =
+        convertPresentationDefinition(stringMap.get("presentation_definition"));
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrant(
             user,
@@ -39,7 +42,8 @@ class ModelConverter {
             scopes,
             claimsPayload,
             customProperties,
-            authorizationDetails);
+            authorizationDetails,
+            presentationDefinition);
     AuthorizationCode authorizationCode =
         new AuthorizationCode(stringMap.get("authorization_code"));
     ExpiredAt expiredAt = new ExpiredAt(stringMap.get("expired_at"));
@@ -72,6 +76,18 @@ class ModelConverter {
       return new AuthorizationDetails(authorizationDetailsList);
     } catch (Exception exception) {
       return new AuthorizationDetails();
+    }
+  }
+
+  private static PresentationDefinition convertPresentationDefinition(String value) {
+    if (value.isEmpty()) {
+      return new PresentationDefinition();
+    }
+    try {
+      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+      return jsonConverter.read(value, PresentationDefinition.class);
+    } catch (Exception exception) {
+      return new PresentationDefinition();
     }
   }
 }

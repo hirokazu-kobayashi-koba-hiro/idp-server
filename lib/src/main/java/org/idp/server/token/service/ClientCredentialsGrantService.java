@@ -3,12 +3,9 @@ package org.idp.server.token.service;
 import java.util.UUID;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.grant.AuthorizationGrant;
-import org.idp.server.oauth.identity.ClaimsPayload;
-import org.idp.server.oauth.identity.User;
-import org.idp.server.oauth.rar.AuthorizationDetails;
+import org.idp.server.oauth.grant.AuthorizationGrantBuilder;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenCreatable;
 import org.idp.server.token.*;
@@ -40,16 +37,10 @@ public class ClientCredentialsGrantService
     verifier.verify();
 
     CustomProperties customProperties = context.customProperties();
-    // TODO
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrant(
-            new User(),
-            new Authentication(),
-            clientConfiguration.clientId(),
-            scopes,
-            new ClaimsPayload(),
-            customProperties,
-            new AuthorizationDetails());
+        new AuthorizationGrantBuilder(clientConfiguration.clientId(), scopes)
+            .add(customProperties)
+            .build();
 
     AccessToken accessToken =
         createAccessToken(

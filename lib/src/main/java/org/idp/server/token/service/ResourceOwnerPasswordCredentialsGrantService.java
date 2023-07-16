@@ -6,8 +6,8 @@ import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.grant.AuthorizationGrant;
+import org.idp.server.oauth.grant.AuthorizationGrantBuilder;
 import org.idp.server.oauth.identity.*;
-import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.AccessTokenCreatable;
 import org.idp.server.oauth.token.RefreshToken;
@@ -18,7 +18,6 @@ import org.idp.server.token.validator.ResourceOwnerPasswordGrantValidator;
 import org.idp.server.token.verifier.ResourceOwnerPasswordGrantVerifier;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.extension.GrantFlow;
-import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.Scopes;
 import org.idp.server.type.oidc.IdToken;
 
@@ -67,20 +66,12 @@ public class ResourceOwnerPasswordCredentialsGrantService
         new ResourceOwnerPasswordGrantVerifier(user, scopes);
     verifier.verify();
 
-    ClientId clientId = clientConfiguration.clientId();
-
-    ClaimsPayload claimsPayload = new ClaimsPayload();
     CustomProperties customProperties = context.customProperties();
-    // TODO
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrant(
-            user,
-            new Authentication(),
-            clientId,
-            scopes,
-            claimsPayload,
-            customProperties,
-            new AuthorizationDetails());
+        new AuthorizationGrantBuilder(clientConfiguration.clientId(), scopes)
+            .add(user)
+            .add(customProperties)
+            .build();
 
     AccessToken accessToken =
         createAccessToken(

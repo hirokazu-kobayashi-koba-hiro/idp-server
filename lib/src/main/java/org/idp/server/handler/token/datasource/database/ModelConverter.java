@@ -5,6 +5,7 @@ import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationGrant;
+import org.idp.server.oauth.grant.AuthorizationGrantBuilder;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.mtls.ClientCertificationThumbprint;
@@ -40,14 +41,14 @@ class ModelConverter {
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrant(
-            user,
-            authentication,
-            clientId,
-            scopes,
-            claimsPayload,
-            customProperties,
-            authorizationDetails);
+        new AuthorizationGrantBuilder(clientId, scopes)
+            .add(user)
+            .add(authentication)
+            .add(claimsPayload)
+            .add(customProperties)
+            .add(authorizationDetails)
+            .build();
+
     ClientCertificationThumbprint thumbprint =
         new ClientCertificationThumbprint(stringMap.get("client_certification_thumbprint"));
     ExpiresIn expiresIn = new ExpiresIn(stringMap.get("expires_in"));

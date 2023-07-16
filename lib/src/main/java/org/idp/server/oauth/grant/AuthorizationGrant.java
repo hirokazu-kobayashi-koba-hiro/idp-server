@@ -9,6 +9,7 @@ import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.Scopes;
 import org.idp.server.type.oauth.Subject;
+import org.idp.server.verifiablepresentation.request.PresentationDefinition;
 
 public class AuthorizationGrant {
 
@@ -19,6 +20,7 @@ public class AuthorizationGrant {
   ClaimsPayload claimsPayload;
   CustomProperties customProperties;
   AuthorizationDetails authorizationDetails;
+  PresentationDefinition presentationDefinition;
 
   public AuthorizationGrant() {}
 
@@ -29,7 +31,8 @@ public class AuthorizationGrant {
       Scopes scopes,
       ClaimsPayload claimsPayload,
       CustomProperties customProperties,
-      AuthorizationDetails authorizationDetails) {
+      AuthorizationDetails authorizationDetails,
+      PresentationDefinition presentationDefinition) {
     this.user = user;
     this.authentication = authentication;
     this.clientId = clientId;
@@ -37,6 +40,7 @@ public class AuthorizationGrant {
     this.claimsPayload = claimsPayload;
     this.customProperties = customProperties;
     this.authorizationDetails = authorizationDetails;
+    this.presentationDefinition = presentationDefinition;
   }
 
   public User user() {
@@ -109,5 +113,13 @@ public class AuthorizationGrant {
 
   public boolean hasClaim() {
     return claimsPayload.exists();
+  }
+
+  public PresentationDefinition presentationDefinition() {
+    return presentationDefinition;
+  }
+
+  public boolean hasPresentationDefinition() {
+    return presentationDefinition.exists();
   }
 }

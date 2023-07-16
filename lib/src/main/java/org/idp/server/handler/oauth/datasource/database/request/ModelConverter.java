@@ -14,6 +14,8 @@ import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;
 import org.idp.server.type.pkce.CodeChallengeMethod;
+import org.idp.server.type.verifiablepresentation.PresentationDefinitionUri;
+import org.idp.server.verifiablepresentation.request.PresentationDefinition;
 
 class ModelConverter {
 
@@ -43,6 +45,8 @@ class ModelConverter {
     builder.add(new CodeChallenge(stringMap.get("code_challenge")));
     builder.add(CodeChallengeMethod.of(stringMap.get("code_challenge_method")));
     builder.add(convertAuthorizationDetails(stringMap.get("authorization_details")));
+    builder.add(convertPresentationDefinition(stringMap.get("presentation_definition")));
+    builder.add(new PresentationDefinitionUri(stringMap.get("presentation_definition_uri")));
     return builder.build();
   }
 
@@ -71,6 +75,18 @@ class ModelConverter {
       return new AuthorizationDetails(authorizationDetailsList);
     } catch (Exception exception) {
       return new AuthorizationDetails();
+    }
+  }
+
+  private static PresentationDefinition convertPresentationDefinition(String value) {
+    if (value.isEmpty()) {
+      return new PresentationDefinition();
+    }
+    try {
+      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+      return jsonConverter.read(value, PresentationDefinition.class);
+    } catch (Exception exception) {
+      return new PresentationDefinition();
     }
   }
 }

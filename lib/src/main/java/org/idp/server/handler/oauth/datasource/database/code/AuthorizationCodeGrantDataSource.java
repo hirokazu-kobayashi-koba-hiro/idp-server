@@ -28,7 +28,7 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
     SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
     String sqlTemplate =
         """
-                SELECT authorization_request_id, authorization_code, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expired_at
+                SELECT authorization_request_id, authorization_code, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expired_at, presentation_definition
                 FROM authorization_code_grant
                 WHERE authorization_code = '%s';
                 """;

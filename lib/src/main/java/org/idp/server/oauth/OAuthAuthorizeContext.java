@@ -16,6 +16,7 @@ import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.ResponseMode;
+import org.idp.server.verifiablepresentation.request.PresentationDefinition;
 
 /** OAuthAuthorizeContext */
 public class OAuthAuthorizeContext implements ResponseModeDecidable {
@@ -68,6 +69,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     Scopes scopes = authorizationRequest.scope();
     ClaimsPayload claimsPayload = authorizationRequest.claimsPayload();
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
+    PresentationDefinition presentationDefinition = authorizationRequest.presentationDefinition();
     return new AuthorizationGrant(
         user,
         authentication,
@@ -75,7 +77,8 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
         scopes,
         claimsPayload,
         customProperties,
-        authorizationDetails);
+        authorizationDetails,
+        presentationDefinition);
   }
 
   public CustomProperties customProperties() {

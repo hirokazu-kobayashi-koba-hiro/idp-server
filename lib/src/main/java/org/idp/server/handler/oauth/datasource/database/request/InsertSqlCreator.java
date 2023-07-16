@@ -3,6 +3,7 @@ package org.idp.server.handler.oauth.datasource.database.request;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.verifiablepresentation.request.PresentationDefinition;
 
 public class InsertSqlCreator {
 
@@ -75,11 +76,25 @@ public class InsertSqlCreator {
       builder.setAuthorizationDetails(
           convertAuthorizationDetails(authorizationRequest.authorizationDetails()));
     }
+    if (authorizationRequest.hasPresentationDefinition()) {
+      builder.setPresentationDefinition(
+          convertPresentationDefinition(authorizationRequest.presentationDefinition()));
+    }
+    if (authorizationRequest.hasPresentationDefinitionUri()) {
+      builder.setPresentationDefinitionUri(
+          authorizationRequest.presentationDefinitionUri().value());
+    }
     return builder.build();
   }
 
   private static String convertAuthorizationDetails(AuthorizationDetails authorizationDetails) {
     JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
     return jsonConverter.write(authorizationDetails.toMapValues());
+  }
+
+  private static String convertPresentationDefinition(
+      PresentationDefinition presentationDefinition) {
+    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    return jsonConverter.write(presentationDefinition);
   }
 }

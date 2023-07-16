@@ -2,14 +2,14 @@ package org.idp.server.handler.oauth.datasource.database.code;
 
 class InsertSqlBuilder {
   String sql;
-  int columnSize = 11;
+  int columnSize = 12;
 
   InsertSqlBuilder(String identifier) {
     this.sql =
         """
                 INSERT INTO public.authorization_code_grant
-                (authorization_request_id, authorization_code, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expired_at)
-                VALUES ('$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$10', '$11');
+                (authorization_request_id, authorization_code, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expired_at, presentation_definition)
+                VALUES ('$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$10', '$11', '$12');
                 """;
     this.sql = replace(1, identifier);
   }
@@ -61,6 +61,11 @@ class InsertSqlBuilder {
 
   InsertSqlBuilder setExpiredAt(String expiredAt) {
     this.sql = replace(11, expiredAt);
+    return this;
+  }
+
+  InsertSqlBuilder setPresentationDefinition(String presentationDefinition) {
+    this.sql = replace(12, presentationDefinition);
     return this;
   }
 

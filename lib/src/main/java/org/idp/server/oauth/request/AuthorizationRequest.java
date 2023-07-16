@@ -297,6 +297,10 @@ public class AuthorizationRequest {
     return presentationDefinitionUri;
   }
 
+  public boolean hasPresentationDefinitionUri() {
+    return presentationDefinitionUri.exists();
+  }
+
   public boolean isInvalidDisplay() {
     return display.isUnknown();
   }

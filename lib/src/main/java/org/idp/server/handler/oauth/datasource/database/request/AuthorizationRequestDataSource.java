@@ -28,7 +28,7 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
     SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
     String sqlTemplate =
         """
-            SELECT id, token_issuer, profile, scopes, response_type, client_id, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details FROM authorization_request
+            SELECT id, token_issuer, profile, scopes, response_type, client_id, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, presentation_definition, presentation_definition_uri FROM authorization_request
             WHERE id = '%s';
             """;
     String sql = String.format(sqlTemplate, authorizationRequestIdentifier.value());
@@ -46,7 +46,7 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
     SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
     String sqlTemplate =
         """
-                SELECT id, token_issuer, profile, scopes, response_type, client_id, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details FROM authorization_request
+                SELECT id, token_issuer, profile, scopes, response_type, client_id, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, presentation_definition, presentation_definition_uri FROM authorization_request
                 WHERE id = '%s';
                 """;
     String sql = String.format(sqlTemplate, authorizationRequestIdentifier.value());
