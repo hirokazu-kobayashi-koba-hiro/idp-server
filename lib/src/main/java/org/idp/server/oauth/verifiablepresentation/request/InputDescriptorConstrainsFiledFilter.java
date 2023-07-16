@@ -1,4 +1,4 @@
-package org.idp.server.verifiablepresentation.request;
+package org.idp.server.oauth.verifiablepresentation.request;
 
 import org.idp.server.basic.json.JsonReadable;
 

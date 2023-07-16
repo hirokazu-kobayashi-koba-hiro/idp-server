@@ -1,57 +1,40 @@
 package org.idp.server.oauth.token;
 
-import java.time.LocalDateTime;
 import java.util.Map;
-import org.idp.server.basic.date.SystemDateTime;
-import org.idp.server.basic.jose.JoseInvalidException;
-import org.idp.server.basic.jose.JsonWebKeyInvalidException;
-import org.idp.server.basic.jose.JsonWebSignature;
-import org.idp.server.basic.jose.JsonWebSignatureFactory;
+import org.idp.server.basic.base64.Base64Codeable;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ConfigurationInvalidException;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.grant.AuthorizationGrant;
-import org.idp.server.type.extension.CreatedAt;
-import org.idp.server.type.extension.ExpiredAt;
-import org.idp.server.type.oauth.AccessTokenValue;
-import org.idp.server.type.oauth.ExpiresIn;
+import org.idp.server.oauth.identity.User;
+import org.idp.server.oauth.verifiablepresentation.response.VerifiablePresentationBuilder;
+import org.idp.server.type.verifiablecredential.VerifiableCredentialContext;
+import org.idp.server.type.verifiablecredential.VerifiableCredentialType;
 import org.idp.server.type.verifiablepresentation.VpToken;
 
-public interface VpTokenCreatable {
+public interface VpTokenCreatable extends Base64Codeable {
 
-  default VpToken createAccessToken(
+  default VpToken createVpToken(
+      User user,
       AuthorizationGrant authorizationGrant,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration,
       ClientCredentials clientCredentials) {
     try {
-      LocalDateTime localDateTime = SystemDateTime.now();
-      CreatedAt createdAt = new CreatedAt(localDateTime);
-      long accessTokenDuration = serverConfiguration.accessTokenDuration();
-      ExpiresIn expiresIn = new ExpiresIn(accessTokenDuration);
-      ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(accessTokenDuration));
-      AccessTokenPayloadBuilder payloadBuilder = new AccessTokenPayloadBuilder();
-      payloadBuilder.add(serverConfiguration.tokenIssuer());
-      payloadBuilder.add(authorizationGrant.subject());
-      payloadBuilder.add(authorizationGrant.clientId());
-      payloadBuilder.add(authorizationGrant.scopes());
-      payloadBuilder.add(authorizationGrant.customProperties());
-      payloadBuilder.add(authorizationGrant.authorizationDetails());
-      payloadBuilder.add(createdAt);
-      payloadBuilder.add(expiredAt);
 
-      Map<String, Object> accessTokenPayload = payloadBuilder.build();
-      JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
-      JsonWebSignature jsonWebSignature =
-          jsonWebSignatureFactory.createWithAsymmetricKey(
-              accessTokenPayload,
-              Map.of(),
-              serverConfiguration.jwks(),
-              serverConfiguration.tokenSignedKeyId());
-      AccessTokenValue accessTokenValue = new AccessTokenValue(jsonWebSignature.serialize());
-      return new VpToken();
-    } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
+      VerifiablePresentationBuilder builder =
+          new VerifiablePresentationBuilder()
+              .addContext(VerifiableCredentialContext.values)
+              .addType(VerifiableCredentialType.vp.types())
+              .addVerifiableCredential(user.verifiableCredentials());
+
+      Map<String, Object> verifiablePresentation = builder.build();
+      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+      String encodeWithUrlSafe = encodeWithUrlSafe(jsonConverter.write(verifiablePresentation));
+      return new VpToken(encodeWithUrlSafe);
+    } catch (Exception exception) {
       throw new ConfigurationInvalidException(exception);
     }
   }

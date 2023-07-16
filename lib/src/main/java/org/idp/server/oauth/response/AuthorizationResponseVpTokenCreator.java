@@ -7,8 +7,6 @@ import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.token.VpTokenCreatable;
 import org.idp.server.type.extension.JarmPayload;
 import org.idp.server.type.extension.ResponseModeValue;
-import org.idp.server.type.oauth.ExpiresIn;
-import org.idp.server.type.oauth.TokenType;
 import org.idp.server.type.verifiablepresentation.VpToken;
 
 public class AuthorizationResponseVpTokenCreator
@@ -21,7 +19,8 @@ public class AuthorizationResponseVpTokenCreator
     AuthorizationGrant authorizationGrant = context.toAuthorizationGranted();
 
     VpToken vpToken =
-        createAccessToken(
+        createVpToken(
+            context.user(),
             authorizationGrant,
             context.serverConfiguration(),
             context.clientConfiguration(),
@@ -33,8 +32,6 @@ public class AuthorizationResponseVpTokenCreator
                 new ResponseModeValue("#"),
                 context.tokenIssuer())
             .add(authorizationRequest.state())
-            .add(TokenType.Bearer)
-            .add(new ExpiresIn(context.serverConfiguration().accessTokenDuration()))
             .add(vpToken)
             .add(authorizationGrant.scopes());
 

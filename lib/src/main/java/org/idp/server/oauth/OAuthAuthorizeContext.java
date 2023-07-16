@@ -12,11 +12,11 @@ import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.response.ResponseModeDecidable;
+import org.idp.server.oauth.verifiablepresentation.request.PresentationDefinition;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.ResponseMode;
-import org.idp.server.verifiablepresentation.request.PresentationDefinition;
 
 /** OAuthAuthorizeContext */
 public class OAuthAuthorizeContext implements ResponseModeDecidable {

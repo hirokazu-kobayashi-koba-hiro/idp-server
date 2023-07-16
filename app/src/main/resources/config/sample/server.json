@@ -44,7 +44,9 @@
     "code token id_token",
     "token id_token",
     "code id_token",
-    "none"
+    "none",
+    "vp_token",
+    "vp_token id_token"
   ],
   "acr_values_supported": [
     "urn:mace:incommon:iap:silver",

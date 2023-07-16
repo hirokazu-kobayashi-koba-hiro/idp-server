@@ -4,10 +4,10 @@ import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.rar.AuthorizationDetails;
+import org.idp.server.oauth.verifiablepresentation.request.PresentationDefinition;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.Scopes;
-import org.idp.server.verifiablepresentation.request.PresentationDefinition;
 
 public class AuthorizationGrantBuilder {
 

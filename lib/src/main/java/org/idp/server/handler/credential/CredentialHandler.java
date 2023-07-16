@@ -7,6 +7,7 @@ import org.idp.server.configuration.ServerConfigurationRepository;
 import org.idp.server.handler.credential.io.CredentialRequest;
 import org.idp.server.handler.credential.io.CredentialRequestStatus;
 import org.idp.server.handler.credential.io.CredentialResponse;
+import org.idp.server.oauth.identity.VerifiableCredential;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.repository.OAuthTokenRepository;

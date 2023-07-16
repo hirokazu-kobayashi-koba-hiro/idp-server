@@ -15,6 +15,8 @@ export const convertToAuthorizationResponse = (redirectUri) => {
     state: params.get("state"),
     iss: params.get("iss"),
     response: params.get("response"),
+    vpToken: params.get("vp_token"),
+    presentationSubmission: params.get("presentation_submission"),
     error: params.get("error"),
     errorDescription: params.get("error_description"),
   };

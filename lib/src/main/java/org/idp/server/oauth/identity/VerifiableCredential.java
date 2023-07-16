@@ -1,4 +1,4 @@
-package org.idp.server.verifiablecredential;
+package org.idp.server.oauth.identity;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;

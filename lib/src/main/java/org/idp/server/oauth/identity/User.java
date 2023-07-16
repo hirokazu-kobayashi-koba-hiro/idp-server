@@ -3,7 +3,6 @@ package org.idp.server.oauth.identity;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
-import org.idp.server.verifiablecredential.VerifiableCredential;
 
 public class User implements Serializable {
   String sub;

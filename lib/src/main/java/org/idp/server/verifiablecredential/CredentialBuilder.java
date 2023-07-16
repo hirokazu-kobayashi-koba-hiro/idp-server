@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.oauth.identity.VerifiableCredential;
 
 public class CredentialBuilder {
   Map<String, Object> values;

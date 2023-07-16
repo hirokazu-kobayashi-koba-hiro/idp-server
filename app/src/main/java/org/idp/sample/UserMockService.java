@@ -16,6 +16,7 @@ import org.idp.server.oauth.OAuthSessionKey;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.Address;
 import org.idp.server.oauth.identity.User;
+import org.idp.server.oauth.identity.VerifiableCredential;
 import org.idp.server.oauth.interaction.UserInteraction;
 import org.idp.server.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.type.ciba.UserCode;
@@ -94,6 +95,7 @@ public class UserMockService
   }
 
   public User getUser() {
+    VerifiableCredential verifiableCredential = getCredential();
     return new User()
         .setSub("001")
         .setName("ito ichiro")
@@ -114,7 +116,51 @@ public class UserMockService
         .setPhoneNumber("09012345678")
         .setPhoneNumberVerified(false)
         .setAddress(new Address().setStreetAddress("street"))
-        .setUpdatedAt(SystemDateTime.now().toEpochSecond(ZoneOffset.UTC));
+        .setUpdatedAt(SystemDateTime.now().toEpochSecond(ZoneOffset.UTC))
+        .setVerifiableCredentials(List.of(verifiableCredential));
+  }
+
+  public VerifiableCredential getCredential() {
+    String vc =
+        """
+                {
+                    "@context": [
+                        "https://www.w3.org/2018/credentials/v1",
+                        "https://www.w3.org/2018/credentials/examples/v1"
+                    ],
+                    "id": "http://example.edu/credentials/1872",
+                    "type": [
+                        "VerifiableCredential",
+                        "AlumniCredential"
+                    ],
+                    "issuer": "https://example.edu/issuers/565049",
+                    "issuanceDate": "2010-01-01T19:23:24Z",
+                    "credentialSubject": {
+                        "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+                        "alumniOf": {
+                            "id": "did:example:c276e12ec21ebfeb1f712ebc6f1",
+                            "name": [
+                                {
+                                    "value": "Example University",
+                                    "lang": "en"
+                                },
+                                {
+                                    "value": "Exemple d'Universite",
+                                    "lang": "fr"
+                                }
+                            ]
+                        }
+                    },
+                    "proof": {
+                        "type": "RsaSignature2018",
+                        "created": "2017-06-18T21:19:10Z",
+                        "proofPurpose": "assertionMethod",
+                        "verificationMethod": "https://example.edu/issuers/565049#key-1",
+                        "jws": "eyJhbGciOiJSUzI1NiIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..TCYt5XsITJX1CxPCT8yAV-TVkIEq_PbChOMqsLfRoPsnsgw5WEuts01mq-pQy7UJiN5mgRxD-WUcX16dUEMGlv50aqzpqh4Qktb3rk-BuQy72IFLOqV0G_zS245-kronKb78cPN25DGlcTwLtjPAYuNzVBAh4vGHSrQyHUdBBPM"
+                    }
+                }
+                """;
+    return VerifiableCredential.parse(vc);
   }
 
   public UserInteraction getUserInteraction(String sessionKey, String username, String password) {
