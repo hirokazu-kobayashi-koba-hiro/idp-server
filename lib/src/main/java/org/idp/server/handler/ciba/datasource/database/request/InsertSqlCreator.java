@@ -28,6 +28,9 @@ public class InsertSqlCreator {
       builder.setAcrValues(backchannelAuthenticationRequest.acrValues().toStringValues());
     }
     if (backchannelAuthenticationRequest.hasUserCode()) {
+      builder.setUserCode(backchannelAuthenticationRequest.userCode().value());
+    }
+    if (backchannelAuthenticationRequest.hasBindingMessage()) {
       builder.setBindMessage(backchannelAuthenticationRequest.bindingMessage().value());
     }
     if (backchannelAuthenticationRequest.hasClientNotificationToken()) {

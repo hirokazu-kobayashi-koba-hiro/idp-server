@@ -1,6 +1,8 @@
 package org.idp.server.handler.oauth.datasource.database.request;
 
-class InsertSqlBuilder {
+import org.idp.server.basic.sql.SqlBaseBuilder;
+
+class InsertSqlBuilder implements SqlBaseBuilder {
   String sql;
   int columnSize = 25;
 
@@ -11,126 +13,126 @@ class InsertSqlBuilder {
             (id, token_issuer, profile, scopes, response_type, client_id, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, presentation_definition, presentation_definition_uri)
             VALUES ('$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$10', '$11', '$12', '$13', '$14', '$15', '$16', '$17', '$18', '$19', '$20', '$21', '$22', '$23', '$24', '$25');
             """;
-    this.sql = replace(1, identifier);
+    this.sql = replace(sql, 1, identifier);
   }
 
   InsertSqlBuilder setTokenIssuer(String tokenIssuer) {
-    this.sql = replace(2, tokenIssuer);
+    this.sql = replace(sql, 2, tokenIssuer);
     return this;
   }
 
   InsertSqlBuilder setProfile(String profile) {
-    this.sql = replace(3, profile);
+    this.sql = replace(sql, 3, profile);
     return this;
   }
 
   InsertSqlBuilder setScopes(String scopes) {
-    this.sql = replace(4, scopes);
+    this.sql = replace(sql, 4, scopes);
     return this;
   }
 
   InsertSqlBuilder setResponseType(String responseType) {
-    this.sql = replace(5, responseType);
+    this.sql = replace(sql, 5, responseType);
     return this;
   }
 
   InsertSqlBuilder setClientId(String clientId) {
-    this.sql = replace(6, clientId);
+    this.sql = replace(sql, 6, clientId);
     return this;
   }
 
   InsertSqlBuilder setRedirectUri(String redirectUri) {
-    this.sql = replace(7, redirectUri);
+    this.sql = replace(sql, 7, redirectUri);
     return this;
   }
 
   InsertSqlBuilder setState(String state) {
-    this.sql = replace(8, state);
+    this.sql = replace(sql, 8, state);
     return this;
   }
 
   InsertSqlBuilder setResponseMode(String responseMode) {
-    this.sql = replace(9, responseMode);
+    this.sql = replace(sql, 9, responseMode);
     return this;
   }
 
   InsertSqlBuilder setNonce(String nonce) {
-    this.sql = replace(10, nonce);
+    this.sql = replace(sql, 10, nonce);
     return this;
   }
 
   InsertSqlBuilder setDisplay(String display) {
-    this.sql = replace(11, display);
+    this.sql = replace(sql, 11, display);
     return this;
   }
 
   InsertSqlBuilder setPrompts(String prompts) {
-    this.sql = replace(12, prompts);
+    this.sql = replace(sql, 12, prompts);
     return this;
   }
 
   InsertSqlBuilder setMaxAge(String maxAge) {
-    this.sql = replace(13, maxAge);
+    this.sql = replace(sql, 13, maxAge);
     return this;
   }
 
   InsertSqlBuilder setUiLocales(String uiLocales) {
-    this.sql = replace(14, uiLocales);
+    this.sql = replace(sql, 14, uiLocales);
     return this;
   }
 
   InsertSqlBuilder setIdTokenHint(String idTokenHint) {
-    this.sql = replace(15, idTokenHint);
+    this.sql = replace(sql, 15, idTokenHint);
     return this;
   }
 
   InsertSqlBuilder setLoginHint(String loginHint) {
-    this.sql = replace(16, loginHint);
+    this.sql = replace(sql, 16, loginHint);
     return this;
   }
 
   InsertSqlBuilder setAcrValues(String acrValues) {
-    this.sql = replace(17, acrValues);
+    this.sql = replace(sql, 17, acrValues);
     return this;
   }
 
   InsertSqlBuilder setClaimsValue(String claimsValue) {
-    this.sql = replace(18, claimsValue);
+    this.sql = replace(sql, 18, claimsValue);
     return this;
   }
 
   InsertSqlBuilder setRequestObject(String requestObject) {
-    this.sql = replace(19, requestObject);
+    this.sql = replace(sql, 19, requestObject);
     return this;
   }
 
   InsertSqlBuilder setRequestUri(String requestUri) {
-    this.sql = replace(20, requestUri);
+    this.sql = replace(sql, 20, requestUri);
     return this;
   }
 
   InsertSqlBuilder setCodeChallenge(String codeChallenge) {
-    this.sql = replace(21, codeChallenge);
+    this.sql = replace(sql, 21, codeChallenge);
     return this;
   }
 
   InsertSqlBuilder setCodeChallengeMethod(String codeChallengeMethod) {
-    this.sql = replace(22, codeChallengeMethod);
+    this.sql = replace(sql, 22, codeChallengeMethod);
     return this;
   }
 
   InsertSqlBuilder setAuthorizationDetails(String authorizationDetails) {
-    this.sql = replace(23, authorizationDetails);
+    this.sql = replace(sql, 23, authorizationDetails);
     return this;
   }
 
   InsertSqlBuilder setPresentationDefinition(String presentationDefinition) {
-    this.sql = replace(24, presentationDefinition);
+    this.sql = replace(sql, 24, presentationDefinition);
     return this;
   }
 
   InsertSqlBuilder setPresentationDefinitionUri(String presentationDefinitionUri) {
-    this.sql = replace(25, presentationDefinitionUri);
+    this.sql = replace(sql, 25, presentationDefinitionUri);
     return this;
   }
 
@@ -140,9 +142,5 @@ class InsertSqlBuilder {
     }
     System.out.println(sql);
     return sql;
-  }
-
-  private String replace(int index, String value) {
-    return sql.replace(String.format("'$%d'", index), String.format("'%s'", value));
   }
 }

@@ -15,14 +15,17 @@ class InsertSqlCreator {
             .setTokenIssuer(oAuthToken.tokenIssuer().value())
             .setTokenTYpe(oAuthToken.tokenType().name())
             .setAccessToken(oAuthToken.accessTokenValue().value())
-            .setUserId(authorizationGrant.user().sub())
-            .setUserPayload(toJson(authorizationGrant.user()))
             .setAuthentication(toJson(authorizationGrant.authentication()))
             .setClientId(authorizationGrant.clientId().value())
             .setScopes(authorizationGrant.scopes().toStringValues())
             .setExpiredIn(oAuthToken.accessToken().expiresIn().toStringValue())
             .setAccessTokenExpiredAt(oAuthToken.accessToken().expiredAt().toStringValue())
             .setAccessTokenCreatedAt(oAuthToken.accessToken().createdAt().toStringValue());
+    if (authorizationGrant.hasUser()) {
+      builder
+          .setUserId(authorizationGrant.user().sub())
+          .setUserPayload(toJson(authorizationGrant.user()));
+    }
     if (authorizationGrant.hasClaim()) {
       builder.setClaims(toJson(authorizationGrant.claimsPayload()));
     }

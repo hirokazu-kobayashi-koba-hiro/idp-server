@@ -29,6 +29,10 @@ class InsertSqlCreator {
       builder.setAuthorizationDetails(
           toJson(authorizationCodeGrant.authorizationGrant().authorizationDetails().toMapValues()));
     }
+    if (authorizationCodeGrant.authorizationGrant().hasPresentationDefinition()) {
+      builder.setPresentationDefinition(
+          toJson(authorizationCodeGrant.authorizationGrant().presentationDefinition()));
+    }
 
     return builder.build();
   }
