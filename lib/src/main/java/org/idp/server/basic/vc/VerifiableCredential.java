@@ -1,4 +1,4 @@
-package org.idp.server.oauth.identity;
+package org.idp.server.basic.vc;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;

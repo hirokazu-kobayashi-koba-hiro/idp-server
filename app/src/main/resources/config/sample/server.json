@@ -161,6 +161,20 @@
     "A128GCM"
   ],
   "tls_client_certificate_bound_access_tokens": true,
+  "vp_formats_supported": {
+    "jwt_vc_json": {
+      "alg_values_supported": [
+        "ES256K",
+        "ES384"
+      ]
+    },
+    "jwt_vp_json": {
+      "alg_values_supported": [
+        "ES256K",
+        "EdDSA"
+      ]
+    }
+  },
   "token_signed_key_id": "access_token",
   "id_token_signed_key_id": "access_token",
   "access_token_duration": 3600,

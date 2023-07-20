@@ -1,49 +1,48 @@
-package org.idp.server.verifiablecredential;
+package org.idp.server.basic.vc;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.oauth.identity.VerifiableCredential;
 
-public class CredentialBuilder {
+public class VerifiableCredentialBuilder {
   Map<String, Object> values;
 
-  public CredentialBuilder() {
+  public VerifiableCredentialBuilder() {
     this.values = new HashMap<>();
   }
 
-  public CredentialBuilder context(List<String> context) {
+  public VerifiableCredentialBuilder context(List<String> context) {
     values.put("@context", context);
     return this;
   }
 
-  public CredentialBuilder id(String id) {
+  public VerifiableCredentialBuilder id(String id) {
     values.put("id", id);
     return this;
   }
 
-  public CredentialBuilder type(List<String> type) {
+  public VerifiableCredentialBuilder type(List<String> type) {
     values.put("type", type);
     return this;
   }
 
-  public CredentialBuilder issuer(String issuer) {
+  public VerifiableCredentialBuilder issuer(String issuer) {
     values.put("issuer", issuer);
     return this;
   }
 
-  public CredentialBuilder issuanceDate(LocalDateTime issuanceDate) {
+  public VerifiableCredentialBuilder issuanceDate(LocalDateTime issuanceDate) {
     values.put("issuanceDate", issuanceDate);
     return this;
   }
 
-  public CredentialBuilder credentialSubject(Map<String, Object> credentialSubject) {
+  public VerifiableCredentialBuilder credentialSubject(Map<String, Object> credentialSubject) {
     values.put("credentialSubject", credentialSubject);
     return this;
   }
 
-  public CredentialBuilder proof(Map<String, Object> proof) {
+  public VerifiableCredentialBuilder proof(Map<String, Object> proof) {
     values.put("proof", proof);
     return this;
   }

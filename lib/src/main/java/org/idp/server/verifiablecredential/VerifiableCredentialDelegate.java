@@ -1,7 +1,7 @@
 package org.idp.server.verifiablecredential;
 
 import java.util.List;
-import org.idp.server.oauth.identity.VerifiableCredential;
+import org.idp.server.basic.vc.VerifiableCredential;
 import org.idp.server.oauth.rar.CredentialDefinition;
 import org.idp.server.type.oauth.Subject;
 import org.idp.server.type.oauth.TokenIssuer;

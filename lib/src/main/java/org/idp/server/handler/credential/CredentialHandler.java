@@ -1,5 +1,6 @@
 package org.idp.server.handler.credential;
 
+import org.idp.server.basic.vc.VerifiableCredential;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ClientConfigurationRepository;
 import org.idp.server.configuration.ServerConfiguration;
@@ -7,7 +8,6 @@ import org.idp.server.configuration.ServerConfigurationRepository;
 import org.idp.server.handler.credential.io.CredentialRequest;
 import org.idp.server.handler.credential.io.CredentialRequestStatus;
 import org.idp.server.handler.credential.io.CredentialResponse;
-import org.idp.server.oauth.identity.VerifiableCredential;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.repository.OAuthTokenRepository;
@@ -15,6 +15,7 @@ import org.idp.server.type.oauth.AccessTokenValue;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.idp.server.verifiablecredential.*;
 import org.idp.server.verifiablecredential.VerifiableCredentialCreators;
+import org.idp.server.verifiablecredential.VerifiableCredentialJwt;
 import org.idp.server.verifiablecredential.verifier.VerifiableCredentialVerifier;
 
 public class CredentialHandler {

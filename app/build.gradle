@@ -11,6 +11,12 @@ sourceCompatibility = '17'
 
 repositories {
 	mavenCentral()
+	maven {
+		url 'https://repo.danubetech.com/repository/maven-public/'
+	}
+	maven {
+		url 'https://jitpack.io'
+	}
 }
 
 dependencies {
