@@ -12,6 +12,7 @@ import {
   verifyAndDecodeJwt,
 } from "./lib/jose";
 import { toEpocTime } from "./lib/util";
+import { re } from "@babel/core/lib/vendor/import-meta-resolve";
 
 describe("OpenID for Verifiable Credential Issuance - draft 13", () => {
   it("success pattern normal", async () => {
@@ -169,4 +170,186 @@ describe("OpenID for Verifiable Credential Issuance - draft 13", () => {
     console.log(decodedIdToken);
   });
 
+  describe("7.2. Credential Request", () => {
+    it("format REQUIRED. Format of the Credential to be issued. This Credential format identifier determines further parameters required to determine the type and (optionally) the content of the credential to be issued. Credential Format Profiles consisting of the Credential format specific set of parameters are defined in Appendix E.", async () => {
+      const authorizationDetails = [
+        {
+          "type": "openid_credential",
+          "locations": [
+            "https://credential-issuer.example.com"
+          ],
+          "format": "jwt_vc_json",
+          "credential_definition": {
+            "type": [
+              "VerifiableCredential",
+              "UniversityDegreeCredential"
+            ]
+          }
+        }
+      ];
+      const token = await getToken({authorizationDetails});
+      const credentialResponse = await requestCredentials({
+        endpoint: serverConfig.credentialEndpoint,
+        params: {
+          format: "",
+        },
+        authorizationHeader: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log(credentialResponse.data);
+      expect(credentialResponse.status).toBe(400);
+      expect(credentialResponse.data.error).toEqual("invalid_request");
+      expect(credentialResponse.data.error_description).toBe("credential request must contains format");
+    });
+
+    it("proof OPTIONAL. JSON object containing proof of possession of the key material the issued Credential shall be bound to. The proof object MUST contain a following claim: proof_type: REQUIRED. JSON string denoting the key proof type. The value of this claim determines other claims in the key proof object and its respective processing rules. Key proof types defined in this specification can be found in Section 7.2.1.", async () => {
+      const authorizationDetails = [
+        {
+          "type": "openid_credential",
+          "locations": [
+            "https://credential-issuer.example.com"
+          ],
+          "format": "jwt_vc_json",
+          "credential_definition": {
+            "type": [
+              "VerifiableCredential",
+              "UniversityDegreeCredential"
+            ]
+          }
+        }
+      ];
+      const token = await getToken({authorizationDetails});
+      const credentialResponse = await requestCredentials({
+        endpoint: serverConfig.credentialEndpoint,
+        params: {
+          format: "jwt_vc_json",
+          proof: {
+
+          }
+        },
+        authorizationHeader: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log(credentialResponse.data);
+      expect(credentialResponse.status).toBe(400);
+      expect(credentialResponse.data.error).toEqual("invalid_request");
+      expect(credentialResponse.data.error_description).toBe("When credential request contains proof, proof entity must define proof_type");
+    });
+
+  });
+
+  describe("7.2.1. Key Proof Types", () => {
+    it("When proof_type is jwt, a proof object MUST include a jwt claim containing a JWT defined in Section 7.2.1.1.", async () => {
+      const authorizationDetails = [
+        {
+          "type": "openid_credential",
+          "locations": [
+            "https://credential-issuer.example.com"
+          ],
+          "format": "jwt_vc_json",
+          "credential_definition": {
+            "type": [
+              "VerifiableCredential",
+              "UniversityDegreeCredential"
+            ]
+          }
+        }
+      ];
+      const token = await getToken({authorizationDetails});
+      const credentialResponse = await requestCredentials({
+        endpoint: serverConfig.credentialEndpoint,
+        params: {
+          format: "jwt_vc_json",
+          proof: {
+            proof_type: "jwt",
+          }
+        },
+        authorizationHeader: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log(credentialResponse.data);
+      expect(credentialResponse.status).toBe(400);
+      expect(credentialResponse.data.error).toEqual("invalid_request");
+      expect(credentialResponse.data.error_description).toBe("When credential request proof_type is jwt, proof entity must contains jwt claim");
+    });
+
+    it("When proof_type is cwt, a proof object MUST include a cwt claim containing a CWT defined in Section 7.2.1.2.", async () => {
+      const authorizationDetails = [
+        {
+          "type": "openid_credential",
+          "locations": [
+            "https://credential-issuer.example.com"
+          ],
+          "format": "jwt_vc_json",
+          "credential_definition": {
+            "type": [
+              "VerifiableCredential",
+              "UniversityDegreeCredential"
+            ]
+          }
+        }
+      ];
+      const token = await getToken({authorizationDetails});
+      const credentialResponse = await requestCredentials({
+        endpoint: serverConfig.credentialEndpoint,
+        params: {
+          format: "jwt_vc_json",
+          proof: {
+            proof_type: "cwt",
+          }
+        },
+        authorizationHeader: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log(credentialResponse.data);
+      expect(credentialResponse.status).toBe(400);
+      expect(credentialResponse.data.error).toEqual("invalid_request");
+      expect(credentialResponse.data.error_description).toBe("When credential request proof_type is cwt, proof entity must contains cwt claim");
+    });
+  });
+
 });
+
+const getToken = async ({ authorizationDetails}) => {
+  const codeVerifier = "aiueo12345678";
+  const codeChallenge = codeVerifier;
+
+  const { authorizationResponse } = await requestAuthorizations({
+    client_id: clientSecretPostClient.clientId,
+    responseType: "code",
+    state: "aiueo",
+    scope: "openid profile phone email " + clientSecretPostClient.scope,
+    redirectUri: clientSecretPostClient.redirectUri,
+    aud: serverConfig.issuer,
+    iss: clientSecretPostClient.clientId,
+    endpoint: serverConfig.authorizationEndpoint,
+    clientId: clientSecretPostClient.clientId,
+    responseMode: "query",
+    nonce: "nonce",
+    display: "page",
+    prompt: "login",
+    codeChallenge,
+    codeChallengeMethod: "plain",
+    authorizationDetails: JSON.stringify(authorizationDetails),
+  });
+  console.log(authorizationResponse);
+  expect(authorizationResponse.code).not.toBeNull();
+
+  const tokenResponse = await requestToken({
+    endpoint: serverConfig.tokenEndpoint,
+    code: authorizationResponse.code,
+    grantType: "authorization_code",
+    redirectUri: clientSecretPostClient.redirectUri,
+    clientId: clientSecretPostClient.clientId,
+    clientSecret: clientSecretPostClient.clientSecret,
+    codeVerifier,
+  });
+  console.log(JSON.stringify(tokenResponse.data));
+  expect(tokenResponse.status).toBe(200);
+
+  return tokenResponse.data.access_token;
+};

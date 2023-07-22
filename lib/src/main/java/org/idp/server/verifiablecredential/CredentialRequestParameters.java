@@ -2,6 +2,7 @@ package org.idp.server.verifiablecredential;
 
 import java.util.Map;
 import org.idp.server.type.OAuthRequestKey;
+import org.idp.server.type.verifiablecredential.CredentialDefinitionEntity;
 import org.idp.server.type.verifiablecredential.Format;
 import org.idp.server.type.verifiablecredential.ProofEntity;
 
@@ -24,6 +25,10 @@ public class CredentialRequestParameters {
     return Format.of(getStringOrEmpty(OAuthRequestKey.format));
   }
 
+  public CredentialDefinitionEntity credentialDefinitionEntity() {
+    return new CredentialDefinitionEntity(values.get(OAuthRequestKey.credential_definition.name()));
+  }
+
   public ProofEntity proofEntity() {
     return new ProofEntity(values.get(OAuthRequestKey.proof.name()));
   }
@@ -36,7 +41,11 @@ public class CredentialRequestParameters {
     return values.containsKey(key.name());
   }
 
-  public boolean hasFormat() {
-    return contains(OAuthRequestKey.format);
+  public boolean isDefined() {
+    return contains(OAuthRequestKey.format) && format().isDefined();
+  }
+
+  public boolean hasProof() {
+    return contains(OAuthRequestKey.proof);
   }
 }

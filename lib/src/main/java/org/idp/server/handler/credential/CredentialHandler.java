@@ -44,7 +44,8 @@ public class CredentialHandler {
     CredentialRequestParameters parameters = request.toParameters();
 
     VerifiableCredentialVerifier verifier =
-        new VerifiableCredentialVerifier(oAuthToken, request.toClientCert(), parameters);
+        new VerifiableCredentialVerifier(
+            oAuthToken, request.toClientCert(), parameters, serverConfiguration);
     verifier.verify();
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =

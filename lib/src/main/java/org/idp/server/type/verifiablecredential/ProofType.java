@@ -19,4 +19,16 @@ public enum ProofType {
     }
     return unknown;
   }
+
+  public boolean isDefined() {
+    return this != undefined;
+  }
+
+  public boolean isJwt() {
+    return this == jwt;
+  }
+
+  public boolean isCwt() {
+    return this == cwt;
+  }
 }

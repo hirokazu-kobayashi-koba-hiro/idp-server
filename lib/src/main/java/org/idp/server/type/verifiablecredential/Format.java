@@ -27,4 +27,12 @@ public enum Format {
     }
     return unknown;
   }
+
+  public String value() {
+    return value;
+  }
+
+  public boolean isDefined() {
+    return this != undefined;
+  }
 }
