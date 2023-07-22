@@ -11,7 +11,7 @@ import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.rar.AuthorizationDetail;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.oauth.verifiablepresentation.request.PresentationDefinition;
+import org.idp.server.oauth.vp.request.PresentationDefinition;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.*;

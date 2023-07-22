@@ -13,7 +13,7 @@ import {
 } from "./lib/jose";
 import { toEpocTime } from "./lib/util";
 
-describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", () => {
+describe("OpenID for Verifiable Credential Issuance - draft 13", () => {
   it("success pattern normal", async () => {
     const codeVerifier = "aiueo12345678";
     const codeChallenge = codeVerifier;

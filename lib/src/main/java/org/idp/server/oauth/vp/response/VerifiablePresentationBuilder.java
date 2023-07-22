@@ -1,4 +1,4 @@
-package org.idp.server.oauth.verifiablepresentation.response;
+package org.idp.server.oauth.vp.response;
 
 import java.util.HashMap;
 import java.util.List;

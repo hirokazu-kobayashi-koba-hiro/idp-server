@@ -9,7 +9,7 @@ import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.identity.User;
-import org.idp.server.oauth.verifiablepresentation.response.VerifiablePresentationBuilder;
+import org.idp.server.oauth.vp.response.VerifiablePresentationBuilder;
 import org.idp.server.type.verifiablecredential.VerifiableCredentialContext;
 import org.idp.server.type.verifiablecredential.VerifiableCredentialType;
 import org.idp.server.type.verifiablepresentation.VpToken;

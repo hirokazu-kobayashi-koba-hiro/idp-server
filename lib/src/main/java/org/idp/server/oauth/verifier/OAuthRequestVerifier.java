@@ -21,6 +21,7 @@ public class OAuthRequestVerifier {
     extensionVerifiers.add(new RequestObjectVerifier());
     extensionVerifiers.add(new OAuthAuthorizationDetailsVerifier());
     extensionVerifiers.add(new JarmVerifier());
+    extensionVerifiers.add(new OAuthVerifiableCredentialVerifier());
   }
 
   public void verify(OAuthRequestContext context) {

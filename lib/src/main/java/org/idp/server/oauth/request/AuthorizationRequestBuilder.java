@@ -3,7 +3,7 @@ package org.idp.server.oauth.request;
 import org.idp.server.oauth.AuthorizationProfile;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.rar.AuthorizationDetails;
-import org.idp.server.oauth.verifiablepresentation.request.PresentationDefinition;
+import org.idp.server.oauth.vp.request.PresentationDefinition;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;

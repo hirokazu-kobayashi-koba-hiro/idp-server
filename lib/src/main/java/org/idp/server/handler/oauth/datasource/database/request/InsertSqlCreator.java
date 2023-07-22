@@ -3,7 +3,7 @@ package org.idp.server.handler.oauth.datasource.database.request;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.request.AuthorizationRequest;
-import org.idp.server.oauth.verifiablepresentation.request.PresentationDefinition;
+import org.idp.server.oauth.vp.request.PresentationDefinition;
 
 public class InsertSqlCreator {
 

@@ -57,7 +57,8 @@ public class ServerConfiguration implements JsonReadable {
   List<String> backchannelAuthenticationRequestSigningAlgValuesSupported = new ArrayList<>();
   Boolean backchannelUserCodeParameterSupported;
   List<String> authorizationDetailsTypesSupported = new ArrayList<>();
-
+  VerifiableCredentialConfiguration credentialIssuerMetadata =
+      new VerifiableCredentialConfiguration();
   // extension
   List<String> fapiBaselineScopes = new ArrayList<>();
   List<String> fapiAdvanceScopes = new ArrayList<>();
@@ -493,5 +494,13 @@ public class ServerConfiguration implements JsonReadable {
 
   public boolean hasKey(String algorithm) {
     return jwks.contains(algorithm);
+  }
+
+  public VerifiableCredentialConfiguration credentialIssuerMetadata() {
+    return credentialIssuerMetadata;
+  }
+
+  public boolean hasCredentialIssuerMetadata() {
+    return credentialIssuerMetadata.exists();
   }
 }

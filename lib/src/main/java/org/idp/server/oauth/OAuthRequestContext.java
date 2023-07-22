@@ -3,6 +3,7 @@ package org.idp.server.oauth;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.oauth.request.OAuthRequestParameters;
@@ -182,6 +183,10 @@ public class OAuthRequestContext implements ResponseModeDecidable {
 
   public boolean hasAuthorizationDetails() {
     return authorizationRequest.hasAuthorizationDetails();
+  }
+
+  public AuthorizationDetails authorizationDetails() {
+    return authorizationRequest.authorizationDetails();
   }
 
   public ClientId clientId() {

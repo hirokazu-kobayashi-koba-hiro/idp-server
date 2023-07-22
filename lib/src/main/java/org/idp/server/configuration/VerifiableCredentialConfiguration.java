@@ -1,5 +1,10 @@
 package org.idp.server.configuration;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import org.idp.server.basic.json.JsonReadable;
+
 /**
  *
  *
@@ -63,4 +68,47 @@ package org.idp.server.configuration;
  * }
  * </pre>
  */
-public class VerifiableCredentialConfiguration {}
+public class VerifiableCredentialConfiguration implements JsonReadable {
+  String credentialIssuer;
+  String authorizationServer = "";
+  String credentialEndpoint;
+  String batchCredentialEndpoint = "";
+  String deferredCredentialEndpoint = "";
+  List<VerifiableCredentialsSupportConfiguration> credentialsSupported = new ArrayList<>();
+
+  public String credentialIssuer() {
+    return credentialIssuer;
+  }
+
+  public String authorizationServer() {
+    return authorizationServer;
+  }
+
+  public String credentialEndpoint() {
+    return credentialEndpoint;
+  }
+
+  public String batchCredentialEndpoint() {
+    return batchCredentialEndpoint;
+  }
+
+  public String deferredCredentialEndpoint() {
+    return deferredCredentialEndpoint;
+  }
+
+  public List<VerifiableCredentialsSupportConfiguration> credentialsSupported() {
+    return credentialsSupported;
+  }
+
+  public boolean isSupportedFormat(String format) {
+    List<String> formats =
+        credentialsSupported.stream()
+            .map(VerifiableCredentialsSupportConfiguration::format)
+            .toList();
+    return formats.contains(format);
+  }
+
+  public boolean exists() {
+    return Objects.nonNull(credentialIssuer) && !credentialIssuer.isEmpty();
+  }
+}

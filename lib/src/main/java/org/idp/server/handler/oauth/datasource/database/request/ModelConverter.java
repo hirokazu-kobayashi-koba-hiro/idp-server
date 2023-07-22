@@ -10,7 +10,7 @@ import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestBuilder;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.oauth.verifiablepresentation.request.PresentationDefinition;
+import org.idp.server.oauth.vp.request.PresentationDefinition;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.pkce.CodeChallenge;

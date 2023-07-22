@@ -5,7 +5,7 @@ import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.identity.IdTokenClaims;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.rar.AuthorizationDetails;
-import org.idp.server.oauth.verifiablepresentation.request.PresentationDefinition;
+import org.idp.server.oauth.vp.request.PresentationDefinition;
 import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.Scopes;
