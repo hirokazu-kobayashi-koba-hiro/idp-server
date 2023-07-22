@@ -12,7 +12,6 @@ import {
   verifyAndDecodeJwt,
 } from "./lib/jose";
 import { toEpocTime } from "./lib/util";
-import { re } from "@babel/core/lib/vendor/import-meta-resolve";
 
 describe("OpenID for Verifiable Credential Issuance - draft 13", () => {
   it("success pattern normal", async () => {

@@ -78,4 +78,8 @@ public class JsonWebSignature {
   public String algorithm() {
     return value.getHeader().getAlgorithm().getName();
   }
+
+  public JsonWebSignatureHeader header() {
+    return new JsonWebSignatureHeader(value.getHeader());
+  }
 }

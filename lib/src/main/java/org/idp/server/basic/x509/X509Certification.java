@@ -1,6 +1,7 @@
 package org.idp.server.basic.x509;
 
 import java.io.ByteArrayInputStream;
+import java.security.PublicKey;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import org.idp.server.basic.base64.Base64Codeable;
@@ -19,6 +20,7 @@ public class X509Certification implements Base64Codeable {
     this.x509Certificate = x509Certificate;
     this.der = der;
     this.subjectAlternativeNames = subjectAlternativeNames;
+    PublicKey publicKey = x509Certificate.getPublicKey();
   }
 
   public static X509Certification parse(String value) throws X509CertInvalidException {
@@ -126,5 +128,9 @@ public class X509Certification implements Base64Codeable {
 
   public boolean hasIPAddress() {
     return subjectAlternativeNames.hasIPAddress();
+  }
+
+  public PublicKey toPublicKey() {
+    return x509Certificate.getPublicKey();
   }
 }

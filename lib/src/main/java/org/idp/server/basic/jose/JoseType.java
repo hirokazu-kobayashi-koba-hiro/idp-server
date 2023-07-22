@@ -36,4 +36,8 @@ public enum JoseType {
       throw new JoseInvalidException("parse failed, invalid jose header", e);
     }
   }
+
+  public boolean isPlain() {
+    return this == plain;
+  }
 }
