@@ -1,5 +1,7 @@
 package org.idp.server.type.verifiablecredential;
 
+import java.util.Objects;
+
 /**
  * c_nonce_expires_in: OPTIONAL.
  *
@@ -10,19 +12,18 @@ package org.idp.server.type.verifiablecredential;
  *     Credential Response</a>
  */
 public class CNonceExpiresIn {
-  long value;
+  Long value;
 
   public CNonceExpiresIn() {}
-
-  public CNonceExpiresIn(int value) {
-    this.value = value;
-  }
 
   public CNonceExpiresIn(long value) {
     this.value = value;
   }
 
   public CNonceExpiresIn(String value) {
+    if (Objects.isNull(value) || value.isEmpty()) {
+      return;
+    }
     this.value = Long.parseLong(value);
   }
 
@@ -32,5 +33,9 @@ public class CNonceExpiresIn {
 
   public String toStringValue() {
     return String.valueOf(value);
+  }
+
+  public boolean exists() {
+    return Objects.nonNull(value);
   }
 }

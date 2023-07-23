@@ -16,6 +16,7 @@ import org.idp.server.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.token.*;
+import org.idp.server.oauth.vc.CNonceCreatable;
 import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.token.validator.TokenRequestCodeGrantValidator;
@@ -23,6 +24,8 @@ import org.idp.server.token.verifier.AuthorizationCodeGrantVerifier;
 import org.idp.server.type.extension.GrantFlow;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
+import org.idp.server.type.verifiablecredential.CNonce;
+import org.idp.server.type.verifiablecredential.CNonceExpiresIn;
 
 /**
  * 4.1.3. Access Token Request authorization code handling
@@ -77,7 +80,8 @@ public class AuthorizationCodeGrantService
     implements OAuthTokenCreationService,
         AccessTokenCreatable,
         RefreshTokenCreatable,
-        IdTokenCreatable {
+        IdTokenCreatable,
+        CNonceCreatable {
 
   AuthorizationRequestRepository authorizationRequestRepository;
   OAuthTokenRepository oAuthTokenRepository;
@@ -145,6 +149,12 @@ public class AuthorizationCodeGrantService
               serverConfiguration,
               clientConfiguration);
       oAuthTokenBuilder.add(idToken);
+    }
+    if (authorizationRequest.isVerifiableCredentialRequest()) {
+      CNonce cNonce = createCNonce();
+      CNonceExpiresIn cNonceExpiresIn = new CNonceExpiresIn(3600L);
+      oAuthTokenBuilder.add(cNonce);
+      oAuthTokenBuilder.add(cNonceExpiresIn);
     }
 
     AuthorizationGrantedIdentifier authorizationGrantedIdentifier =

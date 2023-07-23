@@ -8,24 +8,32 @@ import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.oauth.token.RefreshToken;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
+import org.idp.server.type.verifiablecredential.CNonce;
+import org.idp.server.type.verifiablecredential.CNonceExpiresIn;
 
 public class OAuthToken {
   OAuthTokenIdentifier identifier;
   AccessToken accessToken;
   RefreshToken refreshToken;
   IdToken idToken;
+  CNonce cNonce;
+  CNonceExpiresIn cNonceExpiresIn;
 
   public OAuthToken() {}
 
-  public OAuthToken(
+  OAuthToken(
       OAuthTokenIdentifier identifier,
       AccessToken accessToken,
       RefreshToken refreshToken,
-      IdToken idToken) {
+      IdToken idToken,
+      CNonce cNonce,
+      CNonceExpiresIn cNonceExpiresIn) {
     this.identifier = identifier;
     this.accessToken = accessToken;
     this.refreshToken = refreshToken;
     this.idToken = idToken;
+    this.cNonce = cNonce;
+    this.cNonceExpiresIn = cNonceExpiresIn;
   }
 
   public OAuthTokenIdentifier identifier() {
@@ -102,5 +110,21 @@ public class OAuthToken {
 
   public boolean hasClientCertification() {
     return accessToken.hasClientCertification();
+  }
+
+  public CNonce cNonce() {
+    return cNonce;
+  }
+
+  public boolean hasCNonce() {
+    return cNonce.exists();
+  }
+
+  public CNonceExpiresIn cNonceExpiresIn() {
+    return cNonceExpiresIn;
+  }
+
+  public boolean hasCNonceExpiresIn() {
+    return cNonceExpiresIn.exists();
   }
 }

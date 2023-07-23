@@ -49,6 +49,12 @@ class InsertSqlCreator {
       builder.setClientCertificationThumbprint(
           oAuthToken.accessToken().clientCertificationThumbprint().value());
     }
+    if (oAuthToken.hasCNonce()) {
+      builder.setCNonce(oAuthToken.cNonce().value());
+    }
+    if (oAuthToken.hasCNonceExpiresIn()) {
+      builder.setCNonceExpiresIn(oAuthToken.cNonceExpiresIn().toStringValue());
+    }
     return builder.build();
   }
 

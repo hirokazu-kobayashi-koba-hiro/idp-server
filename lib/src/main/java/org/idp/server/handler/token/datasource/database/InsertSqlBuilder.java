@@ -4,13 +4,13 @@ import org.idp.server.basic.sql.SqlBaseBuilder;
 
 class InsertSqlBuilder implements SqlBaseBuilder {
   String sql;
-  int columnSize = 20;
+  int columnSize = 22;
 
   InsertSqlBuilder(String identifier) {
     this.sql =
         """
-                INSERT INTO public.oauth_token (id, token_issuer, token_type, access_token, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expires_in, access_token_expired_at, access_token_created_at, refresh_token, refresh_token_expired_at, refresh_token_created_at, id_token, client_certification_thumbprint)
-                VALUES ('$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$10', '$11', '$12', '$13', '$14', '$15', '$16', '$17', '$18', '$19', '$20');
+                INSERT INTO public.oauth_token (id, token_issuer, token_type, access_token, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expires_in, access_token_expired_at, access_token_created_at, refresh_token, refresh_token_expired_at, refresh_token_created_at, id_token, client_certification_thumbprint, c_nonce, c_nonce_expires_in)
+                VALUES ('$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$10', '$11', '$12', '$13', '$14', '$15', '$16', '$17', '$18', '$19', '$20', '$21', '$22');
                 """;
     this.sql = replace(sql, 1, identifier);
   }
@@ -107,6 +107,16 @@ class InsertSqlBuilder implements SqlBaseBuilder {
 
   InsertSqlBuilder setClientCertificationThumbprint(String clientCertificationThumbprint) {
     this.sql = replace(sql, 20, clientCertificationThumbprint);
+    return this;
+  }
+
+  InsertSqlBuilder setCNonce(String cNonce) {
+    this.sql = replace(sql, 21, cNonce);
+    return this;
+  }
+
+  InsertSqlBuilder setCNonceExpiresIn(String cNonceExpiresIn) {
+    this.sql = replace(sql, 22, cNonceExpiresIn);
     return this;
   }
 

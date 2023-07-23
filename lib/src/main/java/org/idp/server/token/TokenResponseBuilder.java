@@ -6,6 +6,8 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
+import org.idp.server.type.verifiablecredential.CNonce;
+import org.idp.server.type.verifiablecredential.CNonceExpiresIn;
 
 public class TokenResponseBuilder {
   AccessTokenValue accessTokenValue;
@@ -15,6 +17,8 @@ public class TokenResponseBuilder {
   Scopes scopes = new Scopes();
   IdToken idToken = new IdToken();
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
+  CNonce cNonce = new CNonce();
+  CNonceExpiresIn cNonceExpiresIn = new CNonceExpiresIn();
   Map<String, Object> values = new HashMap<>();
   JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
@@ -68,6 +72,22 @@ public class TokenResponseBuilder {
     return this;
   }
 
+  public TokenResponseBuilder add(CNonce cNonce) {
+    this.cNonce = cNonce;
+    if (cNonce.exists()) {
+      values.put("c_nonce", cNonce.value());
+    }
+    return this;
+  }
+
+  public TokenResponseBuilder add(CNonceExpiresIn cNonceExpiresIn) {
+    this.cNonceExpiresIn = cNonceExpiresIn;
+    if (cNonceExpiresIn.exists()) {
+      values.put("c_nonce_expires_in", cNonceExpiresIn.value());
+    }
+    return this;
+  }
+
   public TokenResponse build() {
     String contents = jsonConverter.write(values);
     return new TokenResponse(
@@ -78,6 +98,8 @@ public class TokenResponseBuilder {
         scopes,
         idToken,
         authorizationDetails,
+        cNonce,
+        cNonceExpiresIn,
         contents);
   }
 }

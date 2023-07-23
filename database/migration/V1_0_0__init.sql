@@ -89,6 +89,8 @@ CREATE TABLE oauth_token
     refresh_token_created_at        text                    NOT NULL,
     id_token                        text                    NOT NULL,
     client_certification_thumbprint text                    NOT NULL,
+    c_nonce                         text                    NOT NULL,
+    c_nonce_expires_in              text                    NOT NULL,
     created_at                      timestamp default now() NOT NULL,
     updated_at                      timestamp default now() NOT NULL
 );

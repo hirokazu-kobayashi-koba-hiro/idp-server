@@ -1,27 +1,39 @@
 package org.idp.server.verifiablecredential.verifier;
 
-import org.idp.server.basic.jose.JoseInvalidException;
-import org.idp.server.basic.jose.JoseType;
-import org.idp.server.basic.jose.JsonWebSignature;
-import org.idp.server.basic.jose.JsonWebSignatureHeader;
+import java.security.PublicKey;
+import java.util.List;
+import org.idp.server.basic.jose.*;
+import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.VerifiableCredentialConfiguration;
+import org.idp.server.token.OAuthToken;
 import org.idp.server.verifiablecredential.exception.VerifiableCredentialBadRequestException;
+import org.idp.server.verifiablecredential.exception.VerifiableCredentialRequestInvalidException;
+import org.idp.server.verifiablecredential.request.VerifiableCredentialRequestTransformable;
 
-public class VerifiableCredentialJwtProofVerifier {
+public class VerifiableCredentialJwtProofVerifier
+    implements VerifiableCredentialRequestTransformable {
   String jwt;
+  OAuthToken oAuthToken;
   VerifiableCredentialConfiguration configuration;
+  ClientConfiguration clientConfiguration;
 
   public VerifiableCredentialJwtProofVerifier(
-      String jwt, VerifiableCredentialConfiguration configuration) {
+      String jwt,
+      OAuthToken oAuthToken,
+      VerifiableCredentialConfiguration configuration,
+      ClientConfiguration clientConfiguration) {
     this.jwt = jwt;
+    this.oAuthToken = oAuthToken;
     this.configuration = configuration;
+    this.clientConfiguration = clientConfiguration;
   }
 
   public void verify() {
     JoseType joseType = parseJoseType(jwt);
-    //header
+    // header
     throwExceptionIfSignatureAlgIsNone(joseType);
     JsonWebSignature jsonWebSignature = parse(jwt);
+    JsonWebTokenClaims claims = jsonWebSignature.claims();
     JsonWebSignatureHeader header = jsonWebSignature.header();
     throwExceptionIfNotContainsAlg(header);
     throwExceptionIfNotContainsType(header);
@@ -29,8 +41,14 @@ public class VerifiableCredentialJwtProofVerifier {
     throwExceptionIfMultiKeyClaims(header);
     throwExceptionIfSignatureIsSymmetricAlg(jsonWebSignature);
 
-    //payload
+    // payload
+    throwExceptionIfInvalidIss(claims);
+    throwExceptionIfInvalidAud(claims);
+    throwExceptionIfInvalidIat(claims);
+    throwExceptionIfInvalidNonce(claims);
 
+    // signature
+    throwExceptionIfInvalidSignature(jsonWebSignature);
   }
 
   void throwExceptionIfSignatureAlgIsNone(JoseType joseType) {
@@ -75,6 +93,81 @@ public class VerifiableCredentialJwtProofVerifier {
     if (jws.isSymmetricType()) {
       throw new VerifiableCredentialBadRequestException(
           "invalid_request", "proof of jws alg must be not symmetric alg");
+    }
+  }
+
+  /**
+   * iss: OPTIONAL (string).
+   *
+   * <p>The value of this claim MUST be the client_id of the client making the credential request.
+   * This claim MUST be omitted if the access token authorizing the issuance call was obtained from
+   * a Pre-Authorized Code Flow through anonymous access to the token endpoint.
+   */
+  void throwExceptionIfInvalidIss(JsonWebTokenClaims claims) {
+    if (!claims.hasIss()) {
+      throw new VerifiableCredentialBadRequestException(
+          "invalid_request", "iss claims does not contain, iss is required");
+    }
+    String iss = claims.getIss();
+    if (!iss.equals(clientConfiguration.clientIdValue())) {
+      throw new VerifiableCredentialBadRequestException(
+          "invalid_request", "iss claims must be client_id");
+    }
+  }
+
+  /**
+   * aud: REQUIRED (string).
+   *
+   * <p>The value of this claim MUST be the Credential Issuer Identifier.
+   */
+  void throwExceptionIfInvalidAud(JsonWebTokenClaims claims) {
+    if (!claims.hasAud()) {
+      throw new VerifiableCredentialBadRequestException(
+          "invalid_request", "aud claims does not contain, aud is required");
+    }
+    List<String> aud = claims.getAud();
+    if (!aud.contains(configuration.credentialIssuer())) {
+      throw new VerifiableCredentialBadRequestException(
+          "invalid_request", "aud must be the Credential Issuer Identifier.");
+    }
+  }
+
+  /**
+   * iat: REQUIRED (number).
+   *
+   * <p>The value of this claim MUST be the time at which the key proof was issued using the syntax
+   * defined in [RFC7519].
+   */
+  void throwExceptionIfInvalidIat(JsonWebTokenClaims claims) {
+    if (claims.hasIat()) {
+      throw new VerifiableCredentialBadRequestException(
+          "invalid_request", "iat claims does not contains, iat is required");
+    }
+  }
+
+  void throwExceptionIfInvalidNonce(JsonWebTokenClaims claims) {
+    if (claims.contains("nonce")) {
+      throw new VerifiableCredentialBadRequestException(
+          "invalid_request", "nonce claims does not contains, nonce is required");
+    }
+    String cNonce = claims.getValue("nonce");
+    if (!cNonce.equals(oAuthToken.cNonce().value())) {
+      throw new VerifiableCredentialBadRequestException(
+          "invalid_request",
+          "nonce claims does not match c_nonce, the value is a c_nonce provided by the credential issuer.");
+    }
+  }
+
+  void throwExceptionIfInvalidSignature(JsonWebSignature jsonWebSignature)
+      throws VerifiableCredentialBadRequestException {
+    try {
+      JsonWebSignatureHeader header = jsonWebSignature.header();
+      PublicKey publicKey = transformPublicKey(header);
+      JsonWebSignatureVerifier jsonWebSignatureVerifier =
+          new JsonWebSignatureVerifier(header, publicKey);
+      jsonWebSignatureVerifier.verify(jsonWebSignature);
+    } catch (JoseInvalidException | VerifiableCredentialRequestInvalidException e) {
+      throw new VerifiableCredentialBadRequestException("invalid_request", e.getMessage());
     }
   }
 

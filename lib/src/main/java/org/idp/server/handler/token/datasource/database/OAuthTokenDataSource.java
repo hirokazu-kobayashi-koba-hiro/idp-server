@@ -30,7 +30,7 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
     SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
     String sqlTemplate =
         """
-        SELECT id, token_issuer, token_type, access_token, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expires_in, access_token_expired_at, access_token_created_at, refresh_token, refresh_token_expired_at, refresh_token_created_at, id_token, client_certification_thumbprint
+        SELECT id, token_issuer, token_type, access_token, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expires_in, access_token_expired_at, access_token_created_at, refresh_token, refresh_token_expired_at, refresh_token_created_at, id_token, client_certification_thumbprint, c_nonce, c_nonce_expires_in
         FROM oauth_token
         WHERE token_issuer = '%s' AND access_token = '%s';
         """;
@@ -47,7 +47,7 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
     SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
     String sqlTemplate =
         """
-            SELECT id, token_issuer, token_type, access_token, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expires_in, access_token_expired_at, access_token_created_at, refresh_token, refresh_token_expired_at, refresh_token_created_at, id_token, client_certification_thumbprint
+            SELECT id, token_issuer, token_type, access_token, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expires_in, access_token_expired_at, access_token_created_at, refresh_token, refresh_token_expired_at, refresh_token_created_at, id_token, client_certification_thumbprint, c_nonce, c_nonce_expires_in
             FROM oauth_token
             WHERE token_issuer = '%s' AND refresh_token = '%s';
             """;

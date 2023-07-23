@@ -24,6 +24,8 @@ public class TokenRequestResponse {
             .add(oAuthToken.expiresIn())
             .add(oAuthToken.idToken())
             .add(oAuthToken.authorizationDetails())
+            .add(oAuthToken.cNonce())
+            .add(oAuthToken.cNonceExpiresIn())
             .build();
     this.errorResponse = new TokenErrorResponse();
     Map<String, String> values = new HashMap<>();

@@ -21,6 +21,8 @@ import org.idp.server.type.extension.CustomProperties;
 import org.idp.server.type.extension.ExpiredAt;
 import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.IdToken;
+import org.idp.server.type.verifiablecredential.CNonce;
+import org.idp.server.type.verifiablecredential.CNonceExpiresIn;
 
 class ModelConverter {
 
@@ -70,8 +72,16 @@ class ModelConverter {
     RefreshToken refreshToken =
         new RefreshToken(refreshTokenValue, refreshTokenCreatedAt, refreshTokenExpiredAt);
     IdToken idToken = new IdToken(stringMap.get("id_token"));
+    CNonce cNonce = new CNonce(stringMap.get("c_nonce"));
+    CNonceExpiresIn cNonceExpiresIn = new CNonceExpiresIn(stringMap.get("c_nonce_expires_in"));
 
-    return new OAuthTokenBuilder(id).add(accessToken).add(refreshToken).add(idToken).build();
+    return new OAuthTokenBuilder(id)
+        .add(accessToken)
+        .add(refreshToken)
+        .add(idToken)
+        .add(cNonce)
+        .add(cNonceExpiresIn)
+        .build();
   }
 
   private static ClaimsPayload convertClaimsPayload(String value) {

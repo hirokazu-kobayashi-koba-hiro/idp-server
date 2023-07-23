@@ -84,7 +84,7 @@ public class JsonWebTokenClaims {
     return (String) payload().get(key);
   }
 
-  boolean contains(String key) {
+  public boolean contains(String key) {
     if (Objects.isNull(value)) {
       return false;
     }

@@ -3,6 +3,7 @@ package org.idp.server.verifiablecredential.verifier;
 import java.time.LocalDateTime;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.x509.X509CertInvalidException;
+import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.oauth.mtls.ClientCertification;
 import org.idp.server.oauth.mtls.ClientCertificationThumbprint;
@@ -25,6 +26,7 @@ public class VerifiableCredentialVerifier implements VerifiableCredentialRequest
   ClientCert clientCert;
   CredentialRequestParameters parameters;
   ServerConfiguration serverConfiguration;
+  ClientConfiguration clientConfiguration;
 
   public VerifiableCredentialVerifier(
       OAuthToken oAuthToken,

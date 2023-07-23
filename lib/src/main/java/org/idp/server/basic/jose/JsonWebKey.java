@@ -57,7 +57,7 @@ public class JsonWebKey {
     return JsonWebKeyType.of(keyType);
   }
 
-  PublicKey toPublicKey() throws JsonWebKeyInvalidException {
+  public PublicKey toPublicKey() throws JsonWebKeyInvalidException {
     JsonWebKeyType jsonWebKeyType = keyType();
     try {
       switch (jsonWebKeyType) {

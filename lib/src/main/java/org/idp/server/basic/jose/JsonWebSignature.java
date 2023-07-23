@@ -52,7 +52,7 @@ public class JsonWebSignature {
     }
   }
 
-  public boolean verify(JWSVerifier verifier) throws JoseInvalidException {
+  boolean verify(JWSVerifier verifier) throws JoseInvalidException {
     try {
       return value.verify(verifier);
     } catch (JOSEException e) {
