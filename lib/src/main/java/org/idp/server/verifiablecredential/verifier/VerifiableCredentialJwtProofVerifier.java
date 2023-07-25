@@ -36,7 +36,7 @@ public class VerifiableCredentialJwtProofVerifier
     JsonWebTokenClaims claims = jsonWebSignature.claims();
     JsonWebSignatureHeader header = jsonWebSignature.header();
     throwExceptionIfNotContainsAlg(header);
-    throwExceptionIfNotContainsType(header);
+    throwExceptionIfInvalidType(header);
     throwExceptionIfNotContainsAnyKeyClaim(header);
     throwExceptionIfMultiKeyClaims(header);
     throwExceptionIfSignatureIsSymmetricAlg(jsonWebSignature);
@@ -82,10 +82,14 @@ public class VerifiableCredentialJwtProofVerifier
     }
   }
 
-  void throwExceptionIfNotContainsType(JsonWebSignatureHeader header) {
+  void throwExceptionIfInvalidType(JsonWebSignatureHeader header) {
     if (!header.hasType()) {
       throw new VerifiableCredentialBadRequestException(
           "invalid_request", "proof of jws header must contains type claim");
+    }
+    if (!header.type().equals("openid4vci-proof+jwt")) {
+      throw new VerifiableCredentialBadRequestException(
+          "invalid_request", "type claim must be openid4vci-proof+jwt");
     }
   }
 
