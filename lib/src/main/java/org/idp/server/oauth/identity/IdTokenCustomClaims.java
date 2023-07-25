@@ -1,26 +1,26 @@
 package org.idp.server.oauth.identity;
 
 import org.idp.server.type.extension.CustomProperties;
-import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.AccessTokenEntity;
 import org.idp.server.type.oauth.AuthorizationCode;
 import org.idp.server.type.oauth.State;
 import org.idp.server.type.oidc.Nonce;
 
 public class IdTokenCustomClaims {
   AuthorizationCode authorizationCode;
-  AccessTokenValue accessTokenValue;
+  AccessTokenEntity accessTokenEntity;
   State state;
   Nonce nonce;
   CustomProperties customProperties;
 
   IdTokenCustomClaims(
       AuthorizationCode authorizationCode,
-      AccessTokenValue accessTokenValue,
+      AccessTokenEntity accessTokenEntity,
       State state,
       Nonce nonce,
       CustomProperties customProperties) {
     this.authorizationCode = authorizationCode;
-    this.accessTokenValue = accessTokenValue;
+    this.accessTokenEntity = accessTokenEntity;
     this.state = state;
     this.nonce = nonce;
     this.customProperties = customProperties;
@@ -34,12 +34,12 @@ public class IdTokenCustomClaims {
     return authorizationCode.exists();
   }
 
-  public AccessTokenValue accessTokenValue() {
-    return accessTokenValue;
+  public AccessTokenEntity accessTokenValue() {
+    return accessTokenEntity;
   }
 
   public boolean hasAccessTokenValue() {
-    return accessTokenValue.exists();
+    return accessTokenEntity.exists();
   }
 
   public State state() {

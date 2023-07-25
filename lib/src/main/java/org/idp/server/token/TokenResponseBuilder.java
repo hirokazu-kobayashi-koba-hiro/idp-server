@@ -10,10 +10,10 @@ import org.idp.server.type.verifiablecredential.CNonce;
 import org.idp.server.type.verifiablecredential.CNonceExpiresIn;
 
 public class TokenResponseBuilder {
-  AccessTokenValue accessTokenValue;
+  AccessTokenEntity accessTokenEntity;
   TokenType tokenType;
   ExpiresIn expiresIn;
-  RefreshTokenValue refreshTokenValue = new RefreshTokenValue();
+  RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity();
   Scopes scopes = new Scopes();
   IdToken idToken = new IdToken();
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
@@ -24,9 +24,9 @@ public class TokenResponseBuilder {
 
   public TokenResponseBuilder() {}
 
-  public TokenResponseBuilder add(AccessTokenValue accessTokenValue) {
-    this.accessTokenValue = accessTokenValue;
-    values.put("access_token", accessTokenValue.value());
+  public TokenResponseBuilder add(AccessTokenEntity accessTokenEntity) {
+    this.accessTokenEntity = accessTokenEntity;
+    values.put("access_token", accessTokenEntity.value());
     return this;
   }
 
@@ -42,10 +42,10 @@ public class TokenResponseBuilder {
     return this;
   }
 
-  public TokenResponseBuilder add(RefreshTokenValue refreshTokenValue) {
-    this.refreshTokenValue = refreshTokenValue;
-    if (refreshTokenValue.exists()) {
-      values.put("refresh_token", refreshTokenValue.value());
+  public TokenResponseBuilder add(RefreshTokenEntity refreshTokenEntity) {
+    this.refreshTokenEntity = refreshTokenEntity;
+    if (refreshTokenEntity.exists()) {
+      values.put("refresh_token", refreshTokenEntity.value());
     }
     return this;
   }
@@ -91,10 +91,10 @@ public class TokenResponseBuilder {
   public TokenResponse build() {
     String contents = jsonConverter.write(values);
     return new TokenResponse(
-        accessTokenValue,
+            accessTokenEntity,
         tokenType,
         expiresIn,
-        refreshTokenValue,
+            refreshTokenEntity,
         scopes,
         idToken,
         authorizationDetails,

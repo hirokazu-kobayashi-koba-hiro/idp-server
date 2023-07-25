@@ -93,8 +93,8 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
     return contains(OAuthRequestKey.grant_type);
   }
 
-  public RefreshTokenValue refreshToken() {
-    return new RefreshTokenValue(getStringOrEmpty(OAuthRequestKey.refresh_token));
+  public RefreshTokenEntity refreshToken() {
+    return new RefreshTokenEntity(getStringOrEmpty(OAuthRequestKey.refresh_token));
   }
 
   public boolean hasRefreshToken() {

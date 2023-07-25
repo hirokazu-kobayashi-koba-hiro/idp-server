@@ -17,7 +17,7 @@ import org.idp.server.oauth.mtls.ClientCertificationThumbprint;
 import org.idp.server.oauth.mtls.ClientCertificationThumbprintCalculator;
 import org.idp.server.type.extension.CreatedAt;
 import org.idp.server.type.extension.ExpiredAt;
-import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.AccessTokenEntity;
 import org.idp.server.type.oauth.ExpiresIn;
 import org.idp.server.type.oauth.TokenType;
 
@@ -61,11 +61,11 @@ public interface AccessTokenCreatable {
               Map.of(),
               serverConfiguration.jwks(),
               serverConfiguration.tokenSignedKeyId());
-      AccessTokenValue accessTokenValue = new AccessTokenValue(jsonWebSignature.serialize());
+      AccessTokenEntity accessTokenEntity = new AccessTokenEntity(jsonWebSignature.serialize());
       return new AccessToken(
           serverConfiguration.tokenIssuer(),
           TokenType.Bearer,
-          accessTokenValue,
+              accessTokenEntity,
           authorizationGrant,
           thumbprint,
           createdAt,

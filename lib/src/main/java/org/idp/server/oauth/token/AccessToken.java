@@ -13,7 +13,7 @@ import org.idp.server.type.oauth.*;
 public class AccessToken {
   TokenIssuer tokenIssuer;
   TokenType tokenType;
-  AccessTokenValue accessTokenValue;
+  AccessTokenEntity accessTokenEntity;
   AuthorizationGrant authorizationGrant;
   ClientCertificationThumbprint clientCertificationThumbprint;
   CreatedAt createdAt;
@@ -25,7 +25,7 @@ public class AccessToken {
   public AccessToken(
       TokenIssuer tokenIssuer,
       TokenType tokenType,
-      AccessTokenValue accessTokenValue,
+      AccessTokenEntity accessTokenEntity,
       AuthorizationGrant authorizationGrant,
       ClientCertificationThumbprint clientCertificationThumbprint,
       CreatedAt createdAt,
@@ -33,7 +33,7 @@ public class AccessToken {
       ExpiredAt expiredAt) {
     this.tokenIssuer = tokenIssuer;
     this.tokenType = tokenType;
-    this.accessTokenValue = accessTokenValue;
+    this.accessTokenEntity = accessTokenEntity;
     this.authorizationGrant = authorizationGrant;
     this.clientCertificationThumbprint = clientCertificationThumbprint;
     this.createdAt = createdAt;
@@ -49,8 +49,8 @@ public class AccessToken {
     return tokenType;
   }
 
-  public AccessTokenValue accessTokenValue() {
-    return accessTokenValue;
+  public AccessTokenEntity accessTokenValue() {
+    return accessTokenEntity;
   }
 
   public AuthorizationGrant authorizationGrant() {
@@ -94,7 +94,7 @@ public class AccessToken {
   }
 
   public boolean exists() {
-    return Objects.nonNull(accessTokenValue) && accessTokenValue.exists();
+    return Objects.nonNull(accessTokenEntity) && accessTokenEntity.exists();
   }
 
   public ClientId clientId() {

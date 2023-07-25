@@ -2,7 +2,7 @@ package org.idp.server.token;
 
 import java.util.Base64;
 import org.idp.server.basic.http.BasicAuth;
-import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.AccessTokenEntity;
 
 public interface AuthorizationHeaderHandlerable {
 
@@ -39,17 +39,17 @@ public interface AuthorizationHeaderHandlerable {
     return new BasicAuth(splitValues[0], splitValues[1]);
   }
 
-  default AccessTokenValue extractAccessToken(String authorizationHeader) {
+  default AccessTokenEntity extractAccessToken(String authorizationHeader) {
     if (isBearer(authorizationHeader)) {
       String accessTokenValue =
           authorizationHeader.substring(AuthorizationHeaderType.Bearer.length());
-      return new AccessTokenValue(accessTokenValue);
+      return new AccessTokenEntity(accessTokenValue);
     }
     if (isDPop(authorizationHeader)) {
       String accessTokenValue =
           authorizationHeader.substring(AuthorizationHeaderType.DPoP.length());
-      return new AccessTokenValue(accessTokenValue);
+      return new AccessTokenEntity(accessTokenValue);
     }
-    return new AccessTokenValue();
+    return new AccessTokenEntity();
   }
 }

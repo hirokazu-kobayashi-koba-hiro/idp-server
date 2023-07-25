@@ -121,7 +121,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
     return parameters.hasRefreshToken();
   }
 
-  public RefreshTokenValue refreshToken() {
+  public RefreshTokenEntity refreshToken() {
     return parameters.refreshToken();
   }
 

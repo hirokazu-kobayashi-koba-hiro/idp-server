@@ -10,7 +10,7 @@ import org.idp.server.handler.userinfo.io.UserinfoRequestStatus;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.repository.OAuthTokenRepository;
-import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.AccessTokenEntity;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.idp.server.userinfo.UserinfoClaimsCreator;
 import org.idp.server.userinfo.UserinfoResponse;
@@ -32,10 +32,10 @@ public class UserinfoHandler {
   }
 
   public UserinfoRequestResponse handle(UserinfoRequest request, UserinfoDelegate delegate) {
-    AccessTokenValue accessTokenValue = request.toAccessToken();
+    AccessTokenEntity accessTokenEntity = request.toAccessToken();
     TokenIssuer tokenIssuer = request.toTokenIssuer();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenValue);
+    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenEntity);
 
     UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken);
     verifier.verify();

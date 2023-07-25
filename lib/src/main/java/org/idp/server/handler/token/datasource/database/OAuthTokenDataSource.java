@@ -6,8 +6,8 @@ import org.idp.server.basic.sql.SqlConnection;
 import org.idp.server.basic.sql.SqlExecutor;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.repository.OAuthTokenRepository;
-import org.idp.server.type.oauth.AccessTokenValue;
-import org.idp.server.type.oauth.RefreshTokenValue;
+import org.idp.server.type.oauth.AccessTokenEntity;
+import org.idp.server.type.oauth.RefreshTokenEntity;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public class OAuthTokenDataSource implements OAuthTokenRepository {
@@ -26,7 +26,7 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
   }
 
   @Override
-  public OAuthToken find(TokenIssuer tokenIssuer, AccessTokenValue accessTokenValue) {
+  public OAuthToken find(TokenIssuer tokenIssuer, AccessTokenEntity accessTokenEntity) {
     SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
     String sqlTemplate =
         """
@@ -34,7 +34,7 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
         FROM oauth_token
         WHERE token_issuer = '%s' AND access_token = '%s';
         """;
-    String sql = String.format(sqlTemplate, tokenIssuer.value(), accessTokenValue.value());
+    String sql = String.format(sqlTemplate, tokenIssuer.value(), accessTokenEntity.value());
     Map<String, String> stringMap = sqlExecutor.selectOne(sql);
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
       return new OAuthToken();
@@ -43,7 +43,7 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
   }
 
   @Override
-  public OAuthToken find(TokenIssuer tokenIssuer, RefreshTokenValue refreshTokenValue) {
+  public OAuthToken find(TokenIssuer tokenIssuer, RefreshTokenEntity refreshTokenEntity) {
     SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
     String sqlTemplate =
         """
@@ -51,7 +51,7 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
             FROM oauth_token
             WHERE token_issuer = '%s' AND refresh_token = '%s';
             """;
-    String sql = String.format(sqlTemplate, tokenIssuer.value(), refreshTokenValue.value());
+    String sql = String.format(sqlTemplate, tokenIssuer.value(), refreshTokenEntity.value());
     Map<String, String> stringMap = sqlExecutor.selectOne(sql);
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
       return new OAuthToken();

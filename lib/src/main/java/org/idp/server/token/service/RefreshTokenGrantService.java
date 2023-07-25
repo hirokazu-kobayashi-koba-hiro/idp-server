@@ -10,7 +10,7 @@ import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.token.validator.RefreshTokenGrantValidator;
 import org.idp.server.token.verifier.RefreshTokenVerifier;
-import org.idp.server.type.oauth.RefreshTokenValue;
+import org.idp.server.type.oauth.RefreshTokenEntity;
 
 public class RefreshTokenGrantService
     implements OAuthTokenCreationService, AccessTokenCreatable, RefreshTokenCreatable {
@@ -26,11 +26,11 @@ public class RefreshTokenGrantService
     RefreshTokenGrantValidator validator = new RefreshTokenGrantValidator(context);
     validator.validate();
 
-    RefreshTokenValue refreshTokenValue = context.refreshToken();
+    RefreshTokenEntity refreshTokenEntity = context.refreshToken();
     ServerConfiguration serverConfiguration = context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
     OAuthToken oAuthToken =
-        oAuthTokenRepository.find(serverConfiguration.tokenIssuer(), refreshTokenValue);
+        oAuthTokenRepository.find(serverConfiguration.tokenIssuer(), refreshTokenEntity);
 
     RefreshTokenVerifier verifier = new RefreshTokenVerifier(context, oAuthToken);
     verifier.verify();

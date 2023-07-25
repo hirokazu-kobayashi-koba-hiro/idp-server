@@ -7,10 +7,10 @@ import org.idp.server.type.verifiablecredential.CNonce;
 import org.idp.server.type.verifiablecredential.CNonceExpiresIn;
 
 public class TokenResponse {
-  AccessTokenValue accessTokenValue;
+  AccessTokenEntity accessTokenEntity;
   TokenType tokenType;
   ExpiresIn expiresIn;
-  RefreshTokenValue refreshTokenValue;
+  RefreshTokenEntity refreshTokenEntity;
   Scopes scopes;
   IdToken idToken;
   AuthorizationDetails authorizationDetails;
@@ -19,20 +19,20 @@ public class TokenResponse {
   String contents;
 
   TokenResponse(
-      AccessTokenValue accessTokenValue,
+      AccessTokenEntity accessTokenEntity,
       TokenType tokenType,
       ExpiresIn expiresIn,
-      RefreshTokenValue refreshTokenValue,
+      RefreshTokenEntity refreshTokenEntity,
       Scopes scopes,
       IdToken idToken,
       AuthorizationDetails authorizationDetails,
       CNonce cNonce,
       CNonceExpiresIn cNonceExpiresIn,
       String contents) {
-    this.accessTokenValue = accessTokenValue;
+    this.accessTokenEntity = accessTokenEntity;
     this.tokenType = tokenType;
     this.expiresIn = expiresIn;
-    this.refreshTokenValue = refreshTokenValue;
+    this.refreshTokenEntity = refreshTokenEntity;
     this.scopes = scopes;
     this.idToken = idToken;
     this.authorizationDetails = authorizationDetails;
@@ -41,8 +41,8 @@ public class TokenResponse {
     this.contents = contents;
   }
 
-  public AccessTokenValue accessToken() {
-    return accessTokenValue;
+  public AccessTokenEntity accessToken() {
+    return accessTokenEntity;
   }
 
   public TokenType tokenType() {
@@ -53,8 +53,8 @@ public class TokenResponse {
     return expiresIn;
   }
 
-  public RefreshTokenValue refreshToken() {
-    return refreshTokenValue;
+  public RefreshTokenEntity refreshToken() {
+    return refreshTokenEntity;
   }
 
   public IdToken idToken() {
@@ -82,6 +82,6 @@ public class TokenResponse {
   }
 
   public boolean hasRefreshToken() {
-    return refreshTokenValue.exists();
+    return refreshTokenEntity.exists();
   }
 }

@@ -7,7 +7,7 @@ import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.type.extension.CreatedAt;
 import org.idp.server.type.extension.ExpiredAt;
-import org.idp.server.type.oauth.RefreshTokenValue;
+import org.idp.server.type.oauth.RefreshTokenEntity;
 
 public interface RefreshTokenCreatable {
 
@@ -15,13 +15,13 @@ public interface RefreshTokenCreatable {
       ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     RandomStringGenerator randomStringGenerator = new RandomStringGenerator(24);
     String code = randomStringGenerator.generate();
-    RefreshTokenValue refreshTokenValue = new RefreshTokenValue(code);
+    RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity(code);
 
     LocalDateTime localDateTime = SystemDateTime.now();
     CreatedAt createdAt = new CreatedAt(localDateTime);
     long refreshTokenDuration = serverConfiguration.refreshTokenDuration();
     ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(refreshTokenDuration));
 
-    return new RefreshToken(refreshTokenValue, createdAt, expiredAt);
+    return new RefreshToken(refreshTokenEntity, createdAt, expiredAt);
   }
 }

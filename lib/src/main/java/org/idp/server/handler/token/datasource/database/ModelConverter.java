@@ -32,7 +32,7 @@ class ModelConverter {
     OAuthTokenIdentifier id = new OAuthTokenIdentifier(stringMap.get("id"));
     TokenIssuer tokenIssuer = new TokenIssuer(stringMap.get("token_issuer"));
     TokenType tokenType = TokenType.valueOf(stringMap.get("token_type"));
-    AccessTokenValue accessTokenValue = new AccessTokenValue(stringMap.get("access_token"));
+    AccessTokenEntity accessTokenEntity = new AccessTokenEntity(stringMap.get("access_token"));
     User user = jsonConverter.read(stringMap.get("user_payload"), User.class);
     Authentication authentication =
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);
@@ -60,17 +60,17 @@ class ModelConverter {
         new AccessToken(
             tokenIssuer,
             tokenType,
-            accessTokenValue,
+                accessTokenEntity,
             authorizationGrant,
             thumbprint,
             accessTokenCreatedAt,
             expiresIn,
             accessTokenExpiredAt);
-    RefreshTokenValue refreshTokenValue = new RefreshTokenValue(stringMap.get("refresh_token"));
+    RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity(stringMap.get("refresh_token"));
     ExpiredAt refreshTokenExpiredAt = new ExpiredAt(stringMap.get("refresh_token_expired_at"));
     CreatedAt refreshTokenCreatedAt = new CreatedAt(stringMap.get("refresh_token_created_at"));
     RefreshToken refreshToken =
-        new RefreshToken(refreshTokenValue, refreshTokenCreatedAt, refreshTokenExpiredAt);
+        new RefreshToken(refreshTokenEntity, refreshTokenCreatedAt, refreshTokenExpiredAt);
     IdToken idToken = new IdToken(stringMap.get("id_token"));
     CNonce cNonce = new CNonce(stringMap.get("c_nonce"));
     CNonceExpiresIn cNonceExpiresIn = new CNonceExpiresIn(stringMap.get("c_nonce_expires_in"));

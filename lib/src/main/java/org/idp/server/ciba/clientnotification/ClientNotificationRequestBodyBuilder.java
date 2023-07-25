@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.type.ciba.AuthReqId;
-import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.AccessTokenEntity;
 import org.idp.server.type.oauth.ExpiresIn;
-import org.idp.server.type.oauth.RefreshTokenValue;
+import org.idp.server.type.oauth.RefreshTokenEntity;
 import org.idp.server.type.oauth.TokenType;
 import org.idp.server.type.oidc.IdToken;
 
@@ -24,8 +24,8 @@ public class ClientNotificationRequestBodyBuilder {
     return this;
   }
 
-  public ClientNotificationRequestBodyBuilder add(AccessTokenValue accessTokenValue) {
-    values.put("access_token", accessTokenValue.value());
+  public ClientNotificationRequestBodyBuilder add(AccessTokenEntity accessTokenEntity) {
+    values.put("access_token", accessTokenEntity.value());
     return this;
   }
 
@@ -39,8 +39,8 @@ public class ClientNotificationRequestBodyBuilder {
     return this;
   }
 
-  public ClientNotificationRequestBodyBuilder add(RefreshTokenValue refreshTokenValue) {
-    values.put("refresh_token", refreshTokenValue.value());
+  public ClientNotificationRequestBodyBuilder add(RefreshTokenEntity refreshTokenEntity) {
+    values.put("refresh_token", refreshTokenEntity.value());
     return this;
   }
 

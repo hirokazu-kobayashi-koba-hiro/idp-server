@@ -10,8 +10,8 @@ import org.idp.server.tokenintrospection.TokenIntrospectionContentsCreator;
 import org.idp.server.tokenintrospection.TokenIntrospectionRequestParameters;
 import org.idp.server.tokenintrospection.validator.TokenIntrospectionValidator;
 import org.idp.server.tokenintrospection.verifier.TokenIntrospectionVerifier;
-import org.idp.server.type.oauth.AccessTokenValue;
-import org.idp.server.type.oauth.RefreshTokenValue;
+import org.idp.server.type.oauth.AccessTokenEntity;
+import org.idp.server.type.oauth.RefreshTokenEntity;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public class TokenIntrospectionHandler {
@@ -37,14 +37,14 @@ public class TokenIntrospectionHandler {
 
   OAuthToken find(TokenIntrospectionRequest request) {
     TokenIntrospectionRequestParameters parameters = request.toParameters();
-    AccessTokenValue accessTokenValue = parameters.accessToken();
+    AccessTokenEntity accessTokenEntity = parameters.accessToken();
     TokenIssuer tokenIssuer = request.toTokenIssuer();
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenValue);
+    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenEntity);
     if (oAuthToken.exists()) {
       return oAuthToken;
     } else {
-      RefreshTokenValue refreshTokenValue = parameters.refreshToken();
-      return oAuthTokenRepository.find(tokenIssuer, refreshTokenValue);
+      RefreshTokenEntity refreshTokenEntity = parameters.refreshToken();
+      return oAuthTokenRepository.find(tokenIssuer, refreshTokenEntity);
     }
   }
 }

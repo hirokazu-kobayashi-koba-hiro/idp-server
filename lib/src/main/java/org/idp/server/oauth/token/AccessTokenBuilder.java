@@ -4,7 +4,7 @@ import org.idp.server.oauth.grant.AuthorizationGrant;
 import org.idp.server.oauth.mtls.ClientCertificationThumbprint;
 import org.idp.server.type.extension.CreatedAt;
 import org.idp.server.type.extension.ExpiredAt;
-import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.AccessTokenEntity;
 import org.idp.server.type.oauth.ExpiresIn;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.idp.server.type.oauth.TokenType;
@@ -12,7 +12,7 @@ import org.idp.server.type.oauth.TokenType;
 public class AccessTokenBuilder {
   TokenIssuer tokenIssuer;
   TokenType tokenType;
-  AccessTokenValue accessTokenValue;
+  AccessTokenEntity accessTokenEntity;
   AuthorizationGrant authorizationGrant;
   ClientCertificationThumbprint clientCertificationThumbprint;
   CreatedAt createdAt;
@@ -28,8 +28,8 @@ public class AccessTokenBuilder {
     return this;
   }
 
-  public AccessTokenBuilder add(AccessTokenValue accessTokenValue) {
-    this.accessTokenValue = accessTokenValue;
+  public AccessTokenBuilder add(AccessTokenEntity accessTokenEntity) {
+    this.accessTokenEntity = accessTokenEntity;
     return this;
   }
 
@@ -62,7 +62,7 @@ public class AccessTokenBuilder {
     return new AccessToken(
         tokenIssuer,
         tokenType,
-        accessTokenValue,
+            accessTokenEntity,
         authorizationGrant,
         clientCertificationThumbprint,
         createdAt,

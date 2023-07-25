@@ -1,14 +1,14 @@
 package org.idp.server.oauth.identity;
 
 import org.idp.server.type.extension.CustomProperties;
-import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.AccessTokenEntity;
 import org.idp.server.type.oauth.AuthorizationCode;
 import org.idp.server.type.oauth.State;
 import org.idp.server.type.oidc.Nonce;
 
 public class IdTokenCustomClaimsBuilder {
   AuthorizationCode authorizationCode = new AuthorizationCode();
-  AccessTokenValue accessTokenValue = new AccessTokenValue();
+  AccessTokenEntity accessTokenEntity = new AccessTokenEntity();
   State state = new State();
   Nonce nonce = new Nonce();
   CustomProperties customProperties = new CustomProperties();
@@ -20,8 +20,8 @@ public class IdTokenCustomClaimsBuilder {
     return this;
   }
 
-  public IdTokenCustomClaimsBuilder add(AccessTokenValue accessTokenValue) {
-    this.accessTokenValue = accessTokenValue;
+  public IdTokenCustomClaimsBuilder add(AccessTokenEntity accessTokenEntity) {
+    this.accessTokenEntity = accessTokenEntity;
     return this;
   }
 
@@ -42,6 +42,6 @@ public class IdTokenCustomClaimsBuilder {
 
   public IdTokenCustomClaims build() {
     return new IdTokenCustomClaims(
-        authorizationCode, accessTokenValue, state, nonce, customProperties);
+        authorizationCode, accessTokenEntity, state, nonce, customProperties);
   }
 }

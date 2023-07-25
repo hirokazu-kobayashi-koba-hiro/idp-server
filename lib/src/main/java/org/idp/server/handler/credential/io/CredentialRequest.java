@@ -3,7 +3,7 @@ package org.idp.server.handler.credential.io;
 import java.util.Map;
 import org.idp.server.token.AuthorizationHeaderHandlerable;
 import org.idp.server.type.mtls.ClientCert;
-import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.AccessTokenEntity;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.idp.server.verifiablecredential.request.CredentialRequestParameters;
 
@@ -40,7 +40,7 @@ public class CredentialRequest implements AuthorizationHeaderHandlerable {
     return clientCert;
   }
 
-  public AccessTokenValue toAccessToken() {
+  public AccessTokenEntity toAccessToken() {
     return extractAccessToken(authorizationHeaders);
   }
 

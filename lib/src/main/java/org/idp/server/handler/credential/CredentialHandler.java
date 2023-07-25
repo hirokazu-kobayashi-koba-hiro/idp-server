@@ -11,7 +11,7 @@ import org.idp.server.handler.credential.io.*;
 import org.idp.server.oauth.token.AccessToken;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.token.repository.OAuthTokenRepository;
-import org.idp.server.type.oauth.AccessTokenValue;
+import org.idp.server.type.oauth.AccessTokenEntity;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.idp.server.verifiablecredential.*;
 import org.idp.server.verifiablecredential.VerifiableCredentialCreators;
@@ -41,10 +41,10 @@ public class CredentialHandler {
 
   public CredentialResponse handleRequest(
       CredentialRequest request, VerifiableCredentialDelegate delegate) {
-    AccessTokenValue accessTokenValue = request.toAccessToken();
+    AccessTokenEntity accessTokenEntity = request.toAccessToken();
     TokenIssuer tokenIssuer = request.toTokenIssuer();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenValue);
+    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenEntity);
     CredentialRequestParameters parameters = request.toParameters();
 
     VerifiableCredentialVerifier verifier =
@@ -73,10 +73,10 @@ public class CredentialHandler {
 
   public BatchCredentialResponse handleBatchRequest(
       BatchCredentialRequest request, VerifiableCredentialDelegate delegate) {
-    AccessTokenValue accessTokenValue = request.toAccessToken();
+    AccessTokenEntity accessTokenEntity = request.toAccessToken();
     TokenIssuer tokenIssuer = request.toTokenIssuer();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenValue);
+    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenEntity);
     BatchCredentialRequestParameters parameters = request.toParameters();
 
     BatchVerifiableCredentialVerifier verifier =

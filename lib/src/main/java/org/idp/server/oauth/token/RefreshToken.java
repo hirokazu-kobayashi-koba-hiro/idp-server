@@ -4,24 +4,24 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import org.idp.server.type.extension.CreatedAt;
 import org.idp.server.type.extension.ExpiredAt;
-import org.idp.server.type.oauth.RefreshTokenValue;
+import org.idp.server.type.oauth.RefreshTokenEntity;
 
 public class RefreshToken {
-  RefreshTokenValue refreshTokenValue = new RefreshTokenValue();
+  RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity();
   CreatedAt createdAt;
   ExpiredAt expiredAt;
 
   public RefreshToken() {}
 
   public RefreshToken(
-      RefreshTokenValue refreshTokenValue, CreatedAt createdAt, ExpiredAt expiredAt) {
-    this.refreshTokenValue = refreshTokenValue;
+          RefreshTokenEntity refreshTokenEntity, CreatedAt createdAt, ExpiredAt expiredAt) {
+    this.refreshTokenEntity = refreshTokenEntity;
     this.createdAt = createdAt;
     this.expiredAt = expiredAt;
   }
 
-  public RefreshTokenValue refreshTokenValue() {
-    return refreshTokenValue;
+  public RefreshTokenEntity refreshTokenValue() {
+    return refreshTokenEntity;
   }
 
   public CreatedAt createdAt() {
@@ -37,6 +37,6 @@ public class RefreshToken {
   }
 
   public boolean exists() {
-    return Objects.nonNull(refreshTokenValue) && refreshTokenValue.exists();
+    return Objects.nonNull(refreshTokenEntity) && refreshTokenEntity.exists();
   }
 }

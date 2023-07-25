@@ -27,12 +27,12 @@ public class TokenRevocationRequestParameters implements BackchannelRequestParam
     return values.isEmpty();
   }
 
-  public AccessTokenValue accessToken() {
-    return new AccessTokenValue(getStringOrEmpty(OAuthRequestKey.token));
+  public AccessTokenEntity accessToken() {
+    return new AccessTokenEntity(getStringOrEmpty(OAuthRequestKey.token));
   }
 
-  public RefreshTokenValue refreshToken() {
-    return new RefreshTokenValue(getStringOrEmpty(OAuthRequestKey.token));
+  public RefreshTokenEntity refreshToken() {
+    return new RefreshTokenEntity(getStringOrEmpty(OAuthRequestKey.token));
   }
 
   public boolean hasToken() {
