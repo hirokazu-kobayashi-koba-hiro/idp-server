@@ -59,7 +59,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
   }
 
   public String getValue(OAuthRequestKey key) {
-    return parameters.getStringOrEmpty(key);
+    return parameters.getValueOrEmpty(key);
   }
 
   public AuthorizationCode code() {

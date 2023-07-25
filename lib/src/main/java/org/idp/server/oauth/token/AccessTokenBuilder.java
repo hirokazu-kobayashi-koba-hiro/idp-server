@@ -62,7 +62,7 @@ public class AccessTokenBuilder {
     return new AccessToken(
         tokenIssuer,
         tokenType,
-            accessTokenEntity,
+        accessTokenEntity,
         authorizationGrant,
         clientCertificationThumbprint,
         createdAt,

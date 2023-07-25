@@ -36,7 +36,7 @@ public class CredentialDefinition {
     return (List<String>) value;
   }
 
-  public String getStringOrEmpty(String key) {
+  public String getValueOrEmpty(String key) {
     Object value = values.get(key);
     if (Objects.isNull(value)) {
       return "";

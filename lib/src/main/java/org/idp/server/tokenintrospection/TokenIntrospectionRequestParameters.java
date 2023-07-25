@@ -27,18 +27,18 @@ public class TokenIntrospectionRequestParameters {
   }
 
   public AccessTokenEntity accessToken() {
-    return new AccessTokenEntity(getStringOrEmpty(OAuthRequestKey.token));
+    return new AccessTokenEntity(getValueOrEmpty(OAuthRequestKey.token));
   }
 
   public RefreshTokenEntity refreshToken() {
-    return new RefreshTokenEntity(getStringOrEmpty(OAuthRequestKey.token));
+    return new RefreshTokenEntity(getValueOrEmpty(OAuthRequestKey.token));
   }
 
   public boolean hasToken() {
     return contains(OAuthRequestKey.token);
   }
 
-  public String getStringOrEmpty(OAuthRequestKey key) {
+  public String getValueOrEmpty(OAuthRequestKey key) {
     return values.getFirstOrEmpty(key.name());
   }
 

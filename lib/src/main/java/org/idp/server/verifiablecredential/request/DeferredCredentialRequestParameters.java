@@ -2,18 +2,19 @@ package org.idp.server.verifiablecredential.request;
 
 import java.util.Map;
 import org.idp.server.type.OAuthRequestKey;
-import org.idp.server.type.verifiablecredential.CredentialDefinitionEntity;
 import org.idp.server.type.verifiablecredential.Format;
 import org.idp.server.type.verifiablecredential.ProofEntity;
+import org.idp.server.type.verifiablecredential.TransactionId;
 
-public class CredentialRequestParameters implements VerifiableCredentialRequestTransformable {
+public class DeferredCredentialRequestParameters
+    implements VerifiableCredentialRequestTransformable {
   Map<String, Object> values;
 
-  public CredentialRequestParameters() {
+  public DeferredCredentialRequestParameters() {
     this.values = Map.of();
   }
 
-  public CredentialRequestParameters(Map<String, Object> values) {
+  public DeferredCredentialRequestParameters(Map<String, Object> values) {
     this.values = values;
   }
 
@@ -25,8 +26,8 @@ public class CredentialRequestParameters implements VerifiableCredentialRequestT
     return Format.of(getValueOrEmpty(OAuthRequestKey.format));
   }
 
-  public CredentialDefinitionEntity credentialDefinitionEntity() {
-    return new CredentialDefinitionEntity(values.get(OAuthRequestKey.credential_definition.name()));
+  public TransactionId transactionId() {
+    return new TransactionId((String) getValueOrEmpty(OAuthRequestKey.transaction_id));
   }
 
   public ProofEntity proofEntity() {

@@ -18,7 +18,7 @@ public class AuthorizationDetail {
   }
 
   public String type() {
-    return getStringOrEmpty("type");
+    return getValueOrEmpty("type");
   }
 
   public List<String> locations() {
@@ -34,7 +34,7 @@ public class AuthorizationDetail {
   }
 
   public String identifier() {
-    return getStringOrEmpty("identifier");
+    return getValueOrEmpty("identifier");
   }
 
   public List<String> privileges() {
@@ -42,11 +42,11 @@ public class AuthorizationDetail {
   }
 
   public boolean isVerifiableCredential() {
-    return getStringOrEmpty("type").equals("openid_credential");
+    return getValueOrEmpty("type").equals("openid_credential");
   }
 
   public String format() {
-    return getStringOrEmpty("format");
+    return getValueOrEmpty("format");
   }
 
   public CredentialDefinition credentialDefinition() {
@@ -54,7 +54,7 @@ public class AuthorizationDetail {
   }
 
   public String doctype() {
-    return getStringOrEmpty("doctype");
+    return getValueOrEmpty("doctype");
   }
 
   public List<String> getListOrEmpty(String key) {
@@ -65,7 +65,7 @@ public class AuthorizationDetail {
     return (List<String>) value;
   }
 
-  public String getStringOrEmpty(String key) {
+  public String getValueOrEmpty(String key) {
     Object value = values.get(key);
     if (Objects.isNull(value)) {
       return "";

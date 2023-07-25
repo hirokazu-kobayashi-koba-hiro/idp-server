@@ -28,18 +28,18 @@ public class TokenRevocationRequestParameters implements BackchannelRequestParam
   }
 
   public AccessTokenEntity accessToken() {
-    return new AccessTokenEntity(getStringOrEmpty(OAuthRequestKey.token));
+    return new AccessTokenEntity(getValueOrEmpty(OAuthRequestKey.token));
   }
 
   public RefreshTokenEntity refreshToken() {
-    return new RefreshTokenEntity(getStringOrEmpty(OAuthRequestKey.token));
+    return new RefreshTokenEntity(getValueOrEmpty(OAuthRequestKey.token));
   }
 
   public boolean hasToken() {
     return contains(OAuthRequestKey.token);
   }
 
-  public String getStringOrEmpty(OAuthRequestKey key) {
+  public String getValueOrEmpty(OAuthRequestKey key) {
     return values.getFirstOrEmpty(key.name());
   }
 
@@ -53,7 +53,7 @@ public class TokenRevocationRequestParameters implements BackchannelRequestParam
 
   @Override
   public ClientId clientId() {
-    return new ClientId(getStringOrEmpty(OAuthRequestKey.client_id));
+    return new ClientId(getValueOrEmpty(OAuthRequestKey.client_id));
   }
 
   @Override
@@ -63,7 +63,7 @@ public class TokenRevocationRequestParameters implements BackchannelRequestParam
 
   @Override
   public ClientSecret clientSecret() {
-    return new ClientSecret(getStringOrEmpty(OAuthRequestKey.client_secret));
+    return new ClientSecret(getValueOrEmpty(OAuthRequestKey.client_secret));
   }
 
   @Override
@@ -73,7 +73,7 @@ public class TokenRevocationRequestParameters implements BackchannelRequestParam
 
   @Override
   public ClientAssertion clientAssertion() {
-    return new ClientAssertion(getStringOrEmpty(OAuthRequestKey.client_assertion));
+    return new ClientAssertion(getValueOrEmpty(OAuthRequestKey.client_assertion));
   }
 
   @Override
@@ -83,7 +83,7 @@ public class TokenRevocationRequestParameters implements BackchannelRequestParam
 
   @Override
   public ClientAssertionType clientAssertionType() {
-    return ClientAssertionType.of(getStringOrEmpty(OAuthRequestKey.client_assertion_type));
+    return ClientAssertionType.of(getValueOrEmpty(OAuthRequestKey.client_assertion_type));
   }
 
   @Override

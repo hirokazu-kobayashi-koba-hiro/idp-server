@@ -65,7 +65,7 @@ public interface AccessTokenCreatable {
       return new AccessToken(
           serverConfiguration.tokenIssuer(),
           TokenType.Bearer,
-              accessTokenEntity,
+          accessTokenEntity,
           authorizationGrant,
           thumbprint,
           createdAt,

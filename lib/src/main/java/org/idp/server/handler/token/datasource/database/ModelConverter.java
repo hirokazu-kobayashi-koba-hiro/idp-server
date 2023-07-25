@@ -60,7 +60,7 @@ class ModelConverter {
         new AccessToken(
             tokenIssuer,
             tokenType,
-                accessTokenEntity,
+            accessTokenEntity,
             authorizationGrant,
             thumbprint,
             accessTokenCreatedAt,

@@ -27,7 +27,7 @@ public interface CibaProfileAnalyzable {
       JoseContext joseContext,
       ClientConfiguration clientConfiguration) {
 
-    String scope = parameters.getStringOrEmpty(OAuthRequestKey.scope);
+    String scope = parameters.getValueOrEmpty(OAuthRequestKey.scope);
     JsonWebTokenClaims claims = joseContext.claims();
     String joseScope = claims.getValue("scope");
     String targetScope =
