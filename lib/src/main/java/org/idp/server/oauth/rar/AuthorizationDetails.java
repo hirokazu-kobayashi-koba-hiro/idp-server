@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.oauth.vc.CredentialDefinition;
 
 public class AuthorizationDetails implements Iterable<AuthorizationDetail> {
 

@@ -5,21 +5,21 @@ import org.idp.server.token.OAuthToken;
 import org.idp.server.type.mtls.ClientCert;
 import org.idp.server.verifiablecredential.exception.VerifiableCredentialBadRequestException;
 import org.idp.server.verifiablecredential.exception.VerifiableCredentialRequestInvalidException;
-import org.idp.server.verifiablecredential.request.CredentialRequestParameters;
-import org.idp.server.verifiablecredential.request.VerifiableCredentialRequest;
+import org.idp.server.verifiablecredential.request.BatchCredentialRequestParameters;
+import org.idp.server.verifiablecredential.request.BatchCredentialRequests;
 import org.idp.server.verifiablecredential.request.VerifiableCredentialRequestTransformable;
 
-public class VerifiableCredentialVerifier implements VerifiableCredentialRequestTransformable {
+public class BatchVerifiableCredentialVerifier implements VerifiableCredentialRequestTransformable {
 
   OAuthToken oAuthToken;
   ClientCert clientCert;
-  CredentialRequestParameters parameters;
+  BatchCredentialRequestParameters parameters;
   ServerConfiguration serverConfiguration;
 
-  public VerifiableCredentialVerifier(
+  public BatchVerifiableCredentialVerifier(
       OAuthToken oAuthToken,
       ClientCert clientCert,
-      CredentialRequestParameters parameters,
+      BatchCredentialRequestParameters parameters,
       ServerConfiguration serverConfiguration) {
     this.oAuthToken = oAuthToken;
     this.clientCert = clientCert;
@@ -32,10 +32,13 @@ public class VerifiableCredentialVerifier implements VerifiableCredentialRequest
     VerifiableCredentialOAuthTokenVerifier oAuthTokenVerifier =
         new VerifiableCredentialOAuthTokenVerifier(oAuthToken, clientCert, serverConfiguration);
     oAuthTokenVerifier.verify();
-    VerifiableCredentialRequest request = transformAndVerify();
-    VerifiableCredentialRequestVerifier requestVerifier =
-        new VerifiableCredentialRequestVerifier(request, serverConfiguration);
-    requestVerifier.verify();
+    BatchCredentialRequests verifiableCredentialRequests = transformAndVerify();
+    verifiableCredentialRequests.forEach(
+        request -> {
+          VerifiableCredentialRequestVerifier requestVerifier =
+              new VerifiableCredentialRequestVerifier(request, serverConfiguration);
+          requestVerifier.verify();
+        });
   }
 
   void throwExceptionIfUnSupportedVerifiableCredential() {
@@ -45,9 +48,9 @@ public class VerifiableCredentialVerifier implements VerifiableCredentialRequest
     }
   }
 
-  VerifiableCredentialRequest transformAndVerify() {
+  BatchCredentialRequests transformAndVerify() {
     try {
-      return transformRequest(parameters.values());
+      return transformBatchRequest(parameters.credentialRequests());
     } catch (VerifiableCredentialRequestInvalidException exception) {
       throw new VerifiableCredentialBadRequestException("invalid_request", exception.getMessage());
     }

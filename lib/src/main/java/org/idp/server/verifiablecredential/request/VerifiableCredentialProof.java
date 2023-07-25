@@ -20,7 +20,7 @@ public class VerifiableCredentialProof {
     return proofType;
   }
 
-  public boolean isDefined() {
+  public boolean isProofTypeDefined() {
     return Objects.nonNull(proofType) && proofType().isDefined();
   }
 
@@ -46,5 +46,9 @@ public class VerifiableCredentialProof {
 
   public boolean isCwtType() {
     return proofType.isCwt();
+  }
+
+  public boolean exists() {
+    return Objects.nonNull(proofType);
   }
 }

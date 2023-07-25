@@ -472,3 +472,15 @@ export const requestCredentials = async ({
     headers: authorizationHeader,
   });
 };
+
+export const requestBatchCredentials = async ({
+ endpoint,
+ params,
+ authorizationHeader,
+}) => {
+  return await postWithJson({
+    url: endpoint,
+    body: params,
+    headers: authorizationHeader,
+  });
+};

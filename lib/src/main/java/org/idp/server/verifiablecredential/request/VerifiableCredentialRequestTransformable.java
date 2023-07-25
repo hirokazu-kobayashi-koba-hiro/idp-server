@@ -3,28 +3,74 @@ package org.idp.server.verifiablecredential.request;
 import java.security.PublicKey;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.idp.server.basic.jose.JsonWebKey;
 import org.idp.server.basic.jose.JsonWebKeyInvalidException;
 import org.idp.server.basic.jose.JsonWebSignatureHeader;
 import org.idp.server.basic.x509.X509CertInvalidException;
 import org.idp.server.basic.x509.X509Certification;
-import org.idp.server.type.verifiablecredential.ProofEntity;
+import org.idp.server.oauth.vc.CredentialDefinition;
+import org.idp.server.type.verifiablecredential.DocType;
+import org.idp.server.type.verifiablecredential.Format;
 import org.idp.server.type.verifiablecredential.ProofType;
 import org.idp.server.verifiablecredential.exception.VerifiableCredentialRequestInvalidException;
 
 public interface VerifiableCredentialRequestTransformable {
 
-  default VerifiableCredentialProof transformProof(ProofEntity proofEntity)
+  default BatchCredentialRequests transformBatchRequest(Object object)
       throws VerifiableCredentialRequestInvalidException {
     try {
-      Object value = proofEntity.value();
-      Map<String, Object> map = (Map<String, Object>) value;
+      List<Object> list = (List<Object>) object;
+      List<VerifiableCredentialRequest> verifiableCredentialRequests =
+          list.stream()
+              .map(
+                  value -> {
+                    try {
+                      return transformRequest(value);
+                    } catch (VerifiableCredentialRequestInvalidException e) {
+                      throw new RuntimeException(e);
+                    }
+                  })
+              .toList();
+      return new BatchCredentialRequests(verifiableCredentialRequests);
+    } catch (Exception e) {
+      throw new VerifiableCredentialRequestInvalidException(
+          "invalid batch credential request, can not pared", e);
+    }
+  }
+
+  default VerifiableCredentialRequest transformRequest(Object object)
+      throws VerifiableCredentialRequestInvalidException {
+    try {
+      if (Objects.isNull(object)) {
+        return new VerifiableCredentialRequest();
+      }
+      Map<String, Object> map = (Map<String, Object>) object;
+      Format format = Format.of((String) map.get("format"));
+      DocType docType = new DocType((String) map.get("doc_type"));
+      CredentialDefinition credentialDefinition =
+          new CredentialDefinition((Map<String, Object>) map.get("credential_definition"));
+      VerifiableCredentialProof proof = transformProof(map.get("proof"));
+      return new VerifiableCredentialRequest(format, docType, credentialDefinition, proof);
+    } catch (Exception e) {
+      throw new VerifiableCredentialRequestInvalidException(
+          "invalid verifiable credential request, can not parsed", e);
+    }
+  }
+
+  default VerifiableCredentialProof transformProof(Object proofEntity)
+      throws VerifiableCredentialRequestInvalidException {
+    try {
+      if (Objects.isNull(proofEntity)) {
+        return new VerifiableCredentialProof();
+      }
+      Map<String, Object> map = (Map<String, Object>) proofEntity;
       ProofType proofType = ProofType.of(getValueOrEmpty(map, "proof_type"));
       String jwt = getValueOrEmpty(map, "jwt");
       String cwt = getValueOrEmpty(map, "cwt");
       return new VerifiableCredentialProof(proofType, jwt, cwt);
     } catch (Exception e) {
-      throw new VerifiableCredentialRequestInvalidException("invalid proof, can not pared", e);
+      throw new VerifiableCredentialRequestInvalidException("invalid proof, can not parsed", e);
     }
   }
 

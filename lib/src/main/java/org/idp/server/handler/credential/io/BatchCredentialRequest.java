@@ -5,21 +5,22 @@ import org.idp.server.token.AuthorizationHeaderHandlerable;
 import org.idp.server.type.mtls.ClientCert;
 import org.idp.server.type.oauth.AccessTokenValue;
 import org.idp.server.type.oauth.TokenIssuer;
-import org.idp.server.verifiablecredential.request.CredentialRequestParameters;
+import org.idp.server.verifiablecredential.request.BatchCredentialRequestParameters;
 
-public class CredentialRequest implements AuthorizationHeaderHandlerable {
+public class BatchCredentialRequest implements AuthorizationHeaderHandlerable {
   String authorizationHeaders;
   Map<String, Object> params;
   String issuer;
   String clientCert;
 
-  public CredentialRequest(String authorizationHeaders, Map<String, Object> params, String issuer) {
+  public BatchCredentialRequest(
+      String authorizationHeaders, Map<String, Object> params, String issuer) {
     this.authorizationHeaders = authorizationHeaders;
     this.params = params;
     this.issuer = issuer;
   }
 
-  public CredentialRequest setClientCert(String clientCert) {
+  public BatchCredentialRequest setClientCert(String clientCert) {
     this.clientCert = clientCert;
     return this;
   }
@@ -44,8 +45,8 @@ public class CredentialRequest implements AuthorizationHeaderHandlerable {
     return extractAccessToken(authorizationHeaders);
   }
 
-  public CredentialRequestParameters toParameters() {
-    return new CredentialRequestParameters(params);
+  public BatchCredentialRequestParameters toParameters() {
+    return new BatchCredentialRequestParameters(params);
   }
 
   public TokenIssuer toTokenIssuer() {

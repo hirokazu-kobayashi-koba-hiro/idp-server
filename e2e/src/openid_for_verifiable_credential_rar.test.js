@@ -1,6 +1,6 @@
 import { describe, expect, it, xit } from "@jest/globals";
 
-import { getJwks, requestCredentials, requestToken } from "./api/oauthClient";
+import { getJwks, requestBatchCredentials, requestCredentials, requestToken } from "./api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
 import { requestAuthorizations } from "./oauth";
 import {
@@ -224,7 +224,7 @@ describe("OpenID for Verifiable Credential Issuance - draft 13", () => {
         params: {
           format: "jwt_vc_json",
           proof: {
-
+            proof_type: "undefined",
           }
         },
         authorizationHeader: {
@@ -308,6 +308,40 @@ describe("OpenID for Verifiable Credential Issuance - draft 13", () => {
       expect(credentialResponse.status).toBe(400);
       expect(credentialResponse.data.error).toEqual("invalid_request");
       expect(credentialResponse.data.error_description).toBe("When credential request proof_type is cwt, proof entity must contains cwt claim");
+    });
+  });
+
+  describe("8. Batch Credential Endpoint", () => {
+    it("8.1. Batch Credential Request success", async () => {
+      const authorizationDetails = [
+        {
+          "type": "openid_credential",
+          "locations": [
+            "https://credential-issuer.example.com"
+          ],
+          "format": "jwt_vc_json",
+          "credential_definition": {
+            "type": [
+              "VerifiableCredential",
+              "UniversityDegreeCredential"
+            ]
+          }
+        }
+      ];
+      const token = await getToken({authorizationDetails});
+      const credentialResponse = await requestBatchCredentials({
+        endpoint: serverConfig.credentialBatchEndpoint,
+        params: {
+          credential_requests: [{
+            format: "jwt_vc_json",
+          }]
+        },
+        authorizationHeader: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log(credentialResponse.data);
+      expect(credentialResponse.status).toBe(200);
     });
   });
 

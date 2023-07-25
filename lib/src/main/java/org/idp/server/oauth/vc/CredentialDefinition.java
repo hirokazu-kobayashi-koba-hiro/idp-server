@@ -1,4 +1,4 @@
-package org.idp.server.oauth.rar;
+package org.idp.server.oauth.vc;
 
 import java.util.List;
 import java.util.Map;

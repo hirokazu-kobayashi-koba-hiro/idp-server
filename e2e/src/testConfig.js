@@ -19,6 +19,7 @@ export const serverConfig = {
   discoveryEndpoint:
     "http://localhost:8080/123/.well-known/openid-configuration",
   credentialEndpoint: "http://localhost:8080/123/api/v1/credentials",
+  credentialBatchEndpoint: "http://localhost:8080/123/api/v1/credentials/batch-requests",
   enabledSsr: false,
   ciba: {
     loginHint: "001",

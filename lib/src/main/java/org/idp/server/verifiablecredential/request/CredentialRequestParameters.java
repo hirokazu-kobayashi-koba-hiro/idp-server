@@ -1,4 +1,4 @@
-package org.idp.server.verifiablecredential;
+package org.idp.server.verifiablecredential.request;
 
 import java.util.Map;
 import org.idp.server.type.OAuthRequestKey;
@@ -6,7 +6,7 @@ import org.idp.server.type.verifiablecredential.CredentialDefinitionEntity;
 import org.idp.server.type.verifiablecredential.Format;
 import org.idp.server.type.verifiablecredential.ProofEntity;
 
-public class CredentialRequestParameters {
+public class CredentialRequestParameters implements VerifiableCredentialRequestTransformable {
   Map<String, Object> values;
 
   public CredentialRequestParameters() {
@@ -47,5 +47,9 @@ public class CredentialRequestParameters {
 
   public boolean hasProof() {
     return contains(OAuthRequestKey.proof);
+  }
+
+  public Map<String, Object> values() {
+    return values;
   }
 }
