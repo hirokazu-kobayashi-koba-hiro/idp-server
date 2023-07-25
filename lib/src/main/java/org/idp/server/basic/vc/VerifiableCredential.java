@@ -83,24 +83,24 @@ public class VerifiableCredential {
   }
 
   public String id() {
-    return getStringOrEmpty("id");
+    return getValueOrEmpty("id");
   }
 
   public String type() {
-    return getStringOrEmpty("type");
+    return getValueOrEmpty("type");
   }
 
   public String issuer() {
-    return getStringOrEmpty("issuer");
+    return getValueOrEmpty("issuer");
   }
 
   public LocalDateTime issuanceDate() {
-    String issuanceDateValue = getStringOrEmpty("issuanceDate");
+    String issuanceDateValue = getValueOrEmpty("issuanceDate");
     return LocalDateTime.parse(issuanceDateValue);
   }
 
   public String issuanceDateValue() {
-    return getStringOrEmpty("issuanceDate");
+    return getValueOrEmpty("issuanceDate");
   }
 
   public Map<String, Object> credentialSubject() {
@@ -128,7 +128,7 @@ public class VerifiableCredential {
     return credentialSubject.containsKey("id");
   }
 
-  public String getStringOrEmpty(String key) {
+  public String getValueOrEmpty(String key) {
     return (String) values.getOrDefault(key, "");
   }
 
