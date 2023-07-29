@@ -2,10 +2,7 @@ package org.idp.server;
 
 import org.idp.server.handler.credential.CredentialHandler;
 import org.idp.server.handler.credential.CredentialRequestErrorHandler;
-import org.idp.server.handler.credential.io.BatchCredentialRequest;
-import org.idp.server.handler.credential.io.BatchCredentialResponse;
-import org.idp.server.handler.credential.io.CredentialRequest;
-import org.idp.server.handler.credential.io.CredentialResponse;
+import org.idp.server.handler.credential.io.*;
 import org.idp.server.verifiablecredential.VerifiableCredentialDelegate;
 
 public class CredentialApi {
@@ -19,19 +16,27 @@ public class CredentialApi {
     this.credentialRequestErrorHandler = new CredentialRequestErrorHandler();
   }
 
-  public CredentialResponse request(CredentialRequest credentialRequest) {
+  public CredentialResponse request(CredentialRequest request) {
     try {
-      return credentialHandler.handleRequest(credentialRequest, delegate);
+      return credentialHandler.handleRequest(request, delegate);
     } catch (Exception exception) {
       return credentialRequestErrorHandler.handle(exception);
     }
   }
 
-  public BatchCredentialResponse requestBatch(BatchCredentialRequest batchCredentialRequest) {
+  public BatchCredentialResponse requestBatch(BatchCredentialRequest request) {
     try {
-      return credentialHandler.handleBatchRequest(batchCredentialRequest, delegate);
+      return credentialHandler.handleBatchRequest(request, delegate);
     } catch (Exception exception) {
       return credentialRequestErrorHandler.handleBatchRequest(exception);
+    }
+  }
+
+  public DeferredCredentialResponse requestDeferred(DeferredCredentialRequest request) {
+    try {
+      return credentialHandler.handleDeferredRequest(request, delegate);
+    } catch (Exception exception) {
+      return credentialRequestErrorHandler.handleDeferredRequest(exception);
     }
   }
 
