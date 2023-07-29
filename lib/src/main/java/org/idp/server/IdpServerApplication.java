@@ -19,6 +19,7 @@ import org.idp.server.handler.configuration.datasource.database.server.ServerCon
 import org.idp.server.handler.configuration.datasource.memory.ClientConfigurationMemoryDataSource;
 import org.idp.server.handler.configuration.datasource.memory.ServerConfigurationMemoryDataSource;
 import org.idp.server.handler.credential.CredentialHandler;
+import org.idp.server.handler.credential.datasource.database.VerifiableCredentialTransactionDataSource;
 import org.idp.server.handler.discovery.DiscoveryHandler;
 import org.idp.server.handler.grantmanagment.datasource.AuthorizationGrantedMemoryDataSource;
 import org.idp.server.handler.oauth.OAuthAuthorizeHandler;
@@ -160,6 +161,8 @@ public class IdpServerApplication {
         new ServerConfigurationDataSource(sqlConnection);
     ClientConfigurationDataSource clientConfigurationMemoryDataSource =
         new ClientConfigurationDataSource(sqlConnection);
+    VerifiableCredentialTransactionDataSource verifiableCredentialTransactionDataSource =
+        new VerifiableCredentialTransactionDataSource(sqlConnection);
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
             authorizationRequestDataSource,
@@ -235,6 +238,7 @@ public class IdpServerApplication {
     CredentialHandler credentialHandler =
         new CredentialHandler(
             oAuthTokenDataSource,
+            verifiableCredentialTransactionDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
     this.credentialApi = new CredentialApi(credentialHandler);

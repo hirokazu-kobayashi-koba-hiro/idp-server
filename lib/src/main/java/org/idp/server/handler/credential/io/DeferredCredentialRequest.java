@@ -5,7 +5,8 @@ import org.idp.server.token.AuthorizationHeaderHandlerable;
 import org.idp.server.type.mtls.ClientCert;
 import org.idp.server.type.oauth.AccessTokenEntity;
 import org.idp.server.type.oauth.TokenIssuer;
-import org.idp.server.verifiablecredential.request.CredentialRequestParameters;
+import org.idp.server.type.verifiablecredential.TransactionId;
+import org.idp.server.verifiablecredential.request.DeferredCredentialRequestParameters;
 
 public class DeferredCredentialRequest implements AuthorizationHeaderHandlerable {
   String authorizationHeaders;
@@ -45,8 +46,12 @@ public class DeferredCredentialRequest implements AuthorizationHeaderHandlerable
     return extractAccessToken(authorizationHeaders);
   }
 
-  public CredentialRequestParameters toParameters() {
-    return new CredentialRequestParameters(params);
+  public DeferredCredentialRequestParameters toParameters() {
+    return new DeferredCredentialRequestParameters(params);
+  }
+
+  public TransactionId transactionId() {
+    return toParameters().transactionId();
   }
 
   public TokenIssuer toTokenIssuer() {

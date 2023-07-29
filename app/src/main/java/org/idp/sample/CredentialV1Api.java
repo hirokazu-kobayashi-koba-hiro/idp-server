@@ -4,15 +4,12 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.CredentialApi;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.basic.vc.VerifiableCredential;
-import org.idp.server.handler.credential.io.BatchCredentialRequest;
-import org.idp.server.handler.credential.io.BatchCredentialResponse;
-import org.idp.server.handler.credential.io.CredentialRequest;
-import org.idp.server.handler.credential.io.CredentialResponse;
+import org.idp.server.handler.credential.io.*;
 import org.idp.server.oauth.vc.CredentialDefinition;
 import org.idp.server.type.oauth.Subject;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.idp.server.verifiablecredential.VerifiableCredentialDelegate;
+import org.idp.server.verifiablecredential.VerifiableCredentialDelegateResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -66,9 +63,29 @@ public class CredentialV1Api implements ParameterTransformable, VerifiableCreden
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
+  @PostMapping("/deferred-request")
+  public ResponseEntity<?> requestDeferred(
+      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
+      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
+      @PathVariable("tenant-id") String tenantId,
+      @RequestBody(required = false) Map<String, Object> params) {
+    Tenant tenant = Tenant.of(tenantId);
+    DeferredCredentialRequest request =
+        new DeferredCredentialRequest(authorizationHeader, params, tenant.issuer());
+    request.setClientCert(clientCert);
+    DeferredCredentialResponse response = credentialApi.requestDeferred(request);
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.setAll(response.headers());
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
   @Override
-  public VerifiableCredential getCredential(
+  public VerifiableCredentialDelegateResponse getCredential(
       TokenIssuer tokenIssuer, Subject subject, List<CredentialDefinition> credentialDefinitions) {
-    return userMockService.getCredential();
+    if (subject.value().equals("pending")) {
+      return VerifiableCredentialDelegateResponse.pending();
+    }
+    return VerifiableCredentialDelegateResponse.issued(userMockService.getCredential());
   }
 }

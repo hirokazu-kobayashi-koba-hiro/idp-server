@@ -137,3 +137,15 @@ CREATE TABLE ciba_grant
             REFERENCES backchannel_authentication_request (id)
             ON DELETE CASCADE
 );
+
+CREATE TABLE verifiable_credential_transaction
+(
+    transaction_id                   varchar(256)            NOT NULL,
+    credential_issuer                text                    NOT NULL,
+    client_id                        text                    NOT NULL,
+    user_id                          varchar(256)            NOT NULL,
+    verifiable_credential           text                    NOT NULL,
+    status                           varchar(10)             NOT NULL,
+    created_at                       timestamp default now() NOT NULL,
+    updated_at                       timestamp default now() NOT NULL
+);

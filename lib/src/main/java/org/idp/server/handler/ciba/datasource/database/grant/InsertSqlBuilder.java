@@ -77,10 +77,6 @@ class InsertSqlBuilder implements SqlBaseBuilder {
   }
 
   String build() {
-    for (int i = 1; i <= columnSize; i++) {
-      this.sql = sql.replace("'$" + i + "'", "''");
-    }
-    System.out.println(sql);
-    return sql;
+    return build(sql, columnSize);
   }
 }

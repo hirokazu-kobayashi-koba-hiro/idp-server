@@ -54,5 +54,5 @@ public enum OAuthRequestKey {
   client_metadata,
   client_metadata_uri,
   transaction_id,
-    ;
+  ;
 }

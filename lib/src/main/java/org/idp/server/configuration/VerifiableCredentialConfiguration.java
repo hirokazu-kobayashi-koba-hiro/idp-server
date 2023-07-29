@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.type.verifiablecredential.CredentialIssuer;
 
 /**
  *
@@ -76,8 +77,8 @@ public class VerifiableCredentialConfiguration implements JsonReadable {
   String deferredCredentialEndpoint = "";
   List<VerifiableCredentialsSupportConfiguration> credentialsSupported = new ArrayList<>();
 
-  public String credentialIssuer() {
-    return credentialIssuer;
+  public CredentialIssuer credentialIssuer() {
+    return new CredentialIssuer(credentialIssuer);
   }
 
   public String authorizationServer() {
