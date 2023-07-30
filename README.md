@@ -41,6 +41,8 @@ This library provides java api supported OAuth2.0 and OIDC spec.
 2. client_secret_basic
 3. client_secret_jwt
 4. private_key_jwt
+5. tls_client_auth
+6. self_signed_tls_client_auth
 
 ## License
 
