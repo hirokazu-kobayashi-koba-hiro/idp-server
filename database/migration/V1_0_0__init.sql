@@ -16,6 +16,38 @@ CREATE TABLE client_configuration
     CONSTRAINT pk_client_configuration PRIMARY KEY (token_issuer, client_id)
 );
 
+CREATE TABLE user (
+  id varchar(256) NOT NULL PRIMARY KEY,
+  token_issuer text NOT NULL,
+  name varchar(256) NOT NULL,
+  given_name varchar(256) NOT NULL,
+  family_name varchar(256) NOT NULL,
+  middle_name varchar(256) NOT NULL,
+  nickname varchar(256) NOT NULL,
+  preferred_username varchar(256) NOT NULL,
+  profile varchar(256) NOT NULL,
+  picture varchar(256) NOT NULL,
+  website varchar(256) NOT NULL,
+  email varchar(256) NOT NULL,
+  email_verified varchar(256) NOT NULL,
+  gender varchar(256) NOT NULL,
+  birthdate varchar(256) NOT NULL,
+  zoneinfo varchar(256) NOT NULL,
+  locale varchar(256) NOT NULL,
+  phone_number varchar(256) NOT NULL,
+  phone_number_verified varchar(256) NOT NULL,
+  address text NOT NULL,
+  custom_properties text NOT NULL,
+  created_at timestamp default now() NOT NULL,
+  updated_at timestamp default now() NOT NULL
+);
+
+CREATE TABLE user_credentials (
+  user_id varchar(256) NOT NULL,
+  created_at timestamp default now() NOT NULL,
+  updated_at timestamp default now() NOT NULL
+);
+
 CREATE TABLE authorization_request
 (
     id                          varchar(256)            NOT NULL PRIMARY KEY,
