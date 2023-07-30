@@ -32,6 +32,8 @@ This library provides java api supported OAuth2.0 and OIDC spec.
 5. RFC7009 OAuth 2.0 Token Revocation
 6. RFC7636 Proof Key for Code Exchange by OAuth Public Clients
 7. RFC7662 OAuth 2.0 Token Introspection
+8. Financial-grade API Security Profile 1.0 - Part 1: Baseline
+9. Financial-grade API Security Profile 1.0 - Part 2: Advanced
 
 ## supported client authentication
 
