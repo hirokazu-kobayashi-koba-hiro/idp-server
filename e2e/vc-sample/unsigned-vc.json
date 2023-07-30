@@ -1,0 +1,10 @@
+{
+    "@context": "https://www.w3.org/2018/credentials/v1",
+    "id": "urn:uuid:78A4DE18-82D1-4039-AD1B-E214BA204C0B",
+    "type": ["VerifiableCredential"],
+    "issuer": "did:key:z6MkiSSzefCBunQYszMyKFaTGpcBkoZBMjLkiDrohBP3UmQb",
+    "issuanceDate": "2023-07-29T06:56:36Z",
+    "credentialSubject": {
+        "id": "did:example:my-data-subject-identifier"
+    }
+}

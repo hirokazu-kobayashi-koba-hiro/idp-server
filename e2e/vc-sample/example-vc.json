@@ -1,0 +1,19 @@
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1"
+  ],
+  "type": "VerifiableCredential",
+  "credentialSubject": {
+    "id": "urn:uuid:ee61d3d8-7e3d-4f95-9937-bd171af699e8"
+  },
+  "issuer": "did:web:demo.spruceid.com",
+  "issuanceDate": "2023-07-29T06:58:58Z",
+  "proof": {
+    "type": "Ed25519Signature2018",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:web:demo.spruceid.com#_t-v-Ep7AtkELhhvAzCCDzy1O5Bn_z1CVFv9yiRXdHY",
+    "created": "2023-07-29T06:58:58.890Z",
+    "jws": "eyJhbGciOiJFZERTQSIsImNyaXQiOlsiYjY0Il0sImI2NCI6ZmFsc2V9..zlGznfR5tMK2PFjQikN-Dw6tUpmXYjronkOhD1Ew-7muUcpb2KbgAtrNSntw6usq4GFhk2WSBdrdDmBl_M45AA"
+  },
+  "expirationDate": "2023-08-28T06:58:58Z"
+}
