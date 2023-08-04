@@ -23,8 +23,6 @@ import org.idp.server.handler.ciba.io.CibaRequestStatus;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.type.ciba.AuthReqId;
-import org.idp.server.type.extension.CustomProperties;
-import org.idp.server.type.extension.Pairs;
 import org.idp.server.type.oauth.TokenIssuer;
 
 public class CibaRequestHandler {
@@ -69,8 +67,8 @@ public class CibaRequestHandler {
     clientAuthenticatorHandler.authenticate(context);
 
     UserService userService = new UserService(delegate, context);
-    // FIXME consider returned object
-    Pairs<User, CustomProperties> pair = userService.getAndNotify();
+
+    User user = userService.getAndNotify();
 
     BackchannelAuthenticationResponse response =
         new BackchannelAuthenticationResponseBuilder()
@@ -82,8 +80,7 @@ public class CibaRequestHandler {
     backchannelAuthenticationRequestRepository.register(context.backchannelAuthenticationRequest());
     // FIXME consider param
     CibaGrantFactory cibaGrantFactory =
-        new CibaGrantFactory(
-            context, response, pair.getLeft(), new Authentication(), pair.getRight());
+        new CibaGrantFactory(context, response, user, new Authentication());
     CibaGrant cibaGrant = cibaGrantFactory.create();
     cibaGrantRepository.register(cibaGrant);
 

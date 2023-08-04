@@ -1,10 +1,19 @@
 package org.idp.sample;
 
 import jakarta.servlet.http.HttpSession;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import org.idp.sample.user.UserService;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.OAuthApi;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.handler.oauth.io.*;
+import org.idp.server.oauth.OAuthRequestDelegate;
+import org.idp.server.oauth.OAuthSession;
+import org.idp.server.oauth.OAuthSessionKey;
+import org.idp.server.oauth.authentication.Authentication;
+import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.interaction.UserInteraction;
 import org.idp.server.type.extension.OAuthDenyReason;
 import org.slf4j.Logger;
@@ -15,22 +24,20 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("")
-public class OAuthController implements ParameterTransformable {
+@RequestMapping
+public class OAuthController implements OAuthRequestDelegate, ParameterTransformable {
 
   Logger log = LoggerFactory.getLogger(OAuthController.class);
   HttpSession httpSession;
   OAuthApi oAuthApi;
-  UserMockService userMockService;
+  UserService userService;
 
   public OAuthController(
-      IdpServerApplication idpServerApplication,
-      UserMockService userMockService,
-      HttpSession httpSession) {
+      IdpServerApplication idpServerApplication, HttpSession httpSession, UserService userService) {
     this.oAuthApi = idpServerApplication.oAuthApi();
-    oAuthApi.setOAuthRequestDelegate(userMockService);
-    this.userMockService = userMockService;
+    oAuthApi.setOAuthRequestDelegate(this);
     this.httpSession = httpSession;
+    this.userService = userService;
   }
 
   @GetMapping("{tenant-id}/v1/authorizations")
@@ -84,14 +91,29 @@ public class OAuthController implements ParameterTransformable {
       @ModelAttribute("tenantId") String tenantId) {
 
     Tenant tenant = Tenant.of(tenantId);
-    UserInteraction userInteraction =
-        userMockService.getUserInteraction(sessionKey, username, password);
+    OAuthSession session = (OAuthSession) httpSession.getAttribute(sessionKey);
+    UserInteraction userInteraction = userInteraction(username, password, session);
     OAuthAuthorizeRequest authAuthorizeRequest =
         new OAuthAuthorizeRequest(
             id, tenant.issuer(), userInteraction.user(), userInteraction.authentication());
     httpSession.setAttribute("id", httpSession.getId());
     OAuthAuthorizeResponse authAuthorizeResponse = oAuthApi.authorize(authAuthorizeRequest);
     return "redirect:" + authAuthorizeResponse.redirectUriValue();
+  }
+
+  private UserInteraction userInteraction(String username, String password, OAuthSession session) {
+    if (Objects.nonNull(session) && password.isEmpty()) {
+      Authentication authentication = session.authentication();
+      User user = session.user();
+      return new UserInteraction(user, authentication);
+    }
+    User user = userService.get(username);
+    Authentication authentication =
+        new Authentication()
+            .setTime(SystemDateTime.now())
+            .setMethods(List.of("password"))
+            .setAcrValues(List.of("urn:mace:incommon:iap:silver"));
+    return new UserInteraction(user, authentication);
   }
 
   @PostMapping("/v1/deny")
@@ -101,5 +123,20 @@ public class OAuthController implements ParameterTransformable {
         new OAuthDenyRequest(id, tenant.issuer(), OAuthDenyReason.access_denied);
     OAuthDenyResponse oAuthDenyResponse = oAuthApi.deny(denyRequest);
     return "redirect:" + oAuthDenyResponse.redirectUriValue();
+  }
+
+  @Override
+  public OAuthSession findSession(OAuthSessionKey oAuthSessionKey) {
+    String sessionKey = oAuthSessionKey.key();
+    return (OAuthSession) httpSession.getAttribute(sessionKey);
+  }
+
+  @Override
+  public void registerSession(OAuthSession oAuthSession) {
+    String sessionKey = oAuthSession.sessionKeyValue();
+    String id = httpSession.getId();
+    httpSession.getId();
+    httpSession.setAttribute(sessionKey, oAuthSession);
+    System.out.println(id);
   }
 }

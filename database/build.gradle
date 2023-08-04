@@ -18,6 +18,12 @@ flyway {
     password = "${env.DB_PASSWORD ?: "idpserver"}"
     encoding = "UTF-8"
     schemas = ["public"]
-    locations = ["filesystem:./migration", "filesystem:./record"]
+    locations = ["filesystem:./migration"]
     cleanDisabled = false
+}
+
+sourceSets {
+    main {
+        resources.srcDirs = ["src/main/java", "src/main/resources"]
+    }
 }

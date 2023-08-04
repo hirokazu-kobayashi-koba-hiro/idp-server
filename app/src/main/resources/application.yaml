@@ -1,3 +1,15 @@
 idp:
   configurations:
    basePath: "src/main/resources/config/sample"
+
+
+spring:
+  datasource:
+    url: "jdbc:postgresql://localhost:5432/idpserver"
+    username: "idpserver"
+    password: "idpserver"
+    hikari:
+      connection-timeout: 3000
+      maximum-pool-size: 50
+      minimum-idle: 50
+

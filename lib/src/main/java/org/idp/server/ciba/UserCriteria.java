@@ -20,11 +20,23 @@ public class UserCriteria {
     return loginHint;
   }
 
+  public boolean hasLoginHint() {
+    return loginHint.exists();
+  }
+
   public LoginHintToken loginHintToken() {
     return loginHintToken;
   }
 
+  public boolean hasLoginHintToken() {
+    return loginHintToken.exists();
+  }
+
   public IdTokenHint idTokenHint() {
     return idTokenHint;
+  }
+
+  public boolean hasIdTokenHint() {
+    return idTokenHint.exists();
   }
 }

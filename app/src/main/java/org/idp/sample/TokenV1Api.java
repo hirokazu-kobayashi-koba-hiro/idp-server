@@ -1,10 +1,17 @@
 package org.idp.sample;
 
 import java.util.Map;
+
+import org.idp.sample.user.UserService;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.TokenApi;
 import org.idp.server.handler.token.io.TokenRequest;
 import org.idp.server.handler.token.io.TokenRequestResponse;
+import org.idp.server.oauth.identity.User;
+import org.idp.server.token.PasswordCredentialsGrantDelegate;
+import org.idp.server.type.oauth.Password;
+import org.idp.server.type.oauth.TokenIssuer;
+import org.idp.server.type.oauth.Username;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,13 +20,16 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("{tenant-id}/api/v1/tokens")
-public class TokenV1Api implements ParameterTransformable {
+public class TokenV1Api implements PasswordCredentialsGrantDelegate, ParameterTransformable {
 
   TokenApi tokenApi;
+  UserService userService;
 
-  public TokenV1Api(IdpServerApplication idpServerApplication, UserMockService userMockService) {
+  public TokenV1Api(
+      IdpServerApplication idpServerApplication, UserService userService) {
     this.tokenApi = idpServerApplication.tokenApi();
-    tokenApi.setPasswordCredentialsGrantDelegate(userMockService);
+    tokenApi.setPasswordCredentialsGrantDelegate(this);
+    this.userService = userService;
   }
 
   @PostMapping
@@ -37,5 +47,17 @@ public class TokenV1Api implements ParameterTransformable {
     httpHeaders.setAll(response.responseHeaders());
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @Override
+  public User findAndAuthenticate(TokenIssuer tokenIssuer, Username username, Password password) {
+    User user = userService.find(username.value());
+    if (!user.exists()) {
+      return User.notFound();
+    }
+    if (!userService.authenticate(user, password.value())) {
+      return User.notFound();
+    }
+    return user;
   }
 }

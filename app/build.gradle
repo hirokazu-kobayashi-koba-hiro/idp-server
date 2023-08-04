@@ -23,6 +23,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.session:spring-session-core'
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.2'
 	runtimeOnly 'org.postgresql:postgresql:42.6.0'
 
 	implementation project(':lib')
@@ -48,3 +49,11 @@ spotless {
 		greclipse()
 	}
 }
+
+sourceSets {
+	main {
+		// mybatis SQL map XML ファイルを java 以下でも検知する
+		resources.srcDirs = ["src/main/java", "src/main/resources"]
+	}
+}
+

@@ -36,11 +36,10 @@ public class UserinfoHandler {
     TokenIssuer tokenIssuer = request.toTokenIssuer();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
     OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenEntity);
-
-    UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken);
+    User user = delegate.findUser(oAuthToken.tokenIssuer(), oAuthToken.subject());
+    UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken, request.toClientCert(), user);
     verifier.verify();
 
-    User user = delegate.getUser(oAuthToken.subject());
     UserinfoClaimsCreator claimsCreator =
         new UserinfoClaimsCreator(
             user, oAuthToken.authorizationGrant(), serverConfiguration.claimsSupported());

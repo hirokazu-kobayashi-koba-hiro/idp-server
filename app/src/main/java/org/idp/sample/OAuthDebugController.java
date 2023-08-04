@@ -1,11 +1,16 @@
 package org.idp.sample;
 
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Map;
+import org.idp.sample.user.UserService;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.OAuthApi;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.handler.oauth.io.*;
+import org.idp.server.oauth.OAuthRequestDelegate;
+import org.idp.server.oauth.OAuthSession;
+import org.idp.server.oauth.OAuthSessionKey;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.type.extension.OAuthDenyReason;
@@ -19,18 +24,20 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("{tenant-id}/api/debug/v1/authorizations")
-public class OAuthDebugController implements ParameterTransformable {
+public class OAuthDebugController implements OAuthRequestDelegate, ParameterTransformable {
 
   Logger log = LoggerFactory.getLogger(OAuthDebugController.class);
 
   OAuthApi oAuthApi;
-  UserMockService userMockService;
+  UserService userService;
+  HttpSession httpSession;
 
   public OAuthDebugController(
-      IdpServerApplication idpServerApplication, UserMockService userMockService) {
+      IdpServerApplication idpServerApplication, UserService userService, HttpSession httpSession) {
     this.oAuthApi = idpServerApplication.oAuthApi();
-    oAuthApi.setOAuthRequestDelegate(userMockService);
-    this.userMockService = userMockService;
+    oAuthApi.setOAuthRequestDelegate(this);
+    this.userService = userService;
+    this.httpSession = httpSession;
   }
 
   @GetMapping
@@ -61,9 +68,11 @@ public class OAuthDebugController implements ParameterTransformable {
 
   @PostMapping("/{id}/authorize")
   public ResponseEntity<?> authorize(
-      @PathVariable String id, @PathVariable("tenant-id") String tenantId) {
+      @PathVariable String id,
+      @PathVariable("tenant-id") String tenantId,
+      @RequestBody MultiValueMap<String, String> request) {
     Tenant tenant = Tenant.of(tenantId);
-    User user = userMockService.getUser();
+    User user = userService.get(request.getFirst("user_id"));
     Authentication authentication =
         new Authentication()
             .setTime(SystemDateTime.now())
@@ -86,5 +95,20 @@ public class OAuthDebugController implements ParameterTransformable {
     OAuthDenyResponse oAuthDenyResponse = oAuthApi.deny(denyRequest);
     Map<String, String> response = Map.of("redirect_uri", oAuthDenyResponse.redirectUriValue());
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public OAuthSession findSession(OAuthSessionKey oAuthSessionKey) {
+    String sessionKey = oAuthSessionKey.key();
+    return (OAuthSession) httpSession.getAttribute(sessionKey);
+  }
+
+  @Override
+  public void registerSession(OAuthSession oAuthSession) {
+    String sessionKey = oAuthSession.sessionKeyValue();
+    String id = httpSession.getId();
+    httpSession.getId();
+    httpSession.setAttribute(sessionKey, oAuthSession);
+    System.out.println(id);
   }
 }

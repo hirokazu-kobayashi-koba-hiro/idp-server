@@ -1,6 +1,7 @@
 package org.idp.server.handler.userinfo.io;
 
 import org.idp.server.token.AuthorizationHeaderHandlerable;
+import org.idp.server.type.mtls.ClientCert;
 import org.idp.server.type.oauth.AccessTokenEntity;
 import org.idp.server.type.oauth.TokenIssuer;
 
@@ -32,6 +33,10 @@ public class UserinfoRequest implements AuthorizationHeaderHandlerable {
 
   public TokenIssuer toTokenIssuer() {
     return new TokenIssuer(issuer);
+  }
+
+  public ClientCert toClientCert() {
+    return new ClientCert(clientCert);
   }
 
   public UserinfoRequest setClientCert(String clientCert) {

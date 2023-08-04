@@ -1,9 +1,16 @@
 package org.idp.sample;
 
 import java.util.Map;
+import org.idp.sample.user.UserService;
 import org.idp.server.CibaApi;
 import org.idp.server.IdpServerApplication;
+import org.idp.server.ciba.CibaRequestDelegate;
+import org.idp.server.ciba.UserCriteria;
+import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.handler.ciba.io.*;
+import org.idp.server.oauth.identity.User;
+import org.idp.server.type.ciba.UserCode;
+import org.idp.server.type.oauth.TokenIssuer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,14 +19,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("{tenant-id}/api/v1/backchannel/authentications")
-public class CibaV1Api implements ParameterTransformable {
+public class CibaV1Api implements CibaRequestDelegate, ParameterTransformable {
 
   CibaApi cibaApi;
-  UserMockService userMockService;
+  UserService userService;
 
-  public CibaV1Api(IdpServerApplication idpServerApplication, UserMockService userMockService) {
+  public CibaV1Api(IdpServerApplication idpServerApplication, UserService userService) {
     this.cibaApi = idpServerApplication.cibaApi();
-    this.userMockService = userMockService;
+    this.userService = userService;
   }
 
   @PostMapping
@@ -32,7 +39,7 @@ public class CibaV1Api implements ParameterTransformable {
     Tenant tenant = Tenant.of(tenantId);
     CibaRequest cibaRequest = new CibaRequest(authorizationHeader, params, tenant.issuer());
     cibaRequest.setClientCert(clientCert);
-    CibaRequestResponse response = cibaApi.request(cibaRequest, userMockService);
+    CibaRequestResponse response = cibaApi.request(cibaRequest, this);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", response.contentTypeValue());
     return new ResponseEntity<>(
@@ -55,4 +62,21 @@ public class CibaV1Api implements ParameterTransformable {
     CibaDenyResponse cibaDenyResponse = cibaApi.deny(cibaDenyRequest);
     return new ResponseEntity<>(HttpStatus.valueOf(cibaDenyResponse.statusCode()));
   }
+
+  @Override
+  public User find(TokenIssuer tokenIssuer, UserCriteria criteria) {
+    if (criteria.hasLoginHint()) {
+      return userService.find(criteria.loginHint().value());
+    }
+    return User.notFound();
+  }
+
+  @Override
+  public boolean authenticate(TokenIssuer tokenIssuer, User user, UserCode userCode) {
+    return userService.authenticate(user, userCode.value());
+  }
+
+  @Override
+  public void notify(
+      TokenIssuer tokenIssuer, User user, BackchannelAuthenticationRequest request) {}
 }

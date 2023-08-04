@@ -1,5 +1,6 @@
 package org.idp.sample;
 
+import org.idp.sample.user.UserService;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.UserinfoApi;
 import org.idp.server.handler.userinfo.UserinfoDelegate;
@@ -7,6 +8,7 @@ import org.idp.server.handler.userinfo.io.UserinfoRequest;
 import org.idp.server.handler.userinfo.io.UserinfoRequestResponse;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.type.oauth.Subject;
+import org.idp.server.type.oauth.TokenIssuer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,11 +18,12 @@ import org.springframework.web.bind.annotation.*;
 public class UserinfoV1Api implements ParameterTransformable, UserinfoDelegate {
 
   UserinfoApi userinfoApi;
-  UserMockService userMockService;
+  UserService userService;
 
-  public UserinfoV1Api(IdpServerApplication idpServerApplication, UserMockService userMockService) {
+  public UserinfoV1Api(
+      IdpServerApplication idpServerApplication, UserService userService) {
     this.userinfoApi = idpServerApplication.userinfoApi();
-    this.userMockService = userMockService;
+    this.userService = userService;
   }
 
   @GetMapping
@@ -48,7 +51,7 @@ public class UserinfoV1Api implements ParameterTransformable, UserinfoDelegate {
   }
 
   @Override
-  public User getUser(Subject subject) {
-    return userMockService.getUser();
+  public User findUser(TokenIssuer tokenIssuer, Subject subject) {
+    return userService.find(subject.value());
   }
 }

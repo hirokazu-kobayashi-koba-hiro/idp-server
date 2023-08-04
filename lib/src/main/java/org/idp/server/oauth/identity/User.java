@@ -1,9 +1,15 @@
 package org.idp.server.oauth.identity;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.vc.VerifiableCredential;
+import org.idp.server.type.extension.CustomProperties;
 
 public class User implements Serializable {
   String sub;
@@ -25,8 +31,14 @@ public class User implements Serializable {
   String phoneNumber;
   Boolean phoneNumberVerified;
   Address address;
-  Long updatedAt;
-  List<VerifiableCredential> verifiableCredentials;
+  LocalDateTime updatedAt;
+  String password;
+  HashMap<String, Object> customProperties = new HashMap<>();
+  List<HashMap<String, Object>> credentials = new ArrayList<>();
+
+  public static User notFound() {
+    return new User();
+  }
 
   public String sub() {
     return sub;
@@ -200,20 +212,24 @@ public class User implements Serializable {
   }
 
   public long updateAt() {
-    return updatedAt;
+    return updatedAt.toEpochSecond(SystemDateTime.zoneOffset);
   }
 
-  public User setUpdatedAt(long updatedAt) {
-    this.updatedAt = updatedAt;
+  public String password() {
+    return password;
+  }
+
+  public User setPassword(String password) {
+    this.password = password;
     return this;
   }
 
-  public List<VerifiableCredential> verifiableCredentials() {
-    return verifiableCredentials;
+  public boolean hasPassword() {
+    return Objects.nonNull(password) && !password.isEmpty();
   }
 
-  public User setVerifiableCredentials(List<VerifiableCredential> verifiableCredentials) {
-    this.verifiableCredentials = verifiableCredentials;
+  public User setUpdatedAt(LocalDateTime updatedAt) {
+    this.updatedAt = updatedAt;
     return this;
   }
 
@@ -297,7 +313,30 @@ public class User implements Serializable {
     return Objects.nonNull(updatedAt);
   }
 
-  public boolean hasVerifiableCredentials() {
-    return Objects.nonNull(verifiableCredentials) && !verifiableCredentials.isEmpty();
+  public CustomProperties customProperties() {
+    return new CustomProperties(customProperties);
+  }
+
+  public User setCustomProperties(HashMap<String, Object> customProperties) {
+    this.customProperties = customProperties;
+    return this;
+  }
+
+  public boolean hasCustomProperties() {
+    return !customProperties.isEmpty();
+  }
+
+  public User setCredentials(List<HashMap<String, Object>> credentials) {
+    this.credentials = credentials;
+    return this;
+  }
+
+  public List<VerifiableCredential> verifiableCredentials() {
+    return credentials.stream()
+            .map(VerifiableCredential::new)
+            .toList();
+  }
+  public boolean hasCredentials() {
+    return !credentials.isEmpty();
   }
 }

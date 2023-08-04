@@ -213,10 +213,11 @@ export const getAuthorizations = async ({
   });
 };
 
-export const authorize = async ({ endpoint, id }) => {
+export const authorize = async ({ endpoint, id, body }) => {
   const url = endpoint.replace("{id}", id);
   return await post({
     url,
+    body,
   });
 };
 

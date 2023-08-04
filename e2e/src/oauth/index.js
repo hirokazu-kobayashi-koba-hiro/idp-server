@@ -30,6 +30,10 @@ export const requestAuthorizations = async ({
   authorizationDetails,
   presentationDefinition,
   action = "authorize",
+  user = {
+    "user_id": "001",
+    "password": "successUserCode",
+  },
 }) => {
   if (serverConfig.enabledSsr) {
     const requestUrl = createAuthorizationRequest({
@@ -166,6 +170,9 @@ export const requestAuthorizations = async ({
       const authorizeResponse = await authorize({
         endpoint: serverConfig.authorizeEndpoint,
         id: response.data.id,
+        body: {
+          ...user
+        }
       });
       console.log(authorizeResponse.data);
       const authorizationResponse = convertToAuthorizationResponse(
