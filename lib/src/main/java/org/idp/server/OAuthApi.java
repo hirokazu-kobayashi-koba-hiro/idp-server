@@ -1,11 +1,6 @@
 package org.idp.server;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.idp.server.handler.oauth.OAuthAuthorizeHandler;
-import org.idp.server.handler.oauth.OAuthDenyHandler;
-import org.idp.server.handler.oauth.OAuthRequestErrorHandler;
-import org.idp.server.handler.oauth.OAuthRequestHandler;
+import org.idp.server.handler.oauth.*;
 import org.idp.server.handler.oauth.io.*;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.OAuthRequestDelegate;
@@ -18,9 +13,10 @@ public class OAuthApi {
   OAuthRequestHandler requestHandler;
   OAuthRequestErrorHandler oAuthRequestErrorHandler;
   OAuthAuthorizeHandler authAuthorizeHandler;
+  OAuthAuthorizeErrorHandler authAuthorizeErrorHandler;
   OAuthDenyHandler oAuthDenyHandler;
+  OAuthDenyErrorHandler denyErrorHandler;
   OAuthRequestDelegate oAuthRequestDelegate;
-  Logger log = Logger.getLogger(OAuthApi.class.getName());
 
   OAuthApi(
       OAuthRequestHandler requestHandler,
@@ -29,7 +25,9 @@ public class OAuthApi {
     this.requestHandler = requestHandler;
     this.oAuthRequestErrorHandler = new OAuthRequestErrorHandler();
     this.authAuthorizeHandler = authAuthorizeHandler;
+    this.authAuthorizeErrorHandler = new OAuthAuthorizeErrorHandler();
     this.oAuthDenyHandler = oAuthDenyHandler;
+    this.denyErrorHandler = new OAuthDenyErrorHandler();
   }
 
   /**
@@ -68,8 +66,7 @@ public class OAuthApi {
       AuthorizationResponse response = authAuthorizeHandler.handle(request, oAuthRequestDelegate);
       return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, response);
     } catch (Exception exception) {
-      log.log(Level.SEVERE, exception.getMessage(), exception);
-      return new OAuthAuthorizeResponse();
+      return authAuthorizeErrorHandler.handle(exception);
     }
   }
 
@@ -77,8 +74,7 @@ public class OAuthApi {
     try {
       return oAuthDenyHandler.handle(request);
     } catch (Exception exception) {
-      log.log(Level.SEVERE, exception.getMessage(), exception);
-      return new OAuthDenyResponse();
+      return denyErrorHandler.handle(exception);
     }
   }
 

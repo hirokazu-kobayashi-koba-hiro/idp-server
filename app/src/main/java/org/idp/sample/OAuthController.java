@@ -88,7 +88,8 @@ public class OAuthController implements OAuthRequestDelegate, ParameterTransform
       @ModelAttribute("username") String username,
       @ModelAttribute("password") String password,
       @ModelAttribute("id") String id,
-      @ModelAttribute("tenantId") String tenantId) {
+      @ModelAttribute("tenantId") String tenantId,
+      Model model) {
 
     Tenant tenant = Tenant.of(tenantId);
     OAuthSession session = (OAuthSession) httpSession.getAttribute(sessionKey);
@@ -98,16 +99,35 @@ public class OAuthController implements OAuthRequestDelegate, ParameterTransform
             id, tenant.issuer(), userInteraction.user(), userInteraction.authentication());
     httpSession.setAttribute("id", httpSession.getId());
     OAuthAuthorizeResponse authAuthorizeResponse = oAuthApi.authorize(authAuthorizeRequest);
-    return "redirect:" + authAuthorizeResponse.redirectUriValue();
+    switch (authAuthorizeResponse.status()) {
+      case OK, REDIRECABLE_BAD_REQUEST -> {
+        return "redirect:" + authAuthorizeResponse.redirectUriValue();
+      }
+      default -> {
+        model.addAttribute("error", authAuthorizeResponse.error());
+        model.addAttribute("errorDescription", authAuthorizeResponse.errorDescription());
+        return "error";
+      }
+    }
   }
 
   @PostMapping("/v1/deny")
-  public String deny(@ModelAttribute("id") String id, @ModelAttribute("tenantId") String tenantId) {
+  public String deny(
+      @ModelAttribute("id") String id, @ModelAttribute("tenantId") String tenantId, Model model) {
     Tenant tenant = Tenant.of(tenantId);
     OAuthDenyRequest denyRequest =
         new OAuthDenyRequest(id, tenant.issuer(), OAuthDenyReason.access_denied);
     OAuthDenyResponse oAuthDenyResponse = oAuthApi.deny(denyRequest);
-    return "redirect:" + oAuthDenyResponse.redirectUriValue();
+    switch (oAuthDenyResponse.status()) {
+      case OK, REDIRECABLE_BAD_REQUEST -> {
+        return "redirect:" + oAuthDenyResponse.redirectUriValue();
+      }
+      default -> {
+        model.addAttribute("error", oAuthDenyResponse.error());
+        model.addAttribute("errorDescription", oAuthDenyResponse.errorDescription());
+        return "error";
+      }
+    }
   }
 
   private UserInteraction userInteraction(String username, String password, OAuthSession session) {

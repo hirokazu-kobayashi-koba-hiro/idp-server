@@ -82,8 +82,31 @@ public class OAuthDebugController implements OAuthRequestDelegate, ParameterTran
     OAuthAuthorizeRequest authAuthorizeRequest =
         new OAuthAuthorizeRequest(id, tenant.issuer(), user, authentication);
     OAuthAuthorizeResponse authAuthorizeResponse = oAuthApi.authorize(authAuthorizeRequest);
-    Map<String, String> response = Map.of("redirect_uri", authAuthorizeResponse.redirectUriValue());
-    return new ResponseEntity<>(response, HttpStatus.OK);
+    switch (authAuthorizeResponse.status()) {
+      case OK, REDIRECABLE_BAD_REQUEST -> {
+        Map<String, String> response =
+            Map.of("redirect_uri", authAuthorizeResponse.redirectUriValue());
+        return new ResponseEntity<>(response, HttpStatus.OK);
+      }
+      case BAD_REQUEST -> {
+        Map<String, String> response =
+            Map.of(
+                "error",
+                authAuthorizeResponse.error(),
+                "error_description",
+                authAuthorizeResponse.errorDescription());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+      }
+      default -> {
+        Map<String, String> response =
+            Map.of(
+                "error",
+                authAuthorizeResponse.error(),
+                "error_description",
+                authAuthorizeResponse.errorDescription());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    }
   }
 
   @PostMapping("/{id}/deny")
@@ -93,8 +116,30 @@ public class OAuthDebugController implements OAuthRequestDelegate, ParameterTran
     OAuthDenyRequest denyRequest =
         new OAuthDenyRequest(id, tenant.issuer(), OAuthDenyReason.access_denied);
     OAuthDenyResponse oAuthDenyResponse = oAuthApi.deny(denyRequest);
-    Map<String, String> response = Map.of("redirect_uri", oAuthDenyResponse.redirectUriValue());
-    return new ResponseEntity<>(response, HttpStatus.OK);
+    switch (oAuthDenyResponse.status()) {
+      case OK, REDIRECABLE_BAD_REQUEST -> {
+        Map<String, String> response = Map.of("redirect_uri", oAuthDenyResponse.redirectUriValue());
+        return new ResponseEntity<>(response, HttpStatus.OK);
+      }
+      case BAD_REQUEST -> {
+        Map<String, String> response =
+            Map.of(
+                "error",
+                oAuthDenyResponse.error(),
+                "error_description",
+                oAuthDenyResponse.errorDescription());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+      }
+      default -> {
+        Map<String, String> response =
+            Map.of(
+                "error",
+                oAuthDenyResponse.error(),
+                "error_description",
+                oAuthDenyResponse.errorDescription());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    }
   }
 
   @Override

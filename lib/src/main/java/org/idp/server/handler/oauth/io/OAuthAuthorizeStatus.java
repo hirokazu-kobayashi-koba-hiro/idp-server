@@ -10,4 +10,8 @@ public enum OAuthAuthorizeStatus {
   public boolean isOK() {
     return this == OK;
   }
+
+  public boolean isRedirectableBadRequest() {
+    return this == REDIRECABLE_BAD_REQUEST;
+  }
 }
