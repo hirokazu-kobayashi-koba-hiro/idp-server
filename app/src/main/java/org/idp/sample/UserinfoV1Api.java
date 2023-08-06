@@ -20,8 +20,7 @@ public class UserinfoV1Api implements ParameterTransformable, UserinfoDelegate {
   UserinfoApi userinfoApi;
   UserService userService;
 
-  public UserinfoV1Api(
-      IdpServerApplication idpServerApplication, UserService userService) {
+  public UserinfoV1Api(IdpServerApplication idpServerApplication, UserService userService) {
     this.userinfoApi = idpServerApplication.userinfoApi();
     this.userService = userService;
   }

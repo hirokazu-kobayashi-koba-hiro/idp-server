@@ -1,6 +1,7 @@
 package org.idp.server.handler.oauth;
 
 import java.util.Objects;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ClientConfigurationRepository;
 import org.idp.server.configuration.ServerConfiguration;
@@ -89,7 +90,9 @@ public class OAuthAuthorizeHandler {
     }
     if (Objects.nonNull(delegate)) {
       OAuthSessionKey oAuthSessionKey = new OAuthSessionKey(tokenIssuer.value(), clientId.value());
-      OAuthSession session = new OAuthSession(oAuthSessionKey, user, authentication);
+      OAuthSession session =
+          new OAuthSession(
+              oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
       delegate.registerSession(session);
     }
 

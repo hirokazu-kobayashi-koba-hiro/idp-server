@@ -101,21 +101,6 @@ public class OAuthController implements OAuthRequestDelegate, ParameterTransform
     return "redirect:" + authAuthorizeResponse.redirectUriValue();
   }
 
-  private UserInteraction userInteraction(String username, String password, OAuthSession session) {
-    if (Objects.nonNull(session) && password.isEmpty()) {
-      Authentication authentication = session.authentication();
-      User user = session.user();
-      return new UserInteraction(user, authentication);
-    }
-    User user = userService.get(username);
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .setMethods(List.of("password"))
-            .setAcrValues(List.of("urn:mace:incommon:iap:silver"));
-    return new UserInteraction(user, authentication);
-  }
-
   @PostMapping("/v1/deny")
   public String deny(@ModelAttribute("id") String id, @ModelAttribute("tenantId") String tenantId) {
     Tenant tenant = Tenant.of(tenantId);
@@ -123,6 +108,24 @@ public class OAuthController implements OAuthRequestDelegate, ParameterTransform
         new OAuthDenyRequest(id, tenant.issuer(), OAuthDenyReason.access_denied);
     OAuthDenyResponse oAuthDenyResponse = oAuthApi.deny(denyRequest);
     return "redirect:" + oAuthDenyResponse.redirectUriValue();
+  }
+
+  private UserInteraction userInteraction(String username, String password, OAuthSession session) {
+    if (Objects.nonNull(session) && !session.isExpire(SystemDateTime.now())) {
+      Authentication authentication = session.authentication();
+      User user = session.user();
+      return new UserInteraction(user, authentication);
+    }
+    User user = userService.get(username);
+    if (userService.authenticate(user, password)) {
+      Authentication authentication =
+          new Authentication()
+              .setTime(SystemDateTime.now())
+              .setMethods(List.of("password"))
+              .setAcrValues(List.of("urn:mace:incommon:iap:silver"));
+      return new UserInteraction(user, authentication);
+    }
+    throw new IllegalArgumentException("not match password");
   }
 
   @Override

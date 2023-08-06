@@ -1,7 +1,6 @@
 package org.idp.sample;
 
 import java.util.Map;
-
 import org.idp.sample.user.UserService;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.TokenApi;
@@ -25,8 +24,7 @@ public class TokenV1Api implements PasswordCredentialsGrantDelegate, ParameterTr
   TokenApi tokenApi;
   UserService userService;
 
-  public TokenV1Api(
-      IdpServerApplication idpServerApplication, UserService userService) {
+  public TokenV1Api(IdpServerApplication idpServerApplication, UserService userService) {
     this.tokenApi = idpServerApplication.tokenApi();
     tokenApi.setPasswordCredentialsGrantDelegate(this);
     this.userService = userService;

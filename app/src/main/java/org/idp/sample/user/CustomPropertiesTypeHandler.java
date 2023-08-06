@@ -24,7 +24,8 @@ public class CustomPropertiesTypeHandler extends BaseTypeHandler<Map<String, Obj
   }
 
   @Override
-  public Map<String, Object> getNullableResult(ResultSet rs, String columnName) throws SQLException {
+  public Map<String, Object> getNullableResult(ResultSet rs, String columnName)
+      throws SQLException {
     String value = rs.getString(columnName);
     try {
       if (Objects.isNull(value) || value.isEmpty()) {
@@ -43,7 +44,7 @@ public class CustomPropertiesTypeHandler extends BaseTypeHandler<Map<String, Obj
       if (Objects.isNull(value) || value.isEmpty()) {
         return Map.of();
       }
-     return objectMapper.readValue(value, new TypeReference<>() {});
+      return objectMapper.readValue(value, new TypeReference<>() {});
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);
     }

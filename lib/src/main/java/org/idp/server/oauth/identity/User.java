@@ -2,11 +2,7 @@ package org.idp.server.oauth.identity;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-
+import java.util.*;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.vc.VerifiableCredential;
 import org.idp.server.type.extension.CustomProperties;
@@ -317,6 +313,10 @@ public class User implements Serializable {
     return new CustomProperties(customProperties);
   }
 
+  public Map<String, Object> customPropertiesValue() {
+    return customProperties;
+  }
+
   public User setCustomProperties(HashMap<String, Object> customProperties) {
     this.customProperties = customProperties;
     return this;
@@ -332,10 +332,9 @@ public class User implements Serializable {
   }
 
   public List<VerifiableCredential> verifiableCredentials() {
-    return credentials.stream()
-            .map(VerifiableCredential::new)
-            .toList();
+    return credentials.stream().map(VerifiableCredential::new).toList();
   }
+
   public boolean hasCredentials() {
     return !credentials.isEmpty();
   }

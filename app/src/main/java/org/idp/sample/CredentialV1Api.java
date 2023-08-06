@@ -22,8 +22,7 @@ public class CredentialV1Api implements ParameterTransformable, VerifiableCreden
 
   CredentialApi credentialApi;
 
-  public CredentialV1Api(
-      IdpServerApplication idpServerApplication) {
+  public CredentialV1Api(IdpServerApplication idpServerApplication) {
     this.credentialApi = idpServerApplication.credentialApi();
     credentialApi.setDelegate(this);
   }
@@ -90,7 +89,7 @@ public class CredentialV1Api implements ParameterTransformable, VerifiableCreden
 
   public VerifiableCredential getCredential() {
     String vc =
-            """
+        """
                     {
                         "@context": [
                             "https://www.w3.org/2018/credentials/v1",

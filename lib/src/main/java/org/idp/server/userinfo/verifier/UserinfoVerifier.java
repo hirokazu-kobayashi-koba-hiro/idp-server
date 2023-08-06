@@ -26,9 +26,9 @@ public class UserinfoVerifier {
   }
 
   public void verify() {
-   throwExceptionIfNotFoundToken();
-   throwExceptionIfUnMatchClientCert();
-    //FIXME
+    throwExceptionIfNotFoundToken();
+    throwExceptionIfUnMatchClientCert();
+    // FIXME
     if (!user.exists()) {
       throw new TokenInvalidException("not found user");
     }
@@ -50,21 +50,21 @@ public class UserinfoVerifier {
     }
     if (!clientCert.exists()) {
       throw new VerifiableCredentialTokenInvalidException(
-              "access token is sender constrained, but mtls client cert does not exists");
+          "access token is sender constrained, but mtls client cert does not exists");
     }
     try {
       ClientCertification clientCertification = ClientCertification.parse(clientCert.plainValue());
       ClientCertificationThumbprintCalculator calculator =
-              new ClientCertificationThumbprintCalculator(clientCertification);
+          new ClientCertificationThumbprintCalculator(clientCertification);
       ClientCertificationThumbprint thumbprint = calculator.calculate();
       AccessToken accessToken = oAuthToken.accessToken();
       if (!accessToken.matchThumbprint(thumbprint)) {
         throw new VerifiableCredentialTokenInvalidException(
-                "access token and mtls client cert is unmatch");
+            "access token and mtls client cert is unmatch");
       }
     } catch (X509CertInvalidException e) {
       throw new VerifiableCredentialTokenInvalidException(
-              "access token is sender constrained, but mtls client cert is invalid format", e);
+          "access token is sender constrained, but mtls client cert is invalid format", e);
     }
   }
 }

@@ -1,7 +1,6 @@
 package org.idp.sample.user;
 
 import org.idp.server.oauth.identity.User;
-import org.idp.server.type.oauth.Password;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.springframework.stereotype.Service;
 

@@ -2,7 +2,6 @@ package org.idp.server.oauth;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.date.SystemDateTime;
@@ -14,12 +13,17 @@ public class OAuthSession implements Serializable {
   OAuthSessionKey oAuthSessionKey;
   User user;
   Authentication authentication;
-  Map<String, Object> customProperties = new HashMap<>();
+  LocalDateTime expiredAt;
 
-  public OAuthSession(OAuthSessionKey oAuthSessionKey, User user, Authentication authentication) {
+  public OAuthSession(
+      OAuthSessionKey oAuthSessionKey,
+      User user,
+      Authentication authentication,
+      LocalDateTime expiredAt) {
     this.oAuthSessionKey = oAuthSessionKey;
     this.user = user;
     this.authentication = authentication;
+    this.expiredAt = expiredAt;
   }
 
   public OAuthSessionKey oAuthSessionKey() {
@@ -50,8 +54,11 @@ public class OAuthSession implements Serializable {
     if (request.isPromptLogin()) {
       return false;
     }
-    LocalDateTime authenticationTime = authentication.time();
     LocalDateTime now = SystemDateTime.now();
+    if (isExpire(now)) {
+      return false;
+    }
+    LocalDateTime authenticationTime = authentication.time();
     if (now.isAfter(authenticationTime.plusSeconds(request.maxAge().toLongValue()))) {
       return false;
     }
@@ -59,7 +66,11 @@ public class OAuthSession implements Serializable {
     return true;
   }
 
+  public boolean isExpire(LocalDateTime now) {
+    return expiredAt.isBefore(now);
+  }
+
   public Map<String, Object> customProperties() {
-    return customProperties;
+    return user.customPropertiesValue();
   }
 }
