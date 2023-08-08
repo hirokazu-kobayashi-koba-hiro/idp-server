@@ -1,10 +1,12 @@
 package org.idp.sample.user;
 
+import org.idp.sample.Tenant;
 import org.idp.server.oauth.identity.User;
-import org.idp.server.type.oauth.TokenIssuer;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class UserService {
 
   UserRepository userRepository;
@@ -13,8 +15,12 @@ public class UserService {
     this.userRepository = userRepository;
   }
 
-  public void register(TokenIssuer tokenIssuer, User user) {
-    userRepository.register(tokenIssuer, user);
+  public void register(Tenant tenant, User user) {
+    userRepository.register(tenant, user);
+  }
+
+  public User findBy(Tenant tenant, String email) {
+    return userRepository.findBy(tenant, email);
   }
 
   public User find(String userId) {

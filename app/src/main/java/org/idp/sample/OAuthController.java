@@ -82,6 +82,13 @@ public class OAuthController implements OAuthRequestDelegate, ParameterTransform
     }
   }
 
+  @GetMapping("/v1/authorize")
+  public String showSuccessPage(@ModelAttribute("tenantId") String tenantId, Model model) {
+    Tenant tenant = Tenant.of(tenantId);
+    model.addAttribute("tenantId", tenant.id());
+    return "authorize";
+  }
+
   @PostMapping("/v1/authorize")
   public String authorize(
       @ModelAttribute("sessionKey") String sessionKey,

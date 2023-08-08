@@ -12,4 +12,10 @@ spring:
       connection-timeout: 3000
       maximum-pool-size: 50
       minimum-idle: 50
+logging:
+  level:
+    root: info
+    web: info
+    org.mybatis: debug
+    org.idp.sample: debug
 

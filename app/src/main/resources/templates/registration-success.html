@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Success</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+<div class="container mx-auto mt-8">
+  <div class="max-w-md mx-auto bg-white p-8 shadow-md">
+    <h2 class="text-2xl font-semibold mb-4">Registration Successful!</h2>
+    <input type="hidden" name="sessionKey" th:value="${sessionKey}">
+    <input type="hidden" name="id" th:value="${id}">
+    <input type="hidden" name="tenantId" th:value="${tenantId}">
+    <p>Your registration was successful. You can now log in using your credentials.</p>
+    <a href="/authorize" class="block mt-4 text-blue-500 hover:underline">go to authorize page</a>
+  </div>
+</div>
+</body>
+</html>

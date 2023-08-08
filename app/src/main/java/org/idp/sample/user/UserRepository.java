@@ -1,12 +1,14 @@
 package org.idp.sample.user;
 
+import org.idp.sample.Tenant;
 import org.idp.server.oauth.identity.User;
-import org.idp.server.type.oauth.TokenIssuer;
 
 public interface UserRepository {
-  void register(TokenIssuer tokenIssuer, User user);
+  void register(Tenant tenant, User user);
 
   User find(String userId);
 
   User get(String userId);
+
+  User findBy(Tenant tenant, String email);
 }
