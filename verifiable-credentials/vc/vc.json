@@ -1,0 +1,20 @@
+{
+  "issuer": "did:web:assets.dev.trustid.sbi-fc.com",
+  "issuanceDate": "2024-01-03T21:57:00Z",
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1"
+  ],
+  "type": [
+    "VerifiableCredential"
+  ],
+  "credentialSubject": {
+    "id": "did:example:test"
+  },
+  "proof": {
+    "type": "MerkleProof2019",
+    "created": "2024-01-03T23:11:27.519914",
+    "proofValue": "znKD4YGVqA8textxyks1L6w7cJKZdrkSQMXUL1T4EACzJCEobfuYuMQRD6asXzacJRrs6W1Q9DeVYkXrfAdMfuo9WCS3PfXPAUSQoPp4LDCtxTpHaYZwSk5dxsEA89gWTJDZarzuaxcCH12tBgFSLY6nPcWG7ihz6bd6Pt1KsD8ggadg1NATNs784fGWMxJn2jGjS22qKGpLQJNzyFnqWF2ua9XSTiWkMLd8nZvopbcAotsea45mjh3mAYcwyqak2kEKKDt9nzxCD4MiHTZRuvAnhu9dQQuP32SykdYgPVHvLvnkSPm2B3iymaj",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:web:assets.dev.trustid.sbi-fc.com#key-2"
+  }
+}
