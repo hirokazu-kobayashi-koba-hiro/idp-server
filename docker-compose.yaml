@@ -5,7 +5,7 @@ services:
     build: ./nginx
     image: fapi-nginx
     ports:
-      - 443:443
+      - "443:443"
   postgresql:
     image: postgres:15
     container_name: postgres
@@ -14,4 +14,9 @@ services:
       - POSTGRES_PASSWORD=idpserver
       - POSTGRES_DB=idpserver
     ports:
-      - 5432:5432
+      - "5432:5432"
+  verifiable-credentials:
+    build: ./verifiable-credentials
+    container_name: verifiable-credentials
+    ports:
+      - "3000:3000"

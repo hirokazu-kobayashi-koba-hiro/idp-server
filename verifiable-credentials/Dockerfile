@@ -1,4 +1,9 @@
-FROM node:20
+FROM node
+#FROM amazonlinux:2023.3.20231218.0
+
+#RUN yum update -y && \
+#    curl -fsSL https://rpm.nodesource.com/setup_16.x | bash && \
+#    yum install -y nodejs
 
 COPY ./index.js .
 COPY ./package.json .
