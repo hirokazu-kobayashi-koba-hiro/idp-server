@@ -20,7 +20,7 @@ curl -v http://localhost:3000/health
 ```shell
 curl -X POST http://localhost:3000/v1/verifiable-credentials/block-cert \
 -H "Content-Type: application/json" \
--d '{ "vc": { "issuer": "did:web:assets.dev.trustid.sbi-fc.com", "issuanceDate": "2024-01-03T21:57:00Z","@context": [ "https://www.w3.org/2018/credentials/v1" ], "type": [ "VerifiableCredential" ], "credentialSubject": { "degree": { "type": "BachelorDegree", "name": "test" } } }, "sub": "did:ethr:0x435df3eda57154cf8cf7926079881f2912f54db4", "nbf": 1562950282, "iss": "did:ethr:0xF1232F840f3aD7d23FcDaA84d6C66dac24EFb198" }'
+-d '{ "vc": { "issuer": "did:web:assets.dev.trustid.sbi-fc.com", "issuanceDate": "2024-01-03T21:57:00Z","@context": [ "https://www.w3.org/2018/credentials/v1" ], "type": [ "VerifiableCredential" ], "credentialSubject": { "id": "did:example:test" } }, "sub": "did:ethr:0x435df3eda57154cf8cf7926079881f2912f54db4", "nbf": 1562950282, "iss": "did:ethr:0xF1232F840f3aD7d23FcDaA84d6C66dac24EFb198" }'
 ```
 
 ```shell

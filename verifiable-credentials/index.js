@@ -188,18 +188,11 @@ function saveFileToUnsignedCertificates (data, i) {
   }
 }
 
-async function getSignedCertificates (count) {
-  let targetPaths = [];
-  // console.log(`retrieving ${count} certificates after issuance`);
-
-
-  targetPaths.push(getSignedCertificatesPath(1));
-
-  // console.log('certificates are located at', targetPaths);
+async function getSignedCertificate () {
 
   return new Promise((resolve, reject) => {
-    const certificates = targetPaths.map(path => fs.readFileSync(path, 'utf8'));
-    resolve(certificates);
+    const certificate = fs.readFileSync(getSignedCertificatesPath(1), 'utf8');
+    resolve(certificate);
   });
 }
 
@@ -234,62 +227,65 @@ function getPythonPath () {
 
 const issueVcBlockCert = async ({ vcPayload }) =>{
 
-  saveFileToUnsignedCertificates(vcPayload, 1);
-  let stdout = [];
-  let stderr = [];
-  const pythonPath = await getPythonPath();
-  const spawnArgs = ['-c', `./conf.ini`]
-  console.log('Spawning python from path:', pythonPath, 'with args', spawnArgs);
-  const verificationProcess = spawn("cert-issuer", spawnArgs);
-  verificationProcess.stdout.pipe(process.stdout);
+  return new Promise(async (resolve, reject) => {
+    saveFileToUnsignedCertificates(vcPayload, 1);
 
-  try {
-    verificationProcess.on('error', err => {
-      console.log('python script error', err);
-    });
-    verificationProcess.stdout.on('error', err => reject(new Error(err)));
-    verificationProcess.stderr.on('error', err => reject(new Error(err)));
-    verificationProcess.stdin.on('error', err => reject(new Error(err)));
+    let stdout = [];
+    let stderr = [];
+    const pythonPath = await getPythonPath();
+    const spawnArgs = ['-c', `./conf.ini`]
+    console.log('Spawning python from path:', pythonPath, 'with args', spawnArgs);
+    const verificationProcess = spawn("cert-issuer", spawnArgs);
+    verificationProcess.stdout.pipe(process.stdout);
 
-    verificationProcess.stdout.on('data', data => stdout.push(data));
-    verificationProcess.stderr.on('data', data => stderr.push(data));
+    try {
+      verificationProcess.on('error', err => {
+        console.log('python script error', err);
+      });
+      verificationProcess.stdout.on('error', err => reject(new Error(err)));
+      verificationProcess.stderr.on('error', err => reject(new Error(err)));
+      verificationProcess.stdin.on('error', err => reject(new Error(err)));
 
-    verificationProcess.stdout.on('end', () => {
-      console.log('Issue.js stdout end:', Buffer.concat(stdout).toString());
-    });
-    verificationProcess.stderr.on('end', () => {
-      console.log('Issue.js stderr end (ERROR):', Buffer.concat(stderr).toString());
-    });
+      verificationProcess.stdout.on('data', data => stdout.push(data));
+      verificationProcess.stderr.on('data', data => stderr.push(data));
 
-    verificationProcess.stdin.end('');
+      verificationProcess.stdout.on('end', () => {
+        console.log('Issue.js stdout end:', Buffer.concat(stdout).toString());
+      });
+      verificationProcess.stderr.on('end', () => {
+        console.log('Issue.js stderr end (ERROR):', Buffer.concat(stderr).toString());
+      });
 
-    verificationProcess.on('exit', code => {
-      if (code !== 0) {
-        console.log('exit event in python cert-issuer', code);
-      }
-    });
+      verificationProcess.stdin.end('');
 
-    verificationProcess.on('close', async code => {
-      stdout = stdout.join('').trim();
-      stderr = stderr.join('').trim();
-      if (code === 0) {
-        const certificates = await getSignedCertificates(1);
+      verificationProcess.on('exit', code => {
+        if (code !== 0) {
+          console.log('exit event in python cert-issuer', code);
+        }
+      });
+
+      verificationProcess.on('close', async code => {
+        stdout = stdout.join('').trim();
+        stderr = stderr.join('').trim();
+        if (code === 0) {
+          const certificate = await getSignedCertificate();
+          deleteTestCertificates(1);
+          return resolve({
+            payload: JSON.parse(certificate)
+          });
+        }
         deleteTestCertificates(1);
-        return {
-          payload: certificates
-        };
-      }
-      deleteTestCertificates(1);
-      return {
-        error: "can not issue vc",
-      };
-    });
-  } catch (e) {
-    console.log('caught server error', e);
-    return {
-      error: e
+        return resolve({
+          error: "can not issue vc",
+        });
+      });
+    } catch (e) {
+      console.log('caught server error', e);
+      return resolve({
+        error: e
+      })
     }
-  }
+  })
 }
 
 

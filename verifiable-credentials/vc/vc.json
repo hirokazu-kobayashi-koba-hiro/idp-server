@@ -8,15 +8,12 @@
     "VerifiableCredential"
   ],
   "credentialSubject": {
-    "degree": {
-      "type": "BachelorDegree",
-      "name": "test"
-    }
+    "id": "did:example:test"
   },
   "proof": {
     "type": "MerkleProof2019",
-    "created": "2024-01-03T13:14:28.400821",
-    "proofValue": "znKD4YGVqA8texu1kLvRhjHpLhfsGUBGKJDvYQMWcmJUjMxDgGSrtPBoMDink1vCsFT4mwUu3K7EZuDz6tTQpYWcTyEQ5WRvqKJCYrUENoAf7hu2RqrceDjwuT16JR6Q37JqadKX4yLkvQ4Cnb7ysMtyibkdLgwtfgqyzDXTnJQey9KTCy34BFcySLsEFm3U7hPkj7guiRnMwC5VhvJWYoDNr6692fPFmdqLeL9GjjC2ftAhUPy1zELaqtiCEDUgg4R2gbp2PSV5oVLCBBtdQPhwX6wVwTejwxRMsBdoVuRYPLkhpaTFaPvht39",
+    "created": "2024-01-03T13:20:43.179688",
+    "proofValue": "znKD4YGVqA8textxyks1L6w7cJKZdrkSQMXUL1T4EACzJCEobfuYuMQRD6asXzacJRrs6W1Q9DeVYkXrfAdMfuo9WCS3PfXPAUSQoPp4LDCtxTpHaYZwSk5dxsEA89gWTJDZarzuaxcCH12tBgFSLY6nPcWG7ihz6bd6Pt1KsD8ggadg1NATNs784fGWMxJn2jGjS22qKGpLQJNzyFnqWF2ua9XSTiWkMLd8sSJrkdfpWfSbVM6aRCWWDQCcJ1FCzVNG9GBaNUsz3pa9fc26wJxkETosrrn9Wrp6JaBAGecSagYhQmvmL1w295M",
     "proofPurpose": "assertionMethod",
     "verificationMethod": "did:web:assets.dev.trustid.sbi-fc.com#key-1"
   }
