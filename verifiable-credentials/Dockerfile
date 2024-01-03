@@ -5,7 +5,7 @@ RUN apt update
 RUN apt-get install gcc -y
 
 COPY ./ethereum_requirements.txt .
-COPY ./privateKey.txt .
+COPY ./privateKey.txt /etc/cert-issuer/
 
 RUN python3 -m ensurepip \
     && pip3 install --upgrade pip setuptools \
@@ -15,6 +15,10 @@ RUN python3 -m ensurepip \
     && mkdir /etc/cert-issuer/data/blockchain_certificates \
     && pip3 install cert-issuer \
     && pip3 install -r ethereum_requirements.txt
+
+COPY ./conf.ini .
+COPY ./__init__.py /usr/local/lib/python3.8/site-packages/cert_issuer/blockchain_handlers/ethereum/__init__.py
+RUN apt-get install vim -y
 
 #api app
 COPY ./index.js .

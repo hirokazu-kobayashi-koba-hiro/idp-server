@@ -31,7 +31,7 @@ app.post("/v1/verifiable-credentials/block-cert", async (request, response) => {
   }
   const { payload, error } = await issueVcBlockCert({
     vcPayload: request.body.vc,
-  })
+  }) || {}
   if (payload && !error) {
     console.log(payload)
     response.send(`{ "vc": ${JSON.stringify(payload)}}`)
@@ -142,7 +142,7 @@ const { spawn, exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-let ISSUER_PATH = '../cert-issuer';
+let ISSUER_PATH = '/usr/local/bin/cert-issuer';
 const UNSIGNED_CERTIFICATES_DIR = '/etc/cert-issuer/data/unsigned_certificates';
 const SIGNED_CERTIFICATES_DIR = '/etc/cert-issuer/data/blockchain_certificates';
 
@@ -167,11 +167,11 @@ function getRootPath () {
 }
 
 function getUnsignedCertificatesPath (i) {
-  return path.join(getRootPath(), UNSIGNED_CERTIFICATES_DIR, getFileName(i));
+  return path.join(UNSIGNED_CERTIFICATES_DIR, getFileName(i));
 }
 
 function getSignedCertificatesPath (i) {
-  return path.join(getRootPath(), SIGNED_CERTIFICATES_DIR, getFileName(i));
+  return path.join(SIGNED_CERTIFICATES_DIR, getFileName(i));
 }
 
 function getFileName (i) {
@@ -192,9 +192,8 @@ async function getSignedCertificates (count) {
   let targetPaths = [];
   // console.log(`retrieving ${count} certificates after issuance`);
 
-  for (let i = 0; i < count; i++) {
-    targetPaths.push(getSignedCertificatesPath(i));
-  }
+
+  targetPaths.push(getSignedCertificatesPath(1));
 
   // console.log('certificates are located at', targetPaths);
 
@@ -239,11 +238,9 @@ const issueVcBlockCert = async ({ vcPayload }) =>{
   let stdout = [];
   let stderr = [];
   const pythonPath = await getPythonPath();
-  const spawnArgs = [`${ISSUER_PATH}/cert_issuer`, '-c', `${ISSUER_PATH}/conf.ini`]
-  // console.log('Spawning python from path:', pythonPath, 'with args', spawnArgs);
-  const verificationProcess = spawn(pythonPath, spawnArgs, {
-    cwd: ISSUER_PATH
-  });
+  const spawnArgs = ['-c', `./conf.ini`]
+  console.log('Spawning python from path:', pythonPath, 'with args', spawnArgs);
+  const verificationProcess = spawn("cert-issuer", spawnArgs);
   verificationProcess.stdout.pipe(process.stdout);
 
   try {
@@ -284,8 +281,7 @@ const issueVcBlockCert = async ({ vcPayload }) =>{
       }
       deleteTestCertificates(1);
       return {
-        success: false,
-        stderr
+        error: "can not issue vc",
       };
     });
   } catch (e) {
