@@ -33,8 +33,11 @@ public class SampleApplication {
     clientPaths.add(configurationBasePath + "/clients/clientSecretPostWithIdTokenEnc.json");
     clientPaths.add(configurationBasePath + "/clients/clientSecretJwt.json");
     clientPaths.add(configurationBasePath + "/clients/privateKeyJwt.json");
+    clientPaths.add(configurationBasePath + "/clients/publicClient.json");
+    clientPaths.add(configurationBasePath + "/clients/selfSignedTlsClientAuth.json");
     clientPaths.add(configurationBasePath + "/clients/unsupportedClient.json");
     clientPaths.add(configurationBasePath + "/clients/unsupportedServerUnsupportedClient.json");
+
     MemoryDataSourceConfig memoryDataSourceConfig = new MemoryDataSourceConfig(serverPaths, clientPaths);
     DatabaseConfig databaseConfig =
         new DatabaseConfig("jdbc:postgresql://localhost:5432/idpserver", "idpserver", "idpserver");
