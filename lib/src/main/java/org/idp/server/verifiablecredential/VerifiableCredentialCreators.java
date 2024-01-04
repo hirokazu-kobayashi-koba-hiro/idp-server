@@ -3,6 +3,8 @@ package org.idp.server.verifiablecredential;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import org.idp.server.handler.credential.client.JwtVerifiableCredentialClient;
 import org.idp.server.type.verifiablecredential.Format;
 
 public class VerifiableCredentialCreators {
@@ -11,7 +13,7 @@ public class VerifiableCredentialCreators {
 
   public VerifiableCredentialCreators() {
     this.values = new HashMap<>();
-    values.put(Format.jwt_vc_json, new JwtVcJsonVerifiableCredentialCreator());
+    values.put(Format.jwt_vc_json, new JwtVerifiableCredentialClient());
   }
 
   public VerifiableCredentialCreator get(Format format) {

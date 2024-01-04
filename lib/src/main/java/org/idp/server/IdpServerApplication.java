@@ -20,6 +20,7 @@ import org.idp.server.handler.configuration.datasource.memory.ClientConfiguratio
 import org.idp.server.handler.configuration.datasource.memory.ServerConfigurationMemoryDataSource;
 import org.idp.server.handler.credential.CredentialHandler;
 import org.idp.server.handler.credential.datasource.database.VerifiableCredentialTransactionDataSource;
+import org.idp.server.handler.credential.datasource.memory.VerifiableCredentialTransactionMemoryDataSource;
 import org.idp.server.handler.discovery.DiscoveryHandler;
 import org.idp.server.handler.grantmanagment.datasource.AuthorizationGrantedMemoryDataSource;
 import org.idp.server.handler.oauth.OAuthAuthorizeHandler;
@@ -108,6 +109,7 @@ public class IdpServerApplication {
         new BackchannelAuthenticationMemoryDataSource();
     CibaGrantMemoryDataSource cibaGrantMemoryDataSource = new CibaGrantMemoryDataSource();
     NotificationClient notificationClient = new NotificationClient();
+    VerifiableCredentialTransactionMemoryDataSource verifiableCredentialTransactionMemoryDataSource = new VerifiableCredentialTransactionMemoryDataSource();
     this.cibaApi =
         new CibaApi(
             new CibaRequestHandler(
@@ -138,12 +140,19 @@ public class IdpServerApplication {
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
     this.tokenApi = new TokenApi(tokenRequestHandler);
+    CredentialHandler credentialHandler =
+            new CredentialHandler(
+                    oAuthTokenMemoryDataSource,
+                    verifiableCredentialTransactionMemoryDataSource,
+                    serverConfigurationMemoryDataSource,
+                    clientConfigurationMemoryDataSource);
+    this.credentialApi = new CredentialApi(credentialHandler);
     this.serverManagementApi =
-        new ServerManagementApi(
-            new ServerConfigurationHandler(serverConfigurationMemoryDataSource));
+            new ServerManagementApi(
+                    new ServerConfigurationHandler(serverConfigurationMemoryDataSource));
     this.clientManagementApi =
-        new ClientManagementApi(
-            new ClientConfigurationHandler(clientConfigurationMemoryDataSource));
+            new ClientManagementApi(
+                    new ClientConfigurationHandler(clientConfigurationMemoryDataSource));
   }
 
   public IdpServerApplication(DatabaseConfig databaseConfig) {
