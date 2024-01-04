@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.8-nodejs21-slim
+FROM nikolaik/python-nodejs:python3.8-nodejs20-slim
 
 #cert-ssuer
 RUN apt update
@@ -21,10 +21,10 @@ COPY ./__init__.py /usr/local/lib/python3.8/site-packages/cert_issuer/blockchain
 RUN apt-get install vim -y
 
 #api app
-COPY index.mjs .
+COPY index.js .
 COPY ./package.json .
 COPY ./package-lock.json .
 RUN npm install
 EXPOSE 3000
 
-CMD [ "node", "index.mjs" ]
+CMD [ "node", "index.js" ]
