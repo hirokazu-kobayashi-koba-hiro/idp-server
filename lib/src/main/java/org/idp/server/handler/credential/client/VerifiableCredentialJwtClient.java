@@ -6,44 +6,34 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
-import jakarta.json.stream.JsonParser;
-import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.http.HttpClientFactory;
-import org.idp.server.basic.jose.JoseInvalidException;
-import org.idp.server.basic.jose.JsonWebKeyInvalidException;
-import org.idp.server.basic.jose.JsonWebSignature;
-import org.idp.server.basic.jose.JsonWebSignatureFactory;
 import org.idp.server.basic.json.JsonConvertable;
-import org.idp.server.basic.vc.VerifiableCredential;
+import org.idp.server.basic.vc.Credential;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.type.extension.CreatedAt;
-import org.idp.server.type.extension.ExpiredAt;
-import org.idp.server.type.oauth.ExpiresIn;
+import org.idp.server.type.verifiablecredential.Format;
 import org.idp.server.verifiablecredential.VerifiableCredentialCreator;
-import org.idp.server.verifiablecredential.VerifiableCredentialJwt;
+import org.idp.server.verifiablecredential.VerifiableCredential;
 
-public class JwtVerifiableCredentialClient implements VerifiableCredentialCreator {
+public class VerifiableCredentialJwtClient implements VerifiableCredentialCreator {
 
   HttpClient httpClient;
 
-  public JwtVerifiableCredentialClient() {
+  public VerifiableCredentialJwtClient() {
     this.httpClient = HttpClientFactory.defaultClient();
   }
 
   // FIXME setting value
-  public VerifiableCredentialJwt create(
-      VerifiableCredential verifiableCredential,
+  public VerifiableCredential create(
+      Credential credential,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
       HashMap<String, Object> requestBodyMap = new HashMap<>();
-      requestBodyMap.put("vc", verifiableCredential.values());
+      requestBodyMap.put("vc", credential.values());
       String requestBody = JsonConvertable.write(requestBodyMap);
       HttpRequest request =
               HttpRequest.newBuilder()
@@ -55,7 +45,7 @@ public class JwtVerifiableCredentialClient implements VerifiableCredentialCreato
               httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String responseBody = response.body();
       Map map = JsonConvertable.read(responseBody, Map.class);
-      return new VerifiableCredentialJwt((String) map.get("vc"));
+      return new VerifiableCredential(map.get("vc"));
     } catch (URISyntaxException e) {
       throw new RuntimeException(e);
     } catch (IOException e) {
@@ -64,4 +54,5 @@ public class JwtVerifiableCredentialClient implements VerifiableCredentialCreato
       throw new RuntimeException(e);
     }
   }
+
 }

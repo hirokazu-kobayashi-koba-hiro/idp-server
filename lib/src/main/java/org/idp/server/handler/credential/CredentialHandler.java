@@ -2,7 +2,7 @@ package org.idp.server.handler.credential;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.basic.vc.VerifiableCredential;
+import org.idp.server.basic.vc.Credential;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ClientConfigurationRepository;
 import org.idp.server.configuration.ServerConfiguration;
@@ -15,7 +15,7 @@ import org.idp.server.type.oauth.AccessTokenEntity;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.idp.server.verifiablecredential.*;
 import org.idp.server.verifiablecredential.VerifiableCredentialCreators;
-import org.idp.server.verifiablecredential.VerifiableCredentialJwt;
+import org.idp.server.verifiablecredential.VerifiableCredential;
 import org.idp.server.verifiablecredential.repository.VerifiableCredentialTransactionRepository;
 import org.idp.server.verifiablecredential.request.*;
 import org.idp.server.verifiablecredential.verifier.BatchVerifiableCredentialVerifier;
@@ -58,7 +58,7 @@ public class CredentialHandler {
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tokenIssuer, accessToken.clientId());
-    VerifiableCredentialDelegateResponse verifiableCredentialDelegateResponse =
+    CredentialDelegateResponse credentialDelegateResponse =
         delegate.getCredential(
             tokenIssuer,
             accessToken.subject(),
@@ -68,22 +68,22 @@ public class CredentialHandler {
 
     VerifiableCredentialTransactionCreator verifiableCredentialTransactionCreator =
         new VerifiableCredentialTransactionCreator(
-            verifiableCredentialDelegateResponse,
+                credentialDelegateResponse,
             oAuthToken,
             serverConfiguration.credentialIssuerMetadata());
     VerifiableCredentialTransaction verifiableCredentialTransaction =
         verifiableCredentialTransactionCreator.create();
     verifiableCredentialTransactionRepository.register(verifiableCredentialTransaction);
 
-    if (verifiableCredentialDelegateResponse.isIssued()) {
+    if (credentialDelegateResponse.isIssued()) {
       VerifiableCredentialCreator verifiableCredentialCreator = creators.get(parameters.format());
-      VerifiableCredential verifiableCredential = verifiableCredentialDelegateResponse.credential();
-      VerifiableCredentialJwt verifiableCredentialJwt =
+      Credential credential = credentialDelegateResponse.credential();
+      VerifiableCredential verifiableCredential =
           verifiableCredentialCreator.create(
-              verifiableCredential, serverConfiguration, clientConfiguration);
-      builder.add(verifiableCredentialJwt);
+                  credential, serverConfiguration, clientConfiguration);
+      builder.add(verifiableCredential);
     }
-    if (verifiableCredentialDelegateResponse.isPending()) {
+    if (credentialDelegateResponse.isPending()) {
       builder.add(verifiableCredentialTransaction.transactionId());
     }
 
@@ -113,7 +113,7 @@ public class CredentialHandler {
         new BatchVerifiableCredentialResponsesBuilder();
     List<BatchVerifiableCredentialResponse> responsesList = new ArrayList<>();
     for (VerifiableCredentialRequest batchCredentialRequest : batchCredentialRequests) {
-      VerifiableCredentialDelegateResponse verifiableCredentialDelegateResponse =
+      CredentialDelegateResponse credentialDelegateResponse =
           delegate.getCredential(
               tokenIssuer,
               accessToken.subject(),
@@ -121,26 +121,26 @@ public class CredentialHandler {
 
       VerifiableCredentialTransactionCreator verifiableCredentialTransactionCreator =
           new VerifiableCredentialTransactionCreator(
-              verifiableCredentialDelegateResponse,
+                  credentialDelegateResponse,
               oAuthToken,
               serverConfiguration.credentialIssuerMetadata());
       VerifiableCredentialTransaction verifiableCredentialTransaction =
           verifiableCredentialTransactionCreator.create();
       verifiableCredentialTransactionRepository.register(verifiableCredentialTransaction);
 
-      if (verifiableCredentialDelegateResponse.isIssued()) {
+      if (credentialDelegateResponse.isIssued()) {
         VerifiableCredentialCreator verifiableCredentialCreator =
             creators.get(batchCredentialRequest.format());
-        VerifiableCredentialJwt verifiableCredentialJwt =
+        VerifiableCredential verifiableCredential =
             verifiableCredentialCreator.create(
-                verifiableCredentialDelegateResponse.credential(),
+                credentialDelegateResponse.credential(),
                 serverConfiguration,
                 clientConfiguration);
         responsesList.add(
             new BatchVerifiableCredentialResponse(
-                batchCredentialRequest.format(), verifiableCredentialJwt));
+                batchCredentialRequest.format(), verifiableCredential));
       }
-      if (verifiableCredentialDelegateResponse.isPending()) {
+      if (credentialDelegateResponse.isPending()) {
         responsesList.add(
             new BatchVerifiableCredentialResponse(verifiableCredentialTransaction.transactionId()));
       }
@@ -176,27 +176,27 @@ public class CredentialHandler {
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tokenIssuer, accessToken.clientId());
-    VerifiableCredentialDelegateResponse verifiableCredentialDelegateResponse =
+    CredentialDelegateResponse credentialDelegateResponse =
         delegate.getCredential(
             tokenIssuer,
             accessToken.subject(),
             accessToken.authorizationDetails().credentialDefinitions());
 
     DeferredVerifiableCredentialVerifier verifiableCredentialVerifier =
-        new DeferredVerifiableCredentialVerifier(verifiableCredentialDelegateResponse);
+        new DeferredVerifiableCredentialVerifier(credentialDelegateResponse);
     verifiableCredentialVerifier.verify();
 
     VerifiableCredentialCreator verifiableCredentialCreator = creators.get(parameters.format());
-    VerifiableCredentialJwt verifiableCredentialJwt =
+    VerifiableCredential verifiableCredential =
         verifiableCredentialCreator.create(
-            verifiableCredentialDelegateResponse.credential(),
+            credentialDelegateResponse.credential(),
             serverConfiguration,
             clientConfiguration);
 
     VerifiableCredentialResponse verifiableCredentialResponse =
         new VerifiableCredentialResponseBuilder()
             .add(parameters.format())
-            .add(verifiableCredentialJwt)
+            .add(verifiableCredential)
             .build();
     return new DeferredCredentialResponse(CredentialRequestStatus.OK, verifiableCredentialResponse);
   }

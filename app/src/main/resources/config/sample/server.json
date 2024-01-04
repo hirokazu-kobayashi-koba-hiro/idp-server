@@ -250,6 +250,63 @@
             "text_color": "#FFFFFF"
           }
         ]
+      },
+      {
+        "format": "ldp_vc",
+        "id": "UniversityDegree_ldp",
+        "cryptographic_binding_methods_supported": [
+          "did:example"
+        ],
+        "cryptographic_suites_supported": [
+          "ES256K"
+        ],
+        "credential_definition":{
+          "type": [
+            "VerifiableCredential",
+            "UniversityDegreeCredential"
+          ],
+          "credentialSubject": {
+            "given_name": {
+              "display": [
+                {
+                  "name": "Given Name",
+                  "locale": "en-US"
+                }
+              ]
+            },
+            "last_name": {
+              "display": [
+                {
+                  "name": "Surname",
+                  "locale": "en-US"
+                }
+              ]
+            },
+            "degree": {},
+            "gpa": {
+              "display": [
+                {
+                  "name": "GPA"
+                }
+              ]
+            }
+          }
+        },
+        "proof_types_supported": [
+          "jwt"
+        ],
+        "display": [
+          {
+            "name": "University Credential",
+            "locale": "en-US",
+            "logo": {
+              "url": "https://exampleuniversity.com/public/logo.png",
+              "alt_text": "a square logo of a university"
+            },
+            "background_color": "#12107c",
+            "text_color": "#FFFFFF"
+          }
+        ]
       }
     ]
   }

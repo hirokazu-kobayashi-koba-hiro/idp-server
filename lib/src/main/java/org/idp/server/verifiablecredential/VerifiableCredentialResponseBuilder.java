@@ -10,7 +10,7 @@ import org.idp.server.type.verifiablecredential.TransactionId;
 
 public class VerifiableCredentialResponseBuilder {
   Format format;
-  VerifiableCredentialJwt credentialJwt = new VerifiableCredentialJwt();
+  VerifiableCredential credentialJwt = new VerifiableCredential();
   CNonce cNonce = new CNonce();
   CNonceExpiresIn cNonceExpiresIn = new CNonceExpiresIn();
   TransactionId transactionId = new TransactionId();
@@ -25,7 +25,7 @@ public class VerifiableCredentialResponseBuilder {
     return this;
   }
 
-  public VerifiableCredentialResponseBuilder add(VerifiableCredentialJwt credentialJwt) {
+  public VerifiableCredentialResponseBuilder add(VerifiableCredential credentialJwt) {
     this.credentialJwt = credentialJwt;
     values.put("credential", credentialJwt.value());
     return this;

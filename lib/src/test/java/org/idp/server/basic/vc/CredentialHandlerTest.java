@@ -10,7 +10,7 @@ import org.idp.server.basic.jose.JsonWebKeyInvalidException;
 import org.idp.server.basic.json.JsonConverter;
 import org.junit.jupiter.api.Test;
 
-public class VerifiableCredentialHandlerTest {
+public class CredentialHandlerTest {
 
   @Test
   void handle()

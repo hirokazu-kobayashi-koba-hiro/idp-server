@@ -48,8 +48,8 @@ public class VerifiableCredentialLinkedDataProofCreator {
       signer.setNonce(nonce);
       LdProof ldSignature = signer.sign(jsonLDObject, true, false);
       credentials.put("proof", ldSignature.getJsonObject());
-      VerifiableCredential verifiableCredential = new VerifiableCredential(credentials);
-      return new VerifiableCredentialContext(VerifiableCredentialFormat.ldp, verifiableCredential);
+      Credential credential = new Credential(credentials);
+      return new VerifiableCredentialContext(VerifiableCredentialFormat.ldp, credential);
     } catch (JsonLDException e) {
       throw new RuntimeException(e);
     } catch (GeneralSecurityException e) {

@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
 import org.idp.server.basic.date.SystemDateTime;
-import org.idp.server.basic.vc.VerifiableCredential;
+import org.idp.server.basic.vc.Credential;
 import org.idp.server.type.extension.CustomProperties;
 
 public class User implements Serializable {
@@ -331,8 +331,8 @@ public class User implements Serializable {
     return this;
   }
 
-  public List<VerifiableCredential> verifiableCredentials() {
-    return credentials.stream().map(VerifiableCredential::new).toList();
+  public List<Credential> verifiableCredentials() {
+    return credentials.stream().map(Credential::new).toList();
   }
 
   public boolean hasCredentials() {

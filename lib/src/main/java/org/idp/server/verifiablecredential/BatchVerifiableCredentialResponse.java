@@ -7,14 +7,14 @@ import org.idp.server.type.verifiablecredential.TransactionId;
 
 public class BatchVerifiableCredentialResponse {
   Format format;
-  VerifiableCredentialJwt credentialJwt;
+  VerifiableCredential verifiableCredential;
   TransactionId transactionId;
 
   public BatchVerifiableCredentialResponse() {}
 
-  public BatchVerifiableCredentialResponse(Format format, VerifiableCredentialJwt credentialJwt) {
+  public BatchVerifiableCredentialResponse(Format format, VerifiableCredential verifiableCredential) {
     this.format = format;
-    this.credentialJwt = credentialJwt;
+    this.verifiableCredential = verifiableCredential;
   }
 
   public BatchVerifiableCredentialResponse(TransactionId transactionId) {
@@ -25,8 +25,8 @@ public class BatchVerifiableCredentialResponse {
     return format;
   }
 
-  public VerifiableCredentialJwt credentialJwt() {
-    return credentialJwt;
+  public VerifiableCredential verifiableCredential() {
+    return verifiableCredential;
   }
 
   public TransactionId transactionId() {
@@ -37,6 +37,6 @@ public class BatchVerifiableCredentialResponse {
     if (Objects.nonNull(transactionId)) {
       return Map.of("transaction_id", transactionId.value());
     }
-    return Map.of("format", format.name(), "credential", credentialJwt.value());
+    return Map.of("format", format.name(), "credential", verifiableCredential.value());
   }
 }

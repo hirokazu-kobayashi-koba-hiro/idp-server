@@ -35,4 +35,11 @@ public enum Format {
   public boolean isDefined() {
     return this != undefined;
   }
+
+  public boolean isJwtVc() {
+    return this == jwt_vc_json || this == jwt_vc_json_ld;
+  }
+  public boolean isLdpVc() {
+    return this == ldp_vc;
+  }
 }

@@ -6,7 +6,7 @@ import org.idp.server.type.verifiablecredential.Format;
 
 public class VerifiableCredentialResponse {
   Format format;
-  VerifiableCredentialJwt credentialJwt;
+  VerifiableCredential credentialJwt;
   CNonce cNonce;
   CNonceExpiresIn cNonceExpiresIn;
   String contents;
@@ -15,7 +15,7 @@ public class VerifiableCredentialResponse {
 
   VerifiableCredentialResponse(
       Format format,
-      VerifiableCredentialJwt credentialJwt,
+      VerifiableCredential credentialJwt,
       CNonce cNonce,
       CNonceExpiresIn cNonceExpiresIn,
       String contents) {
@@ -30,7 +30,7 @@ public class VerifiableCredentialResponse {
     return format;
   }
 
-  public VerifiableCredentialJwt credentialJwt() {
+  public VerifiableCredential credentialJwt() {
     return credentialJwt;
   }
 

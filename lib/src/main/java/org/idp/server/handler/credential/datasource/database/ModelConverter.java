@@ -2,7 +2,7 @@ package org.idp.server.handler.credential.datasource.database;
 
 import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.basic.vc.VerifiableCredential;
+import org.idp.server.basic.vc.Credential;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.Subject;
 import org.idp.server.type.verifiablecredential.CredentialIssuer;
@@ -19,18 +19,18 @@ class ModelConverter {
     CredentialIssuer credentialIssuer = new CredentialIssuer(stringMap.get("credential_issuer"));
     ClientId clientId = new ClientId(stringMap.get("client_id"));
     Subject subject = new Subject(stringMap.get("user_id"));
-    VerifiableCredential verifiableCredential = toVerifiableCredential(stringMap);
+    Credential credential = toVerifiableCredential(stringMap);
     VerifiableCredentialTransactionStatus status =
         VerifiableCredentialTransactionStatus.valueOf(stringMap.get("status"));
     return new VerifiableCredentialTransaction(
-        id, credentialIssuer, clientId, subject, verifiableCredential, status);
+        id, credentialIssuer, clientId, subject, credential, status);
   }
 
-  private static VerifiableCredential toVerifiableCredential(Map<String, String> stringMap) {
+  private static Credential toVerifiableCredential(Map<String, String> stringMap) {
     String credential = stringMap.get("verifiable_credential");
     if (credential.isEmpty()) {
-      return new VerifiableCredential();
+      return new Credential();
     }
-    return new VerifiableCredential(jsonConverter.read(credential, Map.class));
+    return new Credential(jsonConverter.read(credential, Map.class));
   }
 }

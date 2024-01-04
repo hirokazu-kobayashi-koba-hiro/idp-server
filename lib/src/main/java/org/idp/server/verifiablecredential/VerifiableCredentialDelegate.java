@@ -8,6 +8,6 @@ import org.idp.server.type.oauth.TokenIssuer;
 public interface VerifiableCredentialDelegate {
 
   // FIXME
-  VerifiableCredentialDelegateResponse getCredential(
+  CredentialDelegateResponse getCredential(
       TokenIssuer tokenIssuer, Subject subject, List<CredentialDefinition> credentialDefinitions);
 }

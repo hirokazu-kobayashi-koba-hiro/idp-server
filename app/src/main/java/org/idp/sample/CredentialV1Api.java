@@ -4,13 +4,13 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.CredentialApi;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.basic.vc.VerifiableCredential;
+import org.idp.server.basic.vc.Credential;
 import org.idp.server.handler.credential.io.*;
 import org.idp.server.oauth.vc.CredentialDefinition;
 import org.idp.server.type.oauth.Subject;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.idp.server.verifiablecredential.VerifiableCredentialDelegate;
-import org.idp.server.verifiablecredential.VerifiableCredentialDelegateResponse;
+import org.idp.server.verifiablecredential.CredentialDelegateResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -79,15 +79,15 @@ public class CredentialV1Api implements ParameterTransformable, VerifiableCreden
   }
 
   @Override
-  public VerifiableCredentialDelegateResponse getCredential(
+  public CredentialDelegateResponse getCredential(
       TokenIssuer tokenIssuer, Subject subject, List<CredentialDefinition> credentialDefinitions) {
     if (subject.value().equals("pending")) {
-      return VerifiableCredentialDelegateResponse.pending();
+      return CredentialDelegateResponse.pending();
     }
-    return VerifiableCredentialDelegateResponse.issued(getCredential());
+    return CredentialDelegateResponse.issued(getCredential());
   }
 
-  public VerifiableCredential getCredential() {
+  public Credential getCredential() {
     String vc =
         """
                     {
@@ -120,6 +120,6 @@ public class CredentialV1Api implements ParameterTransformable, VerifiableCreden
                         }
                     }
                     """;
-    return VerifiableCredential.parse(vc);
+    return Credential.parse(vc);
   }
 }

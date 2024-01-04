@@ -1,7 +1,7 @@
 package org.idp.server.verifiablecredential;
 
 import java.util.UUID;
-import org.idp.server.basic.vc.VerifiableCredential;
+import org.idp.server.basic.vc.Credential;
 import org.idp.server.configuration.VerifiableCredentialConfiguration;
 import org.idp.server.token.OAuthToken;
 import org.idp.server.type.oauth.ClientId;
@@ -11,12 +11,12 @@ import org.idp.server.type.verifiablecredential.TransactionId;
 
 public class VerifiableCredentialTransactionCreator {
 
-  VerifiableCredentialDelegateResponse delegateResponse;
+  CredentialDelegateResponse delegateResponse;
   OAuthToken oAuthToken;
   VerifiableCredentialConfiguration verifiableCredentialConfiguration;
 
   public VerifiableCredentialTransactionCreator(
-      VerifiableCredentialDelegateResponse delegateResponse,
+      CredentialDelegateResponse delegateResponse,
       OAuthToken oAuthToken,
       VerifiableCredentialConfiguration verifiableCredentialConfiguration) {
     this.delegateResponse = delegateResponse;
@@ -29,9 +29,9 @@ public class VerifiableCredentialTransactionCreator {
     CredentialIssuer credentialIssuer = verifiableCredentialConfiguration.credentialIssuer();
     ClientId clientId = oAuthToken.accessToken().clientId();
     Subject subject = oAuthToken.subject();
-    VerifiableCredential verifiableCredential = delegateResponse.credential();
+    Credential credential = delegateResponse.credential();
     VerifiableCredentialTransactionStatus status = delegateResponse.status();
     return new VerifiableCredentialTransaction(
-        transactionId, credentialIssuer, clientId, subject, verifiableCredential, status);
+        transactionId, credentialIssuer, clientId, subject, credential, status);
   }
 }

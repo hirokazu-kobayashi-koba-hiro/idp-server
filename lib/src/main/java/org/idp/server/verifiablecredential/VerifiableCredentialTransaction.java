@@ -1,7 +1,7 @@
 package org.idp.server.verifiablecredential;
 
 import java.util.Objects;
-import org.idp.server.basic.vc.VerifiableCredential;
+import org.idp.server.basic.vc.Credential;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.Subject;
 import org.idp.server.type.verifiablecredential.CredentialIssuer;
@@ -12,7 +12,7 @@ public class VerifiableCredentialTransaction {
   CredentialIssuer credentialIssuer;
   ClientId clientId;
   Subject subject;
-  VerifiableCredential verifiableCredential;
+  Credential credential;
   VerifiableCredentialTransactionStatus status;
 
   public VerifiableCredentialTransaction() {}
@@ -22,13 +22,13 @@ public class VerifiableCredentialTransaction {
       CredentialIssuer credentialIssuer,
       ClientId clientId,
       Subject subject,
-      VerifiableCredential verifiableCredential,
+      Credential credential,
       VerifiableCredentialTransactionStatus status) {
     this.transactionId = transactionId;
     this.credentialIssuer = credentialIssuer;
     this.clientId = clientId;
     this.subject = subject;
-    this.verifiableCredential = verifiableCredential;
+    this.credential = credential;
     this.status = status;
   }
 
@@ -48,8 +48,8 @@ public class VerifiableCredentialTransaction {
     return subject;
   }
 
-  public VerifiableCredential verifiableCredential() {
-    return verifiableCredential;
+  public Credential verifiableCredential() {
+    return credential;
   }
 
   public VerifiableCredentialTransactionStatus status() {

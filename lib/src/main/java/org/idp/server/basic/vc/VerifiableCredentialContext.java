@@ -1,17 +1,17 @@
 package org.idp.server.basic.vc;
 
-import org.idp.server.verifiablecredential.VerifiableCredentialJwt;
+import org.idp.server.verifiablecredential.VerifiableCredential;
 
 public class VerifiableCredentialContext {
   VerifiableCredentialFormat format;
-  VerifiableCredential verifiableCredential;
+  Credential credential;
   VerifiableCredentialJsonLinkedData verifiableCredentialJsonLinkedData;
-  VerifiableCredentialJwt verifiableCredentialJwt;
+  VerifiableCredential verifiableCredential;
 
   public VerifiableCredentialContext(
-      VerifiableCredentialFormat format, VerifiableCredential verifiableCredential) {
+      VerifiableCredentialFormat format, Credential credential) {
     this.format = format;
-    this.verifiableCredential = verifiableCredential;
+    this.credential = credential;
   }
 
   public VerifiableCredentialContext(
@@ -22,25 +22,25 @@ public class VerifiableCredentialContext {
   }
 
   public VerifiableCredentialContext(
-      VerifiableCredentialFormat format, VerifiableCredentialJwt verifiableCredentialJwt) {
+      VerifiableCredentialFormat format, VerifiableCredential verifiableCredential) {
     this.format = format;
-    this.verifiableCredentialJwt = verifiableCredentialJwt;
+    this.verifiableCredential = verifiableCredential;
   }
 
   public VerifiableCredentialFormat format() {
     return format;
   }
 
-  public VerifiableCredential verifiableCredential() {
-    return verifiableCredential;
+  public Credential verifiableCredential() {
+    return credential;
   }
 
   public VerifiableCredentialJsonLinkedData verifiableCredentialJsonLinkedData() {
     return verifiableCredentialJsonLinkedData;
   }
 
-  public VerifiableCredentialJwt verifiableCredentialJwt() {
-    return verifiableCredentialJwt;
+  public VerifiableCredential verifiableCredentialJwt() {
+    return verifiableCredential;
   }
 
   public String serializeVerifiableCredential() {

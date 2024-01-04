@@ -63,19 +63,19 @@ import org.idp.server.basic.json.JsonConvertable;
  *
  * @see <a href="https://www.w3.org/TR/vc-data-model/">vc-data-model</a>
  */
-public class VerifiableCredential {
+public class Credential {
   Map<String, Object> values;
 
-  public VerifiableCredential() {
+  public Credential() {
     this.values = new HashMap<>();
   }
 
-  public VerifiableCredential(Map<String, Object> values) {
+  public Credential(Map<String, Object> values) {
     this.values = values;
   }
 
-  public static VerifiableCredential parse(String json) {
-    return new VerifiableCredential(JsonConvertable.read(json, Map.class));
+  public static Credential parse(String json) {
+    return new Credential(JsonConvertable.read(json, Map.class));
   }
 
   public List<String> context() {
