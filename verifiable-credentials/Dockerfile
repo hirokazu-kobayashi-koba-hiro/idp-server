@@ -21,10 +21,10 @@ COPY ./__init__.py /usr/local/lib/python3.8/site-packages/cert_issuer/blockchain
 RUN apt-get install vim -y
 
 #api app
-COPY ./index.js .
+COPY index.mjs .
 COPY ./package.json .
 COPY ./package-lock.json .
 RUN npm install
 EXPOSE 3000
 
-CMD [ "node", "index.js" ]
+CMD [ "node", "index.mjs" ]
