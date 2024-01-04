@@ -11,7 +11,7 @@ import {
   generateJti,
   verifyAndDecodeJwt,
 } from "./lib/jose";
-import { toEpocTime } from "./lib/util";
+import { toEpocTime, toJsonString } from "./lib/util";
 
 describe("OpenID for Verifiable Credential Issuance - draft 13", () => {
   it("did-vc success pattern normal", async () => {
@@ -158,7 +158,7 @@ describe("OpenID for Verifiable Credential Issuance - draft 13", () => {
         Authorization: `Bearer ${tokenResponse.data.access_token}`
       }
     });
-    console.log(credentialResponse.data);
+    console.log(toJsonString(credentialResponse.data));
     expect(credentialResponse.status).toBe(200);
   });
 

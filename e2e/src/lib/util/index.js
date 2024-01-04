@@ -1,3 +1,5 @@
+import { re } from "@babel/core/lib/vendor/import-meta-resolve";
+
 export const convertToAuthorizationResponse = (redirectUri) => {
   const query = redirectUri.includes("?")
     ? redirectUri.split("?")[1]
@@ -101,4 +103,8 @@ export const base64UrlEncode = (input) => {
       base64.replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
     return fromBase64(input.toString("base64"));
   }
+};
+
+export const toJsonString = (object) => {
+  return JSON.stringify(object, null, 2);
 };
