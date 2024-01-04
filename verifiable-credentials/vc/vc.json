@@ -1,12 +1,8 @@
 {
   "issuer": "did:web:assets.dev.trustid.sbi-fc.com",
   "issuanceDate": "2024-01-03T21:57:00Z",
-  "@context": [
-    "https://www.w3.org/2018/credentials/v1"
-  ],
-  "type": [
-    "VerifiableCredential"
-  ],
+  "@context": ["https://www.w3.org/2018/credentials/v1"],
+  "type": ["VerifiableCredential"],
   "credentialSubject": {
     "id": "did:example:test"
   },

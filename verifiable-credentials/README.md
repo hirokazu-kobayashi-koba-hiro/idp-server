@@ -1,12 +1,13 @@
 # verifiable-credentials
 
 ## pre
+
 1. create wallet
    1. https://metamask.io/
 2. create alchemy account
-   1. https://www.alchemy.com/ 
-2. create apikey of sepolia at alchemy
-2. send eth to wallet
+   1. https://www.alchemy.com/
+3. create apikey of sepolia at alchemy
+4. send eth to wallet
    1. https://sepoliafaucet.com/
 
 ## setup

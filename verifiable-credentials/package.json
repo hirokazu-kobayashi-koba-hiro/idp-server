@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "format": "npx prettier . --write",
+    "lint": ""
   },
+  "type": "module",
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -15,6 +17,10 @@
     "did-jwt-vc": "^3.2.15",
     "did-resolver": "^4.1.0",
     "ethr-did": "^3.0.8",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "prettier": "3.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
   }
 }
