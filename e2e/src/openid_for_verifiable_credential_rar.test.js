@@ -12,6 +12,7 @@ import {
   verifyAndDecodeJwt,
 } from "./lib/jose";
 import { toEpocTime, toJsonString } from "./lib/util";
+import { verifyBlockCert } from "./lib/vc";
 
 describe("OpenID for Verifiable Credential Issuance - draft 13", () => {
   it("did-vc success pattern normal", async () => {
@@ -160,6 +161,10 @@ describe("OpenID for Verifiable Credential Issuance - draft 13", () => {
     });
     console.log(toJsonString(credentialResponse.data));
     expect(credentialResponse.status).toBe(200);
+
+    const verifyResult = await verifyBlockCert(credentialResponse.data.credential);
+    console.log(verifyResult);
+    expect(verifyResult.status).toEqual("success");
   });
 
   it("success pattern request object", async () => {

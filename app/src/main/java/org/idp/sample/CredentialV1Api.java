@@ -105,17 +105,7 @@ public class CredentialV1Api implements ParameterTransformable, VerifiableCreden
                         "credentialSubject": {
                             "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
                             "alumniOf": {
-                                "id": "did:example:c276e12ec21ebfeb1f712ebc6f1",
-                                "name": [
-                                    {
-                                        "value": "Example University",
-                                        "lang": "en"
-                                    },
-                                    {
-                                        "value": "Exemple d'Universite",
-                                        "lang": "fr"
-                                    }
-                                ]
+                                "id": "did:example:c276e12ec21ebfeb1f712ebc6f1"
                             }
                         }
                     }
