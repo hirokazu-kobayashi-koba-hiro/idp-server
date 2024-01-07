@@ -20,3 +20,8 @@ services:
     container_name: verifiable-credentials
     ports:
       - "3000:3000"
+    environment:
+      - ADDRESS=0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198
+      - PRIVATE_KEY=d8b595680851765f38ea5405129244ba3cbad84467d190859f4c8b20c1ff6c75
+    volumes:
+      - ./verifiable-credentials/privateKey.txt:/etc/cert-issuer/privateKey.txt

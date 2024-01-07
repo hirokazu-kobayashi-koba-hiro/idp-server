@@ -1,11 +1,9 @@
 FROM nikolaik/python-nodejs:python3.8-nodejs20-slim
 
 #cert-ssuer
-RUN apt update
-RUN apt-get install gcc -y
+RUN apt update && apt-get install gcc -y
 
 COPY ./ethereum_requirements.txt .
-COPY ./privateKey.txt /etc/cert-issuer/
 
 RUN python3 -m ensurepip \
     && pip3 install --upgrade pip setuptools \
@@ -18,13 +16,12 @@ RUN python3 -m ensurepip \
 
 COPY ./conf.ini .
 COPY ./__init__.py /usr/local/lib/python3.8/site-packages/cert_issuer/blockchain_handlers/ethereum/__init__.py
-RUN apt-get install vim -y
 
 #api app
-COPY index.js .
 COPY ./package.json .
 COPY ./package-lock.json .
 RUN npm install
+COPY index.js .
 EXPOSE 3000
 
 CMD [ "node", "index.js" ]

@@ -8,9 +8,8 @@ import axios from "axios";
 const app = express();
 const port = 3000;
 const issuer = new EthrDID({
-  identifier: "0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198",
-  privateKey:
-    "d8b595680851765f38ea5405129244ba3cbad84467d190859f4c8b20c1ff6c75",
+  identifier: process.env.ADDRESS,
+  privateKey: process.env.PRIVATE_KEY,
 });
 
 app.use(bodyParser.json());
