@@ -11,6 +11,8 @@
    1. https://sepoliafaucet.com/
 
 ## setup
+configure conf.ini
+configure privateKey.txt
 
 ## api confirmation
 
