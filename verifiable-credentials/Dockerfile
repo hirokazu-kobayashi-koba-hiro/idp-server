@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.8-nodejs20-slim
+FROM python:3.8
 
 #cert-ssuer
 RUN apt update && apt-get install gcc -y
@@ -17,6 +17,9 @@ RUN python3 -m ensurepip \
 COPY ./__init__.py /usr/local/lib/python3.8/site-packages/cert_issuer/blockchain_handlers/ethereum/__init__.py
 
 #api app
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
+
 COPY ./package.json .
 COPY ./package-lock.json .
 RUN npm install
