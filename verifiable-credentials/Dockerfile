@@ -14,7 +14,6 @@ RUN python3 -m ensurepip \
     && pip3 install cert-issuer \
     && pip3 install -r ethereum_requirements.txt
 
-COPY ./conf.ini .
 COPY ./__init__.py /usr/local/lib/python3.8/site-packages/cert_issuer/blockchain_handlers/ethereum/__init__.py
 
 #api app
