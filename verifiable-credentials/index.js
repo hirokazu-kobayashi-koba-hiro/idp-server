@@ -247,14 +247,14 @@ const issueVcBlockCert = async ({ vcPayload }) => {
     let stdout = [];
     let stderr = [];
     const pythonPath = await getPythonPath();
-    const spawnArgs = ["-c", `./conf.ini`];
+    const spawnArgs = ["./cert_issuer/__main__.py", "-c", `./conf.ini`];
     console.log(
       "Spawning python from path:",
       pythonPath,
       "with args",
       spawnArgs,
     );
-    const verificationProcess = spawn("cert-issuer", spawnArgs);
+    const verificationProcess = spawn("python", spawnArgs);
     verificationProcess.stdout.pipe(process.stdout);
 
     try {
