@@ -1,0 +1,39 @@
+{
+  "issuer": "did:web:assets.dev.trustid.sbi-fc.com",
+  "issuanceDate": "2024-01-03T21:57:00Z",
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://w3id.org/security/suites/merkle-2019/v1",
+    "https://w3id.org/security/suites/chained-2021/v1"
+  ],
+  "type": [
+    "VerifiableCredential"
+  ],
+  "credentialSubject": {
+    "id": "did:example:test"
+  },
+  "proof": [
+    {
+      "type": "MerkleProof2019",
+      "created": "2024-01-07T13:45:31.285895",
+      "proofValue": "znKD4YGVqA8textxyks1L6w7cJKZdrkSQMXUL1T4EACzJCEobfuYuMQRD6asXzacJRrs6W1Q9DeVYkXrfAdMfuo9WCS3PfXPAUSQoPp4LDCtxTpHaYZwSk5dxsEA89gWTJDZarzuaxcCH12tBgFSLY6nPcWG7ihz6bd6Pt1KsD8ggadg1NATNs784fGWMxJn2jGjS22qKGpLQJNzyFnqWF2ua9XSTiWkMLd8nnkr8V598BYAkNaG3huiCx7hNbNUCr9DgcqkQqF3CV19sGWvV2pQacLx84Cnk2AbTEgfJHNwEzJPPnqEv9PaJed",
+      "proofPurpose": "assertionMethod",
+      "verificationMethod": "did:web:assets.dev.trustid.sbi-fc.com#key-2"
+    },
+    {
+      "type": "ChainedProof2021",
+      "verificationMethod": "did:web:assets.dev.trustid.sbi-fc.com#key-2",
+      "chainedProofType": "MerkleProof2019",
+      "created": "2024-01-09T19:50:56.276055",
+      "proofPurpose": "assertionMethod",
+      "proofValue": "znKD4YGVqA8textwbWVeWM7fPtiq8tZZVYFFXVH5gmUUSoaWu1J2uw9oDZNL5DUAJDw4creKaJRzNYWiLEAnFMYyNimeHgmP1KGWFonfQa9ZSMpY5LbWVQMVF9ckxx1JvZJQRVHEKEiamQisjqS4VHCB1Q3P5J4xzhRy6w1Eo3ZfjhLEMd325GxLtAe28TxRcD2WFgBhYJJd7jKsjxBvvkUrPtQtp5ZJVev8wvdRdkR5QqbEfU7cce7uGBvThjxq1A6XetNbxfXdenpdNHJKsaVtWHuqypzoELh7mhgSmMtWNFbXaL6bi2QHC4i",
+      "previousProof": {
+        "type": "MerkleProof2019",
+        "created": "2024-01-07T13:45:31.285895",
+        "proofValue": "znKD4YGVqA8textxyks1L6w7cJKZdrkSQMXUL1T4EACzJCEobfuYuMQRD6asXzacJRrs6W1Q9DeVYkXrfAdMfuo9WCS3PfXPAUSQoPp4LDCtxTpHaYZwSk5dxsEA89gWTJDZarzuaxcCH12tBgFSLY6nPcWG7ihz6bd6Pt1KsD8ggadg1NATNs784fGWMxJn2jGjS22qKGpLQJNzyFnqWF2ua9XSTiWkMLd8nnkr8V598BYAkNaG3huiCx7hNbNUCr9DgcqkQqF3CV19sGWvV2pQacLx84Cnk2AbTEgfJHNwEzJPPnqEv9PaJed",
+        "proofPurpose": "assertionMethod",
+        "verificationMethod": "did:web:assets.dev.trustid.sbi-fc.com#key-2"
+      }
+    }
+  ]
+}
