@@ -1,47 +1,85 @@
 import Web3 from "web3";
 
-const web3 = new Web3("wss://eth-sepolia.g.alchemy.com/v2/zO8Ii3ROEXb89VatiAmTWkmaGMJHY4hA");
+const web3 = new Web3(
+  "wss://eth-sepolia.g.alchemy.com/v2/zO8Ii3ROEXb89VatiAmTWkmaGMJHY4hA",
+);
 
-export const getBalance = async ({ address }) => {
+export const issueBlockCert = async ({ address, privateKey, vc }) => {
+  const balance = await getBalance({ address });
+  if (balance < 20000000) {
+    console.warn("balance is less than 20000000");
+    return {
+      error: "balance is less than gas price",
+    };
+  }
+  const transaction = await createTransaction({ address });
+  const signedTransaction = await signTransaction({ transaction, privateKey });
+  await sendSignedTransaction({ signedTransaction });
+  const transactionResult = await getTransaction({
+    transactionHash: signedTransaction.transactionHash,
+  });
+};
+
+const getBalance = async ({ address }) => {
   const balance = await web3.eth.getBalance(address);
   console.log("getBalance: ", balance);
   return balance;
 };
 
-export const broadcastTx = async ({ tx }) => {
-  const response = await web3.eth.sendSignedTransaction(tx).hex();
-  console.info("Broadcasting transaction with EthereumRPCProvider: ", response);
-  return response;
+const sendSignedTransaction = async ({ signedTransaction }) => {
+  const hexRawTransaction = toHex(signedTransaction.rawTransaction);
+  console.log("hexRawTransaction: ", hexRawTransaction);
+  await web3.eth.sendSignedTransaction(hexRawTransaction);
 };
 
-export const getTransactionCount = async ({ sender }) => {
-  const nonce = await web3.eth.getTransactionCount(sender);
+const signTransaction = async ({ transaction, privateKey }) => {
+  const hexedPrivateKey = toHex(privateKey);
+  const signedTransaction = await web3.eth.accounts.signTransaction(
+    transaction,
+    hexedPrivateKey,
+  );
+  console.log("signedTransaction:", signedTransaction);
+  return signedTransaction;
+};
+
+const createTransaction = async ({ address }) => {
+  const nonce = await getNonceByTransactionCount({ address });
+  const toaddress = web3.utils.toChecksumAddress(
+    "0xdeaddeaddeaddeaddeaddeaddeaddeaddeaddead",
+  );
+  console.log(toaddress);
+  const transaction = {
+    from: address,
+    to: toaddress,
+    value: 0,
+    gas: 25000,
+    gasPrice: 20000000000,
+    chainId: 11155111,
+    nonce,
+  };
+  console.log(transaction);
+  return transaction;
+};
+
+const getNonceByTransactionCount = async ({ address }) => {
+  console.log(address);
+  const nonce = await web3.eth.getTransactionCount(address);
   console.info("getTransactionCount nonce: ", nonce);
   return nonce;
 };
 
-
-export const signTransaction = async ({ transaction, privateKey }) => {
-  const hexedPrivateKey = toHex(privateKey);
-  const signedTransaction = await web3.eth.accounts.signTransaction(transaction, hexedPrivateKey);
-  console.log(signedTransaction);
-  return signedTransaction;
+const getTransaction = async ({ transactionHash }) => {
+  const transactionResult = await web3.eth.getTransaction(transactionHash);
+  console.log("transactionResult: ", transactionHash);
+  return transactionResult;
+};
+const toHex = (value) => {
+  const hexValue = web3.utils.toHex(value);
+  console.log(hexValue);
+  return hexValue;
 };
 
-const toHex = (value) => {
-  const hexValue = web3.utils.toHex(value)
-  console.log(hexValue)
-  return hexValue;
-}
-getBalance({ address: "0x260841F2440ffd1884F7eeAC551b892dD4434073" });
-signTransaction({
-  transaction: {
-    from: "0x260841F2440ffd1884F7eeAC551b892dD4434073",
-    to: "0xF0109fC8DF283027b6285cc889F5aA624EaC1F55",
-    value: "1000000000",
-    gas: 2000000,
-    gasPrice: "234567897654321",
-    nonce: 0,
-  },
+issueBlockCert({
+  address: "0x260841F2440ffd1884F7eeAC551b892dD4434073",
   privateKey: "",
 });
