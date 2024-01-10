@@ -6,9 +6,7 @@
     "https://w3id.org/security/suites/merkle-2019/v1",
     "https://w3id.org/security/suites/chained-2021/v1"
   ],
-  "type": [
-    "VerifiableCredential"
-  ],
+  "type": ["VerifiableCredential"],
   "credentialSubject": {
     "id": "did:example:test"
   },

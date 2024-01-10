@@ -11,10 +11,12 @@
    1. https://sepoliafaucet.com/
 
 ## setup
+
 configure conf.ini
 configure privateKey.txt
 
 ## local debug
+
 ```shell
 export ADDRESS=0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198
 export PRIVATE_KEY=d8b595680851765f38ea5405129244ba3cbad84467d190859f4c8b20c1ff6c75
