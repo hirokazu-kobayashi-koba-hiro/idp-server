@@ -2,3 +2,4 @@ node_modules
 
 conf.ini
 privateKey.txt
+local.sh

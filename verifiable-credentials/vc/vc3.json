@@ -1,0 +1,26 @@
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://www.w3.org/2018/credentials/examples/v1"
+  ],
+  "id": "http://example.edu/credentials/1872",
+  "type": [
+    "VerifiableCredential",
+    "AlumniCredential"
+  ],
+  "issuer": "did:web:assets.dev.trustid.sbi-fc.com",
+  "issuanceDate": "2010-01-01T19:23:24Z",
+  "credentialSubject": {
+    "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+    "alumniOf": {
+      "id": "did:example:c276e12ec21ebfeb1f712ebc6f1"
+    }
+  },
+  "merkleProof": {
+    "type": "MerkleProof2019",
+    "created": "2024-01-12T04:19:02.073Z",
+    "proofValue": "z3AVSQCREu5fWSeFgzr1TmxaRXN8C28SxRFWp9QxGxPqJoP8gYVUvVuvFA5sM5TjBVGuiPFx7ujQMb8Y4hA5wpS6HRwAKe8WNEU2JBfVpL8U3ZPuytqyf9oZxRb9k3TMggBaAL1Qku4S86ibtRmtiYbYXvVTS3VeyWttnT3oSYwj3a8qVVx4j6fQr5uJ7CCQdtfYgP47WsNkYqBt8HpuosJoNYA72VfCriTAyggaGTVR8sXhcRs4XvaodQBHdcqX1Hbaqx3iVnNBLzHRJigDcHK7p9VM4iv9hfGopSUpTDcFSpN1p3K7XmQfR7xsaWaUGL73JmV9NjwxYDmHHASv5JJnZg5at1xoyfJR3bPVWdZFv1m7kN6VCeTj2JkVFW3iuj7G49YQUnfzCRVdNrZkX8BsJU3mR8qW5ynBfWSKtLsfmxCdi5k29Tp886vf98zWKSKSxbw6u4v6jWKhZE9u7Kss2GGPDQ1ionYRxs4SPq6L9cw14yvoM11cpAZJVrDg9svYhKEix2nBcydrJbkyW6ba88p7F2JgbK7AGXiWgo34dsL9xS92XSN4Yre65fx7YS9DXkMre8ENRaBAr6pJRaLwmq44yST9",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:web:assets.dev.trustid.sbi-fc.com#key-2"
+  }
+}

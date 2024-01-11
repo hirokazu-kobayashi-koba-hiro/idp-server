@@ -4,20 +4,41 @@ const web3 = new Web3(
   "wss://eth-sepolia.g.alchemy.com/v2/zO8Ii3ROEXb89VatiAmTWkmaGMJHY4hA",
 );
 
-export const issueBlockCert = async ({ address, privateKey, vc }) => {
-  const balance = await getBalance({ address });
-  if (balance < 20000000) {
-    console.warn("balance is less than 20000000");
+export const issueTransaction = async ({ address, privateKey, data }) => {
+  try {
+    const balance = await getBalance({ address });
+    if (balance < 20000000) {
+      console.warn("balance is less than 20000000");
+      return {
+        error: "balance is less than gas price",
+      };
+    }
+    const transaction = await createTransaction({ address, data });
+    const signedTransaction = await signTransaction({
+      transaction,
+      privateKey,
+    });
+    await sendSignedTransaction({ signedTransaction });
+    const transactionResult = await getTransaction({
+      transactionHash: signedTransaction.transactionHash,
+    });
     return {
-      error: "balance is less than gas price",
+      payload: {
+        transactionId: signedTransaction.transactionHash,
+      },
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      error: e,
     };
   }
-  const transaction = await createTransaction({ address });
-  const signedTransaction = await signTransaction({ transaction, privateKey });
-  await sendSignedTransaction({ signedTransaction });
-  const transactionResult = await getTransaction({
-    transactionHash: signedTransaction.transactionHash,
-  });
+};
+
+export const serialize = (data) => {
+  const serializedData = web3.utils.bytesToUint8Array(toHex(data));
+  console.log(serializedData);
+  return serializedData;
 };
 
 const getBalance = async ({ address }) => {
@@ -42,7 +63,7 @@ const signTransaction = async ({ transaction, privateKey }) => {
   return signedTransaction;
 };
 
-const createTransaction = async ({ address }) => {
+const createTransaction = async ({ address, data }) => {
   const nonce = await getNonceByTransactionCount({ address });
   const toaddress = web3.utils.toChecksumAddress(
     "0xdeaddeaddeaddeaddeaddeaddeaddeaddeaddead",
@@ -52,6 +73,7 @@ const createTransaction = async ({ address }) => {
     from: address,
     to: toaddress,
     value: 0,
+    data,
     gas: 25000,
     gasPrice: 20000000000,
     chainId: 11155111,
@@ -78,8 +100,3 @@ const toHex = (value) => {
   console.log(hexValue);
   return hexValue;
 };
-
-issueBlockCert({
-  address: "0x260841F2440ffd1884F7eeAC551b892dD4434073",
-  privateKey: "",
-});
