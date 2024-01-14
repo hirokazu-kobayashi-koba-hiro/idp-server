@@ -38,13 +38,13 @@ app.post("/v1/verifiable-credentials/block-cert", async (request, response) => {
     (await issueBlockCert({
       address: process.env.ADDRESS,
       privateKey: process.env.PRIVATE_KEY,
-      verificationMethod: process.env.VERIFICATION_METHOD,
+      verificationMethod: process.env.VERIFICATION_METHOD || "did:web:assets.dev.trustid.sbi-fc.com#key-2",
       chain: process.env.CHAIN,
       credential: request.body.vc,
     })) || {};
-  if (payload && !error) {
+  if (payload.vc && !error) {
     console.log(payload);
-    response.send(`{ "vc": ${JSON.stringify(payload)}}`);
+    response.send(`{ "vc": ${JSON.stringify(payload.vc)}}`);
     return;
   }
   response.status(400);

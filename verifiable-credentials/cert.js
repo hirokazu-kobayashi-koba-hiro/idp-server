@@ -25,6 +25,8 @@ class MerkleTreeGenerator {
   populate(nodeGenerator) {
     for (const data of nodeGenerator) {
       const hashed = this.hashByteArray(data);
+      console.log("hashed")
+      console.log(data)
       console.log(hashed);
       this.tree.addLeaf(hashed);
     }
@@ -34,7 +36,7 @@ class MerkleTreeGenerator {
     this.tree.makeTree();
     console.log(this.tree.getMerkleRoot());
     const merkleRoot = this.tree.getMerkleRoot().toString("hex");
-    console.log(merkleRoot);
+    console.log(this.ensureString(merkleRoot));
     console.log(Buffer.from(this.ensureString(merkleRoot), "hex"));
     return Buffer.from(this.ensureString(merkleRoot), "hex");
   }
@@ -135,6 +137,7 @@ export const issueBlockCert = async ({
       error,
     }
   }
+  console.log("verificationMethod", verificationMethod)
   const merkleProof = merkleTreeGenerator.generateProof(
     payload.transactionId,
     verificationMethod,
@@ -154,6 +157,6 @@ export const issueBlockCert = async ({
 
 const convertJsonldToByteArray = async (value) => {
   const jsonldHandler = jsonld();
-  return await jsonldHandler.normalize(value);
+  return [await jsonldHandler.normalize(value)];
 };
 
