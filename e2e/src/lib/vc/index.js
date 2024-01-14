@@ -1,4 +1,5 @@
 const { Certificate } = require('@blockcerts/cert-verifier-js/dist/verifier-node/index.js');
+const { Decoder } = require('@vaultie/lds-merkle-proof-2019');
 
 export const verifyBlockCert = async (certificateDefinition) => {
   const certificate = new Certificate(certificateDefinition);
@@ -15,3 +16,9 @@ export const verifyBlockCert = async (certificateDefinition) => {
   }
   return verificationResult;
 };
+export const decodeWithBase58 = (value) => {
+  const decoder = new Decoder(value)
+  const decodedValue = decoder.decode();
+  console.log(decodedValue);
+  return decodedValue;
+}

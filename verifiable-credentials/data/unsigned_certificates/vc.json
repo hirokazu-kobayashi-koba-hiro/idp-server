@@ -5,12 +5,5 @@
   "type": ["VerifiableCredential"],
   "credentialSubject": {
     "id": "did:example:test"
-  },
-  "proof": {
-    "type": "MerkleProof2019",
-    "created": "2024-01-07T13:45:31.285895",
-    "proofValue": "znKD4YGVqA8textxyks1L6w7cJKZdrkSQMXUL1T4EACzJCEobfuYuMQRD6asXzacJRrs6W1Q9DeVYkXrfAdMfuo9WCS3PfXPAUSQoPp4LDCtxTpHaYZwSk5dxsEA89gWTJDZarzuaxcCH12tBgFSLY6nPcWG7ihz6bd6Pt1KsD8ggadg1NATNs784fGWMxJn2jGjS22qKGpLQJNzyFnqWF2ua9XSTiWkMLd8nnkr8V598BYAkNaG3huiCx7hNbNUCr9DgcqkQqF3CV19sGWvV2pQacLx84Cnk2AbTEgfJHNwEzJPPnqEv9PaJed",
-    "proofPurpose": "assertionMethod",
-    "verificationMethod": "did:web:assets.dev.trustid.sbi-fc.com#key-2"
   }
 }

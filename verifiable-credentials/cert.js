@@ -1,7 +1,7 @@
 import { issueTransaction } from "./ethereum.js";
 
 import crypto from "crypto";
-import { Encoder } from "@vaultie/lds-merkle-proof-2019";
+import {Decoder, Encoder} from "@vaultie/lds-merkle-proof-2019";
 import MerkleTools from "merkle-tools";
 import jsonld from "jsonld";
 
@@ -25,8 +25,8 @@ class MerkleTreeGenerator {
   populate(nodeGenerator) {
     for (const data of nodeGenerator) {
       const hashed = this.hashByteArray(data);
-      console.log("hashed")
-      console.log(data)
+      console.log("hashed");
+      console.log(data);
       console.log(hashed);
       this.tree.addLeaf(hashed);
     }
@@ -44,7 +44,7 @@ class MerkleTreeGenerator {
   generateProof(transactionId, verificationMethod, chain) {
     const root = this.ensureString(this.tree.getMerkleRoot().toString("hex"));
     const nodeCount = this.tree.getLeafCount();
-    console.log(nodeCount);
+    console.log(root);
 
     const proof = this.tree.getProof(0);
     const proof2 = proof.map((p) => {
@@ -55,16 +55,18 @@ class MerkleTreeGenerator {
       return dict2;
     });
 
-    const targetHash = this.ensureString(this.tree.getLeaf(0));
+    const targetHash = this.tree.getLeaf(0).toString("hex");
     const merkleJson = {
       path: proof2,
       merkleRoot: root,
       targetHash: targetHash,
-      anchors: [txToBlink({ chain, transactionId })],
+      anchors: [toBlink({ chain, transactionId })],
     };
     console.log("merkleJson:", JSON.stringify(merkleJson, null, 2));
 
     const proofValue = new Encoder(merkleJson).encode();
+    console.log(proofValue)
+    console.log(proofValue.toString("utf8"))
     const merkleProof = {
       type: "MerkleProof2019",
       created: new Date().toISOString(),
@@ -72,12 +74,14 @@ class MerkleTreeGenerator {
       proofPurpose: "assertionMethod",
       verificationMethod: verificationMethod,
     };
-    console.log(nodeCount);
+    const decoder = new Decoder(proofValue.toString("utf8"))
+    const decodedValue = decoder.decode();
+    console.log(decodedValue);
     return merkleProof;
   }
 }
 
-const txToBlink = ({ chain, transactionId }) => {
+const toBlink = ({ chain, transactionId }) => {
   let blink = "blink:";
 
   switch (chain) {
@@ -137,7 +141,7 @@ export const issueBlockCert = async ({
       error,
     }
   }
-  console.log("verificationMethod", verificationMethod)
+  console.log("verificationMethod", verificationMethod);
   const merkleProof = merkleTreeGenerator.generateProof(
     payload.transactionId,
     verificationMethod,
@@ -149,14 +153,12 @@ export const issueBlockCert = async ({
   };
   console.log(vc);
   return {
-    payload: {
-      vc
-    },
+    payload: vc,
   };
 };
 
 const convertJsonldToByteArray = async (value) => {
   const jsonldHandler = jsonld();
-  return [await jsonldHandler.normalize(value)];
+  const normalizedValue = await jsonldHandler.normalize(value);
+  return [normalizedValue.toString("utf-8")];
 };
-
