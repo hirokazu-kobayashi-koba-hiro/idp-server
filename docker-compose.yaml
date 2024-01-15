@@ -23,5 +23,6 @@ services:
     environment:
       - ADDRESS=$ADDRESS
       - PRIVATE_KEY=$PRIVATE_KEY
+      - WEB3_URL=$WEB3_URL
       - VERIFICATION_Method='did:web:assets.dev.trustid.sbi-fc.com#key-2'
       - CHAIN=ethereum_sepolia

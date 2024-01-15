@@ -1,7 +1,7 @@
 import { issueTransaction } from "./ethereum.js";
 
 import crypto from "crypto";
-import { Encoder} from "@vaultie/lds-merkle-proof-2019";
+import { Encoder } from "@vaultie/lds-merkle-proof-2019";
 import MerkleTools from "merkle-tools";
 import jsonld from "jsonld";
 
@@ -49,7 +49,7 @@ class MerkleTreeGenerator {
       path: proof2,
       merkleRoot: root,
       targetHash: targetHash,
-      anchors: [toBlink({ chain, transactionId })],
+      anchors: [this.toBlink({ chain, transactionId })],
     };
 
     const proofValue = new Encoder(merkleJson).encode();
@@ -65,42 +65,42 @@ class MerkleTreeGenerator {
 
     return merkleProof;
   }
+
+  toBlink = ({ chain, transactionId }) => {
+    let blink = "blink:";
+
+    switch (chain) {
+      case "bitcoin_regtest":
+        blink += "btc:regtest:";
+        break;
+      case "bitcoin_testnet":
+        blink += "btc:testnet:";
+        break;
+      case "bitcoin_mainnet":
+        blink += "btc:mainnet:";
+        break;
+      case "ethereum_ropsten":
+        blink += "eth:ropsten:";
+        break;
+      case "ethereum_goerli":
+        blink += "eth:goerli:";
+        break;
+      case "ethereum_sepolia":
+        blink += "eth:sepolia:";
+        break;
+      case "ethereum_mainnet":
+        blink += "eth:mainnet:";
+        break;
+      case "mockchain":
+        blink += "mocknet:";
+        break;
+      default:
+        throw new Error("UnknownChainError: " + chain);
+    }
+
+    return blink + transactionId;
+  };
 }
-
-const toBlink = ({ chain, transactionId }) => {
-  let blink = "blink:";
-
-  switch (chain) {
-    case "bitcoin_regtest":
-      blink += "btc:regtest:";
-      break;
-    case "bitcoin_testnet":
-      blink += "btc:testnet:";
-      break;
-    case "bitcoin_mainnet":
-      blink += "btc:mainnet:";
-      break;
-    case "ethereum_ropsten":
-      blink += "eth:ropsten:";
-      break;
-    case "ethereum_goerli":
-      blink += "eth:goerli:";
-      break;
-    case "ethereum_sepolia":
-      blink += "eth:sepolia:";
-      break;
-    case "ethereum_mainnet":
-      blink += "eth:mainnet:";
-      break;
-    case "mockchain":
-      blink += "mocknet:";
-      break;
-    default:
-      throw new Error("UnknownChainError: " + chain);
-  }
-
-  return blink + transactionId;
-};
 
 export const issueBlockCert = async ({
   address,
@@ -124,7 +124,7 @@ export const issueBlockCert = async ({
     console.log("error");
     return {
       error,
-    }
+    };
   }
   console.log("verificationMethod", verificationMethod);
   const merkleProof = merkleTreeGenerator.generateProof(

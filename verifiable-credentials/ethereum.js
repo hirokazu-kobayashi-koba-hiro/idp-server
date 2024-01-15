@@ -1,8 +1,6 @@
 import Web3 from "web3";
 
-const web3 = new Web3(
-  "wss://eth-sepolia.g.alchemy.com/v2/zO8Ii3ROEXb89VatiAmTWkmaGMJHY4hA",
-);
+const web3 = new Web3(process.env.WEB3_URL);
 
 export const issueTransaction = async ({ address, privateKey, data }) => {
   try {
