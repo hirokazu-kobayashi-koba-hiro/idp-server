@@ -6,8 +6,12 @@ import MerkleTools from "merkle-tools";
 import jsonld from "jsonld";
 
 class MerkleTreeGenerator {
-  constructor() {
+  constructor(normalizedData) {
     this.tree = new MerkleTools({ hashType: "sha256" });
+    const hashed = this.hashByteArray(normalizedData);
+    console.log(hashed);
+    this.tree.addLeaf(hashed);
+    this.tree.makeTree();
   }
 
   hashByteArray(data) {
@@ -22,27 +26,14 @@ class MerkleTreeGenerator {
     return value.toString("utf-8");
   }
 
-  populate(nodeGenerator) {
-    for (const data of nodeGenerator) {
-      const hashed = this.hashByteArray(data);
-      console.log(hashed);
-      this.tree.addLeaf(hashed);
-    }
-  }
-
   getBlockchainData() {
     this.tree.makeTree();
-    console.log(this.tree.getMerkleRoot());
     const merkleRoot = this.tree.getMerkleRoot().toString("hex");
-    console.log(this.ensureString(merkleRoot));
-    console.log(Buffer.from(this.ensureString(merkleRoot), "hex"));
     return Buffer.from(this.ensureString(merkleRoot), "hex");
   }
 
   generateProof(transactionId, verificationMethod, chain) {
     const root = this.ensureString(this.tree.getMerkleRoot().toString("hex"));
-    const nodeCount = this.tree.getLeafCount();
-    console.log(root);
 
     const proof = this.tree.getProof(0);
     const proof2 = proof.map((p) => {
@@ -62,8 +53,6 @@ class MerkleTreeGenerator {
     };
 
     const proofValue = new Encoder(merkleJson).encode();
-    console.log(proofValue)
-    console.log(proofValue.toString("utf8"))
     const merkleProof = {
       type: "MerkleProof2019",
       created: new Date().toISOString(),
@@ -72,7 +61,7 @@ class MerkleTreeGenerator {
       verificationMethod: verificationMethod,
     };
 
-    console.log("merkleJson:", JSON.stringify(merkleProof, null, 2));
+    console.log("merkleProof:", JSON.stringify(merkleProof, null, 2));
 
     return merkleProof;
   }
@@ -121,10 +110,9 @@ export const issueBlockCert = async ({
   credential,
 }) => {
   console.log("start");
-  const merkleTreeGenerator = new MerkleTreeGenerator();
-  const byteArrayCredential = await convertJsonldToByteArray(credential);
-  console.log(byteArrayCredential);
-  merkleTreeGenerator.populate(byteArrayCredential);
+  const normalizedCredential = await normalizeWithJsonld(credential);
+  console.log(normalizedCredential);
+  const merkleTreeGenerator = new MerkleTreeGenerator(normalizedCredential);
   const blockchainData = merkleTreeGenerator.getBlockchainData();
   console.log("Blockchain Data:", blockchainData);
   const { payload, error } = await issueTransaction({
@@ -154,8 +142,8 @@ export const issueBlockCert = async ({
   };
 };
 
-const convertJsonldToByteArray = async (value) => {
+const normalizeWithJsonld = async (value) => {
   const jsonldHandler = jsonld();
   const normalizedValue = await jsonldHandler.normalize(value);
-  return [normalizedValue.toString("utf-8")];
+  return normalizedValue.toString("utf-8");
 };
