@@ -48,7 +48,33 @@ This library provides java api supported OAuth2.0 and OIDC spec.
 
 Apache License, Version 2.0
 
+# verifiable-credentials
+
+## pre setup
+
+1. create wallet
+   1. https://metamask.io/
+2. create alchemy account
+   1. https://www.alchemy.com/
+3. create apikey of sepolia at alchemy
+4. send eth to wallet
+   1. https://sepoliafaucet.com/
+
+
 ## sample server
+
+### docker-compose
+
+example. fix your configuration
+```shell
+export ADDRESS=0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198
+export PRIVATE_KEY=d8b595680851765f38ea5405129244ba3cbad84467d190859f4c8b20c1ff6c75
+export WEB3_URL=wss://eth-sepolia.g.alchemy.com/v2/xxx
+export VERIFICATION_Method='did:web:assets.dev.trustid.sbi-fc.com#key-2'
+export CHAIN=ethereum_sepolia
+
+docker-compose up -d
+```
 
 ### bootRun
 
