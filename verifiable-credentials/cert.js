@@ -1,7 +1,7 @@
 import { issueTransaction } from "./ethereum.js";
 
 import crypto from "crypto";
-import {Decoder, Encoder} from "@vaultie/lds-merkle-proof-2019";
+import { Encoder} from "@vaultie/lds-merkle-proof-2019";
 import MerkleTools from "merkle-tools";
 import jsonld from "jsonld";
 
@@ -25,8 +25,6 @@ class MerkleTreeGenerator {
   populate(nodeGenerator) {
     for (const data of nodeGenerator) {
       const hashed = this.hashByteArray(data);
-      console.log("hashed");
-      console.log(data);
       console.log(hashed);
       this.tree.addLeaf(hashed);
     }
@@ -62,7 +60,6 @@ class MerkleTreeGenerator {
       targetHash: targetHash,
       anchors: [toBlink({ chain, transactionId })],
     };
-    console.log("merkleJson:", JSON.stringify(merkleJson, null, 2));
 
     const proofValue = new Encoder(merkleJson).encode();
     console.log(proofValue)
@@ -74,9 +71,9 @@ class MerkleTreeGenerator {
       proofPurpose: "assertionMethod",
       verificationMethod: verificationMethod,
     };
-    const decoder = new Decoder(proofValue.toString("utf8"))
-    const decodedValue = decoder.decode();
-    console.log(decodedValue);
+
+    console.log("merkleJson:", JSON.stringify(merkleProof, null, 2));
+
     return merkleProof;
   }
 }

@@ -1,27 +1,12 @@
-FROM python:3.8
-
-#cert-ssuer
-RUN apt update && apt-get install gcc -y
-
-COPY ./cert_issuer ./cert_issuer
-COPY ./ethereum_requirements.txt .
-
-RUN python3 -m ensurepip \
-    && pip3 install --upgrade pip setuptools \
-    && pip3 install Cython \
-    && pip3 install wheel \
-    && mkdir -p /etc/cert-issuer/data/unsigned_certificates \
-    && mkdir /etc/cert-issuer/data/blockchain_certificates \
-    && pip3 install -r ethereum_requirements.txt
-
-#api app
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs
+FROM node:20
 
 COPY ./package.json .
 COPY ./package-lock.json .
 RUN npm install
+COPY Encoder.js ./node_modules/@vaultie/lds-merkle-proof-2019/src/Encoder.js
 COPY index.js .
+COPY cert.js .
+COPY ethereum.js .
 EXPOSE 3000
 
 CMD [ "node", "index.js" ]
