@@ -34,6 +34,7 @@ app.post("/v1/verifiable-credentials/block-cert", async (request, response) => {
       .status(400);
     return;
   }
+  console.log(process.env.VERIFICATION_METHOD)
   const { payload, error } =
     (await issueBlockCert({
       address: process.env.ADDRESS,

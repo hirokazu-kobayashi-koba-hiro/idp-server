@@ -33,12 +33,6 @@ export const issueTransaction = async ({ address, privateKey, data }) => {
   }
 };
 
-export const serialize = (data) => {
-  const serializedData = web3.utils.bytesToUint8Array(toHex(data));
-  console.log(serializedData);
-  return serializedData;
-};
-
 const getBalance = async ({ address }) => {
   const balance = await web3.eth.getBalance(address);
   console.log("getBalance: ", balance);
@@ -46,9 +40,18 @@ const getBalance = async ({ address }) => {
 };
 
 const sendSignedTransaction = async ({ signedTransaction }) => {
-  const hexRawTransaction = toHex(signedTransaction.rawTransaction);
-  console.log("hexRawTransaction: ", hexRawTransaction);
-  await web3.eth.sendSignedTransaction(hexRawTransaction);
+  for (let index = 0; index < 10; index++) {
+   try {
+     const hexRawTransaction = toHex(signedTransaction.rawTransaction);
+     console.log("hexRawTransaction: ", hexRawTransaction);
+     await web3.eth.sendSignedTransaction(hexRawTransaction);
+     console.log("success sendSignedTransaction")
+     return
+   } catch (e) {
+     console.warn(e)
+   }
+  }
+  throw new Error("failed sendSignedTransaction, please retry")
 };
 
 const signTransaction = async ({ transaction, privateKey }) => {
@@ -63,13 +66,12 @@ const signTransaction = async ({ transaction, privateKey }) => {
 
 const createTransaction = async ({ address, data }) => {
   const nonce = await getNonceByTransactionCount({ address });
-  const toaddress = web3.utils.toChecksumAddress(
+  const toAddress = web3.utils.toChecksumAddress(
     "0xdeaddeaddeaddeaddeaddeaddeaddeaddeaddead",
   );
-  console.log(toaddress);
   const transaction = {
     from: address,
-    to: toaddress,
+    to: toAddress,
     value: 0,
     data,
     gas: 25000,

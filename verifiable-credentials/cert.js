@@ -1,5 +1,4 @@
 import { issueTransaction } from "./ethereum.js";
-
 import crypto from "crypto";
 import { Encoder } from "@vaultie/lds-merkle-proof-2019";
 import MerkleTools from "merkle-tools";
@@ -35,18 +34,9 @@ class MerkleTreeGenerator {
   generateProof(transactionId, verificationMethod, chain) {
     const root = this.ensureString(this.tree.getMerkleRoot().toString("hex"));
 
-    const proof = this.tree.getProof(0);
-    const proof2 = proof.map((p) => {
-      const dict2 = {};
-      for (const [key, value] of Object.entries(p)) {
-        dict2[key] = this.ensureString(value);
-      }
-      return dict2;
-    });
-
     const targetHash = this.tree.getLeaf(0).toString("hex");
     const merkleJson = {
-      path: proof2,
+      path: [],
       merkleRoot: root,
       targetHash: targetHash,
       anchors: [this.toBlink({ chain, transactionId })],
@@ -70,15 +60,6 @@ class MerkleTreeGenerator {
     let blink = "blink:";
 
     switch (chain) {
-      case "bitcoin_regtest":
-        blink += "btc:regtest:";
-        break;
-      case "bitcoin_testnet":
-        blink += "btc:testnet:";
-        break;
-      case "bitcoin_mainnet":
-        blink += "btc:mainnet:";
-        break;
       case "ethereum_ropsten":
         blink += "eth:ropsten:";
         break;
@@ -90,9 +71,6 @@ class MerkleTreeGenerator {
         break;
       case "ethereum_mainnet":
         blink += "eth:mainnet:";
-        break;
-      case "mockchain":
-        blink += "mocknet:";
         break;
       default:
         throw new Error("UnknownChainError: " + chain);
