@@ -5,9 +5,9 @@ import org.idp.server.basic.json.JsonConvertable;
 import org.idp.server.basic.vc.Credential;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
-import org.idp.server.type.verifiablecredential.Format;
 import org.idp.server.verifiablecredential.VerifiableCredential;
 import org.idp.server.verifiablecredential.VerifiableCredentialCreator;
+import org.idp.server.verifiablecredential.exception.VerifiableCredentialBadRequestException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -43,8 +43,7 @@ public class VerifiableCredentialBlockCertClient implements VerifiableCredential
                       .build();
       HttpResponse<String> response =
               httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-      String responseBody = response.body();
-      Map map = JsonConvertable.read(responseBody, Map.class);
+      Map map = handle(response);
       return new VerifiableCredential(map.get("vc"));
     } catch (URISyntaxException e) {
       throw new RuntimeException(e);
@@ -52,6 +51,18 @@ public class VerifiableCredentialBlockCertClient implements VerifiableCredential
       throw new RuntimeException(e);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  Map handle(HttpResponse<String> response) {
+    String responseBody = response.body();
+    Map map = JsonConvertable.read(responseBody, Map.class);
+    switch (response.statusCode()) {
+      case 200 -> {
+        return map;
+      }
+      case 400 -> throw new VerifiableCredentialBadRequestException("invalid_request", (String) map.get("error_description"));
+      default -> throw new RuntimeException("vc error status code: " + response.statusCode());
     }
   }
 

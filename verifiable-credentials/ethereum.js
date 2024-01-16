@@ -75,7 +75,7 @@ const createTransaction = async ({ address, data }) => {
     value: 0,
     data,
     gas: 25000,
-    gasPrice: 20000000000,
+    gasPrice: 200000000000,
     chainId: 11155111,
     nonce,
   };

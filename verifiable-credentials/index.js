@@ -51,7 +51,7 @@ app.post("/v1/verifiable-credentials/block-cert", async (request, response) => {
     return;
   }
   response.status(400);
-  response.send(`{"error": "invalid_request", "error_description": ${error}"}`);
+  response.send(`{"error": "invalid_request", "error_description": "${error}"}`);
 });
 
 app.post("/v1/verifiable-credentials/did-jwt", async (request, response) => {
