@@ -86,38 +86,45 @@ export const issueBlockCert = async ({
   chain,
   credential,
 }) => {
-  console.log("start");
-  const normalizedCredential = await normalizeWithJsonld(credential);
-  console.log(normalizedCredential);
-  const merkleTreeGenerator = new MerkleTreeGenerator(normalizedCredential);
-  const blockchainData = merkleTreeGenerator.getBlockchainData();
-  console.log("Blockchain Data:", blockchainData);
-  const { payload, error } = await issueTransaction({
-    address,
-    privateKey,
-    chain,
-    data: blockchainData,
-  });
-  if (error) {
-    console.log("error");
-    return {
-      error,
+  try {
+    console.log("issueBlockCert");
+    const normalizedCredential = await normalizeWithJsonld(credential);
+    console.log(normalizedCredential);
+    const merkleTreeGenerator = new MerkleTreeGenerator(normalizedCredential);
+    const blockchainData = merkleTreeGenerator.getBlockchainData();
+    console.log("Blockchain Data:", blockchainData);
+    const { payload, error } = await issueTransaction({
+      address,
+      privateKey,
+      chain,
+      data: blockchainData,
+    });
+    if (error) {
+      console.log("error issueTransaction");
+      return {
+        error,
+      };
+    }
+    console.log("verificationMethod", verificationMethod);
+    const merkleProof = merkleTreeGenerator.generateProof(
+        payload.transactionId,
+        verificationMethod,
+        chain,
+    );
+    const vc = {
+      ...credential,
+      proof: merkleProof,
     };
+    console.log(vc);
+    return {
+      payload: vc,
+    };
+  } catch (e) {
+    console.error(e)
+    return {
+      error: e
+    }
   }
-  console.log("verificationMethod", verificationMethod);
-  const merkleProof = merkleTreeGenerator.generateProof(
-    payload.transactionId,
-    verificationMethod,
-    chain,
-  );
-  const vc = {
-    ...credential,
-    proof: merkleProof,
-  };
-  console.log(vc);
-  return {
-    payload: vc,
-  };
 };
 
 const normalizeWithJsonld = async (value) => {
