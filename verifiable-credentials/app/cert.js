@@ -96,6 +96,7 @@ export const issueBlockCert = async ({
   const { payload, error } = await issueTransaction({
     address,
     privateKey,
+    chain,
     data: blockchainData,
   });
   if (error) {

@@ -1,8 +1,9 @@
 import Web3 from "web3";
+import {chain} from "@vaultie/lds-merkle-proof-2019/src/Keymap.js";
 
 const web3 = new Web3(process.env.WEB3_URL);
 
-export const issueTransaction = async ({ address, privateKey, data }) => {
+export const issueTransaction = async ({ address, privateKey, chain, data }) => {
   try {
     const balance = await getBalance({ address });
     if (balance < 20000000) {
@@ -11,7 +12,7 @@ export const issueTransaction = async ({ address, privateKey, data }) => {
         error: "balance is less than gas price",
       };
     }
-    const transaction = await createTransaction({ address, data });
+    const transaction = await createTransaction({ address, data, chain });
     const signedTransaction = await signTransaction({
       transaction,
       privateKey,
@@ -64,7 +65,7 @@ const signTransaction = async ({ transaction, privateKey }) => {
   return signedTransaction;
 };
 
-const createTransaction = async ({ address, data }) => {
+const createTransaction = async ({ address, data, chain }) => {
   const nonce = await getNonceByTransactionCount({ address });
   const toAddress = web3.utils.toChecksumAddress(
     "0xdeaddeaddeaddeaddeaddeaddeaddeaddeaddead",
@@ -76,7 +77,7 @@ const createTransaction = async ({ address, data }) => {
     data,
     gas: 25000,
     gasPrice: 200000000000,
-    chainId: 11155111,
+    chainId: toCainId(chain),
     nonce,
   };
   console.log(transaction);
@@ -100,3 +101,13 @@ const toHex = (value) => {
   console.log(hexValue);
   return hexValue;
 };
+
+const toCainId = (chainValue) => {
+  switch (chainValue) {
+    case 'ethereum_mainnet': return 1;
+    case "ethereum_ropsten": return 3;
+    case "ethereum_goerli": return 5;
+    case "ethereum_sepolia": return 11155111;
+    default: throw new Error(`UnknownChainError: ${chainValue}}`);
+  }
+}
