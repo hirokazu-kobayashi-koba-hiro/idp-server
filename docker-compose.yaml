@@ -24,5 +24,5 @@ services:
       - ADDRESS=$ADDRESS
       - PRIVATE_KEY=$PRIVATE_KEY
       - WEB3_URL=$WEB3_URL
-      - VERIFICATION_METHOD='did:web:assets.dev.trustid.sbi-fc.com#key-2'
-      - CHAIN=ethereum_sepolia
+      - VERIFICATION_METHOD=$VERIFICATION_METHOD
+      - CHAIN=$CHAIN

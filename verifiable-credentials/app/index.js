@@ -25,11 +25,11 @@ app.get("/health", (req, res) => {
 
 app.post("/v1/verifiable-credentials/block-cert", async (request, response) => {
   console.log(request.body);
-  if (!request.body.vc) {
+  if (!request.body.credential) {
     response.status(400);
     response
       .send(
-        '{"error": "invalid_request", "error_description": "vc is required"}',
+        '{"error": "invalid_request", "error_description": "credential is required"}',
       )
       .status(400);
     return;
@@ -42,7 +42,7 @@ app.post("/v1/verifiable-credentials/block-cert", async (request, response) => {
       verificationMethod:
         process.env.VERIFICATION_METHOD,
       chain: process.env.CHAIN,
-      credential: request.body.vc,
+      credential: request.body.credential,
     })) || {};
   if (payload && !error) {
     console.log(payload);
@@ -55,7 +55,7 @@ app.post("/v1/verifiable-credentials/block-cert", async (request, response) => {
 
 app.post("/v1/verifiable-credentials/did-jwt", async (request, response) => {
   console.log(request.body);
-  if (!request.body.vc) {
+  if (!request.body.credential) {
     response.status(400);
     response
       .send(
@@ -65,7 +65,7 @@ app.post("/v1/verifiable-credentials/did-jwt", async (request, response) => {
     return;
   }
   const { payload, error } = await issueVcJwt({
-    vcPayload: request.body.vc,
+    credential: request.body.credential,
   });
   if (payload && !error) {
     response.send(`{ "vc": "${payload}"}`);
@@ -101,9 +101,9 @@ app.post(
   },
 );
 
-const issueVcJwt = async ({ vcPayload }) => {
+const issueVcJwt = async ({ credential }) => {
   try {
-    const vcJwt = await createVerifiableCredentialJwt(vcPayload, issuer);
+    const vcJwt = await createVerifiableCredentialJwt(credential, issuer);
     console.log(vcJwt);
     return {
       payload: vcJwt,

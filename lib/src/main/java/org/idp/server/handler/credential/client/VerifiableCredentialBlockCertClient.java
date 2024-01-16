@@ -33,7 +33,7 @@ public class VerifiableCredentialBlockCertClient implements VerifiableCredential
       ClientConfiguration clientConfiguration) {
     try {
       HashMap<String, Object> requestBodyMap = new HashMap<>();
-      requestBodyMap.put("vc", credential.values());
+      requestBodyMap.put("credential", credential.values());
       String requestBody = JsonConvertable.write(requestBodyMap);
       HttpRequest request =
               HttpRequest.newBuilder()
