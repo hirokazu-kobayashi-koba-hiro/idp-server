@@ -2,7 +2,7 @@
   "name": "verifiable-credentials",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app/index.js",
   "scripts": {
     "format": "npx prettier . --write",
     "lint": "",
