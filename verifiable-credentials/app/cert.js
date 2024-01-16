@@ -1,6 +1,6 @@
-import { issueTransaction } from "./ethereum.js";
+import {issueTransaction} from "./ethereum.js";
 import crypto from "crypto";
-import { Encoder } from "@vaultie/lds-merkle-proof-2019";
+import {Encoder} from "@vaultie/lds-merkle-proof-2019";
 import MerkleTools from "merkle-tools";
 import jsonld from "jsonld";
 
@@ -14,8 +14,7 @@ class MerkleTreeGenerator {
   }
 
   hashByteArray(data) {
-    const hashed = crypto.createHash("sha256").update(data).digest("hex");
-    return hashed;
+    return crypto.createHash("sha256").update(data).digest("hex");
   }
 
   ensureString(value) {

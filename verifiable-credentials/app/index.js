@@ -40,8 +40,7 @@ app.post("/v1/verifiable-credentials/block-cert", async (request, response) => {
       address: process.env.ADDRESS,
       privateKey: process.env.PRIVATE_KEY,
       verificationMethod:
-        process.env.VERIFICATION_METHOD ||
-        "did:web:assets.dev.trustid.sbi-fc.com#key-2",
+        process.env.VERIFICATION_METHOD,
       chain: process.env.CHAIN,
       credential: request.body.vc,
     })) || {};
