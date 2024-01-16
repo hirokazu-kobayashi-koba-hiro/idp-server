@@ -1,5 +1,4 @@
 import Web3 from "web3";
-import {chain} from "@vaultie/lds-merkle-proof-2019/src/Keymap.js";
 
 const web3 = new Web3(process.env.WEB3_URL);
 
