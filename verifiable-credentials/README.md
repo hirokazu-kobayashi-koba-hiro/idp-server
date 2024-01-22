@@ -25,7 +25,7 @@ export WEB3_URL=wss://eth-sepolia.g.alchemy.com/v2/xxx
 export VERIFICATION_Method='did:web:assets.dev.trustid.sbi-fc.com#key-2'
 export CHAIN=ethereum_sepolia
 
-node index.js
+node ./app/index.js
 ```
 
 ## api confirmation
