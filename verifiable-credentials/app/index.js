@@ -34,7 +34,6 @@ app.post("/v1/verifiable-credentials/block-cert", async (request, response) => {
       .status(400);
     return;
   }
-  console.log(process.env.VERIFICATION_METHOD)
   const { payload, error } =
     (await issueBlockCert({
       address: process.env.ADDRESS,
@@ -53,6 +52,62 @@ app.post("/v1/verifiable-credentials/block-cert", async (request, response) => {
   response.send(`{"error": "invalid_request", "error_description": "${error}"}`);
 });
 
+app.post("/v1/verifiable-credentials/block-cert/verify", async (request, response) => {
+  console.log(request.body);
+  if (!request.body.vc_block_cert) {
+    response.status(400);
+    response
+      .send(
+        '{"error": "invalid_request", "error_description": "vc_block_cert is required"}',
+      )
+      .status(400);
+    return;
+  }
+  const { payload, error } =
+  (await verifyBlockCert(request.body.vc_block_cert)) || {};
+  if (payload && !error) {
+    console.log(payload);
+    response.send(`{ "verify_result": ${JSON.stringify(payload)}}`);
+    return;
+  }
+  response.status(400);
+  response.send(`{"error": "invalid_request", "error_description": "${error}"}`);
+});
+
+import { Certificate } from '@blockcerts/cert-verifier-js/dist/verifier-node/index.js';
+import { Decoder } from '@vaultie/lds-merkle-proof-2019';
+
+export const verifyBlockCert = async (certificateDefinition) => {
+  try {
+    const certificate = new Certificate(certificateDefinition);
+    await certificate.init();
+    const verificationResult = await certificate.verify(({code, label, status, errorMessage}) => {
+      console.log("Code:", code, label, " - Status:", status);
+      if (errorMessage) {
+        console.log(`The step ${code} fails with the error: ${errorMessage}`);
+      }
+    });
+
+    if (verificationResult.status === "failure") {
+      console.log(`The certificate is not valid. Error: ${verificationResult.errorMessage}`);
+    }
+    return {
+      payload: verificationResult,
+    };
+  } catch (e) {
+    console.error(e)
+    return {
+      error: e
+    }
+  }
+};
+export const decodeWithBase58 = (value) => {
+  const decoder = new Decoder(value)
+  const decodedValue = decoder.decode();
+  console.log(decodedValue);
+  return decodedValue;
+}
+
 app.post("/v1/verifiable-credentials/did-jwt", async (request, response) => {
   console.log(request.body);
   if (!request.body.credential) {
@@ -66,6 +121,7 @@ app.post("/v1/verifiable-credentials/did-jwt", async (request, response) => {
   }
   const { payload, error } = await issueVcJwt({
     credential: request.body.credential,
+    headers: request.body.headers,
   });
   if (payload && !error) {
     response.send(`{ "vc": "${payload}"}`);
@@ -101,9 +157,11 @@ app.post(
   },
 );
 
-const issueVcJwt = async ({ credential }) => {
+const issueVcJwt = async ({ credential, headers }) => {
   try {
-    const vcJwt = await createVerifiableCredentialJwt(credential, issuer);
+    const vcJwt = await createVerifiableCredentialJwt(credential, issuer, {
+      header: headers,
+    });
     console.log(vcJwt);
     return {
       payload: vcJwt,
