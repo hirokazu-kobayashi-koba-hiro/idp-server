@@ -1,5 +1,3 @@
-import { re } from "@babel/core/lib/vendor/import-meta-resolve";
-
 export const convertToAuthorizationResponse = (redirectUri) => {
   const query = redirectUri.includes("?")
     ? redirectUri.split("?")[1]
@@ -62,7 +60,7 @@ export const toSnake = (params) => {
   });
 };
 
-const isObject = (value) => {
+export const isObject = (value) => {
   return value !== null && typeof value === "object" && !isArray(value);
 };
 
@@ -107,4 +105,50 @@ export const base64UrlEncode = (input) => {
 
 export const toJsonString = (object) => {
   return JSON.stringify(object, null, 2);
+};
+
+export const validateSchemeDefinition = ({ name, target, schemeDefinition }) => {
+  let errors = [];
+  Object.entries(schemeDefinition).forEach(([key, definition]) => {
+    console.log(key);
+    console.log(definition);
+    const element = target[key];
+    const objectName = `${name}.${key}`;
+    if (definition.required && element === undefined) {
+      errors = [...errors, `${element} is required`];
+      return;
+    }
+    try {
+      if (definition.type && typeof element !== definition.type) {
+        errors = [...errors, `${objectName}' does not match, defined type: ${definition.type}`];
+        return;
+      }
+    } catch (e) {
+      errors = [...errors, `${objectName}' does not match, defined type: ${definition.type}`];
+      return;
+    }
+    try {
+      if (definition.values && !definition.values.includes(element)) {
+        errors = [...errors, `${objectName}'s value is not allowed, it must be one of ${definition.values.join(",")}`];
+        return;
+      }
+    } catch (e) {
+      errors = [...errors, `${objectName}'s value is not allowed, it must be one of ${definition.values.join(",")}`];
+      return;
+    }
+    try {
+      if (isObject(element)) {
+        console.log(element.schema);
+        const leafErrors = validateSchemeDefinition({
+          name: key,
+          target: element,
+          schemeDefinition: definition.schema
+        });
+        errors = [...errors, ...leafErrors];
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  });
+  return errors;
 };
