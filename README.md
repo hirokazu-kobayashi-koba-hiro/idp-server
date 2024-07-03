@@ -76,6 +76,11 @@ export CHAIN=ethereum_sepolia
 docker-compose up -d
 ```
 
+```shell
+cd database
+./gradlew flywayClean flywayMigrate
+```
+
 ### bootRun
 
 ```shell
@@ -90,5 +95,5 @@ docker-compose up -d
 
 ```shell
 cd e2e
-jest test
+npm test
 ```
