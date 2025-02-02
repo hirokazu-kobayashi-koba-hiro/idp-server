@@ -4,13 +4,10 @@ import org.idp.server.ClientManagementApi;
 import org.idp.server.IdpServerApplication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/client/registration")
+@RequestMapping("/{tenant-id}/api/v1/client/registration")
 public class ClientRegistrationV1Api implements ParameterTransformable {
 
   ClientManagementApi clientManagementApi;
@@ -20,7 +17,10 @@ public class ClientRegistrationV1Api implements ParameterTransformable {
   }
 
   @PostMapping
-  public ResponseEntity<?> request(@RequestBody(required = false) String body) {
+  public ResponseEntity<?> request(
+          @PathVariable("tenant-id") String tenantId,
+          @RequestBody(required = false) String body) {
+    Tenant tenant = Tenant.of(tenantId);
     clientManagementApi.register(body);
     return new ResponseEntity<>(HttpStatus.OK);
   }

@@ -1,10 +1,8 @@
 package org.idp.server.handler.configuration.datasource.memory;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.resource.ResourceReadable;
 import org.idp.server.configuration.ClientConfiguration;
@@ -25,7 +23,10 @@ public class ClientConfigurationMemoryDataSource
   }
 
   @Override
-  public void register(ClientConfiguration clientConfiguration) {}
+  public void register(ClientConfiguration clientConfiguration) {
+    MultiClientIdentifier multiClientIdentifier = new MultiClientIdentifier(clientConfiguration.tokenIssuer(), clientConfiguration.clientId());
+    map.put(multiClientIdentifier, clientConfiguration);
+  }
 
   @Override
   public ClientConfiguration get(TokenIssuer tokenIssuer, ClientId clientId) {
@@ -36,6 +37,12 @@ public class ClientConfigurationMemoryDataSource
           String.format("unregistered client (%s)", clientId.value()));
     }
     return clientConfiguration;
+  }
+
+  @Override
+  public List<ClientConfiguration> find(TokenIssuer tokenIssuer, int limit, int offset) {
+    ArrayList<ClientConfiguration> clientConfigurations = new ArrayList<>(map.values());
+    return clientConfigurations.stream().filter(clientConfiguration -> clientConfiguration.tokenIssuer().equals(tokenIssuer)).toList();
   }
 
   void initialize(List<String> paths) {
