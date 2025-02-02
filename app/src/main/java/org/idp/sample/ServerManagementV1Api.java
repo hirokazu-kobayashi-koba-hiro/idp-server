@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/server/configurations")
+@RequestMapping("/{tenant-id}/api/v1/server/configurations")
 public class ServerManagementV1Api implements ParameterTransformable {
 
   ServerManagementApi serverManagementApi;
@@ -18,7 +18,9 @@ public class ServerManagementV1Api implements ParameterTransformable {
   }
 
   @PostMapping
-  public ResponseEntity<?> request(@RequestBody(required = false) String body) {
+  public ResponseEntity<?> request(@PathVariable("tenant-id") String tenantId,
+                                   @RequestBody(required = false) String body) {
+    Tenant tenant = Tenant.of(tenantId);
     serverManagementApi.register(body);
     return new ResponseEntity<>(HttpStatus.OK);
   }
