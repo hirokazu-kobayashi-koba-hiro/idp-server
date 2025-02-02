@@ -65,7 +65,7 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       claims.put("address", user.address().values());
     }
     if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
-      claims.put("updated_at", user.updateAt());
+      claims.put("updated_at", user.updateAtAsLong());
     }
 
     return claims;
@@ -131,7 +131,7 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       claims.put("address", user.address().values());
     }
     if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
-      claims.put("updated_at", user.updateAt());
+      claims.put("updated_at", user.updateAtAsLong());
     }
 
     return claims;

@@ -1,5 +1,7 @@
 package org.idp.sample.user;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import org.idp.sample.Tenant;
 import org.idp.server.oauth.identity.User;
@@ -44,5 +46,14 @@ public class UserDataSource implements UserRepository {
       return new User();
     }
     return user;
+  }
+
+  @Override
+  public List<User> findList(Tenant tenant, int limit, int offset) {
+    List<User> userList = mapper.selectList(tenant.id(), limit, offset);
+    if (Objects.isNull(userList)) {
+      return List.of();
+    }
+    return userList;
   }
 }

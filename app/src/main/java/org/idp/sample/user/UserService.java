@@ -5,6 +5,8 @@ import org.idp.server.oauth.identity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @Transactional
 public class UserService {
@@ -33,5 +35,9 @@ public class UserService {
 
   public boolean authenticate(User user, String password) {
     return true;
+  }
+
+  public List<User> find(Tenant tenant, int limit, int offset) {
+    return userRepository.findList(tenant, limit, offset);
   }
 }
