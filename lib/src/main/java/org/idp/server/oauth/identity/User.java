@@ -207,7 +207,11 @@ public class User implements Serializable {
     return this;
   }
 
-  public long updateAt() {
+  public LocalDateTime updatedAt() {
+    return updatedAt;
+  }
+
+  public long updateAtAsLong() {
     return updatedAt.toEpochSecond(SystemDateTime.zoneOffset);
   }
 

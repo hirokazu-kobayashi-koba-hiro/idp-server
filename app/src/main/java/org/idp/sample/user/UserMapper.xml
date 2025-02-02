@@ -61,7 +61,7 @@
         <result property="password" column="password"/>
     </resultMap>
 
-    <select id="select" resultMap="User">
+    <sql id="select">
         SELECT id,
                name,
                given_name,
@@ -87,38 +87,27 @@
                created_at,
                updated_at
         FROM "user"
+    </sql>
+
+    <select id="select" resultMap="User">
+        <include refid="select" />
         WHERE id = #{userId}
     </select>
 
     <select id="selectBy" resultMap="User">
-        SELECT id,
-               name,
-               given_name,
-               family_name,
-               middle_name,
-               nickname,
-               preferred_username,
-               profile,
-               picture,
-               website,
-               email,
-               email_verified,
-               gender,
-               birthdate,
-               zoneinfo,
-               locale,
-               phone_number,
-               phone_number_verified,
-               address,
-               custom_properties,
-               credentials,
-               password,
-               created_at,
-               updated_at
-        FROM "user"
+        <include refid="select" />
         WHERE
             tenant_id = #{tenantId}
           AND email = #{email}
+    </select>
+
+    <select id="selectList" resultMap="User">
+        <include refid="select" />
+        WHERE
+        tenant_id = #{tenantId}
+        ORDER BY created_at
+        limit #{limit}
+        offset #{offset}
     </select>
 
 </mapper>
