@@ -2,7 +2,7 @@ package org.idp.sample;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.CredentialApi;
+import org.idp.server.api.CredentialApi;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.basic.vc.Credential;
 import org.idp.server.handler.credential.io.*;

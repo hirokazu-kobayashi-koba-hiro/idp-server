@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.sample.user.UserService;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.OAuthApi;
+import org.idp.server.api.OAuthApi;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.handler.oauth.io.*;
 import org.idp.server.oauth.OAuthRequestDelegate;

@@ -3,17 +3,21 @@ package org.idp.server;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.idp.server.api.TokenRevocationApi;
+import org.idp.server.basic.sql.Transactional;
 import org.idp.server.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.handler.tokenrevocation.io.TokenRevocationRequestStatus;
 import org.idp.server.handler.tokenrevocation.io.TokenRevocationResponse;
 
-public class TokenRevocationApi {
+@Transactional
+public class TokenRevocationApiImpl implements TokenRevocationApi {
 
   TokenRevocationHandler handler;
-  Logger log = Logger.getLogger(TokenRevocationApi.class.getName());
+  Logger log = Logger.getLogger(TokenRevocationApiImpl.class.getName());
 
-  public TokenRevocationApi(TokenRevocationHandler handler) {
+  public TokenRevocationApiImpl(TokenRevocationHandler handler) {
     this.handler = handler;
   }
 

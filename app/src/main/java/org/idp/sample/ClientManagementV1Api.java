@@ -1,18 +1,13 @@
 package org.idp.sample;
 
-import jakarta.websocket.server.PathParam;
-import org.idp.server.ClientManagementApi;
+import org.idp.server.api.ClientManagementApi;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.handler.configuration.io.ClientConfigurationManagementListResponse;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/{tenant-id}/api/v1/management/clients")

@@ -3,7 +3,7 @@ package org.idp.sample;
 import java.util.Map;
 import org.idp.sample.user.UserService;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.TokenApi;
+import org.idp.server.api.TokenApi;
 import org.idp.server.handler.token.io.TokenRequest;
 import org.idp.server.handler.token.io.TokenRequestResponse;
 import org.idp.server.oauth.identity.User;

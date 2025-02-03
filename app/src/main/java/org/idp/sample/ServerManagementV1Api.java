@@ -1,8 +1,7 @@
 package org.idp.sample;
 
 import org.idp.server.IdpServerApplication;
-import org.idp.server.ServerManagementApi;
-import org.idp.server.handler.ciba.io.*;
+import org.idp.server.api.ServerManagementApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

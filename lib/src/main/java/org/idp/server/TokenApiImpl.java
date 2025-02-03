@@ -1,19 +1,22 @@
 package org.idp.server;
 
+import org.idp.server.api.TokenApi;
 import org.idp.server.basic.sql.TransactionManager;
+import org.idp.server.basic.sql.Transactional;
 import org.idp.server.handler.token.TokenRequestErrorHandler;
 import org.idp.server.handler.token.TokenRequestHandler;
 import org.idp.server.handler.token.io.TokenRequest;
 import org.idp.server.handler.token.io.TokenRequestResponse;
 import org.idp.server.token.PasswordCredentialsGrantDelegate;
 
-public class TokenApi {
+@Transactional
+public class TokenApiImpl implements TokenApi {
 
   TokenRequestHandler tokenRequestHandler;
   TokenRequestErrorHandler errorHandler;
   PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
 
-  TokenApi(TokenRequestHandler tokenRequestHandler) {
+  TokenApiImpl(TokenRequestHandler tokenRequestHandler) {
     this.tokenRequestHandler = tokenRequestHandler;
     this.errorHandler = new TokenRequestErrorHandler();
   }

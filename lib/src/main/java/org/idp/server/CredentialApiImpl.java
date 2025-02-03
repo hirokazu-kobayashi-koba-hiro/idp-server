@@ -1,17 +1,20 @@
 package org.idp.server;
 
+import org.idp.server.api.CredentialApi;
+import org.idp.server.basic.sql.Transactional;
 import org.idp.server.handler.credential.CredentialHandler;
 import org.idp.server.handler.credential.CredentialRequestErrorHandler;
 import org.idp.server.handler.credential.io.*;
 import org.idp.server.verifiablecredential.VerifiableCredentialDelegate;
 
-public class CredentialApi {
+@Transactional
+public class CredentialApiImpl implements CredentialApi {
 
   CredentialHandler credentialHandler;
   CredentialRequestErrorHandler credentialRequestErrorHandler;
   VerifiableCredentialDelegate delegate;
 
-  public CredentialApi(CredentialHandler credentialHandler) {
+  public CredentialApiImpl(CredentialHandler credentialHandler) {
     this.credentialHandler = credentialHandler;
     this.credentialRequestErrorHandler = new CredentialRequestErrorHandler();
   }

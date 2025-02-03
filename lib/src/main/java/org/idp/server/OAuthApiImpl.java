@@ -1,5 +1,7 @@
 package org.idp.server;
 
+import org.idp.server.api.OAuthApi;
+import org.idp.server.basic.sql.Transactional;
 import org.idp.server.handler.oauth.*;
 import org.idp.server.handler.oauth.io.*;
 import org.idp.server.oauth.OAuthRequestContext;
@@ -9,7 +11,8 @@ import org.idp.server.oauth.response.AuthorizationResponse;
 import org.idp.server.type.oauth.TokenIssuer;
 
 /** OAuthApi */
-public class OAuthApi {
+@Transactional
+public class OAuthApiImpl implements OAuthApi {
   OAuthRequestHandler requestHandler;
   OAuthRequestErrorHandler oAuthRequestErrorHandler;
   OAuthAuthorizeHandler authAuthorizeHandler;
@@ -18,7 +21,7 @@ public class OAuthApi {
   OAuthDenyErrorHandler denyErrorHandler;
   OAuthRequestDelegate oAuthRequestDelegate;
 
-  OAuthApi(
+  OAuthApiImpl(
       OAuthRequestHandler requestHandler,
       OAuthAuthorizeHandler authAuthorizeHandler,
       OAuthDenyHandler oAuthDenyHandler) {

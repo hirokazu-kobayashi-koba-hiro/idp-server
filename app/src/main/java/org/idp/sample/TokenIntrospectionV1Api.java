@@ -2,7 +2,7 @@ package org.idp.sample;
 
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.TokenIntrospectionApi;
+import org.idp.server.api.TokenIntrospectionApi;
 import org.idp.server.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.springframework.http.HttpStatus;
