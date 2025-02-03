@@ -2,6 +2,9 @@ package org.idp.server;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.idp.server.api.CibaApi;
+import org.idp.server.basic.sql.Transactional;
 import org.idp.server.ciba.CibaRequestDelegate;
 import org.idp.server.handler.ciba.CibaAuthorizeHandler;
 import org.idp.server.handler.ciba.CibaDenyHandler;
@@ -9,15 +12,16 @@ import org.idp.server.handler.ciba.CibaRequestErrorHandler;
 import org.idp.server.handler.ciba.CibaRequestHandler;
 import org.idp.server.handler.ciba.io.*;
 
-public class CibaApi {
+@Transactional
+public class CibaApiImpl implements CibaApi {
 
   CibaRequestHandler cibaRequestHandler;
   CibaAuthorizeHandler cibaAuthorizeHandler;
   CibaDenyHandler cibaDenyHandler;
   CibaRequestErrorHandler errorHandler;
-  Logger log = Logger.getLogger(CibaApi.class.getName());
+  Logger log = Logger.getLogger(CibaApiImpl.class.getName());
 
-  CibaApi(
+  CibaApiImpl(
       CibaRequestHandler cibaRequestHandler,
       CibaAuthorizeHandler cibaAuthorizeHandler,
       CibaDenyHandler cibaDenyHandler) {

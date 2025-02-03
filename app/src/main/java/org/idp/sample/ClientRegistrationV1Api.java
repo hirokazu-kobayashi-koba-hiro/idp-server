@@ -1,6 +1,6 @@
 package org.idp.sample;
 
-import org.idp.server.ClientManagementApi;
+import org.idp.server.api.ClientManagementApi;
 import org.idp.server.IdpServerApplication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

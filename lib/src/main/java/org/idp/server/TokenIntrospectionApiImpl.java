@@ -3,6 +3,9 @@ package org.idp.server;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.idp.server.api.TokenIntrospectionApi;
+import org.idp.server.basic.sql.Transactional;
 import org.idp.server.handler.tokenintrospection.TokenIntrospectionHandler;
 import org.idp.server.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.handler.tokenintrospection.io.TokenIntrospectionRequestStatus;
@@ -10,12 +13,13 @@ import org.idp.server.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.tokenintrospection.TokenIntrospectionContentsCreator;
 import org.idp.server.tokenintrospection.exception.TokenInvalidException;
 
-public class TokenIntrospectionApi {
+@Transactional
+public class TokenIntrospectionApiImpl implements TokenIntrospectionApi {
 
   TokenIntrospectionHandler handler;
-  Logger log = Logger.getLogger(TokenIntrospectionApi.class.getName());
+  Logger log = Logger.getLogger(TokenIntrospectionApiImpl.class.getName());
 
-  public TokenIntrospectionApi(TokenIntrospectionHandler handler) {
+  public TokenIntrospectionApiImpl(TokenIntrospectionHandler handler) {
     this.handler = handler;
   }
 

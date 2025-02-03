@@ -1,17 +1,17 @@
 package org.idp.server;
 
-import org.idp.server.configuration.ClientConfiguration;
+import org.idp.server.api.ClientManagementApi;
+import org.idp.server.basic.sql.Transactional;
 import org.idp.server.handler.configuration.ClientConfigurationHandler;
 import org.idp.server.handler.configuration.io.ClientConfigurationManagementListResponse;
 import org.idp.server.type.oauth.TokenIssuer;
 
-import java.util.List;
-
-public class ClientManagementApi {
+@Transactional
+public class ClientManagementApiImpl implements ClientManagementApi {
 
   ClientConfigurationHandler clientConfigurationHandler;
 
-  public ClientManagementApi(ClientConfigurationHandler clientConfigurationHandler) {
+  public ClientManagementApiImpl(ClientConfigurationHandler clientConfigurationHandler) {
     this.clientConfigurationHandler = clientConfigurationHandler;
   }
 

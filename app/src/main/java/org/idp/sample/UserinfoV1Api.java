@@ -2,7 +2,7 @@ package org.idp.sample;
 
 import org.idp.sample.user.UserService;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.UserinfoApi;
+import org.idp.server.api.UserinfoApi;
 import org.idp.server.handler.userinfo.UserinfoDelegate;
 import org.idp.server.handler.userinfo.io.UserinfoRequest;
 import org.idp.server.handler.userinfo.io.UserinfoRequestResponse;

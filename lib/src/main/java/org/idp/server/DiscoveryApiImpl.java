@@ -1,15 +1,19 @@
 package org.idp.server;
 
 import java.util.Map;
+
+import org.idp.server.api.DiscoveryApi;
+import org.idp.server.basic.sql.Transactional;
 import org.idp.server.handler.discovery.DiscoveryHandler;
 import org.idp.server.handler.discovery.io.ServerConfigurationRequestResponse;
 import org.idp.server.handler.discovery.io.ServerConfigurationRequestStatus;
 
-public class DiscoveryApi {
+@Transactional
+public class DiscoveryApiImpl implements DiscoveryApi {
 
   DiscoveryHandler discoveryHandler;
 
-  DiscoveryApi(DiscoveryHandler discoveryHandler) {
+  DiscoveryApiImpl(DiscoveryHandler discoveryHandler) {
     this.discoveryHandler = discoveryHandler;
   }
 

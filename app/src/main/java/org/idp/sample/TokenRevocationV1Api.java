@@ -2,7 +2,7 @@ package org.idp.sample;
 
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.TokenRevocationApi;
+import org.idp.server.api.TokenRevocationApi;
 import org.idp.server.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.springframework.http.HttpStatus;

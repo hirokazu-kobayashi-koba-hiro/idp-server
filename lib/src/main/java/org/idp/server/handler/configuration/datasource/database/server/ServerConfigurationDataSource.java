@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.sql.SqlConnection;
 import org.idp.server.basic.sql.SqlExecutor;
+import org.idp.server.basic.sql.TransactionManager;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.configuration.ServerConfigurationRepository;
@@ -15,14 +16,13 @@ public class ServerConfigurationDataSource implements ServerConfigurationReposit
   SqlConnection sqlConnection;
   JsonConverter jsonConverter;
 
-  public ServerConfigurationDataSource(SqlConnection sqlConnection) {
-    this.sqlConnection = sqlConnection;
+  public ServerConfigurationDataSource() {
     this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   }
 
   @Override
   public void register(ServerConfiguration serverConfiguration) {
-    SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
+    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
                     INSERT INTO server_configuration (token_issuer, payload)
@@ -35,7 +35,7 @@ public class ServerConfigurationDataSource implements ServerConfigurationReposit
 
   @Override
   public ServerConfiguration get(TokenIssuer tokenIssuer) {
-    SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
+    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
                     SELECT token_issuer, payload

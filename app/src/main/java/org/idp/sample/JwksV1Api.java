@@ -1,7 +1,7 @@
 package org.idp.sample;
 
 import org.idp.server.IdpServerApplication;
-import org.idp.server.JwksApi;
+import org.idp.server.api.JwksApi;
 import org.idp.server.handler.discovery.io.JwksRequestResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
