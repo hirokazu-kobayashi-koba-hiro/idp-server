@@ -1,5 +1,6 @@
 package org.idp.server;
 
+import org.idp.server.basic.sql.TransactionManager;
 import org.idp.server.handler.token.TokenRequestErrorHandler;
 import org.idp.server.handler.token.TokenRequestHandler;
 import org.idp.server.handler.token.io.TokenRequest;
@@ -19,8 +20,12 @@ public class TokenApi {
 
   public TokenRequestResponse request(TokenRequest tokenRequest) {
     try {
-      return tokenRequestHandler.handle(tokenRequest, passwordCredentialsGrantDelegate);
+      TransactionManager.beginTransaction();
+      TokenRequestResponse response = tokenRequestHandler.handle(tokenRequest, passwordCredentialsGrantDelegate);
+      TransactionManager.commitTransaction();
+      return response;
     } catch (Exception exception) {
+      TransactionManager.rollbackTransaction();
       return errorHandler.handle(exception);
     }
   }

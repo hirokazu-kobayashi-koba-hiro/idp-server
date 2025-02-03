@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.sql.SqlConnection;
 import org.idp.server.basic.sql.SqlExecutor;
+import org.idp.server.basic.sql.TransactionManager;
 import org.idp.server.type.verifiablecredential.TransactionId;
 import org.idp.server.verifiablecredential.VerifiableCredentialTransaction;
 import org.idp.server.verifiablecredential.repository.VerifiableCredentialTransactionRepository;
@@ -11,16 +12,10 @@ import org.idp.server.verifiablecredential.repository.VerifiableCredentialTransa
 public class VerifiableCredentialTransactionDataSource
     implements VerifiableCredentialTransactionRepository {
 
-  SqlConnection sqlConnection;
-
-  public VerifiableCredentialTransactionDataSource(SqlConnection sqlConnection) {
-    this.sqlConnection = sqlConnection;
-  }
-
   @Override
   public void register(VerifiableCredentialTransaction verifiableCredentialTransaction) {
     String sql = InsertSqlCreator.createInsert(verifiableCredentialTransaction);
-    SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
+    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     sqlExecutor.execute(sql);
   }
 
@@ -33,7 +28,7 @@ public class VerifiableCredentialTransactionDataSource
             WHERE transaction_id = '%s';
             """;
     String sql = String.format(sqlTemplate, transactionId.value());
-    SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
+    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     Map<String, String> stringMap = sqlExecutor.selectOne(sql);
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
       throw new RuntimeException(

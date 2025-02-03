@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.sql.SqlConnection;
 import org.idp.server.basic.sql.SqlExecutor;
+import org.idp.server.basic.sql.TransactionManager;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.configuration.ClientConfigurationRepository;
@@ -16,17 +17,15 @@ import org.idp.server.type.oauth.TokenIssuer;
 
 public class ClientConfigurationDataSource implements ClientConfigurationRepository {
 
-  SqlConnection sqlConnection;
   JsonConverter jsonConverter;
 
-  public ClientConfigurationDataSource(SqlConnection sqlConnection) {
-    this.sqlConnection = sqlConnection;
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  public ClientConfigurationDataSource() {
+     this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   }
 
   @Override
   public void register(ClientConfiguration clientConfiguration) {
-    SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
+    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
             INSERT INTO client_configuration (token_issuer, client_id, payload)
@@ -44,7 +43,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   @Override
   public ClientConfiguration get(TokenIssuer tokenIssuer, ClientId clientId) {
-    SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
+    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
                     SELECT token_issuer, client_id, payload
@@ -62,7 +61,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   @Override
   public List<ClientConfiguration> find(TokenIssuer tokenIssuer, int limit, int offset) {
-    SqlExecutor sqlExecutor = new SqlExecutor(sqlConnection.connection());
+    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
             """
                         SELECT token_issuer, client_id, payload

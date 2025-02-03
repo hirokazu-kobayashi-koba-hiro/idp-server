@@ -41,6 +41,6 @@ public class SampleApplication {
     MemoryDataSourceConfig memoryDataSourceConfig = new MemoryDataSourceConfig(serverPaths, clientPaths);
     DatabaseConfig databaseConfig =
         new DatabaseConfig("jdbc:postgresql://localhost:5432/idpserver", "idpserver", "idpserver");
-    return new IdpServerApplication(memoryDataSourceConfig);
+    return new IdpServerApplication(databaseConfig);
   }
 }

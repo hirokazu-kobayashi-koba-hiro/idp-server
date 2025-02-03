@@ -2,6 +2,7 @@ package org.idp.server;
 
 import java.util.List;
 import org.idp.server.basic.sql.SqlConnection;
+import org.idp.server.basic.sql.TransactionManager;
 import org.idp.server.handler.ciba.CibaAuthorizeHandler;
 import org.idp.server.handler.ciba.CibaDenyHandler;
 import org.idp.server.handler.ciba.CibaRequestHandler;
@@ -156,22 +157,20 @@ public class IdpServerApplication {
   }
 
   public IdpServerApplication(DatabaseConfig databaseConfig) {
-    SqlConnection sqlConnection =
-        new SqlConnection(
-            databaseConfig.url(), databaseConfig.username(), databaseConfig.password());
+    TransactionManager.setConnectionConfig(databaseConfig.url(), databaseConfig.username(), databaseConfig.password());
     AuthorizationRequestDataSource authorizationRequestDataSource =
-        new AuthorizationRequestDataSource(sqlConnection);
+        new AuthorizationRequestDataSource();
     AuthorizationCodeGrantDataSource authorizationCodeGrantDataSource =
-        new AuthorizationCodeGrantDataSource(sqlConnection);
+        new AuthorizationCodeGrantDataSource();
     AuthorizationGrantedMemoryDataSource authorizationGrantedDataSource =
         new AuthorizationGrantedMemoryDataSource();
-    OAuthTokenDataSource oAuthTokenDataSource = new OAuthTokenDataSource(sqlConnection);
+    OAuthTokenDataSource oAuthTokenDataSource = new OAuthTokenDataSource();
     ServerConfigurationDataSource serverConfigurationMemoryDataSource =
-        new ServerConfigurationDataSource(sqlConnection);
+        new ServerConfigurationDataSource();
     ClientConfigurationDataSource clientConfigurationMemoryDataSource =
-        new ClientConfigurationDataSource(sqlConnection);
+        new ClientConfigurationDataSource();
     VerifiableCredentialTransactionDataSource verifiableCredentialTransactionDataSource =
-        new VerifiableCredentialTransactionDataSource(sqlConnection);
+        new VerifiableCredentialTransactionDataSource();
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
             authorizationRequestDataSource,
@@ -211,8 +210,8 @@ public class IdpServerApplication {
     this.discoveryApi = new DiscoveryApi(discoveryHandler);
     this.jwksApi = new JwksApi(discoveryHandler);
     BackchannelAuthenticationDataSource backchannelAuthenticationDataSource =
-        new BackchannelAuthenticationDataSource(sqlConnection);
-    CibaGrantDataSource cibaGrantDataSource = new CibaGrantDataSource(sqlConnection);
+        new BackchannelAuthenticationDataSource();
+    CibaGrantDataSource cibaGrantDataSource = new CibaGrantDataSource();
     NotificationClient notificationClient = new NotificationClient();
     this.cibaApi =
         new CibaApi(
