@@ -23,12 +23,8 @@ public class TokenApiImpl implements TokenApi {
 
   public TokenRequestResponse request(TokenRequest tokenRequest) {
     try {
-      TransactionManager.beginTransaction();
-      TokenRequestResponse response = tokenRequestHandler.handle(tokenRequest, passwordCredentialsGrantDelegate);
-      TransactionManager.commitTransaction();
-      return response;
+        return tokenRequestHandler.handle(tokenRequest, passwordCredentialsGrantDelegate);
     } catch (Exception exception) {
-      TransactionManager.rollbackTransaction();
       return errorHandler.handle(exception);
     }
   }

@@ -244,7 +244,7 @@ public class IdpServerApplication {
             oAuthTokenDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
-    this.tokenApi = new TokenApiImpl(tokenRequestHandler);
+    this.tokenApi = TransactionInterceptor.createProxy(new TokenApiImpl(tokenRequestHandler), TokenApi.class);
     CredentialHandler credentialHandler =
         new CredentialHandler(
             oAuthTokenDataSource,
