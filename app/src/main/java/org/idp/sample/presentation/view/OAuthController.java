@@ -1,9 +1,11 @@
-package org.idp.sample;
+package org.idp.sample.presentation.view;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.sample.presentation.api.ParameterTransformable;
+import org.idp.sample.presentation.api.Tenant;
 import org.idp.sample.user.UserService;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.OAuthApi;

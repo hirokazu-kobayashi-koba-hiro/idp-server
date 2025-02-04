@@ -1,4 +1,4 @@
-package org.idp.sample;
+package org.idp.sample.presentation.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.idp.server.oauth.identity.User;
