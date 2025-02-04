@@ -1,4 +1,4 @@
-package org.idp.sample;
+package org.idp.sample.presentation.api;
 
 public enum Tenant {
   sample("123", "http://localhost:8080/123"),

@@ -1,4 +1,4 @@
-package org.idp.sample;
+package org.idp.sample.presentation.api;
 
 import org.idp.sample.user.UserService;
 import org.idp.server.IdpServerApplication;

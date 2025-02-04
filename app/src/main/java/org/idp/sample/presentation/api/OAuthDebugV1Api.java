@@ -1,4 +1,4 @@
-package org.idp.sample;
+package org.idp.sample.presentation.api;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
@@ -24,15 +24,15 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("{tenant-id}/api/debug/v1/authorizations")
-public class OAuthDebugController implements OAuthRequestDelegate, ParameterTransformable {
+public class OAuthDebugV1Api implements OAuthRequestDelegate, ParameterTransformable {
 
-  Logger log = LoggerFactory.getLogger(OAuthDebugController.class);
+  Logger log = LoggerFactory.getLogger(OAuthDebugV1Api.class);
 
   OAuthApi oAuthApi;
   UserService userService;
   HttpSession httpSession;
 
-  public OAuthDebugController(
+  public OAuthDebugV1Api(
       IdpServerApplication idpServerApplication, UserService userService, HttpSession httpSession) {
     this.oAuthApi = idpServerApplication.oAuthApi();
     oAuthApi.setOAuthRequestDelegate(this);

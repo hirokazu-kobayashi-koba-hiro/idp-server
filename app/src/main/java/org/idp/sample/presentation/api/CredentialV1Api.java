@@ -1,4 +1,4 @@
-package org.idp.sample;
+package org.idp.sample.presentation.api;
 
 import java.util.List;
 import java.util.Map;

@@ -3,7 +3,7 @@ package org.idp.sample.user;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.idp.sample.Tenant;
+import org.idp.sample.presentation.api.Tenant;
 import org.idp.server.oauth.identity.User;
 
 @Mapper

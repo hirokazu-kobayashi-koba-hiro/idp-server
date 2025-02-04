@@ -2,7 +2,7 @@ package org.idp.sample.user;
 
 import java.util.List;
 import java.util.Objects;
-import org.idp.sample.Tenant;
+import org.idp.sample.presentation.api.Tenant;
 import org.idp.server.oauth.identity.User;
 import org.springframework.stereotype.Repository;
 

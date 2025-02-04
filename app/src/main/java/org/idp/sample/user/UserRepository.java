@@ -1,7 +1,7 @@
 package org.idp.sample.user;
 
 import java.util.List;
-import org.idp.sample.Tenant;
+import org.idp.sample.presentation.api.Tenant;
 import org.idp.server.oauth.identity.User;
 
 public interface UserRepository {
