@@ -1,5 +1,8 @@
 package org.idp.server.type.oauth;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * 4.1.2.1. Error Response
  *
@@ -24,5 +27,12 @@ public interface ErrorResponseCreatable {
                 }
                 """;
     return String.format(format, error.value(), errorDescription.value());
+  }
+
+  default Map<String, String> toErrorResponseMap(Error error, ErrorDescription errorDescription) {
+    Map<String, String> map = new HashMap<>();
+    map.put("error", error.value());
+    map.put("error_description", errorDescription.value());
+    return map;
   }
 }

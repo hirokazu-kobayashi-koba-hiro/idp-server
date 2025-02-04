@@ -6,6 +6,9 @@ import org.idp.server.configuration.ClientConfigurationRepository;
 import org.idp.server.configuration.ClientConfigurationResponseCreator;
 import org.idp.server.handler.configuration.io.ClientConfigurationManagementListResponse;
 import org.idp.server.handler.configuration.io.ClientConfigurationManagementListStatus;
+import org.idp.server.handler.configuration.io.ClientConfigurationManagementResponse;
+import org.idp.server.handler.configuration.io.ClientConfigurationManagementStatus;
+import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.TokenIssuer;
 
 import java.util.List;
@@ -32,5 +35,12 @@ public class ClientConfigurationHandler {
     List<ClientConfiguration> clientConfigurations = clientConfigurationRepository.find(tokenIssuer, limit, offset);
     Map<String, Object> content = ClientConfigurationResponseCreator.create(clientConfigurations);
     return new ClientConfigurationManagementListResponse(ClientConfigurationManagementListStatus.OK, content);
+  }
+
+  public ClientConfigurationManagementResponse get(TokenIssuer tokenIssuer, ClientId clientId) {
+
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tokenIssuer, clientId);
+    Map<String, Object> content = ClientConfigurationResponseCreator.create(clientConfiguration);
+    return new ClientConfigurationManagementResponse(ClientConfigurationManagementStatus.OK, content);
   }
 }
