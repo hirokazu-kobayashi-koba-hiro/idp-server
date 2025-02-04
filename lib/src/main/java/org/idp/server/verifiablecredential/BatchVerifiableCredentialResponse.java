@@ -12,7 +12,8 @@ public class BatchVerifiableCredentialResponse {
 
   public BatchVerifiableCredentialResponse() {}
 
-  public BatchVerifiableCredentialResponse(Format format, VerifiableCredential verifiableCredential) {
+  public BatchVerifiableCredentialResponse(
+      Format format, VerifiableCredential verifiableCredential) {
     this.format = format;
     this.verifiableCredential = verifiableCredential;
   }

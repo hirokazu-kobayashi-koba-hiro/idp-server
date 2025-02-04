@@ -8,7 +8,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
@@ -39,7 +38,8 @@ public class CustomPropertiesTypeHandler extends BaseTypeHandler<HashMap<String,
   }
 
   @Override
-  public HashMap<String, Object> getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+  public HashMap<String, Object> getNullableResult(ResultSet rs, int columnIndex)
+      throws SQLException {
     String value = rs.getString(columnIndex);
     try {
       if (Objects.isNull(value) || value.isEmpty()) {

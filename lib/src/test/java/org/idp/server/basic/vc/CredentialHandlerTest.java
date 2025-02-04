@@ -14,8 +14,13 @@ public class CredentialHandlerTest {
 
   @Test
   void handle()
-      throws JsonLDException, GeneralSecurityException, ParseException, IOException, JOSEException,
-          JsonWebKeyInvalidException, VcInvalidKeyException {
+      throws JsonLDException,
+          GeneralSecurityException,
+          ParseException,
+          IOException,
+          JOSEException,
+          JsonWebKeyInvalidException,
+          VcInvalidKeyException {
     String privateKey =
         """
                 {

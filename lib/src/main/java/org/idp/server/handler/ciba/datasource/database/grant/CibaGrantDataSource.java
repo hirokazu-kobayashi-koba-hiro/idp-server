@@ -2,7 +2,6 @@ package org.idp.server.handler.ciba.datasource.database.grant;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.sql.SqlConnection;
 import org.idp.server.basic.sql.SqlExecutor;
 import org.idp.server.basic.sql.TransactionManager;
 import org.idp.server.ciba.grant.CibaGrant;

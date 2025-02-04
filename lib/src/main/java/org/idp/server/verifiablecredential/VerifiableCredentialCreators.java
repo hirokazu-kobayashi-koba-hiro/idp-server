@@ -3,7 +3,6 @@ package org.idp.server.verifiablecredential;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
 import org.idp.server.handler.credential.client.VerifiableCredentialBlockCertClient;
 import org.idp.server.handler.credential.client.VerifiableCredentialJwtClient;
 import org.idp.server.type.verifiablecredential.Format;

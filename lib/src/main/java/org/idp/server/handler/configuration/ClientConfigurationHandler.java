@@ -1,5 +1,7 @@
 package org.idp.server.handler.configuration;
 
+import java.util.List;
+import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ClientConfigurationRepository;
@@ -10,9 +12,6 @@ import org.idp.server.handler.configuration.io.ClientConfigurationManagementResp
 import org.idp.server.handler.configuration.io.ClientConfigurationManagementStatus;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.TokenIssuer;
-
-import java.util.List;
-import java.util.Map;
 
 public class ClientConfigurationHandler {
 
@@ -30,17 +29,22 @@ public class ClientConfigurationHandler {
     clientConfigurationRepository.register(clientConfiguration);
   }
 
-  public ClientConfigurationManagementListResponse find(TokenIssuer tokenIssuer, int limit, int offset) {
+  public ClientConfigurationManagementListResponse find(
+      TokenIssuer tokenIssuer, int limit, int offset) {
 
-    List<ClientConfiguration> clientConfigurations = clientConfigurationRepository.find(tokenIssuer, limit, offset);
+    List<ClientConfiguration> clientConfigurations =
+        clientConfigurationRepository.find(tokenIssuer, limit, offset);
     Map<String, Object> content = ClientConfigurationResponseCreator.create(clientConfigurations);
-    return new ClientConfigurationManagementListResponse(ClientConfigurationManagementListStatus.OK, content);
+    return new ClientConfigurationManagementListResponse(
+        ClientConfigurationManagementListStatus.OK, content);
   }
 
   public ClientConfigurationManagementResponse get(TokenIssuer tokenIssuer, ClientId clientId) {
 
-    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tokenIssuer, clientId);
+    ClientConfiguration clientConfiguration =
+        clientConfigurationRepository.get(tokenIssuer, clientId);
     Map<String, Object> content = ClientConfigurationResponseCreator.create(clientConfiguration);
-    return new ClientConfigurationManagementResponse(ClientConfigurationManagementStatus.OK, content);
+    return new ClientConfigurationManagementResponse(
+        ClientConfigurationManagementStatus.OK, content);
   }
 }

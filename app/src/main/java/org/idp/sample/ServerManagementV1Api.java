@@ -17,8 +17,8 @@ public class ServerManagementV1Api implements ParameterTransformable {
   }
 
   @PostMapping
-  public ResponseEntity<?> request(@PathVariable("tenant-id") String tenantId,
-                                   @RequestBody(required = false) String body) {
+  public ResponseEntity<?> request(
+      @PathVariable("tenant-id") String tenantId, @RequestBody(required = false) String body) {
     Tenant tenant = Tenant.of(tenantId);
     serverManagementApi.register(body);
     return new ResponseEntity<>(HttpStatus.OK);

@@ -1,6 +1,5 @@
 package org.idp.sample.user;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.idp.sample.Tenant;

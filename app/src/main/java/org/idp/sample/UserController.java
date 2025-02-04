@@ -1,5 +1,6 @@
 package org.idp.sample;
 
+import java.util.UUID;
 import org.idp.sample.user.UserService;
 import org.idp.server.oauth.identity.User;
 import org.slf4j.Logger;
@@ -7,8 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @Controller
 @RequestMapping

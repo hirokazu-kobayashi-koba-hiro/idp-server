@@ -1,7 +1,7 @@
 package org.idp.sample;
 
-import org.idp.server.api.ClientManagementApi;
 import org.idp.server.IdpServerApplication;
+import org.idp.server.api.ClientManagementApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +18,7 @@ public class ClientRegistrationV1Api implements ParameterTransformable {
 
   @PostMapping
   public ResponseEntity<?> request(
-          @PathVariable("tenant-id") String tenantId,
-          @RequestBody(required = false) String body) {
+      @PathVariable("tenant-id") String tenantId, @RequestBody(required = false) String body) {
     Tenant tenant = Tenant.of(tenantId);
     clientManagementApi.register(body);
     return new ResponseEntity<>(HttpStatus.OK);

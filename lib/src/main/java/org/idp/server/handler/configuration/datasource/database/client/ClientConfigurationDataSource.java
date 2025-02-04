@@ -3,10 +3,7 @@ package org.idp.server.handler.configuration.datasource.database.client;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
-
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.basic.sql.SqlConnection;
 import org.idp.server.basic.sql.SqlExecutor;
 import org.idp.server.basic.sql.TransactionManager;
 import org.idp.server.configuration.ClientConfiguration;
@@ -20,7 +17,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
   JsonConverter jsonConverter;
 
   public ClientConfigurationDataSource() {
-     this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   }
 
   @Override
@@ -63,7 +60,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
   public List<ClientConfiguration> find(TokenIssuer tokenIssuer, int limit, int offset) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
-            """
+        """
                         SELECT token_issuer, client_id, payload
                         FROM client_configuration
                         WHERE token_issuer = '%s' limit %d offset %d;

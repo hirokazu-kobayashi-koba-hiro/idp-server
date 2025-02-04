@@ -1,13 +1,11 @@
 package org.idp.server.handler.credential.datasource.memory;
 
-
-import org.idp.server.type.verifiablecredential.TransactionId;
-import org.idp.server.verifiablecredential.VerifiableCredentialTransaction;
-import org.idp.server.verifiablecredential.repository.VerifiableCredentialTransactionRepository;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.type.verifiablecredential.TransactionId;
+import org.idp.server.verifiablecredential.VerifiableCredentialTransaction;
+import org.idp.server.verifiablecredential.repository.VerifiableCredentialTransactionRepository;
 
 public class VerifiableCredentialTransactionMemoryDataSource
     implements VerifiableCredentialTransactionRepository {

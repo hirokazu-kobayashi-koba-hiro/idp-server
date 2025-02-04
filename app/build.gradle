@@ -2,7 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.2.0'
 	id 'io.spring.dependency-management' version '1.1.4'
-	id "com.diffplug.spotless" version "6.15.0"
+	id "com.diffplug.spotless" version "6.24.0"
 }
 
 group = 'com.example'
@@ -52,7 +52,7 @@ spotless {
 
 sourceSets {
 	main {
-		// mybatis SQL map XML ファイルを java 以下でも検知する
+		// mybatis SQL map XML to java
 		resources.srcDirs = [
 			"src/main/java",
 			"src/main/resources"
