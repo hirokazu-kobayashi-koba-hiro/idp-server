@@ -68,7 +68,7 @@ export const clientSecretPostClient = {
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
-  idTokenAlg: "ES256",
+  idTokenAlg: "RS256",
   requestKey: {
     kty: "EC",
     d: "uj7jNVQIfSCBdiV4A_yVnY8htLZS7nskIXAGIVDb9oM",
@@ -102,7 +102,7 @@ export const clientSecretPostWithIdTokenEncClient = {
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
-  idTokenAlg: "ES256",
+  idTokenAlg: "RS256",
   requestKey: {
     kty: "EC",
     d: "uj7jNVQIfSCBdiV4A_yVnY8htLZS7nskIXAGIVDb9oM",
@@ -149,7 +149,7 @@ export const clientSecretBasicClient = {
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
-  idTokenAlg: "ES256",
+  idTokenAlg: "RS256",
 };
 
 export const clientSecretJwtClient = {
@@ -160,7 +160,7 @@ export const clientSecretJwtClient = {
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
-  idTokenAlg: "ES256",
+  idTokenAlg: "RS256",
 };
 
 export const privateKeyJwtClient = {
@@ -172,7 +172,7 @@ export const privateKeyJwtClient = {
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
-  idTokenAlg: "ES256",
+  idTokenAlg: "RS256",
   clientSecretKey: {
     p: "5tYV_YB0h-OATLkIJlh12EvU1eZj0Q_ttbzCS4b9fAsSYB2w6qMA_0LRT_upIZm_tPm-HmMLec-5b7enPjKj9N1iqADf_8j50tVcp60Ns9zqX4nXtFZ0w39iHJnMEhbmkBAU5oKLP0m_vYcwtExJ_9EC8aV6MrNOHHnQhaCdRZE",
     kty: "RSA",
@@ -210,7 +210,7 @@ export const privateKeyJwtEcKeyClient = {
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
-  idTokenAlg: "ES256",
+  idTokenAlg: "RS256",
   clientSecretKey: {
 
   },
@@ -223,7 +223,7 @@ export const selfSignedTlsAuthClient = {
   scope: "account transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
-  idTokenAlg: "ES256",
+  idTokenAlg: "RS256",
   clientCertFile: "selfSignedTlsAuth.pem",
   requestKey: {
     p: "8OX-b2ap00yVvPsQ46jFIGBM5NXByTuRI3QTb_Rt_41rjiHy0JNrEIqOkFW7b583rLsOsWPykVNtCwqbjUhWT81ijUneDyzcrCOGlOK9_pZjcqvIIU0fbyXPYox_tejNrv1nixjirnuGFlCDaHZ4ZrWOAN_VPsI7cJLzMyH7jos",
