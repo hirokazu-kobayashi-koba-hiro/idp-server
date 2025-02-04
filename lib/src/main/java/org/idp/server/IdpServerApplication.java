@@ -1,7 +1,6 @@
 package org.idp.server;
 
 import java.util.List;
-
 import org.idp.server.api.*;
 import org.idp.server.basic.sql.TransactionInterceptor;
 import org.idp.server.basic.sql.TransactionManager;
@@ -112,7 +111,9 @@ public class IdpServerApplication {
         new BackchannelAuthenticationMemoryDataSource();
     CibaGrantMemoryDataSource cibaGrantMemoryDataSource = new CibaGrantMemoryDataSource();
     NotificationClient notificationClient = new NotificationClient();
-    VerifiableCredentialTransactionMemoryDataSource verifiableCredentialTransactionMemoryDataSource = new VerifiableCredentialTransactionMemoryDataSource();
+    VerifiableCredentialTransactionMemoryDataSource
+        verifiableCredentialTransactionMemoryDataSource =
+            new VerifiableCredentialTransactionMemoryDataSource();
     this.cibaApi =
         new CibaApiImpl(
             new CibaRequestHandler(
@@ -144,22 +145,23 @@ public class IdpServerApplication {
             clientConfigurationMemoryDataSource);
     this.tokenApi = new TokenApiImpl(tokenRequestHandler);
     CredentialHandler credentialHandler =
-            new CredentialHandler(
-                    oAuthTokenMemoryDataSource,
-                    verifiableCredentialTransactionMemoryDataSource,
-                    serverConfigurationMemoryDataSource,
-                    clientConfigurationMemoryDataSource);
+        new CredentialHandler(
+            oAuthTokenMemoryDataSource,
+            verifiableCredentialTransactionMemoryDataSource,
+            serverConfigurationMemoryDataSource,
+            clientConfigurationMemoryDataSource);
     this.credentialApi = new CredentialApiImpl(credentialHandler);
     this.serverManagementApi =
-            new ServerManagementApiImpl(
-                    new ServerConfigurationHandler(serverConfigurationMemoryDataSource));
+        new ServerManagementApiImpl(
+            new ServerConfigurationHandler(serverConfigurationMemoryDataSource));
     this.clientManagementApi =
-            new ClientManagementApiImpl(
-                    new ClientConfigurationHandler(clientConfigurationMemoryDataSource));
+        new ClientManagementApiImpl(
+            new ClientConfigurationHandler(clientConfigurationMemoryDataSource));
   }
 
   public IdpServerApplication(DatabaseConfig databaseConfig) {
-    TransactionManager.setConnectionConfig(databaseConfig.url(), databaseConfig.username(), databaseConfig.password());
+    TransactionManager.setConnectionConfig(
+        databaseConfig.url(), databaseConfig.username(), databaseConfig.password());
     AuthorizationRequestDataSource authorizationRequestDataSource =
         new AuthorizationRequestDataSource();
     AuthorizationCodeGrantDataSource authorizationCodeGrantDataSource =
@@ -191,49 +193,62 @@ public class IdpServerApplication {
             authorizationRequestDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
-    this.oAuthApi = TransactionInterceptor.createProxy(new OAuthApiImpl(oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler), OAuthApi.class);
+    this.oAuthApi =
+        TransactionInterceptor.createProxy(
+            new OAuthApiImpl(oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler),
+            OAuthApi.class);
 
     TokenIntrospectionHandler tokenIntrospectionHandler =
         new TokenIntrospectionHandler(oAuthTokenDataSource);
-    this.tokenIntrospectionApi = TransactionInterceptor.createProxy(new TokenIntrospectionApiImpl(tokenIntrospectionHandler), TokenIntrospectionApi.class);
+    this.tokenIntrospectionApi =
+        TransactionInterceptor.createProxy(
+            new TokenIntrospectionApiImpl(tokenIntrospectionHandler), TokenIntrospectionApi.class);
     TokenRevocationHandler tokenRevocationHandler =
         new TokenRevocationHandler(
             oAuthTokenDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
-    this.tokenRevocationApi = TransactionInterceptor.createProxy(new TokenRevocationApiImpl(tokenRevocationHandler), TokenRevocationApi.class);
+    this.tokenRevocationApi =
+        TransactionInterceptor.createProxy(
+            new TokenRevocationApiImpl(tokenRevocationHandler), TokenRevocationApi.class);
     UserinfoHandler userinfoHandler =
         new UserinfoHandler(
             oAuthTokenDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
-    this.userinfoApi = TransactionInterceptor.createProxy(new UserinfoApiImpl(userinfoHandler), UserinfoApi.class);
+    this.userinfoApi =
+        TransactionInterceptor.createProxy(new UserinfoApiImpl(userinfoHandler), UserinfoApi.class);
     DiscoveryHandler discoveryHandler = new DiscoveryHandler(serverConfigurationMemoryDataSource);
-    this.discoveryApi = TransactionInterceptor.createProxy(new DiscoveryApiImpl(discoveryHandler), DiscoveryApi.class);
-    this.jwksApi = TransactionInterceptor.createProxy(new JwksApiImpl(discoveryHandler), JwksApi.class);
+    this.discoveryApi =
+        TransactionInterceptor.createProxy(
+            new DiscoveryApiImpl(discoveryHandler), DiscoveryApi.class);
+    this.jwksApi =
+        TransactionInterceptor.createProxy(new JwksApiImpl(discoveryHandler), JwksApi.class);
     BackchannelAuthenticationDataSource backchannelAuthenticationDataSource =
         new BackchannelAuthenticationDataSource();
     CibaGrantDataSource cibaGrantDataSource = new CibaGrantDataSource();
     NotificationClient notificationClient = new NotificationClient();
     this.cibaApi =
-            TransactionInterceptor.createProxy(new CibaApiImpl(
-            new CibaRequestHandler(
-                backchannelAuthenticationDataSource,
-                cibaGrantDataSource,
-                serverConfigurationMemoryDataSource,
-                clientConfigurationMemoryDataSource),
-            new CibaAuthorizeHandler(
-                backchannelAuthenticationDataSource,
-                cibaGrantDataSource,
-                authorizationGrantedDataSource,
-                oAuthTokenDataSource,
-                notificationClient,
-                serverConfigurationMemoryDataSource,
-                clientConfigurationMemoryDataSource),
-            new CibaDenyHandler(
-                cibaGrantDataSource,
-                serverConfigurationMemoryDataSource,
-                clientConfigurationMemoryDataSource)), CibaApi.class);
+        TransactionInterceptor.createProxy(
+            new CibaApiImpl(
+                new CibaRequestHandler(
+                    backchannelAuthenticationDataSource,
+                    cibaGrantDataSource,
+                    serverConfigurationMemoryDataSource,
+                    clientConfigurationMemoryDataSource),
+                new CibaAuthorizeHandler(
+                    backchannelAuthenticationDataSource,
+                    cibaGrantDataSource,
+                    authorizationGrantedDataSource,
+                    oAuthTokenDataSource,
+                    notificationClient,
+                    serverConfigurationMemoryDataSource,
+                    clientConfigurationMemoryDataSource),
+                new CibaDenyHandler(
+                    cibaGrantDataSource,
+                    serverConfigurationMemoryDataSource,
+                    clientConfigurationMemoryDataSource)),
+            CibaApi.class);
     TokenRequestHandler tokenRequestHandler =
         new TokenRequestHandler(
             authorizationRequestDataSource,
@@ -244,20 +259,27 @@ public class IdpServerApplication {
             oAuthTokenDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
-    this.tokenApi = TransactionInterceptor.createProxy(new TokenApiImpl(tokenRequestHandler), TokenApi.class);
+    this.tokenApi =
+        TransactionInterceptor.createProxy(new TokenApiImpl(tokenRequestHandler), TokenApi.class);
     CredentialHandler credentialHandler =
         new CredentialHandler(
             oAuthTokenDataSource,
             verifiableCredentialTransactionDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
-    this.credentialApi = TransactionInterceptor.createProxy(new CredentialApiImpl(credentialHandler), CredentialApi.class);
+    this.credentialApi =
+        TransactionInterceptor.createProxy(
+            new CredentialApiImpl(credentialHandler), CredentialApi.class);
     this.serverManagementApi =
-            TransactionInterceptor.createProxy(new ServerManagementApiImpl(
-            new ServerConfigurationHandler(serverConfigurationMemoryDataSource)), ServerManagementApi.class);
+        TransactionInterceptor.createProxy(
+            new ServerManagementApiImpl(
+                new ServerConfigurationHandler(serverConfigurationMemoryDataSource)),
+            ServerManagementApi.class);
     this.clientManagementApi =
-            TransactionInterceptor.createProxy(new ClientManagementApiImpl(
-            new ClientConfigurationHandler(clientConfigurationMemoryDataSource)), ClientManagementApi.class);
+        TransactionInterceptor.createProxy(
+            new ClientManagementApiImpl(
+                new ClientConfigurationHandler(clientConfigurationMemoryDataSource)),
+            ClientManagementApi.class);
   }
 
   public OAuthApi oAuthApi() {

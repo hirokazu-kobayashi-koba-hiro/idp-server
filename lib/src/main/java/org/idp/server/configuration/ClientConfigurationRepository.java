@@ -1,9 +1,8 @@
 package org.idp.server.configuration;
 
+import java.util.List;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.TokenIssuer;
-
-import java.util.List;
 
 public interface ClientConfigurationRepository {
 

@@ -26,7 +26,8 @@ public class ClientManagementApiImpl implements ClientManagementApi {
     return json;
   }
 
-  public ClientConfigurationManagementListResponse find(TokenIssuer tokenIssuer, int limit, int offset) {
+  public ClientConfigurationManagementListResponse find(
+      TokenIssuer tokenIssuer, int limit, int offset) {
 
     return clientConfigurationHandler.find(tokenIssuer, limit, offset);
   }
@@ -37,7 +38,7 @@ public class ClientManagementApiImpl implements ClientManagementApi {
 
       return clientConfigurationHandler.get(tokenIssuer, clientId);
     } catch (Exception e) {
-      
+
       return errorHandler.handle(e);
     }
   }

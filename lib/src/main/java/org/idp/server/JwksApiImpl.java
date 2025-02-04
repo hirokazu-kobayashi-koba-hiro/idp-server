@@ -1,7 +1,6 @@
 package org.idp.server;
 
 import java.util.Map;
-
 import org.idp.server.api.JwksApi;
 import org.idp.server.basic.sql.Transactional;
 import org.idp.server.handler.discovery.DiscoveryHandler;

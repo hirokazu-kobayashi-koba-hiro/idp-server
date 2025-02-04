@@ -10,5 +10,4 @@ public interface CibaApi {
   CibaAuthorizeResponse authorize(CibaAuthorizeRequest request);
 
   CibaDenyResponse deny(CibaDenyRequest request);
-
 }

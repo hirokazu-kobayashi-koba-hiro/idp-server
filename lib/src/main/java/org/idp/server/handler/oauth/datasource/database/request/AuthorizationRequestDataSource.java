@@ -2,7 +2,6 @@ package org.idp.server.handler.oauth.datasource.database.request;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.sql.SqlConnection;
 import org.idp.server.basic.sql.SqlExecutor;
 import org.idp.server.basic.sql.TransactionManager;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
@@ -11,7 +10,6 @@ import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 
 public class AuthorizationRequestDataSource implements AuthorizationRequestRepository {
 
-  
   @Override
   public void register(AuthorizationRequest authorizationRequest) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());

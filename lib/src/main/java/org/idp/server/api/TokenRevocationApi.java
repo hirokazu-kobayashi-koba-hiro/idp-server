@@ -5,5 +5,5 @@ import org.idp.server.handler.tokenrevocation.io.TokenRevocationResponse;
 
 public interface TokenRevocationApi {
 
- TokenRevocationResponse revoke(TokenRevocationRequest request);
+  TokenRevocationResponse revoke(TokenRevocationRequest request);
 }

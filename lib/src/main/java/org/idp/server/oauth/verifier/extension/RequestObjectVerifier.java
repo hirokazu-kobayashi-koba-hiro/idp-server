@@ -14,12 +14,11 @@ public class RequestObjectVerifier
 
   @Override
   public void verify(OAuthRequestContext context) {
-        try {
-          verify(context.joseContext(), context.serverConfiguration(),
-     context.clientConfiguration());
-        } catch (RequestObjectInvalidException exception) {
-          throw new OAuthRedirectableBadRequestException(
-              "invalid_request_object", exception.getMessage(), context);
-        }
+    try {
+      verify(context.joseContext(), context.serverConfiguration(), context.clientConfiguration());
+    } catch (RequestObjectInvalidException exception) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request_object", exception.getMessage(), context);
+    }
   }
 }

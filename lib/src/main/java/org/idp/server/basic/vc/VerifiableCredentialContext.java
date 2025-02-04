@@ -8,8 +8,7 @@ public class VerifiableCredentialContext {
   VerifiableCredentialJsonLinkedData verifiableCredentialJsonLinkedData;
   VerifiableCredential verifiableCredential;
 
-  public VerifiableCredentialContext(
-      VerifiableCredentialFormat format, Credential credential) {
+  public VerifiableCredentialContext(VerifiableCredentialFormat format, Credential credential) {
     this.format = format;
     this.credential = credential;
   }

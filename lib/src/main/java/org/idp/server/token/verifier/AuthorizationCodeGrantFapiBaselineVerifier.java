@@ -117,6 +117,7 @@ public class AuthorizationCodeGrantFapiBaselineVerifier
           "When FAPI Baseline profile, shall require and use a key of size 160 bits or larger for elliptic curve algorithms");
     }
   }
+
   /**
    * shall return an invalid_client error as defined in 5.2 of RFC6749 when mis-matched client
    * identifiers were provided through the client authentication methods that permits sending the

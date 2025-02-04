@@ -3,7 +3,6 @@ package org.idp.server;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.idp.server.api.TokenRevocationApi;
 import org.idp.server.basic.sql.Transactional;
 import org.idp.server.handler.tokenrevocation.TokenRevocationHandler;

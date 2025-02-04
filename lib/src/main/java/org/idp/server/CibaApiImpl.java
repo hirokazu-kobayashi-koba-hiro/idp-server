@@ -2,7 +2,6 @@ package org.idp.server;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.idp.server.api.CibaApi;
 import org.idp.server.basic.sql.Transactional;
 import org.idp.server.ciba.CibaRequestDelegate;

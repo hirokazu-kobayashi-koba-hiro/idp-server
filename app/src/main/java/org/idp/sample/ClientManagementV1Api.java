@@ -1,7 +1,7 @@
 package org.idp.sample;
 
-import org.idp.server.api.ClientManagementApi;
 import org.idp.server.IdpServerApplication;
+import org.idp.server.api.ClientManagementApi;
 import org.idp.server.handler.configuration.io.ClientConfigurationManagementListResponse;
 import org.idp.server.handler.configuration.io.ClientConfigurationManagementResponse;
 import org.idp.server.type.oauth.ClientId;
@@ -23,8 +23,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
   @PostMapping
   public ResponseEntity<?> request(
-          @PathVariable("tenant-id") String tenantId,
-          @RequestBody(required = false) String body) {
+      @PathVariable("tenant-id") String tenantId, @RequestBody(required = false) String body) {
     Tenant tenant = Tenant.of(tenantId);
     String client = clientManagementApi.register(body);
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -33,27 +32,33 @@ public class ClientManagementV1Api implements ParameterTransformable {
   }
 
   @GetMapping
-  public ResponseEntity<?> getList(@PathVariable("tenant-id") String tenantId,
-                               @RequestParam(value = "limit", defaultValue = "20") String limitValue,
-                               @RequestParam(value = "offset", defaultValue = "0") String offsetValue) {
+  public ResponseEntity<?> getList(
+      @PathVariable("tenant-id") String tenantId,
+      @RequestParam(value = "limit", defaultValue = "20") String limitValue,
+      @RequestParam(value = "offset", defaultValue = "0") String offsetValue) {
     Tenant tenant = Tenant.of(tenantId);
     TokenIssuer tokenIssuer = new TokenIssuer(tenant.issuer());
-    ClientConfigurationManagementListResponse response = clientManagementApi.find(tokenIssuer, Integer.parseInt(limitValue), Integer.parseInt(offsetValue));
+    ClientConfigurationManagementListResponse response =
+        clientManagementApi.find(
+            tokenIssuer, Integer.parseInt(limitValue), Integer.parseInt(offsetValue));
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
-    return new ResponseEntity<>(response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+    return new ResponseEntity<>(
+        response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @GetMapping("/{client-id}")
-  public ResponseEntity<?> get(@PathVariable("tenant-id") String tenantId,
-                               @PathVariable("client-id") String clientId) {
+  public ResponseEntity<?> get(
+      @PathVariable("tenant-id") String tenantId, @PathVariable("client-id") String clientId) {
     Tenant tenant = Tenant.of(tenantId);
     TokenIssuer tokenIssuer = new TokenIssuer(tenant.issuer());
-    ClientConfigurationManagementResponse response = clientManagementApi.get(tokenIssuer, new ClientId(clientId));
+    ClientConfigurationManagementResponse response =
+        clientManagementApi.get(tokenIssuer, new ClientId(clientId));
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
-    return new ResponseEntity<>(response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+    return new ResponseEntity<>(
+        response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }

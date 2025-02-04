@@ -2,15 +2,15 @@ package org.idp.sample;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.api.CredentialApi;
 import org.idp.server.IdpServerApplication;
+import org.idp.server.api.CredentialApi;
 import org.idp.server.basic.vc.Credential;
 import org.idp.server.handler.credential.io.*;
 import org.idp.server.oauth.vc.CredentialDefinition;
 import org.idp.server.type.oauth.Subject;
 import org.idp.server.type.oauth.TokenIssuer;
-import org.idp.server.verifiablecredential.VerifiableCredentialDelegate;
 import org.idp.server.verifiablecredential.CredentialDelegateResponse;
+import org.idp.server.verifiablecredential.VerifiableCredentialDelegate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

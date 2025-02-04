@@ -28,15 +28,14 @@ import org.idp.server.type.oauth.TokenIssuer;
 /**
  * Handles CIBA (Client Initiated Backchannel Authentication) requests.
  *
- * <p>The CibaRequestHandler class processes backchannel authentication requests
- * as per the CIBA protocol. It verifies client and server configurations,
- * authenticates clients, and initiates the user authentication process via the
- * CIBA flow. This class is responsible for generating and registering
- * backchannel authentication requests and CIBA grants.
+ * <p>The CibaRequestHandler class processes backchannel authentication requests as per the CIBA
+ * protocol. It verifies client and server configurations, authenticates clients, and initiates the
+ * user authentication process via the CIBA flow. This class is responsible for generating and
+ * registering backchannel authentication requests and CIBA grants.
  *
- * <p>Typical usage includes receiving a CibaRequest, processing it to determine
- * the authentication parameters and context, verifying the request, and
- * generating a backchannel authentication response.
+ * <p>Typical usage includes receiving a CibaRequest, processing it to determine the authentication
+ * parameters and context, verifying the request, and generating a backchannel authentication
+ * response.
  */
 public class CibaRequestHandler {
 
@@ -50,7 +49,8 @@ public class CibaRequestHandler {
   /**
    * Constructs a CibaRequestHandler with the specified repository and configuration dependencies.
    *
-   * @param backchannelAuthenticationRequestRepository the repository to register backchannel authentication requests
+   * @param backchannelAuthenticationRequestRepository the repository to register backchannel
+   *     authentication requests
    * @param cibaGrantRepository the repository to store CIBA grants
    * @param serverConfigurationRepository the repository to retrieve server configuration details
    * @param clientConfigurationRepository the repository to retrieve client configuration details
@@ -69,23 +69,26 @@ public class CibaRequestHandler {
   }
 
   /**
-   * Handles a CIBA request by processing the request parameters, verifying the client and server configurations,
-   * authenticating the client, and initiating the user authentication process.
+   * Handles a CIBA request by processing the request parameters, verifying the client and server
+   * configurations, authenticating the client, and initiating the user authentication process.
    *
    * <p>This method performs the following steps:
+   *
    * <ul>
-   *   <li>Converts the incoming request into a set of parameters and identifies the token issuer.</li>
-   *   <li>Retrieves the server and client configurations based on the token issuer and client ID.</li>
-   *   <li>Analyzes the request parameters to determine the appropriate CIBA request pattern.</li>
-   *   <li>Creates a CIBA request context using the server and client configurations and request parameters.</li>
-   *   <li>Verifies the request using the CIBA request verifier and authenticates the client.</li>
-   *   <li>Initiates user authentication and notifies the user.</li>
-   *   <li>Generates a backchannel authentication response and registers the request and CIBA grant.</li>
+   *   <li>Converts the incoming request into a set of parameters and identifies the token issuer.
+   *   <li>Retrieves the server and client configurations based on the token issuer and client ID.
+   *   <li>Analyzes the request parameters to determine the appropriate CIBA request pattern.
+   *   <li>Creates a CIBA request context using the server and client configurations and request
+   *       parameters.
+   *   <li>Verifies the request using the CIBA request verifier and authenticates the client.
+   *   <li>Initiates user authentication and notifies the user.
+   *   <li>Generates a backchannel authentication response and registers the request and CIBA grant.
    * </ul>
    *
    * @param request the CIBA request containing client authentication data and parameters
    * @param delegate a delegate interface for handling user-related operations
-   * @return a {@link CibaRequestResponse} containing the status and the backchannel authentication response
+   * @return a {@link CibaRequestResponse} containing the status and the backchannel authentication
+   *     response
    */
   public CibaRequestResponse handle(CibaRequest request, CibaRequestDelegate delegate) {
     CibaRequestParameters parameters = request.toParameters();

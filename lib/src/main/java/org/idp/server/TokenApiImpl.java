@@ -1,7 +1,6 @@
 package org.idp.server;
 
 import org.idp.server.api.TokenApi;
-import org.idp.server.basic.sql.TransactionManager;
 import org.idp.server.basic.sql.Transactional;
 import org.idp.server.handler.token.TokenRequestErrorHandler;
 import org.idp.server.handler.token.TokenRequestHandler;
@@ -23,7 +22,7 @@ public class TokenApiImpl implements TokenApi {
 
   public TokenRequestResponse request(TokenRequest tokenRequest) {
     try {
-        return tokenRequestHandler.handle(tokenRequest, passwordCredentialsGrantDelegate);
+      return tokenRequestHandler.handle(tokenRequest, passwordCredentialsGrantDelegate);
     } catch (Exception exception) {
       return errorHandler.handle(exception);
     }

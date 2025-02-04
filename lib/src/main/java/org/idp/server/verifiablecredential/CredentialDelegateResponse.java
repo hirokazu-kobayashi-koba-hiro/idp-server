@@ -6,15 +6,13 @@ public class CredentialDelegateResponse {
   VerifiableCredentialTransactionStatus status;
   Credential credential;
 
-  CredentialDelegateResponse(
-      VerifiableCredentialTransactionStatus status, Credential credential) {
+  CredentialDelegateResponse(VerifiableCredentialTransactionStatus status, Credential credential) {
     this.status = status;
     this.credential = credential;
   }
 
   public static CredentialDelegateResponse issued(Credential credential) {
-    return new CredentialDelegateResponse(
-        VerifiableCredentialTransactionStatus.issued, credential);
+    return new CredentialDelegateResponse(VerifiableCredentialTransactionStatus.issued, credential);
   }
 
   public static CredentialDelegateResponse pending() {
