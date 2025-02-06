@@ -33,4 +33,8 @@ public class TokenIntrospectionRequest {
   public TokenIssuer toTokenIssuer() {
     return new TokenIssuer(issuer);
   }
+
+  public boolean hasToken() {
+    return params.containsKey("token");
+  }
 }
