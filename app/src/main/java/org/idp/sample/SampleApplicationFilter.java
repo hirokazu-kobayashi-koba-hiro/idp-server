@@ -46,6 +46,13 @@ public class SampleApplicationFilter extends OncePerRequestFilter {
     TokenIntrospectionResponse introspectionResponse =
         tokenIntrospectionApi.inspect(tokenIntrospectionRequest);
     logger.info(introspectionResponse.response().toString());
+    if (!introspectionResponse.isActive()) {
+      response.setHeader(
+          HttpHeaders.WWW_AUTHENTICATE,
+          "error=invalid_token error_description=token is not active");
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      return;
+    }
     filterChain.doFilter(request, response);
   }
 

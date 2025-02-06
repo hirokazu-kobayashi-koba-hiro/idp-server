@@ -36,4 +36,8 @@ public class TokenIntrospectionResponse {
   public Map<String, Object> response() {
     return response;
   }
+
+  public boolean isActive() {
+    return Boolean.TRUE.equals(response.get("active"));
+  }
 }
