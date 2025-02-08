@@ -24,6 +24,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 @Controller
 @RequestMapping
@@ -43,7 +44,7 @@ public class OAuthController implements OAuthRequestDelegate, ParameterTransform
   }
 
   @GetMapping("{tenant-id}/v1/authorizations")
-  public String get(
+  public Object get(
       @RequestParam(required = false) MultiValueMap<String, String> request,
       @PathVariable("tenant-id") String tenantId,
       Model model) {
@@ -60,7 +61,7 @@ public class OAuthController implements OAuthRequestDelegate, ParameterTransform
         model.addAttribute("tenantId", tenant.id());
         model.addAttribute("clientName", response.clientConfiguration().clientName());
         model.addAttribute("scopes", response.scopeList());
-        return "authorizations";
+        return new RedirectView("/signin/index.html?id=" + response.authorizationRequestId());
       }
       case OK_SESSION_ENABLE -> {
         log.info("sessionEnable: true");
@@ -70,7 +71,10 @@ public class OAuthController implements OAuthRequestDelegate, ParameterTransform
         model.addAttribute("tenantId", tenant.id());
         model.addAttribute("clientName", response.clientConfiguration().clientName());
         model.addAttribute("scopes", response.scopeList());
-        return "authorizations";
+        return new RedirectView(
+            String.format(
+                "/signin/index.html?id=%s&session_key=%s",
+                response.authorizationRequestId(), response.sessionKey()));
       }
       case OK_ACCOUNT_CREATION -> {
         log.info("request creation account");
@@ -80,7 +84,10 @@ public class OAuthController implements OAuthRequestDelegate, ParameterTransform
         model.addAttribute("tenantId", tenant.id());
         model.addAttribute("clientName", response.clientConfiguration().clientName());
         model.addAttribute("scopes", response.scopeList());
-        return "user";
+        return new RedirectView(
+            String.format(
+                "/signin/index.html?id=%s&session_key=%s",
+                response.authorizationRequestId(), response.sessionKey()));
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
         log.info("redirect");
