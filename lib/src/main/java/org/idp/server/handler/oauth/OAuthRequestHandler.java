@@ -85,6 +85,9 @@ public class OAuthRequestHandler {
   }
 
   public OAuthRequestResponse handleResponse(OAuthRequestContext context, OAuthSession session) {
+    if (context.isPromptCreate()) {
+      return new OAuthRequestResponse(OAuthRequestStatus.OK_ACCOUNT_CREATION, context, session);
+    }
     if (Objects.isNull(session) || !session.isValid(context.authorizationRequest())) {
       return new OAuthRequestResponse(OAuthRequestStatus.OK, context, session);
     }

@@ -41,6 +41,7 @@ public enum Prompt {
   login,
   consent,
   select_account,
+  create,
   undefined,
   unknown;
 

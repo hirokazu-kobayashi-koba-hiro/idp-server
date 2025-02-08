@@ -61,4 +61,8 @@ public class Prompts implements Iterable<Prompt> {
   public boolean exists() {
     return !values.isEmpty();
   }
+
+  public boolean hasCreate() {
+    return values.contains(Prompt.create);
+  }
 }

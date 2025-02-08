@@ -14,7 +14,12 @@
     <input type="hidden" name="id" th:value="${id}">
     <input type="hidden" name="tenantId" th:value="${tenantId}">
     <p>Your registration was successful. You can now log in using your credentials.</p>
-    <a href="/authorize" class="block mt-4 text-blue-500 hover:underline">go to authorize page</a>
+    <form th:action="@{/v1/authorize}" method="get">
+      <input type="hidden" name="sessionKey" th:value="${sessionKey}">
+      <input type="hidden" name="id" th:value="${id}">
+      <input type="hidden" name="tenantId" th:value="${tenantId}">
+      <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">Next</button>
+    </form>
   </div>
 </div>
 </body>
