@@ -72,6 +72,16 @@ public class OAuthController implements OAuthRequestDelegate, ParameterTransform
         model.addAttribute("scopes", response.scopeList());
         return "authorizations";
       }
+      case OK_ACCOUNT_CREATION -> {
+        log.info("request creation account");
+        model.addAttribute("sessionEnable", false);
+        model.addAttribute("sessionKey", response.sessionKey());
+        model.addAttribute("id", response.authorizationRequestId());
+        model.addAttribute("tenantId", tenant.id());
+        model.addAttribute("clientName", response.clientConfiguration().clientName());
+        model.addAttribute("scopes", response.scopeList());
+        return "user";
+      }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
         log.info("redirect");
         return "redirect:" + response.redirectUri();
@@ -85,8 +95,15 @@ public class OAuthController implements OAuthRequestDelegate, ParameterTransform
   }
 
   @GetMapping("/v1/authorize")
-  public String showSuccessPage(@ModelAttribute("tenantId") String tenantId, Model model) {
-    Tenant tenant = Tenant.of(tenantId);
+  public String showSuccessPage(
+      @ModelAttribute("tenantId") String tenantId,
+      @ModelAttribute("sessionKey") String sessionKey,
+      @ModelAttribute("id") String id,
+      Model model) {
+    Tenant tenant = Tenant.of("123");
+    model.addAttribute("tenantId", tenant.id());
+    model.addAttribute("sessionKey", sessionKey);
+    model.addAttribute("id", id);
     model.addAttribute("tenantId", tenant.id());
     return "authorize";
   }

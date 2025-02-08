@@ -1,6 +1,8 @@
-package org.idp.sample.presentation.api;
+package org.idp.sample.presentation.view;
 
+import jakarta.websocket.server.PathParam;
 import java.util.UUID;
+import org.idp.sample.presentation.api.Tenant;
 import org.idp.sample.user.UserService;
 import org.idp.server.oauth.identity.User;
 import org.slf4j.Logger;
@@ -27,7 +29,7 @@ public class UserController {
   }
 
   @GetMapping("/v1/users/registration-success")
-  public String showSuccessPage(@ModelAttribute("tenantId") String tenantId, Model model) {
+  public String showSuccessPage(@PathParam("tenantId") String tenantId, Model model) {
     Tenant tenant = Tenant.of(tenantId);
     model.addAttribute("tenantId", tenant.id());
     return "registration-success";
@@ -52,7 +54,8 @@ public class UserController {
     user.setPassword(password);
     userService.register(tenant, user);
 
-    return "redirect:/v1/users/registration-success"; // Redirect to a success page
+    return "redirect:/v1/users/registration-success?tenantId="
+        + tenantId; // Redirect to a success page
   }
 
   @ExceptionHandler(Exception.class)

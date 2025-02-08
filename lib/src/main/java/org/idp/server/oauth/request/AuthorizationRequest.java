@@ -337,6 +337,10 @@ public class AuthorizationRequest {
     return prompts().hasLogin();
   }
 
+  public boolean isPromptCreate() {
+    return prompts().hasCreate();
+  }
+
   public boolean isVerifiableCredentialRequest() {
     return authorizationDetails.hasVerifiableCredential();
   }
