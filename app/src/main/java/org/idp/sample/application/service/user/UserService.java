@@ -1,7 +1,8 @@
-package org.idp.sample.user;
+package org.idp.sample.application.service.user;
 
 import java.util.List;
-import org.idp.sample.presentation.api.Tenant;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.user.UserRepository;
 import org.idp.server.oauth.identity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -5,7 +5,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import org.idp.sample.presentation.api.Tenant;
+import org.idp.sample.application.service.TenantService;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.TokenIntrospectionApi;
 import org.idp.server.handler.tokenintrospection.io.TokenIntrospectionRequest;
@@ -20,10 +22,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class SampleApplicationFilter extends OncePerRequestFilter {
 
   TokenIntrospectionApi tokenIntrospectionApi;
+  TenantService tenantService;
   Logger logger = LoggerFactory.getLogger(SampleApplicationFilter.class);
 
-  public SampleApplicationFilter(IdpServerApplication idpServerApplication) {
+  public SampleApplicationFilter(
+      IdpServerApplication idpServerApplication, TenantService tenantService) {
     this.tokenIntrospectionApi = idpServerApplication.tokenIntrospectionApi();
+    this.tenantService = tenantService;
   }
 
   @Override
@@ -31,7 +36,9 @@ public class SampleApplicationFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
     String authorization = request.getHeader("Authorization");
-    Tenant tenant = extractTenant(request);
+    TenantIdentifier tenantIdentifier = extractTenantIdentifier(request);
+    Tenant tenant = tenantService.get(tenantIdentifier);
+
     TokenIntrospectionCreator tokenIntrospectionCreator =
         new TokenIntrospectionCreator(authorization, tenant.issuer());
     TokenIntrospectionRequest tokenIntrospectionRequest = tokenIntrospectionCreator.create();
@@ -56,10 +63,10 @@ public class SampleApplicationFilter extends OncePerRequestFilter {
     filterChain.doFilter(request, response);
   }
 
-  Tenant extractTenant(HttpServletRequest request) {
+  TenantIdentifier extractTenantIdentifier(HttpServletRequest request) {
     String[] paths = request.getRequestURI().split("/");
     String tenantId = paths[1];
-    return Tenant.of(tenantId);
+    return new TenantIdentifier(tenantId);
   }
 
   protected boolean shouldNotFilter(HttpServletRequest request) {

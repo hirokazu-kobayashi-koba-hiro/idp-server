@@ -2,9 +2,11 @@ package org.idp.sample.presentation.view;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.Map;
+import org.idp.sample.application.service.TenantService;
+import org.idp.sample.application.service.user.UserService;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.presentation.api.ParameterTransformable;
-import org.idp.sample.presentation.api.Tenant;
-import org.idp.sample.user.UserService;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.OAuthApi;
 import org.idp.server.handler.oauth.io.*;
@@ -24,21 +26,26 @@ public class OAuthController implements ParameterTransformable {
   HttpSession httpSession;
   OAuthApi oAuthApi;
   UserService userService;
+  TenantService tenantService;
 
   public OAuthController(
-      IdpServerApplication idpServerApplication, HttpSession httpSession, UserService userService) {
+      IdpServerApplication idpServerApplication,
+      HttpSession httpSession,
+      UserService userService,
+      TenantService tenantService) {
     this.oAuthApi = idpServerApplication.oAuthApi();
     this.httpSession = httpSession;
     this.userService = userService;
+    this.tenantService = tenantService;
   }
 
   @GetMapping("{tenant-id}/v1/authorizations")
   public Object get(
       @RequestParam(required = false) MultiValueMap<String, String> request,
-      @PathVariable("tenant-id") String tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       Model model) {
     Map<String, String[]> params = transform(request);
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     OAuthRequest oAuthRequest = new OAuthRequest(params, tenant.issuer());
     OAuthRequestResponse response = oAuthApi.request(oAuthRequest);
     switch (response.status()) {
@@ -47,21 +54,27 @@ public class OAuthController implements ParameterTransformable {
         return new RedirectView(
             String.format(
                 "/signin/index.html?id=%s&session_key=%s&tenant_id=%s",
-                response.authorizationRequestId(), response.sessionKey(), tenant.id()));
+                response.authorizationRequestId(),
+                response.sessionKey(),
+                tenant.identifierValue()));
       }
       case OK_SESSION_ENABLE -> {
         log.info("sessionEnable: true");
         return new RedirectView(
             String.format(
                 "/signin/index.html?id=%s&session_key=%s&tenant_id=%s",
-                response.authorizationRequestId(), response.sessionKey(), tenant.id()));
+                response.authorizationRequestId(),
+                response.sessionKey(),
+                tenant.identifierValue()));
       }
       case OK_ACCOUNT_CREATION -> {
         log.info("request creation account");
         return new RedirectView(
             String.format(
                 "/signup/index.html?id=%s&session_key=%s&tenant_id=%s",
-                response.authorizationRequestId(), response.sessionKey(), tenant.id()));
+                response.authorizationRequestId(),
+                response.sessionKey(),
+                tenant.identifierValue()));
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
         log.info("redirect");

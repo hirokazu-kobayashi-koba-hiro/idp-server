@@ -1,7 +1,10 @@
 package org.idp.sample.presentation.api;
 
 import java.util.List;
-import org.idp.sample.user.UserService;
+import org.idp.sample.application.service.TenantService;
+import org.idp.sample.application.service.user.UserService;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.server.oauth.identity.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,17 +15,19 @@ import org.springframework.web.bind.annotation.*;
 public class UserManagementApi {
 
   UserService userService;
+  TenantService tenantService;
 
-  public UserManagementApi(UserService userService) {
+  public UserManagementApi(UserService userService, TenantService tenantService) {
     this.userService = userService;
+    this.tenantService = tenantService;
   }
 
   @GetMapping
   public ResponseEntity<?> get(
-      @PathVariable("tenant-id") String tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestParam(value = "limit", defaultValue = "20") String limitValue,
       @RequestParam(value = "offset", defaultValue = "0") String offsetValue) {
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     List<User> userList =
         userService.find(tenant, Integer.parseInt(limitValue), Integer.parseInt(offsetValue));
     return new ResponseEntity<>(new UserListResponse(userList), HttpStatus.OK);
@@ -30,8 +35,9 @@ public class UserManagementApi {
 
   @GetMapping("/{user-id}")
   public ResponseEntity<?> getById(
-      @PathVariable("tenant-id") String tenantId, @PathVariable("user-id") String userId) {
-    Tenant tenant = Tenant.of(tenantId);
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("user-id") String userId) {
+    Tenant tenant = tenantService.get(tenantId);
     User user = userService.find(userId);
     return new ResponseEntity<>(new UserResponse(user), HttpStatus.OK);
   }

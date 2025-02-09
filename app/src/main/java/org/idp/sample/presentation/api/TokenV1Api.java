@@ -1,7 +1,10 @@
 package org.idp.sample.presentation.api;
 
 import java.util.Map;
-import org.idp.sample.user.UserService;
+import org.idp.sample.application.service.TenantService;
+import org.idp.sample.application.service.user.UserService;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.TokenApi;
 import org.idp.server.handler.token.io.TokenRequest;
@@ -23,11 +26,16 @@ public class TokenV1Api implements PasswordCredentialsGrantDelegate, ParameterTr
 
   TokenApi tokenApi;
   UserService userService;
+  TenantService tenantService;
 
-  public TokenV1Api(IdpServerApplication idpServerApplication, UserService userService) {
+  public TokenV1Api(
+      IdpServerApplication idpServerApplication,
+      UserService userService,
+      TenantService tenantService) {
     this.tokenApi = idpServerApplication.tokenApi();
     tokenApi.setPasswordCredentialsGrantDelegate(this);
     this.userService = userService;
+    this.tenantService = tenantService;
   }
 
   @PostMapping
@@ -35,9 +43,9 @@ public class TokenV1Api implements PasswordCredentialsGrantDelegate, ParameterTr
       @RequestBody(required = false) MultiValueMap<String, String> body,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") String tenantId) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId) {
     Map<String, String[]> request = transform(body);
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     TokenRequest tokenRequest = new TokenRequest(authorizationHeader, request, tenant.issuer());
     tokenRequest.setClientCert(clientCert);
     TokenRequestResponse response = tokenApi.request(tokenRequest);

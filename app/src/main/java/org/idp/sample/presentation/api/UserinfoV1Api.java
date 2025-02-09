@@ -1,6 +1,9 @@
 package org.idp.sample.presentation.api;
 
-import org.idp.sample.user.UserService;
+import org.idp.sample.application.service.TenantService;
+import org.idp.sample.application.service.user.UserService;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.UserinfoApi;
 import org.idp.server.handler.userinfo.UserinfoDelegate;
@@ -19,18 +22,23 @@ public class UserinfoV1Api implements ParameterTransformable, UserinfoDelegate {
 
   UserinfoApi userinfoApi;
   UserService userService;
+  TenantService tenantService;
 
-  public UserinfoV1Api(IdpServerApplication idpServerApplication, UserService userService) {
+  public UserinfoV1Api(
+      IdpServerApplication idpServerApplication,
+      UserService userService,
+      TenantService tenantService) {
     this.userinfoApi = idpServerApplication.userinfoApi();
     this.userService = userService;
+    this.tenantService = tenantService;
   }
 
   @GetMapping
   public ResponseEntity<?> get(
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") String tenantId) {
-    Tenant tenant = Tenant.of(tenantId);
+      @PathVariable("tenant-id") TenantIdentifier tenantId) {
+    Tenant tenant = tenantService.get(tenantId);
     UserinfoRequest userinfoRequest = new UserinfoRequest(authorizationHeader, tenant.issuer());
     userinfoRequest.setClientCert(clientCert);
     UserinfoRequestResponse response = userinfoApi.request(userinfoRequest, this);
@@ -41,8 +49,8 @@ public class UserinfoV1Api implements ParameterTransformable, UserinfoDelegate {
   public ResponseEntity<?> post(
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") String tenantId) {
-    Tenant tenant = Tenant.of(tenantId);
+      @PathVariable("tenant-id") TenantIdentifier tenantId) {
+    Tenant tenant = tenantService.get(tenantId);
     UserinfoRequest userinfoRequest = new UserinfoRequest(authorizationHeader, tenant.issuer());
     userinfoRequest.setClientCert(clientCert);
     UserinfoRequestResponse response = userinfoApi.request(userinfoRequest, this);

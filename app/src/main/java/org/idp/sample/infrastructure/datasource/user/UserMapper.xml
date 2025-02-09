@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="org.idp.sample.user.UserMapper">
+<mapper namespace="org.idp.sample.infrastructure.datasource.user.UserMapper">
 
     <insert id="insert">
         INSERT INTO public."user" (id, tenant_id, name, given_name, family_name, middle_name, nickname,
@@ -56,8 +56,8 @@
         <result property="phoneNumber" column="phone_number"/>
         <result property="phoneNumberVerified" column="phone_number_verified"/>
         <result property="updatedAt" column="updated_at"/>
-        <result property="customProperties" column="custom_properties" typeHandler="org.idp.sample.user.CustomPropertiesTypeHandler"/>
-        <result property="credentials" column="credentials" typeHandler="org.idp.sample.user.CredentialsTypeHandler"/>
+        <result property="customProperties" column="custom_properties" typeHandler="org.idp.sample.infrastructure.datasource.user.CustomPropertiesTypeHandler"/>
+        <result property="credentials" column="credentials" typeHandler="org.idp.sample.infrastructure.datasource.user.CredentialsTypeHandler"/>
         <result property="password" column="password"/>
     </resultMap>
 
@@ -97,14 +97,14 @@
     <select id="selectBy" resultMap="User">
         <include refid="select" />
         WHERE
-            tenant_id = #{tenantId}
+            tenant_id = #{tenant.identifier.value}
           AND email = #{email}
     </select>
 
     <select id="selectList" resultMap="User">
         <include refid="select" />
         WHERE
-        tenant_id = #{tenantId}
+        tenant_id = #{tenant.identifier.value}
         ORDER BY created_at
         limit #{limit}
         offset #{offset}

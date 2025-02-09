@@ -1,9 +1,9 @@
-package org.idp.sample.user;
+package org.idp.sample.infrastructure.datasource.user;
 
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.idp.sample.presentation.api.Tenant;
+import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.server.oauth.identity.User;
 
 @Mapper
@@ -12,8 +12,8 @@ public interface UserMapper {
 
   User select(@Param("userId") String userId);
 
-  User selectBy(@Param("tenantId") String tenantId, @Param("email") String email);
+  User selectBy(@Param("tenant") Tenant tenant, @Param("email") String email);
 
   List<User> selectList(
-      @Param("tenantId") String tenantId, @Param("limit") int limit, @Param("offset") int offset);
+      @Param("tenant") Tenant tenantId, @Param("limit") int limit, @Param("offset") int offset);
 }
