@@ -19,17 +19,20 @@ public class OAuthApiImpl implements OAuthApi {
   OAuthAuthorizeErrorHandler authAuthorizeErrorHandler;
   OAuthDenyHandler oAuthDenyHandler;
   OAuthDenyErrorHandler denyErrorHandler;
+  OAuthViewDataHandler viewDataHandler;
   OAuthRequestDelegate oAuthRequestDelegate;
 
   OAuthApiImpl(
       OAuthRequestHandler requestHandler,
       OAuthAuthorizeHandler authAuthorizeHandler,
-      OAuthDenyHandler oAuthDenyHandler) {
+      OAuthDenyHandler oAuthDenyHandler,
+      OAuthViewDataHandler viewDataHandler) {
     this.requestHandler = requestHandler;
     this.oAuthRequestErrorHandler = new OAuthRequestErrorHandler();
     this.authAuthorizeHandler = authAuthorizeHandler;
     this.authAuthorizeErrorHandler = new OAuthAuthorizeErrorHandler();
     this.oAuthDenyHandler = oAuthDenyHandler;
+    this.viewDataHandler = viewDataHandler;
     this.denyErrorHandler = new OAuthDenyErrorHandler();
   }
 
@@ -62,6 +65,10 @@ public class OAuthApiImpl implements OAuthApi {
     } catch (Exception exception) {
       return oAuthRequestErrorHandler.handle(exception);
     }
+  }
+
+  public OAuthViewDataResponse getViewData(OAuthViewDataRequest request) {
+    return viewDataHandler.handle(request);
   }
 
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {

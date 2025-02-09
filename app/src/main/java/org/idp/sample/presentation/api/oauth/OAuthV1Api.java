@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,6 +40,20 @@ public class OAuthV1Api implements OAuthRequestDelegate, ParameterTransformable 
     oAuthApi.setOAuthRequestDelegate(this);
     this.httpSession = httpSession;
     this.userService = userService;
+  }
+
+  @GetMapping("/{id}/view-data")
+  public ResponseEntity<?> getViewData(
+      @PathVariable("tenant-id") String tenantId, @PathVariable("id") String id) {
+    Tenant tenant = Tenant.of(tenantId);
+    OAuthViewDataRequest oAuthViewDataRequest = new OAuthViewDataRequest(
+            id, tenant.issuer());
+
+    OAuthViewDataResponse viewDataResponse = oAuthApi.getViewData(oAuthViewDataRequest);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(viewDataResponse.contents(), httpHeaders, HttpStatus.OK);
   }
 
   @PostMapping("/{id}/authorize")
@@ -64,34 +77,41 @@ public class OAuthV1Api implements OAuthRequestDelegate, ParameterTransformable 
 
     switch (authAuthorizeResponse.status()) {
       case OK, REDIRECABLE_BAD_REQUEST -> {
-        return new ResponseEntity<>(authAuthorizeResponse.toResponse(), httpHeaders, HttpStatus.OK);
+        return new ResponseEntity<>(authAuthorizeResponse.contents(), httpHeaders, HttpStatus.OK);
       }
       case BAD_REQUEST -> {
         return new ResponseEntity<>(
-            authAuthorizeResponse.toResponse(), httpHeaders, HttpStatus.BAD_REQUEST);
+            authAuthorizeResponse.contents(), httpHeaders, HttpStatus.BAD_REQUEST);
       }
       default -> {
         return new ResponseEntity<>(
-            authAuthorizeResponse.toResponse(), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+            authAuthorizeResponse.contents(), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }
 
   @PostMapping("/{id}/deny")
-  public String deny(
-      @ModelAttribute("id") String id, @ModelAttribute("tenantId") String tenantId, Model model) {
+  public ResponseEntity<?> deny(
+      @PathVariable("tenant-id") String tenantId, @PathVariable("id") String id) {
     Tenant tenant = Tenant.of(tenantId);
     OAuthDenyRequest denyRequest =
         new OAuthDenyRequest(id, tenant.issuer(), OAuthDenyReason.access_denied);
+
     OAuthDenyResponse oAuthDenyResponse = oAuthApi.deny(denyRequest);
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+
     switch (oAuthDenyResponse.status()) {
       case OK, REDIRECABLE_BAD_REQUEST -> {
-        return "redirect:" + oAuthDenyResponse.redirectUriValue();
+        return new ResponseEntity<>(oAuthDenyResponse.contents(), httpHeaders, HttpStatus.OK);
+      }
+      case BAD_REQUEST -> {
+        return new ResponseEntity<>(
+            oAuthDenyResponse.contents(), httpHeaders, HttpStatus.BAD_REQUEST);
       }
       default -> {
-        model.addAttribute("error", oAuthDenyResponse.error());
-        model.addAttribute("errorDescription", oAuthDenyResponse.errorDescription());
-        return "error";
+        return new ResponseEntity<>(
+            oAuthDenyResponse.contents(), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }

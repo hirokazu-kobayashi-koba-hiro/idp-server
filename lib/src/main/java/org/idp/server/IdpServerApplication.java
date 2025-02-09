@@ -28,6 +28,7 @@ import org.idp.server.handler.grantmanagment.datasource.AuthorizationGrantedMemo
 import org.idp.server.handler.oauth.OAuthAuthorizeHandler;
 import org.idp.server.handler.oauth.OAuthDenyHandler;
 import org.idp.server.handler.oauth.OAuthRequestHandler;
+import org.idp.server.handler.oauth.OAuthViewDataHandler;
 import org.idp.server.handler.oauth.datasource.database.code.AuthorizationCodeGrantDataSource;
 import org.idp.server.handler.oauth.datasource.database.request.AuthorizationRequestDataSource;
 import org.idp.server.handler.oauth.datasource.memory.AuthorizationCodeGrantMemoryDataSource;
@@ -87,7 +88,12 @@ public class IdpServerApplication {
             authorizationRequestMemoryDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
-    this.oAuthApi = new OAuthApiImpl(oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler);
+    OAuthViewDataHandler oAuthViewDataHandler =
+            new OAuthViewDataHandler(
+                    authorizationRequestMemoryDataSource,
+                    serverConfigurationMemoryDataSource,
+                    clientConfigurationMemoryDataSource);
+    this.oAuthApi = new OAuthApiImpl(oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler, oAuthViewDataHandler);
 
     TokenIntrospectionHandler tokenIntrospectionHandler =
         new TokenIntrospectionHandler(oAuthTokenMemoryDataSource);
@@ -193,9 +199,14 @@ public class IdpServerApplication {
             authorizationRequestDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
+    OAuthViewDataHandler oAuthViewDataHandler =
+            new OAuthViewDataHandler(
+                    authorizationRequestDataSource,
+                    serverConfigurationMemoryDataSource,
+                    clientConfigurationMemoryDataSource);
     this.oAuthApi =
         TransactionInterceptor.createProxy(
-            new OAuthApiImpl(oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler),
+            new OAuthApiImpl(oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler, oAuthViewDataHandler),
             OAuthApi.class);
 
     TokenIntrospectionHandler tokenIntrospectionHandler =

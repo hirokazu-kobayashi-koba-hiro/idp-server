@@ -60,7 +60,7 @@ public class OAuthAuthorizeResponse {
     return errorResponse.errorDescription().value();
   }
 
-  public Map<String, Object> toResponse() {
+  public Map<String, Object> contents() {
     if (status.isError()) {
       return Map.of("error", error(), "error_description", errorDescription());
     }
