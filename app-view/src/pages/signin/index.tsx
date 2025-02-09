@@ -1,11 +1,14 @@
 import {
   Avatar,
   Box,
-  Button, Card, Chip,
+  Button,
+  Card,
+  Chip,
   Container,
   List,
   ListItem,
-  ListItemIcon, ListItemText,
+  ListItemIcon,
+  ListItemText,
   Stack,
   TextField,
   Typography
@@ -16,6 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { backendUrl } from "@/pages/_app";
 import PolicyIcon from "@mui/icons-material/Policy";
 import InfoIcon from "@mui/icons-material/Info";
+import { Loading } from "@/components/Loading";
 
 export default function SignIn() {
   const [email, setEmail] = useState("")
@@ -31,9 +35,7 @@ export default function SignIn() {
         console.error(response)
         throw new Error(response.status.toString());
       }
-      const body = await response.json()
-
-      return body
+      return await response.json()
     }
   })
 
@@ -70,8 +72,8 @@ export default function SignIn() {
     }
   }
 
-  if (isPending) return <Box>Loading</Box>
-  if (!data) return  <Box>Loading</Box>
+  if (isPending) return <Loading />
+  if (!data) return  <Loading />
 
   return (
     <>
