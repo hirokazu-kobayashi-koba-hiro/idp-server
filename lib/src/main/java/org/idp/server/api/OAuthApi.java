@@ -7,6 +7,10 @@ public interface OAuthApi {
 
   OAuthRequestResponse request(OAuthRequest oAuthRequest);
 
+  OAuthViewDataResponse getViewData(OAuthViewDataRequest request);
+
+  OAuthAuthenticationUpdateResponse updateAuthentication(OAuthAuthenticationUpdateRequest request);
+
   OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request);
 
   OAuthDenyResponse deny(OAuthDenyRequest request);

@@ -1,5 +1,6 @@
 package org.idp.server.handler.oauth.io;
 
+import java.util.Map;
 import org.idp.server.oauth.response.AuthorizationErrorResponse;
 
 public class OAuthDenyResponse {
@@ -39,5 +40,12 @@ public class OAuthDenyResponse {
 
   public String errorDescription() {
     return errorDescription;
+  }
+
+  public Map<String, Object> contents() {
+    if (status.isError()) {
+      return Map.of("error", error, "errorDescription", errorDescription);
+    }
+    return Map.of("redirect_uri", redirectUriValue());
   }
 }

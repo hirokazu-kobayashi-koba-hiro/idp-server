@@ -1,7 +1,7 @@
 package org.idp.server.handler.oauth.io;
 
 /** OAuthAuthorizeStatus */
-public enum OAuthAuthorizeStatus {
+public enum OAuthViewDataStatus {
   OK,
   BAD_REQUEST,
   REDIRECABLE_BAD_REQUEST,

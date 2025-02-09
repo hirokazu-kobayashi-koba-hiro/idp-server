@@ -13,4 +13,8 @@ public enum OAuthDenyStatus {
   public boolean isRedirectableBadRequest() {
     return this == REDIRECABLE_BAD_REQUEST;
   }
+
+  public boolean isError() {
+    return this == BAD_REQUEST || this == SERVER_ERROR;
+  }
 }
