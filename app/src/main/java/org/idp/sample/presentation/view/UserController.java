@@ -2,8 +2,10 @@ package org.idp.sample.presentation.view;
 
 import jakarta.websocket.server.PathParam;
 import java.util.UUID;
-import org.idp.sample.presentation.api.Tenant;
-import org.idp.sample.user.UserService;
+import org.idp.sample.application.service.TenantService;
+import org.idp.sample.application.service.user.UserService;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.server.oauth.identity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,23 +17,26 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping
 public class UserController {
   UserService userService;
+  TenantService tenantService;
   Logger log = LoggerFactory.getLogger(UserController.class);
 
-  public UserController(UserService userService) {
+  public UserController(UserService userService, TenantService tenantService) {
     this.userService = userService;
+    this.tenantService = tenantService;
   }
 
   @GetMapping("/v1/users")
-  public String showRegistrationPage(@ModelAttribute("tenantId") String tenantId, Model model) {
-    Tenant tenant = Tenant.of(tenantId);
-    model.addAttribute("tenantId", tenant.id());
+  public String showRegistrationPage(
+      @ModelAttribute("tenantId") TenantIdentifier tenantId, Model model) {
+    Tenant tenant = tenantService.get(tenantId);
+    model.addAttribute("tenantId", tenant.identifierValue());
     return "user";
   }
 
   @GetMapping("/v1/users/registration-success")
-  public String showSuccessPage(@PathParam("tenantId") String tenantId, Model model) {
-    Tenant tenant = Tenant.of(tenantId);
-    model.addAttribute("tenantId", tenant.id());
+  public String showSuccessPage(@PathParam("tenantId") TenantIdentifier tenantId, Model model) {
+    Tenant tenant = tenantService.get(tenantId);
+    model.addAttribute("tenantId", tenant.identifierValue());
     return "registration-success";
   }
 
@@ -39,9 +44,9 @@ public class UserController {
   public String processRegistration(
       @RequestParam String email,
       @RequestParam String password,
-      @ModelAttribute("tenantId") String tenantId,
+      @ModelAttribute("tenantId") TenantIdentifier tenantId,
       Model model) {
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     User existingUser = userService.findBy(tenant, email);
     if (existingUser.exists()) {
       log.warn("email already exists: " + email);

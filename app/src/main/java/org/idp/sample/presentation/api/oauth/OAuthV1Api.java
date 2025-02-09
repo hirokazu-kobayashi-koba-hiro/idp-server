@@ -4,9 +4,11 @@ import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.idp.sample.application.service.TenantService;
+import org.idp.sample.application.service.user.UserService;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.presentation.api.ParameterTransformable;
-import org.idp.sample.presentation.api.Tenant;
-import org.idp.sample.user.UserService;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.OAuthApi;
 import org.idp.server.basic.date.SystemDateTime;
@@ -34,19 +36,24 @@ public class OAuthV1Api implements OAuthRequestDelegate, ParameterTransformable 
   HttpSession httpSession;
   OAuthApi oAuthApi;
   UserService userService;
+  TenantService tenantService;
 
   public OAuthV1Api(
-      IdpServerApplication idpServerApplication, HttpSession httpSession, UserService userService) {
+      IdpServerApplication idpServerApplication,
+      HttpSession httpSession,
+      UserService userService,
+      TenantService tenantService) {
     this.oAuthApi = idpServerApplication.oAuthApi();
     oAuthApi.setOAuthRequestDelegate(this);
     this.httpSession = httpSession;
     this.userService = userService;
+    this.tenantService = tenantService;
   }
 
   @GetMapping("/{id}/view-data")
   public ResponseEntity<?> getViewData(
-      @PathVariable("tenant-id") String tenantId, @PathVariable("id") String id) {
-    Tenant tenant = Tenant.of(tenantId);
+      @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
+    Tenant tenant = tenantService.get(tenantId);
     OAuthViewDataRequest oAuthViewDataRequest = new OAuthViewDataRequest(id, tenant.issuer());
 
     OAuthViewDataResponse viewDataResponse = oAuthApi.getViewData(oAuthViewDataRequest);
@@ -59,11 +66,11 @@ public class OAuthV1Api implements OAuthRequestDelegate, ParameterTransformable 
   // TODO
   @PostMapping("/{id}/signup")
   public ResponseEntity<?> signup(
-      @PathVariable("tenant-id") String tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") String id,
       @Validated @RequestBody PasswordAuthenticationRequest passwordAuthenticationRequest) {
 
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     OAuthSession session =
         (OAuthSession) httpSession.getAttribute(passwordAuthenticationRequest.sessionKey());
     User existingUser = userService.findBy(tenant, passwordAuthenticationRequest.username());
@@ -108,11 +115,11 @@ public class OAuthV1Api implements OAuthRequestDelegate, ParameterTransformable 
 
   @PostMapping("/{id}/authorize")
   public ResponseEntity<?> authorize(
-      @PathVariable("tenant-id") String tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") String id,
       @Validated @RequestBody PasswordAuthenticationRequest passwordAuthenticationRequest) {
 
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     OAuthSession session =
         (OAuthSession) httpSession.getAttribute(passwordAuthenticationRequest.sessionKey());
     UserInteraction userInteraction =
@@ -147,8 +154,8 @@ public class OAuthV1Api implements OAuthRequestDelegate, ParameterTransformable 
 
   @PostMapping("/{id}/deny")
   public ResponseEntity<?> deny(
-      @PathVariable("tenant-id") String tenantId, @PathVariable("id") String id) {
-    Tenant tenant = Tenant.of(tenantId);
+      @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
+    Tenant tenant = tenantService.get(tenantId);
     OAuthDenyRequest denyRequest =
         new OAuthDenyRequest(id, tenant.issuer(), OAuthDenyReason.access_denied);
 

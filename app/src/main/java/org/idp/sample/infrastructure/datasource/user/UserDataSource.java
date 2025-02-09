@@ -1,8 +1,9 @@
-package org.idp.sample.user;
+package org.idp.sample.infrastructure.datasource.user;
 
 import java.util.List;
 import java.util.Objects;
-import org.idp.sample.presentation.api.Tenant;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.user.UserRepository;
 import org.idp.server.oauth.identity.User;
 import org.springframework.stereotype.Repository;
 
@@ -40,7 +41,7 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public User findBy(Tenant tenant, String email) {
-    User user = mapper.selectBy(tenant.id(), email);
+    User user = mapper.selectBy(tenant, email);
     if (Objects.isNull(user)) {
       return new User();
     }
@@ -49,7 +50,7 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public List<User> findList(Tenant tenant, int limit, int offset) {
-    List<User> userList = mapper.selectList(tenant.id(), limit, offset);
+    List<User> userList = mapper.selectList(tenant, limit, offset);
     if (Objects.isNull(userList)) {
       return List.of();
     }

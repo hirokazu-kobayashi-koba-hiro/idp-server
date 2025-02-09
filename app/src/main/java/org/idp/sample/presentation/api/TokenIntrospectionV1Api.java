@@ -1,6 +1,9 @@
 package org.idp.sample.presentation.api;
 
 import java.util.Map;
+import org.idp.sample.application.service.TenantService;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.TokenIntrospectionApi;
 import org.idp.server.handler.tokenintrospection.io.TokenIntrospectionRequest;
@@ -15,17 +18,20 @@ import org.springframework.web.bind.annotation.*;
 public class TokenIntrospectionV1Api implements ParameterTransformable {
 
   TokenIntrospectionApi tokenIntrospectionApi;
+  TenantService tenantService;
 
-  public TokenIntrospectionV1Api(IdpServerApplication idpServerApplication) {
+  public TokenIntrospectionV1Api(
+      IdpServerApplication idpServerApplication, TenantService tenantService) {
     this.tokenIntrospectionApi = idpServerApplication.tokenIntrospectionApi();
+    this.tenantService = tenantService;
   }
 
   @PostMapping
   public ResponseEntity<?> request(
       @RequestBody(required = false) MultiValueMap<String, String> body,
-      @PathVariable("tenant-id") String tenantId) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId) {
     Map<String, String[]> request = transform(body);
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     TokenIntrospectionRequest tokenIntrospectionRequest =
         new TokenIntrospectionRequest(request, tenant.issuer());
     TokenIntrospectionResponse response = tokenIntrospectionApi.inspect(tokenIntrospectionRequest);

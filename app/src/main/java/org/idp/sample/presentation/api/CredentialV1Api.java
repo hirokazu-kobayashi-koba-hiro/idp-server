@@ -2,6 +2,9 @@ package org.idp.sample.presentation.api;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.sample.application.service.TenantService;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.CredentialApi;
 import org.idp.server.basic.vc.Credential;
@@ -21,19 +24,21 @@ import org.springframework.web.bind.annotation.*;
 public class CredentialV1Api implements ParameterTransformable, VerifiableCredentialDelegate {
 
   CredentialApi credentialApi;
+  TenantService tenantService;
 
-  public CredentialV1Api(IdpServerApplication idpServerApplication) {
+  public CredentialV1Api(IdpServerApplication idpServerApplication, TenantService tenantService) {
     this.credentialApi = idpServerApplication.credentialApi();
     credentialApi.setDelegate(this);
+    this.tenantService = tenantService;
   }
 
   @PostMapping
   public ResponseEntity<?> post(
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") String tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestBody(required = false) Map<String, Object> params) {
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     CredentialRequest credentialRequest =
         new CredentialRequest(authorizationHeader, params, tenant.issuer());
     credentialRequest.setClientCert(clientCert);
@@ -48,9 +53,9 @@ public class CredentialV1Api implements ParameterTransformable, VerifiableCreden
   public ResponseEntity<?> requestBatch(
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") String tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestBody(required = false) Map<String, Object> params) {
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     BatchCredentialRequest request =
         new BatchCredentialRequest(authorizationHeader, params, tenant.issuer());
     request.setClientCert(clientCert);
@@ -65,9 +70,9 @@ public class CredentialV1Api implements ParameterTransformable, VerifiableCreden
   public ResponseEntity<?> requestDeferred(
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") String tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestBody(required = false) Map<String, Object> params) {
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     DeferredCredentialRequest request =
         new DeferredCredentialRequest(authorizationHeader, params, tenant.issuer());
     request.setClientCert(clientCert);

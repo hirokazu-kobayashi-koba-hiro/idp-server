@@ -1,7 +1,10 @@
 package org.idp.sample.presentation.api;
 
 import java.util.Map;
-import org.idp.sample.user.UserService;
+import org.idp.sample.application.service.TenantService;
+import org.idp.sample.application.service.user.UserService;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.CibaApi;
 import org.idp.server.ciba.CibaRequestDelegate;
@@ -23,10 +26,15 @@ public class CibaV1Api implements CibaRequestDelegate, ParameterTransformable {
 
   CibaApi cibaApi;
   UserService userService;
+  TenantService tenantService;
 
-  public CibaV1Api(IdpServerApplication idpServerApplication, UserService userService) {
+  public CibaV1Api(
+      IdpServerApplication idpServerApplication,
+      UserService userService,
+      TenantService tenantService) {
     this.cibaApi = idpServerApplication.cibaApi();
     this.userService = userService;
+    this.tenantService = tenantService;
   }
 
   @PostMapping
@@ -34,9 +42,9 @@ public class CibaV1Api implements CibaRequestDelegate, ParameterTransformable {
       @RequestBody(required = false) MultiValueMap<String, String> body,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") String tenantId) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId) {
     Map<String, String[]> params = transform(body);
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     CibaRequest cibaRequest = new CibaRequest(authorizationHeader, params, tenant.issuer());
     cibaRequest.setClientCert(clientCert);
     CibaRequestResponse response = cibaApi.request(cibaRequest, this);
@@ -50,8 +58,8 @@ public class CibaV1Api implements CibaRequestDelegate, ParameterTransformable {
   public ResponseEntity<?> complete(
       @RequestParam("auth_req_id") String authReqId,
       @RequestParam("action") String action,
-      @PathVariable("tenant-id") String tenantId) {
-    Tenant tenant = Tenant.of(tenantId);
+      @PathVariable("tenant-id") TenantIdentifier tenantId) {
+    Tenant tenant = tenantService.get(tenantId);
     if (action.equals("allow")) {
       CibaAuthorizeRequest cibaAuthorizeRequest =
           new CibaAuthorizeRequest(authReqId, tenant.issuer());

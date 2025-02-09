@@ -3,7 +3,10 @@ package org.idp.sample.presentation.api;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Map;
-import org.idp.sample.user.UserService;
+import org.idp.sample.application.service.TenantService;
+import org.idp.sample.application.service.user.UserService;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.OAuthApi;
 import org.idp.server.basic.date.SystemDateTime;
@@ -30,22 +33,27 @@ public class OAuthDebugV1Api implements OAuthRequestDelegate, ParameterTransform
 
   OAuthApi oAuthApi;
   UserService userService;
+  TenantService tenantService;
   HttpSession httpSession;
 
   public OAuthDebugV1Api(
-      IdpServerApplication idpServerApplication, UserService userService, HttpSession httpSession) {
+      IdpServerApplication idpServerApplication,
+      UserService userService,
+      TenantService tenantService,
+      HttpSession httpSession) {
     this.oAuthApi = idpServerApplication.oAuthApi();
     oAuthApi.setOAuthRequestDelegate(this);
     this.userService = userService;
+    this.tenantService = tenantService;
     this.httpSession = httpSession;
   }
 
   @GetMapping
   public ResponseEntity<?> get(
       @RequestParam(required = false) MultiValueMap<String, String> request,
-      @PathVariable("tenant-id") String tenantId) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId) {
     Map<String, String[]> params = transform(request);
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     OAuthRequest oAuthRequest = new OAuthRequest(params, tenant.issuer());
     OAuthRequestResponse response = oAuthApi.request(oAuthRequest);
     switch (response.status()) {
@@ -69,9 +77,9 @@ public class OAuthDebugV1Api implements OAuthRequestDelegate, ParameterTransform
   @PostMapping("/{id}/authorize")
   public ResponseEntity<?> authorize(
       @PathVariable String id,
-      @PathVariable("tenant-id") String tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestBody MultiValueMap<String, String> request) {
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     User user = userService.get(request.getFirst("user_id"));
     Authentication authentication =
         new Authentication()
@@ -111,8 +119,8 @@ public class OAuthDebugV1Api implements OAuthRequestDelegate, ParameterTransform
 
   @PostMapping("/{id}/deny")
   public ResponseEntity<?> deny(
-      @PathVariable String id, @PathVariable("tenant-id") String tenantId) {
-    Tenant tenant = Tenant.of(tenantId);
+      @PathVariable String id, @PathVariable("tenant-id") TenantIdentifier tenantId) {
+    Tenant tenant = tenantService.get(tenantId);
     OAuthDenyRequest denyRequest =
         new OAuthDenyRequest(id, tenant.issuer(), OAuthDenyReason.access_denied);
     OAuthDenyResponse oAuthDenyResponse = oAuthApi.deny(denyRequest);

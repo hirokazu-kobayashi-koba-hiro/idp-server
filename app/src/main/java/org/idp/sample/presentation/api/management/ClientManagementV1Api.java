@@ -1,7 +1,9 @@
 package org.idp.sample.presentation.api.management;
 
+import org.idp.sample.application.service.TenantService;
+import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.presentation.api.ParameterTransformable;
-import org.idp.sample.presentation.api.Tenant;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.ClientManagementApi;
 import org.idp.server.handler.configuration.io.ClientConfigurationManagementListResponse;
@@ -18,15 +20,19 @@ import org.springframework.web.bind.annotation.*;
 public class ClientManagementV1Api implements ParameterTransformable {
 
   ClientManagementApi clientManagementApi;
+  TenantService tenantService;
 
-  public ClientManagementV1Api(IdpServerApplication idpServerApplication) {
+  public ClientManagementV1Api(
+      IdpServerApplication idpServerApplication, TenantService tenantService) {
     this.clientManagementApi = idpServerApplication.clientManagementApi();
+    this.tenantService = tenantService;
   }
 
   @PostMapping
   public ResponseEntity<?> request(
-      @PathVariable("tenant-id") String tenantId, @RequestBody(required = false) String body) {
-    Tenant tenant = Tenant.of(tenantId);
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @RequestBody(required = false) String body) {
+    Tenant tenant = tenantService.get(tenantId);
     String client = clientManagementApi.register(body);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
@@ -35,10 +41,10 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
   @GetMapping
   public ResponseEntity<?> getList(
-      @PathVariable("tenant-id") String tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestParam(value = "limit", defaultValue = "20") String limitValue,
       @RequestParam(value = "offset", defaultValue = "0") String offsetValue) {
-    Tenant tenant = Tenant.of(tenantId);
+    Tenant tenant = tenantService.get(tenantId);
     TokenIssuer tokenIssuer = new TokenIssuer(tenant.issuer());
     ClientConfigurationManagementListResponse response =
         clientManagementApi.find(
@@ -52,8 +58,9 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
   @GetMapping("/{client-id}")
   public ResponseEntity<?> get(
-      @PathVariable("tenant-id") String tenantId, @PathVariable("client-id") String clientId) {
-    Tenant tenant = Tenant.of(tenantId);
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("client-id") String clientId) {
+    Tenant tenant = tenantService.get(tenantId);
     TokenIssuer tokenIssuer = new TokenIssuer(tenant.issuer());
     ClientConfigurationManagementResponse response =
         clientManagementApi.get(tokenIssuer, new ClientId(clientId));
