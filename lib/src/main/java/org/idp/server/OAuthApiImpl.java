@@ -71,6 +71,14 @@ public class OAuthApiImpl implements OAuthApi {
     return viewDataHandler.handle(request);
   }
 
+  @Override
+  public OAuthAuthenticationUpdateResponse updateAuthentication(
+      OAuthAuthenticationUpdateRequest request) {
+
+    // TODO
+    return new OAuthAuthenticationUpdateResponse();
+  }
+
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
     try {
       AuthorizationResponse response = authAuthorizeHandler.handle(request, oAuthRequestDelegate);

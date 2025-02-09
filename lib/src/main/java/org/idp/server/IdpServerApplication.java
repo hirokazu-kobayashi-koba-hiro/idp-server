@@ -89,11 +89,13 @@ public class IdpServerApplication {
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
     OAuthViewDataHandler oAuthViewDataHandler =
-            new OAuthViewDataHandler(
-                    authorizationRequestMemoryDataSource,
-                    serverConfigurationMemoryDataSource,
-                    clientConfigurationMemoryDataSource);
-    this.oAuthApi = new OAuthApiImpl(oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler, oAuthViewDataHandler);
+        new OAuthViewDataHandler(
+            authorizationRequestMemoryDataSource,
+            serverConfigurationMemoryDataSource,
+            clientConfigurationMemoryDataSource);
+    this.oAuthApi =
+        new OAuthApiImpl(
+            oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler, oAuthViewDataHandler);
 
     TokenIntrospectionHandler tokenIntrospectionHandler =
         new TokenIntrospectionHandler(oAuthTokenMemoryDataSource);
@@ -200,13 +202,14 @@ public class IdpServerApplication {
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
     OAuthViewDataHandler oAuthViewDataHandler =
-            new OAuthViewDataHandler(
-                    authorizationRequestDataSource,
-                    serverConfigurationMemoryDataSource,
-                    clientConfigurationMemoryDataSource);
+        new OAuthViewDataHandler(
+            authorizationRequestDataSource,
+            serverConfigurationMemoryDataSource,
+            clientConfigurationMemoryDataSource);
     this.oAuthApi =
         TransactionInterceptor.createProxy(
-            new OAuthApiImpl(oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler, oAuthViewDataHandler),
+            new OAuthApiImpl(
+                oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler, oAuthViewDataHandler),
             OAuthApi.class);
 
     TokenIntrospectionHandler tokenIntrospectionHandler =

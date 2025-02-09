@@ -1,11 +1,11 @@
 #!/bin/zsh
 
 #server
-curl -X POST "http://localhost:8080/123/api/v1/server/configurations" \
+curl -X POST "http://localhost:8080/123/api/v1/management/tenants" \
 -H "Content-Type:application/json" \
 --data @./app/src/main/resources/config/sample/server.json
 
-curl -X POST "http://localhost:8080/999/api/v1/server/configurations" \
+curl -X POST "http://localhost:8080/999/api/v1/management/tenants" \
 -H "Content-Type:application/json" \
 --data @./app/src/main/resources/config/sample/unsupportedServer.json
 

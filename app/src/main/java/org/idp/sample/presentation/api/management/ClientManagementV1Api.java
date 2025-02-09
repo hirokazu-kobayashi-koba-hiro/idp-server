@@ -1,5 +1,7 @@
-package org.idp.sample.presentation.api;
+package org.idp.sample.presentation.api.management;
 
+import org.idp.sample.presentation.api.ParameterTransformable;
+import org.idp.sample.presentation.api.Tenant;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.ClientManagementApi;
 import org.idp.server.handler.configuration.io.ClientConfigurationManagementListResponse;

@@ -2,7 +2,7 @@ package org.idp.sample.presentation.api.oauth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class AuthorizeRequest {
+public class PasswordAuthenticationRequest {
   @JsonProperty("session_key")
   String sessionKey;
 

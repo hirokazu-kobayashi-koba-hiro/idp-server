@@ -1,6 +1,7 @@
 package org.idp.server.handler.oauth.io;
 
 import java.util.Map;
+import java.util.Objects;
 import org.idp.server.oauth.response.AuthorizationErrorResponse;
 import org.idp.server.oauth.response.AuthorizationResponse;
 
@@ -61,8 +62,11 @@ public class OAuthAuthorizeResponse {
   }
 
   public Map<String, Object> contents() {
-    if (status.isError()) {
+    if (status.isError() && Objects.nonNull(errorResponse)) {
       return Map.of("error", error(), "error_description", errorDescription());
+    }
+    if (status.isError()) {
+      return Map.of("error", error, "error_description", errorDescription);
     }
     return Map.of("redirect_uri", redirectUriValue());
   }

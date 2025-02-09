@@ -14,7 +14,8 @@ public class ServerManagementApiImpl implements ServerManagementApi {
   }
 
   // TODO
-  public void register(String json) {
+  public String register(String json) {
     serverConfigurationHandler.register(json);
+    return json;
   }
 }

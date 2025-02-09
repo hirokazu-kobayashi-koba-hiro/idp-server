@@ -44,7 +44,8 @@ public class OAuthController implements ParameterTransformable {
     switch (response.status()) {
       case OK -> {
         log.info("sessionEnable: false");
-        return new RedirectView(String.format(
+        return new RedirectView(
+            String.format(
                 "/signin/index.html?id=%s&session_key=%s&tenant_id=%s",
                 response.authorizationRequestId(), response.sessionKey(), tenant.id()));
       }
@@ -57,15 +58,9 @@ public class OAuthController implements ParameterTransformable {
       }
       case OK_ACCOUNT_CREATION -> {
         log.info("request creation account");
-        model.addAttribute("sessionEnable", false);
-        model.addAttribute("sessionKey", response.sessionKey());
-        model.addAttribute("id", response.authorizationRequestId());
-        model.addAttribute("tenantId", tenant.id());
-        model.addAttribute("clientName", response.clientConfiguration().clientName());
-        model.addAttribute("scopes", response.scopeList());
         return new RedirectView(
             String.format(
-                "/signin/index.html?id=%s&session_key=%s&tenant_id=%s",
+                "/signup/index.html?id=%s&session_key=%s&tenant_id=%s",
                 response.authorizationRequestId(), response.sessionKey(), tenant.id()));
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {

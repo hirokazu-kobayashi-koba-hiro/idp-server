@@ -3,6 +3,7 @@ package org.idp.sample.presentation.api.oauth;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import org.idp.sample.presentation.api.ParameterTransformable;
 import org.idp.sample.presentation.api.Tenant;
 import org.idp.sample.user.UserService;
@@ -46,8 +47,7 @@ public class OAuthV1Api implements OAuthRequestDelegate, ParameterTransformable 
   public ResponseEntity<?> getViewData(
       @PathVariable("tenant-id") String tenantId, @PathVariable("id") String id) {
     Tenant tenant = Tenant.of(tenantId);
-    OAuthViewDataRequest oAuthViewDataRequest = new OAuthViewDataRequest(
-            id, tenant.issuer());
+    OAuthViewDataRequest oAuthViewDataRequest = new OAuthViewDataRequest(id, tenant.issuer());
 
     OAuthViewDataResponse viewDataResponse = oAuthApi.getViewData(oAuthViewDataRequest);
 
@@ -56,16 +56,71 @@ public class OAuthV1Api implements OAuthRequestDelegate, ParameterTransformable 
     return new ResponseEntity<>(viewDataResponse.contents(), httpHeaders, HttpStatus.OK);
   }
 
+  // TODO
+  @PostMapping("/{id}/signup")
+  public ResponseEntity<?> signup(
+      @PathVariable("tenant-id") String tenantId,
+      @PathVariable("id") String id,
+      @Validated @RequestBody PasswordAuthenticationRequest passwordAuthenticationRequest) {
+
+    Tenant tenant = Tenant.of(tenantId);
+    OAuthSession session =
+        (OAuthSession) httpSession.getAttribute(passwordAuthenticationRequest.sessionKey());
+    User existingUser = userService.findBy(tenant, passwordAuthenticationRequest.username());
+    if (existingUser.exists()) {
+      return new ResponseEntity<>(HttpStatus.CONFLICT);
+    }
+    User user = new User();
+    user.setSub(UUID.randomUUID().toString());
+    user.setEmail(passwordAuthenticationRequest.username());
+    user.setPassword(passwordAuthenticationRequest.password());
+    userService.register(tenant, user);
+
+    UserInteraction userInteraction =
+        userInteraction(
+            tenant,
+            passwordAuthenticationRequest.username(),
+            passwordAuthenticationRequest.password(),
+            session);
+    OAuthAuthorizeRequest authAuthorizeRequest =
+        new OAuthAuthorizeRequest(
+            id, tenant.issuer(), userInteraction.user(), userInteraction.authentication());
+    httpSession.setAttribute("id", httpSession.getId());
+
+    OAuthAuthorizeResponse authAuthorizeResponse = oAuthApi.authorize(authAuthorizeRequest);
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+
+    switch (authAuthorizeResponse.status()) {
+      case OK, REDIRECABLE_BAD_REQUEST -> {
+        return new ResponseEntity<>(authAuthorizeResponse.contents(), httpHeaders, HttpStatus.OK);
+      }
+      case BAD_REQUEST -> {
+        return new ResponseEntity<>(
+            authAuthorizeResponse.contents(), httpHeaders, HttpStatus.BAD_REQUEST);
+      }
+      default -> {
+        return new ResponseEntity<>(
+            authAuthorizeResponse.contents(), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    }
+  }
+
   @PostMapping("/{id}/authorize")
   public ResponseEntity<?> authorize(
       @PathVariable("tenant-id") String tenantId,
       @PathVariable("id") String id,
-      @Validated @RequestBody AuthorizeRequest authorizeRequest) {
+      @Validated @RequestBody PasswordAuthenticationRequest passwordAuthenticationRequest) {
 
     Tenant tenant = Tenant.of(tenantId);
-    OAuthSession session = (OAuthSession) httpSession.getAttribute(authorizeRequest.sessionKey());
+    OAuthSession session =
+        (OAuthSession) httpSession.getAttribute(passwordAuthenticationRequest.sessionKey());
     UserInteraction userInteraction =
-        userInteraction(tenant, authorizeRequest.username(), authorizeRequest.password(), session);
+        userInteraction(
+            tenant,
+            passwordAuthenticationRequest.username(),
+            passwordAuthenticationRequest.password(),
+            session);
     OAuthAuthorizeRequest authAuthorizeRequest =
         new OAuthAuthorizeRequest(
             id, tenant.issuer(), userInteraction.user(), userInteraction.authentication());
