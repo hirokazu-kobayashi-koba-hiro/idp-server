@@ -4,10 +4,8 @@ import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.domain.model.tenant.TenantRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
 public class TenantService {
   TenantRepository tenantRepository;
 
@@ -17,5 +15,9 @@ public class TenantService {
 
   public Tenant get(TenantIdentifier tenantIdentifier) {
     return tenantRepository.get(tenantIdentifier);
+  }
+
+  public void register(Tenant tenant) {
+    tenantRepository.register(tenant);
   }
 }

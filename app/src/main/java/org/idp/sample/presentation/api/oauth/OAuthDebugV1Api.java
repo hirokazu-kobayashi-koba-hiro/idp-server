@@ -1,4 +1,4 @@
-package org.idp.sample.presentation.api;
+package org.idp.sample.presentation.api.oauth;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
@@ -7,6 +7,7 @@ import org.idp.sample.application.service.TenantService;
 import org.idp.sample.application.service.user.UserService;
 import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
+import org.idp.sample.presentation.api.ParameterTransformable;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.OAuthApi;
 import org.idp.server.basic.date.SystemDateTime;
