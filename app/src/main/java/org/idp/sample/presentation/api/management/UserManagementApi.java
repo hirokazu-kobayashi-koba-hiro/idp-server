@@ -1,4 +1,4 @@
-package org.idp.sample.presentation.api;
+package org.idp.sample.presentation.api.management;
 
 import java.util.List;
 import org.idp.sample.application.service.TenantService;

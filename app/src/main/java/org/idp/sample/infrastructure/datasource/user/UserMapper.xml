@@ -11,7 +11,7 @@
                                    custom_properties, credentials, password)
         VALUES (
                 #{user.sub},
-                #{tenant.id},
+                #{tenant.identifier.value},
                 #{user.name},
                 #{user.givenName},
                 #{user.familyName},
