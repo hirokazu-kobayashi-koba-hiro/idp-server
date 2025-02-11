@@ -5,9 +5,9 @@
   "publish": "summary",
   "server": {
     "login_hint": "123",
-    "issuer": "http://localhost:8080/123",
+    "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
     "jwks_uri": "http://host.docker.internal:8080/123/api/v1/jwks",
-    "authorization_endpoint": "http://localhost:8080/123/v1/authorizations",
+    "authorization_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations",
     "token_endpoint": "http://host.docker.internal:8080/123/api/v1/tokens",
     "userinfo_endpoint": "http://host.docker.internal:8080/123/api/v1/userinfo",
     "acr_values": "urn:mace:incommon:iap:silver"

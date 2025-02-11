@@ -5,7 +5,7 @@
 <mapper namespace="org.idp.sample.infrastructure.datasource.user.UserMapper">
 
     <insert id="insert">
-        INSERT INTO public."user" (id, tenant_id, name, given_name, family_name, middle_name, nickname,
+        INSERT INTO public.idp_user (id, tenant_id, name, given_name, family_name, middle_name, nickname,
                                    preferred_username, profile, picture, website, email, email_verified, gender,
                                    birthdate, zoneinfo, locale, phone_number, phone_number_verified, address,
                                    custom_properties, credentials, password)
@@ -86,7 +86,7 @@
                password,
                created_at,
                updated_at
-        FROM "user"
+        FROM idp_user
     </sql>
 
     <select id="select" resultMap="User">

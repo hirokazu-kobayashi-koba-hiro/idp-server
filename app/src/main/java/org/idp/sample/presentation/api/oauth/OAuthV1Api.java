@@ -2,6 +2,7 @@ package org.idp.sample.presentation.api.oauth;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.idp.sample.application.service.TenantService;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,6 +50,32 @@ public class OAuthV1Api implements OAuthRequestDelegate, ParameterTransformable 
     this.httpSession = httpSession;
     this.userService = userService;
     this.tenantService = tenantService;
+  }
+
+  @GetMapping
+  public ResponseEntity<?> get(
+          @RequestParam(required = false) MultiValueMap<String, String> request,
+          @PathVariable("tenant-id") TenantIdentifier tenantId) {
+    Map<String, String[]> params = transform(request);
+    Tenant tenant = tenantService.get(tenantId);
+    OAuthRequest oAuthRequest = new OAuthRequest(params, tenant.issuer());
+    OAuthRequestResponse response = oAuthApi.request(oAuthRequest);
+    switch (response.status()) {
+      case OK, OK_SESSION_ENABLE -> {
+        return new ResponseEntity<>(response.contents(), HttpStatus.OK);
+      }
+      case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("location", response.redirectUri());
+        return new ResponseEntity<>(httpHeaders, HttpStatus.FOUND);
+      }
+      case BAD_REQUEST -> {
+        return new ResponseEntity<>(response.contents(), HttpStatus.BAD_REQUEST);
+      }
+      default -> {
+        return new ResponseEntity<>(response.contents(), HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    }
   }
 
   @GetMapping("/{id}/view-data")

@@ -1,57 +1,57 @@
 export const serverConfig = {
-  issuer: "http://localhost:8080/123",
+  issuer: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
   authorizationEndpoint:
-    "http://localhost:8080/123/api/debug/v1/authorizations",
+    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations",
   authorizeEndpoint:
-    "http://localhost:8080/123/api/debug/v1/authorizations/{id}/authorize",
+    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/authorize",
   denyEndpoint:
-    "http://localhost:8080/123/api/debug/v1/authorizations/{id}/deny",
-  tokenEndpoint: "http://localhost:8080/123/api/v1/tokens",
+    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/deny",
+  tokenEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens",
   tokenIntrospectionEndpoint:
-    "http://localhost:8080/123/api/v1/tokens/introspection",
-  tokenRevocationEndpoint: "http://localhost:8080/123/api/v1/tokens/revocation",
-  userinfoEndpoint: "http://localhost:8080/123/api/v1/userinfo",
-  jwksEndpoint: "http://localhost:8080/123/api/v1/jwks",
+    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/introspection",
+  tokenRevocationEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/revocation",
+  userinfoEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/userinfo",
+  jwksEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/jwks",
   backchannelAuthenticationEndpoint:
-    "http://localhost:8080/123/api/v1/backchannel/authentications",
+    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications",
   backchannelAuthenticationAutomatedCompleteEndpoint:
-    "http://localhost:8080/123/api/v1/backchannel/authentications/automated-complete",
+    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications/automated-complete",
   discoveryEndpoint:
-    "http://localhost:8080/123/.well-known/openid-configuration",
-  credentialEndpoint: "http://localhost:8080/123/api/v1/credentials",
-  credentialBatchEndpoint: "http://localhost:8080/123/api/v1/credentials/batch-requests",
+    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration",
+  credentialEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials",
+  credentialBatchEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials/batch-requests",
   enabledSsr: false,
   ciba: {
-    loginHint: "001",
+    loginHint: "3ec055a8-8000-44a2-8677-e70ebff414e2",
     userCode: "successUserCode",
     bindingMessage: "999",
     invalidLoginHint: "invalid",
   },
   oauth: {
-    username: "001",
+    username: "ito.ichiro@gmail.com",
     password: "successUserCode",
   },
   acr: "urn:mace:incommon:iap:silver",
 };
 
 export const unsupportedServerConfig = {
-  issuer: "https://server.example.com/999",
+  issuer: "https://server.example.com/94d8598e-f238-4150-85c2-c4accf515784",
   authorizationEndpoint:
-    "http://localhost:8080/999/api/debug/v1/authorizations",
+    "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/authorizations",
   authorizeEndpoint:
-    "http://localhost:8080/999/api/debug/v1/authorizations/{id}/authorize",
-  tokenEndpoint: "http://localhost:8080/999/api/v1/tokens",
+    "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/authorizations/{id}/authorize",
+  tokenEndpoint: "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens",
   tokenIntrospectionEndpoint:
-    "http://localhost:8080/999/api/v1/tokens/introspection",
-  tokenRevocationEndpoint: "http://localhost:8080/999/api/v1/tokens/revocation",
-  userinfoEndpoint: "http://localhost:8080/999/api/v1/userinfo",
-  jwksEndpoint: "http://localhost:8080/999/api/v1/jwks",
+    "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/introspection",
+  tokenRevocationEndpoint: "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/revocation",
+  userinfoEndpoint: "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/userinfo",
+  jwksEndpoint: "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/jwks",
   backchannelAuthenticationEndpoint:
-    "http://localhost:8080/999/api/v1/backchannel/authentications",
+    "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications",
   backchannelAuthenticationAutomatedCompleteEndpoint:
-    "http://localhost:8080/999/api/v1/backchannel/authentications/automated-complete",
+    "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications/automated-complete",
   discoveryEndpoint:
-    "http://localhost:8080/999/.well-known/openid-configuration",
+    "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/.well-known/openid-configuration",
   enabledSsr: false,
   ciba: {
     loginHint: "001",

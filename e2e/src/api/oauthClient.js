@@ -215,7 +215,7 @@ export const getAuthorizations = async ({
 
 export const authorize = async ({ endpoint, id, body }) => {
   const url = endpoint.replace("{id}", id);
-  return await post({
+  return await postWithJson({
     url,
     body,
   });
@@ -223,7 +223,7 @@ export const authorize = async ({ endpoint, id, body }) => {
 
 export const deny = async ({ endpoint, id }) => {
   const url = endpoint.replace("{id}", id);
-  return await post({
+  return await postWithJson({
     url,
   });
 };
