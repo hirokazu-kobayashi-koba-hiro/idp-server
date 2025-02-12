@@ -1,7 +1,7 @@
 package org.idp.sample.presentation.api.management;
 
 import java.util.List;
-import org.idp.sample.application.service.TenantService;
+import org.idp.sample.application.service.tenant.TenantService;
 import org.idp.sample.application.service.user.UserService;
 import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;

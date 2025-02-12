@@ -1,8 +1,8 @@
 CREATE TABLE organization
 (
     id          varchar(256) PRIMARY KEY,
-    name        VARCHAR(255) NOT NULL,
-    description TEXT,
+    name        varchar(256) NOT NULL,
+    description text,
     created_at  timestamp default now() NOT NULL,
     updated_at  timestamp default now() NOT NULL
 );

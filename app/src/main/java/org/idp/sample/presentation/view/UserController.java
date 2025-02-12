@@ -2,7 +2,7 @@ package org.idp.sample.presentation.view;
 
 import jakarta.websocket.server.PathParam;
 import java.util.UUID;
-import org.idp.sample.application.service.TenantService;
+import org.idp.sample.application.service.tenant.TenantService;
 import org.idp.sample.application.service.user.UserService;
 import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;

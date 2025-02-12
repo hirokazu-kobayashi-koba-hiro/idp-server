@@ -2,7 +2,7 @@ package org.idp.sample.presentation.api;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.sample.application.service.TenantService;
+import org.idp.sample.application.service.tenant.TenantService;
 import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.server.IdpServerApplication;

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.idp.sample.infrastructure.datasource.organization.OrganizationMapper">
+
+    <insert id="insert">
+        INSERT INTO organization(id, name, description)
+        VALUES
+            (
+              #{organization.identifier.value},
+             #{organization.name.value}
+             #{organization.description.value}
+            );
+    </insert>
+
+    <resultMap id="Organization" type="org.idp.sample.domain.model.organization.Organization">
+        <id property="identifier.value" column="id"/>
+        <result property="name.value" column="name"/>
+    </resultMap>
+
+    <sql id="select">
+        SELECT
+            id,
+            name,
+            type,
+            issuer
+        FROM tenant
+    </sql>
+
+    <select id="selectBy" resultMap="Organization">
+        <include refid="select" />
+        WHERE
+         id = #{tenantIdentifier.value}
+    </select>
+
+
+</mapper>
