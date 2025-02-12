@@ -31,7 +31,7 @@ export const requestAuthorizations = async ({
   presentationDefinition,
   action = "authorize",
   user = {
-    "user_id": "001",
+    "username": "ito.ichiro@gmail.com",
     "password": "successUserCode",
   },
 }) => {
