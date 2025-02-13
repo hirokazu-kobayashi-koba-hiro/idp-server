@@ -34,4 +34,12 @@ public class Tenant {
   public String issuer() {
     return issuer;
   }
+
+  public boolean isAdmin() {
+    return type == TenantType.ADMIN;
+  }
+
+  public boolean isPublic() {
+    return type == TenantType.PUBLIC;
+  }
 }

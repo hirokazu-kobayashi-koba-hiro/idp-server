@@ -8,6 +8,8 @@ public class Organization {
   OrganizationDescription description;
   AssignedTenants assignedTenants;
 
+  public Organization() {}
+
   public Organization(
       OrganizationIdentifier identifier,
       OrganizationName name,
@@ -17,6 +19,22 @@ public class Organization {
     this.name = name;
     this.description = description;
     this.assignedTenants = assignedTenants;
+  }
+
+  public OrganizationIdentifier identifier() {
+    return identifier;
+  }
+
+  public OrganizationName name() {
+    return name;
+  }
+
+  public OrganizationDescription description() {
+    return description;
+  }
+
+  public AssignedTenants assignedTenants() {
+    return assignedTenants;
   }
 
   public Organization assign(Tenant tenant) {
