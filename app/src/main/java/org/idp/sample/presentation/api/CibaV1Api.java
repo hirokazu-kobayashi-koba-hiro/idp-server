@@ -1,19 +1,9 @@
 package org.idp.sample.presentation.api;
 
 import java.util.Map;
-import org.idp.sample.application.service.TenantService;
-import org.idp.sample.application.service.user.UserService;
-import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.application.service.CibaFlowService;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
-import org.idp.server.IdpServerApplication;
-import org.idp.server.api.CibaApi;
-import org.idp.server.ciba.CibaRequestDelegate;
-import org.idp.server.ciba.UserCriteria;
-import org.idp.server.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.handler.ciba.io.*;
-import org.idp.server.oauth.identity.User;
-import org.idp.server.type.ciba.UserCode;
-import org.idp.server.type.oauth.TokenIssuer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,19 +12,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("{tenant-id}/api/v1/backchannel/authentications")
-public class CibaV1Api implements CibaRequestDelegate, ParameterTransformable {
+public class CibaV1Api implements ParameterTransformable {
 
-  CibaApi cibaApi;
-  UserService userService;
-  TenantService tenantService;
+  CibaFlowService cibaFlowService;
 
-  public CibaV1Api(
-      IdpServerApplication idpServerApplication,
-      UserService userService,
-      TenantService tenantService) {
-    this.cibaApi = idpServerApplication.cibaApi();
-    this.userService = userService;
-    this.tenantService = tenantService;
+  public CibaV1Api(CibaFlowService cibaFlowService) {
+    this.cibaFlowService = cibaFlowService;
   }
 
   @PostMapping
@@ -43,11 +26,12 @@ public class CibaV1Api implements CibaRequestDelegate, ParameterTransformable {
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @PathVariable("tenant-id") TenantIdentifier tenantId) {
+
     Map<String, String[]> params = transform(body);
-    Tenant tenant = tenantService.get(tenantId);
-    CibaRequest cibaRequest = new CibaRequest(authorizationHeader, params, tenant.issuer());
-    cibaRequest.setClientCert(clientCert);
-    CibaRequestResponse response = cibaApi.request(cibaRequest, this);
+
+    CibaRequestResponse response =
+        cibaFlowService.request(tenantId, params, authorizationHeader, clientCert);
+
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", response.contentTypeValue());
     return new ResponseEntity<>(
@@ -59,32 +43,14 @@ public class CibaV1Api implements CibaRequestDelegate, ParameterTransformable {
       @RequestParam("auth_req_id") String authReqId,
       @RequestParam("action") String action,
       @PathVariable("tenant-id") TenantIdentifier tenantId) {
-    Tenant tenant = tenantService.get(tenantId);
+
     if (action.equals("allow")) {
-      CibaAuthorizeRequest cibaAuthorizeRequest =
-          new CibaAuthorizeRequest(authReqId, tenant.issuer());
-      CibaAuthorizeResponse authorizeResponse = cibaApi.authorize(cibaAuthorizeRequest);
+
+      CibaAuthorizeResponse authorizeResponse = cibaFlowService.authorize(tenantId, authReqId);
       return new ResponseEntity<>(HttpStatus.valueOf(authorizeResponse.statusCode()));
     }
-    CibaDenyRequest cibaDenyRequest = new CibaDenyRequest(authReqId, tenant.issuer());
-    CibaDenyResponse cibaDenyResponse = cibaApi.deny(cibaDenyRequest);
+
+    CibaDenyResponse cibaDenyResponse = cibaFlowService.deny(tenantId, authReqId);
     return new ResponseEntity<>(HttpStatus.valueOf(cibaDenyResponse.statusCode()));
   }
-
-  @Override
-  public User find(TokenIssuer tokenIssuer, UserCriteria criteria) {
-    if (criteria.hasLoginHint()) {
-      return userService.find(criteria.loginHint().value());
-    }
-    return User.notFound();
-  }
-
-  @Override
-  public boolean authenticate(TokenIssuer tokenIssuer, User user, UserCode userCode) {
-    return userService.authenticate(user, userCode.value());
-  }
-
-  @Override
-  public void notify(
-      TokenIssuer tokenIssuer, User user, BackchannelAuthenticationRequest request) {}
 }

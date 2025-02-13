@@ -1,4 +1,4 @@
-package org.idp.sample.application.service;
+package org.idp.sample.application.service.tenant;
 
 import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;

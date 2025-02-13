@@ -1,10 +1,7 @@
 package org.idp.sample.presentation.api;
 
-import org.idp.sample.application.service.TenantService;
-import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.application.service.OidcMetaDataService;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
-import org.idp.server.IdpServerApplication;
-import org.idp.server.api.DiscoveryApi;
 import org.idp.server.handler.discovery.io.ServerConfigurationRequestResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,19 +14,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("{tenant-id}/.well-known/openid-configuration")
 public class OpenIdDiscoveryV1Api {
 
-  DiscoveryApi discoveryApi;
-  TenantService tenantService;
+  OidcMetaDataService oidcMetaDataService;
 
-  public OpenIdDiscoveryV1Api(
-      IdpServerApplication idpServerApplication, TenantService tenantService) {
-    this.discoveryApi = idpServerApplication.discoveryApi();
-    this.tenantService = tenantService;
+  public OpenIdDiscoveryV1Api(OidcMetaDataService oidcMetaDataService) {
+    this.oidcMetaDataService = oidcMetaDataService;
   }
 
   @GetMapping
   public ResponseEntity<?> request(@PathVariable("tenant-id") TenantIdentifier tenantId) {
-    Tenant tenant = tenantService.get(tenantId);
-    ServerConfigurationRequestResponse response = discoveryApi.getConfiguration(tenant.issuer());
+
+    ServerConfigurationRequestResponse response = oidcMetaDataService.getConfiguration(tenantId);
     return new ResponseEntity<>(response.content(), HttpStatus.valueOf(response.statusCode()));
   }
 }
