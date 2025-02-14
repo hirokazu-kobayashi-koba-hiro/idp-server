@@ -7,6 +7,8 @@ import org.idp.server.handler.oauth.io.*;
 import org.idp.server.oauth.OAuthRequestContext;
 import org.idp.server.oauth.OAuthRequestDelegate;
 import org.idp.server.oauth.OAuthSession;
+import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.oauth.response.AuthorizationResponse;
 import org.idp.server.type.oauth.TokenIssuer;
 
@@ -19,20 +21,20 @@ public class OAuthApiImpl implements OAuthApi {
   OAuthAuthorizeErrorHandler authAuthorizeErrorHandler;
   OAuthDenyHandler oAuthDenyHandler;
   OAuthDenyErrorHandler denyErrorHandler;
-  OAuthViewDataHandler viewDataHandler;
+  OAuthHandler oauthHandler;
   OAuthRequestDelegate oAuthRequestDelegate;
 
   OAuthApiImpl(
       OAuthRequestHandler requestHandler,
       OAuthAuthorizeHandler authAuthorizeHandler,
       OAuthDenyHandler oAuthDenyHandler,
-      OAuthViewDataHandler viewDataHandler) {
+      OAuthHandler oauthHandler) {
     this.requestHandler = requestHandler;
     this.oAuthRequestErrorHandler = new OAuthRequestErrorHandler();
     this.authAuthorizeHandler = authAuthorizeHandler;
     this.authAuthorizeErrorHandler = new OAuthAuthorizeErrorHandler();
     this.oAuthDenyHandler = oAuthDenyHandler;
-    this.viewDataHandler = viewDataHandler;
+    this.oauthHandler = oauthHandler;
     this.denyErrorHandler = new OAuthDenyErrorHandler();
   }
 
@@ -68,7 +70,11 @@ public class OAuthApiImpl implements OAuthApi {
   }
 
   public OAuthViewDataResponse getViewData(OAuthViewDataRequest request) {
-    return viewDataHandler.handle(request);
+    return oauthHandler.handleViewData(request, oAuthRequestDelegate);
+  }
+
+  public AuthorizationRequest get(AuthorizationRequestIdentifier identifier) {
+    return oauthHandler.handleGettingData(identifier);
   }
 
   @Override

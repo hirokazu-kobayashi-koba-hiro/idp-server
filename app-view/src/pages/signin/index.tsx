@@ -13,7 +13,7 @@ import {
   TextField,
   Typography
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
 import { backendUrl } from "@/pages/_app";
@@ -30,18 +30,21 @@ export default function SignIn() {
     queryKey: ["fetchViewData"],
     queryFn: async () => {
       const { id, tenant_id: tenantId } = router.query;
-      const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/view-data`)
+      const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/view-data`, {
+        credentials: "include",
+      })
       if (!response.ok) {
         console.error(response)
         throw new Error(response.status.toString());
       }
       return await response.json()
-    }
+    },
   })
 
   const handleCancel = async () => {
     const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/deny`, {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json"
       },
@@ -56,6 +59,7 @@ export default function SignIn() {
   const handleApprove = async () => {
     const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/authorize`, {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json"
       },
@@ -72,8 +76,35 @@ export default function SignIn() {
     }
   }
 
+  useEffect(() => {
+    const execute = async () => {
+      const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/authorize-with-session`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+        })
+      if (!response.ok) {
+        console.error(response);
+        return;
+      }
+      const body = await response.json()
+      console.log(response.status, body)
+      if (body.redirect_uri) {
+        window.location.href = body.redirect_uri;
+      }
+    }
+    console.log(data)
+    if (data && data.session_enabled === true) {
+      execute()
+    }
+  }, [data]);
+
   if (isPending) return <Loading />
   if (!data) return  <Loading />
+  if (data && data.session_enabled) return <Loading />
 
   return (
     <>

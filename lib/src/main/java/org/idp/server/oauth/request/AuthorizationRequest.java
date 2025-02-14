@@ -1,6 +1,7 @@
 package org.idp.server.oauth.request;
 
 import org.idp.server.oauth.AuthorizationProfile;
+import org.idp.server.oauth.OAuthSessionKey;
 import org.idp.server.oauth.identity.ClaimsPayload;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.vp.request.PresentationDefinition;
@@ -343,5 +344,9 @@ public class AuthorizationRequest {
 
   public boolean isVerifiableCredentialRequest() {
     return authorizationDetails.hasVerifiableCredential();
+  }
+
+  public OAuthSessionKey sessionKey() {
+    return new OAuthSessionKey(tokenIssuer.value(), clientId.value());
   }
 }

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.sql.SqlExecutor;
 import org.idp.server.basic.sql.TransactionManager;
+import org.idp.server.oauth.exception.OAuthException;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
@@ -29,7 +30,7 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
     Map<String, String> stringMap = sqlExecutor.selectOne(sql);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
-      throw new RuntimeException(
+      throw new OAuthException("invalid_request",
           String.format("not found oauth request (%s)", authorizationRequestIdentifier.value()));
     }
     return ModelConverter.convert(stringMap);

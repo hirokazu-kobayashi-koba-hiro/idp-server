@@ -19,6 +19,8 @@ import org.idp.server.oauth.OAuthSessionKey;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.interaction.UserInteraction;
+import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.extension.OAuthDenyReason;
 import org.springframework.stereotype.Service;
 
@@ -105,6 +107,26 @@ public class OAuthFlowService implements OAuthRequestDelegate {
             tenant.issuer(),
             userInteraction.user(),
             userInteraction.authentication());
+    httpSession.setAttribute("id", httpSession.getId());
+
+    return oAuthApi.authorize(authAuthorizeRequest);
+  }
+
+  // FIXME this is bad code
+  public OAuthAuthorizeResponse authorizeWithSession(
+          TenantIdentifier tenantIdentifier,
+          String oauthRequestIdentifier) {
+    Tenant tenant = tenantService.get(tenantIdentifier);
+    AuthorizationRequest authorizationRequest = oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+    OAuthSession session = (OAuthSession) httpSession.getAttribute(authorizationRequest.sessionKey().key());
+
+    UserInteraction userInteraction = interact(tenant, "", "", session);
+    OAuthAuthorizeRequest authAuthorizeRequest =
+            new OAuthAuthorizeRequest(
+                    oauthRequestIdentifier,
+                    tenant.issuer(),
+                    userInteraction.user(),
+                    userInteraction.authentication());
     httpSession.setAttribute("id", httpSession.getId());
 
     return oAuthApi.authorize(authAuthorizeRequest);

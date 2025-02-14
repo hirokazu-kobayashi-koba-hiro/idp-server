@@ -3,6 +3,8 @@ package org.idp.server.handler.oauth.datasource.memory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import org.idp.server.oauth.exception.OAuthException;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
@@ -25,7 +27,7 @@ public class AuthorizationRequestMemoryDataSource implements AuthorizationReques
   public AuthorizationRequest get(AuthorizationRequestIdentifier authorizationRequestIdentifier) {
     AuthorizationRequest authorizationRequest = map.get(authorizationRequestIdentifier);
     if (Objects.isNull(authorizationRequest)) {
-      throw new RuntimeException(
+      throw new OAuthException("invalid_request",
           String.format("not found oauth request (%s)", authorizationRequestIdentifier.value()));
     }
     return authorizationRequest;

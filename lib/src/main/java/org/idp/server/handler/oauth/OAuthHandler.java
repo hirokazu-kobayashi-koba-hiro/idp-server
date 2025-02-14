@@ -5,6 +5,8 @@ import org.idp.server.configuration.ClientConfigurationRepository;
 import org.idp.server.configuration.ServerConfiguration;
 import org.idp.server.configuration.ServerConfigurationRepository;
 import org.idp.server.handler.oauth.io.*;
+import org.idp.server.oauth.OAuthRequestDelegate;
+import org.idp.server.oauth.OAuthSession;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
@@ -13,13 +15,13 @@ import org.idp.server.oauth.view.OAuthViewDataCreator;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.TokenIssuer;
 
-public class OAuthViewDataHandler {
+public class OAuthHandler {
 
   AuthorizationRequestRepository authorizationRequestRepository;
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
-  public OAuthViewDataHandler(
+  public OAuthHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
@@ -28,7 +30,7 @@ public class OAuthViewDataHandler {
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
-  public OAuthViewDataResponse handle(OAuthViewDataRequest request) {
+  public OAuthViewDataResponse handleViewData(OAuthViewDataRequest request, OAuthRequestDelegate oAuthRequestDelegate) {
     TokenIssuer tokenIssuer = request.toTokenIssuer();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
 
@@ -38,10 +40,17 @@ public class OAuthViewDataHandler {
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tokenIssuer, clientId);
+
+    OAuthSession session = oAuthRequestDelegate.findSession(authorizationRequest.sessionKey());
+
     OAuthViewDataCreator creator =
-        new OAuthViewDataCreator(authorizationRequest, serverConfiguration, clientConfiguration);
+        new OAuthViewDataCreator(authorizationRequest, serverConfiguration, clientConfiguration, session);
     OAuthViewData oAuthViewData = creator.create();
 
     return new OAuthViewDataResponse(OAuthViewDataStatus.OK, oAuthViewData);
+  }
+
+  public AuthorizationRequest handleGettingData(AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+    return authorizationRequestRepository.get(authorizationRequestIdentifier);
   }
 }

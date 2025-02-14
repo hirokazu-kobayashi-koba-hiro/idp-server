@@ -40,7 +40,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     this.authorizationRequest = authorizationRequest;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
-    this.oAuthSessionKey = new OAuthSessionKey(tokenIssuer().value(), clientId().value());
+    this.oAuthSessionKey = authorizationRequest.sessionKey();
   }
 
   public AuthorizationRequestIdentifier identifier() {
