@@ -1,6 +1,7 @@
 idp:
   configurations:
    basePath: "src/main/resources/config/sample"
+   publicTenantDomain: "${PUBLIC_TENANT_DOMAIN:http://localhost:8080/}"
 
 
 spring:

@@ -1,8 +1,8 @@
 CREATE TABLE organization
 (
     id          varchar(256) PRIMARY KEY,
-    name        VARCHAR(255) NOT NULL,
-    description TEXT,
+    name        varchar(256) NOT NULL,
+    description text,
     created_at  timestamp default now() NOT NULL,
     updated_at  timestamp default now() NOT NULL
 );
@@ -19,7 +19,7 @@ CREATE TABLE tenant
 
 CREATE TABLE organization_tenants
 (
-    id          varchar(256) PRIMARY KEY,
+    id          CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id     varchar(256) REFERENCES organization (id) ON DELETE CASCADE,
     tenant_id   varchar(256) REFERENCES tenant (id) ON DELETE CASCADE,
     assigned_at timestamp default now() NOT NULL,
