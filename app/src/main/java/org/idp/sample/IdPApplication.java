@@ -11,10 +11,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
-public class SampleApplication {
+public class IdPApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(SampleApplication.class, args);
+    SpringApplication.run(IdPApplication.class, args);
   }
 
   @Value("${idp.configurations.basePath}")

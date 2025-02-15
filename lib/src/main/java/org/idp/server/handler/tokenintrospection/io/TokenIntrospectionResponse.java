@@ -40,4 +40,8 @@ public class TokenIntrospectionResponse {
   public boolean isActive() {
     return Boolean.TRUE.equals(response.get("active"));
   }
+
+  public String subject() {
+    return (String) response.get("sub");
+  }
 }

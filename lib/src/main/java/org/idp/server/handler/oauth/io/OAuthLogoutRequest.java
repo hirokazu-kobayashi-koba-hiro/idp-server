@@ -1,9 +1,8 @@
 package org.idp.server.handler.oauth.io;
 
+import java.util.Map;
 import org.idp.server.oauth.request.OAuthLogoutParameters;
 import org.idp.server.type.oauth.TokenIssuer;
-
-import java.util.Map;
 
 public class OAuthLogoutRequest {
   Map<String, String[]> params;

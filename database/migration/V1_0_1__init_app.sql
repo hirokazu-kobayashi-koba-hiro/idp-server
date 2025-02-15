@@ -1,7 +1,7 @@
 CREATE TABLE organization
 (
     id          varchar(256) PRIMARY KEY,
-    name        varchar(256) NOT NULL,
+    name        varchar(256)            NOT NULL,
     description text,
     created_at  timestamp default now() NOT NULL,
     updated_at  timestamp default now() NOT NULL
@@ -19,10 +19,10 @@ CREATE TABLE tenant
 
 CREATE TABLE organization_tenants
 (
-    id          CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-    organization_id     varchar(256) REFERENCES organization (id) ON DELETE CASCADE,
-    tenant_id   varchar(256) REFERENCES tenant (id) ON DELETE CASCADE,
-    assigned_at timestamp default now() NOT NULL,
+    id              CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id varchar(256) REFERENCES organization (id) ON DELETE CASCADE,
+    tenant_id       varchar(256) REFERENCES tenant (id) ON DELETE CASCADE,
+    assigned_at     timestamp            default now() NOT NULL,
     UNIQUE (organization_id, tenant_id)
 );
 
@@ -58,11 +58,19 @@ CREATE TABLE idp_user
 
 CREATE TABLE organization_members
 (
-    id        varchar(256) PRIMARY KEY,
-    idp_user_id   varchar(256) REFERENCES idp_user (id) ON DELETE CASCADE,
-    organization_id   varchar(256) REFERENCES organization (id) ON DELETE CASCADE,
-    role      varchar(100) NOT NULL,
-    joined_at timestamp default now() NOT NULL,
+    id              CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+    idp_user_id     varchar(256) REFERENCES idp_user (id) ON DELETE CASCADE,
+    organization_id varchar(256) REFERENCES organization (id) ON DELETE CASCADE,
+    role            varchar(100)                       NOT NULL,
+    joined_at       timestamp            default now() NOT NULL,
     UNIQUE (idp_user_id, organization_id)
 );
+
+CREATE TABLE idp_user_current_organization
+(
+    idp_user_id     varchar(256) REFERENCES idp_user (id) ON DELETE CASCADE PRIMARY KEY,
+    organization_id varchar(256) REFERENCES organization (id) ON DELETE CASCADE,
+    created_at      timestamp default now() NOT NULL,
+    updated_at            timestamp default now() NOT NULL
+)
 
