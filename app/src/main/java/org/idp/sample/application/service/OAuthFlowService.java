@@ -19,7 +19,11 @@ import org.idp.server.oauth.OAuthSessionKey;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.interaction.UserInteraction;
+import org.idp.server.oauth.request.AuthorizationRequest;
+import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.extension.OAuthDenyReason;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -29,6 +33,7 @@ public class OAuthFlowService implements OAuthRequestDelegate {
   OAuthApi oAuthApi;
   UserService userService;
   TenantService tenantService;
+  Logger log = LoggerFactory.getLogger(OAuthFlowService.class);
 
   public OAuthFlowService(
       IdpServerApplication idpServerApplication,
@@ -110,6 +115,27 @@ public class OAuthFlowService implements OAuthRequestDelegate {
     return oAuthApi.authorize(authAuthorizeRequest);
   }
 
+  // FIXME this is bad code
+  public OAuthAuthorizeResponse authorizeWithSession(
+      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
+    Tenant tenant = tenantService.get(tenantIdentifier);
+    AuthorizationRequest authorizationRequest =
+        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+    OAuthSession session =
+        (OAuthSession) httpSession.getAttribute(authorizationRequest.sessionKey().key());
+
+    UserInteraction userInteraction = interact(tenant, "", "", session);
+    OAuthAuthorizeRequest authAuthorizeRequest =
+        new OAuthAuthorizeRequest(
+            oauthRequestIdentifier,
+            tenant.issuer(),
+            userInteraction.user(),
+            userInteraction.authentication());
+    httpSession.setAttribute("id", httpSession.getId());
+
+    return oAuthApi.authorize(authAuthorizeRequest);
+  }
+
   public OAuthDenyResponse deny(TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
 
     Tenant tenant = tenantService.get(tenantIdentifier);
@@ -118,6 +144,12 @@ public class OAuthFlowService implements OAuthRequestDelegate {
             oauthRequestIdentifier, tenant.issuer(), OAuthDenyReason.access_denied);
 
     return oAuthApi.deny(denyRequest);
+  }
+
+  public OAuthLogoutResponse logout(TenantIdentifier tenantIdentifier, Map<String, String[]> params) {
+    Tenant tenant = tenantService.get(tenantIdentifier);
+    OAuthLogoutRequest oAuthLogoutRequest = new OAuthLogoutRequest(params, tenant.issuer());
+    return oAuthApi.logout(oAuthLogoutRequest);
   }
 
   private UserInteraction interact(
@@ -142,15 +174,23 @@ public class OAuthFlowService implements OAuthRequestDelegate {
   @Override
   public OAuthSession findSession(OAuthSessionKey oAuthSessionKey) {
     String sessionKey = oAuthSessionKey.key();
-    return (OAuthSession) httpSession.getAttribute(sessionKey);
+    OAuthSession oAuthSession = (OAuthSession) httpSession.getAttribute(sessionKey);
+    log.info("findSession: {}",oAuthSessionKey.key());
+    return oAuthSession;
   }
 
   @Override
   public void registerSession(OAuthSession oAuthSession) {
     String sessionKey = oAuthSession.sessionKeyValue();
-    String id = httpSession.getId();
+    log.info("registerSession: {}",sessionKey);
     httpSession.getId();
     httpSession.setAttribute(sessionKey, oAuthSession);
-    System.out.println(id);
+  }
+
+  @Override
+  public void deleteSession(OAuthSessionKey oAuthSessionKey) {
+    log.info("deleteSession: {}",oAuthSessionKey.key());
+    //FIXME every client
+    httpSession.invalidate();
   }
 }

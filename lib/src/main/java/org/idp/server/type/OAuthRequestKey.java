@@ -54,5 +54,7 @@ public enum OAuthRequestKey {
   client_metadata,
   client_metadata_uri,
   transaction_id,
-  ;
+  // RP-Initiated Logout
+  post_logout_redirect_uri,
+  logout_hint,
 }

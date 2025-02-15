@@ -5,4 +5,6 @@ public interface OAuthRequestDelegate {
   OAuthSession findSession(OAuthSessionKey oAuthSessionKey);
 
   void registerSession(OAuthSession oAuthSession);
+
+  void deleteSession(OAuthSessionKey oAuthSessionKey);
 }

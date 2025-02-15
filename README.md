@@ -62,15 +62,16 @@ This library provides java api supported OAuth2.0 and OIDC spec.
         3. signature none
     5. userinfo
 3. OpenID Connect Discovery 1.0 incorporating errata set 1
-4. OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0
+4. OpenID Connect RP-Initiated Logout 1.0
+5. OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0
     1. poll mode
     2. ping mode
     3. push mode
-5. RFC7009 OAuth 2.0 Token Revocation
-6. RFC7636 Proof Key for Code Exchange by OAuth Public Clients
-7. RFC7662 OAuth 2.0 Token Introspection
-8. Financial-grade API Security Profile 1.0 - Part 1: Baseline
-9. Financial-grade API Security Profile 1.0 - Part 2: Advanced
+6. RFC7009 OAuth 2.0 Token Revocation
+7. RFC7636 Proof Key for Code Exchange by OAuth Public Clients
+8. RFC7662 OAuth 2.0 Token Introspection
+9. Financial-grade API Security Profile 1.0 - Part 1: Baseline
+10. Financial-grade API Security Profile 1.0 - Part 2: Advanced
 
 ## supported client authentication
 

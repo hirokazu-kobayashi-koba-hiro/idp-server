@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ServerConfiguration;
+import org.idp.server.oauth.OAuthSession;
 import org.idp.server.oauth.request.AuthorizationRequest;
 
 public class OAuthViewDataCreator {
@@ -12,14 +13,17 @@ public class OAuthViewDataCreator {
   AuthorizationRequest authorizationRequest;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
+  OAuthSession session;
 
   public OAuthViewDataCreator(
       AuthorizationRequest authorizationRequest,
       ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+      ClientConfiguration clientConfiguration,
+      OAuthSession session) {
     this.authorizationRequest = authorizationRequest;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
+    this.session = session;
   }
 
   public OAuthViewData create() {
@@ -40,6 +44,11 @@ public class OAuthViewDataCreator {
     contents.put("tos_uri", tosUri);
     contents.put("policy_uri", policyUri);
     contents.put("scopes", scopes);
+    if (session == null) {
+      contents.put("session_enabled", false);
+    } else {
+      contents.put("session_enabled", session.isValid(authorizationRequest));
+    }
     return new OAuthViewData(
         clientId, clientName, clientUri, logoUri, contacts, tosUri, policyUri, scopes, contents);
   }
