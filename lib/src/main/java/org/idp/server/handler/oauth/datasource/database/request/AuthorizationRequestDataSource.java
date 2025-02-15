@@ -30,7 +30,8 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
     Map<String, String> stringMap = sqlExecutor.selectOne(sql);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
-      throw new OAuthException("invalid_request",
+      throw new OAuthException(
+          "invalid_request",
           String.format("not found oauth request (%s)", authorizationRequestIdentifier.value()));
     }
     return ModelConverter.convert(stringMap);

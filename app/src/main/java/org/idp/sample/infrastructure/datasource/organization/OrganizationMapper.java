@@ -7,11 +7,12 @@ import org.idp.sample.domain.model.organization.OrganizationIdentifier;
 
 @Mapper
 public interface OrganizationMapper {
-    void insert(@Param("organization") Organization organization);
+  void insert(@Param("organization") Organization organization);
 
-    void update(@Param("organization") Organization organization);
+  void update(@Param("organization") Organization organization);
 
-    void insertTenants(@Param("organization") Organization organization);
+  void insertTenants(@Param("organization") Organization organization);
 
-    Organization selectBy(@Param("organizationIdentifier") OrganizationIdentifier organizationIdentifier);
+  Organization selectBy(
+      @Param("organizationIdentifier") OrganizationIdentifier organizationIdentifier);
 }

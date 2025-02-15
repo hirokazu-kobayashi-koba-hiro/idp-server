@@ -20,4 +20,6 @@ public interface OAuthApi {
   OAuthDenyResponse deny(OAuthDenyRequest request);
 
   void setOAuthRequestDelegate(OAuthRequestDelegate oAuthRequestDelegate);
+
+  OAuthLogoutResponse logout(OAuthLogoutRequest oAuthLogoutRequest);
 }

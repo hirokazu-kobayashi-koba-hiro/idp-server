@@ -102,6 +102,10 @@ public class OAuthApiImpl implements OAuthApi {
     }
   }
 
+  public OAuthLogoutResponse logout(OAuthLogoutRequest request) {
+    return oauthHandler.handleLogout(request, oAuthRequestDelegate);
+  }
+
   public void setOAuthRequestDelegate(OAuthRequestDelegate oAuthRequestDelegate) {
     this.oAuthRequestDelegate = oAuthRequestDelegate;
   }

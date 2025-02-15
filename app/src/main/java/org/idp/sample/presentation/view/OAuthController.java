@@ -23,18 +23,15 @@ import org.springframework.web.servlet.view.RedirectView;
 public class OAuthController implements ParameterTransformable {
 
   Logger log = LoggerFactory.getLogger(OAuthController.class);
-  HttpSession httpSession;
   OAuthApi oAuthApi;
   UserService userService;
   TenantService tenantService;
 
   public OAuthController(
       IdpServerApplication idpServerApplication,
-      HttpSession httpSession,
       UserService userService,
       TenantService tenantService) {
     this.oAuthApi = idpServerApplication.oAuthApi();
-    this.httpSession = httpSession;
     this.userService = userService;
     this.tenantService = tenantService;
   }

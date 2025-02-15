@@ -52,7 +52,7 @@ public class InitialRegistrationService {
     organizationService.register(organization);
 
     ServerConfigurationCreator serverConfigurationCreator =
-            new ServerConfigurationCreator(tenant, serverConfig);
+        new ServerConfigurationCreator(tenant, serverConfig);
     String config = serverConfigurationCreator.create();
     serverManagementApi.register(config);
   }

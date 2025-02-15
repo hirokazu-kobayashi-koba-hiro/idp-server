@@ -91,12 +91,10 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/authorize-with-session")
   public ResponseEntity<?> authorizeWithSession(
-          @PathVariable("tenant-id") TenantIdentifier tenantId,
-          @PathVariable("id") String id
-  ) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
 
     OAuthAuthorizeResponse authAuthorizeResponse =
-            oAuthFlowService.authorizeWithSession(tenantId, id);
+        oAuthFlowService.authorizeWithSession(tenantId, id);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -107,11 +105,11 @@ public class OAuthV1Api implements ParameterTransformable {
       }
       case BAD_REQUEST -> {
         return new ResponseEntity<>(
-                authAuthorizeResponse.contents(), httpHeaders, HttpStatus.BAD_REQUEST);
+            authAuthorizeResponse.contents(), httpHeaders, HttpStatus.BAD_REQUEST);
       }
       default -> {
         return new ResponseEntity<>(
-                authAuthorizeResponse.contents(), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+            authAuthorizeResponse.contents(), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }
