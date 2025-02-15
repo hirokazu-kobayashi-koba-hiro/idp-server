@@ -5,6 +5,7 @@ import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.domain.model.tenant.TenantNotFoundException;
 import org.idp.sample.domain.model.tenant.TenantRepository;
+import org.idp.server.type.oauth.TokenIssuer;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -39,5 +40,14 @@ public class TenantDataSource implements TenantRepository {
   @Override
   public void delete(TenantIdentifier tenantIdentifier) {
     mapper.delete(tenantIdentifier);
+  }
+
+  @Override
+  public Tenant find(TokenIssuer tokenIssuer) {
+    Tenant tenant = mapper.selectByTokenIssuer(tokenIssuer);
+    if (Objects.isNull(tenant)) {
+      return new Tenant();
+    }
+    return tenant;
   }
 }

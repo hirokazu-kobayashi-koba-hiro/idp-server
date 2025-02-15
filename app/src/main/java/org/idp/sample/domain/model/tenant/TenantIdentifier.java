@@ -28,4 +28,8 @@ public class TenantIdentifier {
   public int hashCode() {
     return Objects.hashCode(value);
   }
+
+  public boolean exists() {
+    return Objects.nonNull(value) && !value.isEmpty();
+  }
 }

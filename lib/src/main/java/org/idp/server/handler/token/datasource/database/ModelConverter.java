@@ -2,6 +2,7 @@ package org.idp.server.handler.token.datasource.database;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.grant.AuthorizationGrant;
@@ -33,7 +34,14 @@ class ModelConverter {
     TokenIssuer tokenIssuer = new TokenIssuer(stringMap.get("token_issuer"));
     TokenType tokenType = TokenType.valueOf(stringMap.get("token_type"));
     AccessTokenEntity accessTokenEntity = new AccessTokenEntity(stringMap.get("access_token"));
-    User user = jsonConverter.read(stringMap.get("user_payload"), User.class);
+    // TODO refactor
+    User user;
+    if (Objects.nonNull(stringMap.get("user_payload"))
+        && !stringMap.get("user_payload").isEmpty()) {
+      user = jsonConverter.read(stringMap.get("user_payload"), User.class);
+    } else {
+      user = new User();
+    }
     Authentication authentication =
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);
     ClientId clientId = new ClientId(stringMap.get("client_id"));
@@ -56,6 +64,9 @@ class ModelConverter {
     ExpiresIn expiresIn = new ExpiresIn(stringMap.get("expires_in"));
     ExpiredAt accessTokenExpiredAt = new ExpiredAt(stringMap.get("access_token_expired_at"));
     CreatedAt accessTokenCreatedAt = new CreatedAt(stringMap.get("access_token_created_at"));
+
+    OAuthTokenBuilder oAuthTokenBuilder = new OAuthTokenBuilder(id);
+
     AccessToken accessToken =
         new AccessToken(
             tokenIssuer,
@@ -66,22 +77,22 @@ class ModelConverter {
             accessTokenCreatedAt,
             expiresIn,
             accessTokenExpiredAt);
-    RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity(stringMap.get("refresh_token"));
-    ExpiredAt refreshTokenExpiredAt = new ExpiredAt(stringMap.get("refresh_token_expired_at"));
-    CreatedAt refreshTokenCreatedAt = new CreatedAt(stringMap.get("refresh_token_created_at"));
-    RefreshToken refreshToken =
-        new RefreshToken(refreshTokenEntity, refreshTokenCreatedAt, refreshTokenExpiredAt);
+    if (!Objects.nonNull(stringMap.get("refresh_token"))
+        && !stringMap.get("refresh_token").isEmpty()) {
+      RefreshTokenEntity refreshTokenEntity =
+          new RefreshTokenEntity(stringMap.get("refresh_token"));
+      ExpiredAt refreshTokenExpiredAt = new ExpiredAt(stringMap.get("refresh_token_expired_at"));
+      CreatedAt refreshTokenCreatedAt = new CreatedAt(stringMap.get("refresh_token_created_at"));
+      RefreshToken refreshToken =
+          new RefreshToken(refreshTokenEntity, refreshTokenCreatedAt, refreshTokenExpiredAt);
+      oAuthTokenBuilder.add(refreshToken);
+    }
+
     IdToken idToken = new IdToken(stringMap.get("id_token"));
     CNonce cNonce = new CNonce(stringMap.get("c_nonce"));
     CNonceExpiresIn cNonceExpiresIn = new CNonceExpiresIn(stringMap.get("c_nonce_expires_in"));
 
-    return new OAuthTokenBuilder(id)
-        .add(accessToken)
-        .add(refreshToken)
-        .add(idToken)
-        .add(cNonce)
-        .add(cNonceExpiresIn)
-        .build();
+    return oAuthTokenBuilder.add(accessToken).add(idToken).add(cNonce).add(cNonceExpiresIn).build();
   }
 
   private static ClaimsPayload convertClaimsPayload(String value) {

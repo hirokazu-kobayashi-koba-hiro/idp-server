@@ -32,7 +32,7 @@ public class UserinfoService implements UserinfoDelegate {
 
   @Override
   public User findUser(TokenIssuer tokenIssuer, Subject subject) {
-    return userService.find(subject.value());
+    return userService.get(subject.value());
   }
 
   public UserinfoRequestResponse request(

@@ -8,11 +8,13 @@ import org.idp.server.IdpServerApplication;
 import org.idp.server.api.ClientManagementApi;
 import org.idp.server.handler.configuration.io.ClientConfigurationManagementListResponse;
 import org.idp.server.handler.configuration.io.ClientConfigurationManagementResponse;
+import org.idp.server.oauth.identity.User;
 import org.idp.server.type.oauth.ClientId;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,9 +31,11 @@ public class ClientManagementV1Api implements ParameterTransformable {
   }
 
   @PostMapping
-  public ResponseEntity<?> request(
+  public ResponseEntity<?> post(
+      @AuthenticationPrincipal User operator,
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestBody(required = false) String body) {
+
     Tenant tenant = tenantService.get(tenantId);
     String client = clientManagementApi.register(body);
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -41,6 +45,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
   @GetMapping
   public ResponseEntity<?> getList(
+      @AuthenticationPrincipal User operator,
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestParam(value = "limit", defaultValue = "20") String limitValue,
       @RequestParam(value = "offset", defaultValue = "0") String offsetValue) {
@@ -58,6 +63,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
   @GetMapping("/{client-id}")
   public ResponseEntity<?> get(
+      @AuthenticationPrincipal User operator,
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("client-id") String clientId) {
     Tenant tenant = tenantService.get(tenantId);

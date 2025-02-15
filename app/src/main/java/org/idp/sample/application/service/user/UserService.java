@@ -23,10 +23,6 @@ public class UserService {
     return userRepository.findBy(tenant, email);
   }
 
-  public User find(String userId) {
-    return userRepository.find(userId);
-  }
-
   public User get(String userId) {
     return userRepository.get(userId);
   }

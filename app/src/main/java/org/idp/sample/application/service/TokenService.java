@@ -80,9 +80,14 @@ public class TokenService implements PasswordCredentialsGrantDelegate {
     return tokenRevocationApi.revoke(revocationRequest);
   }
 
+  // FIXME this is bad code
   @Override
   public User findAndAuthenticate(TokenIssuer tokenIssuer, Username username, Password password) {
-    User user = userService.find(username.value());
+    Tenant tenant = tenantService.find(tokenIssuer);
+    if (!tenant.exists()) {
+      return User.notFound();
+    }
+    User user = userService.findBy(tenant, username.value());
     if (!user.exists()) {
       return User.notFound();
     }
