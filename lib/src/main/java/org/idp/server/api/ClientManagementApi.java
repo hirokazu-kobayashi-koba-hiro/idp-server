@@ -9,6 +9,8 @@ public interface ClientManagementApi {
 
   String register(String json);
 
+  String register(TokenIssuer tokenIssuer, String json);
+
   ClientConfigurationManagementListResponse find(TokenIssuer tokenIssuer, int limit, int offset);
 
   ClientConfigurationManagementResponse get(TokenIssuer tokenIssuer, ClientId clientId);

@@ -36,7 +36,8 @@ public class ClientManagementV1Api implements ParameterTransformable {
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestBody(required = false) String body) {
 
-    String client = clientManagementApi.register(body);
+    Tenant tenant = tenantService.get(tenantId);
+    String client = clientManagementApi.register(tenant.tokenIssuer(), body);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
     return new ResponseEntity<>(client, httpHeaders, HttpStatus.OK);
