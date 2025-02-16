@@ -18,7 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/api/v1/management/clients")
+@RequestMapping("/api/v1/management/tenants/{tenant-id}/clients")
 public class ClientManagementV1Api implements ParameterTransformable {
 
   ClientManagementApi clientManagementApi;
@@ -36,7 +36,6 @@ public class ClientManagementV1Api implements ParameterTransformable {
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestBody(required = false) String body) {
 
-    Tenant tenant = tenantService.get(tenantId);
     String client = clientManagementApi.register(body);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");

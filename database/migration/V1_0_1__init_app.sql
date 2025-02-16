@@ -17,6 +17,8 @@ CREATE TABLE tenant
     updated_at timestamp    NOT NULL default now()
 );
 
+CREATE UNIQUE INDEX unique_admin_tenant ON tenant(type) WHERE type = 'ADMIN';
+
 CREATE TABLE organization_tenants
 (
     id              CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),

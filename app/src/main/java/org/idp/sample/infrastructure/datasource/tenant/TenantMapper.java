@@ -18,4 +18,7 @@ public interface TenantMapper {
   void delete(@Param("tenantIdentifier") TenantIdentifier tenantIdentifier);
 
   Tenant selectByTokenIssuer(@Param("tokenIssuer") TokenIssuer tokenIssuer);
+
+  Tenant selectAdmin();
+
 }

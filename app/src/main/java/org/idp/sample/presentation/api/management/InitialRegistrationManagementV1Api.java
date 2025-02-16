@@ -13,7 +13,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/api/v1/management/initial-registration")
+@RequestMapping("/api/v1/management/initial-registration")
 public class InitialRegistrationManagementV1Api implements ParameterTransformable {
 
   PublicTenantDomain publicTenantDomain;
@@ -29,12 +29,10 @@ public class InitialRegistrationManagementV1Api implements ParameterTransformabl
   @PostMapping
   public ResponseEntity<?> post(
       @AuthenticationPrincipal User operator,
-      @PathVariable("tenant-id") TenantIdentifier adminTenantIdentifier,
       @Validated @RequestBody InitialRegistrationRequest request) {
 
     initialRegistrationService.initialize(
         operator,
-        adminTenantIdentifier,
         request.organizationName(),
         publicTenantDomain,
         request.tenantName(),

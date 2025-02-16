@@ -6,6 +6,8 @@ public interface TenantRepository {
 
   Tenant get(TenantIdentifier tenantIdentifier);
 
+  Tenant getAdmin();
+
   void register(Tenant tenant);
 
   void update(Tenant tenant);

@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/api/v1/management/tenants")
+@RequestMapping("/api/v1/management/tenants")
 @Transactional
 public class TenantManagementV1Api implements ParameterTransformable {
 

@@ -39,16 +39,10 @@ public class InitialRegistrationService {
 
   public void initialize(
       User operator,
-      TenantIdentifier tenantIdentifier,
       OrganizationName organizationName,
       PublicTenantDomain publicTenantDomain,
       TenantName tenantName,
       String serverConfig) {
-    Tenant adminTenant = tenantService.get(tenantIdentifier);
-    InitialRegistrationVerifier initialRegistrationVerifier =
-        new InitialRegistrationVerifier(
-            adminTenant, organizationName, publicTenantDomain, tenantName, serverConfig);
-    initialRegistrationVerifier.verify();
 
     TenantCreator tenantCreator = new TenantCreator(publicTenantDomain, tenantName);
     Tenant tenant = tenantCreator.create();

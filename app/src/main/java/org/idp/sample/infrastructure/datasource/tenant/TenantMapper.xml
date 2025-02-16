@@ -43,5 +43,10 @@
         issuer = #{tokenIssuer.value}
     </select>
 
+    <select id="selectAdmin" resultMap="Tenant">
+        <include refid="select" />
+        WHERE
+        type = 'ADMIN'
+    </select>
 
 </mapper>

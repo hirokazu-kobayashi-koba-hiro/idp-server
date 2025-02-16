@@ -33,12 +33,12 @@ public class AssignedTenants implements Iterable<Tenant> {
     return new AssignedTenants(newValues);
   }
 
-  public List<Map<String, Object>> toListMap() {
+  public List<Map<String, Object>> toMapList() {
     List<Map<String, Object>> result = new ArrayList<>();
     for (Tenant tenant : values) {
       Map<String, Object> row = new HashMap<>();
       row.put("id", tenant.identifier().value());
-      row.put("name", tenant.name());
+      row.put("name", tenant.name().value());
       row.put("type", tenant.type().name());
       row.put("issuer", tenant.issuer());
       result.add(row);

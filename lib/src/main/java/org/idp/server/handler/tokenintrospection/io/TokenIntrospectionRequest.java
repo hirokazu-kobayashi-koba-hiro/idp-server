@@ -34,7 +34,15 @@ public class TokenIntrospectionRequest {
     return new TokenIssuer(issuer);
   }
 
+  public String token() {
+    if (hasToken()) {
+      return params.get("token")[0];
+    }
+    return "";
+  }
+
   public boolean hasToken() {
     return params.containsKey("token");
   }
+
 }

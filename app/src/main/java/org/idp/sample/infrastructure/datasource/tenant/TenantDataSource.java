@@ -1,10 +1,8 @@
 package org.idp.sample.infrastructure.datasource.tenant;
 
 import java.util.Objects;
-import org.idp.sample.domain.model.tenant.Tenant;
-import org.idp.sample.domain.model.tenant.TenantIdentifier;
-import org.idp.sample.domain.model.tenant.TenantNotFoundException;
-import org.idp.sample.domain.model.tenant.TenantRepository;
+
+import org.idp.sample.domain.model.tenant.*;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.springframework.stereotype.Repository;
 
@@ -23,6 +21,15 @@ public class TenantDataSource implements TenantRepository {
     if (Objects.isNull(tenant)) {
       throw new TenantNotFoundException(
           String.format("Tenant is not found (%s)", tenantIdentifier.value()));
+    }
+    return tenant;
+  }
+
+  @Override
+  public Tenant getAdmin() {
+    Tenant tenant = mapper.selectAdmin();
+    if (Objects.isNull(tenant)) {
+      throw new TenantNotFoundException("Admin Tenant is unregistered.");
     }
     return tenant;
   }

@@ -54,7 +54,7 @@ public class Organization {
     result.put("id", identifier.value());
     result.put("name", name.value());
     result.put("description", description.value());
-    result.put("assigned_tenants", assignedTenants.toListMap());
+    result.put("assigned_tenants", assignedTenants.toMapList());
     return result;
   }
 }
