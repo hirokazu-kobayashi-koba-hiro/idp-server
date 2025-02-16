@@ -14,4 +14,6 @@ public interface UserRepository {
   User findBy(Tenant tenant, String email);
 
   List<User> findList(Tenant tenant, int limit, int offset);
+
+  void update(User user);
 }

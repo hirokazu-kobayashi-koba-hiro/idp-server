@@ -3,10 +3,12 @@ package org.idp.sample.presentation.api.management;
 import org.idp.sample.application.service.InitialRegistrationService;
 import org.idp.sample.domain.model.tenant.*;
 import org.idp.sample.presentation.api.ParameterTransformable;
+import org.idp.server.oauth.identity.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,10 +28,12 @@ public class InitialRegistrationManagementV1Api implements ParameterTransformabl
 
   @PostMapping
   public ResponseEntity<?> post(
+      @AuthenticationPrincipal User operator,
       @PathVariable("tenant-id") TenantIdentifier adminTenantIdentifier,
       @Validated @RequestBody InitialRegistrationRequest request) {
 
     initialRegistrationService.initialize(
+        operator,
         adminTenantIdentifier,
         request.organizationName(),
         publicTenantDomain,

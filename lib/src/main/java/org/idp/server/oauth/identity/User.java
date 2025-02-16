@@ -135,7 +135,7 @@ public class User implements Serializable {
     return this;
   }
 
-  public boolean emailVerified() {
+  public Boolean emailVerified() {
     return emailVerified;
   }
 
@@ -189,7 +189,7 @@ public class User implements Serializable {
     return this;
   }
 
-  public boolean phoneNumberVerified() {
+  public Boolean phoneNumberVerified() {
     return phoneNumberVerified;
   }
 

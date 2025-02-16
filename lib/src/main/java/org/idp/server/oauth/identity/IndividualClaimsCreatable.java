@@ -67,6 +67,8 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
       claims.put("updated_at", user.updateAtAsLong());
     }
+    // TODO handle claim
+    claims.putAll(user.customPropertiesValue());
 
     return claims;
   }
@@ -133,6 +135,8 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
       claims.put("updated_at", user.updateAtAsLong());
     }
+    // TODO handle claim
+    claims.putAll(user.customPropertiesValue());
 
     return claims;
   }

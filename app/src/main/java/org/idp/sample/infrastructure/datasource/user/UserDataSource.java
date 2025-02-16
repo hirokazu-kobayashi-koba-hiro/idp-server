@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.user.UserRepository;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.identity.User;
 import org.springframework.stereotype.Repository;
 
@@ -11,9 +12,11 @@ import org.springframework.stereotype.Repository;
 public class UserDataSource implements UserRepository {
 
   UserMapper mapper;
+  JsonConverter jsonConverter;
 
   public UserDataSource(UserMapper mapper) {
     this.mapper = mapper;
+    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   }
 
   @Override
@@ -55,5 +58,11 @@ public class UserDataSource implements UserRepository {
       return List.of();
     }
     return userList;
+  }
+
+  @Override
+  public void update(User user) {
+    String customPropertiesString = jsonConverter.write(user.customPropertiesValue());
+    mapper.update(user, customPropertiesString);
   }
 }

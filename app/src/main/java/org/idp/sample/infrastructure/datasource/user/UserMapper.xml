@@ -110,4 +110,29 @@
         offset #{offset}
     </select>
 
+    <update id="update">
+        UPDATE public.idp_user
+        SET name                  = #{user.name},
+            given_name            = #{user.givenName},
+            family_name           = #{user.familyName},
+            middle_name           = #{user.middleName},
+            nickname              = #{user.nickname},
+            preferred_username    = #{user.preferredUsername},
+            profile               = #{user.profile},
+            picture               = #{user.picture},
+            website               = #{user.website},
+            email                 = #{user.email},
+            email_verified        = #{user.emailVerified},
+            gender                = #{user.gender},
+            birthdate             = #{user.birthdate},
+            zoneinfo              = #{user.zoneinfo},
+            locale                = #{user.locale},
+            phone_number          = #{user.phoneNumber},
+            phone_number_verified = #{user.phoneNumberVerified},
+            custom_properties     = #{customProperties},
+            updated_at            = now()
+        WHERE id = #{user.sub};
+
+    </update>
+
 </mapper>

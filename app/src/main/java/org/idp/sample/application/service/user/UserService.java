@@ -34,4 +34,8 @@ public class UserService {
   public List<User> find(Tenant tenant, int limit, int offset) {
     return userRepository.findList(tenant, limit, offset);
   }
+
+  public void update(User user) {
+    userRepository.update(user);
+  }
 }
