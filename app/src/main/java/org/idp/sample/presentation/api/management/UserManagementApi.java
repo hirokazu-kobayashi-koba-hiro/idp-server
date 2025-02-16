@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/api/v1/management/users")
+@RequestMapping("/api/v1/management/tenants/{tenant-id}/users")
 public class UserManagementApi {
 
   UserService userService;

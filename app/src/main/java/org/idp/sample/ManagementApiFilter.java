@@ -11,7 +11,6 @@ import org.idp.sample.application.service.user.UserService;
 import org.idp.sample.domain.model.operation.IdPScope;
 import org.idp.sample.domain.model.operation.Operator;
 import org.idp.sample.domain.model.tenant.Tenant;
-import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.TokenIntrospectionApi;
 import org.idp.server.handler.tokenintrospection.io.TokenIntrospectionRequest;
@@ -46,11 +45,10 @@ public class ManagementApiFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
     String authorization = request.getHeader("Authorization");
-    TenantIdentifier tenantIdentifier = extractTenantIdentifier(request);
-    Tenant tenant = tenantService.get(tenantIdentifier);
+    Tenant adminTenant = tenantService.getAdmin();
 
     TokenIntrospectionCreator tokenIntrospectionCreator =
-        new TokenIntrospectionCreator(authorization, tenant.issuer());
+        new TokenIntrospectionCreator(authorization, adminTenant.issuer());
     TokenIntrospectionRequest tokenIntrospectionRequest = tokenIntrospectionCreator.create();
 
     if (!tokenIntrospectionRequest.hasToken()) {
@@ -74,18 +72,13 @@ public class ManagementApiFilter extends OncePerRequestFilter {
     Operator operator =
         new Operator(
             user,
-            "",
+            tokenIntrospectionRequest.token(),
             List.of(
                 IdPScope.tenant_management, IdPScope.user_management, IdPScope.client_management));
     SecurityContextHolder.getContext().setAuthentication(operator);
     filterChain.doFilter(request, response);
   }
 
-  TenantIdentifier extractTenantIdentifier(HttpServletRequest request) {
-    String[] paths = request.getRequestURI().split("/");
-    String tenantId = paths[1];
-    return new TenantIdentifier(tenantId);
-  }
 
   protected boolean shouldNotFilter(HttpServletRequest request) {
     return !request.getRequestURI().contains("/management/");
