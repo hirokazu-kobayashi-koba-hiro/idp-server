@@ -146,7 +146,8 @@ public class OAuthFlowService implements OAuthRequestDelegate {
     return oAuthApi.deny(denyRequest);
   }
 
-  public OAuthLogoutResponse logout(TenantIdentifier tenantIdentifier, Map<String, String[]> params) {
+  public OAuthLogoutResponse logout(
+      TenantIdentifier tenantIdentifier, Map<String, String[]> params) {
     Tenant tenant = tenantService.get(tenantIdentifier);
     OAuthLogoutRequest oAuthLogoutRequest = new OAuthLogoutRequest(params, tenant.issuer());
     return oAuthApi.logout(oAuthLogoutRequest);
@@ -175,22 +176,22 @@ public class OAuthFlowService implements OAuthRequestDelegate {
   public OAuthSession findSession(OAuthSessionKey oAuthSessionKey) {
     String sessionKey = oAuthSessionKey.key();
     OAuthSession oAuthSession = (OAuthSession) httpSession.getAttribute(sessionKey);
-    log.info("findSession: {}",oAuthSessionKey.key());
+    log.info("findSession: {}", oAuthSessionKey.key());
     return oAuthSession;
   }
 
   @Override
   public void registerSession(OAuthSession oAuthSession) {
     String sessionKey = oAuthSession.sessionKeyValue();
-    log.info("registerSession: {}",sessionKey);
+    log.info("registerSession: {}", sessionKey);
     httpSession.getId();
     httpSession.setAttribute(sessionKey, oAuthSession);
   }
 
   @Override
   public void deleteSession(OAuthSessionKey oAuthSessionKey) {
-    log.info("deleteSession: {}",oAuthSessionKey.key());
-    //FIXME every client
+    log.info("deleteSession: {}", oAuthSessionKey.key());
+    // FIXME every client
     httpSession.invalidate();
   }
 }

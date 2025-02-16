@@ -16,4 +16,6 @@ public interface UserMapper {
 
   List<User> selectList(
       @Param("tenant") Tenant tenantId, @Param("limit") int limit, @Param("offset") int offset);
+
+  void update(@Param("user") User user, @Param("customProperties") String customProperties);
 }

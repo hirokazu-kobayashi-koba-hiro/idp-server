@@ -59,10 +59,12 @@ public class OAuthHandler {
     return authorizationRequestRepository.get(authorizationRequestIdentifier);
   }
 
-  public OAuthLogoutResponse handleLogout(OAuthLogoutRequest request,  OAuthRequestDelegate delegate) {
+  public OAuthLogoutResponse handleLogout(
+      OAuthLogoutRequest request, OAuthRequestDelegate delegate) {
     OAuthLogoutParameters parameters = request.toParameters();
     TokenIssuer tokenIssuer = request.toTokenIssuer();
-    OAuthSessionKey oAuthSessionKey = new OAuthSessionKey(tokenIssuer.value(), parameters.clientId().value());
+    OAuthSessionKey oAuthSessionKey =
+        new OAuthSessionKey(tokenIssuer.value(), parameters.clientId().value());
     OAuthSession session = delegate.findSession(oAuthSessionKey);
     delegate.deleteSession(oAuthSessionKey);
     return new OAuthLogoutResponse(OAuthLogoutStatus.OK, "http://localhost:3000");

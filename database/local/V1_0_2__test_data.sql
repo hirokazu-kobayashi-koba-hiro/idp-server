@@ -24,6 +24,10 @@ VALUES ('3ec055a8-8000-44a2-8677-e70ebff414e2', '67e7eae6-62b0-4500-9eff-87459f6
         '[{ "@context": [ "https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1" ], "id": "http://example.edu/credentials/1872", "type": [ "VerifiableCredential", "AlumniCredential" ], "issuer": "https://example.edu/issuers/565049", "issuanceDate": "2010-01-01T19:23:24Z", "credentialSubject": { "id": "did:example:ebfeb1f712ebc6f1c276e12ec21", "alumniOf": { "id": "did:example:c276e12ec21ebfeb1f712ebc6f1", "name": [ { "value": "Example University", "lang": "en" }, { "value": "Exemple d''Universite", "lang": "fr" } ] } }, "proof": { "type": "RsaSignature2018", "created": "2017-06-18T21:19:10Z", "proofPurpose": "assertionMethod", "verificationMethod": "https://example.edu/issuers/565049#key-1", "jws": "eyJhbGciOiJSUzI1NiIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..TCYt5XsITJX1CxPCT8yAV-TVkIEq_PbChOMqsLfRoPsnsgw5WEuts01mq-pQy7UJiN5mgRxD-WUcX16dUEMGlv50aqzpqh4Qktb3rk-BuQy72IFLOqV0G_zS245-kronKb78cPN25DGlcTwLtjPAYuNzVBAh4vGHSrQyHUdBBPM" } }]',
         'successUserCode', '2023-08-03 23:44:20.259371', '2023-08-03 23:44:20.259371');
 
-INSERT INTO organization_members(id, idp_user_id, organization_id, role)
+INSERT INTO public.organization_members(id, idp_user_id, organization_id, role)
 VALUES
 ('e934c455-6bcf-4b0f-982e-69a59edff6f3', '3ec055a8-8000-44a2-8677-e70ebff414e2', '9eb8eb8c-2615-4604-809f-5cae1c00a462', 'ADMINISTRATOR');
+
+INSERT INTO public.idp_user_current_organization(idp_user_id, organization_id)
+VALUES
+    ('3ec055a8-8000-44a2-8677-e70ebff414e2', '9eb8eb8c-2615-4604-809f-5cae1c00a462');

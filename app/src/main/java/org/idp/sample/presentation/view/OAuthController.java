@@ -1,6 +1,5 @@
 package org.idp.sample.presentation.view;
 
-import jakarta.servlet.http.HttpSession;
 import java.util.Map;
 import org.idp.sample.application.service.tenant.TenantService;
 import org.idp.sample.application.service.user.UserService;

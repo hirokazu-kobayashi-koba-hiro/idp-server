@@ -1,5 +1,7 @@
 package org.idp.sample.domain.model.tenant;
 
+import java.util.Objects;
+
 public class Tenant {
   TenantIdentifier identifier;
   TenantName name;
@@ -41,5 +43,9 @@ public class Tenant {
 
   public boolean isPublic() {
     return type == TenantType.PUBLIC;
+  }
+
+  public boolean exists() {
+    return Objects.nonNull(identifier) && identifier.exists();
   }
 }

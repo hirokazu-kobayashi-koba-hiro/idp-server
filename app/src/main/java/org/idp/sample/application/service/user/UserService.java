@@ -23,10 +23,6 @@ public class UserService {
     return userRepository.findBy(tenant, email);
   }
 
-  public User find(String userId) {
-    return userRepository.find(userId);
-  }
-
   public User get(String userId) {
     return userRepository.get(userId);
   }
@@ -37,5 +33,9 @@ public class UserService {
 
   public List<User> find(Tenant tenant, int limit, int offset) {
     return userRepository.findList(tenant, limit, offset);
+  }
+
+  public void update(User user) {
+    userRepository.update(user);
   }
 }

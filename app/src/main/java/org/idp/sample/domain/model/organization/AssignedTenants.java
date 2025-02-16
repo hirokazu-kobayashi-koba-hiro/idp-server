@@ -1,8 +1,7 @@
 package org.idp.sample.domain.model.organization;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+
 import org.idp.sample.domain.model.tenant.Tenant;
 
 public class AssignedTenants implements Iterable<Tenant> {
@@ -32,5 +31,18 @@ public class AssignedTenants implements Iterable<Tenant> {
     List<Tenant> newValues = new ArrayList<>(values);
     newValues.remove(tenant);
     return new AssignedTenants(newValues);
+  }
+
+  public List<Map<String, Object>> toListMap() {
+    List<Map<String, Object>> result = new ArrayList<>();
+    for (Tenant tenant : values) {
+      Map<String, Object> row = new HashMap<>();
+      row.put("id", tenant.identifier().value());
+      row.put("name", tenant.name());
+      row.put("type", tenant.type().name());
+      row.put("issuer", tenant.issuer());
+      result.add(row);
+    }
+    return result;
   }
 }

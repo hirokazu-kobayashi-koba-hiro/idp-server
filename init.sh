@@ -1,11 +1,11 @@
 #!/bin/zsh
 
 #server
-curl -X POST "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/management/tenants" \
+curl -X POST "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/server/registration" \
 -H "Content-Type:application/json" \
 --data @./app/src/main/resources/config/sample/server.json
 
-curl -X POST "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/management/tenants" \
+curl -X POST "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/server/registration" \
 -H "Content-Type:application/json" \
 --data @./app/src/main/resources/config/sample/unsupportedServer.json
 

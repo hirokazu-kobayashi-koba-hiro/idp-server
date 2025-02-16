@@ -22,34 +22,34 @@ import java.util.Objects;
 public class PostLogoutRedirectUri {
   String value;
 
-    public PostLogoutRedirectUri() {}
+  public PostLogoutRedirectUri() {}
 
-    public PostLogoutRedirectUri(String value) {
-        this.value = value;
-    }
+  public PostLogoutRedirectUri(String value) {
+    this.value = value;
+  }
 
-    public String value() {
-        return value;
-    }
+  public String value() {
+    return value;
+  }
 
-    public boolean exists() {
-        return Objects.nonNull(value) && !value.isEmpty();
-    }
+  public boolean exists() {
+    return Objects.nonNull(value) && !value.isEmpty();
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        PostLogoutRedirectUri that = (PostLogoutRedirectUri) o;
-        return Objects.equals(value, that.value);
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PostLogoutRedirectUri that = (PostLogoutRedirectUri) o;
+    return Objects.equals(value, that.value);
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(value);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(value);
+  }
 
-    public URI toURI() throws URISyntaxException {
-        return new URI(value);
-    }
+  public URI toURI() throws URISyntaxException {
+    return new URI(value);
+  }
 }

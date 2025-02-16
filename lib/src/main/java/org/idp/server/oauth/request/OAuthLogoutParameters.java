@@ -10,11 +10,6 @@ import org.idp.server.type.oauth.*;
 import org.idp.server.type.oidc.*;
 import org.idp.server.type.oidc.logout.LogoutHint;
 import org.idp.server.type.oidc.logout.PostLogoutRedirectUri;
-import org.idp.server.type.pkce.CodeChallenge;
-import org.idp.server.type.pkce.CodeChallengeMethod;
-import org.idp.server.type.rar.AuthorizationDetailsEntity;
-import org.idp.server.type.verifiablepresentation.PresentationDefinitionEntity;
-import org.idp.server.type.verifiablepresentation.PresentationDefinitionUri;
 
 /** OAuthLogoutParameters */
 public class OAuthLogoutParameters {
@@ -84,7 +79,6 @@ public class OAuthLogoutParameters {
     return contains(ui_locales);
   }
 
-
   public String getValueOrEmpty(OAuthRequestKey key) {
     return values.getFirstOrEmpty(key.name());
   }
@@ -96,5 +90,4 @@ public class OAuthLogoutParameters {
   public List<String> multiValueKeys() {
     return values.multiValueKeys();
   }
-
 }

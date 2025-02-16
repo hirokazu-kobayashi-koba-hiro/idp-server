@@ -38,7 +38,7 @@ public class UserManagementApi {
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("user-id") String userId) {
     Tenant tenant = tenantService.get(tenantId);
-    User user = userService.find(userId);
+    User user = userService.get(userId);
     return new ResponseEntity<>(new UserResponse(user), HttpStatus.OK);
   }
 }
