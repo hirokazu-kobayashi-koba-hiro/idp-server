@@ -2,6 +2,8 @@ package org.idp.sample.domain.model.organization;
 
 import org.idp.sample.domain.model.tenant.Tenant;
 
+import java.util.HashMap;
+
 public class Organization {
   OrganizationIdentifier identifier;
   OrganizationName name;
@@ -45,5 +47,14 @@ public class Organization {
   public Organization remove(Tenant tenant) {
     AssignedTenants removedTenants = assignedTenants.remove(tenant);
     return new Organization(identifier, name, description, removedTenants);
+  }
+
+  public HashMap<String, Object> toMap() {
+    HashMap<String, Object> result = new HashMap<>();
+    result.put("id", identifier.value());
+    result.put("name", name.value());
+    result.put("description", description.value());
+    result.put("assigned_tenants", assignedTenants.toListMap());
+    return result;
   }
 }

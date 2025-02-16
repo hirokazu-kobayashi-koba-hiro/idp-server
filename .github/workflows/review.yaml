@@ -26,7 +26,8 @@ jobs:
             Please point out any excellent points.
             Since the code given to you is only a portion of it, please be reluctant to point out undefined methods or classes.
             Please be reluctant to point out comments that express WHAT.
-            When pointing out an issue, please explain the reason for the change and provide an example of the changed code.
+            First, Review code based on overall PR.
+            Second, when pointing out an issue, please explain the reason for the change and provide an example of the changed code.
             Please point out the following points in particular:
               - Are there any violations of design principles?
               - Are there any names that are misleading or do not accurately represent the actual situation?

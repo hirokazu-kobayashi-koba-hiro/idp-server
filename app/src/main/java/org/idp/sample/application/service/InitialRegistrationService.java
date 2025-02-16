@@ -59,7 +59,7 @@ public class InitialRegistrationService {
     organizationService.register(organization);
 
     HashMap<String, Object> newCustomProperties = new HashMap<>(operator.customPropertiesValue());
-    newCustomProperties.put("organization", organization);
+    newCustomProperties.put("organization", organization.toMap());
     operator.setCustomProperties(newCustomProperties);
     userService.update(operator);
 
