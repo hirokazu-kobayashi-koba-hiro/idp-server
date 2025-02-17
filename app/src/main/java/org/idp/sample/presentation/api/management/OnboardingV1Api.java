@@ -1,6 +1,7 @@
 package org.idp.sample.presentation.api.management;
 
-import org.idp.sample.application.service.InitialRegistrationService;
+import org.idp.sample.application.service.OnboardingService;
+import org.idp.sample.domain.model.organization.Organization;
 import org.idp.sample.domain.model.tenant.*;
 import org.idp.sample.presentation.api.ParameterTransformable;
 import org.idp.server.oauth.identity.User;
@@ -12,17 +13,18 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+
 @RestController
-@RequestMapping("/api/v1/management/initial-registration")
-public class InitialRegistrationManagementV1Api implements ParameterTransformable {
+@RequestMapping("/api/v1/management/onboarding")
+public class OnboardingV1Api implements ParameterTransformable {
 
   PublicTenantDomain publicTenantDomain;
-  InitialRegistrationService initialRegistrationService;
+  OnboardingService onboardingService;
 
-  public InitialRegistrationManagementV1Api(
-      InitialRegistrationService initialRegistrationService,
+  public OnboardingV1Api(
+      OnboardingService onboardingService,
       @Value("${idp.configurations.publicTenantDomain}") String publicTenantDomainValue) {
-    this.initialRegistrationService = initialRegistrationService;
+    this.onboardingService = onboardingService;
     this.publicTenantDomain = new PublicTenantDomain(publicTenantDomainValue);
   }
 
@@ -31,7 +33,7 @@ public class InitialRegistrationManagementV1Api implements ParameterTransformabl
       @AuthenticationPrincipal User operator,
       @Validated @RequestBody InitialRegistrationRequest request) {
 
-    initialRegistrationService.initialize(
+    Organization organization = onboardingService.initialize(
         operator,
         request.organizationName(),
         publicTenantDomain,
@@ -40,6 +42,6 @@ public class InitialRegistrationManagementV1Api implements ParameterTransformabl
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
-    return new ResponseEntity<>(headers, HttpStatus.OK);
+    return new ResponseEntity<>(organization.toMap(), headers, HttpStatus.OK);
   }
 }

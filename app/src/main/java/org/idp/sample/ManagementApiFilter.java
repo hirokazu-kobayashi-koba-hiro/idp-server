@@ -81,6 +81,6 @@ public class ManagementApiFilter extends OncePerRequestFilter {
 
 
   protected boolean shouldNotFilter(HttpServletRequest request) {
-    return !request.getRequestURI().contains("/management/!");
+    return !request.getRequestURI().contains("/management/");
   }
 }
