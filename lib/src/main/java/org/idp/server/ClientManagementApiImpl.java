@@ -27,8 +27,7 @@ public class ClientManagementApiImpl implements ClientManagementApi {
   }
 
   public String register(TokenIssuer tokenIssuer, String json) {
-    clientConfigurationHandler.register(tokenIssuer, json);
-    return json;
+      return clientConfigurationHandler.register(tokenIssuer, json);
   }
 
   public ClientConfigurationManagementListResponse find(

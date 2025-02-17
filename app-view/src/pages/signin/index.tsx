@@ -4,7 +4,7 @@ import {
   Button,
   Card,
   Chip,
-  Container,
+  Container, Divider, Link,
   List,
   ListItem,
   ListItemIcon,
@@ -172,13 +172,25 @@ export default function SignIn() {
               </ListItem>
             </List>
 
-            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
               <Button variant="contained" color="error" onClick={handleCancel}>
                 cancel
               </Button>
               <Button variant="contained" color="primary" onClick={handleApprove}>
                 approve
               </Button>
+            </Box>
+            <Box sx={{mt: 2}} >
+              <Divider />
+            </Box>
+            <Box sx={{mt: 2, gap: 2}} display="flex">
+              <Typography>{"Dont have an account?"}</Typography>
+              <Link
+                onClick={() => {
+                router.push(`/signup?id=${id}&tenant_id=${tenantId}&session_key=${sessionKey}`)
+              }}>
+                Sign Up
+              </Link>
             </Box>
           </Card>
         </Box>

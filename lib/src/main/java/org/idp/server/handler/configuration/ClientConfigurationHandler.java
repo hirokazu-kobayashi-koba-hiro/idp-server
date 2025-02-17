@@ -31,13 +31,14 @@ public class ClientConfigurationHandler {
     clientConfigurationRepository.register(clientConfiguration);
   }
 
-  public void register(TokenIssuer tokenIssuer, String json) {
+  public String register(TokenIssuer tokenIssuer, String json) {
     //FIXME
     String replacedJson = json.replace("${ISSUER}", tokenIssuer.value())
             .replace("${CLIENT_ID}", UUID.randomUUID().toString())
             .replace("${CLIENT_SECRET}", UUID.randomUUID().toString());
     ClientConfiguration clientConfiguration = jsonConverter.read(replacedJson, ClientConfiguration.class);
     clientConfigurationRepository.register(clientConfiguration);
+    return replacedJson;
   }
 
   public ClientConfigurationManagementListResponse find(
