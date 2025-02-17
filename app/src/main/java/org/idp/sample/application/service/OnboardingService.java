@@ -1,6 +1,8 @@
 package org.idp.sample.application.service;
 
 import java.util.HashMap;
+import java.util.Map;
+
 import org.idp.sample.application.service.organization.OrganizationService;
 import org.idp.sample.application.service.tenant.TenantService;
 import org.idp.sample.application.service.user.UserService;
@@ -9,7 +11,6 @@ import org.idp.sample.domain.model.organization.OrganizationName;
 import org.idp.sample.domain.model.organization.initial.*;
 import org.idp.sample.domain.model.tenant.PublicTenantDomain;
 import org.idp.sample.domain.model.tenant.Tenant;
-import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.domain.model.tenant.TenantName;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.ServerManagementApi;
@@ -19,14 +20,14 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Transactional
-public class InitialRegistrationService {
+public class OnboardingService {
 
   TenantService tenantService;
   OrganizationService organizationService;
   UserService userService;
   ServerManagementApi serverManagementApi;
 
-  public InitialRegistrationService(
+  public OnboardingService(
       TenantService tenantService,
       OrganizationService organizationService,
       UserService userService,
@@ -37,7 +38,7 @@ public class InitialRegistrationService {
     this.serverManagementApi = idpServerApplication.serverManagementApi();
   }
 
-  public void initialize(
+  public Organization initialize(
       User operator,
       OrganizationName organizationName,
       PublicTenantDomain publicTenantDomain,
@@ -61,5 +62,7 @@ public class InitialRegistrationService {
         new ServerConfigurationCreator(tenant, serverConfig);
     String config = serverConfigurationCreator.create();
     serverManagementApi.register(config);
+
+    return organization;
   }
 }

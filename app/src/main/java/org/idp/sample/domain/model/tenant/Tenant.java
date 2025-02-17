@@ -1,5 +1,7 @@
 package org.idp.sample.domain.model.tenant;
 
+import org.idp.server.type.oauth.TokenIssuer;
+
 import java.util.Objects;
 
 public class Tenant {
@@ -35,6 +37,10 @@ public class Tenant {
 
   public String issuer() {
     return issuer;
+  }
+
+  public TokenIssuer tokenIssuer() {
+    return new TokenIssuer(issuer);
   }
 
   public boolean isAdmin() {
