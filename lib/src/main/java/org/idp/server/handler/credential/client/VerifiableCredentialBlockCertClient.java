@@ -36,7 +36,7 @@ public class VerifiableCredentialBlockCertClient implements VerifiableCredential
       String requestBody = JsonConvertable.write(requestBodyMap);
       HttpRequest request =
           HttpRequest.newBuilder()
-              .uri(new URI("http://localhost:3000/v1/verifiable-credentials/block-cert"))
+              .uri(new URI("http://localhost:8000/v1/verifiable-credentials/block-cert"))
               .POST((HttpRequest.BodyPublishers.ofString(requestBody)))
               .header("Content-Type", "application/json")
               .build();
