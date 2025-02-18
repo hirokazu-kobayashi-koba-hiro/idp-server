@@ -13,7 +13,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-
 @RestController
 @RequestMapping("/api/v1/management/onboarding")
 public class OnboardingV1Api implements ParameterTransformable {
@@ -33,12 +32,13 @@ public class OnboardingV1Api implements ParameterTransformable {
       @AuthenticationPrincipal User operator,
       @Validated @RequestBody InitialRegistrationRequest request) {
 
-    Organization organization = onboardingService.initialize(
-        operator,
-        request.organizationName(),
-        publicTenantDomain,
-        request.tenantName(),
-        request.serverConfig());
+    Organization organization =
+        onboardingService.initialize(
+            operator,
+            request.organizationName(),
+            publicTenantDomain,
+            request.tenantName(),
+            request.serverConfig());
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

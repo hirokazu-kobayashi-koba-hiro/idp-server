@@ -43,6 +43,7 @@ CREATE TABLE authorization_request
     authorization_details       text                    NOT NULL,
     presentation_definition     text                    NOT NULL,
     presentation_definition_uri text                    NOT NULL,
+    custom_params               text                    NOT NULL,
     created_at                  timestamp default now() NOT NULL
 );
 
@@ -140,12 +141,12 @@ CREATE TABLE ciba_grant
 
 CREATE TABLE verifiable_credential_transaction
 (
-    transaction_id                   varchar(256)            NOT NULL,
-    credential_issuer                text                    NOT NULL,
-    client_id                        text                    NOT NULL,
-    user_id                          varchar(256)            NOT NULL,
-    verifiable_credential           text                    NOT NULL,
-    status                           varchar(10)             NOT NULL,
-    created_at                       timestamp default now() NOT NULL,
-    updated_at                       timestamp default now() NOT NULL
+    transaction_id        varchar(256)            NOT NULL,
+    credential_issuer     text                    NOT NULL,
+    client_id             text                    NOT NULL,
+    user_id               varchar(256)            NOT NULL,
+    verifiable_credential text                    NOT NULL,
+    status                varchar(10)             NOT NULL,
+    created_at            timestamp default now() NOT NULL,
+    updated_at            timestamp default now() NOT NULL
 );

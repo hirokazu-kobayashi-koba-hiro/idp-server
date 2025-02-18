@@ -1,8 +1,7 @@
 package org.idp.sample.domain.model.tenant;
 
-import org.idp.server.type.oauth.TokenIssuer;
-
 import java.util.Objects;
+import org.idp.server.type.oauth.TokenIssuer;
 
 public class Tenant {
   TenantIdentifier identifier;

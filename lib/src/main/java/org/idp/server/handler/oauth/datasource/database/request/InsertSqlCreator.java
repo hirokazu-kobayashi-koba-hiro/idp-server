@@ -4,6 +4,7 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.vp.request.PresentationDefinition;
+import org.idp.server.type.oauth.CustomParams;
 
 public class InsertSqlCreator {
 
@@ -74,27 +75,35 @@ public class InsertSqlCreator {
     }
     if (authorizationRequest.hasAuthorizationDetails()) {
       builder.setAuthorizationDetails(
-          convertAuthorizationDetails(authorizationRequest.authorizationDetails()));
+          convertJsonAuthorizationDetails(authorizationRequest.authorizationDetails()));
     }
     if (authorizationRequest.hasPresentationDefinition()) {
       builder.setPresentationDefinition(
-          convertPresentationDefinition(authorizationRequest.presentationDefinition()));
+          convertJsonPresentationDefinition(authorizationRequest.presentationDefinition()));
     }
     if (authorizationRequest.hasPresentationDefinitionUri()) {
       builder.setPresentationDefinitionUri(
           authorizationRequest.presentationDefinitionUri().value());
     }
+    if (authorizationRequest.hasCustomParams()) {
+      builder.setCustomParams(convertJson(authorizationRequest.customParams()));
+    }
     return builder.build();
   }
 
-  private static String convertAuthorizationDetails(AuthorizationDetails authorizationDetails) {
+  private static String convertJsonAuthorizationDetails(AuthorizationDetails authorizationDetails) {
     JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
     return jsonConverter.write(authorizationDetails.toMapValues());
   }
 
-  private static String convertPresentationDefinition(
+  private static String convertJsonPresentationDefinition(
       PresentationDefinition presentationDefinition) {
     JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
     return jsonConverter.write(presentationDefinition);
+  }
+
+  private static String convertJson(CustomParams customParams) {
+    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    return jsonConverter.write(customParams.values());
   }
 }

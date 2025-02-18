@@ -1,8 +1,7 @@
 package org.idp.sample.domain.model.organization;
 
-import org.idp.sample.domain.model.tenant.Tenant;
-
 import java.util.HashMap;
+import org.idp.sample.domain.model.tenant.Tenant;
 
 public class Organization {
   OrganizationIdentifier identifier;

@@ -3,7 +3,6 @@ package org.idp.server.handler.configuration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ClientConfigurationRepository;
@@ -32,11 +31,13 @@ public class ClientConfigurationHandler {
   }
 
   public String register(TokenIssuer tokenIssuer, String json) {
-    //FIXME
-    String replacedJson = json.replace("${ISSUER}", tokenIssuer.value())
+    // FIXME
+    String replacedJson =
+        json.replace("${ISSUER}", tokenIssuer.value())
             .replace("${CLIENT_ID}", UUID.randomUUID().toString())
             .replace("${CLIENT_SECRET}", UUID.randomUUID().toString());
-    ClientConfiguration clientConfiguration = jsonConverter.read(replacedJson, ClientConfiguration.class);
+    ClientConfiguration clientConfiguration =
+        jsonConverter.read(replacedJson, ClientConfiguration.class);
     clientConfigurationRepository.register(clientConfiguration);
     return replacedJson;
   }

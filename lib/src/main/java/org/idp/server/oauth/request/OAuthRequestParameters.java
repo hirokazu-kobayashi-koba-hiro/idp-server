@@ -2,6 +2,7 @@ package org.idp.server.oauth.request;
 
 import static org.idp.server.type.OAuthRequestKey.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.type.ArrayValueMap;
@@ -216,5 +217,18 @@ public class OAuthRequestParameters {
 
   public AuthorizationDetailsEntity authorizationDetailsValue() {
     return new AuthorizationDetailsEntity(getValueOrEmpty(authorization_details));
+  }
+
+  public CustomParams customParams() {
+    Map<String, String> params = new HashMap<>();
+    values
+        .singleValueMap()
+        .forEach(
+            (key, value) -> {
+              if (!OAuthRequestKey.contains(key)) {
+                params.put(key, value);
+              }
+            });
+    return new CustomParams(params);
   }
 }

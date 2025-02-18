@@ -84,6 +84,7 @@ public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequ
     builder.add(codeChallenge);
     builder.add(codeChallengeMethod);
     builder.add(convertAuthorizationDetails(authorizationDetailsEntity));
+    builder.add(parameters.customParams());
     return builder.build();
   }
 }

@@ -52,6 +52,7 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
     builder.add(parameters.codeChallenge());
     builder.add(parameters.codeChallengeMethod());
     builder.add(convertAuthorizationDetails(parameters.authorizationDetailsValue()));
+    builder.add(parameters.customParams());
     return builder.build();
   }
 }

@@ -44,5 +44,4 @@ public class TokenIntrospectionRequest {
   public boolean hasToken() {
     return params.containsKey("token");
   }
-
 }

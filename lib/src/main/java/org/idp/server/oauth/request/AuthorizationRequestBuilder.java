@@ -39,6 +39,7 @@ public class AuthorizationRequestBuilder {
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
   PresentationDefinition presentationDefinition = new PresentationDefinition();
   PresentationDefinitionUri presentationDefinitionUri = new PresentationDefinitionUri();
+  CustomParams customParams = new CustomParams();
 
   public AuthorizationRequestBuilder() {}
 
@@ -172,6 +173,11 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
+  public AuthorizationRequestBuilder add(CustomParams customParams) {
+    this.customParams = customParams;
+    return this;
+  }
+
   public AuthorizationRequest build() {
     return new AuthorizationRequest(
         identifier,
@@ -199,6 +205,7 @@ public class AuthorizationRequestBuilder {
         codeChallengeMethod,
         authorizationDetails,
         presentationDefinition,
-        presentationDefinitionUri);
+        presentationDefinitionUri,
+        customParams);
   }
 }

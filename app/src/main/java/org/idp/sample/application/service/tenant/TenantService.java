@@ -3,7 +3,6 @@ package org.idp.sample.application.service.tenant;
 import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.domain.model.tenant.TenantRepository;
-import org.idp.sample.domain.model.tenant.TenantType;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.springframework.stereotype.Service;
 

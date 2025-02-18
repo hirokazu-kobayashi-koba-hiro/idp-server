@@ -47,6 +47,7 @@ class ModelConverter {
     builder.add(convertAuthorizationDetails(stringMap.get("authorization_details")));
     builder.add(convertPresentationDefinition(stringMap.get("presentation_definition")));
     builder.add(new PresentationDefinitionUri(stringMap.get("presentation_definition_uri")));
+    builder.add(convertCustomParams(stringMap.get("custom_params")));
     return builder.build();
   }
 
@@ -67,11 +68,13 @@ class ModelConverter {
       return new AuthorizationDetails();
     }
     try {
+
       JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
       List list = jsonConverter.read(value, List.class);
       List<Map> details = (List<Map>) list;
       List<AuthorizationDetail> authorizationDetailsList =
           details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
+
       return new AuthorizationDetails(authorizationDetailsList);
     } catch (Exception exception) {
       return new AuthorizationDetails();
@@ -83,10 +86,27 @@ class ModelConverter {
       return new PresentationDefinition();
     }
     try {
+
       JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+
       return jsonConverter.read(value, PresentationDefinition.class);
     } catch (Exception exception) {
       return new PresentationDefinition();
+    }
+  }
+
+  private static CustomParams convertCustomParams(String value) {
+    if (value.isEmpty()) {
+      return new CustomParams();
+    }
+    try {
+
+      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+      Map<String, String> read = jsonConverter.read(value, Map.class);
+
+      return new CustomParams(read);
+    } catch (Exception exception) {
+      return new CustomParams();
     }
   }
 }

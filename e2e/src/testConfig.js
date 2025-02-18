@@ -22,7 +22,7 @@ export const serverConfig = {
   credentialBatchEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials/batch-requests",
   enabledSsr: false,
   ciba: {
-    loginHint: "3ec055a8-8000-44a2-8677-e70ebff414e2",
+    loginHint: "ito.ichiro@gmail.com",
     userCode: "successUserCode",
     bindingMessage: "999",
     invalidLoginHint: "invalid",

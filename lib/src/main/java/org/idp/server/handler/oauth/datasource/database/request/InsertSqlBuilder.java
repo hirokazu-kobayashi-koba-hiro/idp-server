@@ -4,14 +4,14 @@ import org.idp.server.basic.sql.SqlBaseBuilder;
 
 class InsertSqlBuilder implements SqlBaseBuilder {
   String sql;
-  int columnSize = 25;
+  int columnSize = 26;
 
   InsertSqlBuilder(String identifier) {
     this.sql =
         """
             INSERT INTO public.authorization_request
-            (id, token_issuer, profile, scopes, response_type, client_id, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, presentation_definition, presentation_definition_uri)
-            VALUES ('$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$10', '$11', '$12', '$13', '$14', '$15', '$16', '$17', '$18', '$19', '$20', '$21', '$22', '$23', '$24', '$25');
+            (id, token_issuer, profile, scopes, response_type, client_id, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, presentation_definition, presentation_definition_uri, custom_params)
+            VALUES ('$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$10', '$11', '$12', '$13', '$14', '$15', '$16', '$17', '$18', '$19', '$20', '$21', '$22', '$23', '$24', '$25', '$26');
             """;
     this.sql = replace(sql, 1, identifier);
   }
@@ -133,6 +133,11 @@ class InsertSqlBuilder implements SqlBaseBuilder {
 
   InsertSqlBuilder setPresentationDefinitionUri(String presentationDefinitionUri) {
     this.sql = replace(sql, 25, presentationDefinitionUri);
+    return this;
+  }
+
+  InsertSqlBuilder setCustomParams(String values) {
+    this.sql = replace(sql, 26, values);
     return this;
   }
 

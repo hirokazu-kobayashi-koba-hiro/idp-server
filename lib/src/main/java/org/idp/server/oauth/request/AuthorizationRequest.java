@@ -40,6 +40,7 @@ public class AuthorizationRequest {
   AuthorizationDetails authorizationDetails;
   PresentationDefinition presentationDefinition;
   PresentationDefinitionUri presentationDefinitionUri;
+  CustomParams customParams;
 
   public AuthorizationRequest() {}
 
@@ -69,7 +70,8 @@ public class AuthorizationRequest {
       CodeChallengeMethod codeChallengeMethod,
       AuthorizationDetails authorizationDetails,
       PresentationDefinition presentationDefinition,
-      PresentationDefinitionUri presentationDefinitionUri) {
+      PresentationDefinitionUri presentationDefinitionUri,
+      CustomParams customParams) {
     this.identifier = identifier;
     this.tokenIssuer = tokenIssuer;
     this.profile = profile;
@@ -96,6 +98,7 @@ public class AuthorizationRequest {
     this.authorizationDetails = authorizationDetails;
     this.presentationDefinition = presentationDefinition;
     this.presentationDefinitionUri = presentationDefinitionUri;
+    this.customParams = customParams;
   }
 
   public AuthorizationRequestIdentifier identifier() {
@@ -266,6 +269,10 @@ public class AuthorizationRequest {
     return codeChallenge;
   }
 
+  public CustomParams customParams() {
+    return customParams;
+  }
+
   public boolean hasCodeChallenge() {
     return codeChallenge.exists();
   }
@@ -344,6 +351,10 @@ public class AuthorizationRequest {
 
   public boolean isVerifiableCredentialRequest() {
     return authorizationDetails.hasVerifiableCredential();
+  }
+
+  public boolean hasCustomParams() {
+    return customParams.exists();
   }
 
   public OAuthSessionKey sessionKey() {
