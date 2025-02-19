@@ -12,6 +12,7 @@ public class OAuthViewData {
   String tosUri;
   String policyUri;
   List<String> scopes;
+  Map<String, String> customParams;
   Map<String, Object> contents;
 
   public OAuthViewData(
@@ -23,6 +24,7 @@ public class OAuthViewData {
       String tosUri,
       String policyUri,
       List<String> scopes,
+      Map<String, String> customParams,
       Map<String, Object> contents) {
     this.clientId = clientId;
     this.clientName = clientName;
@@ -32,6 +34,7 @@ public class OAuthViewData {
     this.tosUri = tosUri;
     this.policyUri = policyUri;
     this.scopes = scopes;
+    this.customParams = customParams;
     this.contents = contents;
   }
 
@@ -65,6 +68,10 @@ public class OAuthViewData {
 
   public List<String> scopes() {
     return scopes;
+  }
+
+  public Map<String, String> customParams() {
+    return customParams;
   }
 
   public Map<String, Object> contents() {

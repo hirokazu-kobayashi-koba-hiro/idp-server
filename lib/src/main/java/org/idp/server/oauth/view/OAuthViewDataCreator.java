@@ -34,6 +34,7 @@ public class OAuthViewDataCreator {
     String contacts = clientConfiguration.contacts();
     String tosUri = clientConfiguration.tosUri();
     String policyUri = clientConfiguration.policyUri();
+    Map<String, String> customParams = authorizationRequest.customParams().values();
     List<String> scopes = authorizationRequest.scope().toStringList();
     Map<String, Object> contents = new HashMap<>();
     contents.put("client_id", clientId);
@@ -49,7 +50,17 @@ public class OAuthViewDataCreator {
     } else {
       contents.put("session_enabled", session.isValid(authorizationRequest));
     }
+    contents.put("custom_params", customParams);
     return new OAuthViewData(
-        clientId, clientName, clientUri, logoUri, contacts, tosUri, policyUri, scopes, contents);
+        clientId,
+        clientName,
+        clientUri,
+        logoUri,
+        contacts,
+        tosUri,
+        policyUri,
+        scopes,
+        customParams,
+        contents);
   }
 }

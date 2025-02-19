@@ -9,6 +9,7 @@ import org.idp.sample.application.service.tenant.TenantService;
 import org.idp.sample.application.service.user.UserService;
 import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
+import org.idp.sample.domain.model.user.UserRegistrationConflictException;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.OAuthApi;
 import org.idp.server.basic.date.SystemDateTime;
@@ -74,7 +75,7 @@ public class OAuthFlowService implements OAuthRequestDelegate {
     OAuthSession session = (OAuthSession) httpSession.getAttribute(sessionKey);
     User existingUser = userService.findBy(tenant, username);
     if (existingUser.exists()) {
-      throw new RuntimeException("User already exists");
+      throw new UserRegistrationConflictException("User already exists");
     }
     User user = new User();
     user.setSub(UUID.randomUUID().toString());

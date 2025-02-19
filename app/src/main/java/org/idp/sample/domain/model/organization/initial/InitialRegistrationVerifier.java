@@ -27,7 +27,7 @@ public class InitialRegistrationVerifier {
 
   public void verify() {
     if (!tenant.isAdmin()) {
-      throw new InitialRegistrationNotAllowedException(
+      throw new InitialRegistrationForbiddenException(
           "tenant is not admin. admin tenant only allowed initial registration request");
     }
   }

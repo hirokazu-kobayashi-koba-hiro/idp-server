@@ -1,6 +1,8 @@
 package org.idp.sample.domain.model.tenant;
 
-public class TenantNotFoundException extends RuntimeException {
+import org.idp.sample.domain.model.base.NotFoundException;
+
+public class TenantNotFoundException extends NotFoundException {
 
   public TenantNotFoundException(String message) {
     super(message);
