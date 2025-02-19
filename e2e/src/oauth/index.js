@@ -29,6 +29,7 @@ export const requestAuthorizations = async ({
   codeChallengeMethod,
   authorizationDetails,
   presentationDefinition,
+  customParams,
   action = "authorize",
   user = {
     "username": "ito.ichiro@gmail.com",
@@ -59,6 +60,7 @@ export const requestAuthorizations = async ({
       codeChallengeMethod,
       authorizationDetails,
       presentationDefinition,
+      customParams,
     });
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
@@ -146,6 +148,7 @@ export const requestAuthorizations = async ({
       codeChallengeMethod,
       authorizationDetails,
       presentationDefinition,
+      customParams,
     });
     console.log(response.data);
     if (response.status === 302) {

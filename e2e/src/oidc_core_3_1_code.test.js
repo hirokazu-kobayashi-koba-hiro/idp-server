@@ -20,6 +20,10 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       state: "aiueo",
       scope: "openid profile phone email" + clientSecretPostClient.scope,
       redirectUri: clientSecretPostClient.redirectUri,
+      customParams: {
+        organizationId: "123",
+        organizationName: "test",
+      }
     });
     console.log(authorizationResponse);
     expect(authorizationResponse.code).not.toBeNull();

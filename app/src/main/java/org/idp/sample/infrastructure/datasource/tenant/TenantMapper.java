@@ -20,5 +20,4 @@ public interface TenantMapper {
   Tenant selectByTokenIssuer(@Param("tokenIssuer") TokenIssuer tokenIssuer);
 
   Tenant selectAdmin();
-
 }

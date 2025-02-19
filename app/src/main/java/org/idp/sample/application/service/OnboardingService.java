@@ -1,8 +1,6 @@
 package org.idp.sample.application.service;
 
 import java.util.HashMap;
-import java.util.Map;
-
 import org.idp.sample.application.service.organization.OrganizationService;
 import org.idp.sample.application.service.tenant.TenantService;
 import org.idp.sample.application.service.user.UserService;

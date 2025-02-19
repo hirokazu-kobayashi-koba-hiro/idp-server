@@ -1,7 +1,6 @@
 package org.idp.sample.infrastructure.datasource.tenant;
 
 import java.util.Objects;
-
 import org.idp.sample.domain.model.tenant.*;
 import org.idp.server.type.oauth.TokenIssuer;
 import org.springframework.stereotype.Repository;

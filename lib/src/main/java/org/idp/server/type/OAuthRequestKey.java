@@ -56,5 +56,14 @@ public enum OAuthRequestKey {
   transaction_id,
   // RP-Initiated Logout
   post_logout_redirect_uri,
-  logout_hint,
+  logout_hint;
+
+  public static boolean contains(String key) {
+    for (OAuthRequestKey keys : OAuthRequestKey.values()) {
+      if (keys.name().equals(key)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

@@ -1,7 +1,6 @@
 package org.idp.sample.domain.model.organization;
 
 import java.util.*;
-
 import org.idp.sample.domain.model.tenant.Tenant;
 
 public class AssignedTenants implements Iterable<Tenant> {
