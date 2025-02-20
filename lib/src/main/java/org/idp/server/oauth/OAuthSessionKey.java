@@ -11,6 +11,11 @@ public class OAuthSessionKey implements Serializable {
     this.clientId = clientId;
   }
 
+  public static OAuthSessionKey parse(String sessionKey) {
+    String[] split = sessionKey.split(":");
+    return new OAuthSessionKey(split[0], split[1]);
+  }
+
   public String tokenIssuer() {
     return tokenIssuer;
   }

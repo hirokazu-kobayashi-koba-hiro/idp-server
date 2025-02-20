@@ -57,20 +57,27 @@ public class OAuthV1Api implements ParameterTransformable {
     return new ResponseEntity<>(viewDataResponse.contents(), httpHeaders, HttpStatus.OK);
   }
 
-  // TODO
   @PostMapping("/{id}/signup")
   public ResponseEntity<?> signup(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") String id,
-      @Validated @RequestBody PasswordAuthenticationRequest passwordAuthenticationRequest) {
+      @Validated @RequestBody UserRegistrationRequest request) {
+
+    oAuthFlowService.requestSignup(tenantId, id, request.toUserRegistration());
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(httpHeaders, HttpStatus.OK);
+  }
+
+  @PostMapping("/{id}/authorize-with-session")
+  public ResponseEntity<?> authorizeWithSession(
+      @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
 
     OAuthAuthorizeResponse authAuthorizeResponse =
-        oAuthFlowService.signup(
-            tenantId,
-            id,
-            passwordAuthenticationRequest.username(),
-            passwordAuthenticationRequest.password(),
-            passwordAuthenticationRequest.sessionKey());
+        oAuthFlowService.authorizeWithSession(tenantId, id);
+
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
 
@@ -89,12 +96,18 @@ public class OAuthV1Api implements ParameterTransformable {
     }
   }
 
-  @PostMapping("/{id}/authorize-with-session")
-  public ResponseEntity<?> authorizeWithSession(
-      @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
+  @PostMapping("/{id}/password-authentication")
+  public ResponseEntity<?> authenticateWithPassword(
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("id") String id,
+      @Validated @RequestBody PasswordAuthenticationRequest passwordAuthenticationRequest) {
 
     OAuthAuthorizeResponse authAuthorizeResponse =
-        oAuthFlowService.authorizeWithSession(tenantId, id);
+        oAuthFlowService.authorize(
+            tenantId,
+            id,
+            passwordAuthenticationRequest.username(),
+            passwordAuthenticationRequest.password());
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -125,8 +138,7 @@ public class OAuthV1Api implements ParameterTransformable {
             tenantId,
             id,
             passwordAuthenticationRequest.username(),
-            passwordAuthenticationRequest.password(),
-            passwordAuthenticationRequest.sessionKey());
+            passwordAuthenticationRequest.password());
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

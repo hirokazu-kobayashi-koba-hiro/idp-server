@@ -52,7 +52,7 @@ CREATE TABLE idp_user
     address               text                    NOT NULL,
     custom_properties     text,
     credentials           text,
-    password              text,
+    hashed_password              text,
     created_at            timestamp default now() NOT NULL,
     updated_at            timestamp default now() NOT NULL,
     CONSTRAINT uk_tenant_id_email unique (tenant_id, email)

@@ -8,7 +8,7 @@
         INSERT INTO public.idp_user (id, tenant_id, name, given_name, family_name, middle_name, nickname,
                                    preferred_username, profile, picture, website, email, email_verified, gender,
                                    birthdate, zoneinfo, locale, phone_number, phone_number_verified, address,
-                                   custom_properties, credentials, password)
+                                   custom_properties, credentials, hashed_password)
         VALUES (
                 #{user.sub},
                 #{tenant.identifier.value},
@@ -32,7 +32,7 @@
                 '',
                 '',
                 '',
-                #{user.password});
+                #{user.hashedPassword});
 
     </insert>
 
@@ -58,7 +58,7 @@
         <result property="updatedAt" column="updated_at"/>
         <result property="customProperties" column="custom_properties" typeHandler="org.idp.sample.infrastructure.datasource.user.CustomPropertiesTypeHandler"/>
         <result property="credentials" column="credentials" typeHandler="org.idp.sample.infrastructure.datasource.user.CredentialsTypeHandler"/>
-        <result property="password" column="password"/>
+        <result property="hashedPassword" column="hashed_password"/>
     </resultMap>
 
     <sql id="select">
@@ -83,7 +83,7 @@
                address,
                custom_properties,
                credentials,
-               password,
+               hashed_password,
                created_at,
                updated_at
         FROM idp_user

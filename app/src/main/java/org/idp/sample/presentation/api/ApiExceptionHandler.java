@@ -13,31 +13,31 @@ public class ApiExceptionHandler {
 
   Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
-  @ExceptionHandler
+  @ExceptionHandler(BadRequestException.class)
   public ResponseEntity<?> handleException(BadRequestException exception) {
     log.warn(exception.getMessage());
     return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
   }
 
-  @ExceptionHandler
+  @ExceptionHandler(UnauthorizedException.class)
   public ResponseEntity<?> handleException(UnauthorizedException exception) {
     log.warn(exception.getMessage());
     return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
   }
 
-  @ExceptionHandler
+  @ExceptionHandler(ForbiddenException.class)
   public ResponseEntity<?> handleException(ForbiddenException exception) {
     log.warn(exception.getMessage());
     return new ResponseEntity<>(HttpStatus.FORBIDDEN);
   }
 
-  @ExceptionHandler
+  @ExceptionHandler(NotFoundException.class)
   public ResponseEntity<?> handleException(NotFoundException exception) {
     log.warn(exception.getMessage());
     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
   }
 
-  @ExceptionHandler
+  @ExceptionHandler(ConflictException.class)
   public ResponseEntity<?> handleException(ConflictException exception) {
     log.warn(exception.getMessage());
     return new ResponseEntity<>(HttpStatus.CONFLICT);

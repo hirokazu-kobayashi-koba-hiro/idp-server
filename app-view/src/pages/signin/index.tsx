@@ -25,7 +25,7 @@ export default function SignIn() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const router = useRouter();
-  const { id, tenant_id: tenantId, session_key: sessionKey } = router.query;
+  const { id, tenant_id: tenantId } = router.query;
   const {data, isPending } = useQuery({
     queryKey: ["fetchViewData"],
     queryFn: async () => {
@@ -66,7 +66,6 @@ export default function SignIn() {
       body: JSON.stringify({
         username: email,
         password: password,
-        session_key: sessionKey,
       })
     })
     const body = await response.json()
@@ -187,7 +186,7 @@ export default function SignIn() {
               <Typography>{"Dont have an account?"}</Typography>
               <Link
                 onClick={() => {
-                router.push(`/signup?id=${id}&tenant_id=${tenantId}&session_key=${sessionKey}`)
+                router.push(`/signup?id=${id}&tenant_id=${tenantId}`)
               }}>
                 Sign Up
               </Link>

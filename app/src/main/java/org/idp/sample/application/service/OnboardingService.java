@@ -3,7 +3,7 @@ package org.idp.sample.application.service;
 import java.util.HashMap;
 import org.idp.sample.application.service.organization.OrganizationService;
 import org.idp.sample.application.service.tenant.TenantService;
-import org.idp.sample.application.service.user.UserService;
+import org.idp.sample.application.service.user.internal.UserService;
 import org.idp.sample.domain.model.organization.Organization;
 import org.idp.sample.domain.model.organization.OrganizationName;
 import org.idp.sample.domain.model.organization.initial.*;
