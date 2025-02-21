@@ -2,6 +2,8 @@ export const serverConfig = {
   issuer: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
   authorizationEndpoint:
     "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations",
+  passwordAuthenticationEndpoint:
+    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/password-authentication",
   authorizeEndpoint:
     "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/authorize",
   denyEndpoint:

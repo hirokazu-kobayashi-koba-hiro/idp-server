@@ -215,7 +215,7 @@ public class User implements Serializable {
     return updatedAt.toEpochSecond(SystemDateTime.zoneOffset);
   }
 
-  public String password() {
+  public String hashedPassword() {
     return hashedPassword;
   }
 

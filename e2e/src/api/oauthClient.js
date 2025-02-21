@@ -222,6 +222,14 @@ export const getAuthorizations = async ({
   });
 };
 
+export const authenticateWithPassword = async ({ endpoint, id, body }) => {
+  const url = endpoint.replace("{id}", id);
+  return await postWithJson({
+    url,
+    body,
+  });
+};
+
 export const authorize = async ({ endpoint, id, body }) => {
   const url = endpoint.replace("{id}", id);
   return await postWithJson({

@@ -102,43 +102,27 @@ public class OAuthV1Api implements ParameterTransformable {
       @PathVariable("id") String id,
       @Validated @RequestBody PasswordAuthenticationRequest passwordAuthenticationRequest) {
 
-    OAuthAuthorizeResponse authAuthorizeResponse =
-        oAuthFlowService.authorize(
-            tenantId,
-            id,
-            passwordAuthenticationRequest.username(),
-            passwordAuthenticationRequest.password());
+    oAuthFlowService.authenticateWithPassword(
+        tenantId,
+        id,
+        passwordAuthenticationRequest.username(),
+        passwordAuthenticationRequest.password());
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
 
-    switch (authAuthorizeResponse.status()) {
-      case OK, REDIRECABLE_BAD_REQUEST -> {
-        return new ResponseEntity<>(authAuthorizeResponse.contents(), httpHeaders, HttpStatus.OK);
-      }
-      case BAD_REQUEST -> {
-        return new ResponseEntity<>(
-            authAuthorizeResponse.contents(), httpHeaders, HttpStatus.BAD_REQUEST);
-      }
-      default -> {
-        return new ResponseEntity<>(
-            authAuthorizeResponse.contents(), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-    }
+    return new ResponseEntity<>(httpHeaders, HttpStatus.OK);
   }
 
   @PostMapping("/{id}/authorize")
   public ResponseEntity<?> authorize(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
-      @PathVariable("id") String id,
-      @Validated @RequestBody PasswordAuthenticationRequest passwordAuthenticationRequest) {
+      @PathVariable("id") String id) {
 
     OAuthAuthorizeResponse authAuthorizeResponse =
         oAuthFlowService.authorize(
             tenantId,
-            id,
-            passwordAuthenticationRequest.username(),
-            passwordAuthenticationRequest.password());
+            id);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

@@ -20,6 +20,7 @@ import org.idp.server.oauth.repository.*;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.oauth.response.*;
+import org.idp.server.oauth.validator.OAuthAuthorizeRequestValidator;
 import org.idp.server.token.*;
 import org.idp.server.token.repository.OAuthTokenRepository;
 import org.idp.server.type.extension.CustomProperties;
@@ -52,11 +53,15 @@ public class OAuthAuthorizeHandler {
 
   public AuthorizationResponse handle(
       OAuthAuthorizeRequest request, OAuthRequestDelegate delegate) {
+
     TokenIssuer tokenIssuer = request.toTokenIssuer();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
     User user = request.user();
     Authentication authentication = request.authentication();
     CustomProperties customProperties = request.toCustomProperties();
+
+    OAuthAuthorizeRequestValidator validator = new OAuthAuthorizeRequestValidator(tokenIssuer, authorizationRequestIdentifier, user, authentication, customProperties);
+    validator.validate();
 
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.get(authorizationRequestIdentifier);
@@ -64,6 +69,7 @@ public class OAuthAuthorizeHandler {
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tokenIssuer, clientId);
+
     OAuthAuthorizeContext context =
         new OAuthAuthorizeContext(
             authorizationRequest,
@@ -75,8 +81,8 @@ public class OAuthAuthorizeHandler {
 
     AuthorizationResponseCreator authorizationResponseCreator =
         creators.get(context.responseType());
-
     AuthorizationResponse authorizationResponse = authorizationResponseCreator.create(context);
+
     AuthorizationGrant authorizationGrant = context.toAuthorizationGranted();
     if (authorizationResponse.hasAuthorizationCode()) {
       AuthorizationCodeGrant authorizationCodeGrant =
@@ -88,6 +94,7 @@ public class OAuthAuthorizeHandler {
       OAuthToken oAuthToken = OAuthTokenFactory.create(authorizationResponse, authorizationGrant);
       oAuthTokenRepository.register(oAuthToken);
     }
+
     if (Objects.nonNull(delegate)) {
       OAuthSessionKey oAuthSessionKey = new OAuthSessionKey(tokenIssuer.value(), clientId.value());
       OAuthSession session =

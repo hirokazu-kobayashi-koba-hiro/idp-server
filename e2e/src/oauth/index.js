@@ -1,4 +1,10 @@
-import { authorize, createAuthorizationRequest, deny, getAuthorizations } from "../api/oauthClient";
+import {
+  authenticateWithPassword,
+  authorize,
+  createAuthorizationRequest,
+  deny,
+  getAuthorizations
+} from "../api/oauthClient";
 import { serverConfig } from "../testConfig";
 import { convertToAuthorizationResponse } from "../lib/util";
 import puppeteer from "puppeteer-core";
@@ -170,13 +176,23 @@ export const requestAuthorizations = async ({
     }
 
     if (action === "authorize") {
-      const authorizeResponse = await authorize({
-        endpoint: serverConfig.authorizeEndpoint,
+      const passwordResponse = await authenticateWithPassword({
+        endpoint: serverConfig.passwordAuthenticationEndpoint,
         id: response.data.id,
         body: {
           ...user
         }
       });
+
+      if (passwordResponse.status >= 400) {
+        console.error(passwordResponse.data);
+      }
+
+      const authorizeResponse = await authorize({
+        endpoint: serverConfig.authorizeEndpoint,
+        id: response.data.id,
+      });
+
       console.log(authorizeResponse.data);
       const authorizationResponse = convertToAuthorizationResponse(
         authorizeResponse.data.redirect_uri

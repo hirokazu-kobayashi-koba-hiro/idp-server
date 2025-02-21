@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.sample.application.service.authorization.OAuthSessionService;
 import org.idp.sample.application.service.tenant.TenantService;
+import org.idp.sample.application.service.user.UserAuthenticationService;
 import org.idp.sample.application.service.user.UserRegistrationService;
-import org.idp.sample.application.service.user.internal.UserService;
 import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.domain.model.user.UserRegistration;
@@ -21,8 +21,6 @@ import org.idp.server.oauth.interaction.UserInteraction;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.extension.OAuthDenyReason;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,21 +29,20 @@ public class OAuthFlowService {
   OAuthApi oAuthApi;
   OAuthSessionService oAuthSessionService;
   UserRegistrationService userRegistrationService;
-  UserService userService;
+  UserAuthenticationService userAuthenticationService;
   TenantService tenantService;
-  Logger log = LoggerFactory.getLogger(OAuthFlowService.class);
 
   public OAuthFlowService(
       IdpServerApplication idpServerApplication,
       OAuthSessionService oAuthSessionService,
       UserRegistrationService userRegistrationService,
-      UserService userService,
+      UserAuthenticationService userAuthenticationService,
       TenantService tenantService) {
     this.oAuthApi = idpServerApplication.oAuthApi();
     oAuthApi.setOAuthRequestDelegate(oAuthSessionService);
     this.oAuthSessionService = oAuthSessionService;
     this.userRegistrationService = userRegistrationService;
-    this.userService = userService;
+    this.userAuthenticationService = userAuthenticationService;
     this.tenantService = tenantService;
   }
 
@@ -88,20 +85,7 @@ public class OAuthFlowService {
     oAuthSessionService.registerSession(oAuthSession);
   }
 
-  public void authenticateWithPassword(TenantIdentifier tenantIdentifier,
-                                       String oauthRequestIdentifier,
-                                       String username,
-                                       String password) {
-
-    Tenant tenant = tenantService.get(tenantIdentifier);
-    AuthorizationRequest authorizationRequest =
-            oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
-    OAuthSession session = oAuthSessionService.findSession(authorizationRequest.sessionKey());
-
-  }
-
-  // FIXME this is bad code
-  public OAuthAuthorizeResponse authorize(
+  public void authenticateWithPassword(
       TenantIdentifier tenantIdentifier,
       String oauthRequestIdentifier,
       String username,
@@ -110,15 +94,29 @@ public class OAuthFlowService {
     Tenant tenant = tenantService.get(tenantIdentifier);
     AuthorizationRequest authorizationRequest =
         oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+
+    User user = userAuthenticationService.authenticateWithPassword(tenant, username, password);
+    OAuthSession session = oAuthSessionService.findSession(authorizationRequest.sessionKey());
+    OAuthSession updatedSession = session.didAuthenticationPassword(user);
+
+    oAuthSessionService.updateSession(updatedSession);
+  }
+
+  public OAuthAuthorizeResponse authorize(
+      TenantIdentifier tenantIdentifier,
+      String oauthRequestIdentifier) {
+
+    Tenant tenant = tenantService.get(tenantIdentifier);
+    AuthorizationRequest authorizationRequest =
+        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
     OAuthSession session = oAuthSessionService.findSession(authorizationRequest.sessionKey());
 
-    UserInteraction userInteraction = interact(tenant, username, password, session);
     OAuthAuthorizeRequest authAuthorizeRequest =
         new OAuthAuthorizeRequest(
             oauthRequestIdentifier,
             tenant.issuer(),
-            userInteraction.user(),
-            userInteraction.authentication());
+            session.user(),
+            session.authentication());
 
     return oAuthApi.authorize(authAuthorizeRequest);
   }
@@ -155,27 +153,28 @@ public class OAuthFlowService {
 
   public OAuthLogoutResponse logout(
       TenantIdentifier tenantIdentifier, Map<String, String[]> params) {
+
     Tenant tenant = tenantService.get(tenantIdentifier);
     OAuthLogoutRequest oAuthLogoutRequest = new OAuthLogoutRequest(params, tenant.issuer());
+
     return oAuthApi.logout(oAuthLogoutRequest);
   }
 
   private UserInteraction interact(
       Tenant tenant, String username, String password, OAuthSession session) {
+
     if (Objects.nonNull(session) && !session.isExpire(SystemDateTime.now())) {
       Authentication authentication = session.authentication();
       User user = session.user();
       return new UserInteraction(user, authentication);
     }
-    User user = userService.findBy(tenant, username);
-    if (userService.authenticate(user, password)) {
-      Authentication authentication =
-          new Authentication()
-              .setTime(SystemDateTime.now())
-              .setMethods(List.of("password"))
-              .setAcrValues(List.of("urn:mace:incommon:iap:silver"));
-      return new UserInteraction(user, authentication);
-    }
-    throw new IllegalArgumentException("not match password");
+
+    User authenticated = userAuthenticationService.authenticateWithPassword(tenant, username, password);
+    Authentication authentication =
+        new Authentication()
+            .setTime(SystemDateTime.now())
+            .setMethods(List.of("password"))
+            .setAcrValues(List.of("urn:mace:incommon:iap:silver"));
+    return new UserInteraction(authenticated, authentication);
   }
 }

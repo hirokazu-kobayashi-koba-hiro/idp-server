@@ -30,7 +30,10 @@ public class OAuthSessionDataSource implements OAuthSessionRepository {
   public OAuthSession find(OAuthSessionKey oAuthSessionKey) {
     String sessionKey = oAuthSessionKey.key();
     OAuthSession oAuthSession = (OAuthSession) httpSession.getAttribute(sessionKey);
-    log.info("findSession: {}", oAuthSessionKey.key());
+    log.info("findSession: {}", sessionKey);
+    if (oAuthSession == null) {
+      return new OAuthSession();
+    }
     return oAuthSession;
   }
 
