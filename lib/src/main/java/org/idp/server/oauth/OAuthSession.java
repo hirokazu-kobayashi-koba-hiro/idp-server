@@ -2,8 +2,11 @@ package org.idp.server.oauth;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.User;
@@ -14,6 +17,8 @@ public class OAuthSession implements Serializable {
   User user;
   Authentication authentication;
   LocalDateTime expiredAt;
+
+  public OAuthSession() {}
 
   public OAuthSession(
       OAuthSessionKey oAuthSessionKey,
@@ -54,10 +59,16 @@ public class OAuthSession implements Serializable {
     if (request.isPromptLogin()) {
       return false;
     }
+
+    if (authentication == null || !authentication.hasAuthenticationTime()) {
+      return false;
+    }
+
     LocalDateTime now = SystemDateTime.now();
     if (isExpire(now)) {
       return false;
     }
+    
     LocalDateTime authenticationTime = authentication.time();
     if (now.isAfter(authenticationTime.plusSeconds(request.maxAge().toLongValue()))) {
       return false;
@@ -72,5 +83,20 @@ public class OAuthSession implements Serializable {
 
   public Map<String, Object> customProperties() {
     return user.customPropertiesValue();
+  }
+
+  public OAuthSession didAuthenticationPassword(User user) {
+
+    Authentication authentication =
+        new Authentication()
+            .setMethods(new ArrayList<>(List.of("password")))
+            .setAcrValues(List.of("urn:mace:incommon:iap:silver"));
+
+    return new OAuthSession(
+        oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
+  }
+
+  public boolean exists() {
+    return Objects.nonNull(oAuthSessionKey) && oAuthSessionKey.exists();
   }
 }

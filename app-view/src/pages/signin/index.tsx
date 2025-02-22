@@ -25,7 +25,7 @@ export default function SignIn() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const router = useRouter();
-  const { id, tenant_id: tenantId, session_key: sessionKey } = router.query;
+  const { id, tenant_id: tenantId } = router.query;
   const {data, isPending } = useQuery({
     queryKey: ["fetchViewData"],
     queryFn: async () => {
@@ -56,8 +56,8 @@ export default function SignIn() {
     }
   }
 
-  const handleApprove = async () => {
-    const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/authorize`, {
+  const handleNext = async () => {
+    const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/password-authentication`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -66,13 +66,10 @@ export default function SignIn() {
       body: JSON.stringify({
         username: email,
         password: password,
-        session_key: sessionKey,
       })
     })
-    const body = await response.json()
-    console.log(response.status, body)
-    if (body.redirect_uri) {
-      window.location.href = body.redirect_uri;
+    if (response.ok) {
+      router.push(`/authorize?id=${id}&tenant_id=${tenantId}`)
     }
   }
 
@@ -174,10 +171,10 @@ export default function SignIn() {
 
             <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
               <Button variant="contained" color="error" onClick={handleCancel}>
-                cancel
+                Cancel
               </Button>
-              <Button variant="contained" color="primary" onClick={handleApprove}>
-                approve
+              <Button variant="contained" color="primary" onClick={handleNext}>
+                Next
               </Button>
             </Box>
             <Box sx={{mt: 2}} >
@@ -187,7 +184,7 @@ export default function SignIn() {
               <Typography>{"Dont have an account?"}</Typography>
               <Link
                 onClick={() => {
-                router.push(`/signup?id=${id}&tenant_id=${tenantId}&session_key=${sessionKey}`)
+                router.push(`/signup?id=${id}&tenant_id=${tenantId}`)
               }}>
                 Sign Up
               </Link>

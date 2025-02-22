@@ -7,7 +7,7 @@ export default function SignUp() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const router = useRouter();
-  const { id, tenant_id: tenantId, session_key: sessionKey } = router.query;
+  const { id, tenant_id: tenantId } = router.query;
 
   const handleClick = async () => {
     const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/signup`, {
@@ -18,7 +18,6 @@ export default function SignUp() {
       body: JSON.stringify({
         username: email,
         password: password,
-        session_key: sessionKey,
       })
     })
     const body = await response.json()
@@ -52,7 +51,7 @@ export default function SignUp() {
                 setPassword(e.target.value)
               }} />
             <Button variant={"contained"} onClick={handleClick}>
-              next
+              Next
             </Button>
           </Box>
         </Paper>

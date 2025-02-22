@@ -3,6 +3,7 @@ package org.idp.sample.infrastructure.datasource.user;
 import java.util.List;
 import java.util.Objects;
 import org.idp.sample.domain.model.tenant.Tenant;
+import org.idp.sample.domain.model.user.UserNotFoundException;
 import org.idp.sample.domain.model.user.UserRepository;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.identity.User;
@@ -37,7 +38,7 @@ public class UserDataSource implements UserRepository {
   public User get(String userId) {
     User user = mapper.select(userId);
     if (Objects.isNull(user)) {
-      throw new RuntimeException("not found user");
+      throw new UserNotFoundException("not found user");
     }
     return user;
   }

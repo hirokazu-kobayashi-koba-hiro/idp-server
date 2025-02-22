@@ -6,6 +6,7 @@ import org.idp.server.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.handler.oauth.io.OAuthAuthorizeResponse;
 import org.idp.server.handler.oauth.io.OAuthAuthorizeStatus;
+import org.idp.server.oauth.exception.OAuthBadRequestException;
 import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.oauth.response.AuthorizationErrorResponse;
 import org.idp.server.oauth.response.AuthorizationErrorResponseCreator;
@@ -17,6 +18,14 @@ public class OAuthAuthorizeErrorHandler {
   Logger log = Logger.getLogger(OAuthAuthorizeErrorHandler.class.getName());
 
   public OAuthAuthorizeResponse handle(Exception exception) {
+
+    if (exception instanceof OAuthBadRequestException badRequestException) {
+
+      log.log(Level.WARNING, badRequestException.getMessage(), badRequestException);
+      return new OAuthAuthorizeResponse(
+              OAuthAuthorizeStatus.BAD_REQUEST, badRequestException.error().value(), badRequestException.errorDescription().value());
+    }
+
     if (exception instanceof OAuthRedirectableBadRequestException redirectableBadRequestException) {
       AuthorizationErrorResponseCreator authorizationErrorResponseCreator =
           new AuthorizationErrorResponseCreator(redirectableBadRequestException);

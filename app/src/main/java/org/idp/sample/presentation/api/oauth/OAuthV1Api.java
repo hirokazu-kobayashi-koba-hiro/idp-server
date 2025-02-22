@@ -57,36 +57,18 @@ public class OAuthV1Api implements ParameterTransformable {
     return new ResponseEntity<>(viewDataResponse.contents(), httpHeaders, HttpStatus.OK);
   }
 
-  // TODO
   @PostMapping("/{id}/signup")
   public ResponseEntity<?> signup(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") String id,
-      @Validated @RequestBody PasswordAuthenticationRequest passwordAuthenticationRequest) {
+      @Validated @RequestBody UserRegistrationRequest request) {
 
-    OAuthAuthorizeResponse authAuthorizeResponse =
-        oAuthFlowService.signup(
-            tenantId,
-            id,
-            passwordAuthenticationRequest.username(),
-            passwordAuthenticationRequest.password(),
-            passwordAuthenticationRequest.sessionKey());
+    oAuthFlowService.requestSignup(tenantId, id, request.toUserRegistration());
+
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
 
-    switch (authAuthorizeResponse.status()) {
-      case OK, REDIRECABLE_BAD_REQUEST -> {
-        return new ResponseEntity<>(authAuthorizeResponse.contents(), httpHeaders, HttpStatus.OK);
-      }
-      case BAD_REQUEST -> {
-        return new ResponseEntity<>(
-            authAuthorizeResponse.contents(), httpHeaders, HttpStatus.BAD_REQUEST);
-      }
-      default -> {
-        return new ResponseEntity<>(
-            authAuthorizeResponse.contents(), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-    }
+    return new ResponseEntity<>(httpHeaders, HttpStatus.OK);
   }
 
   @PostMapping("/{id}/authorize-with-session")
@@ -114,19 +96,33 @@ public class OAuthV1Api implements ParameterTransformable {
     }
   }
 
-  @PostMapping("/{id}/authorize")
-  public ResponseEntity<?> authorize(
+  @PostMapping("/{id}/password-authentication")
+  public ResponseEntity<?> authenticateWithPassword(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") String id,
       @Validated @RequestBody PasswordAuthenticationRequest passwordAuthenticationRequest) {
 
+    oAuthFlowService.authenticateWithPassword(
+        tenantId,
+        id,
+        passwordAuthenticationRequest.username(),
+        passwordAuthenticationRequest.password());
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(httpHeaders, HttpStatus.OK);
+  }
+
+  @PostMapping("/{id}/authorize")
+  public ResponseEntity<?> authorize(
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("id") String id) {
+
     OAuthAuthorizeResponse authAuthorizeResponse =
         oAuthFlowService.authorize(
             tenantId,
-            id,
-            passwordAuthenticationRequest.username(),
-            passwordAuthenticationRequest.password(),
-            passwordAuthenticationRequest.sessionKey());
+            id);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

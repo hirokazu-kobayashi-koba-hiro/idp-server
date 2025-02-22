@@ -28,7 +28,7 @@ public class User implements Serializable {
   Boolean phoneNumberVerified;
   Address address;
   LocalDateTime updatedAt;
-  String password;
+  String hashedPassword;
   HashMap<String, Object> customProperties = new HashMap<>();
   List<HashMap<String, Object>> credentials = new ArrayList<>();
 
@@ -215,17 +215,17 @@ public class User implements Serializable {
     return updatedAt.toEpochSecond(SystemDateTime.zoneOffset);
   }
 
-  public String password() {
-    return password;
+  public String hashedPassword() {
+    return hashedPassword;
   }
 
-  public User setPassword(String password) {
-    this.password = password;
+  public User setHashedPassword(String hashedPassword) {
+    this.hashedPassword = hashedPassword;
     return this;
   }
 
   public boolean hasPassword() {
-    return Objects.nonNull(password) && !password.isEmpty();
+    return Objects.nonNull(hashedPassword) && !hashedPassword.isEmpty();
   }
 
   public User setUpdatedAt(LocalDateTime updatedAt) {

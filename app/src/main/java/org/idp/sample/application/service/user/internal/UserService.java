@@ -1,4 +1,4 @@
-package org.idp.sample.application.service.user;
+package org.idp.sample.application.service.user.internal;
 
 import java.util.List;
 import org.idp.sample.domain.model.tenant.Tenant;

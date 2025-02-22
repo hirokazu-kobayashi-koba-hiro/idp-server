@@ -1,6 +1,8 @@
 package org.idp.server.handler.oauth;
 
 import java.util.Objects;
+
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.configuration.ClientConfiguration;
 import org.idp.server.configuration.ClientConfigurationRepository;
 import org.idp.server.configuration.ServerConfiguration;
@@ -9,8 +11,10 @@ import org.idp.server.handler.oauth.io.OAuthRequest;
 import org.idp.server.handler.oauth.io.OAuthRequestResponse;
 import org.idp.server.handler.oauth.io.OAuthRequestStatus;
 import org.idp.server.oauth.*;
+import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.oauth.gateway.RequestObjectGateway;
+import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.oauth.request.OAuthRequestParameters;
 import org.idp.server.oauth.service.*;
@@ -39,7 +43,7 @@ public class OAuthRequestHandler {
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
-  public OAuthRequestContext handle(OAuthRequest oAuthRequest) {
+  public OAuthRequestContext handle(OAuthRequest oAuthRequest, OAuthRequestDelegate delegate) {
     OAuthRequestParameters parameters = oAuthRequest.toParameters();
     TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
     OAuthRequestValidator validator = new OAuthRequestValidator(parameters);
@@ -59,6 +63,14 @@ public class OAuthRequestHandler {
     verifier.verify(context);
     authorizationRequestRepository.register(context.authorizationRequest());
 
+    if (Objects.nonNull(delegate)) {
+      OAuthSessionKey oAuthSessionKey = new OAuthSessionKey(tokenIssuer.value(), parameters.clientId().value());
+      OAuthSession session =
+              new OAuthSession(
+                      oAuthSessionKey, new User(), new Authentication(), SystemDateTime.now().plusSeconds(3600));
+      delegate.registerSession(session);
+    }
+
     return context;
   }
 
@@ -73,7 +85,7 @@ public class OAuthRequestHandler {
       throw new OAuthRedirectableBadRequestException(
           "login_required", "invalid session, session registration function is disable", context);
     }
-    if (Objects.isNull(session)) {
+    if (Objects.isNull(session) || !session.exists()) {
       throw new OAuthRedirectableBadRequestException(
           "login_required", "invalid session, session is not registered", context);
     }
@@ -88,7 +100,10 @@ public class OAuthRequestHandler {
     if (context.isPromptCreate()) {
       return new OAuthRequestResponse(OAuthRequestStatus.OK_ACCOUNT_CREATION, context, session);
     }
-    if (Objects.isNull(session) || !session.isValid(context.authorizationRequest())) {
+    if (Objects.isNull(session) || !session.exists()) {
+      return new OAuthRequestResponse(OAuthRequestStatus.OK, context, session);
+    }
+    if (!session.isValid(context.authorizationRequest())) {
       return new OAuthRequestResponse(OAuthRequestStatus.OK, context, session);
     }
     return new OAuthRequestResponse(OAuthRequestStatus.OK_SESSION_ENABLE, context, session);

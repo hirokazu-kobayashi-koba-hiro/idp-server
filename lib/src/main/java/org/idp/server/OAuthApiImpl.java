@@ -47,9 +47,12 @@ public class OAuthApiImpl implements OAuthApi {
    * username and password login, session cookies) is beyond the scope of this specification.
    */
   public OAuthRequestResponse request(OAuthRequest oAuthRequest) {
+
     try {
-      OAuthRequestContext context = requestHandler.handle(oAuthRequest);
+
+      OAuthRequestContext context = requestHandler.handle(oAuthRequest, oAuthRequestDelegate);
       OAuthSession session = oAuthRequestDelegate.findSession(context.sessionKey());
+
       if (requestHandler.isAuthorizable(context, session, oAuthRequestDelegate)) {
         TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
         OAuthAuthorizeRequest oAuthAuthorizeRequest =
@@ -63,46 +66,55 @@ public class OAuthApiImpl implements OAuthApi {
             authAuthorizeHandler.handle(oAuthAuthorizeRequest, oAuthRequestDelegate);
         return new OAuthRequestResponse(OAuthRequestStatus.NO_INTERACTION_OK, response);
       }
+
       return requestHandler.handleResponse(context, session);
     } catch (Exception exception) {
+
       return oAuthRequestErrorHandler.handle(exception);
     }
   }
 
   public OAuthViewDataResponse getViewData(OAuthViewDataRequest request) {
+
     return oauthHandler.handleViewData(request, oAuthRequestDelegate);
   }
 
   public AuthorizationRequest get(AuthorizationRequestIdentifier identifier) {
+
     return oauthHandler.handleGettingData(identifier);
   }
 
   @Override
   public OAuthAuthenticationUpdateResponse updateAuthentication(
       OAuthAuthenticationUpdateRequest request) {
-
     // TODO
     return new OAuthAuthenticationUpdateResponse();
   }
 
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
     try {
+
       AuthorizationResponse response = authAuthorizeHandler.handle(request, oAuthRequestDelegate);
+
       return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, response);
     } catch (Exception exception) {
+
       return authAuthorizeErrorHandler.handle(exception);
     }
   }
 
   public OAuthDenyResponse deny(OAuthDenyRequest request) {
     try {
+
       return oAuthDenyHandler.handle(request);
     } catch (Exception exception) {
+
       return denyErrorHandler.handle(exception);
     }
   }
 
   public OAuthLogoutResponse logout(OAuthLogoutRequest request) {
+
     return oauthHandler.handleLogout(request, oAuthRequestDelegate);
   }
 

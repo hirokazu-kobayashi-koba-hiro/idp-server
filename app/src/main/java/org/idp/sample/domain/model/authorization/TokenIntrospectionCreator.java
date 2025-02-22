@@ -1,4 +1,4 @@
-package org.idp.sample;
+package org.idp.sample.domain.model.authorization;
 
 import java.util.HashMap;
 import java.util.Map;

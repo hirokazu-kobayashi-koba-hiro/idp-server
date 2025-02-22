@@ -1,6 +1,7 @@
 package org.idp.server.oauth;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class OAuthSessionKey implements Serializable {
   String tokenIssuer;
@@ -9,6 +10,11 @@ public class OAuthSessionKey implements Serializable {
   public OAuthSessionKey(String tokenIssuer, String clientId) {
     this.tokenIssuer = tokenIssuer;
     this.clientId = clientId;
+  }
+
+  public static OAuthSessionKey parse(String sessionKey) {
+    String[] split = sessionKey.split(":");
+    return new OAuthSessionKey(split[0], split[1]);
   }
 
   public String tokenIssuer() {
@@ -21,5 +27,9 @@ public class OAuthSessionKey implements Serializable {
 
   public String key() {
     return tokenIssuer + ":" + clientId;
+  }
+
+  public boolean exists() {
+    return Objects.nonNull(tokenIssuer) && Objects.nonNull(clientId);
   }
 }
