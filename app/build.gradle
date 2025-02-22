@@ -27,6 +27,8 @@ dependencies {
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
 	runtimeOnly 'org.postgresql:postgresql:42.7.2'
 
+	implementation 'com.webauthn4j:webauthn4j-core:0.28.5.RELEASE'
+
 	implementation project(':lib')
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'

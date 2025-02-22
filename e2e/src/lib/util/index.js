@@ -1,8 +1,23 @@
+export const convertNextAction = (redirectUri) => {
+  const query = redirectUri.includes("?")
+    ? redirectUri.split("?")[1]
+    : redirectUri.split("#")[1];
+
+  const params = new URLSearchParams(query);
+  const nextAction = params.get("id") ? "goAuthentication": "goNext";
+
+  return {
+    nextAction: nextAction,
+  };
+};
+
 export const convertToAuthorizationResponse = (redirectUri) => {
+
   const query = redirectUri.includes("?")
     ? redirectUri.split("?")[1]
     : redirectUri.split("#")[1];
   const params = new URLSearchParams(query);
+
   return {
     responseMode: redirectUri.includes("?") ? "?" : "#",
     code: params.get("code"),

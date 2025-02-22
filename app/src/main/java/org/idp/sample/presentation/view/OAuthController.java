@@ -49,28 +49,22 @@ public class OAuthController implements ParameterTransformable {
         log.info("sessionEnable: false");
         return new RedirectView(
             String.format(
-                "/signin/index.html?id=%s&session_key=%s&tenant_id=%s",
-                response.authorizationRequestId(),
-                response.sessionKey(),
-                tenant.identifierValue()));
+                "/signin/index.html?id=%s&tenant_id=%s",
+                response.authorizationRequestId(), tenant.identifierValue()));
       }
       case OK_SESSION_ENABLE -> {
         log.info("sessionEnable: true");
         return new RedirectView(
             String.format(
-                "/signin/index.html?id=%s&session_key=%s&tenant_id=%s",
-                response.authorizationRequestId(),
-                response.sessionKey(),
-                tenant.identifierValue()));
+                "/signin/index.html?id=%s&tenant_id=%s",
+                response.authorizationRequestId(), tenant.identifierValue()));
       }
       case OK_ACCOUNT_CREATION -> {
         log.info("request creation account");
         return new RedirectView(
             String.format(
-                "/signup/index.html?id=%s&session_key=%s&tenant_id=%s",
-                response.authorizationRequestId(),
-                response.sessionKey(),
-                tenant.identifierValue()));
+                "/signup/index.html?id=%s&tenant_id=%s",
+                response.authorizationRequestId(), tenant.identifierValue()));
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
         log.info("redirect");

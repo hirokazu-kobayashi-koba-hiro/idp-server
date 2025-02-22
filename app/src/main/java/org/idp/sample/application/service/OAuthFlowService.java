@@ -3,6 +3,7 @@ package org.idp.sample.application.service;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.sample.application.service.authentication.WebAuthnService;
 import org.idp.sample.application.service.authorization.OAuthSessionService;
 import org.idp.sample.application.service.tenant.TenantService;
 import org.idp.sample.application.service.user.UserAuthenticationService;
@@ -10,6 +11,8 @@ import org.idp.sample.application.service.user.UserRegistrationService;
 import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.domain.model.user.UserRegistration;
+import org.idp.sample.subdomain.webauthn.WebAuthnCredential;
+import org.idp.sample.subdomain.webauthn.WebAuthnSession;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.OAuthApi;
 import org.idp.server.basic.date.SystemDateTime;
@@ -22,8 +25,10 @@ import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.extension.OAuthDenyReason;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class OAuthFlowService {
 
   OAuthApi oAuthApi;
@@ -31,19 +36,22 @@ public class OAuthFlowService {
   UserRegistrationService userRegistrationService;
   UserAuthenticationService userAuthenticationService;
   TenantService tenantService;
+  WebAuthnService webAuthnService;
 
   public OAuthFlowService(
       IdpServerApplication idpServerApplication,
       OAuthSessionService oAuthSessionService,
       UserRegistrationService userRegistrationService,
       UserAuthenticationService userAuthenticationService,
-      TenantService tenantService) {
+      TenantService tenantService,
+      WebAuthnService webAuthnService) {
     this.oAuthApi = idpServerApplication.oAuthApi();
     oAuthApi.setOAuthRequestDelegate(oAuthSessionService);
     this.oAuthSessionService = oAuthSessionService;
     this.userRegistrationService = userRegistrationService;
     this.userAuthenticationService = userAuthenticationService;
     this.tenantService = tenantService;
+    this.webAuthnService = webAuthnService;
   }
 
   public OAuthRequestResponse request(
@@ -74,7 +82,7 @@ public class OAuthFlowService {
     AuthorizationRequest authorizationRequest =
         oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
 
-    User user = userRegistrationService.register(tenant, userRegistration);
+    User user = userRegistrationService.create(tenant, userRegistration);
 
     OAuthSession oAuthSession =
         new OAuthSession(
@@ -83,6 +91,32 @@ public class OAuthFlowService {
             new Authentication(),
             SystemDateTime.now().plusSeconds(3600));
     oAuthSessionService.registerSession(oAuthSession);
+  }
+
+  public WebAuthnSession challengeWebAuthnRegistration(
+      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
+    Tenant tenant = tenantService.get(tenantIdentifier);
+    AuthorizationRequest authorizationRequest =
+        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+    OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
+
+    WebAuthnSession webAuthnSession = webAuthnService.challengeRegistration(tenant);
+
+    return webAuthnSession;
+  }
+
+  public void verifyWebAuthnRegistration(
+      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier, String request) {
+
+    Tenant tenant = tenantService.get(tenantIdentifier);
+    AuthorizationRequest authorizationRequest =
+        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+    OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
+
+    WebAuthnCredential webAuthnCredential =
+        webAuthnService.verifyRegistration(tenant, oAuthSession.user(), request);
+
+    oAuthSessionService.updateSession(oAuthSession);
   }
 
   public void authenticateWithPassword(
@@ -97,28 +131,54 @@ public class OAuthFlowService {
 
     User user = userAuthenticationService.authenticateWithPassword(tenant, username, password);
     OAuthSession session = oAuthSessionService.findSession(authorizationRequest.sessionKey());
-    OAuthSession updatedSession = session.didAuthenticationPassword(user);
+    OAuthSession updatedSession = session.didAuthenticationPassword(authorizationRequest.sessionKey(), user);
 
     oAuthSessionService.updateSession(updatedSession);
   }
 
+  public WebAuthnSession challengeWebAuthnAuthentication(
+      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
+    Tenant tenant = tenantService.get(tenantIdentifier);
+    AuthorizationRequest authorizationRequest =
+        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+    OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
+
+    WebAuthnSession webAuthnSession = webAuthnService.challengeAuthentication(tenant);
+
+    return webAuthnSession;
+  }
+
+  public void verifyWebAuthnAuthentication(
+          TenantIdentifier tenantIdentifier, String oauthRequestIdentifier, String request) {
+
+    Tenant tenant = tenantService.get(tenantIdentifier);
+    AuthorizationRequest authorizationRequest =
+            oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+    OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
+
+    User user = webAuthnService.verifyAuthentication(tenant, request);
+    OAuthSession didWebAuthnAuthenticationSession = oAuthSession.didWebAuthnAuthentication(authorizationRequest.sessionKey(), user);
+
+    oAuthSessionService.updateSession(didWebAuthnAuthenticationSession);
+  }
+
   public OAuthAuthorizeResponse authorize(
-      TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier) {
+      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
 
     Tenant tenant = tenantService.get(tenantIdentifier);
     AuthorizationRequest authorizationRequest =
         oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
     OAuthSession session = oAuthSessionService.findSession(authorizationRequest.sessionKey());
 
-    OAuthAuthorizeRequest authAuthorizeRequest =
+    OAuthAuthorizeRequest oAuthAuthorizeRequest =
         new OAuthAuthorizeRequest(
-            oauthRequestIdentifier,
-            tenant.issuer(),
-            session.user(),
-            session.authentication());
+            oauthRequestIdentifier, tenant.issuer(), session.user(), session.authentication());
 
-    return oAuthApi.authorize(authAuthorizeRequest);
+    if (authorizationRequest.isPromptCreate()) {
+      userRegistrationService.register(tenant, session.user());
+    }
+
+    return oAuthApi.authorize(oAuthAuthorizeRequest);
   }
 
   // FIXME this is bad code
@@ -169,12 +229,13 @@ public class OAuthFlowService {
       return new UserInteraction(user, authentication);
     }
 
-    User authenticated = userAuthenticationService.authenticateWithPassword(tenant, username, password);
+    User authenticated =
+        userAuthenticationService.authenticateWithPassword(tenant, username, password);
     Authentication authentication =
         new Authentication()
             .setTime(SystemDateTime.now())
-            .setMethods(List.of("password"))
-            .setAcrValues(List.of("urn:mace:incommon:iap:silver"));
+            .addMethods(List.of("pwd"))
+            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
     return new UserInteraction(authenticated, authentication);
   }
 }
