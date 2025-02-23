@@ -73,7 +73,7 @@ public class OAuthFlowService {
     return oAuthApi.getViewData(oAuthViewDataRequest);
   }
 
-  public void requestSignup(
+  public User requestSignup(
       TenantIdentifier tenantIdentifier,
       String oauthRequestIdentifier,
       UserRegistration userRegistration) {
@@ -91,6 +91,8 @@ public class OAuthFlowService {
             new Authentication(),
             SystemDateTime.now().plusSeconds(3600));
     oAuthSessionService.registerSession(oAuthSession);
+
+    return user;
   }
 
   public WebAuthnSession challengeWebAuthnRegistration(
@@ -157,7 +159,7 @@ public class OAuthFlowService {
         oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
     OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
 
-    User user = webAuthnService.verifyAuthentication(tenant, oAuthSession.user(), request);
+    User user = webAuthnService.verifyAuthentication(tenant, request);
     OAuthSession didWebAuthnAuthenticationSession =
         oAuthSession.didWebAuthnAuthentication(authorizationRequest.sessionKey(), user);
 

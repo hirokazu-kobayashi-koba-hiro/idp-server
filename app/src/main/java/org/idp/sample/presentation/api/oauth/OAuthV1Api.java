@@ -2,11 +2,13 @@ package org.idp.sample.presentation.api.oauth;
 
 import static org.idp.server.handler.oauth.io.OAuthRequestStatus.OK_ACCOUNT_CREATION;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.sample.application.service.OAuthFlowService;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.presentation.api.ParameterTransformable;
 import org.idp.server.handler.oauth.io.*;
+import org.idp.server.oauth.identity.User;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -84,12 +86,16 @@ public class OAuthV1Api implements ParameterTransformable {
       @PathVariable("id") String id,
       @Validated @RequestBody UserRegistrationRequest request) {
 
-    oAuthFlowService.requestSignup(tenantId, id, request.toUserRegistration());
+    User user = oAuthFlowService.requestSignup(tenantId, id, request.toUserRegistration());
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
+    Map<String, Object> response = new HashMap<>();
+    response.put("id", user.sub());
+    response.put("name", user.name());
+    response.put("email", user.email());
 
-    return new ResponseEntity<>(httpHeaders, HttpStatus.OK);
+    return new ResponseEntity<>(response, httpHeaders, HttpStatus.OK);
   }
 
   @PostMapping("/{id}/authorize-with-session")
