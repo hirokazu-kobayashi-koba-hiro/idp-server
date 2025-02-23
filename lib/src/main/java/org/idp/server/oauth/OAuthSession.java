@@ -99,13 +99,13 @@ public class OAuthSession implements Serializable {
   public OAuthSession didWebAuthnAuthentication(OAuthSessionKey oAuthSessionKey, User user) {
 
     Authentication authentication =
-            new Authentication()
-                    .setTime(SystemDateTime.now())
-                    .addMethods(new ArrayList<>(List.of("hwk")))
-                    .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
+        new Authentication()
+            .setTime(SystemDateTime.now())
+            .addMethods(new ArrayList<>(List.of("hwk")))
+            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     return new OAuthSession(
-            oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
+        oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
   }
 
   public boolean exists() {

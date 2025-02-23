@@ -51,5 +51,4 @@ public class IdPApplication {
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
   }
-
 }

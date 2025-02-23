@@ -6,6 +6,8 @@ import com.webauthn4j.data.AuthenticationData;
 import com.webauthn4j.data.AuthenticationParameters;
 import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.server.ServerProperty;
+
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 
@@ -30,7 +32,7 @@ public class WebAuthnAuthenticationManager {
   public String extractUserId() {
     AuthenticationData authenticationData = parseAuthenticationData();
 
-    return new String(Objects.requireNonNull(authenticationData.getUserHandle()));
+    return new String(Objects.requireNonNull(authenticationData.getUserHandle()), StandardCharsets.UTF_8);
   }
 
   public void verify(WebAuthnCredentials credentials) {

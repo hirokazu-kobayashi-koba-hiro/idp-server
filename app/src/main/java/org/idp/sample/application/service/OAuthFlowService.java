@@ -131,7 +131,8 @@ public class OAuthFlowService {
 
     User user = userAuthenticationService.authenticateWithPassword(tenant, username, password);
     OAuthSession session = oAuthSessionService.findSession(authorizationRequest.sessionKey());
-    OAuthSession updatedSession = session.didAuthenticationPassword(authorizationRequest.sessionKey(), user);
+    OAuthSession updatedSession =
+        session.didAuthenticationPassword(authorizationRequest.sessionKey(), user);
 
     oAuthSessionService.updateSession(updatedSession);
   }
@@ -149,15 +150,16 @@ public class OAuthFlowService {
   }
 
   public void verifyWebAuthnAuthentication(
-          TenantIdentifier tenantIdentifier, String oauthRequestIdentifier, String request) {
+      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier, String request) {
 
     Tenant tenant = tenantService.get(tenantIdentifier);
     AuthorizationRequest authorizationRequest =
-            oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
     OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
 
-    User user = webAuthnService.verifyAuthentication(tenant, request);
-    OAuthSession didWebAuthnAuthenticationSession = oAuthSession.didWebAuthnAuthentication(authorizationRequest.sessionKey(), user);
+    User user = webAuthnService.verifyAuthentication(tenant, oAuthSession.user(), request);
+    OAuthSession didWebAuthnAuthenticationSession =
+        oAuthSession.didWebAuthnAuthentication(authorizationRequest.sessionKey(), user);
 
     oAuthSessionService.updateSession(didWebAuthnAuthenticationSession);
   }

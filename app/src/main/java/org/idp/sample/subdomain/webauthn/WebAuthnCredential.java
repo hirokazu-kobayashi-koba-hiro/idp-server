@@ -1,7 +1,7 @@
 package org.idp.sample.subdomain.webauthn;
 
 public class WebAuthnCredential {
-  String id;
+  byte[] id;
 
   String userId;
 
@@ -16,7 +16,7 @@ public class WebAuthnCredential {
   public WebAuthnCredential() {}
 
   public WebAuthnCredential(
-      String id,
+      byte[] id,
       String userId,
       String rpId,
       byte[] publicKey,
@@ -30,7 +30,7 @@ public class WebAuthnCredential {
     this.signCount = signCount;
   }
 
-  public String id() {
+  public byte[] id() {
     return id;
   }
 

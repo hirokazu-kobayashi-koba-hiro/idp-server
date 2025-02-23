@@ -17,10 +17,10 @@ CREATE TABLE webauthn_rp_configuration
 
 CREATE TABLE webauthn_credentials
 (
-    id                 VARCHAR(256) PRIMARY KEY,
+    id                 BYTEA PRIMARY KEY,
     idp_user_id        VARCHAR(256)            NOT NULL,
     rp_id              VARCHAR(256)            NOT NULL REFERENCES webauthn_rp_configuration (rp_id) ON DELETE CASCADE,
-    public_key         BYTEA                   NOT NULL,
+--     public_key         BYTEA                   NOT NULL,
     attestation_object BYTEA                   NOT NULL,
     sign_count         BIGINT                  NOT NULL,
     created_at         TIMESTAMP DEFAULT now() NOT NULL,

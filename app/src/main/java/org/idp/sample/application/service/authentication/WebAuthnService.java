@@ -60,16 +60,15 @@ public class WebAuthnService {
     return webAuthnSessionService.start();
   }
 
-  public User verifyAuthentication(Tenant tenant, String request) {
+  public User verifyAuthentication(Tenant tenant, User user, String request) {
 
     WebAuthnConfiguration configuration = webAuthnConfigurationService.get(tenant);
     WebAuthnSession session = webAuthnSessionService.get();
 
     WebAuthnAuthenticationManager manager =
-        new WebAuthnAuthenticationManager(
-            webAuthnManager, configuration, session, request);
+        new WebAuthnAuthenticationManager(webAuthnManager, configuration, session, request);
 
-    String userId = manager.extractUserId();
+    String userId = user.sub();
     WebAuthnCredentials webAuthnCredentials = webAuthnCredentialService.findAll(userId);
 
     manager.verify(webAuthnCredentials);

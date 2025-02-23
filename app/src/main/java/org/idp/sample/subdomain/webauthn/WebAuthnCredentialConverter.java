@@ -15,15 +15,14 @@ public class WebAuthnCredentialConverter {
   public WebAuthnCredentialConverter(WebAuthnCredential credential) {
     this.credential = credential;
     ObjectConverter objectConverter = new ObjectConverter();
-    this.attestedCredentialDataConverter =
-        new AttestedCredentialDataConverter(objectConverter);
+    this.attestedCredentialDataConverter = new AttestedCredentialDataConverter(objectConverter);
   }
 
   public CredentialRecordImpl convert() {
     AttestedCredentialData deserializedAttestedCredentialData =
         attestedCredentialDataConverter.convert(credential.attestationObject());
 
-    //TODO
+    // TODO
     return new CredentialRecordImpl(
         new NoneAttestationStatement(),
         null,

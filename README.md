@@ -6,9 +6,8 @@ This library provides java api supported OAuth2.0 and OIDC spec.
 
 ## Features
 
-* ✅️：
-* 
-* ❌：unsupported yet.  
+* ✅️- Supported
+* ❌- Unsupported
 
 | Category        | SubCategory                           | Supported | Description                                                                                                                                                                                                                                             |
 |-----------------|---------------------------------------|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -143,6 +142,6 @@ npm test
 ### library
 
 * jwt
-  * https://connect2id.com/products/nimbus-jose-jwt
+    * https://connect2id.com/products/nimbus-jose-jwt
 * webauthn
-  * https://github.com/webauthn4j/webauthn4j
+    * https://github.com/webauthn4j/webauthn4j
