@@ -26,7 +26,7 @@ jobs:
             Please point out any excellent points.
             Since the code given to you is only a portion of it, please be reluctant to point out undefined methods or classes.
             Please be reluctant to point out comments that express WHAT.
-            First, Review code based on overall PR.
+            First, Please review the PR as a whole.　Then, comment on each problematic piece of code.
             Second, when pointing out an issue, please explain the reason for the change and provide an example of the changed code.
             Please point out the following points in particular:
               - Are there any violations of design principles?

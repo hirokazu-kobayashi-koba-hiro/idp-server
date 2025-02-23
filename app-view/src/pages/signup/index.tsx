@@ -12,6 +12,7 @@ export default function SignUp() {
   const handleClick = async () => {
     const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/signup`, {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json"
       },
@@ -20,11 +21,13 @@ export default function SignUp() {
         password: password,
       })
     })
-    const body = await response.json()
-    console.log(response.status, body)
-    if (body.redirect_uri) {
-      window.location.href = body.redirect_uri;
+
+    if (response.ok) {
+      router.push(`/authorize?id=${id}&tenant_id=${tenantId}`);
+      return
     }
+
+    console.error(response.status)
   }
 
   return (

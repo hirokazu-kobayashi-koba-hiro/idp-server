@@ -1,5 +1,7 @@
 package org.idp.sample.presentation.api.oauth;
 
+import static org.idp.server.handler.oauth.io.OAuthRequestStatus.OK_ACCOUNT_CREATION;
+
 import java.util.Map;
 import org.idp.sample.application.service.OAuthFlowService;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
@@ -26,15 +28,22 @@ public class OAuthV1Api implements ParameterTransformable {
   public ResponseEntity<?> get(
       @RequestParam(required = false) MultiValueMap<String, String> request,
       @PathVariable("tenant-id") TenantIdentifier tenantId) {
+
     Map<String, String[]> params = transform(request);
     OAuthRequestResponse response = oAuthFlowService.request(tenantId, params);
+
     switch (response.status()) {
-      case OK, OK_SESSION_ENABLE -> {
-        return new ResponseEntity<>(response.contents(), HttpStatus.OK);
+      case OK, OK_SESSION_ENABLE, OK_ACCOUNT_CREATION -> {
+        String url = createUrl(tenantId, response);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.LOCATION, url);
+
+        return new ResponseEntity<>(headers, HttpStatus.OK);
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("location", response.redirectUri());
+        httpHeaders.add(HttpHeaders.LOCATION, response.redirectUri());
+
         return new ResponseEntity<>(httpHeaders, HttpStatus.FOUND);
       }
       case BAD_REQUEST -> {
@@ -44,6 +53,18 @@ public class OAuthV1Api implements ParameterTransformable {
         return new ResponseEntity<>(response.contents(), HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
+  }
+
+  private String createUrl(TenantIdentifier tenantIdentifier, OAuthRequestResponse response) {
+    if (response.status() == OK_ACCOUNT_CREATION) {
+      return String.format(
+          "http://localhost:3100/signup?id=%s&tenant_id=%s",
+          response.authorizationRequestId(), tenantIdentifier.value());
+    }
+
+    return String.format(
+        "http://localhost:3100/signin?id=%s&tenant_id=%s",
+        response.authorizationRequestId(), tenantIdentifier.value());
   }
 
   @GetMapping("/{id}/view-data")
@@ -116,13 +137,9 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/authorize")
   public ResponseEntity<?> authorize(
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
-      @PathVariable("id") String id) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
 
-    OAuthAuthorizeResponse authAuthorizeResponse =
-        oAuthFlowService.authorize(
-            tenantId,
-            id);
+    OAuthAuthorizeResponse authAuthorizeResponse = oAuthFlowService.authorize(tenantId, id);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

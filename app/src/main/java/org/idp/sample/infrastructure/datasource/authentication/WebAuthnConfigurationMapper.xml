@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.idp.sample.infrastructure.datasource.authentication.WebAuthnConfigurationMapper">
+
+    <resultMap id="WebAuthnConfiguration" type="org.idp.sample.subdomain.webauthn.WebAuthnConfiguration">
+        <result property="rpId" column="rp_id"/>
+        <result property="rpName" column="rp_name"/>
+        <result property="origin" column="origin"/>
+        <result property="attestationPreference" column="attestation_preference"/>
+        <result property="authenticatorAttachment" column="authenticator_attachment"/>
+        <result property="requireResidentKey" column="require_resident_key"/>
+        <result property="userVerificationRequired" column="user_verification_required"/>
+        <result property="userPresenceRequired" column="user_presence_required"/>
+    </resultMap>
+
+    <sql id="select">
+        SELECT
+            rp_id,
+            rp_name,
+            origin,
+            attestation_preference,
+            authenticator_attachment,
+            require_resident_key,
+            user_verification_required,
+            user_presence_required
+        FROM webauthn_rp_configuration
+    </sql>
+
+    <select id="selectBy" resultMap="WebAuthnConfiguration">
+        <include refid="select" />
+        WHERE
+         tenant_id = #{tenantIdentifier.value}
+    </select>
+
+</mapper>

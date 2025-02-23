@@ -6,7 +6,7 @@ import {
   getAuthorizations
 } from "../api/oauthClient";
 import { serverConfig } from "../testConfig";
-import { convertToAuthorizationResponse } from "../lib/util";
+import { convertNextAction, convertToAuthorizationResponse } from "../lib/util";
 import puppeteer from "puppeteer-core";
 import { createHash, X509Certificate } from "node:crypto";
 import { encodeBuffer } from "../lib/bas64";
@@ -156,11 +156,15 @@ export const requestAuthorizations = async ({
       presentationDefinition,
       customParams,
     });
+
+    console.log(response.headers);
     console.log(response.data);
-    if (response.status === 302) {
+    const { location } = response.headers;
+    const { nextAction } = convertNextAction(location);
+
+    if (nextAction !== "goAuthentication") {
       console.debug("redirect");
-      console.log(response.headers);
-      const { location } = response.headers;
+
       const authorizationResponse = convertToAuthorizationResponse(location);
       return {
         status: response.status,

@@ -1,5 +1,6 @@
 package org.idp.sample;
 
+import java.util.List;
 import org.idp.sample.domain.model.operation.IdPScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +11,10 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.session.web.http.CookieSerializer;
+import org.springframework.session.web.http.DefaultCookieSerializer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -29,6 +34,8 @@ public class SecurityConfig {
             httpSecuritySessionManagementConfigurer.sessionCreationPolicy(
                 SessionCreationPolicy.STATELESS));
     http.csrf(AbstractHttpConfigurer::disable);
+
+    http.cors((cors) -> cors.configurationSource(corsConfigurationSource()));
 
     http.authorizeHttpRequests(
         (authorize) ->
@@ -51,5 +58,28 @@ public class SecurityConfig {
     http.addFilterBefore(managementApiFilter, BasicAuthenticationFilter.class);
 
     return http.build();
+  }
+
+  public UrlBasedCorsConfigurationSource corsConfigurationSource() {
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOrigins(List.of("http://localhost:3100"));
+    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    config.setAllowedHeaders(List.of("*"));
+    config.setAllowCredentials(true);
+    source.registerCorsConfiguration("/**", config);
+    return source;
+  }
+
+  @Bean
+  public CookieSerializer cookieSerializer() {
+    DefaultCookieSerializer serializer = new DefaultCookieSerializer();
+    serializer.setCookieName("IDP_SERVER_SESSION");
+    serializer.setCookiePath("/");
+    serializer.setDomainName("localhost");
+    serializer.setUseSecureCookie(false);
+    serializer.setSameSite("Lax");
+    serializer.setUseHttpOnlyCookie(true);
+    return serializer;
   }
 }

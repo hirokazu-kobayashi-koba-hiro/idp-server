@@ -21,4 +21,8 @@ public class CustomProperties {
   public Map<String, Object> values() {
     return values;
   }
+
+  public String getValueAsStringOrEmpty(String key) {
+    return (String) values.getOrDefault(key, "");
+  }
 }

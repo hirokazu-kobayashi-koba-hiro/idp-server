@@ -23,7 +23,9 @@ public class OAuthAuthorizeErrorHandler {
 
       log.log(Level.WARNING, badRequestException.getMessage(), badRequestException);
       return new OAuthAuthorizeResponse(
-              OAuthAuthorizeStatus.BAD_REQUEST, badRequestException.error().value(), badRequestException.errorDescription().value());
+          OAuthAuthorizeStatus.BAD_REQUEST,
+          badRequestException.error().value(),
+          badRequestException.errorDescription().value());
     }
 
     if (exception instanceof OAuthRedirectableBadRequestException redirectableBadRequestException) {

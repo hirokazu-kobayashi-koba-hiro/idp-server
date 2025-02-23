@@ -21,7 +21,7 @@ public class UserRegistrationService implements PasswordEncodeDelegation {
     this.passwordEncoder = passwordEncoder;
   }
 
-  public User register(Tenant tenant, UserRegistration userRegistration) {
+  public User create(Tenant tenant, UserRegistration userRegistration) {
 
     User existingUser = userService.findBy(tenant, userRegistration.username());
 
@@ -30,7 +30,16 @@ public class UserRegistrationService implements PasswordEncodeDelegation {
     }
 
     UserCreator userCreator = new UserCreator(userRegistration, this);
-    User user = userCreator.create();
+    return userCreator.create();
+  }
+
+  public User register(Tenant tenant, User user) {
+
+    User existingUser = userService.findBy(tenant, user.name());
+
+    if (existingUser.exists()) {
+      throw new UserRegistrationConflictException("User already exists");
+    }
 
     userService.register(tenant, user);
 

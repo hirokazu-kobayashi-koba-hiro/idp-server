@@ -6,9 +6,12 @@ This library provides java api supported OAuth2.0 and OIDC spec.
 
 ## Features
 
+* ✅️- Supported
+* ❌- Unsupported
+
 | Category        | SubCategory                           | Supported | Description                                                                                                                                                                                                                                             |
 |-----------------|---------------------------------------|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Authentication  | Password                              | ❌         | username/password.                                                                                                                                                                                                                                      |
+| Authentication  | Password                              | ✅️        | username/password.                                                                                                                                                                                                                                      |
 |                 | Multi-Factor (MFA)                    | ❌         | Adds extra security layers via SMS, TOTP, push notifications, etc.                                                                                                                                                                                      |
 |                 | Passwordless                          | ❌         | Enables login via FIDO-UAF, FIDO2 or Passkey.                                                                                                                                                                                                           |
 |                 | Social Login                          | ❌         | Supports authentication via Google, Facebook, GitHub, LinkedIn, and more.                                                                                                                                                                               |
@@ -135,3 +138,10 @@ cd database
 cd e2e
 npm test
 ```
+
+### library
+
+* jwt
+    * https://connect2id.com/products/nimbus-jose-jwt
+* webauthn
+    * https://github.com/webauthn4j/webauthn4j

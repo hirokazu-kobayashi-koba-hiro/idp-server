@@ -18,13 +18,17 @@ public class Authentication implements Serializable {
     return this;
   }
 
-  public Authentication setMethods(List<String> methods) {
-    this.methods = methods;
+  public Authentication addMethods(List<String> methods) {
+    List<String> newValues = new ArrayList<>(this.methods);
+    newValues.addAll(methods);
+    this.methods = newValues;
     return this;
   }
 
-  public Authentication setAcrValues(List<String> acrValues) {
-    this.acrValues = acrValues;
+  public Authentication addAcrValues(List<String> acrValues) {
+    List<String> newValues = new ArrayList<>(this.methods);
+    newValues.addAll(acrValues);
+    this.acrValues = newValues;
     return this;
   }
 

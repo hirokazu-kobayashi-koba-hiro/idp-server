@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.User;
@@ -68,7 +67,7 @@ public class OAuthSession implements Serializable {
     if (isExpire(now)) {
       return false;
     }
-    
+
     LocalDateTime authenticationTime = authentication.time();
     if (now.isAfter(authenticationTime.plusSeconds(request.maxAge().toLongValue()))) {
       return false;
@@ -85,12 +84,25 @@ public class OAuthSession implements Serializable {
     return user.customPropertiesValue();
   }
 
-  public OAuthSession didAuthenticationPassword(User user) {
+  public OAuthSession didAuthenticationPassword(OAuthSessionKey oAuthSessionKey, User user) {
 
     Authentication authentication =
         new Authentication()
-            .setMethods(new ArrayList<>(List.of("password")))
-            .setAcrValues(List.of("urn:mace:incommon:iap:silver"));
+            .setTime(SystemDateTime.now())
+            .addMethods(new ArrayList<>(List.of("pwd")))
+            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
+
+    return new OAuthSession(
+        oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
+  }
+
+  public OAuthSession didWebAuthnAuthentication(OAuthSessionKey oAuthSessionKey, User user) {
+
+    Authentication authentication =
+        new Authentication()
+            .setTime(SystemDateTime.now())
+            .addMethods(new ArrayList<>(List.of("hwk")))
+            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     return new OAuthSession(
         oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));

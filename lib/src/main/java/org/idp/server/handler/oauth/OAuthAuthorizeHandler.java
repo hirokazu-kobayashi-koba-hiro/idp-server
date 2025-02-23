@@ -60,7 +60,9 @@ public class OAuthAuthorizeHandler {
     Authentication authentication = request.authentication();
     CustomProperties customProperties = request.toCustomProperties();
 
-    OAuthAuthorizeRequestValidator validator = new OAuthAuthorizeRequestValidator(tokenIssuer, authorizationRequestIdentifier, user, authentication, customProperties);
+    OAuthAuthorizeRequestValidator validator =
+        new OAuthAuthorizeRequestValidator(
+            tokenIssuer, authorizationRequestIdentifier, user, authentication, customProperties);
     validator.validate();
 
     AuthorizationRequest authorizationRequest =
