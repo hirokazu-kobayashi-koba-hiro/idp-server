@@ -5,7 +5,6 @@ import com.webauthn4j.converter.AttestedCredentialDataConverter;
 import com.webauthn4j.converter.util.ObjectConverter;
 import com.webauthn4j.data.RegistrationData;
 import com.webauthn4j.data.RegistrationParameters;
-
 import java.util.Objects;
 
 public class WebAuthnRegistrationManager {
@@ -38,16 +37,17 @@ public class WebAuthnRegistrationManager {
     byte[] credentialId = credentialId(verified);
 
     ObjectConverter objectConverter = new ObjectConverter();
-    AttestedCredentialDataConverter attestedCredentialDataConverter = new AttestedCredentialDataConverter(objectConverter);
-    byte[] attestedCredentialData = attestedCredentialDataConverter.convert(Objects.requireNonNull(Objects.requireNonNull(verified.getAttestationObject()).getAuthenticatorData().getAttestedCredentialData()));
+    AttestedCredentialDataConverter attestedCredentialDataConverter =
+        new AttestedCredentialDataConverter(objectConverter);
+    byte[] attestedCredentialData =
+        attestedCredentialDataConverter.convert(
+            Objects.requireNonNull(
+                Objects.requireNonNull(verified.getAttestationObject())
+                    .getAuthenticatorData()
+                    .getAttestedCredentialData()));
 
     return new WebAuthnCredential(
-        credentialId,
-        userId,
-        configuration.rpId(),
-        new byte[0],
-        attestedCredentialData,
-        0);
+        credentialId, userId, configuration.rpId(), new byte[0], attestedCredentialData, 0);
   }
 
   private byte[] credentialId(RegistrationData verified) {
