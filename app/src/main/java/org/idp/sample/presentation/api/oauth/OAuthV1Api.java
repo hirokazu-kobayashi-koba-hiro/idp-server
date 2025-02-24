@@ -40,7 +40,7 @@ public class OAuthV1Api implements ParameterTransformable {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.LOCATION, url);
 
-        return new ResponseEntity<>(headers, HttpStatus.OK);
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
         HttpHeaders httpHeaders = new HttpHeaders();
