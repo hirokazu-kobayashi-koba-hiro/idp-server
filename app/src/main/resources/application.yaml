@@ -2,13 +2,18 @@ idp:
   configurations:
    basePath: "src/main/resources/config/sample"
    publicTenantDomain: "${PUBLIC_TENANT_DOMAIN:http://localhost:8080/}"
+   email:
+    url: "${EMAIL_URL:https://api.mailgun.net/v3/sandbox77f9e7d20fc4473bab64ca8029d92cbe.mailgun.org}"
+    username: "api"
+    apiKey: "${EMAIL_API_KEY:dumy}"
+    sender: "${EMAIL_SENDER:Mailgun Sandbox <postmaster@sandbox77f9e7d20fc4473bab64ca8029d92cbe.mailgun.org>}"
 
 
 spring:
   datasource:
-    url: "jdbc:postgresql://localhost:5432/idpserver"
-    username: "idpserver"
-    password: "idpserver"
+    url: "${DB_URL:jdbc:postgresql://localhost:5432/idpserver}"
+    username: "${DB_USER_NAME:idpserver}"
+    password: "${DB_PASSWORD:idpserver}"
     hikari:
       connection-timeout: 3000
       maximum-pool-size: 50
@@ -19,4 +24,7 @@ logging:
     web: info
     org.mybatis: debug
     org.idp.sample: debug
+
+
+
 

@@ -2,10 +2,7 @@ package org.idp.server.oauth;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.User;
@@ -16,6 +13,7 @@ public class OAuthSession implements Serializable {
   User user;
   Authentication authentication;
   LocalDateTime expiredAt;
+  HashMap<String, Object> attributes = new HashMap<>();
 
   public OAuthSession() {}
 
@@ -28,6 +26,19 @@ public class OAuthSession implements Serializable {
     this.user = user;
     this.authentication = authentication;
     this.expiredAt = expiredAt;
+  }
+
+  public OAuthSession(
+      OAuthSessionKey oAuthSessionKey,
+      User user,
+      Authentication authentication,
+      LocalDateTime expiredAt,
+      HashMap<String, Object> attributes) {
+    this.oAuthSessionKey = oAuthSessionKey;
+    this.user = user;
+    this.authentication = authentication;
+    this.expiredAt = expiredAt;
+    this.attributes = attributes;
   }
 
   public OAuthSessionKey oAuthSessionKey() {
@@ -96,6 +107,20 @@ public class OAuthSession implements Serializable {
         oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
   }
 
+  public OAuthSession didEmailAuthentication(OAuthSessionKey oAuthSessionKey) {
+
+    Authentication authentication =
+        new Authentication()
+            .setTime(SystemDateTime.now())
+            .addMethods(new ArrayList<>(List.of("otp")))
+            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
+
+    user.setEmailVerified(true);
+
+    return new OAuthSession(
+        oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
+  }
+
   public OAuthSession didWebAuthnAuthentication(OAuthSessionKey oAuthSessionKey, User user) {
 
     Authentication authentication =
@@ -108,7 +133,21 @@ public class OAuthSession implements Serializable {
         oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
   }
 
+  public OAuthSession addAttribute(HashMap<String, Object> attributes) {
+    this.attributes.putAll(attributes);
+    return new OAuthSession(
+        oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600), attributes);
+  }
+
   public boolean exists() {
     return Objects.nonNull(oAuthSessionKey) && oAuthSessionKey.exists();
+  }
+
+  public boolean hasAttribute(String key) {
+    return attributes.containsKey(key);
+  }
+
+  public Object getAttribute(String key) {
+    return attributes.get(key);
   }
 }
