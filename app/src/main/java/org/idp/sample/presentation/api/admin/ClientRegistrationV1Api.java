@@ -1,8 +1,9 @@
-package org.idp.sample.presentation.api;
+package org.idp.sample.presentation.api.admin;
 
 import org.idp.sample.application.service.tenant.TenantService;
 import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
+import org.idp.sample.presentation.api.ParameterTransformable;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.api.ClientManagementApi;
 import org.springframework.http.HttpStatus;
@@ -10,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/api/v1/client/registration")
+@RequestMapping("/{tenant-id}/api/v1/admin/client/registration")
 public class ClientRegistrationV1Api implements ParameterTransformable {
 
   ClientManagementApi clientManagementApi;

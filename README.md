@@ -122,6 +122,15 @@ cd database
 ./gradlew flywayClean flywayMigrate
 ```
 
+```shell
+./init.sh
+```
+
+```shell
+export IDP_SERVER_API_KEY=xxx
+export IDP_SERVER_API_SECRET=xxx
+```
+
 ### bootRun
 
 ```shell
@@ -129,7 +138,7 @@ cd database
 ```
 
 ```shell
-./init.sh
+./setup.sh
 ```
 
 ### e2e

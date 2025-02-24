@@ -28,4 +28,17 @@ public class BasicAuth {
   boolean exists(String value) {
     return Objects.nonNull(value) && !value.isEmpty();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    BasicAuth basicAuth = (BasicAuth) o;
+    return Objects.equals(username, basicAuth.username)
+        && Objects.equals(password, basicAuth.password);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(username, password);
+  }
 }

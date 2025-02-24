@@ -4,7 +4,9 @@ uuid
 
 ```shell
 uuidgen | tr 'A-Z' 'a-z'
+echo $(uuidgen | tr 'A-Z' 'a-z') | base64 
 ```
+
 
 ### signup
 
