@@ -1,13 +1,17 @@
 package org.idp.sample.application.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.sample.application.service.authentication.EmailAuthenticationService;
 import org.idp.sample.application.service.authentication.WebAuthnService;
 import org.idp.sample.application.service.authorization.OAuthSessionService;
 import org.idp.sample.application.service.tenant.TenantService;
 import org.idp.sample.application.service.user.UserAuthenticationService;
 import org.idp.sample.application.service.user.UserRegistrationService;
+import org.idp.sample.domain.model.authentication.EmailVerificationChallenge;
+import org.idp.sample.domain.model.authentication.EmailVerificationChallengeNotFoundException;
 import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.domain.model.user.UserRegistration;
@@ -37,6 +41,7 @@ public class OAuthFlowService {
   UserAuthenticationService userAuthenticationService;
   TenantService tenantService;
   WebAuthnService webAuthnService;
+  EmailAuthenticationService emailAuthenticationService;
 
   public OAuthFlowService(
       IdpServerApplication idpServerApplication,
@@ -44,7 +49,8 @@ public class OAuthFlowService {
       UserRegistrationService userRegistrationService,
       UserAuthenticationService userAuthenticationService,
       TenantService tenantService,
-      WebAuthnService webAuthnService) {
+      WebAuthnService webAuthnService,
+      EmailAuthenticationService emailAuthenticationService) {
     this.oAuthApi = idpServerApplication.oAuthApi();
     oAuthApi.setOAuthRequestDelegate(oAuthSessionService);
     this.oAuthSessionService = oAuthSessionService;
@@ -52,6 +58,7 @@ public class OAuthFlowService {
     this.userAuthenticationService = userAuthenticationService;
     this.tenantService = tenantService;
     this.webAuthnService = webAuthnService;
+    this.emailAuthenticationService = emailAuthenticationService;
   }
 
   public OAuthRequestResponse request(
@@ -93,6 +100,45 @@ public class OAuthFlowService {
     oAuthSessionService.registerSession(oAuthSession);
 
     return user;
+  }
+
+  public void challengeEmailVerification(
+      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
+    Tenant tenant = tenantService.get(tenantIdentifier);
+    AuthorizationRequest authorizationRequest =
+        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+    OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
+
+    EmailVerificationChallenge emailVerificationChallenge =
+        emailAuthenticationService.challenge(oAuthSession.user());
+
+    HashMap<String, Object> attributes = new HashMap<>();
+    attributes.put("emailVerificationChallenge", emailVerificationChallenge);
+    OAuthSession updatedSession = oAuthSession.addAttribute(attributes);
+
+    oAuthSessionService.updateSession(updatedSession);
+  }
+
+  public void verifyEmail(
+      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier, String verificationCode) {
+    Tenant tenant = tenantService.get(tenantIdentifier);
+
+    AuthorizationRequest authorizationRequest =
+        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+
+    OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
+    if (!oAuthSession.hasAttribute("emailVerificationChallenge")) {
+      throw new EmailVerificationChallengeNotFoundException(
+          "emailVerificationChallenge is not found");
+    }
+    EmailVerificationChallenge emailVerificationChallenge =
+        (EmailVerificationChallenge) oAuthSession.getAttribute("emailVerificationChallenge");
+
+    emailAuthenticationService.verify(verificationCode, emailVerificationChallenge);
+
+    OAuthSession updatedSession =
+        oAuthSession.didEmailAuthentication(authorizationRequest.sessionKey());
+    oAuthSessionService.updateSession(updatedSession);
   }
 
   public WebAuthnSession challengeWebAuthnRegistration(
