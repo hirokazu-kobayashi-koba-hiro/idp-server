@@ -25,7 +25,7 @@ public class ServerRegistrationV1Api implements ParameterTransformable {
   public ServerRegistrationV1Api(
       IdpServerApplication idpServerApplication,
       TenantService tenantService,
-      @Value("${idp.configurations.publicTenantDomain}") String publicTenantDomainValue) {
+      @Value("${idp.configurations.serverDomain}") String publicTenantDomainValue) {
     this.serverManagementApi = idpServerApplication.serverManagementApi();
     this.tenantService = tenantService;
     this.publicTenantDomain = new PublicTenantDomain(publicTenantDomainValue);
@@ -37,7 +37,7 @@ public class ServerRegistrationV1Api implements ParameterTransformable {
       @RequestBody(required = false) String body) {
     Tenant tenant = tenantService.get(tenantId);
     String newTenantId = UUID.randomUUID().toString();
-    String issuer = "https://idp-server-0d10773f8944.herokuapp.com/" + newTenantId;
+    String issuer = publicTenantDomain.value() + newTenantId;
     String replacedBody = body.replaceAll("IDP_ISSUER", issuer);
     String response = serverManagementApi.register(replacedBody);
 
