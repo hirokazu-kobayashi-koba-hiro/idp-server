@@ -8,7 +8,7 @@ idp:
     url: "${EMAIL_URL:https://api.mailgun.net/v3/sandbox77f9e7d20fc4473bab64ca8029d92cbe.mailgun.org}"
     username: "api"
     apiKey: "${EMAIL_API_KEY:dumy}"
-    sender: "${EMAIL_SENDER:Mailgun Sandbox <postmaster@sandbox77f9e7d20fc4473bab64ca8029d92cbe.mailgun.org>}"
+    sender: "${EMAIL_SENDER:idp-server <postmaster@sandbox77f9e7d20fc4473bab64ca8029d92cbe.mailgun.org>}"
 
 
 spring:
