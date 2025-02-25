@@ -1,7 +1,10 @@
 package org.idp.sample;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.sql.DataSource;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.handler.config.DatabaseConfig;
 import org.idp.server.handler.config.MemoryDataSourceConfig;
@@ -9,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -21,6 +25,9 @@ public class IdPApplication {
 
   @Value("${idp.configurations.basePath}")
   String configurationBasePath;
+
+  @Value("${spring.datasource.url}")
+  String databaseUrl;
 
   @Bean
   public IdpServerApplication idpServerApplication() {
@@ -50,5 +57,29 @@ public class IdPApplication {
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
+  }
+
+  /**
+   * this bean is for heroku. Variable DATABASE_URL specified heroku is
+   * postgres://username:password@host:port/database format.
+   *
+   * @return
+   * @throws URISyntaxException
+   */
+  @Bean
+  public DataSource dataSource() throws URISyntaxException {
+    DriverManagerDataSource dataSource = new DriverManagerDataSource();
+
+    URI dbUri = new URI(databaseUrl);
+    String username = dbUri.getUserInfo().split(":")[0];
+    String password = dbUri.getUserInfo().split(":")[1];
+    String jdbcUrl =
+        "jdbc:postgresql://" + dbUri.getHost() + ':' + dbUri.getPort() + dbUri.getPath();
+
+    dataSource.setUrl(jdbcUrl);
+    dataSource.setUsername(username);
+    dataSource.setPassword(password);
+    dataSource.setDriverClassName("org.postgresql.Driver");
+    return dataSource;
   }
 }
