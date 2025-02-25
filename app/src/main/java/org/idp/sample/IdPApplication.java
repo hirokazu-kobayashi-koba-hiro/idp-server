@@ -59,27 +59,4 @@ public class IdPApplication {
     return new BCryptPasswordEncoder();
   }
 
-  /**
-   * this bean is for heroku. Variable DATABASE_URL specified heroku is
-   * postgres://username:password@host:port/database format.
-   *
-   * @return
-   * @throws URISyntaxException
-   */
-  @Bean
-  public DataSource dataSource() throws URISyntaxException {
-    DriverManagerDataSource dataSource = new DriverManagerDataSource();
-
-    URI dbUri = new URI(databaseUrl);
-    String username = dbUri.getUserInfo().split(":")[0];
-    String password = dbUri.getUserInfo().split(":")[1];
-    String jdbcUrl =
-        "jdbc:postgresql://" + dbUri.getHost() + ':' + dbUri.getPort() + dbUri.getPath();
-
-    dataSource.setUrl(jdbcUrl);
-    dataSource.setUsername(username);
-    dataSource.setPassword(password);
-    dataSource.setDriverClassName("org.postgresql.Driver");
-    return dataSource;
-  }
 }

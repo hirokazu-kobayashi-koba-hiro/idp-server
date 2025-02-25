@@ -13,7 +13,9 @@ idp:
 
 spring:
   datasource:
-    url: "${DATABASE_URL:postgresql://idpserver:idpserver@localhost:5432/idpserver}"
+    url: "${DB_URL:jdbc:postgresql://localhost:5432/idpserver}"
+    username: "${DB_USER_NAME:idpserver}"
+    password: "${DB_PASSWORD:idpserver}"
     hikari:
       connection-timeout: 3000
       maximum-pool-size: 50
