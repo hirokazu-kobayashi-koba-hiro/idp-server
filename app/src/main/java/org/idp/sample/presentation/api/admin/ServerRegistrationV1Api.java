@@ -37,7 +37,7 @@ public class ServerRegistrationV1Api implements ParameterTransformable {
       @RequestBody(required = false) String body) {
     Tenant tenant = tenantService.get(tenantId);
     String newTenantId = UUID.randomUUID().toString();
-    String issuer = "http://localhost:8080/" + newTenantId;
+    String issuer = "https://idp-server-0d10773f8944.herokuapp.com/" + newTenantId;
     String replacedBody = body.replaceAll("IDP_ISSUER", issuer);
     String response = serverManagementApi.register(replacedBody);
 

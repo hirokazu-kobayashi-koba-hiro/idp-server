@@ -1,27 +1,27 @@
 export const serverConfig = {
-  issuer: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+  issuer: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66",
   authorizationEndpoint:
-    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations",
+    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations",
   passwordAuthenticationEndpoint:
-    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/password-authentication",
+    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/password-authentication",
   authorizeEndpoint:
-    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/authorize",
+    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/authorize",
   denyEndpoint:
-    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/deny",
-  tokenEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens",
+    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/deny",
+  tokenEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens",
   tokenIntrospectionEndpoint:
-    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/introspection",
-  tokenRevocationEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/revocation",
-  userinfoEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/userinfo",
-  jwksEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/jwks",
+    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/introspection",
+  tokenRevocationEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/revocation",
+  userinfoEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/userinfo",
+  jwksEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/jwks",
   backchannelAuthenticationEndpoint:
-    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications",
+    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications",
   backchannelAuthenticationAutomatedCompleteEndpoint:
-    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications/automated-complete",
+    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications/automated-complete",
   discoveryEndpoint:
-    "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration",
-  credentialEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials",
-  credentialBatchEndpoint: "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials/batch-requests",
+    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration",
+  credentialEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials",
+  credentialBatchEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials/batch-requests",
   enabledSsr: false,
   ciba: {
     loginHint: "ito.ichiro@gmail.com",
@@ -39,21 +39,21 @@ export const serverConfig = {
 export const unsupportedServerConfig = {
   issuer: "https://server.example.com/94d8598e-f238-4150-85c2-c4accf515784",
   authorizationEndpoint:
-    "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/authorizations",
+    "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/authorizations",
   authorizeEndpoint:
-    "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/authorizations/{id}/authorize",
-  tokenEndpoint: "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens",
+    "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/authorizations/{id}/authorize",
+  tokenEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens",
   tokenIntrospectionEndpoint:
-    "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/introspection",
-  tokenRevocationEndpoint: "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/revocation",
-  userinfoEndpoint: "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/userinfo",
-  jwksEndpoint: "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/jwks",
+    "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/introspection",
+  tokenRevocationEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/revocation",
+  userinfoEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/userinfo",
+  jwksEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/jwks",
   backchannelAuthenticationEndpoint:
-    "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications",
+    "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications",
   backchannelAuthenticationAutomatedCompleteEndpoint:
-    "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications/automated-complete",
+    "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications/automated-complete",
   discoveryEndpoint:
-    "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/.well-known/openid-configuration",
+    "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/.well-known/openid-configuration",
   enabledSsr: false,
   ciba: {
     loginHint: "001",

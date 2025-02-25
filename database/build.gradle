@@ -8,13 +8,13 @@ repositories {
 }
 
 dependencies {
-    runtimeOnly "org.postgresql:postgresql:42.6.0"
+    runtimeOnly 'org.postgresql:postgresql:42.7.2'
 }
 
 flyway {
     def env = System.env
-    url = "jdbc:postgresql://${env.DB_ENDPOINT ?: "localhost:5432"}/${env.DB_NAME ?: "idpserver"}"
-    user = "${env.DB_USER ?: "idpserver"}"
+    url = "${env.DB_URL ?: "jdbc:postgresql://localhost:5432/idpserver"}"
+    user = "${env.DB_USER_NAME ?: "idpserver"}"
     password = "${env.DB_PASSWORD ?: "idpserver"}"
     encoding = "UTF-8"
     schemas = ["public"]
