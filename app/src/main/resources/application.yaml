@@ -13,7 +13,7 @@ idp:
 
 spring:
   datasource:
-    url: "${JDBC_DATABASE_URL:jdbc:postgresql://localhost:5432/idpserver?password=idpserver&user=idpserver}"
+    url: $JDBC_DATABASE_URL}
     hikari:
       connection-timeout: 3000
       maximum-pool-size: 50
@@ -21,8 +21,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: "${EMAIL_USER_NAME}"
-    password: "${EMAIL_PASSWORD}"
+    username: ${EMAIL_USER_NAME}
+    password: ${EMAIL_PASSWORD}
     properties:
       mail:
         smtp:
