@@ -2,7 +2,7 @@ plugins {
 	id "com.diffplug.spotless" version "6.24.0"
 }
 
-task stage(dependsOn: [':app:bootJar']) {
+task stage(dependsOn: ['clean',':app:bootJar']) {
 	doLast {
 		println "Build application..."
 	}
