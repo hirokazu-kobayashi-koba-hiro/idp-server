@@ -1,10 +1,7 @@
 package org.idp.sample;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.sql.DataSource;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.handler.config.DatabaseConfig;
 import org.idp.server.handler.config.MemoryDataSourceConfig;
@@ -12,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -28,6 +24,12 @@ public class IdPApplication {
 
   @Value("${spring.datasource.url}")
   String databaseUrl;
+
+  @Value("${spring.datasource.username}")
+  String databaseUsername;
+
+  @Value("${spring.datasource.password}")
+  String databasePassword;
 
   @Bean
   public IdpServerApplication idpServerApplication() {
@@ -50,7 +52,7 @@ public class IdPApplication {
     MemoryDataSourceConfig memoryDataSourceConfig =
         new MemoryDataSourceConfig(serverPaths, clientPaths);
     DatabaseConfig databaseConfig =
-        new DatabaseConfig("jdbc:postgresql://localhost:5432/idpserver", "idpserver", "idpserver");
+        new DatabaseConfig(databaseUrl, databaseUsername, databasePassword);
     return new IdpServerApplication(databaseConfig);
   }
 
@@ -58,5 +60,4 @@ public class IdPApplication {
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
   }
-
 }
