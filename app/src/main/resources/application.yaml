@@ -3,7 +3,7 @@ idp:
    apiKey: ${IDP_SERVER_API_KEY}
    apiSecret: ${IDP_SERVER_API_SECRET}
    basePath: "src/main/resources/config/sample"
-   publicTenantDomain: "${PUBLIC_TENANT_DOMAIN:http://localhost:8080/}"
+   serverDomain: "${IDP_SERVER_DOMAIN:http://localhost:8080/}"
    email:
     url: "${EMAIL_URL:https://api.mailgun.net/v3/sandbox77f9e7d20fc4473bab64ca8029d92cbe.mailgun.org}"
     username: "api"

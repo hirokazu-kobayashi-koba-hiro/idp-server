@@ -5,9 +5,9 @@ VALUES ('9eb8eb8c-2615-4604-809f-5cae1c00a462', 'admin', 'admin-organization'),
 
 INSERT INTO public.tenant (id, name, type, issuer)
 VALUES ('67e7eae6-62b0-4500-9eff-87459f63fc66', 'admin', 'ADMIN',
-        'http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66'),
+        'https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66'),
        ('94d8598e-f238-4150-85c2-c4accf515784', 'unsupported', 'PUBLIC',
-        'http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784');
+        'https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784');
 
 INSERT INTO public.organization_tenants(id, organization_id, tenant_id)
 VALUES ('6ae408f9-297b-4a3f-a8f4-1b77eb07b1af', '9eb8eb8c-2615-4604-809f-5cae1c00a462',
