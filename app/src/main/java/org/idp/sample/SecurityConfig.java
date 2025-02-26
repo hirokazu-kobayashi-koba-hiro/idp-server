@@ -83,7 +83,7 @@ public class SecurityConfig {
     serializer.setCookieName("IDP_SERVER_SESSION");
     serializer.setCookiePath("/");
     serializer.setDomainName(authViewDomain());
-    serializer.setUseSecureCookie(false);
+    serializer.setUseSecureCookie(true);
     serializer.setSameSite("Lax");
     serializer.setUseHttpOnlyCookie(true);
     return serializer;
