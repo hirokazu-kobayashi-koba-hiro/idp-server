@@ -9,6 +9,7 @@ import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.presentation.api.ParameterTransformable;
 import org.idp.server.handler.oauth.io.*;
 import org.idp.server.oauth.identity.User;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +22,13 @@ import org.springframework.web.bind.annotation.*;
 public class OAuthV1Api implements ParameterTransformable {
 
   OAuthFlowService oAuthFlowService;
+  String authViewUrl;
 
-  public OAuthV1Api(OAuthFlowService oAuthFlowService) {
+  public OAuthV1Api(
+      OAuthFlowService oAuthFlowService,
+      @Value("${idp.configurations.authViewUrl}") String authViewUrl) {
     this.oAuthFlowService = oAuthFlowService;
+    this.authViewUrl = authViewUrl;
   }
 
   @GetMapping
@@ -60,13 +65,15 @@ public class OAuthV1Api implements ParameterTransformable {
   private String createUrl(TenantIdentifier tenantIdentifier, OAuthRequestResponse response) {
     if (response.status() == OK_ACCOUNT_CREATION) {
       return String.format(
-          "http://localhost:3100/signup?id=%s&tenant_id=%s",
-          response.authorizationRequestId(), tenantIdentifier.value());
+          authViewUrl + "signup?id=%s&tenant_id=%s",
+          response.authorizationRequestId(),
+          tenantIdentifier.value());
     }
 
     return String.format(
-        "http://localhost:3100/signin?id=%s&tenant_id=%s",
-        response.authorizationRequestId(), tenantIdentifier.value());
+        authViewUrl + "signin?id=%s&tenant_id=%s",
+        response.authorizationRequestId(),
+        tenantIdentifier.value());
   }
 
   @GetMapping("/{id}/view-data")

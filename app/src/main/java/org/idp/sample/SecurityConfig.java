@@ -1,7 +1,9 @@
 package org.idp.sample;
 
+import java.net.URI;
 import java.util.List;
 import org.idp.sample.domain.model.operation.IdPScope;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -22,9 +24,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   ManagementApiFilter managementApiFilter;
+  String authViewUrl;
 
-  public SecurityConfig(ManagementApiFilter managementApiFilter) {
+  public SecurityConfig(
+      ManagementApiFilter managementApiFilter,
+      @Value("${idp.configurations.authViewUrl}") String authViewUrl) {
     this.managementApiFilter = managementApiFilter;
+    this.authViewUrl = authViewUrl;
   }
 
   @Bean
@@ -76,10 +82,15 @@ public class SecurityConfig {
     DefaultCookieSerializer serializer = new DefaultCookieSerializer();
     serializer.setCookieName("IDP_SERVER_SESSION");
     serializer.setCookiePath("/");
-    serializer.setDomainName("localhost");
+    serializer.setDomainName(authViewDomain());
     serializer.setUseSecureCookie(false);
     serializer.setSameSite("Lax");
     serializer.setUseHttpOnlyCookie(true);
     return serializer;
+  }
+
+  private String authViewDomain() {
+    URI uri = URI.create(authViewUrl);
+    return uri.getHost();
   }
 }

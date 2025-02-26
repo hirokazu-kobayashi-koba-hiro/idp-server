@@ -25,7 +25,7 @@ public class TenantManagementV1Api implements ParameterTransformable {
   public TenantManagementV1Api(
       IdpServerApplication idpServerApplication,
       TenantService tenantService,
-      @Value("${idp.configurations.serverDomain}") String idpServerDomain) {
+      @Value("${idp.configurations.serverUrl}") String idpServerDomain) {
     this.serverManagementApi = idpServerApplication.serverManagementApi();
     this.tenantService = tenantService;
     this.idpServerDomain = idpServerDomain;
@@ -37,7 +37,7 @@ public class TenantManagementV1Api implements ParameterTransformable {
       @RequestBody(required = false) String body) {
     Tenant tenant = tenantService.get(tenantId);
     String newTenantId = UUID.randomUUID().toString();
-    String issuer = idpServerDomain + "/" + newTenantId;
+    String issuer = idpServerDomain + newTenantId;
     String replacedBody = body.replaceAll("IDP_ISSUER", issuer);
     String response = serverManagementApi.register(replacedBody);
 
