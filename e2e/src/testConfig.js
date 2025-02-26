@@ -1,27 +1,29 @@
+const backendUrl = process.env.IDP_SERVER_URL || "http://localhost:8080";
+
 export const serverConfig = {
-  issuer: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66",
+  issuer: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66`,
   authorizationEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations",
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations`,
   passwordAuthenticationEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/password-authentication",
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/password-authentication`,
   authorizeEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/authorize",
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/authorize`,
   denyEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/deny",
-  tokenEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens",
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/deny`,
+  tokenEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens`,
   tokenIntrospectionEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/introspection",
-  tokenRevocationEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/revocation",
-  userinfoEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/userinfo",
-  jwksEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/jwks",
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/introspection`,
+  tokenRevocationEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/revocation`,
+  userinfoEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/userinfo`,
+  jwksEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/jwks`,
   backchannelAuthenticationEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications",
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications`,
   backchannelAuthenticationAutomatedCompleteEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications/automated-complete",
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications/automated-complete`,
   discoveryEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration",
-  credentialEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials",
-  credentialBatchEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials/batch-requests",
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration`,
+  credentialEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials`,
+  credentialBatchEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials/batch-requests`,
   enabledSsr: false,
   ciba: {
     loginHint: "ito.ichiro@gmail.com",
@@ -39,21 +41,21 @@ export const serverConfig = {
 export const unsupportedServerConfig = {
   issuer: "https://server.example.com/94d8598e-f238-4150-85c2-c4accf515784",
   authorizationEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/authorizations",
+    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/authorizations`,
   authorizeEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/authorizations/{id}/authorize",
-  tokenEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens",
+    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/authorizations/{id}/authorize`,
+  tokenEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens`,
   tokenIntrospectionEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/introspection",
-  tokenRevocationEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/revocation",
-  userinfoEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/userinfo",
-  jwksEndpoint: "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/jwks",
+    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/introspection`,
+  tokenRevocationEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/revocation`,
+  userinfoEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/userinfo`,
+  jwksEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/jwks`,
   backchannelAuthenticationEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications",
+    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications`,
   backchannelAuthenticationAutomatedCompleteEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications/automated-complete",
+    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications/automated-complete`,
   discoveryEndpoint:
-    "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784/.well-known/openid-configuration",
+    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/.well-known/openid-configuration`,
   enabledSsr: false,
   ciba: {
     loginHint: "001",

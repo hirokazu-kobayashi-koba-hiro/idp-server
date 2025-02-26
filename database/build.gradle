@@ -18,7 +18,7 @@ flyway {
     password = "${env.DB_PASSWORD ?: "idpserver"}"
     encoding = "UTF-8"
     schemas = ["public"]
-    locations = ["filesystem:./migration", "filesystem:./${env.ENV ?: "local"}"]
+    locations = ["filesystem:./migration", "filesystem:./resources/${env.ENV ?: "local"}"]
     cleanDisabled = false
 }
 

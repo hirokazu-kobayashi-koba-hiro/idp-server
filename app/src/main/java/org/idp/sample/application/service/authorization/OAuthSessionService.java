@@ -1,5 +1,6 @@
 package org.idp.sample.application.service.authorization;
 
+import org.idp.sample.domain.model.authorization.OAuthHttpSessionRepository;
 import org.idp.sample.domain.model.authorization.OAuthSessionRepository;
 import org.idp.server.oauth.OAuthRequestDelegate;
 import org.idp.server.oauth.OAuthSession;
@@ -9,28 +10,40 @@ import org.springframework.stereotype.Service;
 @Service
 public class OAuthSessionService implements OAuthRequestDelegate {
 
-  OAuthSessionRepository oAuthSessionRepository;
+  OAuthHttpSessionRepository httpSessionRepository;
+  OAuthSessionRepository sessionRepository;
 
-  public OAuthSessionService(OAuthSessionRepository oAuthSessionRepository) {
-    this.oAuthSessionRepository = oAuthSessionRepository;
+  public OAuthSessionService(
+      OAuthHttpSessionRepository httpSessionRepository, OAuthSessionRepository sessionRepository) {
+    this.httpSessionRepository = httpSessionRepository;
+    this.sessionRepository = sessionRepository;
   }
 
   @Override
   public void registerSession(OAuthSession oAuthSession) {
-    oAuthSessionRepository.register(oAuthSession);
+    httpSessionRepository.register(oAuthSession);
+    sessionRepository.register(oAuthSession);
   }
 
   @Override
   public OAuthSession findSession(OAuthSessionKey oAuthSessionKey) {
-    return oAuthSessionRepository.find(oAuthSessionKey);
+    OAuthSession oAuthSession = httpSessionRepository.find(oAuthSessionKey);
+
+    if (oAuthSession.exists()) {
+      return oAuthSession;
+    }
+
+    return sessionRepository.find(oAuthSessionKey);
   }
 
   public void updateSession(OAuthSession oAuthSession) {
-    oAuthSessionRepository.update(oAuthSession);
+    httpSessionRepository.update(oAuthSession);
+    sessionRepository.update(oAuthSession);
   }
 
   @Override
   public void deleteSession(OAuthSessionKey oAuthSessionKey) {
-    oAuthSessionRepository.delete(oAuthSessionKey);
+    httpSessionRepository.delete(oAuthSessionKey);
+    sessionRepository.delete(oAuthSessionKey);
   }
 }

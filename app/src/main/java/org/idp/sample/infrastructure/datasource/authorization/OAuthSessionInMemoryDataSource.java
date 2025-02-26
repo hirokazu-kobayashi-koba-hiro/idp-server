@@ -1,6 +1,7 @@
 package org.idp.sample.infrastructure.datasource.authorization;
 
-import jakarta.servlet.http.HttpSession;
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.sample.domain.model.authorization.OAuthSessionRepository;
 import org.idp.server.oauth.OAuthSession;
 import org.idp.server.oauth.OAuthSessionKey;
@@ -9,28 +10,25 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class OAuthSessionDataSource implements OAuthSessionRepository {
+public class OAuthSessionInMemoryDataSource implements OAuthSessionRepository {
 
-  HttpSession httpSession;
-  Logger log = LoggerFactory.getLogger(OAuthSessionDataSource.class);
-
-  public OAuthSessionDataSource(HttpSession httpSession) {
-    this.httpSession = httpSession;
-  }
+  Map<String, OAuthSession> map = new HashMap<>();
+  Logger log = LoggerFactory.getLogger(OAuthSessionInMemoryDataSource.class);
 
   @Override
   public void register(OAuthSession oAuthSession) {
+    if (map.size() > 10) {
+      map.clear();
+    }
     String sessionKey = oAuthSession.sessionKeyValue();
     log.info("registerSession: {}", sessionKey);
-    log.info("sessionId: {}", httpSession.getId());
-    httpSession.setAttribute(sessionKey, oAuthSession);
+    map.put(sessionKey, oAuthSession);
   }
 
   @Override
   public OAuthSession find(OAuthSessionKey oAuthSessionKey) {
     String sessionKey = oAuthSessionKey.key();
-    OAuthSession oAuthSession = (OAuthSession) httpSession.getAttribute(sessionKey);
-    log.info("sessionId: {}", httpSession.getId());
+    OAuthSession oAuthSession = map.get(sessionKey);
     log.info("findSession: {}", sessionKey);
     if (oAuthSession == null) {
       log.info("sessionId not found");
@@ -42,17 +40,13 @@ public class OAuthSessionDataSource implements OAuthSessionRepository {
   @Override
   public void update(OAuthSession oAuthSession) {
     String sessionKey = oAuthSession.sessionKeyValue();
-    log.info("sessionId: {}", httpSession.getId());
     log.info("updateSession: {}", sessionKey);
-    httpSession.getId();
-    httpSession.setAttribute(sessionKey, oAuthSession);
+    map.put(sessionKey, oAuthSession);
   }
 
   @Override
   public void delete(OAuthSessionKey oAuthSessionKey) {
-    log.info("sessionId: {}", httpSession.getId());
     log.info("deleteSession: {}", oAuthSessionKey.key());
-    // FIXME every client
-    httpSession.invalidate();
+    map.remove(oAuthSessionKey.key());
   }
 }

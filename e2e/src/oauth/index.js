@@ -160,7 +160,7 @@ export const requestAuthorizations = async ({
     console.log(response.headers);
     console.log(response.data);
     const { location } = response.headers;
-    const { nextAction } = convertNextAction(location);
+    const { nextAction, params } = convertNextAction(location);
 
     if (nextAction !== "goAuthentication") {
       console.debug("redirect");
@@ -172,17 +172,20 @@ export const requestAuthorizations = async ({
       };
     }
 
-    if (response.status !== 200) {
+    if (response.status !== 302) {
       return {
         status: response.status,
         error: response.data,
       };
     }
 
+    const id = params.get("id");
+
     if (action === "authorize") {
+
       const passwordResponse = await authenticateWithPassword({
         endpoint: serverConfig.passwordAuthenticationEndpoint,
-        id: response.data.id,
+        id,
         body: {
           ...user
         }
@@ -194,7 +197,7 @@ export const requestAuthorizations = async ({
 
       const authorizeResponse = await authorize({
         endpoint: serverConfig.authorizeEndpoint,
-        id: response.data.id,
+        id
       });
 
       console.log(authorizeResponse.data);
@@ -208,7 +211,7 @@ export const requestAuthorizations = async ({
     } else {
       const denyResponse = await deny({
         endpoint: serverConfig.denyEndpoint,
-        id: response.data.id,
+        id,
       });
       console.log(denyResponse.data);
       const authorizationResponse = convertToAuthorizationResponse(
