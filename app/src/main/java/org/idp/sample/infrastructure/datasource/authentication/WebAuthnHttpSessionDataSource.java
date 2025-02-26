@@ -1,29 +1,30 @@
 package org.idp.sample.infrastructure.datasource.authentication;
 
-import java.util.HashMap;
-import java.util.Map;
+import jakarta.servlet.http.HttpSession;
 import java.util.Objects;
+import org.idp.sample.subdomain.webauthn.WebAuthnHttpSessionRepository;
 import org.idp.sample.subdomain.webauthn.WebAuthnSession;
 import org.idp.sample.subdomain.webauthn.WebAuthnSessionNotFoundException;
-import org.idp.sample.subdomain.webauthn.WebAuthnSessionRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class WebAuthnSessionDataSource implements WebAuthnSessionRepository {
+public class WebAuthnHttpSessionDataSource implements WebAuthnHttpSessionRepository {
 
-  Map<String, WebAuthnSession> map = new HashMap<>();
+  HttpSession httpSession;
+
+  public WebAuthnHttpSessionDataSource(HttpSession httpSession) {
+    this.httpSession = httpSession;
+  }
 
   @Override
   public void register(WebAuthnSession webAuthnSession) {
-    if (map.size() > 3) {
-      map.clear();
-    }
-    map.put("WebAuthnSession", webAuthnSession);
+    httpSession.setAttribute("WebAuthnSession", webAuthnSession);
   }
 
   @Override
   public WebAuthnSession get() {
-    WebAuthnSession webAuthnSession = map.get("WebAuthnSession");
+    WebAuthnSession webAuthnSession =
+        (WebAuthnSession) httpSession.getAttribute("WebAuthnSession");
 
     if (Objects.isNull(webAuthnSession)) {
       throw new WebAuthnSessionNotFoundException("not found web authn session");
