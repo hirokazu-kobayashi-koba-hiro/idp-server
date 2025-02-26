@@ -18,8 +18,8 @@ spring:
     password: "${DB_PASSWORD:idpserver}"
     hikari:
       connection-timeout: 3000
-      maximum-pool-size: 50
-      minimum-idle: 50
+      maximum-pool-size: 5
+      minimum-idle: 2
   mail:
     host: smtp.gmail.com
     port: 587
