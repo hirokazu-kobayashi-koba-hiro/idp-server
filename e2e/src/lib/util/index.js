@@ -8,6 +8,7 @@ export const convertNextAction = (redirectUri) => {
 
   return {
     nextAction: nextAction,
+    params,
   };
 };
 
