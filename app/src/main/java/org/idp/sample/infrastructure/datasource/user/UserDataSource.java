@@ -38,7 +38,7 @@ public class UserDataSource implements UserRepository {
   public User get(String userId) {
     User user = mapper.select(userId);
     if (Objects.isNull(user)) {
-      throw new UserNotFoundException("not found user");
+      throw new UserNotFoundException(String.format("not found user (%s)", userId));
     }
     return user;
   }

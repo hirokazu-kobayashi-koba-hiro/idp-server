@@ -23,8 +23,7 @@ public class WebAuthnHttpSessionDataSource implements WebAuthnHttpSessionReposit
 
   @Override
   public WebAuthnSession get() {
-    WebAuthnSession webAuthnSession =
-        (WebAuthnSession) httpSession.getAttribute("WebAuthnSession");
+    WebAuthnSession webAuthnSession = (WebAuthnSession) httpSession.getAttribute("WebAuthnSession");
 
     if (Objects.isNull(webAuthnSession)) {
       throw new WebAuthnSessionNotFoundException("not found web authn session");

@@ -67,6 +67,14 @@ public class OAuthHandler {
         new OAuthSessionKey(tokenIssuer.value(), parameters.clientId().value());
     OAuthSession session = delegate.findSession(oAuthSessionKey);
     delegate.deleteSession(oAuthSessionKey);
-    return new OAuthLogoutResponse(OAuthLogoutStatus.OK, "http://localhost:3000");
+    String redirectUri =
+        parameters.hasPostLogoutRedirectUri()
+            ? parameters.postLogoutRedirectUri().value()
+            : tokenIssuer.value();
+    if (parameters.hasPostLogoutRedirectUri()) {
+      return new OAuthLogoutResponse(OAuthLogoutStatus.REDIRECABLE_FOUND, redirectUri);
+    }
+
+    return new OAuthLogoutResponse(OAuthLogoutStatus.OK, "");
   }
 }
