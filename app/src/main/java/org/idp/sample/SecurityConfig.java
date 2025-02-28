@@ -24,12 +24,15 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   ManagementApiFilter managementApiFilter;
+  String adminAuthViewUrl;
   String authViewUrl;
 
   public SecurityConfig(
       ManagementApiFilter managementApiFilter,
+      @Value("${idp.configurations.adminAuthViewUrl}") String adminAuthViewUrl,
       @Value("${idp.configurations.authViewUrl}") String authViewUrl) {
     this.managementApiFilter = managementApiFilter;
+    this.adminAuthViewUrl = adminAuthViewUrl;
     this.authViewUrl = authViewUrl;
   }
 
@@ -69,7 +72,7 @@ public class SecurityConfig {
   public UrlBasedCorsConfigurationSource corsConfigurationSource() {
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     CorsConfiguration config = new CorsConfiguration();
-    config.setAllowedOrigins(List.of(authViewUrl, "http://localhost:3100"));
+    config.setAllowedOrigins(List.of(adminAuthViewUrl, authViewUrl, "http://localhost:3100"));
     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     config.setAllowedHeaders(List.of("*"));
     config.setAllowCredentials(true);
