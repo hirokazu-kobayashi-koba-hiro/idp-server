@@ -4,8 +4,8 @@ idp:
    apiSecret: ${IDP_SERVER_API_SECRET}
    basePath: "src/main/resources/config/sample"
    serverUrl: "${IDP_SERVER_DOMAIN:http://localhost:8080/}"
-   adminAuthViewUrl: "${IDP_AUTH_VIEW_URL:http://localhost:3100/}"
-   authViewUrl: "${IDP_AUTH_ADMIN_VIEW_URL:http://localhost:3100/}"
+   adminAuthViewUrl: "${IDP_AUTH_ADMIN_VIEW_URL:http://localhost:3100/}"
+   authViewUrl: "${IDP_AUTH_VIEW_URL:http://localhost:3100/}"
    email:
     url: "${EMAIL_URL:https://api.mailgun.net/v3/sandbox77f9e7d20fc4473bab64ca8029d92cbe.mailgun.org}"
     username: "api"
