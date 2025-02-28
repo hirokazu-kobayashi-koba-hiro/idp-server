@@ -213,7 +213,7 @@ public class OAuthFlowService {
   }
 
   public OAuthAuthorizeResponse authorize(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
+      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier, String action) {
 
     Tenant tenant = tenantService.get(tenantIdentifier);
     AuthorizationRequest authorizationRequest =
@@ -224,7 +224,7 @@ public class OAuthFlowService {
         new OAuthAuthorizeRequest(
             oauthRequestIdentifier, tenant.issuer(), session.user(), session.authentication());
 
-    if (authorizationRequest.isPromptCreate()) {
+    if (authorizationRequest.isPromptCreate() || action.equals("signup")) {
       userRegistrationService.register(tenant, session.user());
     }
 

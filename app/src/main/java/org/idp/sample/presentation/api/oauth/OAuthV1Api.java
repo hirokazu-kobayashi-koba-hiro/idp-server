@@ -150,9 +150,13 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/authorize")
   public ResponseEntity<?> authorize(
-      @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("id") String id,
+      @RequestBody Map<String, String> requestBody) {
 
-    OAuthAuthorizeResponse authAuthorizeResponse = oAuthFlowService.authorize(tenantId, id);
+    String action = requestBody.getOrDefault("action", "signin");
+
+    OAuthAuthorizeResponse authAuthorizeResponse = oAuthFlowService.authorize(tenantId, id, action);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
