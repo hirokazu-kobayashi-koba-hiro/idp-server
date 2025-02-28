@@ -1,5 +1,6 @@
 package org.idp.server.type.oauth;
 
+import java.net.URI;
 import java.util.Objects;
 
 /** TokenIssuer */
@@ -31,5 +32,9 @@ public class TokenIssuer {
 
   public boolean exists() {
     return Objects.nonNull(value) && !value.isEmpty();
+  }
+
+  public String extractDomain() {
+    return URI.create(value).getHost();
   }
 }

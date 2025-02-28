@@ -34,6 +34,7 @@ public class ClientConfigurationHandler {
     // FIXME
     String replacedJson =
         json.replace("${ISSUER}", tokenIssuer.value())
+            .replace("${ISSUER_DOMAIN}", tokenIssuer.extractDomain())
             .replace("${CLIENT_ID}", UUID.randomUUID().toString())
             .replace("${CLIENT_SECRET}", UUID.randomUUID().toString());
     ClientConfiguration clientConfiguration =
