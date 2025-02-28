@@ -5,10 +5,12 @@ import static org.idp.server.handler.oauth.io.OAuthRequestStatus.OK_ACCOUNT_CREA
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.sample.application.service.OAuthFlowService;
+import org.idp.sample.domain.model.tenant.Tenant;
 import org.idp.sample.domain.model.tenant.TenantIdentifier;
 import org.idp.sample.presentation.api.ParameterTransformable;
 import org.idp.server.handler.oauth.io.*;
 import org.idp.server.oauth.identity.User;
+import org.idp.server.type.extension.Pairs;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,12 +24,15 @@ import org.springframework.web.bind.annotation.*;
 public class OAuthV1Api implements ParameterTransformable {
 
   OAuthFlowService oAuthFlowService;
+  String adminAuthViewUrl;
   String authViewUrl;
 
   public OAuthV1Api(
       OAuthFlowService oAuthFlowService,
+      @Value("${idp.configurations.adminAuthViewUrl}") String adminAuthViewUrl,
       @Value("${idp.configurations.authViewUrl}") String authViewUrl) {
     this.oAuthFlowService = oAuthFlowService;
+    this.adminAuthViewUrl = adminAuthViewUrl;
     this.authViewUrl = authViewUrl;
   }
 
@@ -37,11 +42,14 @@ public class OAuthV1Api implements ParameterTransformable {
       @PathVariable("tenant-id") TenantIdentifier tenantId) {
 
     Map<String, String[]> params = transform(request);
-    OAuthRequestResponse response = oAuthFlowService.request(tenantId, params);
+    Pairs<Tenant, OAuthRequestResponse> result = oAuthFlowService.request(tenantId, params);
+
+    Tenant tenant = result.getLeft();
+    OAuthRequestResponse response = result.getRight();
 
     switch (response.status()) {
       case OK, OK_SESSION_ENABLE, OK_ACCOUNT_CREATION -> {
-        String url = createUrl(tenantId, response);
+        String url = createUrl(tenant, response);
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.LOCATION, url);
 
@@ -62,18 +70,20 @@ public class OAuthV1Api implements ParameterTransformable {
     }
   }
 
-  private String createUrl(TenantIdentifier tenantIdentifier, OAuthRequestResponse response) {
+  private String createUrl(Tenant tenant, OAuthRequestResponse response) {
+    String url = tenant.isAdmin() ? adminAuthViewUrl : authViewUrl;
+
     if (response.status() == OK_ACCOUNT_CREATION) {
       return String.format(
-          authViewUrl + "signup?id=%s&tenant_id=%s",
+          url + "signup?id=%s&tenant_id=%s",
           response.authorizationRequestId(),
-          tenantIdentifier.value());
+          tenant.identifier().value());
     }
 
     return String.format(
-        authViewUrl + "signin?id=%s&tenant_id=%s",
+        url + "signin?id=%s&tenant_id=%s",
         response.authorizationRequestId(),
-        tenantIdentifier.value());
+        tenant.identifier().value());
   }
 
   @GetMapping("/{id}/view-data")

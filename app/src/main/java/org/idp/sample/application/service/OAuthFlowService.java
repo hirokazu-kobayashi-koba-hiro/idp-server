@@ -28,6 +28,7 @@ import org.idp.server.oauth.interaction.UserInteraction;
 import org.idp.server.oauth.request.AuthorizationRequest;
 import org.idp.server.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.type.extension.OAuthDenyReason;
+import org.idp.server.type.extension.Pairs;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,13 +62,14 @@ public class OAuthFlowService {
     this.emailAuthenticationService = emailAuthenticationService;
   }
 
-  public OAuthRequestResponse request(
+  public Pairs<Tenant, OAuthRequestResponse> request(
       TenantIdentifier tenantIdentifier, Map<String, String[]> params) {
 
     Tenant tenant = tenantService.get(tenantIdentifier);
     OAuthRequest oAuthRequest = new OAuthRequest(params, tenant.issuer());
 
-    return oAuthApi.request(oAuthRequest);
+    OAuthRequestResponse request = oAuthApi.request(oAuthRequest);
+    return new Pairs<>(tenant, request);
   }
 
   public OAuthViewDataResponse getViewData(
