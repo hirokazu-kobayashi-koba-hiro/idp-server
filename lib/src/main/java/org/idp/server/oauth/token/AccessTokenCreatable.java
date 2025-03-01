@@ -2,6 +2,7 @@ package org.idp.server.oauth.token;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.UUID;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.basic.jose.JsonWebKeyInvalidException;
@@ -34,6 +35,7 @@ public interface AccessTokenCreatable {
       long accessTokenDuration = serverConfiguration.accessTokenDuration();
       ExpiresIn expiresIn = new ExpiresIn(accessTokenDuration);
       ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(accessTokenDuration));
+
       AccessTokenPayloadBuilder payloadBuilder = new AccessTokenPayloadBuilder();
       payloadBuilder.add(serverConfiguration.tokenIssuer());
       payloadBuilder.add(authorizationGrant.subject());
@@ -43,6 +45,8 @@ public interface AccessTokenCreatable {
       payloadBuilder.add(authorizationGrant.authorizationDetails());
       payloadBuilder.add(createdAt);
       payloadBuilder.add(expiredAt);
+      payloadBuilder.addJti(UUID.randomUUID().toString());
+
       ClientCertificationThumbprint thumbprint = new ClientCertificationThumbprint();
       if (clientCredentials.isTlsClientAuthOrSelfSignedTlsClientAuth()
           && serverConfiguration.isTlsClientCertificateBoundAccessTokens()
@@ -53,6 +57,7 @@ public interface AccessTokenCreatable {
         thumbprint = calculator.calculate();
         payloadBuilder.add(thumbprint);
       }
+
       Map<String, Object> accessTokenPayload = payloadBuilder.build();
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
       JsonWebSignature jsonWebSignature =
@@ -62,6 +67,7 @@ public interface AccessTokenCreatable {
               serverConfiguration.jwks(),
               serverConfiguration.tokenSignedKeyId());
       AccessTokenEntity accessTokenEntity = new AccessTokenEntity(jsonWebSignature.serialize());
+
       return new AccessToken(
           serverConfiguration.tokenIssuer(),
           TokenType.Bearer,

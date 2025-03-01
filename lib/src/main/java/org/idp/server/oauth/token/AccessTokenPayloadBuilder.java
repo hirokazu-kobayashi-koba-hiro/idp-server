@@ -43,6 +43,11 @@ public class AccessTokenPayloadBuilder {
     return this;
   }
 
+  public AccessTokenPayloadBuilder addJti(String jti) {
+    values.put("jti", jti);
+    return this;
+  }
+
   public AccessTokenPayloadBuilder add(CreatedAt createdAt) {
     values.put("iat", createdAt.toEpochSecondWithUtc());
     return this;
