@@ -50,7 +50,7 @@ public class OAuthApiImpl implements OAuthApi {
 
     try {
 
-      OAuthRequestContext context = requestHandler.handle(oAuthRequest, oAuthRequestDelegate);
+      OAuthRequestContext context = requestHandler.handle(oAuthRequest);
       OAuthSession session = oAuthRequestDelegate.findSession(context.sessionKey());
 
       if (requestHandler.isAuthorizable(context, session, oAuthRequestDelegate)) {

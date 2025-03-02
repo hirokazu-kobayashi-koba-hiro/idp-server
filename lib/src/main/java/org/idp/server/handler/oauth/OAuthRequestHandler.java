@@ -42,7 +42,7 @@ public class OAuthRequestHandler {
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
-  public OAuthRequestContext handle(OAuthRequest oAuthRequest, OAuthRequestDelegate delegate) {
+  public OAuthRequestContext handle(OAuthRequest oAuthRequest) {
     OAuthRequestParameters parameters = oAuthRequest.toParameters();
     TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
     OAuthRequestValidator validator = new OAuthRequestValidator(parameters);
@@ -61,18 +61,6 @@ public class OAuthRequestHandler {
         oAuthRequestContextService.create(parameters, serverConfiguration, clientConfiguration);
     verifier.verify(context);
     authorizationRequestRepository.register(context.authorizationRequest());
-
-    if (Objects.nonNull(delegate)) {
-      OAuthSessionKey oAuthSessionKey =
-          new OAuthSessionKey(tokenIssuer.value(), parameters.clientId().value());
-      OAuthSession session =
-          new OAuthSession(
-              oAuthSessionKey,
-              new User(),
-              new Authentication(),
-              SystemDateTime.now().plusSeconds(3600));
-      delegate.registerSession(session);
-    }
 
     return context;
   }

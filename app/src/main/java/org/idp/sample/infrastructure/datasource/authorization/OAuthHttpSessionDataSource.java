@@ -38,9 +38,6 @@ public class OAuthHttpSessionDataSource implements OAuthHttpSessionRepository {
       log.info("sessionId not found");
       return new OAuthSession();
     }
-    if (Objects.nonNull(oAuthSession.authentication())) {
-      log.info("authentication time: {}",oAuthSession.authentication().time().toString());
-    }
     return oAuthSession;
   }
 
