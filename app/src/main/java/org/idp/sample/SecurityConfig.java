@@ -26,14 +26,17 @@ public class SecurityConfig {
   ManagementApiFilter managementApiFilter;
   String adminAuthViewUrl;
   String authViewUrl;
+  String serverUrl;
 
   public SecurityConfig(
       ManagementApiFilter managementApiFilter,
       @Value("${idp.configurations.adminAuthViewUrl}") String adminAuthViewUrl,
-      @Value("${idp.configurations.authViewUrl}") String authViewUrl) {
+      @Value("${idp.configurations.authViewUrl}") String authViewUrl,
+      @Value("${idp.configurations.serverUrl}") String serverUrl) {
     this.managementApiFilter = managementApiFilter;
     this.adminAuthViewUrl = adminAuthViewUrl;
     this.authViewUrl = authViewUrl;
+    this.serverUrl = serverUrl;
   }
 
   @Bean
@@ -85,15 +88,15 @@ public class SecurityConfig {
     DefaultCookieSerializer serializer = new DefaultCookieSerializer();
     serializer.setCookieName("IDP_SERVER_SESSION");
     serializer.setCookiePath("/");
-    serializer.setDomainName(authViewDomain());
+    serializer.setDomainName(serverDomain());
     serializer.setUseSecureCookie(true);
     serializer.setSameSite("Lax");
     serializer.setUseHttpOnlyCookie(true);
     return serializer;
   }
 
-  private String authViewDomain() {
-    URI uri = URI.create(authViewUrl);
+  private String serverDomain() {
+    URI uri = URI.create(serverUrl);
     return uri.getHost();
   }
 }
