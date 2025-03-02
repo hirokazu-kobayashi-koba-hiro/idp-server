@@ -81,7 +81,7 @@ public class OAuthV1Api implements ParameterTransformable {
     }
 
     return String.format(
-        url + "signin?id=%s&tenant_id=%s",
+        url + "signin/webauthn?id=%s&tenant_id=%s",
         response.authorizationRequestId(),
         tenant.identifier().value());
   }
