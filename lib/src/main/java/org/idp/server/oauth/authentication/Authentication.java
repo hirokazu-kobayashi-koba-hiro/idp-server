@@ -56,10 +56,7 @@ public class Authentication implements Serializable {
     if (methods.contains("hwk")) {
       return "urn:mace:incommon:iap:silver";
     }
-    if (acrValues.contains("pwd")) {
-      return "urn:mace:incommon:iap:bronze";
-    }
-    return "";
+    return "urn:mace:incommon:iap:bronze";
   }
 
   public boolean hasAcrValues() {
