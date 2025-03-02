@@ -3,10 +3,13 @@ package org.idp.server.oauth;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
+
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.oauth.authentication.Authentication;
 import org.idp.server.oauth.identity.User;
 import org.idp.server.oauth.request.AuthorizationRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OAuthSession implements Serializable {
   OAuthSessionKey oAuthSessionKey;
@@ -14,6 +17,7 @@ public class OAuthSession implements Serializable {
   Authentication authentication;
   LocalDateTime expiredAt;
   HashMap<String, Object> attributes = new HashMap<>();
+  Logger log = LoggerFactory.getLogger(OAuthSession.class);
 
   public OAuthSession() {}
 
@@ -67,20 +71,24 @@ public class OAuthSession implements Serializable {
 
   public boolean isValid(AuthorizationRequest request) {
     if (request.isPromptLogin()) {
+      log.info("isPromptLogin");
       return false;
     }
 
     if (authentication == null || !authentication.hasAuthenticationTime()) {
+      log.info("No authentication time");
       return false;
     }
 
     LocalDateTime now = SystemDateTime.now();
     if (isExpire(now)) {
+      log.info("isExpire authentication expired");
       return false;
     }
 
     LocalDateTime authenticationTime = authentication.time();
     if (now.isAfter(authenticationTime.plusSeconds(request.maxAge().toLongValue()))) {
+      log.info("isAfter authentication expired");
       return false;
     }
     // TODO logic
