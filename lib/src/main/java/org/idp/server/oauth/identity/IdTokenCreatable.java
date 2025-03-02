@@ -27,6 +27,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
+
       Map<String, Object> claims =
           createClaims(
               user,
@@ -40,10 +41,12 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
               serverConfiguration.idTokenDuration(),
               serverConfiguration.claimsSupported(),
               serverConfiguration.idTokenStrictMode());
+
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
       JsonWebSignature jsonWebSignature =
           jsonWebSignatureFactory.createWithAsymmetricKey(
               claims, Map.of(), serverConfiguration.jwks(), serverConfiguration.tokenSignedKeyId());
+
       if (clientConfiguration.hasEncryptedIdTokenMeta()) {
         NestedJsonWebEncryptionCreator nestedJsonWebEncryptionCreator =
             new NestedJsonWebEncryptionCreator(
@@ -54,6 +57,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
         String jwe = nestedJsonWebEncryptionCreator.create();
         return new IdToken(jwe);
       }
+
       return new IdToken(jsonWebSignature.serialize());
     } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
       throw new ConfigurationInvalidException(exception);
@@ -72,6 +76,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       long idTokenDuration,
       List<String> supportedClaims,
       boolean enableStrictMode) {
+
     LocalDateTime now = SystemDateTime.now();
     ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(idTokenDuration));
     HashMap<String, Object> claims = new HashMap<>();
@@ -79,6 +84,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
     claims.put("aud", clientId.value());
     claims.put("exp", expiredAt.toEpochSecondWithUtc());
     claims.put("iat", now.toEpochSecond(SystemDateTime.zoneOffset));
+
     if (idTokenCustomClaims.hasNonce()) {
       claims.put("nonce", idTokenCustomClaims.nonce().value());
     }
@@ -99,7 +105,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       claims.put("amr", authentication.methods());
     }
     if (authentication.hasAcrValues()) {
-      claims.put("acr", authentication.toStringAcrValue());
+      claims.put("acr", authentication.acrValues());
     }
 
     IdTokenIndividualClaimsDecider idTokenIndividualClaimsDecider =
