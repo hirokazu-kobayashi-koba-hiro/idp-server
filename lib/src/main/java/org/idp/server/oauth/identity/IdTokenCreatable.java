@@ -105,7 +105,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       claims.put("amr", authentication.methods());
     }
     if (authentication.hasAcrValues()) {
-      claims.put("acr", authentication.acrValues());
+      claims.put("acr", authentication.toAcr());
     }
 
     IdTokenIndividualClaimsDecider idTokenIndividualClaimsDecider =

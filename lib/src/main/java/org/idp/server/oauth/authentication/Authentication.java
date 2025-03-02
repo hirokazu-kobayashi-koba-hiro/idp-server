@@ -26,7 +26,7 @@ public class Authentication implements Serializable {
   }
 
   public Authentication addAcrValues(List<String> acrValues) {
-    List<String> newValues = new ArrayList<>(this.methods);
+    List<String> newValues = new ArrayList<>(this.acrValues);
     newValues.addAll(acrValues);
     this.acrValues = newValues;
     return this;
@@ -52,8 +52,14 @@ public class Authentication implements Serializable {
     return acrValues;
   }
 
-  public String toStringAcrValue() {
-    return String.join(" ", acrValues);
+  public String toAcr() {
+    if (methods.contains("hwk")) {
+      return "urn:mace:incommon:iap:silver";
+    }
+    if (acrValues.contains("pwd")) {
+      return "urn:mace:incommon:iap:bronze";
+    }
+    return "";
   }
 
   public boolean hasAcrValues() {
