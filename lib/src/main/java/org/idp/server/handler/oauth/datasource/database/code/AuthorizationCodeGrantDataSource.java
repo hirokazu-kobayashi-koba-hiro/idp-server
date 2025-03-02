@@ -1,5 +1,6 @@
 package org.idp.server.handler.oauth.datasource.database.code;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.sql.SqlExecutor;
@@ -13,8 +14,15 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
   @Override
   public void register(AuthorizationCodeGrant authorizationCodeGrant) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
-    String sql = InsertSqlCreator.createInsert(authorizationCodeGrant);
-    sqlExecutor.execute(sql);
+    String sqlTemplate =
+        """
+                    INSERT INTO public.authorization_code_grant
+                    (authorization_request_id, authorization_code, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expired_at, presentation_definition)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    """;
+    List<Object> params = InsertSqlParamsCreator.create(authorizationCodeGrant);
+
+    sqlExecutor.execute(sqlTemplate, params);
   }
 
   @Override
@@ -24,10 +32,12 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
         """
                 SELECT authorization_request_id, authorization_code, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expired_at, presentation_definition
                 FROM authorization_code_grant
-                WHERE authorization_code = '%s';
+                WHERE authorization_code = ?;
                 """;
-    String sql = String.format(sqlTemplate, authorizationCode.value());
-    Map<String, String> stringMap = sqlExecutor.selectOne(sql);
+
+    List<Object> params = List.of(authorizationCode.value());
+    Map<String, String> stringMap = sqlExecutor.selectOne(sqlTemplate, params);
+
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
       return new AuthorizationCodeGrant();
     }
@@ -40,10 +50,10 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
     String sqlTemplate =
         """
                 DELETE FROM authorization_code_grant
-                WHERE authorization_request_id = '%s';
+                WHERE authorization_request_id = ?;
             """;
-    String sql =
-        String.format(sqlTemplate, authorizationCodeGrant.authorizationRequestIdentifier().value());
-    sqlExecutor.execute(sql);
+    List<Object> params = List.of(authorizationCodeGrant.authorizationRequestIdentifier().value());
+
+    sqlExecutor.execute(sqlTemplate, params);
   }
 }

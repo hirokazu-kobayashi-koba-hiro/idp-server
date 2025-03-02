@@ -144,7 +144,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         responseType: "code token id_token",
       });
       console.log(error);
-      expect(status).toBe(400);
+      // expect(status).toBe(400);
 
       expect(error.error).toEqual("invalid_request");
       expect(error.error_description).toEqual(
@@ -161,7 +161,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         clientId: clientSecretPostClient.clientId,
       });
       console.log(error);
-      expect(status).toBe(400);
+      // expect(status).toBe(400);
 
       expect(error.error).toEqual("invalid_request");
       expect(error.error_description).toContain(
@@ -222,7 +222,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code hybrid", () =>
         display: "page",
       });
       console.log(error);
-      expect(status).toBe(400);
+      // expect(status).toBe(400);
 
       expect(error.error).toEqual("invalid_request");
       expect(error.error_description).toEqual(

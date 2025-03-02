@@ -23,19 +23,21 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
   @Override
   public void register(ClientConfiguration clientConfiguration) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+
     String sqlTemplate =
         """
             INSERT INTO client_configuration (token_issuer, client_id, payload)
-            VALUES ('%s', '%s', '%s')
+            VALUES (?, ?, ?)
             """;
+
     String payload = jsonConverter.write(clientConfiguration);
-    String sql =
-        String.format(
-            sqlTemplate,
+    List<Object> params =
+        List.of(
             clientConfiguration.tokenIssuer().value(),
             clientConfiguration.clientId().value(),
             payload);
-    sqlExecutor.execute(sql);
+
+    sqlExecutor.execute(sqlTemplate, params);
   }
 
   @Override
@@ -45,10 +47,11 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
         """
                     SELECT token_issuer, client_id, payload
                     FROM client_configuration
-                    WHERE token_issuer = '%s' AND client_id = '%s';
+                    WHERE token_issuer = ? AND client_id = ?;
                     """;
-    String sql = String.format(sqlTemplate, tokenIssuer.value(), clientId.value());
-    Map<String, String> stringMap = sqlExecutor.selectOne(sql);
+    List<Object> params = List.of(tokenIssuer.value(), clientId.value());
+    Map<String, String> stringMap = sqlExecutor.selectOne(sqlTemplate, params);
+
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
       throw new ClientConfigurationNotFoundException(
           String.format("unregistered client (%s)", clientId.value()));
@@ -63,10 +66,10 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
         """
                         SELECT token_issuer, client_id, payload
                         FROM client_configuration
-                        WHERE token_issuer = '%s' limit %d offset %d;
+                        WHERE token_issuer = ? limit ? offset ?;
                         """;
-    String sql = String.format(sqlTemplate, tokenIssuer.value(), limit, offset);
-    List<Map<String, String>> maps = sqlExecutor.selectList(sql);
+    List<Object> params = List.of(tokenIssuer.value(), limit, offset);
+    List<Map<String, String>> maps = sqlExecutor.selectList(sqlTemplate, params);
     if (Objects.isNull(maps) || maps.isEmpty()) {
       return List.of();
     }

@@ -1,4 +1,4 @@
-const backendUrl = process.env.IDP_SERVER_URL || "http://localhost:8080";
+export const backendUrl = process.env.IDP_SERVER_URL || "http://localhost:8080";
 
 export const serverConfig = {
   issuer: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66`,
@@ -10,6 +10,7 @@ export const serverConfig = {
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/authorize`,
   denyEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/deny`,
+  logoutEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/logout`,
   tokenEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens`,
   tokenIntrospectionEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/introspection`,
@@ -35,7 +36,7 @@ export const serverConfig = {
     username: "ito.ichiro@gmail.com",
     password: "successUserCode",
   },
-  acr: "urn:mace:incommon:iap:silver",
+  acr: "urn:mace:incommon:iap:bronze",
 };
 
 export const unsupportedServerConfig = {

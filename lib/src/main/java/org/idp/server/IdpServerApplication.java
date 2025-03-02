@@ -170,6 +170,7 @@ public class IdpServerApplication {
   public IdpServerApplication(DatabaseConfig databaseConfig) {
     TransactionManager.setConnectionConfig(
         databaseConfig.url(), databaseConfig.username(), databaseConfig.password());
+
     AuthorizationRequestDataSource authorizationRequestDataSource =
         new AuthorizationRequestDataSource();
     AuthorizationCodeGrantDataSource authorizationCodeGrantDataSource =
@@ -183,6 +184,7 @@ public class IdpServerApplication {
         new ClientConfigurationDataSource();
     VerifiableCredentialTransactionDataSource verifiableCredentialTransactionDataSource =
         new VerifiableCredentialTransactionDataSource();
+
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
             authorizationRequestDataSource,
@@ -206,6 +208,7 @@ public class IdpServerApplication {
             authorizationRequestDataSource,
             serverConfigurationMemoryDataSource,
             clientConfigurationMemoryDataSource);
+
     this.oAuthApi =
         TransactionInterceptor.createProxy(
             new OAuthApiImpl(

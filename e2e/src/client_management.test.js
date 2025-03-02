@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { get } from "./lib/http";
 import { requestToken } from "./api/oauthClient";
-import { clientSecretPostClient, serverConfig } from "./testConfig";
+import { clientSecretPostClient, serverConfig, backendUrl } from "./testConfig";
 
 describe("client management api", () => {
 
@@ -20,8 +20,9 @@ describe("client management api", () => {
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
+      ///api/v1/management/tenants/{tenant-id}/clients
       const response = await get({
-        url: `${serverConfig.issuer}/api/v1/management/clients`,
+        url: `${backendUrl}/api/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/clients`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }

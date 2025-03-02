@@ -1,5 +1,7 @@
 package org.idp.server.handler.oauth.datasource.database.request;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.oauth.rar.AuthorizationDetails;
 import org.idp.server.oauth.request.AuthorizationRequest;
@@ -8,87 +10,161 @@ import org.idp.server.type.oauth.CustomParams;
 
 public class InsertSqlCreator {
 
-  static String createInsert(AuthorizationRequest authorizationRequest) {
-    InsertSqlBuilder builder = new InsertSqlBuilder(authorizationRequest.identifier().value());
+  static List<Object> createInsert(AuthorizationRequest authorizationRequest) {
+    List<Object> params = new ArrayList<>();
+    params.add(authorizationRequest.identifier().value());
+
     if (authorizationRequest.hasTokenIssuer()) {
-      builder.setTokenIssuer(authorizationRequest.tokenIssuer().value());
+      params.add(authorizationRequest.tokenIssuer().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasProfile()) {
-      builder.setProfile(authorizationRequest.profile().name());
+      params.add(authorizationRequest.profile().name());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasScope()) {
-      builder.setScopes(authorizationRequest.scope().toStringValues());
+      params.add(authorizationRequest.scope().toStringValues());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasResponseType()) {
-      builder.setResponseType(authorizationRequest.responseType().name());
+      params.add(authorizationRequest.responseType().name());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasClientId()) {
-      builder.setClientId(authorizationRequest.clientId().value());
+      params.add(authorizationRequest.clientId().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasRedirectUri()) {
-      builder.setRedirectUri(authorizationRequest.redirectUri().value());
+      params.add(authorizationRequest.redirectUri().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasState()) {
-      builder.setState(authorizationRequest.state().value());
+      params.add(authorizationRequest.state().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasResponseMode()) {
-      builder.setResponseMode(authorizationRequest.responseMode().name());
+      params.add(authorizationRequest.responseMode().name());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasNonce()) {
-      builder.setNonce(authorizationRequest.nonce().value());
+      params.add(authorizationRequest.nonce().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasDisplay()) {
-      builder.setDisplay(authorizationRequest.display().name());
+      params.add(authorizationRequest.display().name());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasPrompts()) {
-      builder.setPrompts(authorizationRequest.prompts().toStringValues());
+      params.add(authorizationRequest.prompts().toStringValues());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasMaxAge()) {
-      builder.setMaxAge(authorizationRequest.maxAge().value());
+      params.add(authorizationRequest.maxAge().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasUilocales()) {
-      builder.setUiLocales(authorizationRequest.uiLocales().toStringValues());
+      params.add(authorizationRequest.uiLocales().toStringValues());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasIdTokenHint()) {
-      builder.setIdTokenHint(authorizationRequest.idTokenHint().value());
+      params.add(authorizationRequest.idTokenHint().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasLoginHint()) {
-      builder.setLoginHint(authorizationRequest.loginHint().value());
+      params.add(authorizationRequest.loginHint().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasAcrValues()) {
-      builder.setAcrValues(authorizationRequest.acrValues().toStringValues());
+      params.add(authorizationRequest.acrValues().toStringValues());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasClaims()) {
-      builder.setClaimsValue(authorizationRequest.claims().value());
+      params.add(authorizationRequest.claims().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasRequest()) {
-      builder.setRequestObject(authorizationRequest.request().value());
+      params.add(authorizationRequest.request().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasRequestUri()) {
-      builder.setRequestUri(authorizationRequest.requestUri().value());
+      params.add(authorizationRequest.requestUri().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasCodeChallenge()) {
-      builder.setCodeChallenge(authorizationRequest.codeChallenge().value());
+      params.add(authorizationRequest.codeChallenge().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasCodeChallengeMethod()) {
-      builder.setCodeChallengeMethod(authorizationRequest.codeChallengeMethod().name());
+      params.add(authorizationRequest.codeChallengeMethod().name());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasAuthorizationDetails()) {
-      builder.setAuthorizationDetails(
-          convertJsonAuthorizationDetails(authorizationRequest.authorizationDetails()));
+      params.add(convertJsonAuthorizationDetails(authorizationRequest.authorizationDetails()));
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasPresentationDefinition()) {
-      builder.setPresentationDefinition(
-          convertJsonPresentationDefinition(authorizationRequest.presentationDefinition()));
+      params.add(convertJsonPresentationDefinition(authorizationRequest.presentationDefinition()));
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasPresentationDefinitionUri()) {
-      builder.setPresentationDefinitionUri(
-          authorizationRequest.presentationDefinitionUri().value());
+      params.add(authorizationRequest.presentationDefinitionUri().value());
+    } else {
+      params.add("");
     }
+
     if (authorizationRequest.hasCustomParams()) {
-      builder.setCustomParams(convertJson(authorizationRequest.customParams()));
+      params.add(convertJson(authorizationRequest.customParams()));
+    } else {
+      params.add("");
     }
-    return builder.build();
+
+    return params;
   }
 
   private static String convertJsonAuthorizationDetails(AuthorizationDetails authorizationDetails) {
