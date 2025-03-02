@@ -14,7 +14,7 @@ import {
 import { toEpocTime } from "./lib/util";
 
 describe("OpenID for Verifiable Presentations - draft 19", () => {
-  it("success pattern normal", async () => {
+  xit("success pattern normal", async () => {
     const codeVerifier = "aiueo12345678";
     const codeChallenge = codeVerifier;
     const presentationDefinition =

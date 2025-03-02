@@ -6,11 +6,12 @@ import {
   getAuthorizations
 } from "../api/oauthClient";
 import { serverConfig } from "../testConfig";
-import { convertNextAction, convertToAuthorizationResponse } from "../lib/util";
+import { convertNextAction, convertToAuthorizationResponse, convertToSnake } from "../lib/util";
 import puppeteer from "puppeteer-core";
 import { createHash, X509Certificate } from "node:crypto";
 import { encodeBuffer } from "../lib/bas64";
 import { getClientCert } from "../api/cert/clientCert";
+import { get } from "../lib/http";
 
 export const requestAuthorizations = async ({
   endpoint,
@@ -169,6 +170,10 @@ export const requestAuthorizations = async ({
       return {
         status: response.status,
         authorizationResponse,
+        error: {
+          error: authorizationResponse.error,
+          error_description: authorizationResponse.errorDescription,
+        }
       };
     }
 
@@ -197,7 +202,10 @@ export const requestAuthorizations = async ({
 
       const authorizeResponse = await authorize({
         endpoint: serverConfig.authorizeEndpoint,
-        id
+        id,
+        body: {
+          action: "signin"
+        }
       });
 
       console.log(authorizeResponse.data);
@@ -223,6 +231,18 @@ export const requestAuthorizations = async ({
       };
     }
   }
+};
+
+export const requestLogout = async ({ endpoint, clientId}) => {
+
+  const params = new URLSearchParams(convertToSnake({
+    clientId
+  }));
+
+  return await get({
+    url: endpoint + "?" +params.toString(),
+    headers: {},
+  });
 };
 
 export const certThumbprint = (clientCertFile) =>{

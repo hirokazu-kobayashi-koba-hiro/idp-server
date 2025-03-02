@@ -12,7 +12,7 @@ import org.idp.server.type.oauth.*;
 public class AuthorizationCodeGrant {
 
   AuthorizationRequestIdentifier authorizationRequestIdentifier =
-      new AuthorizationRequestIdentifier();
+      new AuthorizationRequestIdentifier("");
   AuthorizationGrant authorizationGrant;
   AuthorizationCode authorizationCode;
   ExpiredAt expiredAt;

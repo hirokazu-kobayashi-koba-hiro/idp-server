@@ -61,11 +61,11 @@ public class OAuthV1Api implements ParameterTransformable {
 
         return new ResponseEntity<>(httpHeaders, HttpStatus.FOUND);
       }
-      case BAD_REQUEST -> {
-        return new ResponseEntity<>(response.contents(), HttpStatus.BAD_REQUEST);
-      }
       default -> {
-        return new ResponseEntity<>(response.contents(), HttpStatus.INTERNAL_SERVER_ERROR);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(HttpHeaders.LOCATION, createErrorUrl(tenant, response));
+
+        return new ResponseEntity<>(httpHeaders, HttpStatus.FOUND);
       }
     }
   }
@@ -84,6 +84,15 @@ public class OAuthV1Api implements ParameterTransformable {
         url + "signin/webauthn?id=%s&tenant_id=%s",
         response.authorizationRequestId(),
         tenant.identifier().value());
+  }
+
+  private String createErrorUrl(Tenant tenant, OAuthRequestResponse response) {
+    String url = tenant.isAdmin() ? adminAuthViewUrl : authViewUrl;
+
+    return String.format(
+        url + "error/?error=%s&error_description=%s",
+        response.error(),
+        response.errorDescription());
   }
 
   @GetMapping("/{id}/view-data")
