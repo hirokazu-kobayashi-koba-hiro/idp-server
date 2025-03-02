@@ -1,197 +1,265 @@
 import {
-  Avatar,
-  Box,
   Button,
-  Card,
-  Chip,
-  Container, Divider, Link,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
+  Divider,
+  InputAdornment,
+  Link,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
 import { backendUrl } from "@/pages/_app";
-import PolicyIcon from "@mui/icons-material/Policy";
-import InfoIcon from "@mui/icons-material/Info";
 import { Loading } from "@/components/Loading";
+import { Email, Lock } from "@mui/icons-material";
+import { useMediaQuery, useTheme } from "@mui/material";
+import { BaseLayout } from "@/components/layout/BaseLayout";
 
 export default function SignIn() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const router = useRouter();
   const { id, tenant_id: tenantId } = router.query;
-  const {data, isPending } = useQuery({
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const { data, isPending } = useQuery({
     queryKey: ["fetchViewData"],
     queryFn: async () => {
       const { id, tenant_id: tenantId } = router.query;
-      const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/view-data`, {
-        credentials: "include",
-      })
+      const response = await fetch(
+        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/view-data`,
+        {
+          credentials: "include",
+        },
+      );
       if (!response.ok) {
-        console.error(response)
+        console.error(response);
         throw new Error(response.status.toString());
       }
-      return await response.json()
+      return await response.json();
     },
-  })
+  });
 
   const handleCancel = async () => {
-    const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/deny`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json"
+    const response = await fetch(
+      `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/deny`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    })
-    const body = await response.json()
-    console.log(response.status, body)
+    );
+    const body = await response.json();
+    console.log(response.status, body);
     if (body.redirect_uri) {
       window.location.href = body.redirect_uri;
     }
-  }
+  };
 
   const handleNext = async () => {
-    const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/password-authentication`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json"
+    const response = await fetch(
+      `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/password-authentication`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: email,
+          password: password,
+        }),
       },
-      body: JSON.stringify({
-        username: email,
-        password: password,
-      })
-    })
-    if (response.ok) {
-      router.push(`/authorize?id=${id}&tenant_id=${tenantId}`)
-    }
-  }
+    );
 
-  useEffect(() => {
-    const execute = async () => {
-      const response = await fetch(`${backendUrl}/${tenantId}/api/v1/authorizations/${id}/authorize-with-session`,
+    if (response.ok) {
+      const authorizeResponse = await fetch(
+        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/authorize`,
         {
           method: "POST",
           credentials: "include",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
-        })
+          body: JSON.stringify({
+            action: "signin",
+          }),
+        },
+      );
+      const body = await authorizeResponse.json();
+      console.log(authorizeResponse.status, body);
+      if (body.redirect_uri) {
+        window.location.href = body.redirect_uri;
+      }
+      return;
+    }
+  };
+
+  useEffect(() => {
+    const execute = async () => {
+      const response = await fetch(
+        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/authorize-with-session`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
       if (!response.ok) {
         console.error(response);
         return;
       }
-      const body = await response.json()
-      console.log(response.status, body)
+      const body = await response.json();
+      console.log(response.status, body);
       if (body.redirect_uri) {
         window.location.href = body.redirect_uri;
       }
-    }
-    console.log(data)
+    };
+    console.log(data);
     if (data && data.session_enabled === true) {
-      execute()
+      execute();
     }
   }, [data]);
 
-  if (isPending) return <Loading />
-  if (!data) return  <Loading />
-  if (data && data.session_enabled) return <Loading />
+  if (isPending) return <Loading />;
+  if (!data) return <Loading />;
+  if (data && data.session_enabled) return <Loading />;
 
   return (
-    <>
-      <Container maxWidth={"xs"}>
-        <Box sx={{ mt: 6, textAlign: "center" }}>
-          <Card variant="outlined" sx={{ p: 3, boxShadow: 3 }}>
-            <Avatar src={data.logo_uri} sx={{ width: 80, height: 80, mx: "auto", mb: 2 }} />
-            <Typography variant="h5">{data.client_name}</Typography>
+    <BaseLayout>
+      <Stack spacing={isMobile ? 2 : 3} alignItems="center">
+        <Typography variant="subtitle1" fontWeight="medium">
+          IdP Server
+        </Typography>
+        <Stack spacing={2} width="100%">
+          <TextField
+            placeholder="Your email"
+            inputMode="email"
+            fullWidth
+            required
+            // variant="standard"
+            InputProps={{
+              disableUnderline: true,
+              sx: {
+                height: 48,
+                fontSize: 17,
+                px: 2,
+                backgroundColor: "transparent",
+              },
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Email sx={{ color: "gray" }} />
+                </InputAdornment>
+              ),
+            }}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <TextField
+            placeholder="Your password"
+            type="password"
+            fullWidth
+            required
+            // variant="standard"
+            InputProps={{
+              disableUnderline: true,
+              sx: {
+                height: 48,
+                fontSize: 17,
+                px: 2,
+                backgroundColor: "transparent",
+              },
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Lock sx={{ color: "gray" }} />
+                </InputAdornment>
+              ),
+            }}
+            onChange={(e) => {
+              navigator.credentials.preventSilentAccess();
+              setPassword(e.target.value);
+            }}
+          />
+        </Stack>
+        <Stack spacing={1} width="100%">
+          <Button
+            variant="contained"
+            disabled={!email || !password}
+            onClick={handleNext}
+            fullWidth
+            sx={{
+              textTransform: "none",
+              borderRadius: 8,
+              height: 44,
+              fontSize: 16,
+              fontWeight: "bold",
+              backgroundColor: "#007AFF",
+              boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.1)",
+              "&:hover": { opacity: 0.8 },
+            }}
+          >
+            Next
+          </Button>
+          {data.show_cancel && (
+            <Button
+              variant="outlined"
+              onClick={handleCancel}
+              sx={{
+                textTransform: "none",
+                fontSize: 16,
+                fontWeight: "medium",
+                color: "#505050",
+                borderColor: "rgba(0, 0, 0, 0.2)",
+              }}
+            >
+              Cancel
+            </Button>
+          )}
+        </Stack>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          textAlign="center"
+          sx={{ mt: 2 }}
+        >
+          By signing in, you agree to our
+          <Link href={data.tos_uri} sx={{ fontWeight: "bold", mx: 0.5 }}>
+            Terms of Use
+          </Link>
+          and
+          <Link href={data.policy_uri} sx={{ fontWeight: "bold", mx: 0.5 }}>
+            Privacy Policy
+          </Link>
+        </Typography>
 
-            <Typography variant="h6" sx={{ mt: 4 }}>
-              request scope
-            </Typography>
-
-            <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 2 }}>
-              {data.scopes.map((scope: string) => (
-                <Chip key={scope} label={scope} color="primary" variant="outlined" />
-              ))}
-            </Stack>
-
-            <Box mt={2} display="flex" flexDirection={"column"} sx={{ gap: 2,}}>
-              <TextField
-                name={"email"}
-                label={"email"}
-                placeholder={"test@gmail.com"}
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value)
-                }} />
-              <TextField
-                name={"password"}
-                label={"password"}
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value)
-                }} />
-            </Box>
-
-            <List sx={{ mt: 2 }}>
-              <ListItem>
-                <ListItemIcon>
-                  <PolicyIcon color="action" />
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <a href={data.tos_uri} target="_blank" rel="noopener noreferrer">
-                      term of use
-                    </a>
-                  }
-                />
-              </ListItem>
-
-              <ListItem>
-                <ListItemIcon>
-                  <InfoIcon color="action" />
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <a href={data.policy_uri} target="_blank" rel="noopener noreferrer">
-                      privacy policy
-                    </a>
-                  }
-                />
-              </ListItem>
-            </List>
-
-            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
-              <Button variant="contained" color="error" onClick={handleCancel}>
-                Cancel
-              </Button>
-              <Button variant="contained" color="primary" onClick={handleNext}>
-                Next
-              </Button>
-            </Box>
-            <Box sx={{mt: 2}} >
-              <Divider />
-            </Box>
-            <Box sx={{mt: 2, gap: 2}} display="flex">
-              <Typography>{"Dont have an account?"}</Typography>
-              <Link
-                onClick={() => {
-                router.push(`/signup?id=${id}&tenant_id=${tenantId}`)
-              }}>
-                Sign Up
-              </Link>
-            </Box>
-          </Card>
-        </Box>
-      </Container>
-    </>
+        <Divider />
+        <Stack
+          spacing={1}
+          direction="row"
+          justifyContent="center"
+          sx={{ mt: 3 }}
+        >
+          <Typography variant="body2">{"Don't have an account?"}</Typography>
+          <Link
+            onClick={() =>
+              router.push(`/signup?id=${id}&tenant_id=${tenantId}`)
+            }
+            sx={{
+              fontWeight: "bold",
+              cursor: "pointer",
+              color: "primary.main",
+              fontSize: 16,
+            }}
+          >
+            Sign Up
+          </Link>
+        </Stack>
+      </Stack>
+    </BaseLayout>
   );
 }
