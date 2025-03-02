@@ -83,6 +83,10 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     return pattern.isRequestParameter();
   }
 
+  public boolean isUnsignedRequestObject() {
+    return !joseContext.hasJsonWebSignature();
+  }
+
   public boolean isOAuth2Profile() {
     return profile().isOAuth2();
   }

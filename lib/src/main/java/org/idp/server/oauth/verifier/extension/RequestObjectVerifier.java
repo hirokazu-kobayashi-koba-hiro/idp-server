@@ -9,7 +9,7 @@ public class RequestObjectVerifier
 
   @Override
   public boolean shouldNotVerify(OAuthRequestContext context) {
-    return !context.isRequestParameterPattern();
+    return !context.isRequestParameterPattern() || context.isUnsignedRequestObject();
   }
 
   @Override
