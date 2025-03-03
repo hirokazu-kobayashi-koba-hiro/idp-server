@@ -6,8 +6,9 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.util.Map;
-import org.idp.server.basic.jose.JsonWebKeyInvalidException;
-import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.core.basic.jose.JsonWebKeyInvalidException;
+import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.basic.vc.VcInvalidKeyException;
 import org.junit.jupiter.api.Test;
 
 public class CredentialHandlerTest {

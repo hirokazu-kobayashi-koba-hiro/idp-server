@@ -1,6 +1,7 @@
 package org.idp.server.basic.jose;
 
 import java.util.Map;
+import org.idp.server.core.basic.jose.*;
 import org.junit.jupiter.api.Test;
 
 public class NestedJsonWebEncryptionCreatorTest {

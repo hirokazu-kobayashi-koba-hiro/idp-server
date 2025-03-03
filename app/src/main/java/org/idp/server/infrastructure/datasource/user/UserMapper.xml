@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.idp.server.infrastructure.datasource.user.UserMapper">
+
+    <insert id="insert">
+        INSERT INTO public.idp_user (id, tenant_id, name, given_name, family_name, middle_name, nickname,
+                                   preferred_username, profile, picture, website, email, email_verified, gender,
+                                   birthdate, zoneinfo, locale, phone_number, phone_number_verified, address,
+                                   custom_properties, credentials, hashed_password)
+        VALUES (
+                #{user.sub},
+                #{tenant.identifier.value},
+                #{user.name},
+                #{user.givenName},
+                #{user.familyName},
+                #{user.middleName},
+                #{user.nickname},
+                #{user.preferredUsername},
+                #{user.profile},
+                #{user.picture},
+                #{user.website},
+                #{user.email},
+                #{user.emailVerified},
+                #{user.gender},
+                #{user.birthdate},
+                #{user.zoneinfo},
+                #{user.locale},
+                #{user.phoneNumber},
+                #{user.phoneNumberVerified},
+                '',
+                '',
+                '',
+                #{user.hashedPassword});
+
+    </insert>
+
+    <resultMap id="User" type="org.idp.server.core.oauth.identity.User">
+        <id property="sub" column="id"/>
+        <result property="name" column="name"/>
+        <result property="givenName" column="given_name"/>
+        <result property="familyName" column="family_name"/>
+        <result property="middleName" column="middle_name"/>
+        <result property="nickname" column="nickname"/>
+        <result property="preferredUsername" column="preferred_username"/>
+        <result property="profile" column="profile"/>
+        <result property="picture" column="picture"/>
+        <result property="website" column="website"/>
+        <result property="email" column="email"/>
+        <result property="emailVerified" column="email_verified"/>
+        <result property="gender" column="gender"/>
+        <result property="birthdate" column="birthdate"/>
+        <result property="zoneinfo" column="zoneinfo"/>
+        <result property="locale" column="locale"/>
+        <result property="phoneNumber" column="phone_number"/>
+        <result property="phoneNumberVerified" column="phone_number_verified"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="customProperties" column="custom_properties" typeHandler="org.idp.server.infrastructure.datasource.user.CustomPropertiesTypeHandler"/>
+        <result property="credentials" column="credentials" typeHandler="org.idp.server.infrastructure.datasource.user.CredentialsTypeHandler"/>
+        <result property="hashedPassword" column="hashed_password"/>
+    </resultMap>
+
+    <sql id="select">
+        SELECT id,
+               name,
+               given_name,
+               family_name,
+               middle_name,
+               nickname,
+               preferred_username,
+               profile,
+               picture,
+               website,
+               email,
+               email_verified,
+               gender,
+               birthdate,
+               zoneinfo,
+               locale,
+               phone_number,
+               phone_number_verified,
+               address,
+               custom_properties,
+               credentials,
+               hashed_password,
+               created_at,
+               updated_at
+        FROM idp_user
+    </sql>
+
+    <select id="select" resultMap="User">
+        <include refid="select" />
+        WHERE id = #{userId}
+    </select>
+
+    <select id="selectBy" resultMap="User">
+        <include refid="select" />
+        WHERE
+            tenant_id = #{tenant.identifier.value}
+          AND email = #{email}
+    </select>
+
+    <select id="selectList" resultMap="User">
+        <include refid="select" />
+        WHERE
+        tenant_id = #{tenant.identifier.value}
+        ORDER BY created_at
+        limit #{limit}
+        offset #{offset}
+    </select>
+
+    <update id="update">
+        UPDATE public.idp_user
+        SET name                  = #{user.name},
+            given_name            = #{user.givenName},
+            family_name           = #{user.familyName},
+            middle_name           = #{user.middleName},
+            nickname              = #{user.nickname},
+            preferred_username    = #{user.preferredUsername},
+            profile               = #{user.profile},
+            picture               = #{user.picture},
+            website               = #{user.website},
+            email                 = #{user.email},
+            email_verified        = #{user.emailVerified},
+            gender                = #{user.gender},
+            birthdate             = #{user.birthdate},
+            zoneinfo              = #{user.zoneinfo},
+            locale                = #{user.locale},
+            phone_number          = #{user.phoneNumber},
+            phone_number_verified = #{user.phoneNumberVerified},
+            custom_properties     = #{customProperties},
+            updated_at            = now()
+        WHERE id = #{user.sub};
+
+    </update>
+
+</mapper>

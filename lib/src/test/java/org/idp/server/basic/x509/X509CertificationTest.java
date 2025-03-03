@@ -1,5 +1,8 @@
 package org.idp.server.basic.x509;
 
+import org.idp.server.core.basic.x509.X509CertInvalidException;
+import org.idp.server.core.basic.x509.X509Certification;
+import org.idp.server.core.basic.x509.X509SubjectAlternativeNames;
 import org.junit.jupiter.api.Test;
 
 public class X509CertificationTest {
