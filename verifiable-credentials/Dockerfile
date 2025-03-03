@@ -6,6 +6,6 @@ RUN npm install
 COPY libs/Encoder.js ./node_modules/@vaultie/lds-merkle-proof-2019/src/Encoder.js
 COPY ./app ./app
 
-EXPOSE 3000
+EXPOSE 8000
 
 CMD [ "node", "./app/index.js" ]

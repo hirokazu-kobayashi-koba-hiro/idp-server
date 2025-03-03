@@ -19,7 +19,7 @@ services:
     build: ./verifiable-credentials
     container_name: verifiable-credentials
     ports:
-      - "8000:3000"
+      - "8000:8000"
     environment:
       - ADDRESS=$ADDRESS
       - PRIVATE_KEY=$PRIVATE_KEY

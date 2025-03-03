@@ -5,7 +5,8 @@
   "main": "app/index.js",
   "scripts": {
     "format": "npx prettier . --write",
-    "test": "jest"
+    "test": "jest",
+    "dev": "node ./app/index.js"
   },
   "type": "module",
   "author": "",

@@ -35,7 +35,7 @@ public class VerifiableCredentialJwtClient implements VerifiableCredentialCreato
       String requestBody = JsonConvertable.write(requestBodyMap);
       HttpRequest request =
           HttpRequest.newBuilder()
-              .uri(new URI("http://localhost:3000/v1/verifiable-credentials/did-jwt"))
+              .uri(new URI("http://localhost:8000/v1/verifiable-credentials/did-jwt"))
               .POST((HttpRequest.BodyPublishers.ofString(requestBody)))
               .header("Content-Type", "application/json")
               .build();

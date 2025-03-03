@@ -14,7 +14,7 @@ import {
 import { toEpocTime, toJsonString } from "./lib/util";
 import {decodeWithBase58, verifyBlockCert} from "./lib/vc";
 
-xdescribe("OpenID for Verifiable Credential Issuance - draft 13", () => {
+describe("OpenID for Verifiable Credential Issuance - draft 13", () => {
   it("did-vc success pattern normal", async () => {
     const codeVerifier = "aiueo12345678";
     const codeChallenge = codeVerifier;

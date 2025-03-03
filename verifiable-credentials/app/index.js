@@ -7,7 +7,7 @@ import { createVerifiableCredentialJwt, verifyCredential } from "did-jwt-vc";
 import axios from "axios";
 import { issueBlockCert } from "./cert.js";
 const app = express();
-const port = 3000;
+const port = 8000;
 const issuer = new EthrDID({
   identifier: process.env.ADDRESS,
   privateKey: process.env.PRIVATE_KEY,
