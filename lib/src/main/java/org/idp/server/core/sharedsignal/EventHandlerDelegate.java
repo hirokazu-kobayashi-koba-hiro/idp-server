@@ -1,4 +1,4 @@
-package org.idp.server.oauth.sharedsignal;
+package org.idp.server.core.sharedsignal;
 
 
 import org.idp.server.type.oauth.TokenIssuer;

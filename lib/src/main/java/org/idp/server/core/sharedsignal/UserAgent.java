@@ -1,4 +1,4 @@
-package org.idp.server.oauth.sharedsignal;
+package org.idp.server.core.sharedsignal;
 
 public class UserAgent {
     String value;
