@@ -1,16 +1,14 @@
 package org.idp.server.core.sharedsignal;
 
-
-import org.idp.server.type.oauth.TokenIssuer;
+import org.idp.server.core.type.oauth.TokenIssuer;
 
 public interface EventHandlerDelegate {
 
-    void register(Event event);
+  void register(Event event);
 
-    void notify(Event event, SsfConfiguration ssfConfiguration);
+  void notify(Event event, SsfConfiguration ssfConfiguration);
 
-    Events find(TokenIssuer tokenIssuer, EventIdentifier eventIdentifier);
+  Events find(TokenIssuer tokenIssuer, EventIdentifier eventIdentifier);
 
-    Events search(TokenIssuer tokenIssuer, String userId);
-
+  Events search(TokenIssuer tokenIssuer, String userId);
 }

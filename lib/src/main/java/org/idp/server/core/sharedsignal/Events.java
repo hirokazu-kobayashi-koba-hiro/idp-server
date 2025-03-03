@@ -6,18 +6,18 @@ import java.util.List;
 
 public class Events implements Iterable<Event> {
 
-    List<Event> values;
+  List<Event> values;
 
-    public Events() {
-        values = new ArrayList<>();
-    }
+  public Events() {
+    values = new ArrayList<>();
+  }
 
-    public Events(List<Event> values) {
-        this.values = values;
-    }
+  public Events(List<Event> values) {
+    this.values = values;
+  }
 
-    @Override
-    public Iterator<Event> iterator() {
-        return values.iterator();
-    }
+  @Override
+  public Iterator<Event> iterator() {
+    return values.iterator();
+  }
 }

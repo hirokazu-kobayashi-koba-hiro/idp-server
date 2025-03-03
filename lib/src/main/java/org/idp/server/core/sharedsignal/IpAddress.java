@@ -1,15 +1,15 @@
 package org.idp.server.core.sharedsignal;
 
 public class IpAddress {
-    String value;
+  String value;
 
-    public IpAddress() {}
+  public IpAddress() {}
 
-    public IpAddress(String value) {
-        this.value = value;
-    }
+  public IpAddress(String value) {
+    this.value = value;
+  }
 
-    public String value() {
-        return value;
-    }
+  public String value() {
+    return value;
+  }
 }

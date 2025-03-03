@@ -1,15 +1,15 @@
 package org.idp.server.core.sharedsignal;
 
 public class UserAgent {
-    String value;
+  String value;
 
-    public UserAgent() {}
+  public UserAgent() {}
 
-    public UserAgent(String value) {
-        this.value = value;
-    }
+  public UserAgent(String value) {
+    this.value = value;
+  }
 
-    public String value() {
-        return value;
-    }
+  public String value() {
+    return value;
+  }
 }
