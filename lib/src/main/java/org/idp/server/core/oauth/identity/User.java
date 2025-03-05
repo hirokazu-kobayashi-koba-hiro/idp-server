@@ -365,11 +365,8 @@ public class User implements Serializable {
     if (hasPhoneNumber()) map.put("phone_number", phoneNumber);
     if (hasPhoneNumberVerified()) map.put("phone_number_verified", phoneNumberVerified);
     if (hasUpdatedAt()) map.put("updated_at", updatedAt.toString());
-    if (hasPassword()) map.put("hashed_password", hashedPassword);
     if (hasAddress()) map.put("address", address.toMap());
     if (hasCustomProperties()) map.put("custom_properties", new HashMap<>(customProperties));
-    if (hasCredentials())
-      map.put("credentials", verifiableCredentials().stream().map(Credential::toMap).toList());
 
     return map;
   }

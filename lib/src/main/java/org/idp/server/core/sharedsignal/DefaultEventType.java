@@ -4,6 +4,7 @@ public enum DefaultEventType {
   signup("User signed up"),
   password_success("User successfully authenticated with a password"),
   password_failure("User failed authentication with a password"),
+  webauthn_registration_success("User successfully registration WebAuthn"),
   webauthn_success("User successfully authenticated using WebAuthn"),
   webauthn_failure("User failed authentication using WebAuthn"),
   email_verification_success("User successfully verified their email"),

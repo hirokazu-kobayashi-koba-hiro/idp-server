@@ -20,7 +20,9 @@ import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.interaction.UserInteraction;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.sharedsignal.Event;
+import org.idp.server.core.sharedsignal.OAuthFlowEventCreator;
 import org.idp.server.core.type.extension.OAuthDenyReason;
 import org.idp.server.core.type.extension.Pairs;
 import org.idp.server.domain.model.authentication.EmailVerificationChallenge;
@@ -106,6 +108,11 @@ public class OAuthFlowService {
             SystemDateTime.now().plusSeconds(3600));
     oAuthSessionService.registerSession(oAuthSession);
 
+    OAuthFlowEventCreator eventCreator =
+        new OAuthFlowEventCreator(authorizationRequest, user, DefaultEventType.signup);
+    Event event = eventCreator.create();
+    eventPublisher.publishEvent(event);
+
     return user;
   }
 
@@ -146,6 +153,12 @@ public class OAuthFlowService {
     OAuthSession updatedSession =
         oAuthSession.didEmailAuthentication(authorizationRequest.sessionKey());
     oAuthSessionService.updateSession(updatedSession);
+
+    OAuthFlowEventCreator eventCreator =
+        new OAuthFlowEventCreator(
+            authorizationRequest, oAuthSession.user(), DefaultEventType.email_verification_success);
+    Event event = eventCreator.create();
+    eventPublisher.publishEvent(event);
   }
 
   public WebAuthnSession challengeWebAuthnRegistration(
@@ -172,6 +185,14 @@ public class OAuthFlowService {
         webAuthnService.verifyRegistration(tenant, oAuthSession.user(), request);
 
     oAuthSessionService.updateSession(oAuthSession);
+
+    OAuthFlowEventCreator eventCreator =
+        new OAuthFlowEventCreator(
+            authorizationRequest,
+            oAuthSession.user(),
+            DefaultEventType.webauthn_registration_success);
+    Event event = eventCreator.create();
+    eventPublisher.publishEvent(event);
   }
 
   public void authenticateWithPassword(
@@ -191,7 +212,10 @@ public class OAuthFlowService {
 
     oAuthSessionService.updateSession(updatedSession);
 
-    eventPublisher.publishEvent(new Event());
+    OAuthFlowEventCreator eventCreator =
+        new OAuthFlowEventCreator(authorizationRequest, user, DefaultEventType.password_success);
+    Event event = eventCreator.create();
+    eventPublisher.publishEvent(event);
   }
 
   public WebAuthnSession challengeWebAuthnAuthentication(
@@ -219,6 +243,11 @@ public class OAuthFlowService {
         oAuthSession.didWebAuthnAuthentication(authorizationRequest.sessionKey(), user);
 
     oAuthSessionService.updateSession(didWebAuthnAuthenticationSession);
+
+    OAuthFlowEventCreator eventCreator =
+        new OAuthFlowEventCreator(authorizationRequest, user, DefaultEventType.webauthn_success);
+    Event event = eventCreator.create();
+    eventPublisher.publishEvent(event);
   }
 
   public OAuthAuthorizeResponse authorize(
@@ -237,7 +266,14 @@ public class OAuthFlowService {
       userRegistrationService.register(tenant, session.user());
     }
 
-    return oAuthApi.authorize(oAuthAuthorizeRequest);
+    OAuthAuthorizeResponse authorize = oAuthApi.authorize(oAuthAuthorizeRequest);
+
+    OAuthFlowEventCreator eventCreator =
+        new OAuthFlowEventCreator(authorizationRequest, session.user(), DefaultEventType.login);
+    Event event = eventCreator.create();
+    eventPublisher.publishEvent(event);
+
+    return authorize;
   }
 
   // FIXME this is bad code
@@ -257,7 +293,14 @@ public class OAuthFlowService {
             userInteraction.user(),
             userInteraction.authentication());
 
-    return oAuthApi.authorize(authAuthorizeRequest);
+    OAuthAuthorizeResponse authorize = oAuthApi.authorize(authAuthorizeRequest);
+
+    OAuthFlowEventCreator eventCreator =
+        new OAuthFlowEventCreator(authorizationRequest, session.user(), DefaultEventType.login);
+    Event event = eventCreator.create();
+    eventPublisher.publishEvent(event);
+
+    return authorize;
   }
 
   public OAuthDenyResponse deny(TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
