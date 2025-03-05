@@ -1,6 +1,7 @@
 package org.idp.server.core.handler.userinfo.io;
 
 import java.util.Map;
+import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.userinfo.UserinfoErrorResponse;
 import org.idp.server.core.userinfo.UserinfoResponse;
 
@@ -35,6 +36,10 @@ public class UserinfoRequestResponse {
 
   public UserinfoResponse userinfoResponse() {
     return userinfoResponse;
+  }
+
+  public User user() {
+    return userinfoResponse.user();
   }
 
   public UserinfoErrorResponse errorResponse() {

@@ -4,19 +4,19 @@ import java.time.LocalDateTime;
 
 public class EventDatetime {
 
-    LocalDateTime value;
+  LocalDateTime value;
 
-    public EventDatetime() {}
+  public EventDatetime() {}
 
-    public EventDatetime(LocalDateTime value) {
-        this.value = value;
-    }
+  public EventDatetime(LocalDateTime value) {
+    this.value = value;
+  }
 
-    public LocalDateTime value() {
-        return value;
-    }
+  public LocalDateTime value() {
+    return value;
+  }
 
-    public String valueAsString() {
-        return value.toString();
-    }
+  public String valueAsString() {
+    return value.toString();
+  }
 }

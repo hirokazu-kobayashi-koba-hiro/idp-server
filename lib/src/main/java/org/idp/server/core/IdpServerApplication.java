@@ -34,6 +34,7 @@ import org.idp.server.core.handler.oauth.datasource.database.request.Authorizati
 import org.idp.server.core.handler.oauth.datasource.memory.AuthorizationCodeGrantMemoryDataSource;
 import org.idp.server.core.handler.oauth.datasource.memory.AuthorizationRequestMemoryDataSource;
 import org.idp.server.core.handler.oauth.httpclient.RequestObjectHttpClient;
+import org.idp.server.core.handler.sharedsignal.EventDataSource;
 import org.idp.server.core.handler.token.TokenRequestHandler;
 import org.idp.server.core.handler.token.datasource.database.OAuthTokenDataSource;
 import org.idp.server.core.handler.token.datasource.memory.OAuthTokenMemoryDataSource;
@@ -55,6 +56,7 @@ public class IdpServerApplication {
   CredentialApi credentialApi;
   ServerManagementApi serverManagementApi;
   ClientManagementApi clientManagementApi;
+  EventApi eventApi;
 
   public IdpServerApplication(MemoryDataSourceConfig memoryDataSourceConfig) {
     List<String> serverConfigurations = memoryDataSourceConfig.serverConfigurations();
@@ -184,6 +186,7 @@ public class IdpServerApplication {
         new ClientConfigurationDataSource();
     VerifiableCredentialTransactionDataSource verifiableCredentialTransactionDataSource =
         new VerifiableCredentialTransactionDataSource();
+    EventDataSource eventDataSource = new EventDataSource();
 
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
@@ -297,6 +300,9 @@ public class IdpServerApplication {
             new ClientManagementApiImpl(
                 new ClientConfigurationHandler(clientConfigurationMemoryDataSource)),
             ClientManagementApi.class);
+
+    this.eventApi =
+        TransactionInterceptor.createProxy(new EventApiImpl(eventDataSource), EventApi.class);
   }
 
   public OAuthApi oAuthApi() {
@@ -341,5 +347,9 @@ public class IdpServerApplication {
 
   public ClientManagementApi clientManagementApi() {
     return clientManagementApi;
+  }
+
+  public EventApi eventApi() {
+    return eventApi;
   }
 }

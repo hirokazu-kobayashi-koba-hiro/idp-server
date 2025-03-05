@@ -2,6 +2,7 @@ package org.idp.server.core.sharedsignal;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Event {
 
@@ -54,15 +55,15 @@ public class Event {
   }
 
   public EventServer server() {
-      return server;
+    return server;
   }
 
   public EventClient client() {
-      return client;
+    return client;
   }
 
   public EventUser user() {
-      return user;
+    return user;
   }
 
   public IpAddress ipAddress() {
@@ -78,15 +79,24 @@ public class Event {
   }
 
   public EventDatetime createdAt() {
-      return createdAt;
+    return createdAt;
+  }
+
+  public boolean hasUser() {
+    return Objects.nonNull(user) && user.exists();
   }
 
   public Map<String, Object> toMap() {
-      HashMap<String, Object> result = new HashMap<>();
-      result.put("id", identifier.value());
-      result.put("type", type.value());
-      result.put("description", description.value());
-      result.put("detail", detail.toMap());
-      return result;
+    HashMap<String, Object> result = new HashMap<>();
+    result.put("id", identifier.value());
+    result.put("type", type.value());
+    result.put("description", description.value());
+    result.put("server", server().toMap());
+    result.put("client", client().toMap());
+    if (hasUser()) {
+      result.put("user", user().toMap());
+    }
+    result.put("detail", detail.toMap());
+    return result;
   }
 }

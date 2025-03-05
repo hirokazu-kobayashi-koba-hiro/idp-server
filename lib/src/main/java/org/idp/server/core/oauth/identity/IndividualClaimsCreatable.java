@@ -62,7 +62,7 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       claims.put("phone_number_verified", user.phoneNumberVerified());
     }
     if (claimsDecider.shouldAddAddress() && user.hasAddress()) {
-      claims.put("address", user.address().values());
+      claims.put("address", user.address().toMap());
     }
     if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
       claims.put("updated_at", user.updateAtAsLong());
@@ -130,7 +130,7 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       claims.put("phone_number_verified", user.phoneNumberVerified());
     }
     if (claimsDecider.shouldAddAddress() && user.hasAddress()) {
-      claims.put("address", user.address().values());
+      claims.put("address", user.address().toMap());
     }
     if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
       claims.put("updated_at", user.updateAtAsLong());

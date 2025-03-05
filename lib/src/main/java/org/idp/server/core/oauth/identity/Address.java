@@ -79,7 +79,7 @@ public class Address implements Serializable {
     return !values.isEmpty();
   }
 
-  public Map<String, Object> values() {
+  public Map<String, Object> toMap() {
     return values;
   }
 }
