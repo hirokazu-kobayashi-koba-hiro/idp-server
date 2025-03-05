@@ -296,7 +296,7 @@ public class OAuthFlowService {
     OAuthAuthorizeResponse authorize = oAuthApi.authorize(authAuthorizeRequest);
 
     OAuthFlowEventCreator eventCreator =
-        new OAuthFlowEventCreator(authorizationRequest, session.user(), DefaultEventType.login);
+        new OAuthFlowEventCreator(authorizationRequest, session.user(), DefaultEventType.login_with_session);
     Event event = eventCreator.create();
     eventPublisher.publishEvent(event);
 

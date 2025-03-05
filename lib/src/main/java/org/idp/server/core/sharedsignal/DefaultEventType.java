@@ -10,6 +10,7 @@ public enum DefaultEventType {
   email_verification_success("User successfully verified their email"),
   email_verification_failure("User failed email verification"),
   login("User logged in"),
+  login_with_session("User logged in with a session"),
   logout("User logged out"),
   password_reset("User reset their password"),
   password_change("User changed their password"),
