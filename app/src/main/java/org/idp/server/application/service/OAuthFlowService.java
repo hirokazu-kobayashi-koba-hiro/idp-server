@@ -20,6 +20,7 @@ import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.interaction.UserInteraction;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.sharedsignal.Event;
 import org.idp.server.core.type.extension.OAuthDenyReason;
 import org.idp.server.core.type.extension.Pairs;
 import org.idp.server.domain.model.authentication.EmailVerificationChallenge;
@@ -29,6 +30,7 @@ import org.idp.server.domain.model.tenant.TenantIdentifier;
 import org.idp.server.domain.model.user.UserRegistration;
 import org.idp.server.subdomain.webauthn.WebAuthnCredential;
 import org.idp.server.subdomain.webauthn.WebAuthnSession;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,7 @@ public class OAuthFlowService {
   TenantService tenantService;
   WebAuthnService webAuthnService;
   EmailAuthenticationService emailAuthenticationService;
+  ApplicationEventPublisher eventPublisher;
 
   public OAuthFlowService(
       IdpServerApplication idpServerApplication,
@@ -51,7 +54,8 @@ public class OAuthFlowService {
       UserAuthenticationService userAuthenticationService,
       TenantService tenantService,
       WebAuthnService webAuthnService,
-      EmailAuthenticationService emailAuthenticationService) {
+      EmailAuthenticationService emailAuthenticationService,
+      ApplicationEventPublisher eventPublisher) {
     this.oAuthApi = idpServerApplication.oAuthApi();
     oAuthApi.setOAuthRequestDelegate(oAuthSessionService);
     this.oAuthSessionService = oAuthSessionService;
@@ -60,6 +64,7 @@ public class OAuthFlowService {
     this.tenantService = tenantService;
     this.webAuthnService = webAuthnService;
     this.emailAuthenticationService = emailAuthenticationService;
+    this.eventPublisher = eventPublisher;
   }
 
   public Pairs<Tenant, OAuthRequestResponse> request(
@@ -185,6 +190,8 @@ public class OAuthFlowService {
         session.didAuthenticationPassword(authorizationRequest.sessionKey(), user);
 
     oAuthSessionService.updateSession(updatedSession);
+
+    eventPublisher.publishEvent(new Event());
   }
 
   public WebAuthnSession challengeWebAuthnAuthentication(

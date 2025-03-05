@@ -342,4 +342,35 @@ public class User implements Serializable {
   public boolean hasCredentials() {
     return !credentials.isEmpty();
   }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+
+    if (exists()) map.put("sub", sub);
+    if (hasName()) map.put("name", name);
+    if (hasGivenName()) map.put("given_name", givenName);
+    if (hasFamilyName()) map.put("family_name", familyName);
+    if (hasMiddleName()) map.put("middle_name", middleName);
+    if (hasNickname()) map.put("nickname", nickname);
+    if (hasPreferredUsername()) map.put("preferred_username", preferredUsername);
+    if (hasProfile()) map.put("profile", profile);
+    if (hasPicture()) map.put("picture", picture);
+    if (hasWebsite()) map.put("website", website);
+    if (hasEmail()) map.put("email", email);
+    if (hasEmailVerified()) map.put("email_verified", emailVerified);
+    if (hasGender()) map.put("gender", gender);
+    if (hasBirthdate()) map.put("birthdate", birthdate);
+    if (hasZoneinfo()) map.put("zoneinfo", zoneinfo);
+    if (hasLocale()) map.put("locale", locale);
+    if (hasPhoneNumber()) map.put("phone_number", phoneNumber);
+    if (hasPhoneNumberVerified()) map.put("phone_number_verified", phoneNumberVerified);
+    if (hasUpdatedAt()) map.put("updated_at", updatedAt.toString());
+    if (hasPassword()) map.put("hashed_password", hashedPassword);
+    if (hasAddress()) map.put("address", address.toMap());
+    if (hasCustomProperties()) map.put("custom_properties", new HashMap<>(customProperties));
+    if (hasCredentials())
+      map.put("credentials", verifiableCredentials().stream().map(Credential::toMap).toList());
+
+    return map;
+  }
 }
