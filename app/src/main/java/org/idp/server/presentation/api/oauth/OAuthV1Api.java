@@ -121,9 +121,10 @@ public class OAuthV1Api implements ParameterTransformable {
         oAuthFlowService.requestFederation(tenantIdentifier, id, body.get("federatable_idp_id"));
 
     HttpHeaders headers = new HttpHeaders();
-    headers.add(HttpHeaders.LOCATION, requestResponse.authorizationRequestUrl());
+    headers.add("Content-Type", "application/json");
 
-    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(
+        Map.of("redirect_uri", requestResponse.authorizationRequestUrl()), headers, HttpStatus.OK);
   }
 
   @PostMapping("/{id}/signup")
