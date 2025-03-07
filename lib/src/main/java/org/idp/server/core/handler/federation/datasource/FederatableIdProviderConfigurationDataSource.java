@@ -20,7 +20,7 @@ public class FederatableIdProviderConfigurationDataSource
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                SELECT id, payload FROM federatable_idp_configuration WHERE identifier = ?;
+                SELECT id, payload FROM federatable_idp_configuration WHERE id = ?;
                 """;
     List<Object> params = List.of(identifier);
     Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);

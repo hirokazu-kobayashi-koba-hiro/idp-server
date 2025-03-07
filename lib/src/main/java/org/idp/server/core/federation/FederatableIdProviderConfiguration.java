@@ -1,9 +1,11 @@
 package org.idp.server.core.federation;
 
+import org.idp.server.core.basic.json.JsonReadable;
+
 import java.util.List;
 import java.util.Objects;
 
-public class FederatableIdProviderConfiguration {
+public class FederatableIdProviderConfiguration implements JsonReadable {
 
   String identifier;
   String name;
