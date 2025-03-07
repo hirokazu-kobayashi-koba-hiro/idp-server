@@ -113,7 +113,7 @@ public class OAuthV1Api implements ParameterTransformable {
       @PathVariable("id") String id,
       @RequestBody Map<String, String> body) {
 
-    if (body.containsKey("federatable_idp_id")) {
+    if (!body.containsKey("federatable_idp_id")) {
       return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
