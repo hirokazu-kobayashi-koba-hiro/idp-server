@@ -7,12 +7,15 @@ import java.util.Objects;
 import org.idp.server.application.service.authentication.EmailAuthenticationService;
 import org.idp.server.application.service.authentication.WebAuthnService;
 import org.idp.server.application.service.authorization.OAuthSessionService;
+import org.idp.server.application.service.federation.FederationService;
 import org.idp.server.application.service.tenant.TenantService;
 import org.idp.server.application.service.user.UserAuthenticationService;
 import org.idp.server.application.service.user.UserRegistrationService;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.api.OAuthApi;
 import org.idp.server.core.basic.date.SystemDateTime;
+import org.idp.server.core.handler.federation.io.FederationRequest;
+import org.idp.server.core.handler.federation.io.FederationRequestResponse;
 import org.idp.server.core.handler.oauth.io.*;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
@@ -47,6 +50,7 @@ public class OAuthFlowService {
   TenantService tenantService;
   WebAuthnService webAuthnService;
   EmailAuthenticationService emailAuthenticationService;
+  FederationService federationService;
   ApplicationEventPublisher eventPublisher;
 
   public OAuthFlowService(
@@ -57,6 +61,7 @@ public class OAuthFlowService {
       TenantService tenantService,
       WebAuthnService webAuthnService,
       EmailAuthenticationService emailAuthenticationService,
+      FederationService federationService,
       ApplicationEventPublisher eventPublisher) {
     this.oAuthApi = idpServerApplication.oAuthApi();
     oAuthApi.setOAuthRequestDelegate(oAuthSessionService);
@@ -66,6 +71,7 @@ public class OAuthFlowService {
     this.tenantService = tenantService;
     this.webAuthnService = webAuthnService;
     this.emailAuthenticationService = emailAuthenticationService;
+    this.federationService = federationService;
     this.eventPublisher = eventPublisher;
   }
 
@@ -89,6 +95,18 @@ public class OAuthFlowService {
     return oAuthApi.getViewData(oAuthViewDataRequest);
   }
 
+  public FederationRequestResponse requestFederation(
+      TenantIdentifier tenantIdentifier,
+      String oauthRequestIdentifier,
+      String federationIdentifier) {
+
+    Tenant tenant = tenantService.get(tenantIdentifier);
+    AuthorizationRequest authorizationRequest =
+        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+
+    return federationService.request(new FederationRequest(federationIdentifier));
+  }
+
   public User requestSignup(
       TenantIdentifier tenantIdentifier,
       String oauthRequestIdentifier,
@@ -108,10 +126,7 @@ public class OAuthFlowService {
             SystemDateTime.now().plusSeconds(3600));
     oAuthSessionService.registerSession(oAuthSession);
 
-    OAuthFlowEventCreator eventCreator =
-        new OAuthFlowEventCreator(authorizationRequest, user, DefaultEventType.signup);
-    Event event = eventCreator.create();
-    eventPublisher.publishEvent(event);
+    publishEvent(authorizationRequest, user, DefaultEventType.signup);
 
     return user;
   }
@@ -154,11 +169,8 @@ public class OAuthFlowService {
         oAuthSession.didEmailAuthentication(authorizationRequest.sessionKey());
     oAuthSessionService.updateSession(updatedSession);
 
-    OAuthFlowEventCreator eventCreator =
-        new OAuthFlowEventCreator(
-            authorizationRequest, oAuthSession.user(), DefaultEventType.email_verification_success);
-    Event event = eventCreator.create();
-    eventPublisher.publishEvent(event);
+    publishEvent(
+        authorizationRequest, oAuthSession.user(), DefaultEventType.email_verification_success);
   }
 
   public WebAuthnSession challengeWebAuthnRegistration(
@@ -186,13 +198,8 @@ public class OAuthFlowService {
 
     oAuthSessionService.updateSession(oAuthSession);
 
-    OAuthFlowEventCreator eventCreator =
-        new OAuthFlowEventCreator(
-            authorizationRequest,
-            oAuthSession.user(),
-            DefaultEventType.webauthn_registration_success);
-    Event event = eventCreator.create();
-    eventPublisher.publishEvent(event);
+    publishEvent(
+        authorizationRequest, oAuthSession.user(), DefaultEventType.webauthn_registration_success);
   }
 
   public void authenticateWithPassword(
@@ -212,10 +219,7 @@ public class OAuthFlowService {
 
     oAuthSessionService.updateSession(updatedSession);
 
-    OAuthFlowEventCreator eventCreator =
-        new OAuthFlowEventCreator(authorizationRequest, user, DefaultEventType.password_success);
-    Event event = eventCreator.create();
-    eventPublisher.publishEvent(event);
+    publishEvent(authorizationRequest, user, DefaultEventType.password_success);
   }
 
   public WebAuthnSession challengeWebAuthnAuthentication(
@@ -244,10 +248,7 @@ public class OAuthFlowService {
 
     oAuthSessionService.updateSession(didWebAuthnAuthenticationSession);
 
-    OAuthFlowEventCreator eventCreator =
-        new OAuthFlowEventCreator(authorizationRequest, user, DefaultEventType.webauthn_success);
-    Event event = eventCreator.create();
-    eventPublisher.publishEvent(event);
+    publishEvent(authorizationRequest, user, DefaultEventType.webauthn_success);
   }
 
   public OAuthAuthorizeResponse authorize(
@@ -268,10 +269,7 @@ public class OAuthFlowService {
 
     OAuthAuthorizeResponse authorize = oAuthApi.authorize(oAuthAuthorizeRequest);
 
-    OAuthFlowEventCreator eventCreator =
-        new OAuthFlowEventCreator(authorizationRequest, session.user(), DefaultEventType.login);
-    Event event = eventCreator.create();
-    eventPublisher.publishEvent(event);
+    publishEvent(authorizationRequest, session.user(), DefaultEventType.login);
 
     return authorize;
   }
@@ -295,10 +293,7 @@ public class OAuthFlowService {
 
     OAuthAuthorizeResponse authorize = oAuthApi.authorize(authAuthorizeRequest);
 
-    OAuthFlowEventCreator eventCreator =
-        new OAuthFlowEventCreator(authorizationRequest, session.user(), DefaultEventType.login_with_session);
-    Event event = eventCreator.create();
-    eventPublisher.publishEvent(event);
+    publishEvent(authorizationRequest, session.user(), DefaultEventType.login_with_session);
 
     return authorize;
   }
@@ -320,6 +315,14 @@ public class OAuthFlowService {
     OAuthLogoutRequest oAuthLogoutRequest = new OAuthLogoutRequest(params, tenant.issuer());
 
     return oAuthApi.logout(oAuthLogoutRequest);
+  }
+
+  private void publishEvent(
+      AuthorizationRequest authorizationRequest, User user, DefaultEventType login_with_session) {
+    OAuthFlowEventCreator eventCreator =
+        new OAuthFlowEventCreator(authorizationRequest, user, login_with_session);
+    Event event = eventCreator.create();
+    eventPublisher.publishEvent(event);
   }
 
   private UserInteraction interact(

@@ -24,6 +24,8 @@ import org.idp.server.core.handler.credential.CredentialHandler;
 import org.idp.server.core.handler.credential.datasource.database.VerifiableCredentialTransactionDataSource;
 import org.idp.server.core.handler.credential.datasource.memory.VerifiableCredentialTransactionMemoryDataSource;
 import org.idp.server.core.handler.discovery.DiscoveryHandler;
+import org.idp.server.core.handler.federation.FederationHandler;
+import org.idp.server.core.handler.federation.datasource.FederatableIdProviderConfigurationDataSource;
 import org.idp.server.core.handler.grantmanagment.datasource.AuthorizationGrantedMemoryDataSource;
 import org.idp.server.core.handler.oauth.OAuthAuthorizeHandler;
 import org.idp.server.core.handler.oauth.OAuthDenyHandler;
@@ -57,6 +59,7 @@ public class IdpServerApplication {
   ServerManagementApi serverManagementApi;
   ClientManagementApi clientManagementApi;
   EventApi eventApi;
+  FederationApi federationApi;
 
   public IdpServerApplication(MemoryDataSourceConfig memoryDataSourceConfig) {
     List<String> serverConfigurations = memoryDataSourceConfig.serverConfigurations();
@@ -187,6 +190,8 @@ public class IdpServerApplication {
     VerifiableCredentialTransactionDataSource verifiableCredentialTransactionDataSource =
         new VerifiableCredentialTransactionDataSource();
     EventDataSource eventDataSource = new EventDataSource();
+    FederatableIdProviderConfigurationDataSource federatableIdProviderConfigurationDataSource =
+        new FederatableIdProviderConfigurationDataSource();
 
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
@@ -303,6 +308,12 @@ public class IdpServerApplication {
 
     this.eventApi =
         TransactionInterceptor.createProxy(new EventApiImpl(eventDataSource), EventApi.class);
+
+    FederationHandler federationHandler =
+        new FederationHandler(federatableIdProviderConfigurationDataSource);
+    this.federationApi =
+        TransactionInterceptor.createProxy(
+            new FederationApiImpl(federationHandler), FederationApi.class);
   }
 
   public OAuthApi oAuthApi() {
@@ -351,5 +362,9 @@ public class IdpServerApplication {
 
   public EventApi eventApi() {
     return eventApi;
+  }
+
+  public FederationApi federationApi() {
+    return federationApi;
   }
 }

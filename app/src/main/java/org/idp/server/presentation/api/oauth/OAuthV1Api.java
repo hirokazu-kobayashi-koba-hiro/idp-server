@@ -5,6 +5,7 @@ import static org.idp.server.core.handler.oauth.io.OAuthRequestStatus.OK_ACCOUNT
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.application.service.OAuthFlowService;
+import org.idp.server.core.handler.federation.io.FederationRequestResponse;
 import org.idp.server.core.handler.oauth.io.*;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.type.extension.Pairs;
@@ -104,6 +105,25 @@ public class OAuthV1Api implements ParameterTransformable {
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(viewDataResponse.contents(), httpHeaders, HttpStatus.OK);
+  }
+
+  @PostMapping("/{id}/federations")
+  public ResponseEntity<?> createFederation(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") String id,
+      @RequestBody Map<String, String> body) {
+
+    if (body.containsKey("federatable_idp_id")) {
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    FederationRequestResponse requestResponse =
+        oAuthFlowService.requestFederation(tenantIdentifier, id, body.get("federatable_idp_id"));
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add(HttpHeaders.LOCATION, requestResponse.authorizationRequestUrl());
+
+    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
   }
 
   @PostMapping("/{id}/signup")
