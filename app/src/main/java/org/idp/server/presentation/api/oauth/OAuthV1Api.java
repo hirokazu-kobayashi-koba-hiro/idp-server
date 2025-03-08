@@ -134,26 +134,6 @@ public class OAuthV1Api implements ParameterTransformable {
         Map.of("redirect_uri", requestResponse.authorizationRequestUrl()), headers, HttpStatus.OK);
   }
 
-  @PostMapping("/{id}/federations/callback")
-  public ResponseEntity<?> callbackFederation(
-      @RequestBody(required = false) MultiValueMap<String, String> body) {
-
-    Map<String, String[]> params = transform(body);
-    FederationCallbackResponse callbackResponse = oAuthFlowService.callbackFederation(params);
-
-    switch (callbackResponse.status()) {
-      case OK -> {
-        return new ResponseEntity<>(HttpStatus.OK);
-      }
-      case BAD_REQUEST -> {
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-      }
-      default -> {
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-    }
-  }
-
   @PostMapping("/{id}/signup")
   public ResponseEntity<?> signup(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
