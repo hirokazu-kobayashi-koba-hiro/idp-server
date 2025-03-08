@@ -76,5 +76,5 @@ CREATE TABLE idp_user_current_organization
     organization_id VARCHAR(255) REFERENCES organization (id) ON DELETE CASCADE,
     created_at      TIMESTAMP DEFAULT now() NOT NULL,
     updated_at      TIMESTAMP DEFAULT now() NOT NULL
-)
+);
 
