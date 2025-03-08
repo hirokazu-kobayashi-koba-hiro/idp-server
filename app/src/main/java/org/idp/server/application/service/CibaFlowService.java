@@ -66,7 +66,8 @@ public class CibaFlowService implements CibaRequestDelegate {
   public User find(TokenIssuer tokenIssuer, UserCriteria criteria) {
     Tenant tenant = tenantService.find(tokenIssuer);
     if (tenant.exists() && criteria.hasLoginHint()) {
-      return userService.findBy(tenant, criteria.loginHint().value());
+      // TODO proverId
+      return userService.findBy(tenant, criteria.loginHint().value(), "idp-server");
     }
     return User.notFound();
   }

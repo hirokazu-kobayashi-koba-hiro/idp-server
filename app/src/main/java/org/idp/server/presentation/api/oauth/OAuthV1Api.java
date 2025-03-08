@@ -2,9 +2,11 @@ package org.idp.server.presentation.api.oauth;
 
 import static org.idp.server.core.handler.oauth.io.OAuthRequestStatus.OK_ACCOUNT_CREATION;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.application.service.OAuthFlowService;
+import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
 import org.idp.server.core.handler.oauth.io.*;
 import org.idp.server.core.oauth.identity.User;
@@ -39,8 +41,13 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @GetMapping
   public ResponseEntity<?> get(
+      HttpServletRequest httpServletRequest,
       @RequestParam(required = false) MultiValueMap<String, String> request,
       @PathVariable("tenant-id") TenantIdentifier tenantId) {
+
+    System.out.println(httpServletRequest.getHeader("X-Forwarded-For"));
+    System.out.println(httpServletRequest.getHeader("X-Real-IP"));
+    System.out.println(httpServletRequest.getRemoteAddr());
 
     Map<String, String[]> params = transform(request);
     Pairs<Tenant, OAuthRequestResponse> result = oAuthFlowService.request(tenantId, params);
@@ -127,6 +134,29 @@ public class OAuthV1Api implements ParameterTransformable {
         Map.of("redirect_uri", requestResponse.authorizationRequestUrl()), headers, HttpStatus.OK);
   }
 
+  @PostMapping("/{id}/federations/callback")
+  public ResponseEntity<?> callbackFederation(
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("id") String id,
+      @RequestBody(required = false) MultiValueMap<String, String> body) {
+
+    Map<String, String[]> params = transform(body);
+    FederationCallbackResponse callbackResponse =
+        oAuthFlowService.callbackFederation(tenantId, id, params);
+
+    switch (callbackResponse.status()) {
+      case OK -> {
+        return new ResponseEntity<>(HttpStatus.OK);
+      }
+      case BAD_REQUEST -> {
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+      }
+      default -> {
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    }
+  }
+
   @PostMapping("/{id}/signup")
   public ResponseEntity<?> signup(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
@@ -190,13 +220,9 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/authorize")
   public ResponseEntity<?> authorize(
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
-      @PathVariable("id") String id,
-      @RequestBody Map<String, String> requestBody) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
 
-    String action = requestBody.getOrDefault("action", "signin");
-
-    OAuthAuthorizeResponse authAuthorizeResponse = oAuthFlowService.authorize(tenantId, id, action);
+    OAuthAuthorizeResponse authAuthorizeResponse = oAuthFlowService.authorize(tenantId, id);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

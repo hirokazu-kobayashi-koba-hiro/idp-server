@@ -27,13 +27,19 @@ public class FederationApiImpl implements FederationApi {
       return federationHandler.handleRequest(federationRequest);
     } catch (Exception e) {
 
-      return federationHandler.handleRequest(federationRequest);
+      return federationErrorHandler.handleRequest(e);
     }
   }
 
   @Override
   public FederationCallbackResponse handleCallback(
       FederationCallbackRequest federationCallbackRequest) {
-    return null;
+    try {
+
+      return federationHandler.handleCallback(federationCallbackRequest);
+    } catch (Exception e) {
+
+      return federationErrorHandler.handleCallback(e);
+    }
   }
 }

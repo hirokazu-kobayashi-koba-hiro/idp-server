@@ -9,7 +9,7 @@ CREATE TABLE server_configuration
 CREATE TABLE client_configuration
 (
     token_issuer TEXT                    NOT NULL,
-    client_id    VARCHAR(256)            NOT NULL,
+    client_id    VARCHAR(255)            NOT NULL,
     payload      TEXT                    NOT NULL,
     created_at   TIMESTAMP DEFAULT now() NOT NULL,
     updated_at   TIMESTAMP DEFAULT now() NOT NULL,
@@ -18,19 +18,19 @@ CREATE TABLE client_configuration
 
 CREATE TABLE authorization_request
 (
-    id                          VARCHAR(256)            NOT NULL PRIMARY KEY,
+    id                          VARCHAR(255)            NOT NULL PRIMARY KEY,
     token_issuer                TEXT                    NOT NULL,
-    profile                     VARCHAR(256)            NOT NULL,
+    profile                     VARCHAR(255)            NOT NULL,
     scopes                      TEXT                    NOT NULL,
-    response_type               VARCHAR(256)            NOT NULL,
-    client_id                   VARCHAR(256)            NOT NULL,
+    response_type               VARCHAR(255)            NOT NULL,
+    client_id                   VARCHAR(255)            NOT NULL,
     redirect_uri                TEXT                    NOT NULL,
     state                       TEXT                    NOT NULL,
-    response_mode               VARCHAR(256)            NOT NULL,
+    response_mode               VARCHAR(255)            NOT NULL,
     nonce                       TEXT                    NOT NULL,
-    display                     VARCHAR(256)            NOT NULL,
-    prompts                     VARCHAR(256)            NOT NULL,
-    max_age                     VARCHAR(256)            NOT NULL,
+    display                     VARCHAR(255)            NOT NULL,
+    prompts                     VARCHAR(255)            NOT NULL,
+    max_age                     VARCHAR(255)            NOT NULL,
     ui_locales                  TEXT                    NOT NULL,
     id_token_hint               TEXT                    NOT NULL,
     login_hint                  TEXT                    NOT NULL,
@@ -49,12 +49,12 @@ CREATE TABLE authorization_request
 
 CREATE TABLE authorization_code_grant
 (
-    authorization_request_id VARCHAR(256)            NOT NULL PRIMARY KEY,
-    authorization_code       VARCHAR(256)            NOT NULL,
-    user_id                  VARCHAR(256)            NOT NULL,
+    authorization_request_id VARCHAR(255)            NOT NULL PRIMARY KEY,
+    authorization_code       VARCHAR(255)            NOT NULL,
+    user_id                  VARCHAR(255)            NOT NULL,
     user_payload             TEXT                    NOT NULL,
     authentication           TEXT                    NOT NULL,
-    client_id                VARCHAR(256)            NOT NULL,
+    client_id                VARCHAR(255)            NOT NULL,
     scopes                   TEXT                    NOT NULL,
     claims                   TEXT                    NOT NULL,
     custom_properties        TEXT                    NOT NULL,
@@ -70,14 +70,14 @@ CREATE TABLE authorization_code_grant
 
 CREATE TABLE oauth_token
 (
-    id                              VARCHAR(256)            NOT NULL PRIMARY KEY,
+    id                              VARCHAR(255)            NOT NULL PRIMARY KEY,
     token_issuer                    TEXT                    NOT NULL,
     token_type                      VARCHAR(10)             NOT NULL,
     access_token                    TEXT                    NOT NULL,
-    user_id                         VARCHAR(256)            NOT NULL,
+    user_id                         VARCHAR(255)            NOT NULL,
     user_payload                    TEXT                    NOT NULL,
     authentication                  TEXT                    NOT NULL,
-    client_id                       VARCHAR(256)            NOT NULL,
+    client_id                       VARCHAR(255)            NOT NULL,
     scopes                          TEXT                    NOT NULL,
     claims                          TEXT                    NOT NULL,
     custom_properties               TEXT                    NOT NULL,
@@ -98,12 +98,12 @@ CREATE TABLE oauth_token
 
 CREATE TABLE backchannel_authentication_request
 (
-    id                        VARCHAR(256)            NOT NULL PRIMARY KEY,
+    id                        VARCHAR(255)            NOT NULL PRIMARY KEY,
     token_issuer              TEXT                    NOT NULL,
-    profile                   VARCHAR(256)            NOT NULL,
+    profile                   VARCHAR(255)            NOT NULL,
     delivery_mode             VARCHAR(10)             NOT NULL,
     scopes                    TEXT                    NOT NULL,
-    client_id                 VARCHAR(256)            NOT NULL,
+    client_id                 VARCHAR(255)            NOT NULL,
     id_token_hint             TEXT                    NOT NULL,
     login_hint                TEXT                    NOT NULL,
     login_hint_token          TEXT                    NOT NULL,
@@ -119,15 +119,15 @@ CREATE TABLE backchannel_authentication_request
 
 CREATE TABLE ciba_grant
 (
-    backchannel_authentication_request_id VARCHAR(256)            NOT NULL PRIMARY KEY,
-    auth_req_id                           VARCHAR(256)            NOT NULL,
+    backchannel_authentication_request_id VARCHAR(255)            NOT NULL PRIMARY KEY,
+    auth_req_id                           VARCHAR(255)            NOT NULL,
     expired_at                            TEXT                    NOT NULL,
     interval                              TEXT                    NOT NULL,
     status                                VARCHAR(100)            NOT NULL,
-    user_id                               VARCHAR(256)            NOT NULL,
+    user_id                               VARCHAR(255)            NOT NULL,
     user_payload                          TEXT                    NOT NULL,
     authentication                        TEXT                    NOT NULL,
-    client_id                             VARCHAR(256)            NOT NULL,
+    client_id                             VARCHAR(255)            NOT NULL,
     scopes                                TEXT                    NOT NULL,
     claims                                TEXT                    NOT NULL,
     custom_properties                     TEXT                    NOT NULL,
@@ -141,10 +141,10 @@ CREATE TABLE ciba_grant
 
 CREATE TABLE verifiable_credential_transaction
 (
-    transaction_id        VARCHAR(256)            NOT NULL,
+    transaction_id        VARCHAR(255)            NOT NULL,
     credential_issuer     TEXT                    NOT NULL,
     client_id             TEXT                    NOT NULL,
-    user_id               VARCHAR(256)            NOT NULL,
+    user_id               VARCHAR(255)            NOT NULL,
     verifiable_credential TEXT                    NOT NULL,
     status                VARCHAR(10)             NOT NULL,
     created_at            TIMESTAMP DEFAULT now() NOT NULL,
@@ -154,14 +154,14 @@ CREATE TABLE verifiable_credential_transaction
 CREATE TABLE events
 (
     id          char(36) PRIMARY KEY,
-    type        VARCHAR(256) NOT NULL,
-    description VARCHAR(256) NOT NULL,
-    server_id   VARCHAR(256) NOT NULL,
-    server_name VARCHAR(256) NOT NULL,
-    client_id   VARCHAR(256) NOT NULL,
-    client_name VARCHAR(256) NOT NULL,
-    user_id     VARCHAR(256),
-    user_name   VARCHAR(256),
+    type        VARCHAR(255) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    server_id   VARCHAR(255) NOT NULL,
+    server_name VARCHAR(255) NOT NULL,
+    client_id   VARCHAR(255) NOT NULL,
+    client_name VARCHAR(255) NOT NULL,
+    user_id     VARCHAR(255),
+    user_name   VARCHAR(255),
     detail      JSONB        NOT NULL,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -175,7 +175,7 @@ CREATE INDEX idx_events_detail_jsonb ON events USING GIN (detail);
 
 CREATE TABLE federatable_idp_configuration
 (
-    id         VARCHAR(256)            NOT NULL PRIMARY KEY,
+    id         VARCHAR(255)            NOT NULL PRIMARY KEY,
     payload    JSONB                   NOT NULL,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL

@@ -1,12 +1,12 @@
 package org.idp.server.core.handler.federation.io;
 
 import org.idp.server.core.federation.FederatableIdProviderConfiguration;
-import org.idp.server.core.federation.FederationAuthorizationRequest;
+import org.idp.server.core.federation.FederationSession;
 
 public class FederationRequestResponse {
 
   FederationRequestStatus status;
-  FederationAuthorizationRequest federationAuthorizationRequest;
+  FederationSession federationSession;
   FederatableIdProviderConfiguration federatableIdProviderConfiguration;
 
   public FederationRequestResponse(FederationRequestStatus status) {
@@ -15,10 +15,10 @@ public class FederationRequestResponse {
 
   public FederationRequestResponse(
       FederationRequestStatus status,
-      FederationAuthorizationRequest federationAuthorizationRequest,
+      FederationSession federationSession,
       FederatableIdProviderConfiguration federatableIdProviderConfiguration) {
     this.status = status;
-    this.federationAuthorizationRequest = federationAuthorizationRequest;
+    this.federationSession = federationSession;
     this.federatableIdProviderConfiguration = federatableIdProviderConfiguration;
   }
 
@@ -26,8 +26,8 @@ public class FederationRequestResponse {
     return status;
   }
 
-  public FederationAuthorizationRequest federationAuthorizationRequest() {
-    return federationAuthorizationRequest;
+  public FederationSession federationSession() {
+    return federationSession;
   }
 
   public FederatableIdProviderConfiguration federatableIdProviderConfiguration() {
@@ -35,6 +35,6 @@ public class FederationRequestResponse {
   }
 
   public String authorizationRequestUrl() {
-    return federationAuthorizationRequest.url();
+    return federationSession.authorizationRequestUri();
   }
 }

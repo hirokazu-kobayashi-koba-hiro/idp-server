@@ -9,6 +9,8 @@ import org.idp.server.core.type.extension.CustomProperties;
 
 public class User implements Serializable {
   String sub;
+  String providerId;
+  String providerUserId;
   String name;
   String givenName;
   String familyName;
@@ -42,6 +44,24 @@ public class User implements Serializable {
 
   public User setSub(String sub) {
     this.sub = sub;
+    return this;
+  }
+
+  public String providerId() {
+    return providerId;
+  }
+
+  public User setProviderId(String providerId) {
+    this.providerId = providerId;
+    return this;
+  }
+
+  public String providerUserId() {
+    return providerUserId;
+  }
+
+  public User setProviderUserId(String providerUserId) {
+    this.providerUserId = providerUserId;
     return this;
   }
 
@@ -347,6 +367,8 @@ public class User implements Serializable {
     Map<String, Object> map = new HashMap<>();
 
     if (exists()) map.put("sub", sub);
+    if (exists()) map.put("provider_id", providerId);
+    if (exists()) map.put("provider_user_id", providerUserId);
     if (hasName()) map.put("name", name);
     if (hasGivenName()) map.put("given_name", givenName);
     if (hasFamilyName()) map.put("family_name", familyName);

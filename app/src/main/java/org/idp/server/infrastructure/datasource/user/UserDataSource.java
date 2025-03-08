@@ -44,8 +44,8 @@ public class UserDataSource implements UserRepository {
   }
 
   @Override
-  public User findBy(Tenant tenant, String email) {
-    User user = mapper.selectBy(tenant, email);
+  public User findBy(Tenant tenant, String email, String providerId) {
+    User user = mapper.selectBy(tenant, email, providerId);
     if (Objects.isNull(user)) {
       return new User();
     }

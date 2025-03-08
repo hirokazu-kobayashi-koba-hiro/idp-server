@@ -19,8 +19,8 @@ public class UserService {
     userRepository.register(tenant, user);
   }
 
-  public User findBy(Tenant tenant, String email) {
-    return userRepository.findBy(tenant, email);
+  public User findBy(Tenant tenant, String email, String providerId) {
+    return userRepository.findBy(tenant, email, providerId);
   }
 
   public User get(String userId) {

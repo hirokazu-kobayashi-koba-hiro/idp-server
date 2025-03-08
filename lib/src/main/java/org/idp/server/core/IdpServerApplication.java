@@ -26,6 +26,8 @@ import org.idp.server.core.handler.credential.datasource.memory.VerifiableCreden
 import org.idp.server.core.handler.discovery.DiscoveryHandler;
 import org.idp.server.core.handler.federation.FederationHandler;
 import org.idp.server.core.handler.federation.datasource.FederatableIdProviderConfigurationDataSource;
+import org.idp.server.core.handler.federation.datasource.FederationSessionDataSource;
+import org.idp.server.core.handler.federation.httpclient.FederationClient;
 import org.idp.server.core.handler.grantmanagment.datasource.AuthorizationGrantedMemoryDataSource;
 import org.idp.server.core.handler.oauth.OAuthAuthorizeHandler;
 import org.idp.server.core.handler.oauth.OAuthDenyHandler;
@@ -192,6 +194,7 @@ public class IdpServerApplication {
     EventDataSource eventDataSource = new EventDataSource();
     FederatableIdProviderConfigurationDataSource federatableIdProviderConfigurationDataSource =
         new FederatableIdProviderConfigurationDataSource();
+    FederationSessionDataSource federationSessionDataSource = new FederationSessionDataSource();
 
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
@@ -310,7 +313,10 @@ public class IdpServerApplication {
         TransactionInterceptor.createProxy(new EventApiImpl(eventDataSource), EventApi.class);
 
     FederationHandler federationHandler =
-        new FederationHandler(federatableIdProviderConfigurationDataSource);
+        new FederationHandler(
+            federatableIdProviderConfigurationDataSource,
+            federationSessionDataSource,
+            new FederationClient());
     this.federationApi =
         TransactionInterceptor.createProxy(
             new FederationApiImpl(federationHandler), FederationApi.class);

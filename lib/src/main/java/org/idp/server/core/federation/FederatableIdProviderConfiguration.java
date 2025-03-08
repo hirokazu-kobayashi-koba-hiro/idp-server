@@ -1,16 +1,15 @@
 package org.idp.server.core.federation;
 
-import org.idp.server.core.basic.json.JsonReadable;
-
 import java.util.List;
 import java.util.Objects;
+import org.idp.server.core.basic.json.JsonReadable;
 
 public class FederatableIdProviderConfiguration implements JsonReadable {
 
   String identifier;
-  String name;
-  String description;
   String issuer;
+  String issuerName;
+  String description;
   String clientId;
   String clientSecret;
   String redirectUri;
@@ -24,9 +23,9 @@ public class FederatableIdProviderConfiguration implements JsonReadable {
 
   public FederatableIdProviderConfiguration(
       String identifier,
-      String name,
-      String description,
       String issuer,
+      String issuerName,
+      String description,
       String clientId,
       String clientSecret,
       String redirectUri,
@@ -36,9 +35,9 @@ public class FederatableIdProviderConfiguration implements JsonReadable {
       String userinfoEndpoint,
       String jwksUri) {
     this.identifier = identifier;
-    this.name = name;
-    this.description = description;
     this.issuer = issuer;
+    this.issuerName = issuerName;
+    this.description = description;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.redirectUri = redirectUri;
@@ -53,16 +52,16 @@ public class FederatableIdProviderConfiguration implements JsonReadable {
     return identifier;
   }
 
-  public String name() {
-    return name;
+  public String issuer() {
+    return issuer;
+  }
+
+  public String issuerName() {
+    return issuerName;
   }
 
   public String description() {
     return description;
-  }
-
-  public String issuer() {
-    return issuer;
   }
 
   public String clientId() {

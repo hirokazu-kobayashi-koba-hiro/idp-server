@@ -5,13 +5,15 @@
 <mapper namespace="org.idp.server.infrastructure.datasource.user.UserMapper">
 
     <insert id="insert">
-        INSERT INTO public.idp_user (id, tenant_id, name, given_name, family_name, middle_name, nickname,
+        INSERT INTO public.idp_user (id, tenant_id, provider_id, provider_user_id, name, given_name, family_name, middle_name, nickname,
                                    preferred_username, profile, picture, website, email, email_verified, gender,
                                    birthdate, zoneinfo, locale, phone_number, phone_number_verified, address,
                                    custom_properties, credentials, hashed_password)
         VALUES (
                 #{user.sub},
                 #{tenant.identifier.value},
+                #{user.providerId},
+                #{user.providerUserId},
                 #{user.name},
                 #{user.givenName},
                 #{user.familyName},
@@ -38,6 +40,8 @@
 
     <resultMap id="User" type="org.idp.server.core.oauth.identity.User">
         <id property="sub" column="id"/>
+        <result property="providerId" column="provider_id" />
+        <result property="providerUserId" column="provider_user_id" />
         <result property="name" column="name"/>
         <result property="givenName" column="given_name"/>
         <result property="familyName" column="family_name"/>
@@ -63,6 +67,8 @@
 
     <sql id="select">
         SELECT id,
+               provider_id,
+               provider_user_id,
                name,
                given_name,
                family_name,
@@ -99,6 +105,7 @@
         WHERE
             tenant_id = #{tenant.identifier.value}
           AND email = #{email}
+          AND provider_id = #{providerId}
     </select>
 
     <select id="selectList" resultMap="User">

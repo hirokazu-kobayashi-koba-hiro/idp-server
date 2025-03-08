@@ -3,8 +3,8 @@ package org.idp.server.application.service.user;
 import org.idp.server.application.service.user.internal.UserService;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.domain.model.tenant.Tenant;
+import org.idp.server.domain.model.user.IdPUserCreator;
 import org.idp.server.domain.model.user.PasswordEncodeDelegation;
-import org.idp.server.domain.model.user.UserCreator;
 import org.idp.server.domain.model.user.UserRegistration;
 import org.idp.server.domain.model.user.UserRegistrationConflictException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,22 +23,23 @@ public class UserRegistrationService implements PasswordEncodeDelegation {
 
   public User create(Tenant tenant, UserRegistration userRegistration) {
 
-    User existingUser = userService.findBy(tenant, userRegistration.username());
+    User existingUser = userService.findBy(tenant, userRegistration.username(), "idp-server");
 
     if (existingUser.exists()) {
       throw new UserRegistrationConflictException("User already exists");
     }
 
-    UserCreator userCreator = new UserCreator(userRegistration, this);
-    return userCreator.create();
+    IdPUserCreator idPUserCreator = new IdPUserCreator(userRegistration, this);
+    return idPUserCreator.create();
   }
 
-  public User register(Tenant tenant, User user) {
+  public User registerOrUpdate(Tenant tenant, User user) {
 
-    User existingUser = userService.findBy(tenant, user.name());
+    User existingUser = userService.findBy(tenant, user.name(), user.providerUserId());
 
     if (existingUser.exists()) {
-      throw new UserRegistrationConflictException("User already exists");
+      userService.update(user);
+      return user;
     }
 
     userService.register(tenant, user);

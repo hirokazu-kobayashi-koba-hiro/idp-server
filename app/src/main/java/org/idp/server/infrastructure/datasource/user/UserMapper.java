@@ -12,7 +12,10 @@ public interface UserMapper {
 
   User select(@Param("userId") String userId);
 
-  User selectBy(@Param("tenant") Tenant tenant, @Param("email") String email);
+  User selectBy(
+      @Param("tenant") Tenant tenant,
+      @Param("email") String email,
+      @Param("providerId") String providerId);
 
   List<User> selectList(
       @Param("tenant") Tenant tenantId, @Param("limit") int limit, @Param("offset") int offset);

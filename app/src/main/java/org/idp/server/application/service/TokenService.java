@@ -87,7 +87,7 @@ public class TokenService implements PasswordCredentialsGrantDelegate {
     if (!tenant.exists()) {
       return User.notFound();
     }
-    User user = userService.findBy(tenant, username.value());
+    User user = userService.findBy(tenant, username.value(), "idp-server");
     if (!user.exists()) {
       return User.notFound();
     }

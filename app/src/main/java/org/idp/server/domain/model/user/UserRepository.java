@@ -11,7 +11,7 @@ public interface UserRepository {
 
   User get(String userId);
 
-  User findBy(Tenant tenant, String email);
+  User findBy(Tenant tenant, String email, String providerId);
 
   List<User> findList(Tenant tenant, int limit, int offset);
 

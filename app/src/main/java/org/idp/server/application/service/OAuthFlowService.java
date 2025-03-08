@@ -14,6 +14,8 @@ import org.idp.server.application.service.user.UserRegistrationService;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.api.OAuthApi;
 import org.idp.server.core.basic.date.SystemDateTime;
+import org.idp.server.core.handler.federation.io.FederationCallbackRequest;
+import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
 import org.idp.server.core.handler.federation.io.FederationRequest;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
 import org.idp.server.core.handler.oauth.io.*;
@@ -104,7 +106,30 @@ public class OAuthFlowService {
     AuthorizationRequest authorizationRequest =
         oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
 
-    return federationService.request(new FederationRequest(federationIdentifier));
+    return federationService.request(new FederationRequest(tenant.issuer(), federationIdentifier));
+  }
+
+  public FederationCallbackResponse callbackFederation(
+      TenantIdentifier tenantIdentifier,
+      String oauthRequestIdentifier,
+      Map<String, String[]> params) {
+    Tenant tenant = tenantService.get(tenantIdentifier);
+    AuthorizationRequest authorizationRequest =
+        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+
+    FederationCallbackResponse callbackResponse =
+        federationService.callback(new FederationCallbackRequest(tenant.issuer(), params));
+
+    OAuthSession oAuthSession =
+        new OAuthSession(
+            authorizationRequest.sessionKey(),
+            callbackResponse.user(),
+            new Authentication().setTime(SystemDateTime.now()),
+            SystemDateTime.now().plusSeconds(3600));
+
+    oAuthSessionService.updateSession(oAuthSession);
+
+    return callbackResponse;
   }
 
   public User requestSignup(
@@ -252,7 +277,7 @@ public class OAuthFlowService {
   }
 
   public OAuthAuthorizeResponse authorize(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier, String action) {
+      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
 
     Tenant tenant = tenantService.get(tenantIdentifier);
     AuthorizationRequest authorizationRequest =
@@ -263,13 +288,11 @@ public class OAuthFlowService {
         new OAuthAuthorizeRequest(
             oauthRequestIdentifier, tenant.issuer(), session.user(), session.authentication());
 
-    if (authorizationRequest.isPromptCreate() || action.equals("signup")) {
-      userRegistrationService.register(tenant, session.user());
-    }
+    User user = userRegistrationService.registerOrUpdate(tenant, session.user());
 
     OAuthAuthorizeResponse authorize = oAuthApi.authorize(oAuthAuthorizeRequest);
 
-    publishEvent(authorizationRequest, session.user(), DefaultEventType.login);
+    publishEvent(authorizationRequest, user, DefaultEventType.login);
 
     return authorize;
   }
@@ -328,7 +351,9 @@ public class OAuthFlowService {
   private UserInteraction interact(
       Tenant tenant, String username, String password, OAuthSession session) {
 
-    if (Objects.nonNull(session) && !session.isExpire(SystemDateTime.now())) {
+    if (Objects.nonNull(session)
+        && !session.isExpire(SystemDateTime.now())
+        && Objects.nonNull(session.user())) {
       Authentication authentication = session.authentication();
       User user = session.user();
       return new UserInteraction(user, authentication);

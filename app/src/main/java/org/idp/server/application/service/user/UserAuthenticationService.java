@@ -20,7 +20,7 @@ public class UserAuthenticationService implements PasswordVerificationDelegation
   }
 
   public User authenticateWithPassword(Tenant tenant, String username, String password) {
-    User user = userService.findBy(tenant, username);
+    User user = userService.findBy(tenant, username, "idp-server");
     if (!verify(password, user.hashedPassword())) {
       throw new UserNotFoundException("User " + username + " not found");
     }

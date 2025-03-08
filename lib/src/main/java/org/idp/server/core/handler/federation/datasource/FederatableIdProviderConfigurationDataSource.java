@@ -25,7 +25,7 @@ public class FederatableIdProviderConfigurationDataSource
     List<Object> params = List.of(identifier);
     Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
 
-    if (Objects.isNull(result)) {
+    if (Objects.isNull(result) || result.isEmpty()) {
       throw new FederatableIdProviderConfigurationNotFoundException(
           String.format("federatable idp configuration is not found (%s)", identifier));
     }
