@@ -33,6 +33,7 @@ public class FederationClient implements FederationGateway {
           HttpRequest.newBuilder()
               .uri(new URI(federationTokenRequest.endpoint()))
               .header("Content-Type", "application/x-www-form-urlencoded")
+              .header("Accept", "application/json")
               .POST(HttpRequest.BodyPublishers.ofString(queryParams.params()))
               .build();
 
@@ -40,6 +41,10 @@ public class FederationClient implements FederationGateway {
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String body = httpResponse.body();
       log.info("token response:" + body);
+
+      if (httpResponse.statusCode() != 200) {
+        throw new RuntimeException("Response code is not 200");
+      }
 
       Map map = jsonConverter.read(body, Map.class);
 
@@ -59,6 +64,7 @@ public class FederationClient implements FederationGateway {
           HttpRequest.newBuilder()
               .uri(new URI(federationUserinfoRequest.endpoint()))
               .header("Content-Type", "application/json")
+              .header("Accept", "application/json")
               .header(
                   "Authorization",
                   String.format("Bearer %s", federationUserinfoRequest.accessToken()))
@@ -67,8 +73,14 @@ public class FederationClient implements FederationGateway {
 
       HttpResponse<String> httpResponse =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
       String body = httpResponse.body();
       log.info("userinfo response:" + body);
+
+      if (httpResponse.statusCode() != 200) {
+        throw new RuntimeException("Response code is not 200");
+      }
+
 
       Map map = jsonConverter.read(body, Map.class);
 

@@ -23,6 +23,10 @@ public class FederationUserinfoResponse {
   }
 
   public String sub() {
+
+    if (containsKey("id")) {
+      return (String) values.get("id");
+    }
     return optValueAsString("sub", "");
   }
 
