@@ -1,10 +1,13 @@
 package org.idp.server.core.handler.federation.io;
 
+import org.idp.server.core.federation.FederationSession;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 
 public class FederationCallbackResponse {
 
   FederationCallbackStatus status;
+  FederationSession federationSession;
   User user;
 
   public FederationCallbackResponse() {}
@@ -13,8 +16,10 @@ public class FederationCallbackResponse {
     this.status = status;
   }
 
-  public FederationCallbackResponse(FederationCallbackStatus status, User user) {
+  public FederationCallbackResponse(
+      FederationCallbackStatus status, FederationSession federationSession, User user) {
     this.status = status;
+    this.federationSession = federationSession;
     this.user = user;
   }
 
@@ -22,7 +27,15 @@ public class FederationCallbackResponse {
     return status;
   }
 
+  public FederationSession federationSession() {
+    return federationSession;
+  }
+
   public User user() {
     return user;
+  }
+
+  public AuthorizationRequestIdentifier authorizationRequestIdentifier() {
+    return new AuthorizationRequestIdentifier(federationSession.authorizationRequestId());
   }
 }

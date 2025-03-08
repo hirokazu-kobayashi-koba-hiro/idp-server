@@ -26,8 +26,7 @@ public class FederationHandler {
             federationRequest.federatableIdProviderId());
 
     FederationSessionCreator authorizationRequestCreator =
-        new FederationSessionCreator(
-            federatableIdProviderConfiguration, federationRequest.customParameters());
+        new FederationSessionCreator(federatableIdProviderConfiguration, federationRequest);
     FederationSession federationSession = authorizationRequestCreator.create();
 
     federationSessionRepository.register(federationRequest.tokenIssuer(), federationSession);
@@ -42,12 +41,10 @@ public class FederationHandler {
       FederationCallbackRequest federationCallbackRequest) {
 
     FederationCallbackParameters parameters = federationCallbackRequest.parameters();
-    FederationSession session =
-        federationSessionRepository.find(
-            federationCallbackRequest.tokenIssuer(), parameters.state());
+    FederationSession session = federationSessionRepository.find(parameters.state());
 
     if (!session.exists()) {
-      throw new FederationSessionNotFoundException("");
+      throw new FederationSessionNotFoundException("not found session");
     }
 
     FederatableIdProviderConfiguration configuration =
@@ -70,6 +67,6 @@ public class FederationHandler {
 
     federationSessionRepository.delete(parameters.tokenIssuer(), session);
 
-    return new FederationCallbackResponse(FederationCallbackStatus.OK, user);
+    return new FederationCallbackResponse(FederationCallbackStatus.OK, session, user);
   }
 }

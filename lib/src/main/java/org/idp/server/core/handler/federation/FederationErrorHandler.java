@@ -24,8 +24,7 @@ public class FederationErrorHandler {
       return new FederationRequestResponse(FederationRequestStatus.BAD_REQUEST);
     }
 
-    if (exception
-            instanceof FederationSessionNotFoundException notFoundException) {
+    if (exception instanceof FederationSessionNotFoundException notFoundException) {
       log.log(Level.WARNING, exception.getMessage(), exception);
       return new FederationRequestResponse(FederationRequestStatus.BAD_REQUEST);
     }

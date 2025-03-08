@@ -7,7 +7,7 @@ public interface FederationSessionRepository {
 
   void register(TokenIssuer tokenIssuer, FederationSession federationSession);
 
-  FederationSession find(TokenIssuer tokenIssuer, State state);
+  FederationSession find(State state);
 
   void delete(TokenIssuer tokenIssuer, FederationSession federationSession);
 }

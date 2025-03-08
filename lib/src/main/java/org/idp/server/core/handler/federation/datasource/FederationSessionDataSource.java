@@ -14,11 +14,14 @@ public class FederationSessionDataSource implements FederationSessionRepository 
 
   @Override
   public void register(TokenIssuer tokenIssuer, FederationSession federationSession) {
+    if (map.size() > 10) {
+      map.clear();
+    }
     map.put(federationSession.state(), federationSession);
   }
 
   @Override
-  public FederationSession find(TokenIssuer tokenIssuer, State state) {
+  public FederationSession find(State state) {
     FederationSession federationSession = map.get(state.value());
 
     if (Objects.isNull(federationSession)) {
@@ -30,7 +33,6 @@ public class FederationSessionDataSource implements FederationSessionRepository 
 
   @Override
   public void delete(TokenIssuer tokenIssuer, FederationSession federationSession) {
-
     map.remove(federationSession.state());
   }
 }

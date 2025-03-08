@@ -136,13 +136,10 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/federations/callback")
   public ResponseEntity<?> callbackFederation(
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
-      @PathVariable("id") String id,
       @RequestBody(required = false) MultiValueMap<String, String> body) {
 
     Map<String, String[]> params = transform(body);
-    FederationCallbackResponse callbackResponse =
-        oAuthFlowService.callbackFederation(tenantId, id, params);
+    FederationCallbackResponse callbackResponse = oAuthFlowService.callbackFederation(params);
 
     switch (callbackResponse.status()) {
       case OK -> {

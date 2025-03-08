@@ -106,19 +106,17 @@ public class OAuthFlowService {
     AuthorizationRequest authorizationRequest =
         oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
 
-    return federationService.request(new FederationRequest(tenant.issuer(), federationIdentifier));
+    return federationService.request(
+        new FederationRequest(oauthRequestIdentifier, tenant.issuer(), federationIdentifier));
   }
 
-  public FederationCallbackResponse callbackFederation(
-      TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
-      Map<String, String[]> params) {
-    Tenant tenant = tenantService.get(tenantIdentifier);
-    AuthorizationRequest authorizationRequest =
-        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+  public FederationCallbackResponse callbackFederation(Map<String, String[]> params) {
 
     FederationCallbackResponse callbackResponse =
-        federationService.callback(new FederationCallbackRequest(tenant.issuer(), params));
+        federationService.callback(new FederationCallbackRequest(params));
+
+    AuthorizationRequest authorizationRequest =
+        oAuthApi.get(callbackResponse.authorizationRequestIdentifier());
 
     OAuthSession oAuthSession =
         new OAuthSession(

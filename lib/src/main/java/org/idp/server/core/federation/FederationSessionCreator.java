@@ -1,19 +1,19 @@
 package org.idp.server.core.federation;
 
-import java.util.Map;
 import java.util.UUID;
 import org.idp.server.core.basic.http.QueryParams;
+import org.idp.server.core.handler.federation.io.FederationRequest;
 
 public class FederationSessionCreator {
 
   FederatableIdProviderConfiguration configuration;
-  Map<String, String> customParams;
+  FederationRequest federationRequest;
 
   public FederationSessionCreator(
       FederatableIdProviderConfiguration federatableIdProviderConfiguration,
-      Map<String, String> customParams) {
+      FederationRequest federationRequest) {
     this.configuration = federatableIdProviderConfiguration;
-    this.customParams = customParams;
+    this.federationRequest = federationRequest;
   }
 
   public FederationSession create() {
@@ -33,6 +33,8 @@ public class FederationSessionCreator {
         String.format("%s?%s", authorizationEndpoint, queryParams.params());
 
     return new FederationSession(
+        federationRequest.authorizationRequestId(),
+        federationRequest.tokenIssuerValue(),
         state,
         nonce,
         configuration.identifier(),
