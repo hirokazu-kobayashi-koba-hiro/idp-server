@@ -39,9 +39,9 @@ public class FederationClient implements FederationGateway {
       HttpResponse<String> httpResponse =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String body = httpResponse.body();
+      log.info("token response:" + body);
 
       Map map = jsonConverter.read(body, Map.class);
-      log.info("token response:" + map.toString());
 
       return new FederationTokenResponse(map);
     } catch (Exception e) {
@@ -68,9 +68,10 @@ public class FederationClient implements FederationGateway {
       HttpResponse<String> httpResponse =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String body = httpResponse.body();
+      log.info("userinfo response:" + body);
 
       Map map = jsonConverter.read(body, Map.class);
-      log.info("userinfo response:" + map.toString());
+
 
       return new FederationUserinfoResponse(map);
     } catch (Exception e) {
