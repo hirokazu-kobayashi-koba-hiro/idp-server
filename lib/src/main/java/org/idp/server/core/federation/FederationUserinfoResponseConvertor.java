@@ -21,7 +21,9 @@ public class FederationUserinfoResponseConvertor {
 
   public User convert() {
     User user = new User();
-    if (!exsistingUser.exists()) {
+    if (exsistingUser.exists()) {
+      user.setSub(exsistingUser.sub());
+    } else {
       user.setSub(UUID.randomUUID().toString());
     }
     user.setProviderId(configuration.issuerName());

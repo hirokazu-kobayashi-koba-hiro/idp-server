@@ -69,7 +69,7 @@ public class FederationHandler {
         new FederationUserinfoResponseConvertor(existingUser, userinfoResponse, configuration);
     User user = convertor.convert();
 
-    federationSessionRepository.delete(parameters.tokenIssuer(), session);
+    //    federationSessionRepository.delete(parameters.tokenIssuer(), session);
 
     return new FederationCallbackResponse(FederationCallbackStatus.OK, session, user);
   }

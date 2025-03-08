@@ -102,9 +102,6 @@ public class SqlExecutor {
         if (param instanceof Integer integerValue) {
           prepareStatement.setInt(index, integerValue);
         }
-        if (param instanceof Object objectValue) {
-          prepareStatement.setObject(index, objectValue);
-        }
         index++;
       }
       prepareStatement.executeUpdate();
