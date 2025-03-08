@@ -16,4 +16,6 @@ public interface UserRepository {
   List<User> findList(Tenant tenant, int limit, int offset);
 
   void update(User user);
+
+  User findByProvider(String tokenIssuer, String providerId, String providerUserId);
 }

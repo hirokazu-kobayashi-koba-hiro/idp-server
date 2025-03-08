@@ -38,7 +38,7 @@ public class FederationHandler {
   }
 
   public FederationCallbackResponse handleCallback(
-      FederationCallbackRequest federationCallbackRequest) {
+      FederationCallbackRequest federationCallbackRequest, FederationDelegate federationDelegate) {
 
     FederationCallbackParameters parameters = federationCallbackRequest.parameters();
     FederationSession session = federationSessionRepository.find(parameters.state());
@@ -61,8 +61,12 @@ public class FederationHandler {
     FederationUserinfoResponse userinfoResponse =
         federationGateway.requestUserInfo(userinfoRequest);
 
+    User existingUser =
+        federationDelegate.find(
+            session.tokenIssuer(), configuration.issuerName(), userinfoResponse.sub());
+
     FederationUserinfoResponseConvertor convertor =
-        new FederationUserinfoResponseConvertor(User.notFound(), userinfoResponse, configuration);
+        new FederationUserinfoResponseConvertor(existingUser, userinfoResponse, configuration);
     User user = convertor.convert();
 
     federationSessionRepository.delete(parameters.tokenIssuer(), session);

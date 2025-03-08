@@ -23,6 +23,11 @@ public class UserService {
     return userRepository.findBy(tenant, email, providerId);
   }
 
+  public User findByProvider(String tokenIssuer, String providerId, String providerUserId) {
+
+    return userRepository.findByProvider(tokenIssuer, providerId, providerUserId);
+  }
+
   public User get(String userId) {
     return userRepository.get(userId);
   }

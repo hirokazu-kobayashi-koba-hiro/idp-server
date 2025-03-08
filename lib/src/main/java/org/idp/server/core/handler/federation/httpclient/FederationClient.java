@@ -72,7 +72,6 @@ public class FederationClient implements FederationGateway {
 
       Map map = jsonConverter.read(body, Map.class);
 
-
       return new FederationUserinfoResponse(map);
     } catch (Exception e) {
       log.severe(e.getMessage());

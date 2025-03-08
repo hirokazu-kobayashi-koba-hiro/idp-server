@@ -66,4 +66,15 @@ public class UserDataSource implements UserRepository {
     String customPropertiesString = jsonConverter.write(user.customPropertiesValue());
     mapper.update(user, customPropertiesString);
   }
+
+  @Override
+  public User findByProvider(String tokenIssuer, String providerId, String providerUserId) {
+    User user = mapper.selectByProvider(tokenIssuer, providerId, providerUserId);
+
+    if (Objects.isNull(user)) {
+      return new User();
+    }
+
+    return user;
+  }
 }

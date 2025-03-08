@@ -2,6 +2,7 @@ package org.idp.server.core;
 
 import org.idp.server.core.api.FederationApi;
 import org.idp.server.core.basic.sql.Transactional;
+import org.idp.server.core.federation.FederationDelegate;
 import org.idp.server.core.handler.federation.FederationErrorHandler;
 import org.idp.server.core.handler.federation.FederationHandler;
 import org.idp.server.core.handler.federation.io.FederationCallbackRequest;
@@ -33,10 +34,10 @@ public class FederationApiImpl implements FederationApi {
 
   @Override
   public FederationCallbackResponse handleCallback(
-      FederationCallbackRequest federationCallbackRequest) {
+      FederationCallbackRequest federationCallbackRequest, FederationDelegate federationDelegate) {
     try {
 
-      return federationHandler.handleCallback(federationCallbackRequest);
+      return federationHandler.handleCallback(federationCallbackRequest, federationDelegate);
     } catch (Exception e) {
 
       return federationErrorHandler.handleCallback(e);
