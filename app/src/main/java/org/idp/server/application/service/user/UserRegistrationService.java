@@ -35,7 +35,7 @@ public class UserRegistrationService implements PasswordEncodeDelegation {
 
   public User registerOrUpdate(Tenant tenant, User user) {
 
-    User existingUser = userService.findBy(tenant, user.name(), user.providerUserId());
+    User existingUser = userService.findBy(tenant, user.email(), user.providerUserId());
 
     if (existingUser.exists()) {
       userService.update(user);
