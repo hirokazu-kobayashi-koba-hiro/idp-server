@@ -3,7 +3,10 @@ package org.idp.server.presentation.api.oauth;
 import java.util.Map;
 import org.idp.server.application.service.OAuthFlowService;
 import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
+import org.idp.server.core.type.extension.Pairs;
+import org.idp.server.domain.model.tenant.Tenant;
 import org.idp.server.presentation.api.ParameterTransformable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
@@ -24,11 +27,23 @@ public class OAuthFederationCallbackV1Api implements ParameterTransformable {
       @RequestBody(required = false) MultiValueMap<String, String> body) {
 
     Map<String, String[]> params = transform(body);
-    FederationCallbackResponse callbackResponse = oAuthFlowService.callbackFederation(params);
+    Pairs<Tenant, FederationCallbackResponse> result = oAuthFlowService.callbackFederation(params);
+    Tenant tenant = result.getLeft();
+    FederationCallbackResponse callbackResponse = result.getRight();
 
     switch (callbackResponse.status()) {
       case OK -> {
-        return new ResponseEntity<>(HttpStatus.OK);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type", "application/json");
+
+        Map<String, String> contents =
+            Map.of(
+                "id",
+                callbackResponse.authorizationRequestId(),
+                "tenant_id",
+                tenant.identifierValue());
+
+        return new ResponseEntity<>(contents, headers, HttpStatus.OK);
       }
       case BAD_REQUEST -> {
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);

@@ -38,4 +38,8 @@ public class FederationCallbackResponse {
   public AuthorizationRequestIdentifier authorizationRequestIdentifier() {
     return new AuthorizationRequestIdentifier(federationSession.authorizationRequestId());
   }
+
+  public String authorizationRequestId() {
+    return federationSession.authorizationRequestId();
+  }
 }
