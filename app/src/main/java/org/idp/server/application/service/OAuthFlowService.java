@@ -117,7 +117,7 @@ public class OAuthFlowService {
         federationService.callback(new FederationCallbackRequest(params));
 
     if (callbackResponse.isError()) {
-      return Pairs.of(new Tenant(), new FederationCallbackResponse());
+      return Pairs.of(new Tenant(), callbackResponse);
     }
 
     AuthorizationRequest authorizationRequest =
