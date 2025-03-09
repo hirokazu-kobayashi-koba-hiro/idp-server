@@ -8,7 +8,9 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
   default Map<String, Object> createIndividualClaims(
       User user, IdTokenIndividualClaimsDecider claimsDecider) {
 
-    HashMap<String, Object> claims = new HashMap<>();
+    // TODO handle claim
+    HashMap<String, Object> claims = new HashMap<>(user.customPropertiesValue());
+
     claims.put("sub", user.sub());
     if (claimsDecider.shouldAddName() && user.hasName()) {
       claims.put("name", user.name());
@@ -67,8 +69,6 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
       claims.put("updated_at", user.updateAtAsLong());
     }
-    // TODO handle claim
-    claims.putAll(user.customPropertiesValue());
 
     return claims;
   }
@@ -76,7 +76,9 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
   default Map<String, Object> createIndividualClaims(
       User user, UserinfoIndividualClaimsDecider claimsDecider) {
 
-    HashMap<String, Object> claims = new HashMap<>();
+    // TODO handle claim
+    HashMap<String, Object> claims = new HashMap<>(user.customPropertiesValue());
+
     claims.put("sub", user.sub());
     if (claimsDecider.shouldAddName() && user.hasName()) {
       claims.put("name", user.name());
@@ -135,8 +137,6 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
       claims.put("updated_at", user.updateAtAsLong());
     }
-    // TODO handle claim
-    claims.putAll(user.customPropertiesValue());
 
     return claims;
   }
