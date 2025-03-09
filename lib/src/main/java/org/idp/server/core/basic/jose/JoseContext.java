@@ -1,5 +1,7 @@
 package org.idp.server.core.basic.jose;
 
+import java.util.Map;
+
 /** JoseContext */
 public class JoseContext {
 
@@ -27,6 +29,10 @@ public class JoseContext {
 
   public JsonWebTokenClaims claims() {
     return claims;
+  }
+
+  public Map<String, Object> claimsAsMap() {
+    return claims.toMap();
   }
 
   public JsonWebSignatureVerifier jwsVerifier() {

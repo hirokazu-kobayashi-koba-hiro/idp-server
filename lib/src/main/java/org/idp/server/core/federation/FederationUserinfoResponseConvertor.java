@@ -36,7 +36,11 @@ public class FederationUserinfoResponseConvertor {
     user.setMiddleName(userinfoResponse.middleName());
     user.setPreferredUsername(userinfoResponse.preferredUsername());
     user.setProfile(userinfoResponse.profile());
-    user.setPicture(userinfoResponse.picture());
+    if (configuration.isFacebook()) {
+      user.setPicture("");
+    } else {
+      user.setPicture(userinfoResponse.picture());
+    }
     user.setWebsite(userinfoResponse.website());
     user.setEmail(userinfoResponse.email());
     user.setEmailVerified(userinfoResponse.emailVerified());

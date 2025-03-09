@@ -18,6 +18,7 @@ public class FederatableIdProviderConfiguration implements JsonReadable {
   String tokenEndpoint;
   String userinfoEndpoint;
   String jwksUri;
+  String paramsDelimiter;
 
   public FederatableIdProviderConfiguration() {}
 
@@ -33,7 +34,8 @@ public class FederatableIdProviderConfiguration implements JsonReadable {
       String authorizationEndpoint,
       String tokenEndpoint,
       String userinfoEndpoint,
-      String jwksUri) {
+      String jwksUri,
+      String paramsDelimiter) {
     this.identifier = identifier;
     this.issuer = issuer;
     this.issuerName = issuerName;
@@ -46,6 +48,7 @@ public class FederatableIdProviderConfiguration implements JsonReadable {
     this.tokenEndpoint = tokenEndpoint;
     this.userinfoEndpoint = userinfoEndpoint;
     this.jwksUri = jwksUri;
+    this.paramsDelimiter = paramsDelimiter;
   }
 
   public String identifier() {
@@ -81,6 +84,11 @@ public class FederatableIdProviderConfiguration implements JsonReadable {
   }
 
   public String scopeAsString() {
+
+    if (Objects.nonNull(paramsDelimiter) && Objects.equals(paramsDelimiter, ",")) {
+      return String.join(",", scopesSupported);
+    }
+
     return String.join(" ", scopesSupported);
   }
 
@@ -102,5 +110,13 @@ public class FederatableIdProviderConfiguration implements JsonReadable {
 
   public boolean exists() {
     return Objects.nonNull(identifier) && !identifier.isEmpty();
+  }
+
+  public boolean isFacebook() {
+    return Objects.nonNull(issuer) && issuerName.equals("facebook");
+  }
+
+  public boolean isYahoo() {
+    return Objects.nonNull(issuer) && issuerName.equals("yahoo");
   }
 }

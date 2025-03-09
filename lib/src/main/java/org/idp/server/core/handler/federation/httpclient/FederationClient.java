@@ -56,6 +56,36 @@ public class FederationClient implements FederationGateway {
   }
 
   @Override
+  public FederationJwksResponse getJwks(FederationJwksRequest federationJwksRequest) {
+
+    try {
+
+      HttpRequest request =
+          HttpRequest.newBuilder()
+              .uri(new URI(federationJwksRequest.endpoint()))
+              .header("Content-Type", "application/json")
+              .header("Accept", "application/json")
+              .GET()
+              .build();
+
+      HttpResponse<String> httpResponse =
+          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+      String body = httpResponse.body();
+      log.info("userinfo response:" + body);
+
+      if (httpResponse.statusCode() != 200) {
+        throw new RuntimeException("Response code is not 200");
+      }
+
+      return new FederationJwksResponse(body);
+    } catch (Exception e) {
+      log.severe(e.getMessage());
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
   public FederationUserinfoResponse requestUserInfo(
       FederationUserinfoRequest federationUserinfoRequest) {
     try {
@@ -81,6 +111,40 @@ public class FederationClient implements FederationGateway {
         throw new RuntimeException("Response code is not 200");
       }
 
+      Map map = jsonConverter.read(body, Map.class);
+
+      return new FederationUserinfoResponse(map);
+    } catch (Exception e) {
+      log.severe(e.getMessage());
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public FederationUserinfoResponse requestFacebookSpecificUerInfo(
+      FederationUserinfoRequest federationUserinfoRequest) {
+    try {
+
+      QueryParams queryParams = new QueryParams();
+      queryParams.add("fields", "id,name,email,picture");
+      queryParams.add("access_token", federationUserinfoRequest.accessToken());
+      HttpRequest request =
+          HttpRequest.newBuilder()
+              .uri(new URI(federationUserinfoRequest.endpoint() + "?" + queryParams.params()))
+              .header("Content-Type", "application/json")
+              .header("Accept", "application/json")
+              .GET()
+              .build();
+
+      HttpResponse<String> httpResponse =
+          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+      String body = httpResponse.body();
+      log.info("userinfo response:" + body);
+
+      if (httpResponse.statusCode() != 200) {
+        throw new RuntimeException("Response code is not 200");
+      }
 
       Map map = jsonConverter.read(body, Map.class);
 

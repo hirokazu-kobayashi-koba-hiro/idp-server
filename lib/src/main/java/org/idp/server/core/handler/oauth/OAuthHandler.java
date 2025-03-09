@@ -61,16 +61,20 @@ public class OAuthHandler {
 
   public OAuthLogoutResponse handleLogout(
       OAuthLogoutRequest request, OAuthRequestDelegate delegate) {
+
     OAuthLogoutParameters parameters = request.toParameters();
     TokenIssuer tokenIssuer = request.toTokenIssuer();
+
     OAuthSessionKey oAuthSessionKey =
         new OAuthSessionKey(tokenIssuer.value(), parameters.clientId().value());
     OAuthSession session = delegate.findSession(oAuthSessionKey);
     delegate.deleteSession(oAuthSessionKey);
+
     String redirectUri =
         parameters.hasPostLogoutRedirectUri()
             ? parameters.postLogoutRedirectUri().value()
             : tokenIssuer.value();
+
     if (parameters.hasPostLogoutRedirectUri()) {
       return new OAuthLogoutResponse(OAuthLogoutStatus.REDIRECABLE_FOUND, redirectUri);
     }

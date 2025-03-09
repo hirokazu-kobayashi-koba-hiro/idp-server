@@ -97,4 +97,8 @@ public class JsonWebTokenClaims {
     }
     return !value.getClaims().isEmpty();
   }
+
+  public Map<String, Object> toMap() {
+    return value.getClaims();
+  }
 }
