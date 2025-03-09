@@ -116,12 +116,12 @@ public class OAuthFlowService {
     FederationCallbackResponse callbackResponse =
         federationService.callback(new FederationCallbackRequest(params));
 
-    AuthorizationRequest authorizationRequest =
-        oAuthApi.get(callbackResponse.authorizationRequestIdentifier());
-
     if (callbackResponse.isError()) {
       return Pairs.of(new Tenant(), new FederationCallbackResponse());
     }
+
+    AuthorizationRequest authorizationRequest =
+        oAuthApi.get(callbackResponse.authorizationRequestIdentifier());
 
     Tenant tenant = tenantService.find(authorizationRequest.tokenIssuer());
 
