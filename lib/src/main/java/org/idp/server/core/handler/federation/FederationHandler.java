@@ -1,14 +1,12 @@
 package org.idp.server.core.handler.federation;
 
+import java.util.Map;
 import org.idp.server.core.basic.jose.JoseContext;
 import org.idp.server.core.basic.jose.JoseHandler;
 import org.idp.server.core.basic.jose.JoseInvalidException;
 import org.idp.server.core.federation.*;
 import org.idp.server.core.handler.federation.io.*;
 import org.idp.server.core.oauth.identity.User;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class FederationHandler {
 
@@ -111,7 +109,7 @@ public class FederationHandler {
       return federationGateway.requestFacebookSpecificUerInfo(userinfoRequest);
     }
 
-    //TODO examine at yahoo
+    // TODO examine at yahoo
     if (configuration.isYahoo()) {
 
       Map<String, Object> values = Map.of("sub", joseContext.claims().getSub());

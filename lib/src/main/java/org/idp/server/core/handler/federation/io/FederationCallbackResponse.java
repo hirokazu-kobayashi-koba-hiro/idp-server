@@ -42,4 +42,8 @@ public class FederationCallbackResponse {
   public String authorizationRequestId() {
     return federationSession.authorizationRequestId();
   }
+
+  public boolean isError() {
+    return status.isError();
+  }
 }

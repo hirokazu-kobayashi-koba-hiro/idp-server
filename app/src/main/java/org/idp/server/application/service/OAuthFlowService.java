@@ -119,6 +119,10 @@ public class OAuthFlowService {
     AuthorizationRequest authorizationRequest =
         oAuthApi.get(callbackResponse.authorizationRequestIdentifier());
 
+    if (callbackResponse.isError()) {
+      return Pairs.of(new Tenant(), new FederationCallbackResponse());
+    }
+
     Tenant tenant = tenantService.find(authorizationRequest.tokenIssuer());
 
     OAuthSession oAuthSession =
