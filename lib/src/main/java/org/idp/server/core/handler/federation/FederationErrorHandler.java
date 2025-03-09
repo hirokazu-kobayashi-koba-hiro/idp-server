@@ -2,6 +2,8 @@ package org.idp.server.core.handler.federation;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.idp.server.core.basic.http.HttpClientErrorException;
+import org.idp.server.core.basic.http.HttpServerErrorException;
 import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.core.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.core.federation.FederatableIdProviderConfigurationNotFoundException;
@@ -20,18 +22,18 @@ public class FederationErrorHandler {
 
     if (exception
         instanceof FederatableIdProviderConfigurationNotFoundException notFoundException) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new FederationRequestResponse(FederationRequestStatus.BAD_REQUEST);
     }
 
     if (exception instanceof FederationSessionNotFoundException notFoundException) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new FederationRequestResponse(FederationRequestStatus.BAD_REQUEST);
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {
       log.log(Level.WARNING, "not found configuration");
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new FederationRequestResponse(FederationRequestStatus.BAD_REQUEST);
@@ -39,7 +41,7 @@ public class FederationErrorHandler {
 
     if (exception instanceof ServerConfigurationNotFoundException) {
       log.log(Level.WARNING, "not found configuration");
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new FederationRequestResponse(FederationRequestStatus.BAD_REQUEST);
@@ -47,20 +49,20 @@ public class FederationErrorHandler {
 
     Error error = new Error("server_error");
     ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
-    log.log(Level.SEVERE, exception.getMessage(), exception);
+    log.log(Level.SEVERE, exception.getMessage());
     return new FederationRequestResponse(FederationRequestStatus.SERVER_ERROR);
   }
 
   public FederationCallbackResponse handleCallback(Exception exception) {
     if (exception
         instanceof FederatableIdProviderConfigurationNotFoundException notFoundException) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new FederationCallbackResponse(FederationCallbackStatus.BAD_REQUEST);
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {
       log.log(Level.WARNING, "not found configuration");
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new FederationCallbackResponse(FederationCallbackStatus.BAD_REQUEST);
@@ -68,10 +70,20 @@ public class FederationErrorHandler {
 
     if (exception instanceof ServerConfigurationNotFoundException) {
       log.log(Level.WARNING, "not found configuration");
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new FederationCallbackResponse(FederationCallbackStatus.BAD_REQUEST);
+    }
+
+    if (exception instanceof HttpClientErrorException clientErrorException) {
+      log.log(Level.WARNING, clientErrorException.getMessage());
+      return new FederationCallbackResponse(FederationCallbackStatus.BAD_REQUEST);
+    }
+
+    if (exception instanceof HttpServerErrorException serverErrorException) {
+      log.log(Level.SEVERE, serverErrorException.getMessage());
+      return new FederationCallbackResponse(FederationCallbackStatus.SERVER_ERROR);
     }
 
     Error error = new Error("server_error");

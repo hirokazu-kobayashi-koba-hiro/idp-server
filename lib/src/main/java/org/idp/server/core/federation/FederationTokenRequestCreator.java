@@ -22,7 +22,8 @@ public class FederationTokenRequestCreator {
     String clientSecret = configuration.clientSecret();
     String redirectUri = session.redirectUri();
     String grantType = "authorization_code";
+    String clientAuthenticationType = configuration.clientAuthenticationType();
     return new FederationTokenRequest(
-        endpoint, code, clientId, clientSecret, redirectUri, grantType);
+        endpoint, code, clientId, clientSecret, redirectUri, grantType, clientAuthenticationType);
   }
 }

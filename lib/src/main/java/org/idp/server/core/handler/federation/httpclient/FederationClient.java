@@ -1,12 +1,16 @@
 package org.idp.server.core.handler.federation.httpclient;
 
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 import java.util.logging.Logger;
+import org.idp.server.core.basic.http.HttpClientErrorException;
 import org.idp.server.core.basic.http.HttpClientFactory;
+import org.idp.server.core.basic.http.HttpNetworkErrorException;
 import org.idp.server.core.basic.http.QueryParams;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.federation.*;
@@ -29,29 +33,32 @@ public class FederationClient implements FederationGateway {
 
       QueryParams queryParams = new QueryParams(federationTokenRequest.toMap());
 
-      HttpRequest request =
+      HttpRequest.Builder builder =
           HttpRequest.newBuilder()
               .uri(new URI(federationTokenRequest.endpoint()))
               .header("Content-Type", "application/x-www-form-urlencoded")
               .header("Accept", "application/json")
-              .POST(HttpRequest.BodyPublishers.ofString(queryParams.params()))
-              .build();
+              .POST(HttpRequest.BodyPublishers.ofString(queryParams.params()));
+
+      if (federationTokenRequest.isClientSecretBasic()) {
+        builder.header("Authorization", federationTokenRequest.basicAuthenticationValue());
+      }
+
+      HttpRequest request = builder.build();
 
       HttpResponse<String> httpResponse =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String body = httpResponse.body();
       log.info("token response:" + body);
 
-      if (httpResponse.statusCode() != 200) {
-        throw new RuntimeException("Response code is not 200");
-      }
+      validateResponse(httpResponse, body);
 
       Map map = jsonConverter.read(body, Map.class);
 
       return new FederationTokenResponse(map);
-    } catch (Exception e) {
+    } catch (IOException | InterruptedException | URISyntaxException e) {
       log.severe(e.getMessage());
-      throw new RuntimeException(e);
+      throw new HttpNetworkErrorException("unexpected network error", e);
     }
   }
 
@@ -72,16 +79,14 @@ public class FederationClient implements FederationGateway {
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
       String body = httpResponse.body();
-      log.info("userinfo response:" + body);
+      log.info("jwks response:" + body);
 
-      if (httpResponse.statusCode() != 200) {
-        throw new RuntimeException("Response code is not 200");
-      }
+      validateResponse(httpResponse, body);
 
       return new FederationJwksResponse(body);
-    } catch (Exception e) {
+    } catch (IOException | InterruptedException | URISyntaxException e) {
       log.severe(e.getMessage());
-      throw new RuntimeException(e);
+      throw new HttpNetworkErrorException("unexpected network error", e);
     }
   }
 
@@ -107,16 +112,14 @@ public class FederationClient implements FederationGateway {
       String body = httpResponse.body();
       log.info("userinfo response:" + body);
 
-      if (httpResponse.statusCode() != 200) {
-        throw new RuntimeException("Response code is not 200");
-      }
+      validateResponse(httpResponse, body);
 
       Map map = jsonConverter.read(body, Map.class);
 
       return new FederationUserinfoResponse(map);
-    } catch (Exception e) {
+    } catch (IOException | InterruptedException | URISyntaxException e) {
       log.severe(e.getMessage());
-      throw new RuntimeException(e);
+      throw new HttpNetworkErrorException("unexpected network error", e);
     }
   }
 
@@ -142,16 +145,24 @@ public class FederationClient implements FederationGateway {
       String body = httpResponse.body();
       log.info("userinfo response:" + body);
 
-      if (httpResponse.statusCode() != 200) {
-        throw new RuntimeException("Response code is not 200");
-      }
+      validateResponse(httpResponse, body);
 
       Map map = jsonConverter.read(body, Map.class);
 
       return new FederationUserinfoResponse(map);
-    } catch (Exception e) {
+    } catch (IOException | InterruptedException | URISyntaxException e) {
       log.severe(e.getMessage());
-      throw new RuntimeException(e);
+      throw new HttpNetworkErrorException("unexpected network error", e);
+    }
+  }
+
+  private void validateResponse(HttpResponse<String> httpResponse, String body) {
+    if (httpResponse.statusCode() >= 400 && httpResponse.statusCode() < 500) {
+      throw new HttpClientErrorException(body, httpResponse.statusCode());
+    }
+
+    if (httpResponse.statusCode() >= 500) {
+      throw new HttpClientErrorException(body, httpResponse.statusCode());
     }
   }
 }

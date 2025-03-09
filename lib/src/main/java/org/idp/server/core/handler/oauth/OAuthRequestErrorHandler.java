@@ -19,7 +19,7 @@ public class OAuthRequestErrorHandler {
 
   public OAuthRequestResponse handle(Exception exception) {
     if (exception instanceof OAuthBadRequestException badRequestException) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new OAuthRequestResponse(
           OAuthRequestStatus.BAD_REQUEST,
           badRequestException.error(),
@@ -29,19 +29,19 @@ public class OAuthRequestErrorHandler {
       AuthorizationErrorResponseCreator authorizationErrorResponseCreator =
           new AuthorizationErrorResponseCreator(redirectableBadRequestException);
       AuthorizationErrorResponse errorResponse = authorizationErrorResponseCreator.create();
-      log.log(Level.WARNING, redirectableBadRequestException.getMessage(), exception);
+      log.log(Level.WARNING, redirectableBadRequestException.getMessage());
       return new OAuthRequestResponse(OAuthRequestStatus.REDIRECABLE_BAD_REQUEST, errorResponse);
     }
     if (exception instanceof ClientConfigurationNotFoundException) {
       log.log(Level.WARNING, "not found configuration");
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST, error, errorDescription);
     }
     if (exception instanceof ServerConfigurationNotFoundException) {
       log.log(Level.WARNING, "not found configuration");
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST, error, errorDescription);

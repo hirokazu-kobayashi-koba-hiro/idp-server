@@ -12,6 +12,7 @@ public class FederatableIdProviderConfiguration implements JsonReadable {
   String description;
   String clientId;
   String clientSecret;
+  String clientAuthenticationType;
   String redirectUri;
   List<String> scopesSupported;
   String authorizationEndpoint;
@@ -29,6 +30,7 @@ public class FederatableIdProviderConfiguration implements JsonReadable {
       String description,
       String clientId,
       String clientSecret,
+      String clientAuthenticationType,
       String redirectUri,
       List<String> scopesSupported,
       String authorizationEndpoint,
@@ -42,6 +44,7 @@ public class FederatableIdProviderConfiguration implements JsonReadable {
     this.description = description;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
+    this.clientAuthenticationType = clientAuthenticationType;
     this.redirectUri = redirectUri;
     this.scopesSupported = scopesSupported;
     this.authorizationEndpoint = authorizationEndpoint;
@@ -73,6 +76,10 @@ public class FederatableIdProviderConfiguration implements JsonReadable {
 
   public String clientSecret() {
     return clientSecret;
+  }
+
+  public String clientAuthenticationType() {
+    return clientAuthenticationType;
   }
 
   public String redirectUri() {

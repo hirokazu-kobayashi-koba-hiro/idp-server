@@ -26,7 +26,7 @@ public class OAuthDenyErrorHandler {
     }
     if (exception instanceof ClientConfigurationNotFoundException) {
       log.log(Level.WARNING, "not found configuration");
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new OAuthDenyResponse(
@@ -34,7 +34,7 @@ public class OAuthDenyErrorHandler {
     }
     if (exception instanceof ServerConfigurationNotFoundException) {
       log.log(Level.WARNING, "not found configuration");
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new OAuthDenyResponse(

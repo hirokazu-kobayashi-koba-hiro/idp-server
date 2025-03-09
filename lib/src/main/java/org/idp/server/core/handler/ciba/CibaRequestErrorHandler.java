@@ -16,14 +16,14 @@ public class CibaRequestErrorHandler {
 
   public CibaRequestResponse handle(Exception exception) {
     if (exception instanceof BackchannelAuthenticationBadRequestException badRequest) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new CibaRequestResponse(
           CibaRequestStatus.BAD_REQUEST,
           new BackchannelAuthenticationErrorResponse(
               badRequest.error(), badRequest.errorDescription()));
     }
     if (exception instanceof ClientUnAuthorizedException) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new CibaRequestResponse(
           CibaRequestStatus.UNAUTHORIZE,
           new BackchannelAuthenticationErrorResponse(

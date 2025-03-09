@@ -20,28 +20,28 @@ public class CredentialRequestErrorHandler {
 
   public CredentialResponse handle(Exception exception) {
     if (exception instanceof VerifiableCredentialTokenInvalidException badRequest) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new CredentialResponse(
           CredentialRequestStatus.BAD_REQUEST,
           new VerifiableCredentialErrorResponse(
               new Error("invalid_token"), new ErrorDescription(badRequest.getMessage())));
     }
     if (exception instanceof VerifiableCredentialBadRequestException badRequest) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new CredentialResponse(
           CredentialRequestStatus.BAD_REQUEST,
           new VerifiableCredentialErrorResponse(
               new Error("invalid_request"), new ErrorDescription(badRequest.getMessage())));
     }
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new CredentialResponse(
           CredentialRequestStatus.BAD_REQUEST,
           new VerifiableCredentialErrorResponse(
               new Error("invalid_client"), new ErrorDescription(exception.getMessage())));
     }
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new CredentialResponse(
           CredentialRequestStatus.BAD_REQUEST,
           new VerifiableCredentialErrorResponse(
@@ -57,34 +57,34 @@ public class CredentialRequestErrorHandler {
 
   public BatchCredentialResponse handleBatchRequest(Exception exception) {
     if (exception instanceof VerifiableCredentialTokenInvalidException badRequest) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new BatchCredentialResponse(
           CredentialRequestStatus.BAD_REQUEST,
           new VerifiableCredentialErrorResponse(
               new Error("invalid_token"), new ErrorDescription(badRequest.getMessage())));
     }
     if (exception instanceof VerifiableCredentialBadRequestException badRequest) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new BatchCredentialResponse(
           CredentialRequestStatus.BAD_REQUEST,
           new VerifiableCredentialErrorResponse(
               new Error("invalid_request"), new ErrorDescription(badRequest.getMessage())));
     }
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new BatchCredentialResponse(
           CredentialRequestStatus.BAD_REQUEST,
           new VerifiableCredentialErrorResponse(
               new Error("invalid_client"), new ErrorDescription(exception.getMessage())));
     }
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new BatchCredentialResponse(
           CredentialRequestStatus.BAD_REQUEST,
           new VerifiableCredentialErrorResponse(
               new Error("invalid_request"), new ErrorDescription(exception.getMessage())));
     }
-    log.log(Level.SEVERE, exception.getMessage(), exception);
+    log.log(Level.SEVERE, exception.getMessage());
     Error error = new Error("server_error");
     ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
     VerifiableCredentialErrorResponse errorResponse =
@@ -94,28 +94,28 @@ public class CredentialRequestErrorHandler {
 
   public DeferredCredentialResponse handleDeferredRequest(Exception exception) {
     if (exception instanceof VerifiableCredentialTokenInvalidException badRequest) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new DeferredCredentialResponse(
           CredentialRequestStatus.BAD_REQUEST,
           new VerifiableCredentialErrorResponse(
               new Error("invalid_token"), new ErrorDescription(badRequest.getMessage())));
     }
     if (exception instanceof VerifiableCredentialBadRequestException badRequest) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new DeferredCredentialResponse(
           CredentialRequestStatus.BAD_REQUEST,
           new VerifiableCredentialErrorResponse(
               new Error("invalid_request"), new ErrorDescription(badRequest.getMessage())));
     }
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new DeferredCredentialResponse(
           CredentialRequestStatus.BAD_REQUEST,
           new VerifiableCredentialErrorResponse(
               new Error("invalid_client"), new ErrorDescription(exception.getMessage())));
     }
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.log(Level.WARNING, exception.getMessage(), exception);
+      log.log(Level.WARNING, exception.getMessage());
       return new DeferredCredentialResponse(
           CredentialRequestStatus.BAD_REQUEST,
           new VerifiableCredentialErrorResponse(
