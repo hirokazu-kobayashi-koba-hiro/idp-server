@@ -35,10 +35,10 @@ public class OAuthFlowEventCreator {
     builder.add(eventType);
     builder.add(eventDescription);
 
-    EventServer eventServer = new EventServer(authorizationRequest.tokenIssuer().value(), "");
+    EventServer eventServer = new EventServer(authorizationRequest.tokenIssuer(), "");
     builder.add(eventServer);
 
-    EventClient eventClient = new EventClient(authorizationRequest.clientId().value(), "");
+    EventClient eventClient = new EventClient(authorizationRequest.clientId(), "");
     builder.add(eventClient);
 
     EventUser eventUser = new EventUser(user.sub(), user.name());

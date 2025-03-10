@@ -38,7 +38,10 @@ import org.idp.server.core.handler.oauth.datasource.database.request.Authorizati
 import org.idp.server.core.handler.oauth.datasource.memory.AuthorizationCodeGrantMemoryDataSource;
 import org.idp.server.core.handler.oauth.datasource.memory.AuthorizationRequestMemoryDataSource;
 import org.idp.server.core.handler.oauth.httpclient.RequestObjectHttpClient;
-import org.idp.server.core.handler.sharedsignal.EventDataSource;
+import org.idp.server.core.handler.sharedsignal.EventHandler;
+import org.idp.server.core.handler.sharedsignal.datasource.EventDataSource;
+import org.idp.server.core.handler.sharedsignal.datasource.SharedSignalFrameworkConfigurationDataSource;
+import org.idp.server.core.handler.sharedsignal.httpClient.SharedSignalEventClient;
 import org.idp.server.core.handler.token.TokenRequestHandler;
 import org.idp.server.core.handler.token.datasource.database.OAuthTokenDataSource;
 import org.idp.server.core.handler.token.datasource.memory.OAuthTokenMemoryDataSource;
@@ -195,6 +198,8 @@ public class IdpServerApplication {
     FederatableIdProviderConfigurationDataSource federatableIdProviderConfigurationDataSource =
         new FederatableIdProviderConfigurationDataSource();
     FederationSessionDataSource federationSessionDataSource = new FederationSessionDataSource();
+    SharedSignalFrameworkConfigurationDataSource sharedSignalFrameworkConfigurationDataSource =
+        new SharedSignalFrameworkConfigurationDataSource();
 
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
@@ -309,8 +314,12 @@ public class IdpServerApplication {
                 new ClientConfigurationHandler(clientConfigurationMemoryDataSource)),
             ClientManagementApi.class);
 
+    SharedSignalEventClient sharedSignalEventClient = new SharedSignalEventClient();
+    EventHandler eventHandler =
+        new EventHandler(
+            eventDataSource, sharedSignalFrameworkConfigurationDataSource, sharedSignalEventClient);
     this.eventApi =
-        TransactionInterceptor.createProxy(new EventApiImpl(eventDataSource), EventApi.class);
+        TransactionInterceptor.createProxy(new EventApiImpl(eventHandler), EventApi.class);
 
     FederationHandler federationHandler =
         new FederationHandler(

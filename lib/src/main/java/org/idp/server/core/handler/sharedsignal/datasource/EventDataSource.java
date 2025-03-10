@@ -1,4 +1,4 @@
-package org.idp.server.core.handler.sharedsignal;
+package org.idp.server.core.handler.sharedsignal.datasource;
 
 import java.util.ArrayList;
 import java.util.List;

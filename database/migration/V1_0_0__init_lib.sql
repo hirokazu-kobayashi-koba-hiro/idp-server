@@ -151,6 +151,14 @@ CREATE TABLE verifiable_credential_transaction
     updated_at            TIMESTAMP DEFAULT now() NOT NULL
 );
 
+CREATE TABLE shared_signal_framework_configuration
+(
+    id         VARCHAR(255)            NOT NULL PRIMARY KEY,
+    payload    JSONB                   NOT NULL,
+    created_at TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP DEFAULT now() NOT NULL
+);
+
 CREATE TABLE events
 (
     id          char(36) PRIMARY KEY,

@@ -3,6 +3,8 @@ package org.idp.server.core.sharedsignal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class Event {
 
@@ -66,6 +68,10 @@ public class Event {
     return user;
   }
 
+  public String userSub() {
+    return user.id();
+  }
+
   public IpAddress ipAddress() {
     return ipAddress;
   }
@@ -98,5 +104,17 @@ public class Event {
     }
     result.put("detail", detail.toMap());
     return result;
+  }
+
+  public TokenIssuer tokenIssuer() {
+    return server.issuer();
+  }
+
+  public String tokenIssuerValue() {
+    return server.id();
+  }
+
+  public ClientId clientId() {
+    return client.clientId();
   }
 }

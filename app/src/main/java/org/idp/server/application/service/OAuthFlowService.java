@@ -156,7 +156,7 @@ public class OAuthFlowService {
             SystemDateTime.now().plusSeconds(3600));
     oAuthSessionService.registerSession(oAuthSession);
 
-    publishEvent(authorizationRequest, user, DefaultEventType.signup);
+    publishEvent(authorizationRequest, user, DefaultEventType.user_signup);
 
     return user;
   }

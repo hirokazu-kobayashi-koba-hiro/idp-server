@@ -3,15 +3,16 @@ package org.idp.server.core.sharedsignal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.type.oauth.ClientId;
 
 public class EventClient {
 
-  String id;
+  ClientId id;
   String name;
 
   public EventClient() {}
 
-  public EventClient(String id, String name) {
+  public EventClient(ClientId id, String name) {
     this.id = id;
     this.name = name;
   }
@@ -28,7 +29,7 @@ public class EventClient {
   }
 
   public String id() {
-    return id;
+    return id.value();
   }
 
   public String name() {
@@ -36,6 +37,10 @@ public class EventClient {
   }
 
   public boolean exists() {
-    return Objects.nonNull(id) && !id.isEmpty();
+    return Objects.nonNull(id) && !id.exists();
+  }
+
+  public ClientId clientId() {
+    return id;
   }
 }

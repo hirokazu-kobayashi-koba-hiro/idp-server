@@ -22,6 +22,6 @@ public class EventListerService {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onEvent(Event event) {
     log.info("onEvent: {}", event.toMap());
-    eventApi.register(event);
+    eventApi.handle(event);
   }
 }

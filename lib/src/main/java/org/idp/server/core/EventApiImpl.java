@@ -2,20 +2,26 @@ package org.idp.server.core;
 
 import org.idp.server.core.api.EventApi;
 import org.idp.server.core.basic.sql.Transactional;
-import org.idp.server.core.sharedsignal.Event;
-import org.idp.server.core.sharedsignal.EventRepository;
+import org.idp.server.core.handler.sharedsignal.EventHandler;
+import org.idp.server.core.sharedsignal.*;
 
 @Transactional
 public class EventApiImpl implements EventApi {
 
-  EventRepository eventRepository;
+  EventHandler eventHandler;
 
-  public EventApiImpl(EventRepository eventRepository) {
-    this.eventRepository = eventRepository;
+  public EventApiImpl(EventHandler eventHandler) {
+    this.eventHandler = eventHandler;
   }
 
   @Override
-  public void register(Event event) {
-    eventRepository.register(event);
+  public void handle(Event event) {
+    try {
+
+      eventHandler.handle(event);
+    } catch (Exception e) {
+
+      e.printStackTrace();
+    }
   }
 }

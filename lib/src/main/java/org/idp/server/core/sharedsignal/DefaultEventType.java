@@ -1,7 +1,10 @@
 package org.idp.server.core.sharedsignal;
 
 public enum DefaultEventType {
-  signup("User signed up"),
+  user_signup("User signed up"),
+  user_disabled("User disabled"),
+  user_enabled("User enabled"),
+  user_deletion("User deleted"),
   password_success("User successfully authenticated with a password"),
   password_failure("User failed authentication with a password"),
   webauthn_registration_success("User successfully registration WebAuthn"),

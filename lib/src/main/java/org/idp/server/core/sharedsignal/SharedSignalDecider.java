@@ -1,0 +1,25 @@
+package org.idp.server.core.sharedsignal;
+
+public class SharedSignalDecider {
+
+  SharedSignalFrameworkConfiguration configuration;
+  SecurityEventTokenEntity securityEventTokenEntity;
+
+  public SharedSignalDecider(
+      SharedSignalFrameworkConfiguration configuration,
+      SecurityEventTokenEntity securityEventTokenEntity) {
+    this.configuration = configuration;
+    this.securityEventTokenEntity = securityEventTokenEntity;
+  }
+
+  public boolean decide() {
+    if (!configuration.exists()) {
+      return false;
+    }
+    if (!securityEventTokenEntity.isDefinedEvent()) {
+      return false;
+    }
+
+    return configuration.containsEvent(securityEventTokenEntity.securityEventAsString());
+  }
+}
