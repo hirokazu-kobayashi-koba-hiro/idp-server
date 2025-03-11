@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.idp.server.adapters.springboot.infrastructure.datasource.tenant.TenantMapper">
+
+    <insert id="insert">
+        INSERT INTO tenant(id, name, type, issuer)
+        VALUES
+            (
+              #{tenant.identifier.value},
+             #{tenant.name.value},
+             #{tenant.type},
+             #{tenant.issuer}
+            );
+    </insert>
+
+    <resultMap id="Tenant" type="org.idp.server.adapters.springboot.domain.model.tenant.Tenant">
+        <id property="identifier.value" column="id"/>
+        <result property="name.value" column="name"/>
+        <result property="type" column="type"/>
+        <result property="issuer" column="issuer"/>
+    </resultMap>
+
+    <sql id="select">
+        SELECT
+            id,
+            name,
+            type,
+            issuer
+        FROM tenant
+    </sql>
+
+    <select id="selectBy" resultMap="Tenant">
+        <include refid="select" />
+        WHERE
+         id = #{tenantIdentifier.value}
+    </select>
+
+    <select id="selectByTokenIssuer" resultMap="Tenant">
+        <include refid="select" />
+        WHERE
+        issuer = #{tokenIssuer.value}
+    </select>
+
+    <select id="selectAdmin" resultMap="Tenant">
+        <include refid="select" />
+        WHERE
+        type = 'ADMIN'
+    </select>
+
+</mapper>
