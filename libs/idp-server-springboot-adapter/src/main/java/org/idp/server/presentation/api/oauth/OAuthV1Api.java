@@ -13,6 +13,8 @@ import org.idp.server.core.type.extension.Pairs;
 import org.idp.server.domain.model.tenant.Tenant;
 import org.idp.server.domain.model.tenant.TenantIdentifier;
 import org.idp.server.presentation.api.ParameterTransformable;
+import org.idp.server.presentation.api.oauth.PasswordAuthenticationRequest;
+import org.idp.server.presentation.api.oauth.UserRegistrationRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

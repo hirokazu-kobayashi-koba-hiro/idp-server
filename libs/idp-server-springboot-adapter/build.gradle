@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.2'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id "com.diffplug.spotless" version "6.24.0"
+}
+
+group = 'org.idp.server'
+version = 'unspecified'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.session:spring-session-core'
+    implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+    runtimeOnly 'org.postgresql:postgresql:42.7.2'
+
+    implementation 'com.webauthn4j:webauthn4j-core:0.28.5.RELEASE'
+
+    implementation project(':libs:idp-server-core')
+
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+sourceSets {
+    main {
+        // mybatis SQL map XML to java
+        resources.srcDirs = [
+                "src/main/java",
+                "src/main/resources"
+        ]
+    }
+}

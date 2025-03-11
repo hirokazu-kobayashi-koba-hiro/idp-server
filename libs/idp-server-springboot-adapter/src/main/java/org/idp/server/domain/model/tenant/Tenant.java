@@ -2,6 +2,9 @@ package org.idp.server.domain.model.tenant;
 
 import java.util.Objects;
 import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.domain.model.tenant.TenantIdentifier;
+import org.idp.server.domain.model.tenant.TenantName;
+import org.idp.server.domain.model.tenant.TenantType;
 
 public class Tenant {
   TenantIdentifier identifier;

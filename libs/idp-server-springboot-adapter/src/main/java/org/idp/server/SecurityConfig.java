@@ -2,6 +2,8 @@ package org.idp.server;
 
 import java.net.URI;
 import java.util.List;
+
+import org.idp.server.ManagementApiFilter;
 import org.idp.server.domain.model.operation.IdPScope;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

@@ -1,6 +1,7 @@
 package org.idp.server.domain.model.organization;
 
 import java.util.HashMap;
+
 import org.idp.server.domain.model.tenant.Tenant;
 
 public class Organization {

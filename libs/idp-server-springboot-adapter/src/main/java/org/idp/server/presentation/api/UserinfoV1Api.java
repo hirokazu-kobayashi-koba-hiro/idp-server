@@ -3,6 +3,7 @@ package org.idp.server.presentation.api;
 import org.idp.server.application.service.UserinfoService;
 import org.idp.server.core.handler.userinfo.io.UserinfoRequestResponse;
 import org.idp.server.domain.model.tenant.TenantIdentifier;
+import org.idp.server.presentation.api.ParameterTransformable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

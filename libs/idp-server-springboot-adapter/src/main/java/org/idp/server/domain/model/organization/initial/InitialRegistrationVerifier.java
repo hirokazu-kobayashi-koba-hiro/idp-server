@@ -1,6 +1,7 @@
 package org.idp.server.domain.model.organization.initial;
 
 import org.idp.server.domain.model.organization.OrganizationName;
+import org.idp.server.domain.model.organization.initial.InitialRegistrationForbiddenException;
 import org.idp.server.domain.model.tenant.PublicTenantDomain;
 import org.idp.server.domain.model.tenant.Tenant;
 import org.idp.server.domain.model.tenant.TenantName;

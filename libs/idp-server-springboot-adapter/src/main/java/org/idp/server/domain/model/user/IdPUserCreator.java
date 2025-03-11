@@ -2,6 +2,8 @@ package org.idp.server.domain.model.user;
 
 import java.util.UUID;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.domain.model.user.PasswordEncodeDelegation;
+import org.idp.server.domain.model.user.UserRegistration;
 
 public class IdPUserCreator {
 

@@ -14,6 +14,7 @@ import org.idp.server.core.verifiablecredential.CredentialDelegateResponse;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialDelegate;
 import org.idp.server.domain.model.tenant.Tenant;
 import org.idp.server.domain.model.tenant.TenantIdentifier;
+import org.idp.server.presentation.api.ParameterTransformable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

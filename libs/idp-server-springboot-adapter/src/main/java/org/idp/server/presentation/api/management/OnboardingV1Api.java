@@ -5,6 +5,7 @@ import org.idp.server.core.oauth.identity.User;
 import org.idp.server.domain.model.organization.Organization;
 import org.idp.server.domain.model.tenant.*;
 import org.idp.server.presentation.api.ParameterTransformable;
+import org.idp.server.presentation.api.management.InitialRegistrationRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
