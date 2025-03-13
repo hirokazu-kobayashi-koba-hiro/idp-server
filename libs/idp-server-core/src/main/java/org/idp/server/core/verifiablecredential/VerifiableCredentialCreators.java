@@ -1,20 +1,15 @@
 package org.idp.server.core.verifiablecredential;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.handler.credential.client.VerifiableCredentialBlockCertClient;
-import org.idp.server.core.handler.credential.client.VerifiableCredentialJwtClient;
 import org.idp.server.core.type.verifiablecredential.Format;
 
 public class VerifiableCredentialCreators {
 
   Map<Format, VerifiableCredentialCreator> values;
 
-  public VerifiableCredentialCreators() {
-    this.values = new HashMap<>();
-    values.put(Format.jwt_vc_json, new VerifiableCredentialJwtClient());
-    values.put(Format.ldp_vc, new VerifiableCredentialBlockCertClient());
+  public VerifiableCredentialCreators(Map<Format, VerifiableCredentialCreator> values) {
+    this.values = values;
   }
 
   public VerifiableCredentialCreator get(Format format) {

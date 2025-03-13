@@ -35,12 +35,13 @@ public class CredentialHandler {
       OAuthTokenRepository oAuthTokenRepository,
       VerifiableCredentialTransactionRepository verifiableCredentialTransactionRepository,
       ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+      ClientConfigurationRepository clientConfigurationRepository,
+      VerifiableCredentialCreators creators) {
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.verifiableCredentialTransactionRepository = verifiableCredentialTransactionRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
-    this.creators = new VerifiableCredentialCreators();
+    this.creators = creators;
   }
 
   public CredentialResponse handleRequest(

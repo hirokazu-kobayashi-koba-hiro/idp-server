@@ -1,45 +1,53 @@
 package org.idp.server.core.adapters;
 
 import org.idp.server.core.*;
+import org.idp.server.core.adapters.datasource.ciba.database.grant.CibaGrantDataSource;
+import org.idp.server.core.adapters.datasource.ciba.database.request.BackchannelAuthenticationDataSource;
+import org.idp.server.core.adapters.datasource.configuration.database.client.ClientConfigurationDataSource;
+import org.idp.server.core.adapters.datasource.configuration.database.server.ServerConfigurationDataSource;
+import org.idp.server.core.adapters.datasource.credential.database.VerifiableCredentialTransactionDataSource;
+import org.idp.server.core.adapters.datasource.federation.FederatableIdProviderConfigurationDataSource;
+import org.idp.server.core.adapters.datasource.federation.FederationSessionDataSource;
+import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedMemoryDataSource;
+import org.idp.server.core.adapters.datasource.oauth.database.code.AuthorizationCodeGrantDataSource;
+import org.idp.server.core.adapters.datasource.oauth.database.request.AuthorizationRequestDataSource;
+import org.idp.server.core.adapters.datasource.sharedsignal.EventDataSource;
+import org.idp.server.core.adapters.datasource.sharedsignal.SharedSignalFrameworkConfigurationDataSource;
+import org.idp.server.core.adapters.datasource.token.database.OAuthTokenDataSource;
+import org.idp.server.core.adapters.datasource.user.UserDataSource;
+import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
+import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialBlockCertClient;
+import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialJwtClient;
+import org.idp.server.core.adapters.httpclient.federation.FederationClient;
+import org.idp.server.core.adapters.httpclient.oauth.RequestObjectHttpClient;
+import org.idp.server.core.adapters.httpclient.sharedsignal.SharedSignalEventClient;
 import org.idp.server.core.basic.sql.TransactionInterceptor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.handler.ciba.CibaAuthorizeHandler;
 import org.idp.server.core.handler.ciba.CibaDenyHandler;
 import org.idp.server.core.handler.ciba.CibaRequestHandler;
-import org.idp.server.core.handler.ciba.datasource.database.grant.CibaGrantDataSource;
-import org.idp.server.core.handler.ciba.datasource.database.request.BackchannelAuthenticationDataSource;
-import org.idp.server.core.handler.ciba.httpclient.NotificationClient;
 import org.idp.server.core.handler.config.DatabaseConfig;
 import org.idp.server.core.handler.configuration.ClientConfigurationHandler;
 import org.idp.server.core.handler.configuration.ServerConfigurationHandler;
-import org.idp.server.core.handler.configuration.datasource.database.client.ClientConfigurationDataSource;
-import org.idp.server.core.handler.configuration.datasource.database.server.ServerConfigurationDataSource;
 import org.idp.server.core.handler.credential.CredentialHandler;
-import org.idp.server.core.handler.credential.datasource.database.VerifiableCredentialTransactionDataSource;
 import org.idp.server.core.handler.discovery.DiscoveryHandler;
 import org.idp.server.core.handler.federation.FederationHandler;
-import org.idp.server.core.handler.federation.datasource.FederatableIdProviderConfigurationDataSource;
-import org.idp.server.core.handler.federation.datasource.FederationSessionDataSource;
-import org.idp.server.core.handler.federation.httpclient.FederationClient;
-import org.idp.server.core.handler.grantmanagment.datasource.AuthorizationGrantedMemoryDataSource;
 import org.idp.server.core.handler.oauth.OAuthAuthorizeHandler;
 import org.idp.server.core.handler.oauth.OAuthDenyHandler;
 import org.idp.server.core.handler.oauth.OAuthHandler;
 import org.idp.server.core.handler.oauth.OAuthRequestHandler;
-import org.idp.server.core.handler.oauth.datasource.database.code.AuthorizationCodeGrantDataSource;
-import org.idp.server.core.handler.oauth.datasource.database.request.AuthorizationRequestDataSource;
-import org.idp.server.core.handler.oauth.httpclient.RequestObjectHttpClient;
 import org.idp.server.core.handler.sharedsignal.EventHandler;
-import org.idp.server.core.handler.sharedsignal.datasource.EventDataSource;
-import org.idp.server.core.handler.sharedsignal.datasource.SharedSignalFrameworkConfigurationDataSource;
-import org.idp.server.core.handler.sharedsignal.httpClient.SharedSignalEventClient;
 import org.idp.server.core.handler.token.TokenRequestHandler;
-import org.idp.server.core.handler.token.datasource.database.OAuthTokenDataSource;
 import org.idp.server.core.handler.tokenintrospection.TokenIntrospectionHandler;
 import org.idp.server.core.handler.tokenrevocation.TokenRevocationHandler;
-import org.idp.server.core.handler.user.datasource.UserDataSource;
 import org.idp.server.core.handler.userinfo.UserinfoHandler;
+import org.idp.server.core.type.verifiablecredential.Format;
 import org.idp.server.core.user.UserService;
+import org.idp.server.core.verifiablecredential.VerifiableCredentialCreator;
+import org.idp.server.core.verifiablecredential.VerifiableCredentialCreators;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /** IdpServerApplication */
 public class IdpServerApplication {
@@ -179,15 +187,24 @@ public class IdpServerApplication {
             clientConfigurationMemoryDataSource);
     this.tokenApi =
         TransactionInterceptor.createProxy(new TokenApiImpl(tokenRequestHandler), TokenApi.class);
+
+    Map<Format, VerifiableCredentialCreator> vcCreators = new HashMap<>();
+    vcCreators.put(Format.jwt_vc_json, new VerifiableCredentialJwtClient());
+    vcCreators.put(Format.ldp_vc, new VerifiableCredentialBlockCertClient());
+
+    VerifiableCredentialCreators creators = new VerifiableCredentialCreators(vcCreators);
     CredentialHandler credentialHandler =
-        new CredentialHandler(
-            oAuthTokenDataSource,
-            verifiableCredentialTransactionDataSource,
-            serverConfigurationMemoryDataSource,
-            clientConfigurationMemoryDataSource);
+            new CredentialHandler(
+                    oAuthTokenDataSource,
+                    verifiableCredentialTransactionDataSource,
+                    serverConfigurationMemoryDataSource,
+                    clientConfigurationMemoryDataSource,
+                    creators);
+
     this.credentialApi =
         TransactionInterceptor.createProxy(
             new CredentialApiImpl(credentialHandler), CredentialApi.class);
+
     this.serverManagementApi =
         TransactionInterceptor.createProxy(
             new ServerManagementApiImpl(
