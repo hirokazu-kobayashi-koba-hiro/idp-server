@@ -9,6 +9,8 @@ import org.idp.server.adapters.springboot.application.service.OAuthFlowService;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
 import org.idp.server.core.handler.oauth.io.*;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
+import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.type.extension.Pairs;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -137,18 +139,14 @@ public class OAuthV1Api implements ParameterTransformable {
   public ResponseEntity<?> signup(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") String id,
-      @Validated @RequestBody UserRegistrationRequest request) {
+      @RequestBody Map<String, Object> params) {
 
-    User user = oAuthFlowService.requestSignup(tenantId, id, request.toUserRegistration());
+    OAuthUserInteractionResult result = oAuthFlowService.interact(tenantId, id, OAuthUserInteractionType.SIGNUP, params);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
-    Map<String, Object> response = new HashMap<>();
-    response.put("id", user.sub());
-    response.put("name", user.name());
-    response.put("email", user.email());
 
-    return new ResponseEntity<>(response, httpHeaders, HttpStatus.OK);
+    return new ResponseEntity<>(result.response(), httpHeaders, HttpStatus.OK);
   }
 
   @PostMapping("/{id}/authorize-with-session")
@@ -180,18 +178,19 @@ public class OAuthV1Api implements ParameterTransformable {
   public ResponseEntity<?> authenticateWithPassword(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") String id,
-      @Validated @RequestBody PasswordAuthenticationRequest passwordAuthenticationRequest) {
+      @RequestBody Map<String, Object> params) {
 
-    oAuthFlowService.authenticateWithPassword(
-        tenantId,
-        id,
-        passwordAuthenticationRequest.username(),
-        passwordAuthenticationRequest.password());
+
+    OAuthUserInteractionResult result = oAuthFlowService.interact(
+            tenantId,
+            id,
+            OAuthUserInteractionType.PASSWORD_AUTHENTICATION,
+            params);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
 
-    return new ResponseEntity<>(httpHeaders, HttpStatus.OK);
+    return new ResponseEntity<>(result.response(), httpHeaders, HttpStatus.OK);
   }
 
   @PostMapping("/{id}/authorize")

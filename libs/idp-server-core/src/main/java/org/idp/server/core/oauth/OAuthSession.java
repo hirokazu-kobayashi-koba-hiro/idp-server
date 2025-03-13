@@ -95,39 +95,7 @@ public class OAuthSession implements Serializable {
     return user.customPropertiesValue();
   }
 
-  public OAuthSession didAuthenticationPassword(OAuthSessionKey oAuthSessionKey, User user) {
-
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("pwd")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
-
-    return new OAuthSession(
-        oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
-  }
-
-  public OAuthSession didEmailAuthentication(OAuthSessionKey oAuthSessionKey) {
-
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("otp")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
-
-    user.setEmailVerified(true);
-
-    return new OAuthSession(
-        oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
-  }
-
-  public OAuthSession didWebAuthnAuthentication(OAuthSessionKey oAuthSessionKey, User user) {
-
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("hwk")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
+  public OAuthSession didAuthentication(OAuthSessionKey oAuthSessionKey, User user, Authentication authentication) {
 
     return new OAuthSession(
         oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));

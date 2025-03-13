@@ -392,4 +392,14 @@ public class User implements Serializable {
 
     return map;
   }
+
+    public User maskPassword() {
+    this.hashedPassword = "****";
+    return this;
+    }
+
+  public User didEmailVerification() {
+    this.emailVerified = true;
+    return this;
+  }
 }

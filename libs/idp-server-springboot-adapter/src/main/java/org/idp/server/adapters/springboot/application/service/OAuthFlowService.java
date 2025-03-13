@@ -1,16 +1,12 @@
 package org.idp.server.adapters.springboot.application.service;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.adapters.springboot.application.service.authentication.EmailAuthenticationService;
-import org.idp.server.authenticators.webauthn.service.WebAuthnService;
 import org.idp.server.adapters.springboot.application.service.authorization.OAuthSessionService;
 import org.idp.server.adapters.springboot.application.service.federation.FederationService;
 import org.idp.server.adapters.springboot.application.service.tenant.TenantService;
-import org.idp.server.adapters.springboot.application.service.user.UserAuthenticationService;
 import org.idp.server.adapters.springboot.application.service.user.UserRegistrationService;
+import org.idp.server.core.OAuthFlowFunction;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.OAuthApi;
 import org.idp.server.core.basic.date.SystemDateTime;
@@ -22,7 +18,7 @@ import org.idp.server.core.handler.oauth.io.*;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.interaction.UserInteraction;
+import org.idp.server.core.oauth.interaction.*;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.sharedsignal.DefaultEventType;
@@ -30,49 +26,38 @@ import org.idp.server.core.sharedsignal.Event;
 import org.idp.server.core.sharedsignal.OAuthFlowEventCreator;
 import org.idp.server.core.type.extension.OAuthDenyReason;
 import org.idp.server.core.type.extension.Pairs;
-import org.idp.server.adapters.springboot.domain.model.authentication.EmailVerificationChallenge;
-import org.idp.server.adapters.springboot.domain.model.authentication.EmailVerificationChallengeNotFoundException;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.user.UserRegistration;
-import org.idp.server.authenticators.webauthn.WebAuthnCredential;
-import org.idp.server.authenticators.webauthn.WebAuthnSession;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public class OAuthFlowService {
+public class OAuthFlowService implements OAuthFlowFunction {
 
   OAuthApi oAuthApi;
   OAuthSessionService oAuthSessionService;
+  OAuthUserInteractors oAuthUserInteractors;
   UserRegistrationService userRegistrationService;
-  UserAuthenticationService userAuthenticationService;
   TenantService tenantService;
-  WebAuthnService webAuthnService;
-  EmailAuthenticationService emailAuthenticationService;
   FederationService federationService;
   ApplicationEventPublisher eventPublisher;
 
   public OAuthFlowService(
       IdpServerApplication idpServerApplication,
       OAuthSessionService oAuthSessionService,
+      OAuthUserInteractors oAuthUserInteractors,
       UserRegistrationService userRegistrationService,
-      UserAuthenticationService userAuthenticationService,
       TenantService tenantService,
-      WebAuthnService webAuthnService,
-      EmailAuthenticationService emailAuthenticationService,
       FederationService federationService,
       ApplicationEventPublisher eventPublisher) {
     this.oAuthApi = idpServerApplication.oAuthApi();
     oAuthApi.setOAuthRequestDelegate(oAuthSessionService);
     this.oAuthSessionService = oAuthSessionService;
+    this.oAuthUserInteractors = oAuthUserInteractors;
     this.userRegistrationService = userRegistrationService;
-    this.userAuthenticationService = userAuthenticationService;
     this.tenantService = tenantService;
-    this.webAuthnService = webAuthnService;
-    this.emailAuthenticationService = emailAuthenticationService;
     this.federationService = federationService;
     this.eventPublisher = eventPublisher;
   }
@@ -95,6 +80,27 @@ public class OAuthFlowService {
         new OAuthViewDataRequest(oauthRequestIdentifier, tenant.issuer());
 
     return oAuthApi.getViewData(oAuthViewDataRequest);
+  }
+
+  @Override
+  public OAuthUserInteractionResult interact(TenantIdentifier tenantIdentifier, String oauthRequestIdentifier, OAuthUserInteractionType type, Map<String, Object> params) {
+
+    Tenant tenant = tenantService.get(tenantIdentifier);
+    AuthorizationRequest authorizationRequest = oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+    OAuthUserInteractor oAuthUserInteractor = oAuthUserInteractors.get(type);
+
+    OAuthUserInteractionResult result = oAuthUserInteractor.interact(tenant, authorizationRequest, type, params);
+
+    if (result.hasUser()) {
+      OAuthSession session = oAuthSessionService.findSession(authorizationRequest.sessionKey());
+      OAuthSession updatedSession =
+              session.didAuthentication(authorizationRequest.sessionKey(), result.user(), result.authentication());
+      oAuthSessionService.updateSession(updatedSession);
+
+      publishEvent(authorizationRequest, result.user(), result.eventType());
+    }
+
+    return result;
   }
 
   public FederationRequestResponse requestFederation(
@@ -135,150 +141,6 @@ public class OAuthFlowService {
     oAuthSessionService.updateSession(oAuthSession);
 
     return Pairs.of(tenant, callbackResponse);
-  }
-
-  public User requestSignup(
-      TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
-      UserRegistration userRegistration) {
-
-    Tenant tenant = tenantService.get(tenantIdentifier);
-    AuthorizationRequest authorizationRequest =
-        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
-
-    User user = userRegistrationService.create(tenant, userRegistration);
-
-    OAuthSession oAuthSession =
-        new OAuthSession(
-            authorizationRequest.sessionKey(),
-            user,
-            new Authentication(),
-            SystemDateTime.now().plusSeconds(3600));
-    oAuthSessionService.registerSession(oAuthSession);
-
-    publishEvent(authorizationRequest, user, DefaultEventType.user_signup);
-
-    return user;
-  }
-
-  public void challengeEmailVerification(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
-    Tenant tenant = tenantService.get(tenantIdentifier);
-    AuthorizationRequest authorizationRequest =
-        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
-    OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
-
-    EmailVerificationChallenge emailVerificationChallenge =
-        emailAuthenticationService.challenge(oAuthSession.user());
-
-    HashMap<String, Object> attributes = new HashMap<>();
-    attributes.put("emailVerificationChallenge", emailVerificationChallenge);
-    OAuthSession updatedSession = oAuthSession.addAttribute(attributes);
-
-    oAuthSessionService.updateSession(updatedSession);
-  }
-
-  public void verifyEmail(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier, String verificationCode) {
-    Tenant tenant = tenantService.get(tenantIdentifier);
-
-    AuthorizationRequest authorizationRequest =
-        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
-
-    OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
-    if (!oAuthSession.hasAttribute("emailVerificationChallenge")) {
-      throw new EmailVerificationChallengeNotFoundException(
-          "emailVerificationChallenge is not found");
-    }
-    EmailVerificationChallenge emailVerificationChallenge =
-        (EmailVerificationChallenge) oAuthSession.getAttribute("emailVerificationChallenge");
-
-    emailAuthenticationService.verify(verificationCode, emailVerificationChallenge);
-
-    OAuthSession updatedSession =
-        oAuthSession.didEmailAuthentication(authorizationRequest.sessionKey());
-    oAuthSessionService.updateSession(updatedSession);
-
-    publishEvent(
-        authorizationRequest, oAuthSession.user(), DefaultEventType.email_verification_success);
-  }
-
-  public WebAuthnSession challengeWebAuthnRegistration(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
-    Tenant tenant = tenantService.get(tenantIdentifier);
-    AuthorizationRequest authorizationRequest =
-        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
-    OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
-
-    WebAuthnSession webAuthnSession = webAuthnService.challengeRegistration(tenant);
-
-    return webAuthnSession;
-  }
-
-  public void verifyWebAuthnRegistration(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier, String request) {
-
-    Tenant tenant = tenantService.get(tenantIdentifier);
-    AuthorizationRequest authorizationRequest =
-        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
-    OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
-
-    WebAuthnCredential webAuthnCredential =
-        webAuthnService.verifyRegistration(tenant, oAuthSession.user(), request);
-
-    oAuthSessionService.updateSession(oAuthSession);
-
-    publishEvent(
-        authorizationRequest, oAuthSession.user(), DefaultEventType.webauthn_registration_success);
-  }
-
-  public void authenticateWithPassword(
-      TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
-      String username,
-      String password) {
-
-    Tenant tenant = tenantService.get(tenantIdentifier);
-    AuthorizationRequest authorizationRequest =
-        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
-
-    User user = userAuthenticationService.authenticateWithPassword(tenant, username, password);
-    OAuthSession session = oAuthSessionService.findSession(authorizationRequest.sessionKey());
-    OAuthSession updatedSession =
-        session.didAuthenticationPassword(authorizationRequest.sessionKey(), user);
-
-    oAuthSessionService.updateSession(updatedSession);
-
-    publishEvent(authorizationRequest, user, DefaultEventType.password_success);
-  }
-
-  public WebAuthnSession challengeWebAuthnAuthentication(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
-    Tenant tenant = tenantService.get(tenantIdentifier);
-    AuthorizationRequest authorizationRequest =
-        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
-    OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
-
-    WebAuthnSession webAuthnSession = webAuthnService.challengeAuthentication(tenant);
-
-    return webAuthnSession;
-  }
-
-  public void verifyWebAuthnAuthentication(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier, String request) {
-
-    Tenant tenant = tenantService.get(tenantIdentifier);
-    AuthorizationRequest authorizationRequest =
-        oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
-    OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
-
-    User user = webAuthnService.verifyAuthentication(tenant, request);
-    OAuthSession didWebAuthnAuthenticationSession =
-        oAuthSession.didWebAuthnAuthentication(authorizationRequest.sessionKey(), user);
-
-    oAuthSessionService.updateSession(didWebAuthnAuthenticationSession);
-
-    publishEvent(authorizationRequest, user, DefaultEventType.webauthn_success);
   }
 
   public OAuthAuthorizeResponse authorize(
@@ -346,9 +208,9 @@ public class OAuthFlowService {
   }
 
   private void publishEvent(
-      AuthorizationRequest authorizationRequest, User user, DefaultEventType login_with_session) {
+      AuthorizationRequest authorizationRequest, User user, DefaultEventType type) {
     OAuthFlowEventCreator eventCreator =
-        new OAuthFlowEventCreator(authorizationRequest, user, login_with_session);
+        new OAuthFlowEventCreator(authorizationRequest, user, type);
     Event event = eventCreator.create();
     eventPublisher.publishEvent(event);
   }
@@ -364,13 +226,6 @@ public class OAuthFlowService {
       return new UserInteraction(user, authentication);
     }
 
-    User authenticated =
-        userAuthenticationService.authenticateWithPassword(tenant, username, password);
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(List.of("pwd"))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
-    return new UserInteraction(authenticated, authentication);
+    throw new RuntimeException("session expired");
   }
 }

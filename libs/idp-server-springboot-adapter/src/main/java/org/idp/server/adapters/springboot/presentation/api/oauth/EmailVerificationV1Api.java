@@ -2,6 +2,8 @@ package org.idp.server.adapters.springboot.presentation.api.oauth;
 
 import java.util.Map;
 import org.idp.server.adapters.springboot.application.service.OAuthFlowService;
+import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
+import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,27 +21,26 @@ public class EmailVerificationV1Api {
   }
 
   @PostMapping("/challenge")
-  public ResponseEntity<Map<String, String>> challenge(
+  public ResponseEntity<?> challenge(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @PathVariable("id") String id) {
 
-    oAuthFlowService.challengeEmailVerification(tenantIdentifier, id);
+    OAuthUserInteractionResult result = oAuthFlowService.interact(tenantIdentifier, id, OAuthUserInteractionType.EMAIL_VERIFICATION_CHALLENGE, Map.of());
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
 
-    return new ResponseEntity<>(httpHeaders, HttpStatus.OK);
+    return new ResponseEntity<>(result.response(), httpHeaders, HttpStatus.OK);
   }
 
   @PostMapping("/verify")
-  public ResponseEntity<String> register(
+  public ResponseEntity<?> register(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") String id,
-      @RequestBody Map<String, String> request) {
+      @RequestBody Map<String, Object> params) {
 
-    String verificationCode = request.getOrDefault("verification_code", "");
 
-    oAuthFlowService.verifyEmail(tenantIdentifier, id, verificationCode);
+    OAuthUserInteractionResult result = oAuthFlowService.interact(tenantIdentifier, id, OAuthUserInteractionType.EMAIL_VERIFICATION, params);
 
-    return new ResponseEntity<>(HttpStatus.OK);
+    return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }

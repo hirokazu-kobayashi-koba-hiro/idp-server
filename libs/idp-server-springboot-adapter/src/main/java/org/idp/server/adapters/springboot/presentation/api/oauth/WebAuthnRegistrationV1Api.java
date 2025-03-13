@@ -1,10 +1,10 @@
 package org.idp.server.adapters.springboot.presentation.api.oauth;
 
-import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.adapters.springboot.application.service.OAuthFlowService;
+import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
+import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.authenticators.webauthn.WebAuthnSession;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,29 +21,29 @@ public class WebAuthnRegistrationV1Api {
   }
 
   @GetMapping("/challenge")
-  public ResponseEntity<Map<String, String>> getChallenge(
+  public ResponseEntity<?> getChallenge(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @PathVariable("id") String id) {
 
-    WebAuthnSession webAuthnSession =
-        oAuthFlowService.challengeWebAuthnRegistration(tenantIdentifier, id);
-
-    Map<String, String> response = new HashMap<>();
-    response.put("challenge", (webAuthnSession.challengeAsString()));
+    OAuthUserInteractionResult result =
+        oAuthFlowService.interact(tenantIdentifier, id, OAuthUserInteractionType.WEBAUTHN_REGISTRATION_CHALLENGE, Map.of());
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
 
-    return new ResponseEntity<>(response, httpHeaders, HttpStatus.OK);
+    return new ResponseEntity<>(result.response(), httpHeaders, HttpStatus.OK);
   }
 
   @PostMapping("/response")
-  public ResponseEntity<String> register(
+  public ResponseEntity<?> register(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") String id,
       @RequestBody String request) {
 
-    oAuthFlowService.verifyWebAuthnRegistration(tenantIdentifier, id, request);
+    OAuthUserInteractionResult result = oAuthFlowService.interact(tenantIdentifier, id, OAuthUserInteractionType.WEBAUTHN_REGISTRATION, Map.of("request", request));
 
-    return new ResponseEntity<>(HttpStatus.OK);
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(result.response(), httpHeaders, HttpStatus.OK);
   }
 }
