@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot.infrastructure.datasource.authenticat
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.idp.server.adapters.springboot.subdomain.webauthn.WebAuthnCredential;
+import org.idp.server.authenticators.webauthn.WebAuthnCredential;
 
 @Mapper
 public interface WebAuthnCredentialMapper {

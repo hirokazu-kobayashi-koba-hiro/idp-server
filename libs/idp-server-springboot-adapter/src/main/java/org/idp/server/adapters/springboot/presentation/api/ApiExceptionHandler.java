@@ -1,6 +1,6 @@
 package org.idp.server.adapters.springboot.presentation.api;
 
-import org.idp.server.adapters.springboot.domain.model.base.*;
+import org.idp.server.core.type.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;

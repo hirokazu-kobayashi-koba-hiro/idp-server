@@ -1,9 +1,9 @@
 package org.idp.server.adapters.springboot.application.service.tenant;
 
 import org.idp.server.core.type.oauth.TokenIssuer;
-import org.idp.server.adapters.springboot.domain.model.tenant.Tenant;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantIdentifier;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantRepository;
+import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.tenant.TenantRepository;
 import org.springframework.stereotype.Service;
 
 @Service

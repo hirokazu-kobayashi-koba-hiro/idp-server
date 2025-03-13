@@ -15,7 +15,7 @@
             );
     </insert>
 
-    <resultMap id="Tenant" type="org.idp.server.adapters.springboot.domain.model.tenant.Tenant">
+    <resultMap id="Tenant" type="org.idp.server.core.tenant.Tenant">
         <id property="identifier.value" column="id"/>
         <result property="name.value" column="name"/>
         <result property="type" column="type"/>

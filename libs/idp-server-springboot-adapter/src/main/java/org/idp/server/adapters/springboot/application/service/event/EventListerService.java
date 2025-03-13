@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.application.service.event;
 
-import org.idp.server.core.IdpServerApplication;
-import org.idp.server.core.api.EventApi;
+import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.EventApi;
 import org.idp.server.core.sharedsignal.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

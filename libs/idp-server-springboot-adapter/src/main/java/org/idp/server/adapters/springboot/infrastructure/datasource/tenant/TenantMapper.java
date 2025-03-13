@@ -3,8 +3,8 @@ package org.idp.server.adapters.springboot.infrastructure.datasource.tenant;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.idp.server.core.type.oauth.TokenIssuer;
-import org.idp.server.adapters.springboot.domain.model.tenant.Tenant;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantIdentifier;
+import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
 
 @Mapper
 public interface TenantMapper {

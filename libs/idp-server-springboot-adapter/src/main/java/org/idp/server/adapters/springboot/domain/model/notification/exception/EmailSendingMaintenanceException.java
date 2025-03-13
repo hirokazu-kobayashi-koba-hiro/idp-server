@@ -1,6 +1,6 @@
 package org.idp.server.adapters.springboot.domain.model.notification.exception;
 
-import org.idp.server.adapters.springboot.domain.model.base.ServerMaintenanceException;
+import org.idp.server.core.type.exception.ServerMaintenanceException;
 
 public class EmailSendingMaintenanceException extends ServerMaintenanceException {
 

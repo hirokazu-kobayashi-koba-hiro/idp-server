@@ -2,9 +2,9 @@ package org.idp.server.adapters.springboot.infrastructure.datasource.authenticat
 
 import jakarta.servlet.http.HttpSession;
 import java.util.Objects;
-import org.idp.server.adapters.springboot.subdomain.webauthn.WebAuthnHttpSessionRepository;
-import org.idp.server.adapters.springboot.subdomain.webauthn.WebAuthnSession;
-import org.idp.server.adapters.springboot.subdomain.webauthn.WebAuthnSessionNotFoundException;
+import org.idp.server.authenticators.webauthn.WebAuthnHttpSessionRepository;
+import org.idp.server.authenticators.webauthn.WebAuthnSession;
+import org.idp.server.authenticators.webauthn.WebAuthnSessionNotFoundException;
 import org.springframework.stereotype.Repository;
 
 @Repository

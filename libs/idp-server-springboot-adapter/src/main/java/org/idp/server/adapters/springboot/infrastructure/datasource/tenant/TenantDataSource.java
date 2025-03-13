@@ -2,10 +2,10 @@ package org.idp.server.adapters.springboot.infrastructure.datasource.tenant;
 
 import java.util.Objects;
 
-import org.idp.server.adapters.springboot.domain.model.tenant.Tenant;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantIdentifier;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantNotFoundException;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantRepository;
+import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.tenant.TenantNotFoundException;
+import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.oauth.TokenIssuer;
 import org.springframework.stereotype.Repository;
 

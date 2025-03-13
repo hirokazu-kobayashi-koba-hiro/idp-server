@@ -2,12 +2,12 @@ package org.idp.server.adapters.springboot.presentation.view;
 
 import java.util.Map;
 import org.idp.server.adapters.springboot.application.service.tenant.TenantService;
-import org.idp.server.adapters.springboot.application.service.user.internal.UserService;
-import org.idp.server.core.IdpServerApplication;
-import org.idp.server.core.api.OAuthApi;
+import org.idp.server.core.UserManagementApi;
+import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.OAuthApi;
 import org.idp.server.core.handler.oauth.io.*;
-import org.idp.server.adapters.springboot.domain.model.tenant.Tenant;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantIdentifier;
+import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.adapters.springboot.presentation.api.ParameterTransformable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,15 +23,14 @@ public class OAuthController implements ParameterTransformable {
 
   Logger log = LoggerFactory.getLogger(OAuthController.class);
   OAuthApi oAuthApi;
-  UserService userService;
+  UserManagementApi userManagementApi;
   TenantService tenantService;
 
   public OAuthController(
       IdpServerApplication idpServerApplication,
-      UserService userService,
       TenantService tenantService) {
     this.oAuthApi = idpServerApplication.oAuthApi();
-    this.userService = userService;
+    this.userManagementApi = idpServerApplication.userManagementApi();
     this.tenantService = tenantService;
   }
 

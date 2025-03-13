@@ -1,8 +1,8 @@
 package org.idp.server.adapters.springboot.application.service.federation;
 
-import org.idp.server.adapters.springboot.application.service.user.internal.UserService;
-import org.idp.server.core.IdpServerApplication;
-import org.idp.server.core.api.FederationApi;
+import org.idp.server.core.UserManagementApi;
+import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.FederationApi;
 import org.idp.server.core.federation.FederationDelegate;
 import org.idp.server.core.handler.federation.io.FederationCallbackRequest;
 import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
@@ -15,11 +15,11 @@ import org.springframework.stereotype.Service;
 public class FederationService implements FederationDelegate {
 
   FederationApi federationApi;
-  UserService userService;
+  UserManagementApi userManagementApi;
 
-  public FederationService(IdpServerApplication idpServerApplication, UserService userService) {
+  public FederationService(IdpServerApplication idpServerApplication) {
     this.federationApi = idpServerApplication.federationApi();
-    this.userService = userService;
+    this.userManagementApi = idpServerApplication.userManagementApi();
   }
 
   public FederationRequestResponse request(FederationRequest federationRequest) {
@@ -35,6 +35,6 @@ public class FederationService implements FederationDelegate {
   @Override
   public User find(String tokenIssuer, String providerId, String providerUserId) {
 
-    return userService.findByProvider(tokenIssuer, providerId, providerUserId);
+    return userManagementApi.findByProvider(tokenIssuer, providerId, providerUserId);
   }
 }

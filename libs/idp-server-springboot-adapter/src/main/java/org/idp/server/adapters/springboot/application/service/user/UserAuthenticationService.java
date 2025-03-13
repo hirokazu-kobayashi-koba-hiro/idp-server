@@ -1,26 +1,27 @@
 package org.idp.server.adapters.springboot.application.service.user;
 
-import org.idp.server.adapters.springboot.application.service.user.internal.UserService;
+import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.UserManagementApi;
 import org.idp.server.core.oauth.identity.User;
-import org.idp.server.adapters.springboot.domain.model.tenant.Tenant;
-import org.idp.server.adapters.springboot.domain.model.user.PasswordVerificationDelegation;
-import org.idp.server.adapters.springboot.domain.model.user.UserNotFoundException;
+import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.user.PasswordVerificationDelegation;
+import org.idp.server.core.user.UserNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserAuthenticationService implements PasswordVerificationDelegation {
 
-  UserService userService;
+  UserManagementApi userManagementApi;
   PasswordEncoder passwordEncoder;
 
-  public UserAuthenticationService(UserService userService, PasswordEncoder passwordEncoder) {
-    this.userService = userService;
+  public UserAuthenticationService(IdpServerApplication idpServerApplication, PasswordEncoder passwordEncoder) {
+    this.userManagementApi = idpServerApplication.userManagementApi();
     this.passwordEncoder = passwordEncoder;
   }
 
   public User authenticateWithPassword(Tenant tenant, String username, String password) {
-    User user = userService.findBy(tenant, username, "idp-server");
+    User user = userManagementApi.findBy(tenant, username, "idp-server");
     if (!verify(password, user.hashedPassword())) {
       throw new UserNotFoundException("User " + username + " not found");
     }

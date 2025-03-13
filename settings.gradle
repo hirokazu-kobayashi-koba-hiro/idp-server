@@ -5,4 +5,8 @@ include ':libs:idp-server-core'
 include 'database'
 include 'libs:idp-server-springboot-adapter'
 findProject(':libs:idp-server-springboot-adapter')?.name = 'idp-server-springboot-adapter'
+include 'libs:idp-server-webauthn'
+findProject(':libs:idp-server-webauthn')?.name = 'idp-server-webauthn'
+include 'libs:idp-server-core-adapter'
+findProject(':libs:idp-server-core-adapter')?.name = 'idp-server-core-adapter'
 

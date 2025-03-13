@@ -20,7 +20,7 @@ public enum SecurityEventType {
       "https://schemas.openid.net/secevent/risc/event-type/account-disabled"),
   AccountEnabled(
       "RISC",
-      DefaultEventType.login.name(),
+      "",
       "https://schemas.openid.net/secevent/risc/event-type/account-enabled"),
   IdentifierChanged(
       "RISC", "", "https://schemas.openid.net/secevent/risc/event-type/identifier-changed"),

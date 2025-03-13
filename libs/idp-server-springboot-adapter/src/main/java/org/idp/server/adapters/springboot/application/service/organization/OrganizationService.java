@@ -1,8 +1,8 @@
 package org.idp.server.adapters.springboot.application.service.organization;
 
-import org.idp.server.adapters.springboot.domain.model.organization.Organization;
-import org.idp.server.adapters.springboot.domain.model.organization.OrganizationIdentifier;
-import org.idp.server.adapters.springboot.domain.model.organization.OrganizationRepository;
+import org.idp.server.core.organization.Organization;
+import org.idp.server.core.organization.OrganizationIdentifier;
+import org.idp.server.core.organization.OrganizationRepository;
 import org.springframework.stereotype.Service;
 
 @Service

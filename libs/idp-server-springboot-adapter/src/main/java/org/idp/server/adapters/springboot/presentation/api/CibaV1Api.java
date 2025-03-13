@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot.presentation.api;
 import java.util.Map;
 import org.idp.server.adapters.springboot.application.service.CibaFlowService;
 import org.idp.server.core.handler.ciba.io.*;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantIdentifier;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

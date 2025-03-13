@@ -66,8 +66,8 @@ public class SqlExecutor {
         if (param instanceof Integer integerValue) {
           prepareStatement.setInt(index, integerValue);
         }
-        if (param instanceof Object objectValue) {
-          prepareStatement.setObject(index, objectValue);
+        if (param instanceof Boolean booleanValue) {
+          prepareStatement.setBoolean(index, booleanValue);
         }
         index++;
       }
@@ -101,6 +101,9 @@ public class SqlExecutor {
         }
         if (param instanceof Integer integerValue) {
           prepareStatement.setInt(index, integerValue);
+        }
+        if (param instanceof Boolean booleanValue) {
+          prepareStatement.setBoolean(index, booleanValue);
         }
         index++;
       }

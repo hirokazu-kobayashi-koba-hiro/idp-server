@@ -1,6 +1,6 @@
 package org.idp.server.adapters.springboot.domain.model.notification.exception;
 
-import org.idp.server.adapters.springboot.domain.model.base.InternalServerErrorException;
+import org.idp.server.core.type.exception.InternalServerErrorException;
 
 public class EmailSendingInternalServerErrorException extends InternalServerErrorException {
   public EmailSendingInternalServerErrorException(String message) {

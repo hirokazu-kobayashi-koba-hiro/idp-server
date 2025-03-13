@@ -1,9 +1,9 @@
 package org.idp.server.adapters.springboot.infrastructure.datasource.organization;
 
-import org.idp.server.adapters.springboot.domain.model.organization.Organization;
-import org.idp.server.adapters.springboot.domain.model.organization.OrganizationIdentifier;
-import org.idp.server.adapters.springboot.domain.model.organization.OrganizationNotFoundException;
-import org.idp.server.adapters.springboot.domain.model.organization.OrganizationRepository;
+import org.idp.server.core.organization.Organization;
+import org.idp.server.core.organization.OrganizationIdentifier;
+import org.idp.server.core.organization.OrganizationNotFoundException;
+import org.idp.server.core.organization.OrganizationRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository

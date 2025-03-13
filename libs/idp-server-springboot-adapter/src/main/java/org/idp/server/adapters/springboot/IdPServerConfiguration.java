@@ -1,10 +1,15 @@
 package org.idp.server.adapters.springboot;
 
-import java.util.ArrayList;
-import java.util.List;
-import org.idp.server.core.IdpServerApplication;
+import org.idp.server.authenticators.handler.webauthn.datasource.configuration.WebAuthnConfigurationDataSource;
+import org.idp.server.authenticators.handler.webauthn.datasource.credential.WebAuthnCredentialDataSource;
+import org.idp.server.authenticators.handler.webauthn.datasource.session.WebAuthnSessionDataSource;
+import org.idp.server.authenticators.webauthn.service.WebAuthnService;
+import org.idp.server.authenticators.webauthn.service.internal.WebAuthnConfigurationService;
+import org.idp.server.authenticators.webauthn.service.internal.WebAuthnCredentialService;
+import org.idp.server.authenticators.webauthn.service.internal.WebAuthnSessionService;
+import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.UserManagementApi;
 import org.idp.server.core.handler.config.DatabaseConfig;
-import org.idp.server.core.handler.config.MemoryDataSourceConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,9 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 public class IdPServerConfiguration {
-
-  @Value("${idp.configurations.basePath}")
-  String configurationBasePath;
 
   @Value("${spring.datasource.url}")
   String databaseUrl;
@@ -28,24 +30,7 @@ public class IdPServerConfiguration {
 
   @Bean
   public IdpServerApplication idpServerApplication() {
-    List<String> serverPaths = new ArrayList<>();
-    serverPaths.add(configurationBasePath + "/server.json");
-    serverPaths.add(configurationBasePath + "/unsupportedServer.json");
 
-    List<String> clientPaths = new ArrayList<>();
-    clientPaths.add(configurationBasePath + "/clients/clientSecretBasic.json");
-    clientPaths.add(configurationBasePath + "/clients/clientSecretBasic2.json");
-    clientPaths.add(configurationBasePath + "/clients/clientSecretPost.json");
-    clientPaths.add(configurationBasePath + "/clients/clientSecretPostWithIdTokenEnc.json");
-    clientPaths.add(configurationBasePath + "/clients/clientSecretJwt.json");
-    clientPaths.add(configurationBasePath + "/clients/privateKeyJwt.json");
-    clientPaths.add(configurationBasePath + "/clients/publicClient.json");
-    clientPaths.add(configurationBasePath + "/clients/selfSignedTlsClientAuth.json");
-    clientPaths.add(configurationBasePath + "/clients/unsupportedClient.json");
-    clientPaths.add(configurationBasePath + "/clients/unsupportedServerUnsupportedClient.json");
-
-    MemoryDataSourceConfig memoryDataSourceConfig =
-        new MemoryDataSourceConfig(serverPaths, clientPaths);
     DatabaseConfig databaseConfig =
         new DatabaseConfig(databaseUrl, databaseUsername, databasePassword);
     return new IdpServerApplication(databaseConfig);
@@ -54,5 +39,14 @@ public class IdPServerConfiguration {
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
+  }
+
+  @Bean
+  public WebAuthnService webAuthnService(IdpServerApplication idpServerApplication) {
+    WebAuthnConfigurationService configurationService  = new WebAuthnConfigurationService(new WebAuthnConfigurationDataSource());
+    WebAuthnSessionService sessionService = new WebAuthnSessionService(new WebAuthnSessionDataSource());
+    WebAuthnCredentialService credentialService = new WebAuthnCredentialService(new WebAuthnCredentialDataSource());
+    UserManagementApi userManagementApi = idpServerApplication.userManagementApi();
+    return new WebAuthnService(configurationService, sessionService, credentialService, userManagementApi);
   }
 }

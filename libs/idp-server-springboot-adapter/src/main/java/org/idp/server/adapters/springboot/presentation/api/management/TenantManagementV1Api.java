@@ -2,13 +2,13 @@ package org.idp.server.adapters.springboot.presentation.api.management;
 
 import java.util.UUID;
 
-import org.idp.server.adapters.springboot.domain.model.tenant.Tenant;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantIdentifier;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantName;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantType;
+import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.tenant.TenantName;
+import org.idp.server.core.tenant.TenantType;
 import org.idp.server.adapters.springboot.application.service.tenant.TenantService;
-import org.idp.server.core.IdpServerApplication;
-import org.idp.server.core.api.ServerManagementApi;
+import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.ServerManagementApi;
 import org.idp.server.adapters.springboot.presentation.api.ParameterTransformable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;

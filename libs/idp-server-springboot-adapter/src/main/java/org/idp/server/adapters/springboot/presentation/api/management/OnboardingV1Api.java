@@ -1,9 +1,9 @@
 package org.idp.server.adapters.springboot.presentation.api.management;
 
-import org.idp.server.adapters.springboot.domain.model.tenant.PublicTenantDomain;
+import org.idp.server.core.tenant.PublicTenantDomain;
 import org.idp.server.adapters.springboot.application.service.OnboardingService;
 import org.idp.server.core.oauth.identity.User;
-import org.idp.server.adapters.springboot.domain.model.organization.Organization;
+import org.idp.server.core.organization.Organization;
 import org.idp.server.adapters.springboot.presentation.api.ParameterTransformable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;

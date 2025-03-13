@@ -7,16 +7,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import org.idp.server.adapters.springboot.application.service.tenant.TenantService;
-import org.idp.server.adapters.springboot.application.service.user.internal.UserService;
-import org.idp.server.core.IdpServerApplication;
-import org.idp.server.core.api.TokenIntrospectionApi;
+import org.idp.server.core.UserManagementApi;
+import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.TokenIntrospectionApi;
 import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.adapters.springboot.domain.model.authorization.TokenIntrospectionCreator;
 import org.idp.server.adapters.springboot.domain.model.operation.IdPScope;
 import org.idp.server.adapters.springboot.domain.model.operation.Operator;
-import org.idp.server.adapters.springboot.domain.model.tenant.Tenant;
+import org.idp.server.core.tenant.Tenant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -29,16 +29,15 @@ public class ManagementApiFilter extends OncePerRequestFilter {
 
   TokenIntrospectionApi tokenIntrospectionApi;
   TenantService tenantService;
-  UserService userService;
+  UserManagementApi userManagementApi;
   Logger logger = LoggerFactory.getLogger(ManagementApiFilter.class);
 
   public ManagementApiFilter(
       IdpServerApplication idpServerApplication,
-      TenantService tenantService,
-      UserService userService) {
+      TenantService tenantService) {
     this.tokenIntrospectionApi = idpServerApplication.tokenIntrospectionApi();
     this.tenantService = tenantService;
-    this.userService = userService;
+    this.userManagementApi = idpServerApplication.userManagementApi();
   }
 
   @Override
@@ -69,7 +68,7 @@ public class ManagementApiFilter extends OncePerRequestFilter {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       return;
     }
-    User user = userService.get(introspectionResponse.subject());
+    User user = userManagementApi.get(introspectionResponse.subject());
     Operator operator =
         new Operator(
             user,

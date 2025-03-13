@@ -1,15 +1,15 @@
 package org.idp.server.adapters.springboot.presentation.api.management;
 
 import org.idp.server.adapters.springboot.application.service.tenant.TenantService;
-import org.idp.server.core.IdpServerApplication;
-import org.idp.server.core.api.ClientManagementApi;
+import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.ClientManagementApi;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementListResponse;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.TokenIssuer;
-import org.idp.server.adapters.springboot.domain.model.tenant.Tenant;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantIdentifier;
+import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.adapters.springboot.presentation.api.ParameterTransformable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

@@ -4,7 +4,7 @@ import java.util.Map;
 import org.idp.server.adapters.springboot.application.service.OAuthFlowService;
 import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
 import org.idp.server.core.type.extension.Pairs;
-import org.idp.server.adapters.springboot.domain.model.tenant.Tenant;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.adapters.springboot.presentation.api.ParameterTransformable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

@@ -2,11 +2,11 @@ package org.idp.server.adapters.springboot.application.service;
 
 import java.util.Map;
 import org.idp.server.adapters.springboot.application.service.tenant.TenantService;
-import org.idp.server.adapters.springboot.application.service.user.internal.UserService;
-import org.idp.server.core.IdpServerApplication;
-import org.idp.server.core.api.TokenApi;
-import org.idp.server.core.api.TokenIntrospectionApi;
-import org.idp.server.core.api.TokenRevocationApi;
+import org.idp.server.core.UserManagementApi;
+import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.TokenApi;
+import org.idp.server.core.TokenIntrospectionApi;
+import org.idp.server.core.TokenRevocationApi;
 import org.idp.server.core.handler.token.io.TokenRequest;
 import org.idp.server.core.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionRequest;
@@ -18,8 +18,8 @@ import org.idp.server.core.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.core.type.oauth.Password;
 import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.core.type.oauth.Username;
-import org.idp.server.adapters.springboot.domain.model.tenant.Tenant;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantIdentifier;
+import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -29,18 +29,17 @@ public class TokenService implements PasswordCredentialsGrantDelegate {
   TokenIntrospectionApi tokenIntrospectionApi;
   TokenRevocationApi tokenRevocationApi;
   TenantService tenantService;
-  UserService userService;
+  UserManagementApi userManagementApi;
 
   public TokenService(
       IdpServerApplication idpServerApplication,
-      TenantService tenantService,
-      UserService userService) {
+      TenantService tenantService) {
     this.tokenApi = idpServerApplication.tokenApi();
     tokenApi.setPasswordCredentialsGrantDelegate(this);
     this.tokenIntrospectionApi = idpServerApplication.tokenIntrospectionApi();
     this.tokenRevocationApi = idpServerApplication.tokenRevocationApi();
     this.tenantService = tenantService;
-    this.userService = userService;
+    this.userManagementApi = idpServerApplication.userManagementApi();
   }
 
   public TokenRequestResponse request(
@@ -87,11 +86,11 @@ public class TokenService implements PasswordCredentialsGrantDelegate {
     if (!tenant.exists()) {
       return User.notFound();
     }
-    User user = userService.findBy(tenant, username.value(), "idp-server");
+    User user = userManagementApi.findBy(tenant, username.value(), "idp-server");
     if (!user.exists()) {
       return User.notFound();
     }
-    if (!userService.authenticate(user, password.value())) {
+    if (!userManagementApi.authenticate(user, password.value())) {
       return User.notFound();
     }
     return user;

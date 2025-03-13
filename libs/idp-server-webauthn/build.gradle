@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.idp.server'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':libs:idp-server-core')
+    implementation 'com.webauthn4j:webauthn4j-core:0.28.5.RELEASE'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}

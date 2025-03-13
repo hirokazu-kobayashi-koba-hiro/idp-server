@@ -1,13 +1,13 @@
 package org.idp.server.adapters.springboot.application.service;
 
 import org.idp.server.adapters.springboot.application.service.tenant.TenantService;
-import org.idp.server.core.IdpServerApplication;
-import org.idp.server.core.api.DiscoveryApi;
-import org.idp.server.core.api.JwksApi;
+import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.DiscoveryApi;
+import org.idp.server.core.JwksApi;
 import org.idp.server.core.handler.discovery.io.JwksRequestResponse;
 import org.idp.server.core.handler.discovery.io.ServerConfigurationRequestResponse;
-import org.idp.server.adapters.springboot.domain.model.tenant.Tenant;
-import org.idp.server.adapters.springboot.domain.model.tenant.TenantIdentifier;
+import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.stereotype.Service;
 
 @Service

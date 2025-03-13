@@ -2,8 +2,8 @@ package org.idp.server.adapters.springboot.infrastructure.datasource.organizatio
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.idp.server.adapters.springboot.domain.model.organization.Organization;
-import org.idp.server.adapters.springboot.domain.model.organization.OrganizationIdentifier;
+import org.idp.server.core.organization.Organization;
+import org.idp.server.core.organization.OrganizationIdentifier;
 
 @Mapper
 public interface OrganizationMapper {

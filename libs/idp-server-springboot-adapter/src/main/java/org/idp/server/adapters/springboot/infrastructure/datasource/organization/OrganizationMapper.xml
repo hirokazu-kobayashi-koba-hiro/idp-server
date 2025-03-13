@@ -33,7 +33,7 @@
             id = #{organizationIdentifier.value};
     </update>
 
-    <resultMap id="Organization" type="org.idp.server.adapters.springboot.domain.model.organization.Organization">
+    <resultMap id="Organization" type="org.idp.server.core.organization.Organization">
         <id property="identifier.value" column="id"/>
         <result property="name.value" column="name"/>
     </resultMap>
