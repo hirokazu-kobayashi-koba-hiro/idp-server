@@ -18,10 +18,7 @@ public enum SecurityEventType {
       "RISC",
       DefaultEventType.user_disabled.name(),
       "https://schemas.openid.net/secevent/risc/event-type/account-disabled"),
-  AccountEnabled(
-      "RISC",
-      "",
-      "https://schemas.openid.net/secevent/risc/event-type/account-enabled"),
+  AccountEnabled("RISC", "", "https://schemas.openid.net/secevent/risc/event-type/account-enabled"),
   IdentifierChanged(
       "RISC", "", "https://schemas.openid.net/secevent/risc/event-type/identifier-changed"),
   IdentifierRecycled(

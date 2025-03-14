@@ -9,5 +9,4 @@ public class IdPApplication {
   public static void main(String[] args) {
     SpringApplication.run(IdPApplication.class, args);
   }
-
 }

@@ -17,6 +17,7 @@ import org.idp.server.core.handler.federation.io.FederationRequestResponse;
 import org.idp.server.core.handler.oauth.io.*;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.interaction.*;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
@@ -164,7 +165,6 @@ public class OAuthFlowService implements OAuthFlowFunction {
     return authorize;
   }
 
-  // FIXME this is bad code
   public OAuthAuthorizeResponse authorizeWithSession(
       TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
 
@@ -173,13 +173,18 @@ public class OAuthFlowService implements OAuthFlowFunction {
         oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
     OAuthSession session = oAuthSessionService.findSession(authorizationRequest.sessionKey());
 
-    UserInteraction userInteraction = interact(tenant, "", "", session);
+    if (Objects.isNull(session)
+            || session.isExpire(SystemDateTime.now())
+            || Objects.isNull(session.user())) {
+      throw new OAuthBadRequestException("invalid_request", "session expired");
+    }
+
     OAuthAuthorizeRequest authAuthorizeRequest =
         new OAuthAuthorizeRequest(
             oauthRequestIdentifier,
             tenant.issuer(),
-            userInteraction.user(),
-            userInteraction.authentication());
+            session.user(),
+            session.authentication());
 
     OAuthAuthorizeResponse authorize = oAuthApi.authorize(authAuthorizeRequest);
 
@@ -215,17 +220,4 @@ public class OAuthFlowService implements OAuthFlowFunction {
     eventPublisher.publishEvent(event);
   }
 
-  private UserInteraction interact(
-      Tenant tenant, String username, String password, OAuthSession session) {
-
-    if (Objects.nonNull(session)
-        && !session.isExpire(SystemDateTime.now())
-        && Objects.nonNull(session.user())) {
-      Authentication authentication = session.authentication();
-      User user = session.user();
-      return new UserInteraction(user, authentication);
-    }
-
-    throw new RuntimeException("session expired");
-  }
 }

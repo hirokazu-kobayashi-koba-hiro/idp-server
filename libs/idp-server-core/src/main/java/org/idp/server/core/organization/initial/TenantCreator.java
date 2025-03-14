@@ -1,7 +1,6 @@
 package org.idp.server.core.organization.initial;
 
 import java.util.UUID;
-
 import org.idp.server.core.tenant.*;
 
 public class TenantCreator {

@@ -63,8 +63,8 @@ public class Authentication implements Serializable {
     return !acrValues.isEmpty();
   }
 
-    public boolean exists() {
+  public boolean exists() {
 
     return hasAuthenticationTime();
-    }
+  }
 }

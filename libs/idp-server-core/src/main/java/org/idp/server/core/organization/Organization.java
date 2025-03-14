@@ -1,7 +1,6 @@
 package org.idp.server.core.organization;
 
 import java.util.HashMap;
-
 import org.idp.server.core.tenant.Tenant;
 
 public class Organization {

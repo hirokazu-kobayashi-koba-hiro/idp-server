@@ -2,7 +2,6 @@ package org.idp.server.core.organization.initial;
 
 import java.util.List;
 import java.util.UUID;
-
 import org.idp.server.core.organization.*;
 import org.idp.server.core.tenant.Tenant;
 
