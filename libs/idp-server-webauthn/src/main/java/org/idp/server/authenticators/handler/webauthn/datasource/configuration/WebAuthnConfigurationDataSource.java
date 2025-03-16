@@ -24,13 +24,13 @@ public class WebAuthnConfigurationDataSource implements WebAuthnConfigurationRep
             """;
 
     List<Object> params = List.of(tenant.identifierValue());
-    Map<String, String> stringMap = sqlExecutor.selectOne(sqlTemplate, params);
+    Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
 
-    if (Objects.isNull(stringMap) || !stringMap.isEmpty()) {
+    if (Objects.isNull(result) || result.isEmpty()) {
       throw new WebAuthnConfigurationNotFoundException(
           String.format("Web Authn Configuration is Not Found (%s)", tenant.identifierValue()));
     }
 
-    return ModelConverter.convert(stringMap);
+    return ModelConverter.convert(result);
   }
 }
