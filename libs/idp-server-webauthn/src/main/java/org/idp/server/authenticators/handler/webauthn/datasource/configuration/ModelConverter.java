@@ -10,7 +10,9 @@ class ModelConverter {
     String rpId = stringMap.get("rp_id");
     String rpName = stringMap.get("rp_name");
     String origin = stringMap.get("origin");
-    byte[] tokenBindingId = Base64.getDecoder().decode(stringMap.get("token_binding_id"));
+
+    byte[] tokenBindingId = getTokenBindingId(stringMap);
+
     String attestationPreference = stringMap.get("attestation_preference");
     String authenticatorAttachment = stringMap.get("authenticator_attachment");
 
@@ -19,6 +21,13 @@ class ModelConverter {
     boolean userPresenceRequired = Boolean.parseBoolean(stringMap.get("user_presence_required"));
 
     return new WebAuthnConfiguration(rpId, rpName, origin, tokenBindingId, attestationPreference, authenticatorAttachment, requireResidentKey, userVerificationRequired, userPresenceRequired);
+  }
+
+  private static byte[] getTokenBindingId(Map<String, String> stringMap) {
+    if (stringMap.containsKey("token_binding_id") && !stringMap.getOrDefault("token_binding_id", "").isEmpty()) {
+      return Base64.getDecoder().decode(stringMap.get("token_binding_id"));
+    }
+    return null;
   }
 
 
