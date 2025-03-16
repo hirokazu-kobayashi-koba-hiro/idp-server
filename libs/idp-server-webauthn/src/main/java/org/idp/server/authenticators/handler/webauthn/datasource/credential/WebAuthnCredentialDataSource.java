@@ -33,28 +33,6 @@ public class WebAuthnCredentialDataSource implements WebAuthnCredentialRepositor
   }
 
   @Override
-  public WebAuthnCredential get(String credentialId) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
-
-    String sqlTemplate = """
-            SELECT id, idp_user_id, rp_id, attestation_object, sign_count
-            FROM webauthn_credentials
-            WHERE id = ?;
-            """;
-    List<Object> params = new ArrayList<>();
-    params.add(credentialId);
-
-    Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
-
-    if (Objects.isNull(result) || result.isEmpty()) {
-      throw new WebAuthnCredentialNotFoundException(
-          String.format("credential not found (%s)", credentialId));
-    }
-
-    return ModelConverter.convert(result);
-  }
-
-  @Override
   public WebAuthnCredentials findAll(String userId) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
@@ -66,7 +44,7 @@ public class WebAuthnCredentialDataSource implements WebAuthnCredentialRepositor
     List<Object> params = new ArrayList<>();
     params.add(userId);
 
-    List<Map<String, String>> results = sqlExecutor.selectList(sqlTemplate, params);
+    List<Map<String, Object>> results = sqlExecutor.selectListWithType(sqlTemplate, params);
 
     if (Objects.isNull(results) || results.isEmpty()) {
       return new WebAuthnCredentials();

@@ -15,10 +15,6 @@ public class WebAuthnCredentialService {
     webAuthnCredentialRepository.register(webAuthnCredential);
   }
 
-  public WebAuthnCredential get(String id) {
-    return webAuthnCredentialRepository.get(id);
-  }
-
   public WebAuthnCredentials findAll(String userId) {
     return webAuthnCredentialRepository.findAll(userId);
   }
