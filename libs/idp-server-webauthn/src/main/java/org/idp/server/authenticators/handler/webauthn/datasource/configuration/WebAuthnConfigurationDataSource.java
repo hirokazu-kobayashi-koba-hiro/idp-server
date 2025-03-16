@@ -23,7 +23,7 @@ public class WebAuthnConfigurationDataSource implements WebAuthnConfigurationRep
             WHERE tenant_id = ?
             """;
 
-    List<Object> params = List.of(tenant.identifier());
+    List<Object> params = List.of(tenant.identifierValue());
     Map<String, String> stringMap = sqlExecutor.selectOne(sqlTemplate, params);
 
     if (Objects.isNull(stringMap) || !stringMap.isEmpty()) {
