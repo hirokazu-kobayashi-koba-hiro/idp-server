@@ -1,6 +1,7 @@
 package org.idp.server.core.oauth.interaction;
 
 public enum OAuthUserInteractionType {
+  SIGNUP_REQUEST,
   SIGNUP,
   PASSWORD_AUTHENTICATION,
   EMAIL_VERIFICATION_CHALLENGE,

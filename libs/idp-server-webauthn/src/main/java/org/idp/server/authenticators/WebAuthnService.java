@@ -4,7 +4,6 @@ import org.idp.server.authenticators.webauthn.*;
 import org.idp.server.authenticators.webauthn.service.internal.WebAuthnConfigurationService;
 import org.idp.server.authenticators.webauthn.service.internal.WebAuthnCredentialService;
 import org.idp.server.authenticators.webauthn.service.internal.WebAuthnSessionService;
-import org.idp.server.core.UserManagementApi;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
@@ -15,6 +14,7 @@ import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.user.UserService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,22 +26,19 @@ public class WebAuthnService implements OAuthUserInteractor {
   WebAuthnConfigurationService webAuthnConfigurationService;
   WebAuthnSessionService webAuthnSessionService;
   WebAuthnCredentialService webAuthnCredentialService;
-  UserManagementApi userManagementApi;
 
   public WebAuthnService(
       WebAuthnConfigurationService webAuthnConfigurationService,
       WebAuthnSessionService webAuthnSessionService,
-      WebAuthnCredentialService webAuthnCredentialService,
-      UserManagementApi userManagementApi) {
+      WebAuthnCredentialService webAuthnCredentialService) {
     this.webAuthnConfigurationService = webAuthnConfigurationService;
     this.webAuthnSessionService = webAuthnSessionService;
     this.webAuthnCredentialService = webAuthnCredentialService;
-    this.userManagementApi = userManagementApi;
   }
 
 
   @Override
-  public OAuthUserInteractionResult interact(Tenant tenant, AuthorizationRequest authorizationRequest, OAuthUserInteractionType type, Map<String, Object> params) {
+  public OAuthUserInteractionResult interact(Tenant tenant, AuthorizationRequest authorizationRequest, OAuthUserInteractionType type, Map<String, Object> params, UserService userService) {
 
     switch (type) {
       case WEBAUTHN_REGISTRATION_CHALLENGE -> {
@@ -77,7 +74,7 @@ public class WebAuthnService implements OAuthUserInteractor {
 
         String request = (String) params.get("request");
 
-        User user = verifyAuthentication(tenant, request);
+        User user = verifyAuthentication(tenant, userService, request);
         Authentication authentication =
                 new Authentication()
                         .setTime(SystemDateTime.now())
@@ -122,7 +119,7 @@ public class WebAuthnService implements OAuthUserInteractor {
     return webAuthnSessionService.start();
   }
 
-  private User verifyAuthentication(Tenant tenant, String request) {
+  private User verifyAuthentication(Tenant tenant, UserService userService, String request) {
 
     WebAuthnConfiguration configuration = webAuthnConfigurationService.get(tenant);
     WebAuthnSession session = webAuthnSessionService.get();
@@ -135,6 +132,6 @@ public class WebAuthnService implements OAuthUserInteractor {
 
     manager.verify(webAuthnCredentials);
 
-    return userManagementApi.get(extractUserId);
+    return userService.get(extractUserId);
   }
 }

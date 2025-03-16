@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot;
 import java.net.URI;
 import java.util.List;
 
-import org.idp.server.adapters.springboot.domain.model.operation.IdPScope;
+import org.idp.server.adapters.springboot.operation.IdPScope;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
