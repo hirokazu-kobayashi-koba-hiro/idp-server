@@ -2,12 +2,12 @@ package org.idp.server.core.user;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
 
@@ -25,7 +25,7 @@ public class UserRegistrationService implements OAuthUserInteractor {
   @Override
   public OAuthUserInteractionResult interact(
       Tenant tenant,
-      AuthorizationRequest authorizationRequest,
+      OAuthSession oAuthSession,
       OAuthUserInteractionType type,
       Map<String, Object> request,
       UserService userService) {
@@ -36,11 +36,9 @@ public class UserRegistrationService implements OAuthUserInteractor {
     User user = create(tenant, userRegistration);
     Authentication authentication = new Authentication();
 
-    User maskedPasswordUser = user.maskPassword();
-
     Map<String, Object> response = new HashMap<>();
-    response.put("user", maskedPasswordUser);
-    response.put("authentication", authentication);
+    response.put("user", user.toMap());
+    response.put("authentication", authentication.toMap());
 
     return new OAuthUserInteractionResult(
         type, user, authentication, response, DefaultEventType.user_signup);

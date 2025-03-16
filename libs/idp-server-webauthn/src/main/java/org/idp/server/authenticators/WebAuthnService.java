@@ -5,13 +5,13 @@ import org.idp.server.authenticators.webauthn.service.internal.WebAuthnConfigura
 import org.idp.server.authenticators.webauthn.service.internal.WebAuthnCredentialService;
 import org.idp.server.authenticators.webauthn.service.internal.WebAuthnSessionService;
 import org.idp.server.core.basic.date.SystemDateTime;
+import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.interaction.OAuthInteractorUnSupportedException;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.user.UserService;
@@ -38,7 +38,7 @@ public class WebAuthnService implements OAuthUserInteractor {
 
 
   @Override
-  public OAuthUserInteractionResult interact(Tenant tenant, AuthorizationRequest authorizationRequest, OAuthUserInteractionType type, Map<String, Object> params, UserService userService) {
+  public OAuthUserInteractionResult interact(Tenant tenant, OAuthSession oAuthSession, OAuthUserInteractionType type, Map<String, Object> params, UserService userService) {
 
     switch (type) {
       case WEBAUTHN_REGISTRATION_CHALLENGE -> {
@@ -52,11 +52,11 @@ public class WebAuthnService implements OAuthUserInteractor {
       }
       case WEBAUTHN_REGISTRATION -> {
         String request = (String) params.get("request");
-        String userId = (String) params.get("userId");
+        String userId = oAuthSession.user().sub();
 
         WebAuthnCredential webAuthnCredential = verifyRegistration(tenant, userId, request);
         Map<String, Object> response = new HashMap<>();
-        response.put("registration", webAuthnCredential);
+        response.put("registration", webAuthnCredential.toMap());
 
         return new OAuthUserInteractionResult(type, response, DefaultEventType.webauthn_registration_success);
       }
@@ -82,8 +82,8 @@ public class WebAuthnService implements OAuthUserInteractor {
                         .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
         Map<String, Object> response = new HashMap<>();
-        response.put("user", user);
-        response.put("authentication", authentication);
+        response.put("user", user.toMap());
+        response.put("authentication", authentication.toMap());
 
         return new OAuthUserInteractionResult(type, user, authentication, response, DefaultEventType.webauthn_authentication_success);
       }

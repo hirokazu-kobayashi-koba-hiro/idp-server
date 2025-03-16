@@ -53,7 +53,7 @@ public class UserDataSource implements UserRepository {
         params.add(user.phoneNumber());
         params.add(user.phoneNumberVerified());
         params.add(jsonConverter.write(user.address()));
-        params.add(jsonConverter.write(user.customProperties()));
+        params.add(jsonConverter.write(user.customProperties().values()));
         params.add(jsonConverter.write(user.verifiableCredentials()));
         params.add(user.hashedPassword());
 

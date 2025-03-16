@@ -94,10 +94,12 @@ public class OAuthFlowService implements OAuthFlowFunction {
     Tenant tenant = tenantService.get(tenantIdentifier);
     AuthorizationRequest authorizationRequest =
         oAuthApi.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+    OAuthSession oAuthSession = oAuthRequestDelegate.findSession(authorizationRequest.sessionKey());
+
     OAuthUserInteractor oAuthUserInteractor = oAuthUserInteractors.get(type);
 
     OAuthUserInteractionResult result =
-        oAuthUserInteractor.interact(tenant, authorizationRequest, type, params, userService);
+        oAuthUserInteractor.interact(tenant, oAuthSession, type, params, userService);
 
     if (result.hasUser()) {
       OAuthSession session = oAuthRequestDelegate.findSession(authorizationRequest.sessionKey());

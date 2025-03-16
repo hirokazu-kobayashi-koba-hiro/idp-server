@@ -2,9 +2,7 @@ package org.idp.server.core.oauth.authentication;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class Authentication implements Serializable {
   LocalDateTime time;
@@ -66,5 +64,13 @@ public class Authentication implements Serializable {
   public boolean exists() {
 
     return hasAuthenticationTime();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("time", time);
+    map.put("methods", methods);
+    map.put("acrValues", acrValues);
+    return map;
   }
 }

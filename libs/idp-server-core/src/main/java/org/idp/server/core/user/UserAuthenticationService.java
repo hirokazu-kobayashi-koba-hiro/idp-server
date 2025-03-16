@@ -1,15 +1,16 @@
 package org.idp.server.core.user;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.basic.date.SystemDateTime;
+import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
 
@@ -24,7 +25,7 @@ public class UserAuthenticationService implements OAuthUserInteractor {
   @Override
   public OAuthUserInteractionResult interact(
       Tenant tenant,
-      AuthorizationRequest authorizationRequest,
+      OAuthSession oAuthSession,
       OAuthUserInteractionType type,
       Map<String, Object> request,
       UserService userService) {
@@ -38,7 +39,9 @@ public class UserAuthenticationService implements OAuthUserInteractor {
             .addMethods(new ArrayList<>(List.of("pwd")))
             .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
-    Map<String, Object> response = Map.of("user", user);
+    Map<String, Object> response = new HashMap<>();
+    response.put("user", user.toMap());
+    response.put("authentication", authentication.toMap());
 
     return new OAuthUserInteractionResult(
         type, user, authentication, response, DefaultEventType.password_success);

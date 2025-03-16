@@ -155,8 +155,11 @@ public class User implements Serializable {
     return this;
   }
 
-  public Boolean emailVerified() {
-    return emailVerified;
+  public boolean emailVerified() {
+    if (hasEmailVerified()) {
+      return emailVerified;
+    }
+    return false;
   }
 
   public User setEmailVerified(boolean emailVerified) {
@@ -209,8 +212,11 @@ public class User implements Serializable {
     return this;
   }
 
-  public Boolean phoneNumberVerified() {
-    return phoneNumberVerified;
+  public boolean phoneNumberVerified() {
+    if (hasPhoneNumberVerified()) {
+      return phoneNumberVerified;
+    }
+    return false;
   }
 
   public User setPhoneNumberVerified(boolean phoneNumberVerified) {
@@ -329,6 +335,10 @@ public class User implements Serializable {
     return Objects.nonNull(address) && address.exists();
   }
 
+  public boolean hasHashedPassword() {
+    return Objects.nonNull(hashedPassword) && !hashedPassword.isEmpty();
+  }
+
   public boolean hasUpdatedAt() {
     return Objects.nonNull(updatedAt);
   }
@@ -389,13 +399,9 @@ public class User implements Serializable {
     if (hasUpdatedAt()) map.put("updated_at", updatedAt.toString());
     if (hasAddress()) map.put("address", address.toMap());
     if (hasCustomProperties()) map.put("custom_properties", new HashMap<>(customProperties));
+    if (hasHashedPassword()) map.put("hashed_password", "****");
 
     return map;
-  }
-
-  public User maskPassword() {
-    this.hashedPassword = "****";
-    return this;
   }
 
   public User didEmailVerification() {

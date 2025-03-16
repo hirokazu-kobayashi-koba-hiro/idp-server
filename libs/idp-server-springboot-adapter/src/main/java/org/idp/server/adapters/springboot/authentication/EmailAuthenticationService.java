@@ -39,10 +39,9 @@ public class EmailAuthenticationService implements OAuthUserInteractor {
   }
 
   @Override
-  public OAuthUserInteractionResult interact(Tenant tenant, AuthorizationRequest authorizationRequest, OAuthUserInteractionType type, Map<String, Object> params, UserService userService) {
+  public OAuthUserInteractionResult interact(Tenant tenant, OAuthSession oAuthSession, OAuthUserInteractionType type, Map<String, Object> params, UserService userService) {
     switch (type) {
       case EMAIL_VERIFICATION_CHALLENGE -> {
-        OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
 
         EmailVerificationChallenge emailVerificationChallenge =
                 challenge(oAuthSession.user());
@@ -52,12 +51,13 @@ public class EmailAuthenticationService implements OAuthUserInteractor {
         OAuthSession updatedSession = oAuthSession.addAttribute(attributes);
 
         oAuthSessionService.updateSession(updatedSession);
+
+        return new OAuthUserInteractionResult(type, Map.of(), DefaultEventType.email_verification_request);
       }
 
       case EMAIL_VERIFICATION -> {
         String verificationCode = (String) params.getOrDefault("verification_code", "");
 
-        OAuthSession oAuthSession = oAuthSessionService.findSession(authorizationRequest.sessionKey());
         if (!oAuthSession.hasAttribute("emailVerificationChallenge")) {
           throw new EmailVerificationChallengeNotFoundException(
                   "emailVerificationChallenge is not found");
@@ -68,7 +68,6 @@ public class EmailAuthenticationService implements OAuthUserInteractor {
         verify(verificationCode, emailVerificationChallenge);
 
         User user = oAuthSession.user();
-        User maskedUser = user.didEmailVerification().maskPassword();
 
         Authentication authentication =
                 new Authentication()
@@ -77,7 +76,8 @@ public class EmailAuthenticationService implements OAuthUserInteractor {
                         .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
         Map<String, Object> response = new HashMap<>();
-        response.put("user", maskedUser);
+        response.put("user", user.toMap());
+        response.put("authentication", authentication.toMap());
 
         return new OAuthUserInteractionResult(type, user, authentication, response, DefaultEventType.email_verification_success);
       }

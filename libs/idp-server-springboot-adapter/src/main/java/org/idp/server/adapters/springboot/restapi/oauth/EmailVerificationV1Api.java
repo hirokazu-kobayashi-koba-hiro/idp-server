@@ -43,6 +43,6 @@ public class EmailVerificationV1Api {
 
     OAuthUserInteractionResult result = oAuthFlowFunction.interact(tenantIdentifier, id, OAuthUserInteractionType.EMAIL_VERIFICATION, params);
 
-    return new ResponseEntity<>(result, HttpStatus.OK);
+    return new ResponseEntity<>(result.response(), HttpStatus.OK);
   }
 }

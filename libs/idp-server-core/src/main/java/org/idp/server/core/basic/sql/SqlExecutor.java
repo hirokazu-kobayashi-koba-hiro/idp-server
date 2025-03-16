@@ -66,8 +66,17 @@ public class SqlExecutor {
         if (param instanceof Integer integerValue) {
           prepareStatement.setInt(index, integerValue);
         }
+        if (param instanceof Long longValue) {
+          prepareStatement.setLong(index, longValue);
+        }
         if (param instanceof Boolean booleanValue) {
           prepareStatement.setBoolean(index, booleanValue);
+        }
+        if (param instanceof byte[] binary) {
+          prepareStatement.setBytes(index, binary);
+        }
+        if (param == null) {
+          prepareStatement.setString(index, "");
         }
         index++;
       }
@@ -102,8 +111,14 @@ public class SqlExecutor {
         if (param instanceof Integer integerValue) {
           prepareStatement.setInt(index, integerValue);
         }
+        if (param instanceof Long longValue) {
+          prepareStatement.setLong(index, longValue);
+        }
         if (param instanceof Boolean booleanValue) {
           prepareStatement.setBoolean(index, booleanValue);
+        }
+        if (param instanceof byte[] binary) {
+          prepareStatement.setBytes(index, binary);
         }
         if (param == null) {
           prepareStatement.setString(index, "");

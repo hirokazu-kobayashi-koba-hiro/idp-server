@@ -13,6 +13,7 @@ public enum DefaultEventType {
   webauthn_authentication_challenge("User challenge authentication using WebAuthn"),
   webauthn_authentication_success("User successfully authenticated using WebAuthn"),
   webauthn_authentication_failure("User failed authentication using WebAuthn"),
+  email_verification_request("User request verified their email"),
   email_verification_success("User successfully verified their email"),
   email_verification_failure("User failed email verification"),
   login("User logged in"),

@@ -1,5 +1,8 @@
 package org.idp.server.authenticators.webauthn;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class WebAuthnCredential {
   byte[] id;
 
@@ -52,5 +55,16 @@ public class WebAuthnCredential {
 
   public byte[] attestationObject() {
     return attestationObject;
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> result = new HashMap<>();
+    result.put("id", id);
+    result.put("user_id", userId);
+    result.put("rp_id", rpId);
+    result.put("public_key", publicKey);
+    result.put("attestation_object", attestationObject);
+    result.put("sign_count", signCount);
+    return result;
   }
 }
