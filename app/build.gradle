@@ -20,17 +20,12 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.session:spring-session-core'
-	implementation "org.springframework.boot:spring-boot-starter-security"
-	implementation 'org.springframework.boot:spring-boot-starter-mail'
-	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
-	runtimeOnly 'org.postgresql:postgresql:42.7.2'
 
-	implementation 'com.webauthn4j:webauthn4j-core:0.28.5.RELEASE'
-
-	implementation project(':lib')
+	implementation project(':libs:idp-server-core')
+	implementation project(':libs:idp-server-core-adapter')
+	implementation project(':libs:idp-server-webauthn')
+	implementation project(':libs:idp-server-springboot-adapter')
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
