@@ -105,6 +105,9 @@ public class SqlExecutor {
         if (param instanceof Boolean booleanValue) {
           prepareStatement.setBoolean(index, booleanValue);
         }
+        if (param == null) {
+          prepareStatement.setString(index, "");
+        }
         index++;
       }
       prepareStatement.executeUpdate();
