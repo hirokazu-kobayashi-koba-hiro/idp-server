@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.oauth.OAuthRequestPattern;
 import org.idp.server.core.oauth.gateway.RequestObjectGateway;
+import org.idp.server.core.type.exception.UnSupportedException;
 
 public class OAuthRequestContextServices {
   Map<OAuthRequestPattern, OAuthRequestContextService> values;
@@ -20,7 +21,8 @@ public class OAuthRequestContextServices {
   public OAuthRequestContextService get(OAuthRequestPattern pattern) {
     OAuthRequestContextService oAuthRequestContextService = values.get(pattern);
     if (Objects.isNull(oAuthRequestContextService)) {
-      throw new RuntimeException("not support request pattern");
+      throw new UnSupportedException(
+          String.format("not support request pattern (%s)", pattern.name()));
     }
     return oAuthRequestContextService;
   }

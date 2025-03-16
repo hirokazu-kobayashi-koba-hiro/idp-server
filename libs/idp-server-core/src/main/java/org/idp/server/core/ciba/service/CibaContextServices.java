@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.ciba.CibaRequestPattern;
+import org.idp.server.core.type.exception.UnSupportedException;
 
 public class CibaContextServices {
 
@@ -18,7 +19,8 @@ public class CibaContextServices {
   public CibaRequestContextService get(CibaRequestPattern pattern) {
     CibaRequestContextService cibaRequestContextService = values.get(pattern);
     if (Objects.isNull(cibaRequestContextService)) {
-      throw new RuntimeException("unsupported ciba request pattern");
+      throw new UnSupportedException(
+          String.format("unsupported ciba request pattern (%s)", pattern.name()));
     }
     return cibaRequestContextService;
   }

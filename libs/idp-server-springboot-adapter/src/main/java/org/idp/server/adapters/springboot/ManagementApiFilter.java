@@ -61,11 +61,12 @@ public class ManagementApiFilter extends OncePerRequestFilter {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
     } catch (Exception e) {
+
+      logger.error(e.getMessage(), e);
       response.setHeader(
               HttpHeaders.WWW_AUTHENTICATE, "error=invalid_token unexpected error occurred");
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
-
 
   }
 

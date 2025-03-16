@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.ciba.CibaRequestContext;
+import org.idp.server.core.type.exception.UnSupportedException;
 
 public class CibaRequestVerifier {
 
@@ -21,7 +22,8 @@ public class CibaRequestVerifier {
   public void verify() {
     CibaVerifier cibaVerifier = baseVerifiers.get(context.profile());
     if (Objects.isNull(cibaVerifier)) {
-      throw new RuntimeException("unsupported ciba profile");
+      throw new UnSupportedException(
+          String.format("unsupported ciba profile (%s)", context.profile().name()));
     }
     cibaVerifier.verify(context);
   }

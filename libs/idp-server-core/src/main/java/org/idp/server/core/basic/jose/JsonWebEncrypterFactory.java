@@ -6,6 +6,7 @@ import com.nimbusds.jose.crypto.ECDHEncrypter;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
+import org.idp.server.core.type.exception.UnSupportedException;
 
 public class JsonWebEncrypterFactory {
 
@@ -25,7 +26,8 @@ public class JsonWebEncrypterFactory {
         return new RSAEncrypter((RSAPublicKey) jsonWebKey.toPublicKey());
       }
       default -> {
-        throw new RuntimeException("unsupported encryption alg");
+        throw new UnSupportedException(
+            String.format("unsupported encryption alg (%s)", jsonWebKeyType.name()));
       }
     }
   }

@@ -2,8 +2,6 @@ package org.idp.server.authenticators.handler.webauthn.datasource.credential;
 
 import org.idp.server.authenticators.webauthn.WebAuthnCredential;
 
-import java.util.Base64;
-import java.util.HexFormat;
 import java.util.Map;
 
 class ModelConverter {

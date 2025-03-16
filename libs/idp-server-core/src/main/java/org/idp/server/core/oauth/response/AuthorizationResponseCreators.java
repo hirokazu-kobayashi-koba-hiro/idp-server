@@ -6,6 +6,7 @@ import static org.idp.server.core.type.oauth.ResponseType.none;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.type.exception.UnSupportedException;
 import org.idp.server.core.type.oauth.ResponseType;
 
 public class AuthorizationResponseCreators {
@@ -28,7 +29,8 @@ public class AuthorizationResponseCreators {
   public AuthorizationResponseCreator get(ResponseType responseType) {
     AuthorizationResponseCreator authorizationResponseCreator = values.get(responseType);
     if (Objects.isNull(authorizationResponseCreator)) {
-      throw new RuntimeException("not support request type");
+      throw new UnSupportedException(
+          String.format("not support request type (%s)", responseType.value()));
     }
     return authorizationResponseCreator;
   }

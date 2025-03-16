@@ -12,6 +12,7 @@ import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.core.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.core.type.exception.UnSupportedException;
 import org.idp.server.core.type.oauth.GrantType;
 
 public class OAuthTokenCreationServices {
@@ -47,7 +48,8 @@ public class OAuthTokenCreationServices {
   public OAuthTokenCreationService get(GrantType grantType) {
     OAuthTokenCreationService oAuthTokenCreationService = values.get(grantType);
     if (Objects.isNull(oAuthTokenCreationService)) {
-      throw new RuntimeException(String.format("unsupported grant_type (%s)", grantType.name()));
+      throw new UnSupportedException(
+          String.format("unsupported grant_type (%s)", grantType.name()));
     }
     return oAuthTokenCreationService;
   }

@@ -5,6 +5,7 @@ import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.verifier.base.AuthorizationRequestVerifier;
 import org.idp.server.core.oauth.verifier.extension.*;
+import org.idp.server.core.type.exception.UnSupportedException;
 
 /** OAuthRequestVerifier */
 public class OAuthRequestVerifier {
@@ -27,7 +28,7 @@ public class OAuthRequestVerifier {
   public void verify(OAuthRequestContext context) {
     AuthorizationRequestVerifier baseRequestVerifier = baseVerifiers.get(context.profile());
     if (Objects.isNull(baseRequestVerifier)) {
-      throw new RuntimeException(
+      throw new UnSupportedException(
           String.format("idp server unsupported profile (%s)", context.profile().name()));
     }
     baseRequestVerifier.verify(context);

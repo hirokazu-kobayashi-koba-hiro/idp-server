@@ -6,6 +6,7 @@ import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.token.TokenRequestContext;
+import org.idp.server.core.type.exception.UnSupportedException;
 
 public class AuthorizationCodeGrantVerifier {
   TokenRequestContext tokenRequestContext;
@@ -42,7 +43,9 @@ public class AuthorizationCodeGrantVerifier {
     AuthorizationCodeGrantVerifierInterface baseVerifier =
         baseVerifiers.get(authorizationRequest.profile());
     if (Objects.isNull(baseVerifier)) {
-      throw new RuntimeException("idp server does not supported profile");
+      throw new UnSupportedException(
+          String.format(
+              "idp server does not supported profile (%s)", authorizationRequest.profile().name()));
     }
     baseVerifier.verify(
         tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);

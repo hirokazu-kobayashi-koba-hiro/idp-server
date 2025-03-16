@@ -39,7 +39,8 @@ public class SecurityEventTokenCreator {
 
       return new SecurityEventToken(jws);
     } catch (JsonWebKeyInvalidException e) {
-      throw new RuntimeException(e);
+      throw new SecurityEventTokenCreationFailedException(
+          "security event token creation is failed.", e);
     }
   }
 }

@@ -12,6 +12,7 @@ import java.security.PrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.text.ParseException;
 import java.util.Map;
+import org.idp.server.core.type.exception.UnSupportedException;
 
 // FIXME refactor
 public class JsonWebSignatureFactory {
@@ -139,7 +140,8 @@ public class JsonWebSignatureFactory {
         return new RSASSASigner(privateKey);
       }
       default -> {
-        throw new RuntimeException("unsupported sign key");
+        throw new UnSupportedException(
+            String.format("unsupported sign key (%s)", jsonWebKeyType.name()));
       }
     }
   }

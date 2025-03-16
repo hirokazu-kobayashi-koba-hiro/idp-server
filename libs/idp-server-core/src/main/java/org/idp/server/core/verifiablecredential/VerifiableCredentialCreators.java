@@ -15,7 +15,7 @@ public class VerifiableCredentialCreators {
   public VerifiableCredentialCreator get(Format format) {
     VerifiableCredentialCreator verifiableCredentialCreator = values.get(format);
     if (Objects.isNull(verifiableCredentialCreator)) {
-      throw new RuntimeException(String.format("unsupported format", format.name()));
+      throw new RuntimeException(String.format("unsupported format (%s)", format.name()));
     }
     return verifiableCredentialCreator;
   }

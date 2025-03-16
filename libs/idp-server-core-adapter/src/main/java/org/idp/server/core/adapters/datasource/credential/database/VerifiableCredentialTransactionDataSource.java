@@ -2,6 +2,7 @@ package org.idp.server.core.adapters.datasource.credential.database;
 
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
+import org.idp.server.core.type.exception.NotFoundException;
 import org.idp.server.core.type.verifiablecredential.TransactionId;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialTransaction;
 import org.idp.server.core.verifiablecredential.repository.VerifiableCredentialTransactionRepository;
@@ -42,7 +43,7 @@ public class VerifiableCredentialTransactionDataSource
     Map<String, String> stringMap = sqlExecutor.selectOne(sqlTemplate, params);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
-      throw new RuntimeException(
+      throw new NotFoundException(
           String.format("not found verifiable credential transaction (%s)", transactionId.value()));
     }
 

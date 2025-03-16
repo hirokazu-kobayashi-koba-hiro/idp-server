@@ -47,7 +47,7 @@ This library provides java api supported OAuth2.0 and OIDC spec.
 
 ## Architecture
 
-![architecture](./architecture.svg)
+TODO
 
 ## supported spec
 
