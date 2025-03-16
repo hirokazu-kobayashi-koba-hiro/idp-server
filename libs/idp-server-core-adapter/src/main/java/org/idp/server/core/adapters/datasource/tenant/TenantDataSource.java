@@ -106,7 +106,7 @@ public class TenantDataSource implements TenantRepository {
     if (Objects.isNull(result) || result.isEmpty()) {
       return new Tenant();
     }
-    TenantIdentifier tenantIdentifier = new TenantIdentifier(result.getOrDefault("identifier", ""));
+    TenantIdentifier tenantIdentifier = new TenantIdentifier(result.getOrDefault("id", ""));
     TenantName tenantName = new TenantName(result.getOrDefault("name", ""));
     TenantType tenantType = TenantType.valueOf(result.getOrDefault("type", ""));
     String issuer = result.getOrDefault("issuer", "");

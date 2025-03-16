@@ -52,11 +52,13 @@ public class ClientNotificationService
       CibaGrant cibaGrant,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
+
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
         backchannelAuthenticationRequestRepository.find(
             cibaGrant.backchannelAuthenticationRequestIdentifier());
     ClientNotificationRequestBodyBuilder builder =
         new ClientNotificationRequestBodyBuilder().add(cibaGrant.authReqId());
+
     if (backchannelAuthenticationRequest.isPingMode()) {
       ClientNotificationRequest clientNotificationRequest =
           new ClientNotificationRequest(
@@ -65,6 +67,7 @@ public class ClientNotificationService
               backchannelAuthenticationRequest.clientNotificationToken().value());
       clientNotificationGateway.notify(clientNotificationRequest);
     }
+
     if (backchannelAuthenticationRequest.isPushMode()) {
       AccessToken accessToken =
           createAccessToken(

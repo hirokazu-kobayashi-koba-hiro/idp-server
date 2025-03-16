@@ -1,6 +1,7 @@
 package org.idp.server.core;
 
 import java.util.Map;
+import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.ciba.CibaRequestDelegate;
 import org.idp.server.core.ciba.UserCriteria;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
@@ -15,6 +16,7 @@ import org.idp.server.core.type.ciba.UserCode;
 import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.core.user.UserService;
 
+@Transactional
 public class CibaFlowService implements CibaFlowFunction, CibaRequestDelegate {
 
   CibaApi cibaApi;

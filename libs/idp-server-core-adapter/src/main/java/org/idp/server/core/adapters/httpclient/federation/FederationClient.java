@@ -1,6 +1,5 @@
 package org.idp.server.core.adapters.httpclient.federation;
 
-import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
 import org.idp.server.core.basic.http.HttpClientErrorException;
 import org.idp.server.core.basic.http.HttpClientFactory;
 import org.idp.server.core.basic.http.HttpNetworkErrorException;
@@ -19,7 +18,7 @@ import java.util.logging.Logger;
 
 public class FederationClient implements FederationGateway {
 
-  Logger log = Logger.getLogger(NotificationClient.class.getName());
+  Logger log = Logger.getLogger(FederationClient.class.getName());
   HttpClient httpClient;
   JsonConverter jsonConverter;
 

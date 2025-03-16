@@ -20,6 +20,7 @@ public class ClientManagementService implements ClientManagementFunction {
 
   public ClientManagementService(
       TenantService tenantService, ClientConfigurationHandler clientConfigurationHandler) {
+    this.tenantService = tenantService;
     this.clientConfigurationHandler = clientConfigurationHandler;
     this.errorHandler = new ClientConfigurationErrorHandler();
   }
