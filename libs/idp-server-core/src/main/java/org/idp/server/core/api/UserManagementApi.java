@@ -18,5 +18,5 @@ public interface UserManagementApi {
 
   List<User> find(TenantIdentifier tenantIdentifier, int limit, int offset);
 
-  boolean authenticate(User user, String rawPassword);
+
 }

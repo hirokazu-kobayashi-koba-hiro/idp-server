@@ -14,10 +14,9 @@ import org.idp.server.core.oauth.interaction.OAuthInteractorUnSupportedException
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.user.UserService;
+import org.idp.server.core.user.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +38,7 @@ public class EmailAuthenticationService implements OAuthUserInteractor {
   }
 
   @Override
-  public OAuthUserInteractionResult interact(Tenant tenant, OAuthSession oAuthSession, OAuthUserInteractionType type, Map<String, Object> params, UserService userService) {
+  public OAuthUserInteractionResult interact(Tenant tenant, OAuthSession oAuthSession, OAuthUserInteractionType type, Map<String, Object> params, UserRepository userRepository) {
     switch (type) {
       case EMAIL_VERIFICATION_CHALLENGE -> {
 

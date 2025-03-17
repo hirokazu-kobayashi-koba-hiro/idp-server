@@ -14,23 +14,23 @@ import org.idp.server.core.organization.initial.TenantCreator;
 import org.idp.server.core.tenant.PublicTenantDomain;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantName;
-import org.idp.server.core.tenant.TenantService;
+import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.user.UserRegistrationService;
 
 @Transactional
 public class OnboardingEntryService implements OnboardingApi {
 
-  TenantService tenantService;
+  TenantRepository tenantRepository;
   OrganizationService organizationService;
   UserRegistrationService userRegistrationService;
   ServerConfigurationHandler serverConfigurationHandler;
 
   public OnboardingEntryService(
-      TenantService tenantService,
+      TenantRepository tenantRepository,
       OrganizationService organizationService,
       UserRegistrationService userRegistrationService,
       ServerConfigurationHandler serverConfigurationHandler) {
-    this.tenantService = tenantService;
+    this.tenantRepository = tenantRepository;
     this.organizationService = organizationService;
     this.userRegistrationService = userRegistrationService;
     this.serverConfigurationHandler = serverConfigurationHandler;
@@ -45,7 +45,7 @@ public class OnboardingEntryService implements OnboardingApi {
 
     TenantCreator tenantCreator = new TenantCreator(publicTenantDomain, tenantName);
     Tenant tenant = tenantCreator.create();
-    tenantService.register(tenant);
+    tenantRepository.register(tenant);
 
     OrganizationCreator organizationCreator = new OrganizationCreator(organizationName, tenant);
     Organization organization = organizationCreator.create();
@@ -59,7 +59,7 @@ public class OnboardingEntryService implements OnboardingApi {
     ServerConfigurationCreator serverConfigurationCreator =
         new ServerConfigurationCreator(tenant, serverConfig);
     String config = serverConfigurationCreator.create();
-    serverConfigurationHandler.register(config);
+    serverConfigurationHandler.handleRegistration(config);
 
     return organization;
   }

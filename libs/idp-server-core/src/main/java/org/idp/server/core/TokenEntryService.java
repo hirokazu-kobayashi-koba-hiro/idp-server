@@ -15,12 +15,12 @@ import org.idp.server.core.protocol.TokenIntrospectionApi;
 import org.idp.server.core.protocol.TokenRevocationProtocol;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.tenant.TenantService;
+import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.core.type.oauth.Password;
 import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.core.type.oauth.Username;
-import org.idp.server.core.user.UserService;
+import org.idp.server.core.user.UserRepository;
 
 @Transactional
 public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDelegate {
@@ -28,21 +28,21 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
   TokenProtocol tokenProtocol;
   TokenIntrospectionApi tokenIntrospectionApi;
   TokenRevocationProtocol tokenRevocationProtocol;
-  TenantService tenantService;
-  UserService userService;
+  TenantRepository tenantRepository;
+  UserRepository userRepository;
 
   public TokenEntryService(
       TokenProtocol tokenProtocol,
       TokenIntrospectionApi tokenIntrospectionApi,
       TokenRevocationProtocol tokenRevocationProtocol,
-      UserService userService,
-      TenantService tenantService) {
+      UserRepository userRepository,
+      TenantRepository tenantRepository) {
     this.tokenProtocol = tokenProtocol;
     tokenProtocol.setPasswordCredentialsGrantDelegate(this);
     this.tokenIntrospectionApi = tokenIntrospectionApi;
     this.tokenRevocationProtocol = tokenRevocationProtocol;
-    this.tenantService = tenantService;
-    this.userService = userService;
+    this.tenantRepository = tenantRepository;
+    this.userRepository = userRepository;
   }
 
   public TokenRequestResponse request(
@@ -51,7 +51,7 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
       String authorizationHeader,
       String clientCert) {
 
-    Tenant tenant = tenantService.get(tenantId);
+    Tenant tenant = tenantRepository.get(tenantId);
     TokenRequest tokenRequest = new TokenRequest(authorizationHeader, params, tenant.issuer());
     tokenRequest.setClientCert(clientCert);
 
@@ -61,7 +61,7 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
   public TokenIntrospectionResponse inspect(
       TenantIdentifier tenantIdentifier, Map<String, String[]> params) {
 
-    Tenant tenant = tenantService.get(tenantIdentifier);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
     TokenIntrospectionRequest tokenIntrospectionRequest =
         new TokenIntrospectionRequest(params, tenant.issuer());
 
@@ -74,7 +74,7 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
       String authorizationHeader,
       String clientCert) {
 
-    Tenant tenant = tenantService.get(tenantId);
+    Tenant tenant = tenantRepository.get(tenantId);
     TokenRevocationRequest revocationRequest =
         new TokenRevocationRequest(authorizationHeader, request, tenant.issuer());
     revocationRequest.setClientCert(clientCert);
@@ -85,17 +85,15 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
   // FIXME this is bad code
   @Override
   public User findAndAuthenticate(TokenIssuer tokenIssuer, Username username, Password password) {
-    Tenant tenant = tenantService.find(tokenIssuer);
+    Tenant tenant = tenantRepository.find(tokenIssuer);
     if (!tenant.exists()) {
       return User.notFound();
     }
-    User user = userService.findBy(tenant, username.value(), "idp-server");
+    User user = userRepository.findBy(tenant, username.value(), "idp-server");
     if (!user.exists()) {
       return User.notFound();
     }
-    if (!userService.authenticate(user, password.value())) {
-      return User.notFound();
-    }
+    //TODO implement password authentication
     return user;
   }
 }

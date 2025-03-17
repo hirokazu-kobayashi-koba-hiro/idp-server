@@ -6,57 +6,54 @@ import org.idp.server.core.api.UserManagementApi;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.tenant.TenantService;
-import org.idp.server.core.user.UserService;
+import org.idp.server.core.tenant.TenantRepository;
+import org.idp.server.core.user.UserRepository;
 
 // TODO
 @Transactional
 public class UserManagementEntryService implements UserManagementApi {
 
-  TenantService tenantService;
-  UserService userService;
+  TenantRepository tenantRepository;
+  UserRepository userRepository;
 
-  public UserManagementEntryService(TenantService tenantService, UserService userService) {
-    this.tenantService = tenantService;
-    this.userService = userService;
+  public UserManagementEntryService(TenantRepository tenantRepository, UserRepository userRepository) {
+    this.tenantRepository = tenantRepository;
+    this.userRepository = userRepository;
   }
 
   @Override
   public void register(Tenant tenant, User user) {
-    userService.register(tenant, user);
+    userRepository.register(tenant, user);
   }
 
   @Override
   public User get(TenantIdentifier tenantIdentifier, String userId) {
-    Tenant tenant = tenantService.get(tenantIdentifier);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    return userService.get(userId);
+    return userRepository.get(userId);
   }
 
   @Override
   public User findBy(Tenant tenant, String email, String providerId) {
-    return userService.findBy(tenant, email, providerId);
+    return userRepository.findBy(tenant, email, providerId);
   }
 
   @Override
   public void update(User user) {
-    userService.update(user);
+    userRepository.update(user);
   }
 
   @Override
   public User findByProvider(String tokenIssuer, String providerId, String providerUserId) {
-    return userService.findByProvider(tokenIssuer, providerId, providerUserId);
+    return userRepository.findByProvider(tokenIssuer, providerId, providerUserId);
   }
 
   @Override
   public List<User> find(TenantIdentifier tenantIdentifier, int limit, int offset) {
-    Tenant tenant = tenantService.get(tenantIdentifier);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    return userService.find(tenant, limit, offset);
+    return userRepository.findList(tenant, limit, offset);
   }
 
-  @Override
-  public boolean authenticate(User user, String rawPassword) {
-    return userService.authenticate(user, rawPassword);
-  }
+
 }

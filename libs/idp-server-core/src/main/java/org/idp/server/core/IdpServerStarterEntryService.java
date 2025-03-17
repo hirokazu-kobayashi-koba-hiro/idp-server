@@ -5,16 +5,16 @@ import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.api.IdpServerStarterApi;
 import org.idp.server.core.handler.configuration.ClientConfigurationHandler;
 import org.idp.server.core.organization.OrganizationService;
-import org.idp.server.core.tenant.TenantService;
-import org.idp.server.core.user.UserService;
+import org.idp.server.core.tenant.TenantRepository;
+import org.idp.server.core.user.UserRepository;
 
 @Transactional
 public class IdpServerStarterEntryService implements IdpServerStarterApi {
 
   OrganizationService organizationService;
-  TenantService tenantService;
+  TenantRepository tenantRepository;
   ClientConfigurationHandler clientConfigurationHandler;
-  UserService userService;
+  UserRepository userRepository;
 
   @Override
   public Map<String, Object> initialize(Map<String, Object> request) {

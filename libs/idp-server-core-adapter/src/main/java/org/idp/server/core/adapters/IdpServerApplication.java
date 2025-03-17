@@ -54,7 +54,7 @@ import org.idp.server.core.oauth.interaction.OAuthUserInteractors;
 import org.idp.server.core.organization.OrganizationService;
 import org.idp.server.core.protocol.*;
 import org.idp.server.core.sharedsignal.EventPublisher;
-import org.idp.server.core.tenant.TenantService;
+import org.idp.server.core.sharedsignal.OAuthFlowEventPublisher;
 import org.idp.server.core.type.verifiablecredential.Format;
 import org.idp.server.core.user.*;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreator;
@@ -150,10 +150,8 @@ public class IdpServerApplication {
             new FederationProtocolImpl(federationHandler), FederationProtocol.class);
 
     OrganizationService organizationService = new OrganizationService(organizationDataSource);
-    TenantService tenantService = new TenantService(tenantDataSource);
-    UserService userService = new UserService(userDataSource);
 
-    FederationService federationService = new FederationService(federationProtocol, userService);
+    FederationService federationService = new FederationService(federationProtocol, userDataSource);
 
     TokenIntrospectionHandler tokenIntrospectionHandler =
         new TokenIntrospectionHandler(oAuthTokenDataSource);
@@ -247,37 +245,39 @@ public class IdpServerApplication {
         TransactionInterceptor.createProxy(
             new IdpServerStarterEntryService(), IdpServerStarterApi.class);
 
+    OAuthFlowEventPublisher oAuthFLowEventPublisher = new OAuthFlowEventPublisher(eventPublisher);
+
     this.oAuthFlowApi =
         TransactionInterceptor.createProxy(
             new OAuthFlowEntryService(
                     oAuthProtocol,
                 oAuthRequestDelegate,
                 oAuthUserInteractors,
-                userService,
+                userDataSource,
                 userRegistrationService,
-                tenantService,
+                tenantDataSource,
                 federationService,
-                eventPublisher),
+                oAuthFLowEventPublisher),
             OAuthFlowApi.class);
 
     this.tokenApi =
         TransactionInterceptor.createProxy(
             new TokenEntryService(
-                    tokenProtocol, tokenIntrospectionApi, tokenRevocationProtocol, userService, tenantService),
+                    tokenProtocol, tokenIntrospectionApi, tokenRevocationProtocol, userDataSource, tenantDataSource),
             TokenApi.class);
 
     this.oidcMetaDataApi =
         TransactionInterceptor.createProxy(
-            new OidcMetaDataEntryService(tenantService, discoveryProtocol, jwksProtocol),
+            new OidcMetaDataEntryService(tenantDataSource, discoveryProtocol, jwksProtocol),
             OidcMetaDataApi.class);
 
     this.userinfoApi =
         TransactionInterceptor.createProxy(
-            new UserinfoEntryService(userinfoProtocol, userService, tenantService), UserinfoApi.class);
+            new UserinfoEntryService(userinfoProtocol, userDataSource, tenantDataSource), UserinfoApi.class);
 
     this.cibaFlowApi =
         TransactionInterceptor.createProxy(
-            new CibaFlowEntryService(cibaProtocol, userService, tenantService), CibaFlowApi.class);
+            new CibaFlowEntryService(cibaProtocol, userDataSource, tenantDataSource), CibaFlowApi.class);
 
     this.eventApi =
         TransactionInterceptor.createProxy(new EventEntryService(eventHandler), EventApi.class);
@@ -285,7 +285,7 @@ public class IdpServerApplication {
     this.onboardingApi =
         TransactionInterceptor.createProxy(
             new OnboardingEntryService(
-                tenantService,
+                tenantDataSource,
                 organizationService,
                 userRegistrationService,
                 serverConfigurationHandler),
@@ -293,22 +293,22 @@ public class IdpServerApplication {
 
     this.serverManagementApi =
         TransactionInterceptor.createProxy(
-            new ServerManagementEntryService(tenantService, serverConfigurationHandler),
+            new ServerManagementEntryService(tenantDataSource, serverConfigurationHandler),
             ServerManagementApi.class);
 
     this.clientManagementApi =
         TransactionInterceptor.createProxy(
             new ClientManagementEntryService(
-                tenantService, new ClientConfigurationHandler(clientConfigurationDataSource)),
+                tenantDataSource, new ClientConfigurationHandler(clientConfigurationDataSource)),
             ClientManagementApi.class);
 
     this.userManagementApi =
         TransactionInterceptor.createProxy(
-            new UserManagementEntryService(tenantService, userService), UserManagementApi.class);
+            new UserManagementEntryService(tenantDataSource, userDataSource), UserManagementApi.class);
 
     this.operatorAuthenticationApi =
         TransactionInterceptor.createProxy(
-            new OperatorAuthenticationEntryService(tokenIntrospectionApi, tenantService, userService),
+            new OperatorAuthenticationEntryService(tokenIntrospectionApi, tenantDataSource, userDataSource),
             OperatorAuthenticationApi.class);
   }
 

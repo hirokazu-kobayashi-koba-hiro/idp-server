@@ -11,22 +11,22 @@ import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.protocol.CibaProtocol;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.tenant.TenantService;
+import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.ciba.UserCode;
 import org.idp.server.core.type.oauth.TokenIssuer;
-import org.idp.server.core.user.UserService;
+import org.idp.server.core.user.UserRepository;
 
 @Transactional
 public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
 
   CibaProtocol cibaProtocol;
-  UserService userService;
-  TenantService tenantService;
+  UserRepository userRepository;
+  TenantRepository tenantRepository;
 
-  public CibaFlowEntryService(CibaProtocol cibaProtocol, UserService userService, TenantService tenantService) {
+  public CibaFlowEntryService(CibaProtocol cibaProtocol, UserRepository userRepository, TenantRepository tenantRepository) {
     this.cibaProtocol = cibaProtocol;
-    this.userService = userService;
-    this.tenantService = tenantService;
+    this.userRepository = userRepository;
+    this.tenantRepository = tenantRepository;
   }
 
   public CibaRequestResponse request(
@@ -35,7 +35,7 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
       String authorizationHeader,
       String clientCert) {
 
-    Tenant tenant = tenantService.get(tenantIdentifier);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
     CibaRequest cibaRequest = new CibaRequest(authorizationHeader, params, tenant.issuer());
     cibaRequest.setClientCert(clientCert);
 
@@ -44,7 +44,7 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
 
   public CibaAuthorizeResponse authorize(TenantIdentifier tenantIdentifier, String authReqId) {
 
-    Tenant tenant = tenantService.get(tenantIdentifier);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
     CibaAuthorizeRequest cibaAuthorizeRequest =
         new CibaAuthorizeRequest(authReqId, tenant.issuer());
 
@@ -53,7 +53,7 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
 
   public CibaDenyResponse deny(TenantIdentifier tenantIdentifier, String authReqId) {
 
-    Tenant tenant = tenantService.get(tenantIdentifier);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
     CibaDenyRequest cibaDenyRequest = new CibaDenyRequest(authReqId, tenant.issuer());
 
     return cibaProtocol.deny(cibaDenyRequest);
@@ -61,17 +61,18 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
 
   @Override
   public User find(TokenIssuer tokenIssuer, UserCriteria criteria) {
-    Tenant tenant = tenantService.find(tokenIssuer);
+    Tenant tenant = tenantRepository.find(tokenIssuer);
     if (tenant.exists() && criteria.hasLoginHint()) {
       // TODO proverId
-      return userService.findBy(tenant, criteria.loginHint().value(), "idp-server");
+      return userRepository.findBy(tenant, criteria.loginHint().value(), "idp-server");
     }
     return User.notFound();
   }
 
+  //TODO implement
   @Override
   public boolean authenticate(TokenIssuer tokenIssuer, User user, UserCode userCode) {
-    return userService.authenticate(user, userCode.value());
+    return true;
   }
 
   @Override

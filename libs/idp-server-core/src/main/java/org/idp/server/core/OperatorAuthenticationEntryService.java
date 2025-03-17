@@ -8,29 +8,29 @@ import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionRespo
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.protocol.TokenIntrospectionApi;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantService;
+import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.exception.UnauthorizedException;
 import org.idp.server.core.type.extension.Pairs;
-import org.idp.server.core.user.UserService;
+import org.idp.server.core.user.UserRepository;
 
 @Transactional
 public class OperatorAuthenticationEntryService implements OperatorAuthenticationApi {
 
   TokenIntrospectionApi tokenIntrospectionApi;
-  TenantService tenantService;
-  UserService userService;
+  TenantRepository tenantRepository;
+  UserRepository userRepository;
 
   public OperatorAuthenticationEntryService(
       TokenIntrospectionApi tokenIntrospectionApi,
-      TenantService tenantService,
-      UserService userService) {
+      TenantRepository tenantRepository,
+      UserRepository userRepository) {
     this.tokenIntrospectionApi = tokenIntrospectionApi;
-    this.tenantService = tenantService;
-    this.userService = userService;
+    this.tenantRepository = tenantRepository;
+    this.userRepository = userRepository;
   }
 
   public Pairs<User, String> authenticate(String authorizationHeader) {
-    Tenant adminTenant = tenantService.getAdmin();
+    Tenant adminTenant = tenantRepository.getAdmin();
 
     TokenIntrospectionCreator tokenIntrospectionCreator =
         new TokenIntrospectionCreator(authorizationHeader, adminTenant.issuer());
@@ -46,7 +46,7 @@ public class OperatorAuthenticationEntryService implements OperatorAuthenticatio
     if (!introspectionResponse.isActive()) {
       throw new UnauthorizedException("error=invalid_token error_description=token is undefined");
     }
-    User user = userService.get(introspectionResponse.subject());
+    User user = userRepository.get(introspectionResponse.subject());
 
     return new Pairs<>(user, tokenIntrospectionRequest.token());
   }

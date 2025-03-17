@@ -15,7 +15,7 @@ public class ServerConfigurationHandler {
   }
 
   // TODO
-  public void register(String json) {
+  public void handleRegistration(String json) {
     ServerConfiguration serverConfiguration = jsonConverter.read(json, ServerConfiguration.class);
     serverConfigurationRepository.register(serverConfiguration);
   }

@@ -28,11 +28,11 @@ public class UserAuthenticationService implements OAuthUserInteractor {
       OAuthSession oAuthSession,
       OAuthUserInteractionType type,
       Map<String, Object> request,
-      UserService userService) {
+      UserRepository userRepository) {
     String username = (String) request.get("username");
     String password = (String) request.get("password");
 
-    User user = authenticateWithPassword(tenant, userService, username, password);
+    User user = authenticateWithPassword(tenant, userRepository, username, password);
     Authentication authentication =
         new Authentication()
             .setTime(SystemDateTime.now())
@@ -48,8 +48,8 @@ public class UserAuthenticationService implements OAuthUserInteractor {
   }
 
   private User authenticateWithPassword(
-      Tenant tenant, UserService userService, String username, String password) {
-    User user = userService.findBy(tenant, username, "idp-server");
+      Tenant tenant, UserRepository userRepository, String username, String password) {
+    User user = userRepository.findBy(tenant, username, "idp-server");
     if (!passwordVerificationDelegation.verify(password, user.hashedPassword())) {
       throw new UserNotFoundException("User " + username + " not found");
     }

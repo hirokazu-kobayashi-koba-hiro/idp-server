@@ -28,7 +28,7 @@ public class UserRegistrationService implements OAuthUserInteractor {
       OAuthSession oAuthSession,
       OAuthUserInteractionType type,
       Map<String, Object> request,
-      UserService userService) {
+      UserRepository userRepository) {
     String username = (String) request.get("username");
     String password = (String) request.get("password");
     UserRegistration userRegistration = new UserRegistration(username, password);

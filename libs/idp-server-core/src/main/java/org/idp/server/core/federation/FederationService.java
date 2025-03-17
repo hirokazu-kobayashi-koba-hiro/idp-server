@@ -6,16 +6,16 @@ import org.idp.server.core.handler.federation.io.FederationRequest;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.protocol.FederationProtocol;
-import org.idp.server.core.user.UserService;
+import org.idp.server.core.user.UserRepository;
 
 public class FederationService implements FederationDelegate {
 
   FederationProtocol federationProtocol;
-  UserService userService;
+  UserRepository userRepository;
 
-  public FederationService(FederationProtocol federationProtocol, UserService userService) {
+  public FederationService(FederationProtocol federationProtocol, UserRepository userRepository) {
     this.federationProtocol = federationProtocol;
-    this.userService = userService;
+    this.userRepository = userRepository;
   }
 
   public FederationRequestResponse request(FederationRequest federationRequest) {
@@ -31,6 +31,6 @@ public class FederationService implements FederationDelegate {
   @Override
   public User find(String tokenIssuer, String providerId, String providerUserId) {
 
-    return userService.findByProvider(tokenIssuer, providerId, providerUserId);
+    return userRepository.findByProvider(tokenIssuer, providerId, providerUserId);
   }
 }

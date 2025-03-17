@@ -13,8 +13,6 @@ public interface OAuthProtocol {
 
   AuthorizationRequest get(AuthorizationRequestIdentifier authorizationRequestIdentifier);
 
-  OAuthAuthenticationUpdateResponse updateAuthentication(OAuthAuthenticationUpdateRequest request);
-
   OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request);
 
   OAuthDenyResponse deny(OAuthDenyRequest request);

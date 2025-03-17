@@ -4,26 +4,26 @@ import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.api.ServerManagementApi;
 import org.idp.server.core.handler.configuration.ServerConfigurationHandler;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantService;
+import org.idp.server.core.tenant.TenantRepository;
 
 @Transactional
 public class ServerManagementEntryService implements ServerManagementApi {
 
-  TenantService tenantService;
+  TenantRepository tenantRepository;
   ServerConfigurationHandler serverConfigurationHandler;
 
   public ServerManagementEntryService(
-      TenantService tenantService, ServerConfigurationHandler serverConfigurationHandler) {
-    this.tenantService = tenantService;
+      TenantRepository tenantRepository, ServerConfigurationHandler serverConfigurationHandler) {
+    this.tenantRepository = tenantRepository;
     this.serverConfigurationHandler = serverConfigurationHandler;
   }
 
   // TODO
   public String register(Tenant tenant, String json) {
 
-    serverConfigurationHandler.register(json);
+    serverConfigurationHandler.handleRegistration(json);
 
-    tenantService.register(tenant);
+    tenantRepository.register(tenant);
 
     return json;
   }

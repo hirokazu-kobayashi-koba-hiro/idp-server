@@ -8,44 +8,50 @@ import org.idp.server.core.handler.configuration.io.ClientConfigurationManagemen
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.tenant.TenantService;
+import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.oauth.ClientId;
 
 @Transactional
 public class ClientManagementEntryService implements ClientManagementApi {
 
-  TenantService tenantService;
+  TenantRepository tenantRepository;
   ClientConfigurationHandler clientConfigurationHandler;
   ClientConfigurationErrorHandler errorHandler;
 
   public ClientManagementEntryService(
-      TenantService tenantService, ClientConfigurationHandler clientConfigurationHandler) {
-    this.tenantService = tenantService;
+      TenantRepository tenantRepository, ClientConfigurationHandler clientConfigurationHandler) {
+    this.tenantRepository = tenantRepository;
     this.clientConfigurationHandler = clientConfigurationHandler;
     this.errorHandler = new ClientConfigurationErrorHandler();
   }
 
   // TODO
   public String register(String json) {
-    Tenant tenant = tenantService.getAdmin();
 
-    return clientConfigurationHandler.register(tenant.tokenIssuer(), json);
+    Tenant tenant = tenantRepository.getAdmin();
+    return clientConfigurationHandler.handleRegistration(tenant.tokenIssuer(), json);
+  }
+
+  public String register(TenantIdentifier tenantIdentifier, String body) {
+
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    return clientConfigurationHandler.handleRegistration(tenant.tokenIssuer(), body);
   }
 
   public ClientConfigurationManagementListResponse find(
       TenantIdentifier tenantIdentifier, int limit, int offset) {
-    Tenant tenant = tenantService.get(tenantIdentifier);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    return clientConfigurationHandler.find(tenant.tokenIssuer(), limit, offset);
+    return clientConfigurationHandler.handleFinding(tenant.tokenIssuer(), limit, offset);
   }
 
   @Override
   public ClientConfigurationManagementResponse get(
       TenantIdentifier tenantIdentifier, ClientId clientId) {
     try {
-      Tenant tenant = tenantService.get(tenantIdentifier);
+      Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-      return clientConfigurationHandler.get(tenant.tokenIssuer(), clientId);
+      return clientConfigurationHandler.handleGetting(tenant.tokenIssuer(), clientId);
     } catch (Exception e) {
 
       return errorHandler.handle(e);

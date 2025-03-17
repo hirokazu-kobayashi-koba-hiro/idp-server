@@ -81,13 +81,6 @@ public class OAuthProtocolImpl implements OAuthProtocol {
     return oauthHandler.handleGettingData(identifier);
   }
 
-  @Override
-  public OAuthAuthenticationUpdateResponse updateAuthentication(
-      OAuthAuthenticationUpdateRequest request) {
-    // TODO
-    return new OAuthAuthenticationUpdateResponse();
-  }
-
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
     try {
 

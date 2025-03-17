@@ -3,7 +3,7 @@ package org.idp.server.core.oauth.interaction;
 import java.util.Map;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.user.UserService;
+import org.idp.server.core.user.UserRepository;
 
 public interface OAuthUserInteractor {
   OAuthUserInteractionResult interact(
@@ -11,5 +11,5 @@ public interface OAuthUserInteractor {
       OAuthSession oAuthSession,
       OAuthUserInteractionType type,
       Map<String, Object> request,
-      UserService userService);
+      UserRepository userRepository);
 }

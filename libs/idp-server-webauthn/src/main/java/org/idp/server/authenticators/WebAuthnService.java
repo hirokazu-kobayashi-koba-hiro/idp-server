@@ -18,7 +18,7 @@ import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.user.UserService;
+import org.idp.server.core.user.UserRepository;
 
 public class WebAuthnService implements OAuthUserInteractor {
 
@@ -41,7 +41,7 @@ public class WebAuthnService implements OAuthUserInteractor {
       OAuthSession oAuthSession,
       OAuthUserInteractionType type,
       Map<String, Object> params,
-      UserService userService) {
+      UserRepository userRepository) {
 
     switch (type) {
       case WEBAUTHN_REGISTRATION_CHALLENGE -> {
@@ -76,7 +76,7 @@ public class WebAuthnService implements OAuthUserInteractor {
       case WEBAUTHN_AUTHENTICATION -> {
         String request = (String) params.get("request");
 
-        User user = verifyAuthentication(tenant, userService, request);
+        User user = verifyAuthentication(tenant, userRepository, request);
         Authentication authentication =
             new Authentication()
                 .setTime(SystemDateTime.now())
@@ -123,7 +123,7 @@ public class WebAuthnService implements OAuthUserInteractor {
     return webAuthnSessionService.start();
   }
 
-  private User verifyAuthentication(Tenant tenant, UserService userService, String request) {
+  private User verifyAuthentication(Tenant tenant, UserRepository userRepository, String request) {
 
     WebAuthnConfiguration configuration = webAuthnConfigurationService.get(tenant);
     WebAuthnSession session = webAuthnSessionService.get();
@@ -136,6 +136,6 @@ public class WebAuthnService implements OAuthUserInteractor {
 
     manager.verify(webAuthnCredentials);
 
-    return userService.get(extractUserId);
+    return userRepository.get(extractUserId);
   }
 }

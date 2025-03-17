@@ -25,12 +25,12 @@ public class ClientConfigurationHandler {
   }
 
   // TODO
-  public void register(String json) {
+  public void handleRegistration(String json) {
     ClientConfiguration clientConfiguration = jsonConverter.read(json, ClientConfiguration.class);
     clientConfigurationRepository.register(clientConfiguration);
   }
 
-  public String register(TokenIssuer tokenIssuer, String json) {
+  public String handleRegistration(TokenIssuer tokenIssuer, String json) {
     // FIXME
     String replacedJson =
         json.replace("${ISSUER}", tokenIssuer.value())
@@ -43,7 +43,7 @@ public class ClientConfigurationHandler {
     return replacedJson;
   }
 
-  public ClientConfigurationManagementListResponse find(
+  public ClientConfigurationManagementListResponse handleFinding(
       TokenIssuer tokenIssuer, int limit, int offset) {
 
     List<ClientConfiguration> clientConfigurations =
@@ -53,7 +53,7 @@ public class ClientConfigurationHandler {
         ClientConfigurationManagementListStatus.OK, content);
   }
 
-  public ClientConfigurationManagementResponse get(TokenIssuer tokenIssuer, ClientId clientId) {
+  public ClientConfigurationManagementResponse handleGetting(TokenIssuer tokenIssuer, ClientId clientId) {
 
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tokenIssuer, clientId);
