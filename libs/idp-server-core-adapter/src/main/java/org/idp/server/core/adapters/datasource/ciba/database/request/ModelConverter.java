@@ -43,7 +43,7 @@ class ModelConverter {
   }
 
   private static AuthorizationDetails convertAuthorizationDetails(String value) {
-    if (value.isEmpty()) {
+    if (value == null || value.isEmpty()) {
       return new AuthorizationDetails();
     }
     try {

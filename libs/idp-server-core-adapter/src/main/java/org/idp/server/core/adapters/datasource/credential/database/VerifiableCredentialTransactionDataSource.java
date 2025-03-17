@@ -21,7 +21,7 @@ public class VerifiableCredentialTransactionDataSource
         """
                     INSERT INTO public.verifiable_credential_transaction
                     (transaction_id, credential_issuer, client_id, user_id, verifiable_credential, status)
-                    VALUES (?, ?, ?, ?, ?, ?);
+                    VALUES (?, ?, ?, ?, ?::jsonb, ?);
                     """;
     List<Object> params = InsertSqlParamsCreator.create(verifiableCredentialTransaction);
 

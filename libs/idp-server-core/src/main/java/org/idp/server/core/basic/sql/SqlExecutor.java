@@ -13,21 +13,6 @@ public class SqlExecutor {
     this.connection = connection;
   }
 
-  public Map<String, String> selectOne(String sql) {
-    try (Statement statement = connection.createStatement()) {
-      List<Map<String, String>> results = select(sql, statement);
-      if (results.isEmpty()) {
-        return Map.of();
-      }
-      if (results.size() > 1) {
-        throw new RuntimeException(String.format("find results (%d)", results.size()));
-      }
-      return results.get(0);
-    } catch (SQLException exception) {
-      throw new SqlRuntimeException(exception.getMessage(), exception);
-    }
-  }
-
   public Map<String, String> selectOne(String sql, List<Object> params) {
     try (PreparedStatement prepareStatement = connection.prepareStatement(sql)) {
 
@@ -127,14 +112,6 @@ public class SqlExecutor {
     }
   }
 
-  public void execute(String sql) {
-    try (Statement statement = connection.createStatement()) {
-      statement.execute(sql);
-    } catch (SQLException exception) {
-      throw new SqlRuntimeException(exception.getMessage(), exception);
-    }
-  }
-
   public void execute(String sql, List<Object> params) {
     try (PreparedStatement prepareStatement = connection.prepareStatement(sql)) {
 
@@ -157,7 +134,7 @@ public class SqlExecutor {
           prepareStatement.setBytes(index, binary);
         }
         if (param == null) {
-          prepareStatement.setString(index, "");
+          prepareStatement.setString(index, null);
         }
         index++;
       }
@@ -166,21 +143,6 @@ public class SqlExecutor {
     } catch (SQLException exception) {
       throw new SqlRuntimeException(exception.getMessage(), exception);
     }
-  }
-
-  private List<Map<String, String>> select(String sql, Statement statement) throws SQLException {
-    ResultSet resultSet = statement.executeQuery(sql);
-    List<String> columnNames = SqlAnalyzer.columnNames(sql);
-    List<Map<String, String>> results = new ArrayList<>();
-    while (resultSet.next()) {
-      Map<String, String> map = new HashMap<>();
-      for (String columnName : columnNames) {
-        String value = resultSet.getString(columnName);
-        map.put(columnName, value);
-      }
-      results.add(map);
-    }
-    return results;
   }
 
   private List<Map<String, String>> select(String sql, PreparedStatement preparedStatement)

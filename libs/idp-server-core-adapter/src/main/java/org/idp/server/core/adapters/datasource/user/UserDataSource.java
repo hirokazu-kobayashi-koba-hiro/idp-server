@@ -27,7 +27,7 @@ public class UserDataSource implements UserRepository {
                  preferred_username, profile, picture, website, email, email_verified, gender,
                  birthdate, zoneinfo, locale, phone_number, phone_number_verified, address,
                  custom_properties, credentials, hashed_password)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?);
                 """;
 
         List<Object> params = new ArrayList<>();
@@ -134,7 +134,7 @@ public class UserDataSource implements UserRepository {
               UPDATE public.idp_user 
               SET name = ?, given_name = ?, family_name = ?, middle_name = ?, nickname = ?, preferred_username = ?, 
               profile = ?, picture = ?, website = ?, email = ?, email_verified = ?, gender = ?, birthdate = ?, zoneinfo = ?, 
-              locale = ?, phone_number = ?, phone_number_verified = ?, custom_properties = ?, updated_at = now() 
+              locale = ?, phone_number = ?, phone_number_verified = ?, custom_properties = ?::jsonb, updated_at = now() 
               WHERE id = ?;
               """;
 

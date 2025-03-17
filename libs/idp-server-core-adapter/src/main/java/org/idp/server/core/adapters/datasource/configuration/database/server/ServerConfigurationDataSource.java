@@ -27,7 +27,7 @@ public class ServerConfigurationDataSource implements ServerConfigurationReposit
     String sql =
         """
                     INSERT INTO server_configuration (token_issuer, payload)
-                    VALUES (?, ?);
+                    VALUES (?, ?::jsonb);
                     """;
     String payload = jsonConverter.write(serverConfiguration);
 

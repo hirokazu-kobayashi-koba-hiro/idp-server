@@ -19,8 +19,11 @@ public class AuthorizationResponseNoneCreator
                 decideRedirectUri(authorizationRequest, context.clientConfiguration()),
                 context.responseMode(),
                 decideResponseModeValue(context.responseType(), context.responseMode()),
-                context.tokenIssuer())
-            .add(authorizationRequest.state());
+                context.tokenIssuer());
+
+    if (context.hasState()) {
+      authorizationResponseBuilder.add(authorizationRequest.state());
+    }
 
     if (context.isJwtMode()) {
       AuthorizationResponse authorizationResponse = authorizationResponseBuilder.build();

@@ -28,7 +28,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
     String sqlTemplate =
         """
             INSERT INTO client_configuration (token_issuer, client_id, payload)
-            VALUES (?, ?, ?)
+            VALUES (?, ?, ?::jsonb)
             """;
 
     String payload = jsonConverter.write(clientConfiguration);

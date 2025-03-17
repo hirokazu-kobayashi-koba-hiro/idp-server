@@ -53,7 +53,7 @@ class ModelConverter {
   }
 
   private static ClaimsPayload convertClaimsPayload(String value) {
-    if (value.isEmpty()) {
+    if (value == null || value.isEmpty()) {
       return new ClaimsPayload();
     }
     try {
@@ -65,7 +65,7 @@ class ModelConverter {
   }
 
   private static AuthorizationDetails convertAuthorizationDetails(String value) {
-    if (value.isEmpty()) {
+    if (value == null || value.isEmpty()) {
       return new AuthorizationDetails();
     }
     try {
@@ -83,7 +83,7 @@ class ModelConverter {
   }
 
   private static PresentationDefinition convertPresentationDefinition(String value) {
-    if (value.isEmpty()) {
+    if (value == null || value.isEmpty()) {
       return new PresentationDefinition();
     }
     try {
@@ -97,7 +97,7 @@ class ModelConverter {
   }
 
   private static CustomParams convertCustomParams(String value) {
-    if (value.isEmpty()) {
+    if (value == null || value.isEmpty()) {
       return new CustomParams();
     }
     try {

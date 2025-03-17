@@ -19,7 +19,7 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
         """
                     INSERT INTO public.authorization_code_grant
                     (authorization_request_id, authorization_code, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expired_at, presentation_definition)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb);
                     """;
     List<Object> params = InsertSqlParamsCreator.create(authorizationCodeGrant);
 

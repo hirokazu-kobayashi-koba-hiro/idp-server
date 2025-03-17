@@ -36,12 +36,15 @@ public class AuthorizationResponseCodeTokenCreator
                 context.responseMode(),
                 new ResponseModeValue("#"),
                 context.tokenIssuer())
-            .add(authorizationRequest.state())
             .add(authorizationCode)
             .add(TokenType.Bearer)
             .add(new ExpiresIn(context.serverConfiguration().accessTokenDuration()))
             .add(authorizationGrant.scopes())
             .add(accessToken);
+
+    if (context.hasState()) {
+      authorizationResponseBuilder.add(authorizationRequest.state());
+    }
 
     if (context.isJwtMode()) {
       AuthorizationResponse authorizationResponse = authorizationResponseBuilder.build();
