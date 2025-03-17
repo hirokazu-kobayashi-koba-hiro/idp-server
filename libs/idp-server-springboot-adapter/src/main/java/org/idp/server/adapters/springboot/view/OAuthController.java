@@ -2,7 +2,7 @@ package org.idp.server.adapters.springboot.view;
 
 import java.util.Map;
 
-import org.idp.server.core.function.OAuthFlowFunction;
+import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.handler.oauth.io.*;
 import org.idp.server.core.tenant.Tenant;
@@ -22,11 +22,11 @@ import org.springframework.web.servlet.view.RedirectView;
 public class OAuthController implements ParameterTransformable {
 
   Logger log = LoggerFactory.getLogger(OAuthController.class);
-  OAuthFlowFunction oAuthFlowFunction;
+  OAuthFlowApi oAuthFlowApi;
 
   public OAuthController(
       IdpServerApplication idpServerApplication) {
-    this.oAuthFlowFunction = idpServerApplication.oAuthFlowFunction();
+    this.oAuthFlowApi = idpServerApplication.oAuthFlowFunction();
   }
 
   @GetMapping("{tenant-id}/v1/authorizations")
@@ -36,7 +36,7 @@ public class OAuthController implements ParameterTransformable {
       Model model) {
     Map<String, String[]> params = transform(request);
 
-    Pairs<Tenant, OAuthRequestResponse> result = oAuthFlowFunction.request(tenantIdentifier, params);
+    Pairs<Tenant, OAuthRequestResponse> result = oAuthFlowApi.request(tenantIdentifier, params);
     Tenant tenant = result.getLeft();
     OAuthRequestResponse response = result.getRight();
 

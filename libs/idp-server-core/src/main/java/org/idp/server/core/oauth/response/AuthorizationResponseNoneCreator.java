@@ -16,10 +16,10 @@ public class AuthorizationResponseNoneCreator
 
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(
-                decideRedirectUri(authorizationRequest, context.clientConfiguration()),
-                context.responseMode(),
-                decideResponseModeValue(context.responseType(), context.responseMode()),
-                context.tokenIssuer());
+            decideRedirectUri(authorizationRequest, context.clientConfiguration()),
+            context.responseMode(),
+            decideResponseModeValue(context.responseType(), context.responseMode()),
+            context.tokenIssuer());
 
     if (context.hasState()) {
       authorizationResponseBuilder.add(authorizationRequest.state());

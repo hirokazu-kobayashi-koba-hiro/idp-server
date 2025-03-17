@@ -1,5 +1,9 @@
 package org.idp.server.core.adapters.datasource.ciba.database.request;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
@@ -7,11 +11,6 @@ import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepos
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestBuilder;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 public class BackchannelAuthenticationDataSource
     implements BackchannelAuthenticationRequestRepository {
@@ -21,7 +20,8 @@ public class BackchannelAuthenticationDataSource
   @Override
   public void register(BackchannelAuthenticationRequest request) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
-    String sqlTemplate = """
+    String sqlTemplate =
+        """
                 INSERT INTO public.backchannel_authentication_request
                 (id, token_issuer, profile, delivery_mode, scopes, client_id, id_token_hint, login_hint, login_hint_token, acr_values, user_code, client_notification_token, binding_message, requested_expiry, request_object, authorization_details)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb);
@@ -66,8 +66,7 @@ public class BackchannelAuthenticationDataSource
       params.add(null);
     }
     if (request.hasClientNotificationToken()) {
-      params.add(
-              request.clientNotificationToken().value());
+      params.add(request.clientNotificationToken().value());
     } else {
       params.add(null);
     }
@@ -82,8 +81,7 @@ public class BackchannelAuthenticationDataSource
       params.add(null);
     }
     if (request.hasAuthorizationDetails()) {
-      params.add(
-              toJson(request.authorizationDetails().toMapValues()));
+      params.add(toJson(request.authorizationDetails().toMapValues()));
     } else {
       params.add("[]");
     }

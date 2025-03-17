@@ -16,10 +16,7 @@ public class WebAuthnRegistrationManager {
   String userId;
 
   public WebAuthnRegistrationManager(
-      WebAuthnConfiguration configuration,
-      WebAuthnSession session,
-      String request,
-      String userId) {
+      WebAuthnConfiguration configuration, WebAuthnSession session, String request, String userId) {
     this.webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
     this.configuration = configuration;
     this.session = session;

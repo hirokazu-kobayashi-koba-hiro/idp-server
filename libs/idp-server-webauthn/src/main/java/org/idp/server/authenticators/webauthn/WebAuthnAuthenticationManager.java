@@ -18,9 +18,7 @@ public class WebAuthnAuthenticationManager {
   String request;
 
   public WebAuthnAuthenticationManager(
-      WebAuthnConfiguration configuration,
-      WebAuthnSession session,
-      String request) {
+      WebAuthnConfiguration configuration, WebAuthnSession session, String request) {
     this.webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
     this.configuration = configuration;
     this.session = session;

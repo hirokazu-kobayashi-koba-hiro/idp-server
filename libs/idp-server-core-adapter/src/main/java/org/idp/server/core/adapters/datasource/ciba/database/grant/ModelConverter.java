@@ -1,5 +1,7 @@
 package org.idp.server.core.adapters.datasource.ciba.database.grant;
 
+import java.util.List;
+import java.util.Map;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.ciba.grant.CibaGrant;
 import org.idp.server.core.ciba.grant.CibaGrantStatus;
@@ -17,9 +19,6 @@ import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.extension.ExpiredAt;
 import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.Scopes;
-
-import java.util.List;
-import java.util.Map;
 
 class ModelConverter {
 

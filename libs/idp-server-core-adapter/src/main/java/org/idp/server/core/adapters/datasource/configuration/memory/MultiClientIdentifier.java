@@ -1,9 +1,8 @@
 package org.idp.server.core.adapters.datasource.configuration.memory;
 
+import java.util.Objects;
 import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.TokenIssuer;
-
-import java.util.Objects;
 
 class MultiClientIdentifier {
   TokenIssuer tokenIssuer;

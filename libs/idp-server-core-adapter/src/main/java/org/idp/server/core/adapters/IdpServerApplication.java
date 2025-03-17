@@ -1,5 +1,7 @@
 package org.idp.server.core.adapters;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.*;
 import org.idp.server.core.adapters.datasource.ciba.database.grant.CibaGrantDataSource;
 import org.idp.server.core.adapters.datasource.ciba.database.request.BackchannelAuthenticationDataSource;
@@ -27,7 +29,6 @@ import org.idp.server.core.api.*;
 import org.idp.server.core.basic.sql.TransactionInterceptor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.federation.FederationService;
-import org.idp.server.core.function.*;
 import org.idp.server.core.handler.ciba.CibaAuthorizeHandler;
 import org.idp.server.core.handler.ciba.CibaDenyHandler;
 import org.idp.server.core.handler.ciba.CibaRequestHandler;
@@ -51,7 +52,7 @@ import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractors;
 import org.idp.server.core.organization.OrganizationService;
-import org.idp.server.core.protcol.*;
+import org.idp.server.core.protocol.*;
 import org.idp.server.core.sharedsignal.EventPublisher;
 import org.idp.server.core.tenant.TenantService;
 import org.idp.server.core.type.verifiablecredential.Format;
@@ -59,31 +60,29 @@ import org.idp.server.core.user.*;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreator;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreators;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /** IdpServerApplication */
 public class IdpServerApplication {
 
-  OAuthFlowFunction oAuthFlowFunction;
-  TokenFunction tokenFunction;
-  OidcMetaDataFunction oidcMetaDataFunction;
-  UserinfoFunction userinfoFunction;
-  CibaFlowFunction cibaFlowFunction;
-  EventFunction eventFunction;
-  OnboardingFunction onboardingFunction;
-  ServerManagementFunction serverManagementFunction;
-  ClientManagementFunction clientManagementFunction;
-  UserManagementFunction userManagementFunction;
-  OperatorAuthenticationFunction operatorAuthenticationFunction;
+  IdpServerStarterApi idpServerStarterApi;
+  OAuthFlowApi oAuthFlowApi;
+  TokenApi tokenApi;
+  OidcMetaDataApi oidcMetaDataApi;
+  UserinfoApi userinfoApi;
+  CibaFlowApi cibaFlowApi;
+  EventApi eventApi;
+  OnboardingApi onboardingApi;
+  ServerManagementApi serverManagementApi;
+  ClientManagementApi clientManagementApi;
+  UserManagementApi userManagementApi;
+  OperatorAuthenticationApi operatorAuthenticationApi;
 
-
-  public IdpServerApplication(DatabaseConfig databaseConfig,
-                              OAuthRequestDelegate oAuthRequestDelegate,
-                              Map<OAuthUserInteractionType, OAuthUserInteractor> additionalUserInteractions,
-                              PasswordEncodeDelegation passwordEncodeDelegation,
-                              PasswordVerificationDelegation passwordVerificationDelegation,
-                              EventPublisher eventPublisher) {
+  public IdpServerApplication(
+      DatabaseConfig databaseConfig,
+      OAuthRequestDelegate oAuthRequestDelegate,
+      Map<OAuthUserInteractionType, OAuthUserInteractor> additionalUserInteractions,
+      PasswordEncodeDelegation passwordEncodeDelegation,
+      PasswordVerificationDelegation passwordVerificationDelegation,
+      EventPublisher eventPublisher) {
     TransactionManager.setConnectionConfig(
         databaseConfig.url(), databaseConfig.username(), databaseConfig.password());
 
@@ -94,9 +93,9 @@ public class IdpServerApplication {
     AuthorizationGrantedMemoryDataSource authorizationGrantedDataSource =
         new AuthorizationGrantedMemoryDataSource();
     OAuthTokenDataSource oAuthTokenDataSource = new OAuthTokenDataSource();
-    ServerConfigurationDataSource serverConfigurationMemoryDataSource =
+    ServerConfigurationDataSource serverConfigurationDataSource =
         new ServerConfigurationDataSource();
-    ClientConfigurationDataSource clientConfigurationMemoryDataSource =
+    ClientConfigurationDataSource clientConfigurationDataSource =
         new ClientConfigurationDataSource();
     VerifiableCredentialTransactionDataSource verifiableCredentialTransactionDataSource =
         new VerifiableCredentialTransactionDataSource();
@@ -113,46 +112,48 @@ public class IdpServerApplication {
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
             authorizationRequestDataSource,
-            serverConfigurationMemoryDataSource,
-            clientConfigurationMemoryDataSource,
+            serverConfigurationDataSource,
+            clientConfigurationDataSource,
             new RequestObjectHttpClient());
     OAuthAuthorizeHandler oAuthAuthorizeHandler =
         new OAuthAuthorizeHandler(
             authorizationRequestDataSource,
             authorizationCodeGrantDataSource,
             oAuthTokenDataSource,
-            serverConfigurationMemoryDataSource,
-            clientConfigurationMemoryDataSource);
+            serverConfigurationDataSource,
+            clientConfigurationDataSource);
     OAuthDenyHandler oAuthDenyHandler =
         new OAuthDenyHandler(
             authorizationRequestDataSource,
-            serverConfigurationMemoryDataSource,
-            clientConfigurationMemoryDataSource);
+            serverConfigurationDataSource,
+            clientConfigurationDataSource);
     OAuthHandler oAuthHandler =
         new OAuthHandler(
             authorizationRequestDataSource,
-            serverConfigurationMemoryDataSource,
-            clientConfigurationMemoryDataSource);
+            serverConfigurationDataSource,
+            clientConfigurationDataSource);
 
-    OAuthApi oAuthApi =
-            new OAuthApiImpl(
-                    oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler, oAuthHandler);
-    UserRegistrationService userRegistrationService = new UserRegistrationService(userDataSource, passwordEncodeDelegation);
-    UserAuthenticationService userAuthenticationService = new UserAuthenticationService(passwordVerificationDelegation);
+    OAuthProtocol oAuthProtocol =
+        new OAuthProtocolImpl(
+            oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler, oAuthHandler);
+    UserRegistrationService userRegistrationService =
+        new UserRegistrationService(userDataSource, passwordEncodeDelegation);
+    UserAuthenticationService userAuthenticationService =
+        new UserAuthenticationService(passwordVerificationDelegation);
     FederationHandler federationHandler =
-            new FederationHandler(
-                    federatableIdProviderConfigurationDataSource,
-                    federationSessionDataSource,
-                    new FederationClient());
-    FederationApi federationApi =
-            TransactionInterceptor.createProxy(
-                    new FederationApiImpl(federationHandler), FederationApi.class);
+        new FederationHandler(
+            federatableIdProviderConfigurationDataSource,
+            federationSessionDataSource,
+            new FederationClient());
+    FederationProtocol federationProtocol =
+        TransactionInterceptor.createProxy(
+            new FederationProtocolImpl(federationHandler), FederationProtocol.class);
 
     OrganizationService organizationService = new OrganizationService(organizationDataSource);
     TenantService tenantService = new TenantService(tenantDataSource);
     UserService userService = new UserService(userDataSource);
 
-    FederationService federationService = new FederationService(federationApi, userService);
+    FederationService federationService = new FederationService(federationProtocol, userService);
 
     TokenIntrospectionHandler tokenIntrospectionHandler =
         new TokenIntrospectionHandler(oAuthTokenDataSource);
@@ -161,50 +162,46 @@ public class IdpServerApplication {
             new TokenIntrospectionApiImpl(tokenIntrospectionHandler), TokenIntrospectionApi.class);
     TokenRevocationHandler tokenRevocationHandler =
         new TokenRevocationHandler(
-            oAuthTokenDataSource,
-            serverConfigurationMemoryDataSource,
-            clientConfigurationMemoryDataSource);
-    TokenRevocationApi tokenRevocationApi =
+            oAuthTokenDataSource, serverConfigurationDataSource, clientConfigurationDataSource);
+    TokenRevocationProtocol tokenRevocationProtocol =
         TransactionInterceptor.createProxy(
-            new TokenRevocationApiImpl(tokenRevocationHandler), TokenRevocationApi.class);
+            new TokenRevocationProtocolImpl(tokenRevocationHandler), TokenRevocationProtocol.class);
     UserinfoHandler userinfoHandler =
         new UserinfoHandler(
-            oAuthTokenDataSource,
-            serverConfigurationMemoryDataSource,
-            clientConfigurationMemoryDataSource);
-    UserinfoApi userinfoApi =
-        TransactionInterceptor.createProxy(new UserinfoApiImpl(userinfoHandler), UserinfoApi.class);
-    DiscoveryHandler discoveryHandler = new DiscoveryHandler(serverConfigurationMemoryDataSource);
-    DiscoveryApi discoveryApi =
+            oAuthTokenDataSource, serverConfigurationDataSource, clientConfigurationDataSource);
+    UserinfoProtocol userinfoProtocol =
+        TransactionInterceptor.createProxy(new UserinfoProtocolImpl(userinfoHandler), UserinfoProtocol.class);
+    DiscoveryHandler discoveryHandler = new DiscoveryHandler(serverConfigurationDataSource);
+    DiscoveryProtocol discoveryProtocol =
         TransactionInterceptor.createProxy(
-            new DiscoveryApiImpl(discoveryHandler), DiscoveryApi.class);
-    JwksApi jwksApi =
-        TransactionInterceptor.createProxy(new JwksApiImpl(discoveryHandler), JwksApi.class);
+            new DiscoveryProtocolImpl(discoveryHandler), DiscoveryProtocol.class);
+    JwksProtocol jwksProtocol =
+        TransactionInterceptor.createProxy(new JwksProtocolImpl(discoveryHandler), JwksProtocol.class);
     BackchannelAuthenticationDataSource backchannelAuthenticationDataSource =
         new BackchannelAuthenticationDataSource();
     CibaGrantDataSource cibaGrantDataSource = new CibaGrantDataSource();
     NotificationClient notificationClient = new NotificationClient();
-    CibaApi cibaApi =
+    CibaProtocol cibaProtocol =
         TransactionInterceptor.createProxy(
-            new CibaApiImpl(
+            new CibaProtocolImpl(
                 new CibaRequestHandler(
                     backchannelAuthenticationDataSource,
                     cibaGrantDataSource,
-                    serverConfigurationMemoryDataSource,
-                    clientConfigurationMemoryDataSource),
+                    serverConfigurationDataSource,
+                    clientConfigurationDataSource),
                 new CibaAuthorizeHandler(
                     backchannelAuthenticationDataSource,
                     cibaGrantDataSource,
                     authorizationGrantedDataSource,
                     oAuthTokenDataSource,
                     notificationClient,
-                    serverConfigurationMemoryDataSource,
-                    clientConfigurationMemoryDataSource),
+                    serverConfigurationDataSource,
+                    clientConfigurationDataSource),
                 new CibaDenyHandler(
                     cibaGrantDataSource,
-                    serverConfigurationMemoryDataSource,
-                    clientConfigurationMemoryDataSource)),
-            CibaApi.class);
+                    serverConfigurationDataSource,
+                    clientConfigurationDataSource)),
+            CibaProtocol.class);
     TokenRequestHandler tokenRequestHandler =
         new TokenRequestHandler(
             authorizationRequestDataSource,
@@ -213,10 +210,10 @@ public class IdpServerApplication {
             backchannelAuthenticationDataSource,
             cibaGrantDataSource,
             oAuthTokenDataSource,
-            serverConfigurationMemoryDataSource,
-            clientConfigurationMemoryDataSource);
-    TokenApi tokenApi =
-        TransactionInterceptor.createProxy(new TokenApiImpl(tokenRequestHandler), TokenApi.class);
+            serverConfigurationDataSource,
+            clientConfigurationDataSource);
+    TokenProtocol tokenProtocol =
+        TransactionInterceptor.createProxy(new TokenProtocolImpl(tokenRequestHandler), TokenProtocol.class);
 
     Map<Format, VerifiableCredentialCreator> vcCreators = new HashMap<>();
     vcCreators.put(Format.jwt_vc_json, new VerifiableCredentialJwtClient());
@@ -224,122 +221,142 @@ public class IdpServerApplication {
 
     VerifiableCredentialCreators creators = new VerifiableCredentialCreators(vcCreators);
     CredentialHandler credentialHandler =
-            new CredentialHandler(
-                    oAuthTokenDataSource,
-                    verifiableCredentialTransactionDataSource,
-                    serverConfigurationMemoryDataSource,
-                    clientConfigurationMemoryDataSource,
-                    creators);
-
+        new CredentialHandler(
+            oAuthTokenDataSource,
+            verifiableCredentialTransactionDataSource,
+            serverConfigurationDataSource,
+            clientConfigurationDataSource,
+            creators);
 
     SharedSignalEventClient sharedSignalEventClient = new SharedSignalEventClient();
     EventHandler eventHandler =
         new EventHandler(
             eventDataSource, sharedSignalFrameworkConfigurationDataSource, sharedSignalEventClient);
 
-    ServerConfigurationHandler serverConfigurationHandler = new ServerConfigurationHandler(serverConfigurationMemoryDataSource);
+    ServerConfigurationHandler serverConfigurationHandler =
+        new ServerConfigurationHandler(serverConfigurationDataSource);
 
-    //create instance
-    HashMap<OAuthUserInteractionType, OAuthUserInteractor> interactors = new HashMap<>(additionalUserInteractions);
+    // create instance
+    HashMap<OAuthUserInteractionType, OAuthUserInteractor> interactors =
+        new HashMap<>(additionalUserInteractions);
     interactors.put(OAuthUserInteractionType.SIGNUP_REQUEST, userRegistrationService);
     interactors.put(OAuthUserInteractionType.PASSWORD_AUTHENTICATION, userAuthenticationService);
     OAuthUserInteractors oAuthUserInteractors = new OAuthUserInteractors(interactors);
 
-    this.oAuthFlowFunction =
-            TransactionInterceptor.createProxy(
-                    new OAuthFlowService(
-                            oAuthApi, oAuthRequestDelegate, oAuthUserInteractors, userService, userRegistrationService, tenantService, federationService, eventPublisher
-                    ), OAuthFlowFunction.class
-            );
+    this.idpServerStarterApi =
+        TransactionInterceptor.createProxy(
+            new IdpServerStarterEntryService(), IdpServerStarterApi.class);
 
-    this.tokenFunction = TransactionInterceptor.createProxy(
-            new TokenService(
-                    tokenApi, tokenIntrospectionApi, tokenRevocationApi, userService, tenantService
-            ), TokenFunction.class
-    );
+    this.oAuthFlowApi =
+        TransactionInterceptor.createProxy(
+            new OAuthFlowEntryService(
+                    oAuthProtocol,
+                oAuthRequestDelegate,
+                oAuthUserInteractors,
+                userService,
+                userRegistrationService,
+                tenantService,
+                federationService,
+                eventPublisher),
+            OAuthFlowApi.class);
 
-    this.oidcMetaDataFunction = TransactionInterceptor.createProxy(
-            new OidcMetaDataService(tenantService, discoveryApi, jwksApi), OidcMetaDataFunction.class
-    );
+    this.tokenApi =
+        TransactionInterceptor.createProxy(
+            new TokenEntryService(
+                    tokenProtocol, tokenIntrospectionApi, tokenRevocationProtocol, userService, tenantService),
+            TokenApi.class);
 
-    this.userinfoFunction = TransactionInterceptor.createProxy(
-            new UserinfoService(userinfoApi, userService, tenantService), UserinfoFunction.class
-    );
+    this.oidcMetaDataApi =
+        TransactionInterceptor.createProxy(
+            new OidcMetaDataEntryService(tenantService, discoveryProtocol, jwksProtocol),
+            OidcMetaDataApi.class);
 
-    this.cibaFlowFunction = TransactionInterceptor.createProxy(
-            new CibaFlowService(cibaApi, userService, tenantService), CibaFlowFunction.class
-    );
+    this.userinfoApi =
+        TransactionInterceptor.createProxy(
+            new UserinfoEntryService(userinfoProtocol, userService, tenantService), UserinfoApi.class);
 
-    this.eventFunction =
-            TransactionInterceptor.createProxy(new EventService(eventHandler), EventFunction.class);
+    this.cibaFlowApi =
+        TransactionInterceptor.createProxy(
+            new CibaFlowEntryService(cibaProtocol, userService, tenantService), CibaFlowApi.class);
 
-    this.onboardingFunction = TransactionInterceptor.createProxy(
-            new OnboardingService(tenantService, organizationService, userService, serverConfigurationHandler),
-            OnboardingFunction.class
-    );
+    this.eventApi =
+        TransactionInterceptor.createProxy(new EventEntryService(eventHandler), EventApi.class);
 
-    this.serverManagementFunction =
-            TransactionInterceptor.createProxy(
-                    new ServerManagementService(
-                            tenantService,serverConfigurationHandler
-                            ),
-                    ServerManagementFunction.class);
+    this.onboardingApi =
+        TransactionInterceptor.createProxy(
+            new OnboardingEntryService(
+                tenantService,
+                organizationService,
+                userRegistrationService,
+                serverConfigurationHandler),
+            OnboardingApi.class);
 
-    this.clientManagementFunction =
-            TransactionInterceptor.createProxy(
-                    new ClientManagementService(
-                            tenantService,
-                            new ClientConfigurationHandler(clientConfigurationMemoryDataSource)),
-                    ClientManagementFunction.class);
+    this.serverManagementApi =
+        TransactionInterceptor.createProxy(
+            new ServerManagementEntryService(tenantService, serverConfigurationHandler),
+            ServerManagementApi.class);
 
-    this.userManagementFunction = TransactionInterceptor.createProxy(new UserManagementService(tenantService, userService), UserManagementFunction.class);
+    this.clientManagementApi =
+        TransactionInterceptor.createProxy(
+            new ClientManagementEntryService(
+                tenantService, new ClientConfigurationHandler(clientConfigurationDataSource)),
+            ClientManagementApi.class);
 
-    this.operatorAuthenticationFunction = TransactionInterceptor.createProxy(
-            new OperatorAuthenticationService(tokenIntrospectionApi, tenantService, userService), OperatorAuthenticationFunction.class
-    );
+    this.userManagementApi =
+        TransactionInterceptor.createProxy(
+            new UserManagementEntryService(tenantService, userService), UserManagementApi.class);
+
+    this.operatorAuthenticationApi =
+        TransactionInterceptor.createProxy(
+            new OperatorAuthenticationEntryService(tokenIntrospectionApi, tenantService, userService),
+            OperatorAuthenticationApi.class);
   }
 
-  public OAuthFlowFunction oAuthFlowFunction() {
-    return oAuthFlowFunction;
+  public OAuthFlowApi oAuthFlowFunction() {
+    return oAuthFlowApi;
   }
 
-  public TokenFunction tokenFunction() {
-    return tokenFunction;
+  public TokenApi tokenFunction() {
+    return tokenApi;
   }
 
-  public OidcMetaDataFunction oidcMetaDataFunction() {
-    return oidcMetaDataFunction;
+  public OidcMetaDataApi oidcMetaDataFunction() {
+    return oidcMetaDataApi;
   }
 
-  public UserinfoFunction userinfoFunction() {
-    return userinfoFunction;
+  public UserinfoApi userinfoFunction() {
+    return userinfoApi;
   }
 
-  public CibaFlowFunction cibaFlowFunction() {
-    return cibaFlowFunction;
+  public CibaFlowApi cibaFlowFunction() {
+    return cibaFlowApi;
   }
 
-  public EventFunction eventFunction() {
-    return eventFunction;
+  public EventApi eventFunction() {
+    return eventApi;
   }
 
-  public OnboardingFunction onboardingFunction() {
-    return onboardingFunction;
+  public OnboardingApi onboardingFunction() {
+    return onboardingApi;
   }
 
-  public ServerManagementFunction serverManagementFunction() {
-    return serverManagementFunction;
+  public ServerManagementApi serverManagementFunction() {
+    return serverManagementApi;
   }
 
-  public ClientManagementFunction clientManagementFunction() {
-    return clientManagementFunction;
+  public ClientManagementApi clientManagementFunction() {
+    return clientManagementApi;
   }
 
-  public UserManagementFunction userManagementFunction() {
-    return userManagementFunction;
+  public UserManagementApi userManagementFunction() {
+    return userManagementApi;
   }
 
-  public OperatorAuthenticationFunction operatorAuthenticationFunction() {
-    return operatorAuthenticationFunction;
+  public OperatorAuthenticationApi operatorAuthenticationFunction() {
+    return operatorAuthenticationApi;
+  }
+
+  public IdpServerStarterApi idpServerStarterFunction() {
+    return idpServerStarterApi;
   }
 }

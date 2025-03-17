@@ -7,11 +7,21 @@ CREATE TABLE organization
     updated_at  TIMESTAMP DEFAULT now() NOT NULL
 );
 
+CREATE TABLE server_configuration
+(
+    id           VARCHAR(255)            NOT NULL PRIMARY KEY,
+    token_issuer TEXT                    NOT NULL,
+    payload      JSONB                   NOT NULL,
+    created_at   TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at   TIMESTAMP DEFAULT now() NOT NULL
+);
+
 CREATE TABLE tenant
 (
     id         VARCHAR(255) NOT NULL PRIMARY KEY,
     name       VARCHAR(255) NOT NULL,
     type       VARCHAR(10)  NOT NULL,
+    server_id  VARCHAR(255) NOT NULL REFERENCES server_configuration(id),
     issuer     TEXT         NOT NULL,
     created_at TIMESTAMP    NOT NULL DEFAULT now(),
     updated_at TIMESTAMP    NOT NULL DEFAULT now()
@@ -78,24 +88,14 @@ CREATE TABLE idp_user_current_organization
     updated_at      TIMESTAMP DEFAULT now() NOT NULL
 );
 
-
-
-CREATE TABLE server_configuration
+CREATE TABLE client_configuration
 (
-    token_issuer TEXT                    NOT NULL PRIMARY KEY,
+    id           VARCHAR(255)            NOT NULL PRIMARY KEY,
+    server_id    VARCHAR(255)            NOT NULL,
+    token_issuer TEXT                    NOT NULL,
     payload      JSONB                   NOT NULL,
     created_at   TIMESTAMP DEFAULT now() NOT NULL,
     updated_at   TIMESTAMP DEFAULT now() NOT NULL
-);
-
-CREATE TABLE client_configuration
-(
-    token_issuer TEXT                    NOT NULL,
-    client_id    VARCHAR(255)            NOT NULL,
-    payload      JSONB                   NOT NULL,
-    created_at   TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at   TIMESTAMP DEFAULT now() NOT NULL,
-    CONSTRAINT pk_client_configuration PRIMARY KEY (token_issuer, client_id)
 );
 
 CREATE TABLE authorization_request

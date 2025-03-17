@@ -1,12 +1,5 @@
 package org.idp.server.core.adapters.httpclient.federation;
 
-import org.idp.server.core.basic.http.HttpClientErrorException;
-import org.idp.server.core.basic.http.HttpClientFactory;
-import org.idp.server.core.basic.http.HttpNetworkErrorException;
-import org.idp.server.core.basic.http.QueryParams;
-import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.federation.*;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -15,6 +8,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 import java.util.logging.Logger;
+import org.idp.server.core.basic.http.HttpClientErrorException;
+import org.idp.server.core.basic.http.HttpClientFactory;
+import org.idp.server.core.basic.http.HttpNetworkErrorException;
+import org.idp.server.core.basic.http.QueryParams;
+import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.federation.*;
 
 public class FederationClient implements FederationGateway {
 

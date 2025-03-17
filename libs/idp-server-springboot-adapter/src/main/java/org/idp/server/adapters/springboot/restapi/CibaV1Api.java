@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot.restapi;
 import java.util.Map;
 
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.function.CibaFlowFunction;
+import org.idp.server.core.api.CibaFlowApi;
 import org.idp.server.core.handler.ciba.io.*;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("{tenant-id}/api/v1/backchannel/authentications")
 public class CibaV1Api implements ParameterTransformable {
 
-  CibaFlowFunction cibaFlowFunction;
+  CibaFlowApi cibaFlowApi;
 
   public CibaV1Api(IdpServerApplication idpServerApplication) {
-    this.cibaFlowFunction = idpServerApplication.cibaFlowFunction();
+    this.cibaFlowApi = idpServerApplication.cibaFlowFunction();
   }
 
   @PostMapping
@@ -32,7 +32,7 @@ public class CibaV1Api implements ParameterTransformable {
     Map<String, String[]> params = transform(body);
 
     CibaRequestResponse response =
-        cibaFlowFunction.request(tenantId, params, authorizationHeader, clientCert);
+        cibaFlowApi.request(tenantId, params, authorizationHeader, clientCert);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", response.contentTypeValue());
@@ -48,11 +48,11 @@ public class CibaV1Api implements ParameterTransformable {
 
     if (action.equals("allow")) {
 
-      CibaAuthorizeResponse authorizeResponse = cibaFlowFunction.authorize(tenantId, authReqId);
+      CibaAuthorizeResponse authorizeResponse = cibaFlowApi.authorize(tenantId, authReqId);
       return new ResponseEntity<>(HttpStatus.valueOf(authorizeResponse.statusCode()));
     }
 
-    CibaDenyResponse cibaDenyResponse = cibaFlowFunction.deny(tenantId, authReqId);
+    CibaDenyResponse cibaDenyResponse = cibaFlowApi.deny(tenantId, authReqId);
     return new ResponseEntity<>(HttpStatus.valueOf(cibaDenyResponse.statusCode()));
   }
 }

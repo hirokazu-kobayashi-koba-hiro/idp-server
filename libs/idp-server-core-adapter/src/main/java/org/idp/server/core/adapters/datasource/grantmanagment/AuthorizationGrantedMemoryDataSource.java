@@ -1,12 +1,11 @@
 package org.idp.server.core.adapters.datasource.grantmanagment;
 
-import org.idp.server.core.grantmangment.AuthorizationGranted;
-import org.idp.server.core.grantmangment.AuthorizationGrantedIdentifier;
-import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.grantmangment.AuthorizationGranted;
+import org.idp.server.core.grantmangment.AuthorizationGrantedIdentifier;
+import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
 
 public class AuthorizationGrantedMemoryDataSource implements AuthorizationGrantedRepository {
 

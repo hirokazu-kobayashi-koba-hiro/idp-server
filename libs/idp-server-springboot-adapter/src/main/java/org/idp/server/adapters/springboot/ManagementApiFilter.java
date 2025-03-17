@@ -1,24 +1,16 @@
 package org.idp.server.adapters.springboot;
 
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
+
 import java.util.List;
 
-import org.idp.server.core.function.OperatorAuthenticationFunction;
-import org.idp.server.core.tenant.TenantService;
-import org.idp.server.core.function.UserManagementFunction;
+import org.idp.server.core.api.OperatorAuthenticationApi;
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.protcol.TokenIntrospectionApi;
-import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionRequest;
-import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.admin.TokenIntrospectionCreator;
 import org.idp.server.adapters.springboot.operation.IdPScope;
 import org.idp.server.adapters.springboot.operation.Operator;
-import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.exception.UnauthorizedException;
 import org.idp.server.core.type.extension.Pairs;
 import org.slf4j.Logger;
@@ -31,12 +23,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class ManagementApiFilter extends OncePerRequestFilter {
 
-  OperatorAuthenticationFunction operatorAuthenticationFunction;
+  OperatorAuthenticationApi operatorAuthenticationApi;
   Logger logger = LoggerFactory.getLogger(ManagementApiFilter.class);
 
   public ManagementApiFilter(
       IdpServerApplication idpServerApplication) {
-    this.operatorAuthenticationFunction = idpServerApplication.operatorAuthenticationFunction();
+    this.operatorAuthenticationApi = idpServerApplication.operatorAuthenticationFunction();
   }
 
   @Override
@@ -45,7 +37,7 @@ public class ManagementApiFilter extends OncePerRequestFilter {
     String authorization = request.getHeader("Authorization");
 
     try {
-      Pairs<User, String> result = operatorAuthenticationFunction.authenticate(authorization);
+      Pairs<User, String> result = operatorAuthenticationApi.authenticate(authorization);
 
       Operator operator =
               new Operator(

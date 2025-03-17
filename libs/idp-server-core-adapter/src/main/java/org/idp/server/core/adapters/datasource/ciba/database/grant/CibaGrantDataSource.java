@@ -1,5 +1,9 @@
 package org.idp.server.core.adapters.datasource.ciba.database.grant;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
@@ -7,11 +11,6 @@ import org.idp.server.core.ciba.grant.CibaGrant;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.type.ciba.AuthReqId;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 public class CibaGrantDataSource implements CibaGrantRepository {
 
@@ -21,7 +20,7 @@ public class CibaGrantDataSource implements CibaGrantRepository {
   public void register(CibaGrant cibaGrant) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
-            """
+        """
                     INSERT INTO public.ciba_grant
                     (backchannel_authentication_request_id, auth_req_id, expired_at, interval, status, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details)
                     VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb);
@@ -64,7 +63,7 @@ public class CibaGrantDataSource implements CibaGrantRepository {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
     String sqlTemplate =
-            """
+        """
                 UPDATE ciba_grant
                 SET authentication = ?::jsonb,
                 status = ?
@@ -76,7 +75,6 @@ public class CibaGrantDataSource implements CibaGrantRepository {
     params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);
-
   }
 
   @Override

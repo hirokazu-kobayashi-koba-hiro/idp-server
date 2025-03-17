@@ -1,13 +1,12 @@
 package org.idp.server.core.adapters.datasource.oauth.database.request;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.type.oauth.CustomParams;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class InsertSqlCreator {
 

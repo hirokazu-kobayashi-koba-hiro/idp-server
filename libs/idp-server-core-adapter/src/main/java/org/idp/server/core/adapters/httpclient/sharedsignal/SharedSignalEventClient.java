@@ -1,11 +1,5 @@
 package org.idp.server.core.adapters.httpclient.sharedsignal;
 
-import org.idp.server.core.basic.http.HttpClientErrorException;
-import org.idp.server.core.basic.http.HttpClientFactory;
-import org.idp.server.core.basic.http.HttpNetworkErrorException;
-import org.idp.server.core.sharedsignal.SharedSignalEventGateway;
-import org.idp.server.core.sharedsignal.SharedSignalEventRequest;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -13,6 +7,11 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.logging.Logger;
+import org.idp.server.core.basic.http.HttpClientErrorException;
+import org.idp.server.core.basic.http.HttpClientFactory;
+import org.idp.server.core.basic.http.HttpNetworkErrorException;
+import org.idp.server.core.sharedsignal.SharedSignalEventGateway;
+import org.idp.server.core.sharedsignal.SharedSignalEventRequest;
 
 /**
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8935">Push-Based Security Event Token

@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot.restapi;
 import java.util.Map;
 
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.function.TokenFunction;
+import org.idp.server.core.api.TokenApi;
 import org.idp.server.core.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("{tenant-id}/api/v1/tokens")
 public class TokenV1Api implements ParameterTransformable {
 
-  TokenFunction tokenFunction;
+  TokenApi tokenApi;
 
   public TokenV1Api(IdpServerApplication idpServerApplication) {
-    this.tokenFunction = idpServerApplication.tokenFunction();
+    this.tokenApi = idpServerApplication.tokenFunction();
   }
 
   @PostMapping
@@ -31,7 +31,7 @@ public class TokenV1Api implements ParameterTransformable {
     Map<String, String[]> request = transform(body);
 
     TokenRequestResponse response =
-        tokenFunction.request(tenantId, request, authorizationHeader, clientCert);
+        tokenApi.request(tenantId, request, authorizationHeader, clientCert);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.setAll(response.responseHeaders());

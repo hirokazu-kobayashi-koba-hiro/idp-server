@@ -1,10 +1,9 @@
 package org.idp.server.core.adapters.datasource.oauth.database.code;
 
-import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 
 class InsertSqlParamsCreator {
 

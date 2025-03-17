@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.restapi;
 
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.function.UserinfoFunction;
+import org.idp.server.core.api.UserinfoApi;
 import org.idp.server.core.handler.userinfo.io.UserinfoRequestResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpStatus;
@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("{tenant-id}/api/v1/userinfo")
 public class UserinfoV1Api implements ParameterTransformable {
 
-  UserinfoFunction userinfoFunction;
+  UserinfoApi userinfoApi;
 
   public UserinfoV1Api(IdpServerApplication idpServerApplication) {
-    this.userinfoFunction = idpServerApplication.userinfoFunction();
+    this.userinfoApi = idpServerApplication.userinfoFunction();
   }
 
   @GetMapping
@@ -25,7 +25,7 @@ public class UserinfoV1Api implements ParameterTransformable {
       @PathVariable("tenant-id") TenantIdentifier tenantId) {
 
     UserinfoRequestResponse response =
-        userinfoFunction.request(tenantId, authorizationHeader, clientCert);
+        userinfoApi.request(tenantId, authorizationHeader, clientCert);
 
     return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
   }
@@ -37,7 +37,7 @@ public class UserinfoV1Api implements ParameterTransformable {
       @PathVariable("tenant-id") TenantIdentifier tenantId) {
 
     UserinfoRequestResponse response =
-        userinfoFunction.request(tenantId, authorizationHeader, clientCert);
+        userinfoApi.request(tenantId, authorizationHeader, clientCert);
 
     return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
   }
