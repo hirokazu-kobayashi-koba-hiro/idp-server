@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot.restapi;
 import java.util.Map;
 
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.function.TokenFunction;
+import org.idp.server.core.api.TokenApi;
 import org.idp.server.core.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpStatus;
@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("{tenant-id}/api/v1/tokens/revocation")
 public class TokenRevocationV1Api implements ParameterTransformable {
 
-  TokenFunction tokenFunction;
+  TokenApi tokenApi;
 
   public TokenRevocationV1Api(IdpServerApplication idpServerApplication) {
-    this.tokenFunction = idpServerApplication.tokenFunction();
+    this.tokenApi = idpServerApplication.tokenFunction();
   }
 
   @PostMapping
@@ -30,7 +30,7 @@ public class TokenRevocationV1Api implements ParameterTransformable {
     Map<String, String[]> request = transform(body);
 
     TokenRevocationResponse response =
-        tokenFunction.revoke(tenantId, request, authorizationHeader, clientCert);
+        tokenApi.revoke(tenantId, request, authorizationHeader, clientCert);
 
     return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
   }

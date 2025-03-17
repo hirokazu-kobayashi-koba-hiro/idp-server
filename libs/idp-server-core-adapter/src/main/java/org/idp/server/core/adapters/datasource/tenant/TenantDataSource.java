@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.tenant.*;
@@ -16,7 +15,8 @@ public class TenantDataSource implements TenantRepository {
   public void register(Tenant tenant) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
-    String sqlTemplate = """
+    String sqlTemplate =
+        """
             INSERT INTO tenant(id, name, type, issuer)
             VALUES (?, ?, ?, ?);
             """;
@@ -27,14 +27,14 @@ public class TenantDataSource implements TenantRepository {
     params.add(tenant.issuer());
 
     sqlExecutor.execute(sqlTemplate, params);
-
   }
 
   @Override
   public Tenant get(TenantIdentifier tenantIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
-    String sqlTemplate = """
+    String sqlTemplate =
+        """
             SELECT id, name, type, issuer FROM tenant
             WHERE id = ?
             """;
@@ -58,7 +58,8 @@ public class TenantDataSource implements TenantRepository {
   public Tenant getAdmin() {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
-    String sqlTemplate = """
+    String sqlTemplate =
+        """
             SELECT id, name, type, issuer FROM tenant
             WHERE type = ?
             """;
@@ -80,21 +81,18 @@ public class TenantDataSource implements TenantRepository {
   }
 
   @Override
-  public void update(Tenant tenant) {
-
-  }
+  public void update(Tenant tenant) {}
 
   @Override
-  public void delete(TenantIdentifier tenantIdentifier) {
-
-  }
+  public void delete(TenantIdentifier tenantIdentifier) {}
 
   @Override
   public Tenant find(TokenIssuer tokenIssuer) {
 
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
-    String sqlTemplate = """
+    String sqlTemplate =
+        """
             SELECT id, name, type, issuer FROM tenant
             WHERE issuer = ?
             """;

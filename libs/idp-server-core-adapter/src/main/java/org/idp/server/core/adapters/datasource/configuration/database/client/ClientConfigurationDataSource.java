@@ -1,5 +1,8 @@
 package org.idp.server.core.adapters.datasource.configuration.database.client;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
@@ -8,10 +11,6 @@ import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.TokenIssuer;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 public class ClientConfigurationDataSource implements ClientConfigurationRepository {
 
@@ -28,7 +27,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
     String sqlTemplate =
         """
             INSERT INTO client_configuration (token_issuer, client_id, payload)
-            VALUES (?, ?, ?)
+            VALUES (?, ?, ?::jsonb)
             """;
 
     String payload = jsonConverter.write(clientConfiguration);

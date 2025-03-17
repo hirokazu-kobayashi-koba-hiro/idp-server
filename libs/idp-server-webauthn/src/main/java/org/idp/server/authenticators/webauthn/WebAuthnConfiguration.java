@@ -18,10 +18,18 @@ public class WebAuthnConfiguration {
   boolean userVerificationRequired;
   boolean userPresenceRequired;
 
-
   public WebAuthnConfiguration() {}
 
-  public WebAuthnConfiguration(String rpId, String rpName, String origin, byte[] tokenBindingId, String attestationPreference, String authenticatorAttachment, boolean requireResidentKey, boolean userVerificationRequired, boolean userPresenceRequired) {
+  public WebAuthnConfiguration(
+      String rpId,
+      String rpName,
+      String origin,
+      byte[] tokenBindingId,
+      String attestationPreference,
+      String authenticatorAttachment,
+      boolean requireResidentKey,
+      boolean userVerificationRequired,
+      boolean userPresenceRequired) {
     this.rpId = rpId;
     this.rpName = rpName;
     this.origin = origin;

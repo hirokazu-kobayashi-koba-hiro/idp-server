@@ -1,5 +1,6 @@
 package org.idp.server.core.adapters.datasource.credential.database;
 
+import java.util.Map;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.vc.Credential;
 import org.idp.server.core.type.oauth.ClientId;
@@ -8,8 +9,6 @@ import org.idp.server.core.type.verifiablecredential.CredentialIssuer;
 import org.idp.server.core.type.verifiablecredential.TransactionId;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialTransaction;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialTransactionStatus;
-
-import java.util.Map;
 
 class ModelConverter {
 

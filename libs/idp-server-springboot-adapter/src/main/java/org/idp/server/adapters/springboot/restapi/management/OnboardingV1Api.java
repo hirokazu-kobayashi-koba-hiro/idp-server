@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.restapi.management;
 
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.function.OnboardingFunction;
+import org.idp.server.core.api.OnboardingApi;
 import org.idp.server.core.tenant.PublicTenantDomain;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.organization.Organization;
@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.*;
 public class OnboardingV1Api implements ParameterTransformable {
 
   PublicTenantDomain publicTenantDomain;
-  OnboardingFunction onboardingFunction;
+  OnboardingApi onboardingApi;
 
   public OnboardingV1Api(
       IdpServerApplication idpServerApplication,
       @Value("${idp.configurations.serverUrl}") String idpServerDomainDomain) {
-    this.onboardingFunction = idpServerApplication.onboardingFunction();
+    this.onboardingApi = idpServerApplication.onboardingFunction();
     this.publicTenantDomain = new PublicTenantDomain(idpServerDomainDomain);
   }
 
@@ -34,7 +34,7 @@ public class OnboardingV1Api implements ParameterTransformable {
       @Validated @RequestBody InitialRegistrationRequest request) {
 
     Organization organization =
-        onboardingFunction.initialize(
+        onboardingApi.initialize(
             operator,
             request.organizationName(),
             publicTenantDomain,

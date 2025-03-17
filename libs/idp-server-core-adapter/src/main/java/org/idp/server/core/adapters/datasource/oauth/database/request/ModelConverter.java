@@ -1,5 +1,7 @@
 package org.idp.server.core.adapters.datasource.oauth.database.request;
 
+import java.util.List;
+import java.util.Map;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
@@ -14,9 +16,6 @@ import org.idp.server.core.type.oidc.*;
 import org.idp.server.core.type.pkce.CodeChallenge;
 import org.idp.server.core.type.pkce.CodeChallengeMethod;
 import org.idp.server.core.type.verifiablepresentation.PresentationDefinitionUri;
-
-import java.util.List;
-import java.util.Map;
 
 class ModelConverter {
 
@@ -53,7 +52,7 @@ class ModelConverter {
   }
 
   private static ClaimsPayload convertClaimsPayload(String value) {
-    if (value.isEmpty()) {
+    if (value == null || value.isEmpty()) {
       return new ClaimsPayload();
     }
     try {
@@ -65,7 +64,7 @@ class ModelConverter {
   }
 
   private static AuthorizationDetails convertAuthorizationDetails(String value) {
-    if (value.isEmpty()) {
+    if (value == null || value.isEmpty()) {
       return new AuthorizationDetails();
     }
     try {
@@ -83,7 +82,7 @@ class ModelConverter {
   }
 
   private static PresentationDefinition convertPresentationDefinition(String value) {
-    if (value.isEmpty()) {
+    if (value == null || value.isEmpty()) {
       return new PresentationDefinition();
     }
     try {
@@ -97,7 +96,7 @@ class ModelConverter {
   }
 
   private static CustomParams convertCustomParams(String value) {
-    if (value.isEmpty()) {
+    if (value == null || value.isEmpty()) {
       return new CustomParams();
     }
     try {

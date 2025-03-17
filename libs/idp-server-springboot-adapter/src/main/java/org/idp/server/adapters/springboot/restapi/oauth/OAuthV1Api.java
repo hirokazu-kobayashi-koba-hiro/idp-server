@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.function.OAuthFlowFunction;
+import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
 import org.idp.server.core.handler.oauth.io.*;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/{tenant-id}/api/v1/authorizations")
 public class OAuthV1Api implements ParameterTransformable {
 
-  OAuthFlowFunction oAuthFlowFunction;
+  OAuthFlowApi oAuthFlowApi;
   String adminAuthViewUrl;
   String authViewUrl;
 
@@ -35,7 +35,7 @@ public class OAuthV1Api implements ParameterTransformable {
       IdpServerApplication idpServerApplication,
       @Value("${idp.configurations.adminAuthViewUrl}") String adminAuthViewUrl,
       @Value("${idp.configurations.authViewUrl}") String authViewUrl) {
-    this.oAuthFlowFunction = idpServerApplication.oAuthFlowFunction();
+    this.oAuthFlowApi = idpServerApplication.oAuthFlowFunction();
     this.adminAuthViewUrl = adminAuthViewUrl;
     this.authViewUrl = authViewUrl;
   }
@@ -51,7 +51,7 @@ public class OAuthV1Api implements ParameterTransformable {
     System.out.println(httpServletRequest.getRemoteAddr());
 
     Map<String, String[]> params = transform(request);
-    Pairs<Tenant, OAuthRequestResponse> result = oAuthFlowFunction.request(tenantId, params);
+    Pairs<Tenant, OAuthRequestResponse> result = oAuthFlowApi.request(tenantId, params);
 
     Tenant tenant = result.getLeft();
     OAuthRequestResponse response = result.getRight();
@@ -108,7 +108,7 @@ public class OAuthV1Api implements ParameterTransformable {
   public ResponseEntity<?> getViewData(
       @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
 
-    OAuthViewDataResponse viewDataResponse = oAuthFlowFunction.getViewData(tenantId, id);
+    OAuthViewDataResponse viewDataResponse = oAuthFlowApi.getViewData(tenantId, id);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -126,7 +126,7 @@ public class OAuthV1Api implements ParameterTransformable {
     }
 
     FederationRequestResponse requestResponse =
-        oAuthFlowFunction.requestFederation(tenantIdentifier, id, body.get("federatable_idp_id"));
+        oAuthFlowApi.requestFederation(tenantIdentifier, id, body.get("federatable_idp_id"));
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
@@ -141,7 +141,7 @@ public class OAuthV1Api implements ParameterTransformable {
       @PathVariable("id") String id,
       @RequestBody Map<String, Object> params) {
 
-    OAuthUserInteractionResult result = oAuthFlowFunction.interact(tenantId, id, OAuthUserInteractionType.SIGNUP_REQUEST, params);
+    OAuthUserInteractionResult result = oAuthFlowApi.interact(tenantId, id, OAuthUserInteractionType.SIGNUP_REQUEST, params);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -154,7 +154,7 @@ public class OAuthV1Api implements ParameterTransformable {
       @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
 
     OAuthAuthorizeResponse authAuthorizeResponse =
-        oAuthFlowFunction.authorizeWithSession(tenantId, id);
+        oAuthFlowApi.authorizeWithSession(tenantId, id);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -181,7 +181,7 @@ public class OAuthV1Api implements ParameterTransformable {
       @RequestBody Map<String, Object> params) {
 
 
-    OAuthUserInteractionResult result = oAuthFlowFunction.interact(
+    OAuthUserInteractionResult result = oAuthFlowApi.interact(
             tenantId,
             id,
             OAuthUserInteractionType.PASSWORD_AUTHENTICATION,
@@ -197,7 +197,7 @@ public class OAuthV1Api implements ParameterTransformable {
   public ResponseEntity<?> authorize(
       @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
 
-    OAuthAuthorizeResponse authAuthorizeResponse = oAuthFlowFunction.authorize(tenantId, id);
+    OAuthAuthorizeResponse authAuthorizeResponse = oAuthFlowApi.authorize(tenantId, id);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -221,7 +221,7 @@ public class OAuthV1Api implements ParameterTransformable {
   public ResponseEntity<?> deny(
       @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
 
-    OAuthDenyResponse oAuthDenyResponse = oAuthFlowFunction.deny(tenantId, id);
+    OAuthDenyResponse oAuthDenyResponse = oAuthFlowApi.deny(tenantId, id);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
 

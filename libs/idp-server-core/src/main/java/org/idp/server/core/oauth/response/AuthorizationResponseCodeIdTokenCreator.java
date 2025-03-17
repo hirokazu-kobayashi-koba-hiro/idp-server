@@ -44,9 +44,12 @@ public class AuthorizationResponseCodeIdTokenCreator
                 context.responseMode(),
                 new ResponseModeValue("#"),
                 context.tokenIssuer())
-            .add(authorizationRequest.state())
             .add(authorizationCode)
             .add(idToken);
+
+    if (context.hasState()) {
+      authorizationResponseBuilder.add(authorizationRequest.state());
+    }
 
     if (context.isJwtMode()) {
       AuthorizationResponse authorizationResponse = authorizationResponseBuilder.build();

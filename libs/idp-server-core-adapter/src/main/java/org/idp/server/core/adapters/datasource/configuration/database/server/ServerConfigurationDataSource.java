@@ -1,5 +1,9 @@
 package org.idp.server.core.adapters.datasource.configuration.database.server;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
@@ -7,10 +11,6 @@ import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.type.oauth.TokenIssuer;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 public class ServerConfigurationDataSource implements ServerConfigurationRepository {
 
@@ -24,14 +24,18 @@ public class ServerConfigurationDataSource implements ServerConfigurationReposit
   public void register(ServerConfiguration serverConfiguration) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
-    String sql =
+    String sqlTemplate =
         """
-                    INSERT INTO server_configuration (token_issuer, payload)
-                    VALUES (?, ?);
+                    INSERT INTO server_configuration (id, token_issuer, payload)
+                    VALUES (?, ?, ?::jsonb);
                     """;
     String payload = jsonConverter.write(serverConfiguration);
+    List<Object> params = new ArrayList<>();
+    params.add(serverConfiguration.identifier());
+    params.add(serverConfiguration.tokenIssuer());
+    params.add(payload);
 
-    sqlExecutor.execute(sql, List.of(serverConfiguration.tokenIssuer().value(), payload));
+    sqlExecutor.execute(sqlTemplate, List.of(serverConfiguration.tokenIssuer().value(), payload));
   }
 
   @Override

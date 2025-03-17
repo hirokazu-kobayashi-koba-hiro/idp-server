@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot.restapi.oauth;
 import java.util.Map;
 
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.function.OAuthFlowFunction;
+import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/{tenant-id}/api/v1/authorizations/{id}/webauthn/authentication")
 public class WebAuthnAuthenticationV1Api {
 
-  OAuthFlowFunction oAuthFlowFunction;
+  OAuthFlowApi oAuthFlowApi;
 
   public WebAuthnAuthenticationV1Api(IdpServerApplication idpServerApplication) {
-    this.oAuthFlowFunction = idpServerApplication.oAuthFlowFunction();
+    this.oAuthFlowApi = idpServerApplication.oAuthFlowFunction();
   }
 
   @GetMapping("/challenge")
@@ -27,7 +27,7 @@ public class WebAuthnAuthenticationV1Api {
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @PathVariable("id") String id) {
 
     OAuthUserInteractionResult result =
-        oAuthFlowFunction.interact(tenantIdentifier, id, OAuthUserInteractionType.WEBAUTHN_AUTHENTICATION_CHALLENGE, Map.of());
+        oAuthFlowApi.interact(tenantIdentifier, id, OAuthUserInteractionType.WEBAUTHN_AUTHENTICATION_CHALLENGE, Map.of());
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -41,7 +41,7 @@ public class WebAuthnAuthenticationV1Api {
       @PathVariable("id") String id,
       @RequestBody String request) {
 
-    OAuthUserInteractionResult result = oAuthFlowFunction.interact(tenantIdentifier, id, OAuthUserInteractionType.WEBAUTHN_AUTHENTICATION, Map.of("request", request));
+    OAuthUserInteractionResult result = oAuthFlowApi.interact(tenantIdentifier, id, OAuthUserInteractionType.WEBAUTHN_AUTHENTICATION, Map.of("request", request));
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

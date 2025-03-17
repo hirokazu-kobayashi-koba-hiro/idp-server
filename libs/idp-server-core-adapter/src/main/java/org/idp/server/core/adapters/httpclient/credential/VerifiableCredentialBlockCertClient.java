@@ -1,14 +1,5 @@
 package org.idp.server.core.adapters.httpclient.credential;
 
-import org.idp.server.core.basic.http.HttpClientFactory;
-import org.idp.server.core.basic.json.JsonConvertable;
-import org.idp.server.core.basic.vc.Credential;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.verifiablecredential.VerifiableCredential;
-import org.idp.server.core.verifiablecredential.VerifiableCredentialCreator;
-import org.idp.server.core.verifiablecredential.exception.VerifiableCredentialBadRequestException;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -17,6 +8,14 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.basic.http.HttpClientFactory;
+import org.idp.server.core.basic.json.JsonConvertable;
+import org.idp.server.core.basic.vc.Credential;
+import org.idp.server.core.configuration.ClientConfiguration;
+import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.verifiablecredential.VerifiableCredential;
+import org.idp.server.core.verifiablecredential.VerifiableCredentialCreator;
+import org.idp.server.core.verifiablecredential.exception.VerifiableCredentialBadRequestException;
 
 public class VerifiableCredentialBlockCertClient implements VerifiableCredentialCreator {
 

@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.restapi.management;
 
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.function.ClientManagementFunction;
+import org.idp.server.core.api.ClientManagementApi;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementListResponse;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.oauth.identity.User;
@@ -18,11 +18,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/management/tenants/{tenant-id}/clients")
 public class ClientManagementV1Api implements ParameterTransformable {
 
-  ClientManagementFunction clientManagementFunction;
+  ClientManagementApi clientManagementApi;
 
   public ClientManagementV1Api(
       IdpServerApplication idpServerApplication) {
-    this.clientManagementFunction = idpServerApplication.clientManagementFunction();
+    this.clientManagementApi = idpServerApplication.clientManagementFunction();
   }
 
   @PostMapping
@@ -31,7 +31,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestBody(required = false) String body) {
 
-    String client = clientManagementFunction.register(tenantIdentifier, body);
+    String client = clientManagementApi.register(tenantIdentifier, body);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
     return new ResponseEntity<>(client, httpHeaders, HttpStatus.OK);
@@ -45,7 +45,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
       @RequestParam(value = "offset", defaultValue = "0") String offsetValue) {
 
     ClientConfigurationManagementListResponse response =
-        clientManagementFunction.find(
+        clientManagementApi.find(
             tenantIdentifier, Integer.parseInt(limitValue), Integer.parseInt(offsetValue));
 
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -61,7 +61,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
       @PathVariable("client-id") String clientId) {
 
     ClientConfigurationManagementResponse response =
-        clientManagementFunction.get(tenantIdentifier, new ClientId(clientId));
+        clientManagementApi.get(tenantIdentifier, new ClientId(clientId));
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");

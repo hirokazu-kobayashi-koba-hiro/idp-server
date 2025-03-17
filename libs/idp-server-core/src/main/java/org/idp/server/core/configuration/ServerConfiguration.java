@@ -8,6 +8,7 @@ import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** ServerConfiguration */
 public class ServerConfiguration implements JsonReadable {
+  String identifier;
   String issuer;
   String authorizationEndpoint;
   String tokenEndpoint = "";
@@ -73,6 +74,10 @@ public class ServerConfiguration implements JsonReadable {
   long authorizationResponseDuration = 60;
 
   public ServerConfiguration() {}
+
+  public String identifier() {
+    return identifier;
+  }
 
   public TokenIssuer tokenIssuer() {
     return new TokenIssuer(issuer);

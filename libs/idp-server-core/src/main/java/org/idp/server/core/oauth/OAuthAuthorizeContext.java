@@ -118,4 +118,8 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
   public IdTokenClaims idTokenClaims() {
     return authorizationRequest.claimsPayload().idToken();
   }
+
+  public boolean hasState() {
+    return authorizationRequest.hasState();
+  }
 }

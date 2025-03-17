@@ -1,11 +1,10 @@
 package org.idp.server.core.adapters.datasource.token.database;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.token.OAuthToken;
-
-import java.util.ArrayList;
-import java.util.List;
 
 class InsertSqlParamsCreator {
 
@@ -23,8 +22,8 @@ class InsertSqlParamsCreator {
       params.add((authorizationGrant.user().sub()));
       params.add(toJson(authorizationGrant.user()));
     } else {
-      params.add("");
-      params.add("");
+      params.add(null);
+      params.add(null);
     }
 
     params.add(toJson(authorizationGrant.authentication()));
@@ -34,19 +33,19 @@ class InsertSqlParamsCreator {
     if (authorizationGrant.hasClaim()) {
       params.add(toJson(authorizationGrant.claimsPayload()));
     } else {
-      params.add("");
+      params.add("{}");
     }
 
     if (authorizationGrant.hasCustomProperties()) {
       params.add(toJson(authorizationGrant.customProperties().values()));
     } else {
-      params.add("");
+      params.add("{}");
     }
 
     if (authorizationGrant.hasAuthorizationDetails()) {
       params.add(toJson(authorizationGrant.authorizationDetails().toMapValues()));
     } else {
-      params.add("");
+      params.add("[]");
     }
 
     params.add(oAuthToken.accessToken().expiresIn().toStringValue());

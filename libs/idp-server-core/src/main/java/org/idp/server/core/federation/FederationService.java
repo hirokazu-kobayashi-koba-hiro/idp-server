@@ -5,27 +5,27 @@ import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
 import org.idp.server.core.handler.federation.io.FederationRequest;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
 import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.protcol.FederationApi;
+import org.idp.server.core.protocol.FederationProtocol;
 import org.idp.server.core.user.UserService;
 
 public class FederationService implements FederationDelegate {
 
-  FederationApi federationApi;
+  FederationProtocol federationProtocol;
   UserService userService;
 
-  public FederationService(FederationApi federationApi, UserService userService) {
-    this.federationApi = federationApi;
+  public FederationService(FederationProtocol federationProtocol, UserService userService) {
+    this.federationProtocol = federationProtocol;
     this.userService = userService;
   }
 
   public FederationRequestResponse request(FederationRequest federationRequest) {
 
-    return federationApi.handleRequest(federationRequest);
+    return federationProtocol.handleRequest(federationRequest);
   }
 
   public FederationCallbackResponse callback(FederationCallbackRequest federationCallbackRequest) {
 
-    return federationApi.handleCallback(federationCallbackRequest, this);
+    return federationProtocol.handleCallback(federationCallbackRequest, this);
   }
 
   @Override

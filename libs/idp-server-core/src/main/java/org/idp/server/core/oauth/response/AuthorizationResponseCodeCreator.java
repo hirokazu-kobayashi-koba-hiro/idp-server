@@ -35,8 +35,11 @@ public class AuthorizationResponseCodeCreator
                 context.responseMode(),
                 decideResponseModeValue(context.responseType(), context.responseMode()),
                 context.tokenIssuer())
-            .add(authorizationRequest.state())
             .add(authorizationCode);
+
+    if (context.hasState()) {
+      authorizationResponseBuilder.add(authorizationRequest.state());
+    }
 
     if (context.isJwtMode()) {
       AuthorizationResponse authorizationResponse = authorizationResponseBuilder.build();

@@ -1,8 +1,7 @@
 package org.idp.server.authenticators.handler.webauthn.datasource.credential;
 
-import org.idp.server.authenticators.webauthn.WebAuthnCredential;
-
 import java.util.Map;
+import org.idp.server.authenticators.webauthn.WebAuthnCredential;
 
 class ModelConverter {
 
@@ -17,6 +16,4 @@ class ModelConverter {
 
     return new WebAuthnCredential(id, userId, rpId, publicKey, attestationObject, signCount);
   }
-
-
 }

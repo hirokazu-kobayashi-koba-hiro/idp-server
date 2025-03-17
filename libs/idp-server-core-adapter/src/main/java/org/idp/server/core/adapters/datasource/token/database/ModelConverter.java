@@ -1,5 +1,8 @@
 package org.idp.server.core.adapters.datasource.token.database;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
@@ -21,10 +24,6 @@ import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.IdToken;
 import org.idp.server.core.type.verifiablecredential.CNonce;
 import org.idp.server.core.type.verifiablecredential.CNonceExpiresIn;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 class ModelConverter {
 

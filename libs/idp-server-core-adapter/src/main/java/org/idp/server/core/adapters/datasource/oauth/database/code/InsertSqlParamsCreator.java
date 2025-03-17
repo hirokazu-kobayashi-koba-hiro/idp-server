@@ -1,10 +1,9 @@
 package org.idp.server.core.adapters.datasource.oauth.database.code;
 
-import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 
 class InsertSqlParamsCreator {
 
@@ -24,20 +23,20 @@ class InsertSqlParamsCreator {
     if (authorizationCodeGrant.authorizationGrant().hasClaim()) {
       params.add(toJson(authorizationCodeGrant.authorizationGrant().claimsPayload()));
     } else {
-      params.add("");
+      params.add("{}");
     }
 
     if (authorizationCodeGrant.authorizationGrant().hasCustomProperties()) {
       params.add(toJson(authorizationCodeGrant.authorizationGrant().customProperties().values()));
     } else {
-      params.add("");
+      params.add("{}");
     }
 
     if (authorizationCodeGrant.authorizationGrant().hasAuthorizationDetails()) {
       params.add(
           toJson(authorizationCodeGrant.authorizationGrant().authorizationDetails().toMapValues()));
     } else {
-      params.add("");
+      params.add("[]");
     }
 
     params.add(authorizationCodeGrant.expiredAt().toStringValue());
@@ -45,7 +44,7 @@ class InsertSqlParamsCreator {
     if (authorizationCodeGrant.authorizationGrant().hasPresentationDefinition()) {
       params.add(toJson(authorizationCodeGrant.authorizationGrant().presentationDefinition()));
     } else {
-      params.add("");
+      params.add("{}");
     }
 
     return params;

@@ -5,9 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
 import org.idp.server.authenticators.webauthn.WebAuthnCredential;
-import org.idp.server.authenticators.webauthn.WebAuthnCredentialNotFoundException;
 import org.idp.server.authenticators.webauthn.WebAuthnCredentialRepository;
 import org.idp.server.authenticators.webauthn.WebAuthnCredentials;
 import org.idp.server.core.basic.sql.SqlExecutor;
@@ -18,7 +16,8 @@ public class WebAuthnCredentialDataSource implements WebAuthnCredentialRepositor
   @Override
   public void register(WebAuthnCredential credential) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
-    String sqlTemplate = """
+    String sqlTemplate =
+        """
             INSERT INTO public.webauthn_credentials (id, idp_user_id, rp_id, attestation_object, sign_count)
             VALUES (?, ?, ?, ?, ?);
             """;
@@ -36,7 +35,8 @@ public class WebAuthnCredentialDataSource implements WebAuthnCredentialRepositor
   public WebAuthnCredentials findAll(String userId) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
-    String sqlTemplate = """
+    String sqlTemplate =
+        """
             SELECT id, idp_user_id, rp_id, attestation_object, sign_count
             FROM webauthn_credentials
             WHERE idp_user_id = ?;
@@ -50,7 +50,8 @@ public class WebAuthnCredentialDataSource implements WebAuthnCredentialRepositor
       return new WebAuthnCredentials();
     }
 
-    List<WebAuthnCredential> credentials = results.stream().map(ModelConverter::convert).collect(Collectors.toList());
+    List<WebAuthnCredential> credentials =
+        results.stream().map(ModelConverter::convert).collect(Collectors.toList());
 
     return new WebAuthnCredentials(credentials);
   }

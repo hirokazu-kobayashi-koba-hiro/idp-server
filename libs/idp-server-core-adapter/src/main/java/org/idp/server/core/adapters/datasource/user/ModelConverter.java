@@ -1,14 +1,13 @@
 package org.idp.server.core.adapters.datasource.user;
 
-import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.oauth.identity.Address;
-import org.idp.server.core.oauth.identity.User;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.oauth.identity.Address;
+import org.idp.server.core.oauth.identity.User;
 
 class ModelConverter {
 
@@ -36,7 +35,8 @@ class ModelConverter {
     user.setZoneinfo(stringMap.getOrDefault("zoneinfo", ""));
     user.setLocale(stringMap.getOrDefault("locale", ""));
     user.setPhoneNumber(stringMap.getOrDefault("phone_number", ""));
-    user.setPhoneNumberVerified(Boolean.parseBoolean(stringMap.getOrDefault("phone_number_verified", "false")));
+    user.setPhoneNumberVerified(
+        Boolean.parseBoolean(stringMap.getOrDefault("phone_number_verified", "false")));
     user.setHashedPassword(stringMap.getOrDefault("hashed_password", ""));
 
     if (stringMap.containsKey("updated_at")) {
@@ -48,13 +48,16 @@ class ModelConverter {
       user.setAddress(address);
     }
 
-    if (stringMap.containsKey("custom_properties") && !stringMap.get("custom_properties").isEmpty()) {
-      HashMap<String, Object> customProps = jsonConverter.read(stringMap.get("custom_properties"), HashMap.class);
+    if (stringMap.containsKey("custom_properties")
+        && !stringMap.get("custom_properties").isEmpty()) {
+      HashMap<String, Object> customProps =
+          jsonConverter.read(stringMap.get("custom_properties"), HashMap.class);
       user.setCustomProperties(customProps);
     }
 
     if (stringMap.containsKey("credentials") && !stringMap.get("credentials").isEmpty()) {
-      List<HashMap<String, Object>> credentials = jsonConverter.read(stringMap.get("credentials"), List.class);
+      List<HashMap<String, Object>> credentials =
+          jsonConverter.read(stringMap.get("credentials"), List.class);
       user.setCredentials(credentials);
     }
 
@@ -84,6 +87,4 @@ class ModelConverter {
 
     return parts[0] + "." + fraction;
   }
-
-
 }

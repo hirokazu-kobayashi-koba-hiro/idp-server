@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot.restapi.admin;
 import java.util.UUID;
 
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.function.ServerManagementFunction;
+import org.idp.server.core.api.ServerManagementApi;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.tenant.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,25 +14,24 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/api/v1/admin/server/registration")
+@RequestMapping("/api/v1/admin/server/registration")
 @Transactional
 public class ServerRegistrationV1Api implements ParameterTransformable {
 
   PublicTenantDomain publicTenantDomain;
-  ServerManagementFunction serverManagementFunction;
+  ServerManagementApi serverManagementApi;
 
 
   public ServerRegistrationV1Api(
       IdpServerApplication idpServerApplication,
       @Value("${idp.configurations.serverUrl}") String publicTenantDomainValue) {
-    this.serverManagementFunction = idpServerApplication.serverManagementFunction();
+    this.serverManagementApi = idpServerApplication.serverManagementFunction();
 
     this.publicTenantDomain = new PublicTenantDomain(publicTenantDomainValue);
   }
 
   @PostMapping
   public ResponseEntity<?> post(
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestBody(required = false) String body) {
 
     String newTenantId = UUID.randomUUID().toString();
@@ -46,7 +45,7 @@ public class ServerRegistrationV1Api implements ParameterTransformable {
                     TenantType.PUBLIC,
                     issuer);
 
-    String response = serverManagementFunction.register(newTenant, replacedBody);
+    String response = serverManagementApi.register(newTenant, replacedBody);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

@@ -3,6 +3,7 @@ package org.idp.server.authenticators.webauthn.service.internal;
 import org.idp.server.authenticators.webauthn.WebAuthnCredential;
 import org.idp.server.authenticators.webauthn.WebAuthnCredentialRepository;
 import org.idp.server.authenticators.webauthn.WebAuthnCredentials;
+
 public class WebAuthnCredentialService {
 
   WebAuthnCredentialRepository webAuthnCredentialRepository;

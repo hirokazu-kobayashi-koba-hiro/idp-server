@@ -1,8 +1,9 @@
 package org.idp.server.authenticators.webauthn.service.internal;
 
-import org.idp.server.core.tenant.Tenant;
 import org.idp.server.authenticators.webauthn.WebAuthnConfiguration;
 import org.idp.server.authenticators.webauthn.WebAuthnConfigurationRepository;
+import org.idp.server.core.tenant.Tenant;
+
 public class WebAuthnConfigurationService {
 
   WebAuthnConfigurationRepository webAuthnConfigurationRepository;

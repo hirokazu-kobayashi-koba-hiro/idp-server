@@ -54,10 +54,13 @@ public class AuthorizationResponseVpTokenIdTokenCreator
                 context.responseMode(),
                 new ResponseModeValue("#"),
                 context.tokenIssuer())
-            .add(authorizationRequest.state())
             .add(vpToken)
             .add(authorizationGrant.scopes())
             .add(idToken);
+
+    if (context.hasState()) {
+      authorizationResponseBuilder.add(authorizationRequest.state());
+    }
 
     if (context.isJwtMode()) {
       AuthorizationResponse authorizationResponse = authorizationResponseBuilder.build();
