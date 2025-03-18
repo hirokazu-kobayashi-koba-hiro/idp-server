@@ -1,5 +1,6 @@
 {
-  "issuer": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784",
+  "server_id": "94d8598e-f238-4150-85c2-c4accf515784",
+  "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
   "client_id": "unsupportedClient",
   "client_secret": "unsupportedClientSecret",
   "client_id_issued_at": 2893256800,

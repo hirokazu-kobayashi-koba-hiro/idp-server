@@ -1,7 +1,7 @@
 package org.idp.server.core;
 
-import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.api.ClientManagementApi;
+import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.handler.configuration.ClientConfigurationErrorHandler;
 import org.idp.server.core.handler.configuration.ClientConfigurationHandler;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementListResponse;
@@ -25,13 +25,6 @@ public class ClientManagementEntryService implements ClientManagementApi {
     this.errorHandler = new ClientConfigurationErrorHandler();
   }
 
-  // TODO
-  public String register(String json) {
-
-    Tenant tenant = tenantRepository.getAdmin();
-    return clientConfigurationHandler.handleRegistration(tenant.tokenIssuer(), json);
-  }
-
   public String register(TenantIdentifier tenantIdentifier, String body) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
@@ -45,7 +38,6 @@ public class ClientManagementEntryService implements ClientManagementApi {
     return clientConfigurationHandler.handleFinding(tenant.tokenIssuer(), limit, offset);
   }
 
-  @Override
   public ClientConfigurationManagementResponse get(
       TenantIdentifier tenantIdentifier, ClientId clientId) {
     try {

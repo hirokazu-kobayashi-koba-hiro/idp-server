@@ -51,7 +51,6 @@ import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractors;
-import org.idp.server.core.organization.OrganizationService;
 import org.idp.server.core.protocol.*;
 import org.idp.server.core.sharedsignal.EventPublisher;
 import org.idp.server.core.sharedsignal.OAuthFlowEventPublisher;
@@ -149,8 +148,6 @@ public class IdpServerApplication {
         TransactionInterceptor.createProxy(
             new FederationProtocolImpl(federationHandler), FederationProtocol.class);
 
-    OrganizationService organizationService = new OrganizationService(organizationDataSource);
-
     FederationService federationService = new FederationService(federationProtocol, userDataSource);
 
     TokenIntrospectionHandler tokenIntrospectionHandler =
@@ -168,13 +165,15 @@ public class IdpServerApplication {
         new UserinfoHandler(
             oAuthTokenDataSource, serverConfigurationDataSource, clientConfigurationDataSource);
     UserinfoProtocol userinfoProtocol =
-        TransactionInterceptor.createProxy(new UserinfoProtocolImpl(userinfoHandler), UserinfoProtocol.class);
+        TransactionInterceptor.createProxy(
+            new UserinfoProtocolImpl(userinfoHandler), UserinfoProtocol.class);
     DiscoveryHandler discoveryHandler = new DiscoveryHandler(serverConfigurationDataSource);
     DiscoveryProtocol discoveryProtocol =
         TransactionInterceptor.createProxy(
             new DiscoveryProtocolImpl(discoveryHandler), DiscoveryProtocol.class);
     JwksProtocol jwksProtocol =
-        TransactionInterceptor.createProxy(new JwksProtocolImpl(discoveryHandler), JwksProtocol.class);
+        TransactionInterceptor.createProxy(
+            new JwksProtocolImpl(discoveryHandler), JwksProtocol.class);
     BackchannelAuthenticationDataSource backchannelAuthenticationDataSource =
         new BackchannelAuthenticationDataSource();
     CibaGrantDataSource cibaGrantDataSource = new CibaGrantDataSource();
@@ -211,7 +210,8 @@ public class IdpServerApplication {
             serverConfigurationDataSource,
             clientConfigurationDataSource);
     TokenProtocol tokenProtocol =
-        TransactionInterceptor.createProxy(new TokenProtocolImpl(tokenRequestHandler), TokenProtocol.class);
+        TransactionInterceptor.createProxy(
+            new TokenProtocolImpl(tokenRequestHandler), TokenProtocol.class);
 
     Map<Format, VerifiableCredentialCreator> vcCreators = new HashMap<>();
     vcCreators.put(Format.jwt_vc_json, new VerifiableCredentialJwtClient());
@@ -243,14 +243,20 @@ public class IdpServerApplication {
 
     this.idpServerStarterApi =
         TransactionInterceptor.createProxy(
-            new IdpServerStarterEntryService(), IdpServerStarterApi.class);
+            new IdpServerStarterEntryService(
+                organizationDataSource,
+                tenantDataSource,
+                userDataSource,
+                serverConfigurationDataSource,
+                passwordEncodeDelegation),
+            IdpServerStarterApi.class);
 
     OAuthFlowEventPublisher oAuthFLowEventPublisher = new OAuthFlowEventPublisher(eventPublisher);
 
     this.oAuthFlowApi =
         TransactionInterceptor.createProxy(
             new OAuthFlowEntryService(
-                    oAuthProtocol,
+                oAuthProtocol,
                 oAuthRequestDelegate,
                 oAuthUserInteractors,
                 userDataSource,
@@ -263,7 +269,11 @@ public class IdpServerApplication {
     this.tokenApi =
         TransactionInterceptor.createProxy(
             new TokenEntryService(
-                    tokenProtocol, tokenIntrospectionApi, tokenRevocationProtocol, userDataSource, tenantDataSource),
+                tokenProtocol,
+                tokenIntrospectionApi,
+                tokenRevocationProtocol,
+                userDataSource,
+                tenantDataSource),
             TokenApi.class);
 
     this.oidcMetaDataApi =
@@ -273,11 +283,13 @@ public class IdpServerApplication {
 
     this.userinfoApi =
         TransactionInterceptor.createProxy(
-            new UserinfoEntryService(userinfoProtocol, userDataSource, tenantDataSource), UserinfoApi.class);
+            new UserinfoEntryService(userinfoProtocol, userDataSource, tenantDataSource),
+            UserinfoApi.class);
 
     this.cibaFlowApi =
         TransactionInterceptor.createProxy(
-            new CibaFlowEntryService(cibaProtocol, userDataSource, tenantDataSource), CibaFlowApi.class);
+            new CibaFlowEntryService(cibaProtocol, userDataSource, tenantDataSource),
+            CibaFlowApi.class);
 
     this.eventApi =
         TransactionInterceptor.createProxy(new EventEntryService(eventHandler), EventApi.class);
@@ -286,7 +298,7 @@ public class IdpServerApplication {
         TransactionInterceptor.createProxy(
             new OnboardingEntryService(
                 tenantDataSource,
-                organizationService,
+                organizationDataSource,
                 userRegistrationService,
                 serverConfigurationHandler),
             OnboardingApi.class);
@@ -304,11 +316,13 @@ public class IdpServerApplication {
 
     this.userManagementApi =
         TransactionInterceptor.createProxy(
-            new UserManagementEntryService(tenantDataSource, userDataSource), UserManagementApi.class);
+            new UserManagementEntryService(tenantDataSource, userDataSource),
+            UserManagementApi.class);
 
     this.operatorAuthenticationApi =
         TransactionInterceptor.createProxy(
-            new OperatorAuthenticationEntryService(tokenIntrospectionApi, tenantDataSource, userDataSource),
+            new OperatorAuthenticationEntryService(
+                tokenIntrospectionApi, tenantDataSource, userDataSource),
             OperatorAuthenticationApi.class);
   }
 

@@ -1,7 +1,7 @@
 package org.idp.server.core;
 
-import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.api.UserinfoApi;
+import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.handler.userinfo.UserinfoDelegate;
 import org.idp.server.core.handler.userinfo.io.UserinfoRequest;
 import org.idp.server.core.handler.userinfo.io.UserinfoRequestResponse;
@@ -22,7 +22,9 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
   TenantRepository tenantRepository;
 
   public UserinfoEntryService(
-          UserinfoProtocol userinfoProtocol, UserRepository userRepository, TenantRepository tenantRepository) {
+      UserinfoProtocol userinfoProtocol,
+      UserRepository userRepository,
+      TenantRepository tenantRepository) {
     this.userinfoProtocol = userinfoProtocol;
     this.userRepository = userRepository;
     this.tenantRepository = tenantRepository;

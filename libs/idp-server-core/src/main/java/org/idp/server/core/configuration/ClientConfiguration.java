@@ -46,6 +46,7 @@ public class ClientConfiguration implements JsonReadable {
   String authorizationEncryptedResponseEnc;
   // extension
   boolean supportedJar;
+  String serverId;
   String issuer;
 
   public ClientConfiguration() {}
@@ -293,5 +294,9 @@ public class ClientConfiguration implements JsonReadable {
   public boolean hasEncryptedAuthorizationResponseMeta() {
     return Objects.nonNull(idTokenEncryptedResponseAlg)
         && Objects.nonNull(idTokenEncryptedResponseEnc);
+  }
+
+  public String serverId() {
+    return serverId;
   }
 }

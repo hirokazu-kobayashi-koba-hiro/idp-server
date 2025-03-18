@@ -1,4 +1,5 @@
 {
+  "server_id": "217e863d-8aee-46e2-89a3-9bd20db19196",
   "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
   "client_id": "privateKeyJwt",
   "client_secret": "privateKeyJwtSecret",

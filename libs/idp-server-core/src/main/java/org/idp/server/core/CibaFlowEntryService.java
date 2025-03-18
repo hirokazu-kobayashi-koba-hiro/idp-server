@@ -1,11 +1,11 @@
 package org.idp.server.core;
 
 import java.util.Map;
+import org.idp.server.core.api.CibaFlowApi;
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.ciba.CibaRequestDelegate;
 import org.idp.server.core.ciba.UserCriteria;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.api.CibaFlowApi;
 import org.idp.server.core.handler.ciba.io.*;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.protocol.CibaProtocol;
@@ -23,7 +23,8 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
   UserRepository userRepository;
   TenantRepository tenantRepository;
 
-  public CibaFlowEntryService(CibaProtocol cibaProtocol, UserRepository userRepository, TenantRepository tenantRepository) {
+  public CibaFlowEntryService(
+      CibaProtocol cibaProtocol, UserRepository userRepository, TenantRepository tenantRepository) {
     this.cibaProtocol = cibaProtocol;
     this.userRepository = userRepository;
     this.tenantRepository = tenantRepository;
@@ -69,7 +70,7 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
     return User.notFound();
   }
 
-  //TODO implement
+  // TODO implement
   @Override
   public boolean authenticate(TokenIssuer tokenIssuer, User user, UserCode userCode) {
     return true;

@@ -50,7 +50,7 @@ public class OAuthProtocolImpl implements OAuthProtocol {
       OAuthRequestContext context = requestHandler.handle(oAuthRequest);
       OAuthSession session = oAuthRequestDelegate.findSession(context.sessionKey());
 
-      if (requestHandler.isAuthorizable(context, session, oAuthRequestDelegate)) {
+      if (requestHandler.canAuthorize(context, session, oAuthRequestDelegate)) {
         TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
         OAuthAuthorizeRequest oAuthAuthorizeRequest =
             new OAuthAuthorizeRequest(

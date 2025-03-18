@@ -17,6 +17,4 @@ public interface UserManagementApi {
   User findByProvider(String tokenIssuer, String providerId, String providerUserId);
 
   List<User> find(TenantIdentifier tenantIdentifier, int limit, int offset);
-
-
 }

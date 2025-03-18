@@ -5,7 +5,6 @@ import org.idp.server.core.handler.credential.CredentialRequestErrorHandler;
 import org.idp.server.core.handler.credential.io.*;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialDelegate;
 
-
 public class CredentialApiImpl implements CredentialProtocol {
 
   CredentialHandler credentialHandler;

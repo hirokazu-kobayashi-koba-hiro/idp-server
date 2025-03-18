@@ -1,10 +1,12 @@
 package org.idp.server.core;
 
-import org.idp.server.core.basic.sql.Transactional;
+import java.util.UUID;
 import org.idp.server.core.api.ServerManagementApi;
+import org.idp.server.core.basic.sql.Transactional;
+import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.handler.configuration.ServerConfigurationHandler;
-import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantRepository;
+import org.idp.server.core.organization.initial.TenantCreator;
+import org.idp.server.core.tenant.*;
 
 @Transactional
 public class ServerManagementEntryService implements ServerManagementApi {
@@ -19,12 +21,25 @@ public class ServerManagementEntryService implements ServerManagementApi {
   }
 
   // TODO
-  public String register(Tenant tenant, String json) {
+  public String register(PublicTenantDomain publicTenantDomain, String serverConfig) {
 
-    serverConfigurationHandler.handleRegistration(json);
+    String newTenantId = UUID.randomUUID().toString();
+    String issuer = publicTenantDomain.value() + newTenantId;
+    String replacedBody = serverConfig.replaceAll("IDP_ISSUER", issuer);
 
-    tenantRepository.register(tenant);
+    ServerConfiguration serverConfiguration =
+        serverConfigurationHandler.handleRegistration(replacedBody);
 
-    return json;
+    TenantCreator tenantCreator =
+        new TenantCreator(
+            new TenantIdentifier(newTenantId),
+            new TenantName(newTenantId),
+            serverConfiguration.serverIdentifier(),
+            serverConfiguration.tokenIssuer());
+    Tenant newTenant = tenantCreator.create();
+
+    tenantRepository.register(newTenant);
+
+    return serverConfig;
   }
 }

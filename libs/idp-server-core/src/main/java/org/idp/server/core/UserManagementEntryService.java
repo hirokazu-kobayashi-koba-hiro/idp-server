@@ -1,8 +1,8 @@
 package org.idp.server.core;
 
 import java.util.List;
-import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.api.UserManagementApi;
+import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -16,7 +16,8 @@ public class UserManagementEntryService implements UserManagementApi {
   TenantRepository tenantRepository;
   UserRepository userRepository;
 
-  public UserManagementEntryService(TenantRepository tenantRepository, UserRepository userRepository) {
+  public UserManagementEntryService(
+      TenantRepository tenantRepository, UserRepository userRepository) {
     this.tenantRepository = tenantRepository;
     this.userRepository = userRepository;
   }
@@ -54,6 +55,4 @@ public class UserManagementEntryService implements UserManagementApi {
 
     return userRepository.findList(tenant, limit, offset);
   }
-
-
 }

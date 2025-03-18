@@ -1,21 +1,29 @@
 package org.idp.server.core.tenant;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.core.configuration.ServerIdentifier;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
-public class Tenant {
+public class Tenant implements JsonReadable {
   TenantIdentifier identifier;
   TenantName name;
   TenantType type;
-  String issuer;
+  TenantServerAttribute serverAttribute;
 
   public Tenant() {}
 
-  public Tenant(TenantIdentifier identifier, TenantName name, TenantType type, String issuer) {
+  public Tenant(
+      TenantIdentifier identifier,
+      TenantName name,
+      TenantType type,
+      TenantServerAttribute serverAttribute) {
     this.identifier = identifier;
     this.name = name;
     this.type = type;
-    this.issuer = issuer;
+    this.serverAttribute = serverAttribute;
   }
 
   public TenantIdentifier identifier() {
@@ -34,12 +42,20 @@ public class Tenant {
     return type;
   }
 
+  public TenantServerAttribute serverAttribute() {
+    return serverAttribute;
+  }
+
+  public ServerIdentifier serverIdentifier() {
+    return serverAttribute.serverIdentifier();
+  }
+
   public String issuer() {
-    return issuer;
+    return serverAttribute.tokenIssuerValue();
   }
 
   public TokenIssuer tokenIssuer() {
-    return new TokenIssuer(issuer);
+    return serverAttribute.tokenIssuer();
   }
 
   public boolean isAdmin() {
@@ -52,5 +68,14 @@ public class Tenant {
 
   public boolean exists() {
     return Objects.nonNull(identifier) && identifier.exists();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", identifier.value());
+    map.put("name", name.value());
+    map.put("type", type.name());
+    map.put("attributes", serverAttribute.toMap());
+    return map;
   }
 }

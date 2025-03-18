@@ -32,10 +32,10 @@ public class ServerConfigurationDataSource implements ServerConfigurationReposit
     String payload = jsonConverter.write(serverConfiguration);
     List<Object> params = new ArrayList<>();
     params.add(serverConfiguration.identifier());
-    params.add(serverConfiguration.tokenIssuer());
+    params.add(serverConfiguration.tokenIssuer().value());
     params.add(payload);
 
-    sqlExecutor.execute(sqlTemplate, List.of(serverConfiguration.tokenIssuer().value(), payload));
+    sqlExecutor.execute(sqlTemplate, params);
   }
 
   @Override

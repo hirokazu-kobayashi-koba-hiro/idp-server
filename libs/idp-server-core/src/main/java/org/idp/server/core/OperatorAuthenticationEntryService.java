@@ -1,8 +1,8 @@
 package org.idp.server.core;
 
 import org.idp.server.core.admin.TokenIntrospectionCreator;
-import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.api.OperatorAuthenticationApi;
+import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.oauth.identity.User;

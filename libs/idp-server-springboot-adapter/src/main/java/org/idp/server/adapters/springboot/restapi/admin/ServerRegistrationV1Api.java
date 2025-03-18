@@ -34,18 +34,7 @@ public class ServerRegistrationV1Api implements ParameterTransformable {
   public ResponseEntity<?> post(
       @RequestBody(required = false) String body) {
 
-    String newTenantId = UUID.randomUUID().toString();
-    String issuer = publicTenantDomain.value() + newTenantId;
-    String replacedBody = body.replaceAll("IDP_ISSUER", issuer);
-
-    Tenant newTenant =
-            new Tenant(
-                    new TenantIdentifier(newTenantId),
-                    new TenantName(newTenantId),
-                    TenantType.PUBLIC,
-                    issuer);
-
-    String response = serverManagementApi.register(newTenant, replacedBody);
+    String response = serverManagementApi.register(publicTenantDomain, body);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

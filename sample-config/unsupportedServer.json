@@ -1,4 +1,5 @@
 {
+  "identifier": "94d8598e-f238-4150-85c2-c4accf515784",
   "issuer": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784",
   "authorization_endpoint": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/debug/v1/authorizations",
   "token_endpoint": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens",

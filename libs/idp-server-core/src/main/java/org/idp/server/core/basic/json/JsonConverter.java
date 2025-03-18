@@ -38,6 +38,11 @@ public class JsonConverter {
     return new JsonConverter(objectMapper);
   }
 
+  public <TYPE> TYPE read(Object jsonObject, Class<TYPE> type) {
+    String json = write(jsonObject);
+    return read(json, type);
+  }
+
   public <TYPE> TYPE read(String value, Class<TYPE> typeClass) {
     try {
       return objectMapper.readValue(value, typeClass);

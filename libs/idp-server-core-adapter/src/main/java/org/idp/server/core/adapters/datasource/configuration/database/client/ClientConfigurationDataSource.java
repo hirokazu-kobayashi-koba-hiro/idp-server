@@ -1,5 +1,6 @@
 package org.idp.server.core.adapters.datasource.configuration.database.client;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,16 +27,16 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
     String sqlTemplate =
         """
-            INSERT INTO client_configuration (token_issuer, client_id, payload)
-            VALUES (?, ?, ?::jsonb)
+            INSERT INTO client_configuration (id, server_id, token_issuer, payload)
+            VALUES (?, ?, ?, ?::jsonb)
             """;
 
     String payload = jsonConverter.write(clientConfiguration);
-    List<Object> params =
-        List.of(
-            clientConfiguration.tokenIssuer().value(),
-            clientConfiguration.clientId().value(),
-            payload);
+    List<Object> params = new ArrayList<>();
+    params.add(clientConfiguration.clientId().value());
+    params.add(clientConfiguration.serverId());
+    params.add(clientConfiguration.tokenIssuer().value());
+    params.add(payload);
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -45,9 +46,9 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                    SELECT token_issuer, client_id, payload
+                    SELECT id, server_id, token_issuer, payload
                     FROM client_configuration
-                    WHERE token_issuer = ? AND client_id = ?;
+                    WHERE token_issuer = ? AND id = ?;
                     """;
     List<Object> params = List.of(tokenIssuer.value(), clientId.value());
     Map<String, String> stringMap = sqlExecutor.selectOne(sqlTemplate, params);
@@ -64,7 +65,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                        SELECT token_issuer, client_id, payload
+                        SELECT id, server_id, token_issuer, payload
                         FROM client_configuration
                         WHERE token_issuer = ? limit ? offset ?;
                         """;

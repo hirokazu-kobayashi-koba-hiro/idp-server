@@ -1,5 +1,6 @@
 package org.idp.server.core.handler.configuration;
 
+import java.util.UUID;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
@@ -15,8 +16,11 @@ public class ServerConfigurationHandler {
   }
 
   // TODO
-  public void handleRegistration(String json) {
+  public ServerConfiguration handleRegistration(String json) {
     ServerConfiguration serverConfiguration = jsonConverter.read(json, ServerConfiguration.class);
+    serverConfiguration.setIdentifier(UUID.randomUUID().toString());
     serverConfigurationRepository.register(serverConfiguration);
+
+    return serverConfiguration;
   }
 }

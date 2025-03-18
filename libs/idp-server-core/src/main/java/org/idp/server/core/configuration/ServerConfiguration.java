@@ -79,6 +79,15 @@ public class ServerConfiguration implements JsonReadable {
     return identifier;
   }
 
+  // TODO
+  public void setIdentifier(String identifier) {
+    this.identifier = identifier;
+  }
+
+  public ServerIdentifier serverIdentifier() {
+    return new ServerIdentifier(identifier);
+  }
+
   public TokenIssuer tokenIssuer() {
     return new TokenIssuer(issuer);
   }

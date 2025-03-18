@@ -39,7 +39,7 @@ public class OrganizationDataSource implements OrganizationRepository {
         .forEach(
             organizationTenant -> {
               sqlValues.add("(?, ?)");
-              tenantParams.add(organizationTenant.identifier().value());
+              tenantParams.add(organization.identifier().value());
               tenantParams.add(organizationTenant.identifier().value());
             });
     sqlTemplateBuilder.append(String.join(",", sqlValues));

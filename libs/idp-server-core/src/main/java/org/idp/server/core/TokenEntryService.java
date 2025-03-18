@@ -1,8 +1,8 @@
 package org.idp.server.core;
 
 import java.util.Map;
-import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.api.TokenApi;
+import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.handler.token.io.TokenRequest;
 import org.idp.server.core.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionRequest;
@@ -10,8 +10,8 @@ import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionRespo
 import org.idp.server.core.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.protocol.TokenProtocol;
 import org.idp.server.core.protocol.TokenIntrospectionApi;
+import org.idp.server.core.protocol.TokenProtocol;
 import org.idp.server.core.protocol.TokenRevocationProtocol;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -93,7 +93,7 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
     if (!user.exists()) {
       return User.notFound();
     }
-    //TODO implement password authentication
+    // TODO implement password authentication
     return user;
   }
 }

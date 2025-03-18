@@ -1,15 +1,23 @@
 package org.idp.server.core.organization;
 
 import java.util.HashMap;
+import org.idp.server.core.basic.json.JsonReadable;
 import org.idp.server.core.tenant.Tenant;
 
-public class Organization {
+public class Organization implements JsonReadable {
   OrganizationIdentifier identifier;
   OrganizationName name;
   OrganizationDescription description;
   AssignedTenants assignedTenants;
 
   public Organization() {}
+
+  public Organization(
+          OrganizationIdentifier identifier,
+          OrganizationName name,
+          OrganizationDescription description) {
+    this(identifier, name, description, new AssignedTenants());
+  }
 
   public Organization(
       OrganizationIdentifier identifier,

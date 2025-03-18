@@ -53,7 +53,8 @@ public class ClientConfigurationHandler {
         ClientConfigurationManagementListStatus.OK, content);
   }
 
-  public ClientConfigurationManagementResponse handleGetting(TokenIssuer tokenIssuer, ClientId clientId) {
+  public ClientConfigurationManagementResponse handleGetting(
+      TokenIssuer tokenIssuer, ClientId clientId) {
 
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tokenIssuer, clientId);

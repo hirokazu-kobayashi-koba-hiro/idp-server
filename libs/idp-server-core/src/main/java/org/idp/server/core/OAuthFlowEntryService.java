@@ -2,10 +2,10 @@ package org.idp.server.core;
 
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.federation.FederationService;
-import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.handler.federation.io.FederationCallbackRequest;
 import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
 import org.idp.server.core.handler.federation.io.FederationRequest;
@@ -191,7 +191,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(authAuthorizeRequest);
 
-    eventPublisher.publish(authorizationRequest, session.user(), DefaultEventType.login_with_session);
+    eventPublisher.publish(
+        authorizationRequest, session.user(), DefaultEventType.login_with_session);
 
     return authorize;
   }
@@ -214,5 +215,4 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     return oAuthProtocol.logout(oAuthLogoutRequest);
   }
-
 }

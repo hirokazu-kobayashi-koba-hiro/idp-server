@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
+import org.idp.server.core.configuration.ServerIdentifier;
 import org.idp.server.core.tenant.*;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
@@ -17,13 +18,14 @@ public class TenantDataSource implements TenantRepository {
 
     String sqlTemplate =
         """
-            INSERT INTO tenant(id, name, type, issuer)
-            VALUES (?, ?, ?, ?);
+            INSERT INTO tenant(id, name, type, server_id, issuer)
+            VALUES (?, ?, ?, ?, ?);
             """;
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(tenant.name().value());
     params.add(tenant.type().name());
+    params.add(tenant.serverIdentifier().value());
     params.add(tenant.issuer());
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -35,7 +37,7 @@ public class TenantDataSource implements TenantRepository {
 
     String sqlTemplate =
         """
-            SELECT id, name, type, issuer FROM tenant
+            SELECT id, name, type, server_id, issuer FROM tenant
             WHERE id = ?
             """;
     List<Object> params = new ArrayList<>();
@@ -49,9 +51,12 @@ public class TenantDataSource implements TenantRepository {
     }
     TenantName tenantName = new TenantName(result.getOrDefault("name", ""));
     TenantType tenantType = TenantType.valueOf(result.getOrDefault("type", ""));
-    String issuer = result.getOrDefault("issuer", "");
+    ServerIdentifier serverIdentifier = new ServerIdentifier(result.getOrDefault("server_id", ""));
+    TokenIssuer tokenIssuer = new TokenIssuer(result.getOrDefault("issuer", ""));
+    TenantServerAttribute tenantServerAttribute =
+        new TenantServerAttribute(serverIdentifier, tokenIssuer);
 
-    return new Tenant(tenantIdentifier, tenantName, tenantType, issuer);
+    return new Tenant(tenantIdentifier, tenantName, tenantType, tenantServerAttribute);
   }
 
   @Override
@@ -75,9 +80,12 @@ public class TenantDataSource implements TenantRepository {
     TenantIdentifier tenantIdentifier = new TenantIdentifier(result.getOrDefault("identifier", ""));
     TenantName tenantName = new TenantName(result.getOrDefault("name", ""));
     TenantType tenantType = TenantType.valueOf(result.getOrDefault("type", ""));
-    String issuer = result.getOrDefault("issuer", "");
+    ServerIdentifier serverIdentifier = new ServerIdentifier(result.getOrDefault("server_id", ""));
+    TokenIssuer tokenIssuer = new TokenIssuer(result.getOrDefault("issuer", ""));
+    TenantServerAttribute tenantServerAttribute =
+        new TenantServerAttribute(serverIdentifier, tokenIssuer);
 
-    return new Tenant(tenantIdentifier, tenantName, tenantType, issuer);
+    return new Tenant(tenantIdentifier, tenantName, tenantType, tenantServerAttribute);
   }
 
   @Override
@@ -86,6 +94,7 @@ public class TenantDataSource implements TenantRepository {
   @Override
   public void delete(TenantIdentifier tenantIdentifier) {}
 
+  // FIXME data structure and implementation is not match
   @Override
   public Tenant find(TokenIssuer tokenIssuer) {
 
@@ -107,8 +116,10 @@ public class TenantDataSource implements TenantRepository {
     TenantIdentifier tenantIdentifier = new TenantIdentifier(result.getOrDefault("id", ""));
     TenantName tenantName = new TenantName(result.getOrDefault("name", ""));
     TenantType tenantType = TenantType.valueOf(result.getOrDefault("type", ""));
-    String issuer = result.getOrDefault("issuer", "");
+    ServerIdentifier serverIdentifier = new ServerIdentifier(result.getOrDefault("server_id", ""));
+    TenantServerAttribute tenantServerAttribute =
+        new TenantServerAttribute(serverIdentifier, tokenIssuer);
 
-    return new Tenant(tenantIdentifier, tenantName, tenantType, issuer);
+    return new Tenant(tenantIdentifier, tenantName, tenantType, tenantServerAttribute);
   }
 }

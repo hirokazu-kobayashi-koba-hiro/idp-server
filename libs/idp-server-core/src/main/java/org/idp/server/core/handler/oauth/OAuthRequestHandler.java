@@ -62,7 +62,7 @@ public class OAuthRequestHandler {
     return context;
   }
 
-  public boolean isAuthorizable(
+  public boolean canAuthorize(
       OAuthRequestContext context,
       OAuthSession session,
       OAuthRequestDelegate oAuthRequestDelegate) {

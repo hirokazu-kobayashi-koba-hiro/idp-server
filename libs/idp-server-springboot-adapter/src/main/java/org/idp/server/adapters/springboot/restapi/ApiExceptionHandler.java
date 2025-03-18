@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.util.Map;
+
 @ControllerAdvice
 public class ApiExceptionHandler {
 
@@ -41,5 +43,11 @@ public class ApiExceptionHandler {
   public ResponseEntity<?> handleException(ConflictException exception) {
     log.warn(exception.getMessage());
     return new ResponseEntity<>(HttpStatus.CONFLICT);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<?> handleException(Exception exception) {
+    log.error(exception.getMessage(), exception);
+    return new ResponseEntity<>(Map.of("error", "server_error", "error_description", "unexpected error is occurred"), HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }

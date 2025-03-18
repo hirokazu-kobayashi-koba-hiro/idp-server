@@ -4,10 +4,11 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
 import org.idp.server.core.basic.date.SystemDateTime;
+import org.idp.server.core.basic.json.JsonReadable;
 import org.idp.server.core.basic.vc.Credential;
 import org.idp.server.core.type.extension.CustomProperties;
 
-public class User implements Serializable {
+public class User implements JsonReadable, Serializable {
   String sub;
   String providerId;
   String providerUserId;
@@ -31,6 +32,7 @@ public class User implements Serializable {
   Address address;
   LocalDateTime updatedAt;
   String hashedPassword;
+  String rawPassword;
   HashMap<String, Object> customProperties = new HashMap<>();
   List<HashMap<String, Object>> credentials = new ArrayList<>();
 
@@ -407,5 +409,9 @@ public class User implements Serializable {
   public User didEmailVerification() {
     this.emailVerified = true;
     return this;
+  }
+
+  public String rawPassword() {
+    return rawPassword;
   }
 }
