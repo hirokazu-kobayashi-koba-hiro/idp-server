@@ -4,7 +4,7 @@
 curl -X POST "${IDP_SERVER_DOMAIN}api/v1/admin/registration" \
 -u "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" \
 -H "Content-Type:application/json" \
---data @./setup.json
+--data @./sample-config/admin.json
 
 ##client
 curl -X POST "${IDP_SERVER_DOMAIN}api/v1/admin/client/registration" \
