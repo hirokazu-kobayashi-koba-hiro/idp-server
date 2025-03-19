@@ -54,12 +54,12 @@ curl -X POST "${IDP_SERVER_DOMAIN}api/v1/admin/client/registration" \
 --data @./sample-config/clients/publicClient.json
 
 
-curl -X POST "${IDP_SERVER_DOMAIN}api/v1/admin/server/registration" \
--u "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" \
--H "Content-Type:application/json" \
---data @./sample-config/unsupportedServer.json
-
-curl -X POST "${IDP_SERVER_DOMAIN}api/v1/admin/tenants/d2849b5f-4e95-41c1-a82d-0197224085ec/client/registration" \
--u "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" \
--H "Content-Type:application/json" \
---data @./sample-config/clients/unsupportedServerUnsupportedClient.json
+#curl -X POST "${IDP_SERVER_DOMAIN}api/v1/admin/server/registration" \
+#-u "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" \
+#-H "Content-Type:application/json" \
+#--data @./sample-config/unsupportedServer.json
+#
+#curl -X POST "${IDP_SERVER_DOMAIN}api/v1/admin/tenants/d2849b5f-4e95-41c1-a82d-0197224085ec/client/registration" \
+#-u "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" \
+#-H "Content-Type:application/json" \
+#--data @./sample-config/clients/unsupportedServerUnsupportedClient.json

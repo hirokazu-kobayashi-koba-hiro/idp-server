@@ -7,6 +7,7 @@ import org.idp.server.core.type.oauth.ClientId;
 
 public interface ClientManagementApi {
 
+  String register(String json);
 
   String register(TenantIdentifier tenantIdentifier, String body);
 
