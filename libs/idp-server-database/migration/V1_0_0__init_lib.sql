@@ -38,6 +38,19 @@ CREATE TABLE server_configuration
     updated_at   TIMESTAMP DEFAULT now() NOT NULL
 );
 
+CREATE TABLE role
+(
+    id          CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id   CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    name        VARCHAR(255)            NOT NULL,
+    description VARCHAR(255),
+    created_at  TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at  TIMESTAMP DEFAULT now() NOT NULL,
+    CONSTRAINT uk_tenant_role UNIQUE (tenant_id, name)
+);
+
+CREATE INDEX idx_role_tenant_name ON role (tenant_id, name);
+
 CREATE TABLE idp_user
 (
     id                             CHAR(36)                NOT NULL PRIMARY KEY,
@@ -72,6 +85,21 @@ CREATE TABLE idp_user
     updated_at                     TIMESTAMP DEFAULT now() NOT NULL,
     CONSTRAINT uk_tenant_provider_user unique (tenant_id, provider_user_id)
 );
+
+CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_user_id);
+CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
+
+CREATE TABLE idp_user_roles
+(
+    id          CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     CHAR(36)                           NOT NULL REFERENCES idp_user (id) ON DELETE CASCADE,
+    role_id     CHAR(36)                           NOT NULL REFERENCES role (id) ON DELETE CASCADE,
+    assigned_at TIMESTAMP            DEFAULT now() NOT NULL,
+    UNIQUE (user_id, role_id)
+);
+
+CREATE INDEX idx_idp_user_roles_user_role ON idp_user_roles (user_id, role_id);
+
 
 CREATE TABLE organization_members
 (
@@ -156,6 +184,9 @@ CREATE TABLE authorization_code_grant
             ON DELETE CASCADE
 );
 
+CREATE INDEX idx_auth_code_grant_code ON authorization_code_grant (authorization_code);
+
+
 CREATE TABLE oauth_token
 (
     id                              CHAR(36)                NOT NULL PRIMARY KEY,
@@ -227,6 +258,8 @@ CREATE TABLE ciba_grant
             REFERENCES backchannel_authentication_request (id)
             ON DELETE CASCADE
 );
+
+CREATE INDEX idx_ciba_grant_auth_req ON ciba_grant (auth_req_id);
 
 CREATE TABLE verifiable_credential_transaction
 (
