@@ -76,7 +76,7 @@ CREATE TABLE idp_user
 CREATE TABLE organization_members
 (
     id              CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-    idp_user_id     VARCHAR(255) REFERENCES idp_user (id) ON DELETE CASCADE,
+    idp_user_id     CHAR(36) REFERENCES idp_user (id) ON DELETE CASCADE,
     organization_id VARCHAR(255) REFERENCES organization (id) ON DELETE CASCADE,
     role            VARCHAR(100)                       NOT NULL,
     joined_at       TIMESTAMP            DEFAULT now() NOT NULL,
@@ -163,7 +163,7 @@ CREATE TABLE oauth_token
     token_issuer                    TEXT                    NOT NULL,
     token_type                      VARCHAR(10)             NOT NULL,
     access_token                    TEXT                    NOT NULL,
-    user_id                         VARCHAR(255),
+    user_id                         CHAR(36),
     user_payload                    JSONB,
     authentication                  JSONB                   NOT NULL,
     client_id                       VARCHAR(255)            NOT NULL,
