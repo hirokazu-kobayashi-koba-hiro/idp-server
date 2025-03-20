@@ -16,6 +16,7 @@ import org.idp.server.core.user.UserRepository;
 public class UserDataSource implements UserRepository {
 
   JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  String selectSql = "SELECT id, provider_id, provider_user_id, provider_user_original_payload, name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, email, email_verified, gender, birthdate, zoneinfo, locale, phone_number, phone_number_verified, address, custom_properties, credentials, hashed_password, multi_factor_authentication, enabled, created_at, updated_at \n";
 
   @Override
   public void register(Tenant tenant, User user) {
@@ -23,11 +24,11 @@ public class UserDataSource implements UserRepository {
     String sqlTemplate =
         """
                 INSERT INTO public.idp_user
-                (id, tenant_id, provider_id, provider_user_id, name, given_name, family_name, middle_name, nickname,
+                (id, tenant_id, provider_id, provider_user_id, provider_user_original_payload, name, given_name, family_name, middle_name, nickname,
                  preferred_username, profile, picture, website, email, email_verified, gender,
                  birthdate, zoneinfo, locale, phone_number, phone_number_verified, address,
-                 custom_properties, credentials, hashed_password)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?);
+                 custom_properties, credentials, hashed_password, multi_factor_authentication, enabled)
+                 VALUES (?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?);
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -35,6 +36,7 @@ public class UserDataSource implements UserRepository {
     params.add(tenant.identifierValue());
     params.add(user.providerId());
     params.add(user.providerUserId());
+    params.add(jsonConverter.write(user.providerOriginalPayload()));
     params.add(user.name());
     params.add(user.givenName());
     params.add(user.familyName());
@@ -56,6 +58,8 @@ public class UserDataSource implements UserRepository {
     params.add(jsonConverter.write(user.customProperties().values()));
     params.add(jsonConverter.write(user.verifiableCredentials()));
     params.add(user.hashedPassword());
+    params.add(jsonConverter.write(user.multiFactorAuthentication()));
+    params.add(user.isEnabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -65,7 +69,7 @@ public class UserDataSource implements UserRepository {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                SELECT id, provider_id, provider_user_id, name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, email, email_verified, gender, birthdate, zoneinfo, locale, phone_number, phone_number_verified, address, custom_properties, credentials, hashed_password, created_at, updated_at
+                SELECT id, provider_id, provider_user_id, provider_user_original_payload, name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, email, email_verified, gender, birthdate, zoneinfo, locale, phone_number, phone_number_verified, address, custom_properties, credentials, hashed_password, multi_factor_authentication, enabled, created_at, updated_at
                 FROM idp_user
                 WHERE id = ?
                 """;
@@ -84,9 +88,8 @@ public class UserDataSource implements UserRepository {
   @Override
   public User findBy(Tenant tenant, String email, String providerId) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
-    String sqlTemplate =
+    String sqlTemplate = selectSql +
         """
-                SELECT id, provider_id, provider_user_id, name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, email, email_verified, gender, birthdate, zoneinfo, locale, phone_number, phone_number_verified, address, custom_properties, credentials, hashed_password, created_at, updated_at
                 FROM idp_user
                 WHERE tenant_id = ?
                 AND email = ?
@@ -109,9 +112,8 @@ public class UserDataSource implements UserRepository {
   @Override
   public List<User> findList(Tenant tenant, int limit, int offset) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
-    String sqlTemplate =
+    String sqlTemplate = selectSql +
         """
-                SELECT id, provider_id, provider_user_id, name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, email, email_verified, gender, birthdate, zoneinfo, locale, phone_number, phone_number_verified, address, custom_properties, credentials, hashed_password, created_at, updated_at
                 FROM idp_user
                 WHERE tenant_id = ?
                 limit ?
@@ -169,9 +171,8 @@ public class UserDataSource implements UserRepository {
   @Override
   public User findByProvider(String tenantId, String providerId, String providerUserId) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
-    String sqlTemplate =
+    String sqlTemplate = selectSql +
         """
-                SELECT id, provider_id, provider_user_id, name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, email, email_verified, gender, birthdate, zoneinfo, locale, phone_number, phone_number_verified, address, custom_properties, credentials, hashed_password, created_at, updated_at
                 FROM idp_user
                 WHERE
                 tenant_id = ?

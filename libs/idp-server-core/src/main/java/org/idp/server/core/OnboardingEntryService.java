@@ -1,9 +1,16 @@
 package org.idp.server.core;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import org.idp.server.core.api.OnboardingApi;
+import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.configuration.ServerConfigurationRepository;
+import org.idp.server.core.handler.admin.OrganizationRegistrationRequest;
+import org.idp.server.core.handler.admin.TenantRegistrationRequest;
 import org.idp.server.core.handler.configuration.ServerConfigurationHandler;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.organization.Organization;
@@ -20,43 +27,52 @@ public class OnboardingEntryService implements OnboardingApi {
   TenantRepository tenantRepository;
   OrganizationRepository organizationRepository;
   UserRegistrationService userRegistrationService;
-  ServerConfigurationHandler serverConfigurationHandler;
+  ServerConfigurationRepository serverConfigurationRepository;
+  JsonConverter jsonConverter;
 
   public OnboardingEntryService(
       TenantRepository tenantRepository,
       OrganizationRepository organizationRepository,
       UserRegistrationService userRegistrationService,
-      ServerConfigurationHandler serverConfigurationHandler) {
+      ServerConfigurationRepository serverConfigurationRepository) {
     this.tenantRepository = tenantRepository;
     this.organizationRepository = organizationRepository;
     this.userRegistrationService = userRegistrationService;
-    this.serverConfigurationHandler = serverConfigurationHandler;
+    this.serverConfigurationRepository = serverConfigurationRepository;
+    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   }
 
   // TODO improve logic
-  public Organization initialize(
-      User operator,
-      OrganizationName organizationName,
-      ServerDomain serverDomain,
-      TenantName tenantName,
-      String serverConfig) {
+  public Map<String, Object> initialize(
+          User operator,
+          Map<String, Object> request) {
 
-    TenantCreator tenantCreator = new TenantCreator(TenantType.PUBLIC, serverDomain);
-    Tenant tenant = tenantCreator.create();
+    OrganizationRegistrationRequest organizationRequest =
+            jsonConverter.read(request.get("organization"), OrganizationRegistrationRequest.class);
+    TenantRegistrationRequest tenantRequest =
+            jsonConverter.read(request.get("tenant"), TenantRegistrationRequest.class);
+    ServerConfiguration serverConfiguration =
+            jsonConverter.read(request.get("server_configuration"), ServerConfiguration.class);
+
+    Organization organization = organizationRequest.toOrganization();
+    Tenant tenant =
+            new Tenant(
+                    new TenantIdentifier(UUID.randomUUID().toString()),
+                    tenantRequest.tenantName(),
+                    TenantType.ADMIN,
+                    new TenantDomain(serverConfiguration.tokenIssuer().value()));
+    organization.assign(tenant);
+
     tenantRepository.register(tenant);
-
-    String config = serverConfig.replaceAll("IDP_ISSUER", tenant.tokenIssuerValue());
-    ServerConfiguration serverConfiguration = serverConfigurationHandler.handleRegistration(config);
-
-    OrganizationCreator organizationCreator = new OrganizationCreator(organizationName, tenant);
-    Organization organization = organizationCreator.create();
+    serverConfigurationRepository.register(serverConfiguration);
     organizationRepository.register(organization);
+
 
     HashMap<String, Object> newCustomProperties = new HashMap<>(operator.customPropertiesValue());
     newCustomProperties.put("organization", organization.toMap());
     operator.setCustomProperties(newCustomProperties);
     userRegistrationService.registerOrUpdate(tenant, operator);
 
-    return organization;
+    return Map.of("organization", organization.toMap(), "tenant", tenant.toMap());
   }
 }

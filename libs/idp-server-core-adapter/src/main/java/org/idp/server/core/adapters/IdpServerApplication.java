@@ -300,7 +300,7 @@ public class IdpServerApplication {
                 tenantDataSource,
                 organizationDataSource,
                 userRegistrationService,
-                serverConfigurationHandler),
+                serverConfigurationDataSource),
             OnboardingApi.class);
 
     this.serverManagementApi =

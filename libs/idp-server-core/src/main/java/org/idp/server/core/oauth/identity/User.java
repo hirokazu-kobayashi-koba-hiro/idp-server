@@ -12,6 +12,7 @@ public class User implements JsonReadable, Serializable {
   String sub;
   String providerId;
   String providerUserId;
+  HashMap<String, Object> providerOriginalPayload = new HashMap<>();
   String name;
   String givenName;
   String familyName;
@@ -35,6 +36,8 @@ public class User implements JsonReadable, Serializable {
   String rawPassword;
   HashMap<String, Object> customProperties = new HashMap<>();
   List<HashMap<String, Object>> credentials = new ArrayList<>();
+  HashMap<String, Object> multiFactorAuthentication = new HashMap<>();
+  boolean enabled = true;
 
   public static User notFound() {
     return new User();
@@ -65,6 +68,19 @@ public class User implements JsonReadable, Serializable {
   public User setProviderUserId(String providerUserId) {
     this.providerUserId = providerUserId;
     return this;
+  }
+
+  public User setProviderOriginalPayload(HashMap<String, Object> providerOriginalPayload) {
+    this.providerOriginalPayload = providerOriginalPayload;
+    return this;
+  }
+
+  public boolean hasProviderOriginalPayload() {
+    return providerOriginalPayload != null && !providerOriginalPayload.isEmpty();
+  }
+
+  public HashMap<String, Object> providerOriginalPayload() {
+    return providerOriginalPayload;
   }
 
   public String name() {
@@ -375,12 +391,34 @@ public class User implements JsonReadable, Serializable {
     return !credentials.isEmpty();
   }
 
+  public HashMap<String, Object> multiFactorAuthentication() {
+    return multiFactorAuthentication;
+  }
+  public User setMultiFactorAuthentication(HashMap<String, Object> multiFactorAuthentication) {
+    this.multiFactorAuthentication = multiFactorAuthentication;
+    return this;
+  }
+
+  public boolean hasMultiFactorAuthentication() {
+    return multiFactorAuthentication != null && !multiFactorAuthentication.isEmpty();
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public User setEnabled(boolean enabled) {
+    this.enabled = enabled;
+    return this;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
 
     if (exists()) map.put("sub", sub);
     if (exists()) map.put("provider_id", providerId);
     if (exists()) map.put("provider_user_id", providerUserId);
+    if (hasProviderOriginalPayload()) map.put("provider_original_payload", providerOriginalPayload);
     if (hasName()) map.put("name", name);
     if (hasGivenName()) map.put("given_name", givenName);
     if (hasFamilyName()) map.put("family_name", familyName);
@@ -402,6 +440,8 @@ public class User implements JsonReadable, Serializable {
     if (hasAddress()) map.put("address", address.toMap());
     if (hasCustomProperties()) map.put("custom_properties", new HashMap<>(customProperties));
     if (hasHashedPassword()) map.put("hashed_password", "****");
+    if (hasMultiFactorAuthentication()) map.put("multi_factor_authentication", multiFactorAuthentication);
+    map.put("enabled", enabled);
 
     return map;
   }
@@ -414,4 +454,5 @@ public class User implements JsonReadable, Serializable {
   public String rawPassword() {
     return rawPassword;
   }
+
 }

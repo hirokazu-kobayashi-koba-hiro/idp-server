@@ -6,12 +6,11 @@ import org.idp.server.core.organization.OrganizationName;
 import org.idp.server.core.tenant.ServerDomain;
 import org.idp.server.core.tenant.TenantName;
 
+import java.util.Map;
+
 public interface OnboardingApi {
 
-  Organization initialize(
+  Map<String, Object> initialize(
       User operator,
-      OrganizationName organizationName,
-      ServerDomain serverDomain,
-      TenantName tenantName,
-      String serverConfig);
+      Map<String, Object> request);
 }

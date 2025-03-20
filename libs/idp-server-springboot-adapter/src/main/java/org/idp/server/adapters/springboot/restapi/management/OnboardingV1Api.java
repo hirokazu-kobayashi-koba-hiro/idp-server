@@ -1,5 +1,6 @@
 package org.idp.server.adapters.springboot.restapi.management;
 
+import org.idp.server.core.OnboardingEntryService;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OnboardingApi;
 import org.idp.server.core.tenant.ServerDomain;
@@ -11,8 +12,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/management/onboarding")
@@ -31,18 +33,15 @@ public class OnboardingV1Api implements ParameterTransformable {
   @PostMapping
   public ResponseEntity<?> post(
       @AuthenticationPrincipal User operator,
-      @Validated @RequestBody InitialRegistrationRequest request) {
+      @RequestBody Map<String, Object> request) {
 
-    Organization organization =
+    Map<String, Object> response =
         onboardingApi.initialize(
             operator,
-            request.organizationName(),
-                serverDomain,
-            request.tenantName(),
-            request.serverConfig());
+            request);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
-    return new ResponseEntity<>(organization.toMap(), headers, HttpStatus.OK);
+    return new ResponseEntity<>(response, headers, HttpStatus.OK);
   }
 }

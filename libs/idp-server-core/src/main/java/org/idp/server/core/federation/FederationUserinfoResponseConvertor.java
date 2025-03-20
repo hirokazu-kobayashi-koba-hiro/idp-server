@@ -49,7 +49,7 @@ public class FederationUserinfoResponseConvertor {
     user.setZoneinfo(userinfoResponse.zoneinfo());
     user.setPhoneNumber(userinfoResponse.phoneNumber());
     user.setPhoneNumberVerified(userinfoResponse.phoneNumberVerified());
-    user.setCustomProperties(new HashMap<>(userinfoResponse.toMap()));
+    user.setProviderOriginalPayload(new HashMap<>(userinfoResponse.toMap()));
 
     return user;
   }
