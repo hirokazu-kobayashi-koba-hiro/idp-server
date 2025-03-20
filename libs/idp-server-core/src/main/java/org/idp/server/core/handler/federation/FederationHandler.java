@@ -33,7 +33,7 @@ public class FederationHandler {
         new FederationSessionCreator(federatableIdProviderConfiguration, federationRequest);
     FederationSession federationSession = authorizationRequestCreator.create();
 
-    federationSessionRepository.register(federationRequest.tokenIssuer(), federationSession);
+    federationSessionRepository.register(federationSession);
 
     return new FederationRequestResponse(
         FederationRequestStatus.REDIRECABLE_OK,
@@ -66,7 +66,7 @@ public class FederationHandler {
 
     User existingUser =
         federationDelegate.find(
-            session.tokenIssuer(), configuration.issuerName(), userinfoResponse.sub());
+            session.tenantId(), configuration.issuerName(), userinfoResponse.sub());
 
     FederationUserinfoResponseConvertor convertor =
         new FederationUserinfoResponseConvertor(existingUser, userinfoResponse, configuration);

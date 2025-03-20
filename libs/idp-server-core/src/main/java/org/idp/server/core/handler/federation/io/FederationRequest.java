@@ -9,7 +9,6 @@ public class FederationRequest {
   Tenant tenant;
   String authorizationRequestId;
   String federatableIdProviderId;
-  String issuer;
   Map<String, String> customParameters;
 
   public FederationRequest(
@@ -38,14 +37,6 @@ public class FederationRequest {
 
   public String federatableIdProviderId() {
     return federatableIdProviderId;
-  }
-
-  public TokenIssuer tokenIssuer() {
-    return new TokenIssuer(issuer);
-  }
-
-  public String tokenIssuerValue() {
-    return issuer;
   }
 
   public Map<String, String> customParameters() {

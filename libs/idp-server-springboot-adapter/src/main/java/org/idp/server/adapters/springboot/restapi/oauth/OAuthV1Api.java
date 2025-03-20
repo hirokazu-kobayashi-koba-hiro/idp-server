@@ -131,8 +131,16 @@ public class OAuthV1Api implements ParameterTransformable {
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
 
-    return new ResponseEntity<>(
-        Map.of("redirect_uri", requestResponse.authorizationRequestUrl()), headers, HttpStatus.OK);
+    switch (requestResponse.status()) {
+      case REDIRECABLE_OK, REDIRECABLE_BAD_REQUEST -> {
+
+        return new ResponseEntity<>(
+                Map.of("redirect_uri", requestResponse.authorizationRequestUrl()), headers, HttpStatus.OK);
+      }
+      default -> {
+        return new ResponseEntity<>(Map.of("error", "unexpected error is occurred"), HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    }
   }
 
   @PostMapping("/{id}/signup")

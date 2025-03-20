@@ -13,7 +13,7 @@ public class FederationSessionDataSource implements FederationSessionRepository 
   Map<String, FederationSession> map = new HashMap<>();
 
   @Override
-  public void register(TokenIssuer tokenIssuer, FederationSession federationSession) {
+  public void register(FederationSession federationSession) {
     if (map.size() > 10) {
       map.clear();
     }
@@ -32,7 +32,7 @@ public class FederationSessionDataSource implements FederationSessionRepository 
   }
 
   @Override
-  public void delete(TokenIssuer tokenIssuer, FederationSession federationSession) {
+  public void delete(FederationSession federationSession) {
     map.remove(federationSession.state());
   }
 }

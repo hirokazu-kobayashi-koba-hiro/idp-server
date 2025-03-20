@@ -65,9 +65,9 @@ public class UserDataSource implements UserRepository {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                SELECT idp_user.id, idp_user.provider_id, idp_user.provider_user_id, idp_user.name, idp_user.given_name, idp_user.family_name, idp_user.middle_name, idp_user.nickname, idp_user.preferred_username, idp_user.profile, idp_user.picture, idp_user.website, idp_user.email, idp_user.email_verified, idp_user.gender, idp_user.birthdate, idp_user.zoneinfo, idp_user.locale, idp_user.phone_number, idp_user.phone_number_verified, idp_user.address, idp_user.custom_properties, idp_user.credentials, idp_user.hashed_password, idp_user.created_at, idp_user.updated_at
+                SELECT id, provider_id, provider_user_id, name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, email, email_verified, gender, birthdate, zoneinfo, locale, phone_number, phone_number_verified, address, custom_properties, credentials, hashed_password, created_at, updated_at
                 FROM idp_user
-                WHERE idp_user.id = ?
+                WHERE id = ?
                 """;
     List<Object> params = new ArrayList<>();
     params.add(userId);
@@ -86,7 +86,7 @@ public class UserDataSource implements UserRepository {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                SELECT idp_user.id, idp_user.provider_id, idp_user.provider_user_id, idp_user.name, idp_user.given_name, idp_user.family_name, idp_user.middle_name, idp_user.nickname, idp_user.preferred_username, idp_user.profile, idp_user.picture, idp_user.website, idp_user.email, idp_user.email_verified, idp_user.gender, idp_user.birthdate, idp_user.zoneinfo, idp_user.locale, idp_user.phone_number, idp_user.phone_number_verified, idp_user.address, idp_user.custom_properties, idp_user.credentials, idp_user.hashed_password, idp_user.created_at, idp_user.updated_at
+                SELECT id, provider_id, provider_user_id, name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, email, email_verified, gender, birthdate, zoneinfo, locale, phone_number, phone_number_verified, address, custom_properties, credentials, hashed_password, created_at, updated_at
                 FROM idp_user
                 WHERE tenant_id = ?
                 AND email = ?
@@ -111,7 +111,7 @@ public class UserDataSource implements UserRepository {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                SELECT idp_user.id, idp_user.provider_id, idp_user.provider_user_id, idp_user.name, idp_user.given_name, idp_user.family_name, idp_user.middle_name, idp_user.nickname, idp_user.preferred_username, idp_user.profile, idp_user.picture, idp_user.website, idp_user.email, idp_user.email_verified, idp_user.gender, idp_user.birthdate, idp_user.zoneinfo, idp_user.locale, idp_user.phone_number, idp_user.phone_number_verified, idp_user.address, idp_user.custom_properties, idp_user.credentials, idp_user.hashed_password, idp_user.created_at, idp_user.updated_at
+                SELECT id, provider_id, provider_user_id, name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, email, email_verified, gender, birthdate, zoneinfo, locale, phone_number, phone_number_verified, address, custom_properties, credentials, hashed_password, created_at, updated_at
                 FROM idp_user
                 WHERE tenant_id = ?
                 limit ?
@@ -167,21 +167,19 @@ public class UserDataSource implements UserRepository {
   }
 
   @Override
-  public User findByProvider(String tokenIssuer, String providerId, String providerUserId) {
+  public User findByProvider(String tenantId, String providerId, String providerUserId) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                SELECT idp_user.id, idp_user.provider_id, idp_user.provider_user_id, idp_user.name, idp_user.given_name, idp_user.family_name, idp_user.middle_name, idp_user.nickname, idp_user.preferred_username, idp_user.profile, idp_user.picture, idp_user.website, idp_user.email, idp_user.email_verified, idp_user.gender, idp_user.birthdate, idp_user.zoneinfo, idp_user.locale, idp_user.phone_number, idp_user.phone_number_verified, idp_user.address, idp_user.custom_properties, idp_user.credentials, idp_user.hashed_password, idp_user.created_at, idp_user.updated_at
+                SELECT id, provider_id, provider_user_id, name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, email, email_verified, gender, birthdate, zoneinfo, locale, phone_number, phone_number_verified, address, custom_properties, credentials, hashed_password, created_at, updated_at
                 FROM idp_user
-                JOIN tenant
-                ON idp_user.tenant_id = tenant.id
                 WHERE
-                tenant.issuer = ?
+                tenant_id = ?
                 AND provider_id = ?
                 AND provider_user_id = ?
                 """;
     List<Object> params = new ArrayList<>();
-    params.add(tokenIssuer);
+    params.add(tenantId);
     params.add(providerId);
     params.add(providerUserId);
 

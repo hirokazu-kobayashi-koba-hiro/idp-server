@@ -34,7 +34,8 @@ public class FederationSessionCreator {
 
     return new FederationSession(
         federationRequest.authorizationRequestId(),
-        federationRequest.tokenIssuerValue(),
+        federationRequest.tenant().identifierValue(),
+        federationRequest.tenant().tokenIssuerValue(),
         state,
         nonce,
         configuration.identifier(),

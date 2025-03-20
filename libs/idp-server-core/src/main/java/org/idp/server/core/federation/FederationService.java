@@ -29,8 +29,8 @@ public class FederationService implements FederationDelegate {
   }
 
   @Override
-  public User find(String tokenIssuer, String providerId, String providerUserId) {
+  public User find(String tenantId, String providerId, String providerUserId) {
 
-    return userRepository.findByProvider(tokenIssuer, providerId, providerUserId);
+    return userRepository.findByProvider(tenantId, providerId, providerUserId);
   }
 }

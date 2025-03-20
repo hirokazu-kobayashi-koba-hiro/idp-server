@@ -5,9 +5,9 @@ import org.idp.server.core.type.oauth.TokenIssuer;
 
 public interface FederationSessionRepository {
 
-  void register(TokenIssuer tokenIssuer, FederationSession federationSession);
+  void register(FederationSession federationSession);
 
   FederationSession find(State state);
 
-  void delete(TokenIssuer tokenIssuer, FederationSession federationSession);
+  void delete(FederationSession federationSession);
 }

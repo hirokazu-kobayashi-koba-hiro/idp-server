@@ -6,6 +6,7 @@ import org.idp.server.core.basic.json.JsonReadable;
 public class FederationSession implements JsonReadable {
 
   String authorizationRequestId;
+  String tenantId;
   String tokenIssuer;
   String state;
   String nonce;
@@ -18,6 +19,7 @@ public class FederationSession implements JsonReadable {
 
   public FederationSession(
       String authorizationRequestId,
+      String tenantId,
       String tokenIssuer,
       String state,
       String nonce,
@@ -26,6 +28,7 @@ public class FederationSession implements JsonReadable {
       String redirectUri,
       String authorizationRequestUri) {
     this.authorizationRequestId = authorizationRequestId;
+    this.tenantId = tenantId;
     this.tokenIssuer = tokenIssuer;
     this.state = state;
     this.nonce = nonce;
@@ -37,6 +40,10 @@ public class FederationSession implements JsonReadable {
 
   public String authorizationRequestId() {
     return authorizationRequestId;
+  }
+
+  public String tenantId() {
+    return tenantId;
   }
 
   public String tokenIssuer() {
