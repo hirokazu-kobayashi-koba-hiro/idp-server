@@ -26,6 +26,7 @@ public class RequestObjectPatternContextService
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
+
       JoseContext joseContext =
           joseHandler.handle(
               parameters.request().value(),
@@ -37,14 +38,17 @@ public class RequestObjectPatternContextService
       Set<String> filteredScopes =
           filterScopes(pattern, parameters, joseContext, clientConfiguration);
       CibaProfile profile = analyze(filteredScopes, serverConfiguration);
+
       BackchannelAuthenticationRequest backchannelAuthenticationRequest =
           requestObjectPatternFactory.create(
               profile,
+              clientSecretBasic,
               parameters,
               joseContext,
               filteredScopes,
               serverConfiguration,
               clientConfiguration);
+
       return new CibaRequestContext(
           pattern,
           clientSecretBasic,

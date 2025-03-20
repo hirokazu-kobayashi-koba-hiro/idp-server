@@ -3,25 +3,25 @@ package org.idp.server.core.handler.token.io;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.basic.http.BasicAuth;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.AuthorizationHeaderHandlerable;
 import org.idp.server.core.token.TokenRequestParameters;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.mtls.ClientCert;
 import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecretBasic;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class TokenRequest implements AuthorizationHeaderHandlerable {
+  Tenant tenant;
   String authorizationHeaders;
   Map<String, String[]> params;
-  String issuer;
   String clientCert;
   Map<String, Object> customProperties = new HashMap<>();
 
-  public TokenRequest(String authorizationHeaders, Map<String, String[]> params, String issuer) {
+  public TokenRequest(Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
+    this.tenant = tenant;
     this.authorizationHeaders = authorizationHeaders;
     this.params = params;
-    this.issuer = issuer;
   }
 
   public TokenRequest setClientCert(String clientCert) {
@@ -35,10 +35,6 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
 
   public Map<String, String[]> getParams() {
     return params;
-  }
-
-  public String getIssuer() {
-    return issuer;
   }
 
   public String getClientCert() {
@@ -73,12 +69,12 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
     return new ClientSecretBasic();
   }
 
-  public TokenRequestParameters toParameters() {
-    return new TokenRequestParameters(params);
+  public Tenant tenant() {
+    return tenant;
   }
 
-  public TokenIssuer toTokenIssuer() {
-    return new TokenIssuer(issuer);
+  public TokenRequestParameters toParameters() {
+    return new TokenRequestParameters(params);
   }
 
   public CustomProperties toCustomProperties() {

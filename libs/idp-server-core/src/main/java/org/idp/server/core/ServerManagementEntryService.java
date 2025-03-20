@@ -1,6 +1,5 @@
 package org.idp.server.core;
 
-import java.util.UUID;
 import org.idp.server.core.api.ServerManagementApi;
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.configuration.ServerConfiguration;
@@ -21,24 +20,16 @@ public class ServerManagementEntryService implements ServerManagementApi {
   }
 
   // TODO
-  public String register(PublicTenantDomain publicTenantDomain, String serverConfig) {
+  public String register(TenantType tenantType, ServerDomain serverDomain, String serverConfig) {
 
-    String newTenantId = UUID.randomUUID().toString();
-    String issuer = publicTenantDomain.value() + newTenantId;
-    String replacedBody = serverConfig.replaceAll("IDP_ISSUER", issuer);
+    TenantCreator tenantCreator = new TenantCreator(tenantType, serverDomain);
+    Tenant newTenant = tenantCreator.create();
+    tenantRepository.register(newTenant);
+
+    String replacedBody = serverConfig.replaceAll("IDP_ISSUER", newTenant.tokenIssuerValue());
 
     ServerConfiguration serverConfiguration =
         serverConfigurationHandler.handleRegistration(replacedBody);
-
-    TenantCreator tenantCreator =
-        new TenantCreator(
-            new TenantIdentifier(newTenantId),
-            new TenantName(newTenantId),
-            serverConfiguration.serverIdentifier(),
-            serverConfiguration.tokenIssuer());
-    Tenant newTenant = tenantCreator.create();
-
-    tenantRepository.register(newTenant);
 
     return serverConfig;
   }

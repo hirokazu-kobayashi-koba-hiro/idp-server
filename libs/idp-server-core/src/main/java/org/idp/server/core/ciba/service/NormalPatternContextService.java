@@ -29,6 +29,7 @@ public class NormalPatternContextService
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
         normalRequestFactory.create(
             profile,
+            clientSecretBasic,
             parameters,
             joseContext,
             filteredScopes,

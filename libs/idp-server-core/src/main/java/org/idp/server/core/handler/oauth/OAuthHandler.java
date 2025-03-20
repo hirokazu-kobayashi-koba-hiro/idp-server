@@ -14,8 +14,8 @@ import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.request.OAuthLogoutParameters;
 import org.idp.server.core.oauth.view.OAuthViewData;
 import org.idp.server.core.oauth.view.OAuthViewDataCreator;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.oauth.ClientId;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class OAuthHandler {
 
@@ -34,15 +34,15 @@ public class OAuthHandler {
 
   public OAuthViewDataResponse handleViewData(
       OAuthViewDataRequest request, OAuthRequestDelegate oAuthRequestDelegate) {
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
+    Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
 
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.get(authorizationRequestIdentifier);
     ClientId clientId = authorizationRequest.clientId();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tokenIssuer, clientId);
+    ServerConfiguration serverConfiguration =
+        serverConfigurationRepository.get(tenant.identifier());
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, clientId);
 
     OAuthSession session = oAuthRequestDelegate.findSession(authorizationRequest.sessionKey());
 
@@ -63,17 +63,17 @@ public class OAuthHandler {
       OAuthLogoutRequest request, OAuthRequestDelegate delegate) {
 
     OAuthLogoutParameters parameters = request.toParameters();
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
+    Tenant tenant = request.tenant();
 
     OAuthSessionKey oAuthSessionKey =
-        new OAuthSessionKey(tokenIssuer.value(), parameters.clientId().value());
+        new OAuthSessionKey(tenant.identifierValue(), parameters.clientId().value());
     OAuthSession session = delegate.findSession(oAuthSessionKey);
     delegate.deleteSession(oAuthSessionKey);
 
     String redirectUri =
         parameters.hasPostLogoutRedirectUri()
             ? parameters.postLogoutRedirectUri().value()
-            : tokenIssuer.value();
+            : tenant.tokenIssuer().value();
 
     if (parameters.hasPostLogoutRedirectUri()) {
       return new OAuthLogoutResponse(OAuthLogoutStatus.REDIRECABLE_FOUND, redirectUri);

@@ -14,6 +14,7 @@ class InsertSqlParamsCreator {
     AuthorizationGrant authorizationGrant = oAuthToken.accessToken().authorizationGrant();
     List<Object> params = new ArrayList<>();
     params.add(oAuthToken.identifier().value());
+    params.add(oAuthToken.tenantIdentifier().value());
     params.add(oAuthToken.tokenIssuer().value());
     params.add(oAuthToken.tokenType().name());
     params.add(oAuthToken.accessTokenValue().value());

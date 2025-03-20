@@ -11,7 +11,6 @@ import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.oauth.Subject;
-import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.core.user.UserRepository;
 
 @Transactional
@@ -31,7 +30,7 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
   }
 
   @Override
-  public User findUser(TokenIssuer tokenIssuer, Subject subject) {
+  public User findUser(Tenant tenant, Subject subject) {
     return userRepository.get(subject.value());
   }
 
@@ -39,7 +38,7 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
       TenantIdentifier tenantId, String authorizationHeader, String clientCert) {
 
     Tenant tenant = tenantRepository.get(tenantId);
-    UserinfoRequest userinfoRequest = new UserinfoRequest(authorizationHeader, tenant.issuer());
+    UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
     userinfoRequest.setClientCert(clientCert);
 
     return userinfoProtocol.request(userinfoRequest, this);

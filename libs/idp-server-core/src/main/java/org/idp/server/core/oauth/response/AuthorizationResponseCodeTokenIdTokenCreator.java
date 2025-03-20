@@ -47,7 +47,7 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
             context.user(),
             context.authentication(),
             GrantFlow.hybrid,
-            context.scopes(),
+            context.toAuthorizationGranted(),
             context.idTokenClaims(),
             idTokenCustomClaims,
             context.serverConfiguration(),

@@ -11,13 +11,13 @@ import org.idp.server.core.basic.resource.ResourceReadable;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
-import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.core.tenant.TenantIdentifier;
 
 /** ServerConfigurationMemoryDataSource */
 public class ServerConfigurationMemoryDataSource
     implements ServerConfigurationRepository, ResourceReadable {
 
-  Map<TokenIssuer, ServerConfiguration> map = new HashMap<>();
+  Map<TenantIdentifier, ServerConfiguration> map = new HashMap<>();
 
   public ServerConfigurationMemoryDataSource(List<String> paths) {
     initialize(paths);
@@ -27,11 +27,11 @@ public class ServerConfigurationMemoryDataSource
   public void register(ServerConfiguration serverConfiguration) {}
 
   @Override
-  public ServerConfiguration get(TokenIssuer tokenIssuer) {
-    ServerConfiguration serverConfiguration = map.get(tokenIssuer);
+  public ServerConfiguration get(TenantIdentifier tenantIdentifier) {
+    ServerConfiguration serverConfiguration = map.get(tenantIdentifier);
     if (Objects.isNull(serverConfiguration)) {
       throw new ServerConfigurationNotFoundException(
-          String.format("unregistered server configuration (%s)", tokenIssuer.value()));
+          String.format("unregistered server configuration (%s)", tenantIdentifier.value()));
     }
     return serverConfiguration;
   }
@@ -43,7 +43,7 @@ public class ServerConfigurationMemoryDataSource
         String json = read(path);
         ServerConfiguration serverConfiguration =
             jsonConverter.read(json, ServerConfiguration.class);
-        map.put(serverConfiguration.tokenIssuer(), serverConfiguration);
+        map.put(serverConfiguration.tenantIdentifier(), serverConfiguration);
       }
     } catch (IOException e) {
       throw new IdpServerFailedInitializationException(e.getMessage(), e);

@@ -4,6 +4,7 @@ import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.*;
 import org.idp.server.core.type.pkce.CodeChallenge;
@@ -14,7 +15,7 @@ import org.idp.server.core.type.verifiablepresentation.PresentationDefinitionUri
 public class AuthorizationRequestBuilder {
 
   AuthorizationRequestIdentifier identifier = new AuthorizationRequestIdentifier();
-  TokenIssuer tokenIssuer = new TokenIssuer();
+  TenantIdentifier tenantIdentifier = new TenantIdentifier();
   AuthorizationProfile profile = AuthorizationProfile.UNDEFINED;
   Scopes scopes = new Scopes();
   ResponseType responseType = ResponseType.undefined;
@@ -48,8 +49,8 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
-  public AuthorizationRequestBuilder add(TokenIssuer tokenIssuer) {
-    this.tokenIssuer = tokenIssuer;
+  public AuthorizationRequestBuilder add(TenantIdentifier tenantIdentifier) {
+    this.tenantIdentifier = tenantIdentifier;
     return this;
   }
 
@@ -181,7 +182,7 @@ public class AuthorizationRequestBuilder {
   public AuthorizationRequest build() {
     return new AuthorizationRequest(
         identifier,
-        tokenIssuer,
+        tenantIdentifier,
         profile,
         scopes,
         responseType,

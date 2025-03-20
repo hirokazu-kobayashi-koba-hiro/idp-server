@@ -14,6 +14,7 @@ import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.token.AccessToken;
 import org.idp.server.core.oauth.token.RefreshToken;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.OAuthTokenBuilder;
 import org.idp.server.core.token.OAuthTokenIdentifier;
@@ -31,6 +32,7 @@ class ModelConverter {
 
   static OAuthToken convert(Map<String, String> stringMap) {
     OAuthTokenIdentifier id = new OAuthTokenIdentifier(stringMap.get("id"));
+    TenantIdentifier tenantIdentifier = new TenantIdentifier(stringMap.get("tenant_id"));
     TokenIssuer tokenIssuer = new TokenIssuer(stringMap.get("token_issuer"));
     TokenType tokenType = TokenType.valueOf(stringMap.get("token_type"));
     AccessTokenEntity accessTokenEntity = new AccessTokenEntity(stringMap.get("access_token"));
@@ -69,6 +71,7 @@ class ModelConverter {
 
     AccessToken accessToken =
         new AccessToken(
+            tenantIdentifier,
             tokenIssuer,
             tokenType,
             accessTokenEntity,

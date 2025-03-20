@@ -10,8 +10,8 @@ import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.oauth.ClientId;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class ClientConfigurationDataSource implements ClientConfigurationRepository {
 
@@ -27,49 +27,63 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
     String sqlTemplate =
         """
-            INSERT INTO client_configuration (id, server_id, token_issuer, payload)
+            INSERT INTO client_configuration (id, id_alias, tenant_id, payload)
             VALUES (?, ?, ?, ?::jsonb)
             """;
 
     String payload = jsonConverter.write(clientConfiguration);
     List<Object> params = new ArrayList<>();
     params.add(clientConfiguration.clientId().value());
-    params.add(clientConfiguration.serverId());
-    params.add(clientConfiguration.tokenIssuer().value());
+    params.add(clientConfiguration.clientIdAlias());
+    params.add(clientConfiguration.tenantIdentifier().value());
     params.add(payload);
 
     sqlExecutor.execute(sqlTemplate, params);
   }
 
   @Override
-  public ClientConfiguration get(TokenIssuer tokenIssuer, ClientId clientId) {
+  public ClientConfiguration get(Tenant tenant, ClientId clientId) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                    SELECT id, server_id, token_issuer, payload
+                    SELECT id, id_alias, tenant_id, payload
                     FROM client_configuration
-                    WHERE token_issuer = ? AND id = ?;
+                    WHERE tenant_id = ? AND id = ?;
                     """;
-    List<Object> params = List.of(tokenIssuer.value(), clientId.value());
-    Map<String, String> stringMap = sqlExecutor.selectOne(sqlTemplate, params);
+    List<Object> params = List.of(tenant.identifierValue(), clientId.value());
+    Map<String, String> resultClientId = sqlExecutor.selectOne(sqlTemplate, params);
 
-    if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
+    if (resultClientId != null && !resultClientId.isEmpty()) {
+      return ModelConverter.convert(resultClientId);
+    }
+
+    String sqlTemplateClientIdAlias =
+        """
+                        SELECT id, id_alias, tenant_id, payload
+                        FROM client_configuration
+                        WHERE tenant_id = ? AND id_alias = ?;
+                        """;
+    List<Object> paramsClientIdAlias = List.of(tenant.identifierValue(), clientId.value());
+    Map<String, String> resultClientIdAlias =
+        sqlExecutor.selectOne(sqlTemplateClientIdAlias, paramsClientIdAlias);
+
+    if (resultClientIdAlias == null || resultClientIdAlias.isEmpty()) {
       throw new ClientConfigurationNotFoundException(
           String.format("unregistered client (%s)", clientId.value()));
     }
-    return ModelConverter.convert(stringMap);
+    return ModelConverter.convert(resultClientIdAlias);
   }
 
   @Override
-  public List<ClientConfiguration> find(TokenIssuer tokenIssuer, int limit, int offset) {
+  public List<ClientConfiguration> find(Tenant tenant, int limit, int offset) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                        SELECT id, server_id, token_issuer, payload
+                        SELECT id, id_alias, tenant_id, payload
                         FROM client_configuration
-                        WHERE token_issuer = ? limit ? offset ?;
+                        WHERE tenant_id = ? limit ? offset ?;
                         """;
-    List<Object> params = List.of(tokenIssuer.value(), limit, offset);
+    List<Object> params = List.of(tenant.identifierValue(), limit, offset);
     List<Map<String, String>> maps = sqlExecutor.selectList(sqlTemplate, params);
     if (Objects.isNull(maps) || maps.isEmpty()) {
       return List.of();

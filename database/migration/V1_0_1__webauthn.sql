@@ -1,6 +1,6 @@
 CREATE TABLE webauthn_rp_configuration
 (
-    tenant_id                  VARCHAR(256) REFERENCES tenant (id) ON DELETE CASCADE PRIMARY KEY,
+    tenant_id                  CHAR(36) REFERENCES tenant (id) ON DELETE CASCADE PRIMARY KEY,
     rp_id                      VARCHAR(4096) NOT NULL UNIQUE,
     rp_name                    VARCHAR(256)  NOT NULL,
     origin                     VARCHAR(4096) NOT NULL,

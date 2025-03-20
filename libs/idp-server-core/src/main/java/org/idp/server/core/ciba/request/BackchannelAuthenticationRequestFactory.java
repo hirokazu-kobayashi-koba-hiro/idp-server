@@ -7,10 +7,12 @@ import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.ciba.CibaRequestParameters;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.type.oauth.ClientSecretBasic;
 
 public interface BackchannelAuthenticationRequestFactory {
   BackchannelAuthenticationRequest create(
       CibaProfile profile,
+      ClientSecretBasic clientSecretBasic,
       CibaRequestParameters parameters,
       JoseContext joseContext,
       Set<String> filteredScopes,

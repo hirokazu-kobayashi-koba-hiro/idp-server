@@ -6,6 +6,7 @@ import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.ciba.CibaRequestParameters;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.type.oauth.ClientSecretBasic;
 import org.idp.server.core.type.oauth.Scopes;
 
 /** NormalRequestFactory */
@@ -14,6 +15,7 @@ public class NormalRequestFactory implements BackchannelAuthenticationRequestFac
   @Override
   public BackchannelAuthenticationRequest create(
       CibaProfile profile,
+      ClientSecretBasic clientSecretBasic,
       CibaRequestParameters parameters,
       JoseContext joseContext,
       Set<String> filteredScopes,
@@ -23,11 +25,10 @@ public class NormalRequestFactory implements BackchannelAuthenticationRequestFac
     BackchannelAuthenticationRequestBuilder builder =
         new BackchannelAuthenticationRequestBuilder()
             .add(createIdentifier())
-            .add(serverConfiguration.tokenIssuer())
+            .add(serverConfiguration.tenantIdentifier())
             .add(profile)
             .add(clientConfiguration.backchannelTokenDeliveryMode())
             .add(new Scopes(filteredScopes))
-            .add(clientConfiguration.clientId())
             .add(parameters.idTokenHint())
             .add(parameters.loginHint())
             .add(parameters.loginHintToken())
@@ -37,6 +38,13 @@ public class NormalRequestFactory implements BackchannelAuthenticationRequestFac
             .add(parameters.clientNotificationToken())
             .add(parameters.userCode())
             .add(parameters.requestedExpiry());
+
+    if (parameters.hasClientId()) {
+      builder.add(parameters.clientId());
+    } else {
+      builder.add(clientSecretBasic.clientId());
+    }
+
     return builder.build();
   }
 }

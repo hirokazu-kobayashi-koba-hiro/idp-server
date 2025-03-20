@@ -3,16 +3,22 @@ package org.idp.server.core.sharedsignal;
 import java.util.Map;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
+import org.idp.server.core.tenant.Tenant;
 
 public class OAuthFlowEventCreator {
 
+  Tenant tenant;
   AuthorizationRequest authorizationRequest;
   User user;
   EventType eventType;
   EventDescription eventDescription;
 
   public OAuthFlowEventCreator(
-      AuthorizationRequest authorizationRequest, User user, DefaultEventType defaultEventType) {
+      Tenant tenant,
+      AuthorizationRequest authorizationRequest,
+      User user,
+      DefaultEventType defaultEventType) {
+    this.tenant = tenant;
     this.authorizationRequest = authorizationRequest;
     this.user = user;
     this.eventType = defaultEventType.toEventType();
@@ -35,8 +41,9 @@ public class OAuthFlowEventCreator {
     builder.add(eventType);
     builder.add(eventDescription);
 
-    EventServer eventServer = new EventServer(authorizationRequest.tokenIssuer(), "");
-    builder.add(eventServer);
+    EventTenant eventTenant =
+        new EventTenant(tenant.identifier(), tenant.tokenIssuer(), tenant.name().value());
+    builder.add(eventTenant);
 
     EventClient eventClient = new EventClient(authorizationRequest.clientId(), "");
     builder.add(eventClient);

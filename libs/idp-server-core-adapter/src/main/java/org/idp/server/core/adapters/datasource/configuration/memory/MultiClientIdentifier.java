@@ -1,15 +1,15 @@
 package org.idp.server.core.adapters.datasource.configuration.memory;
 
 import java.util.Objects;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.ClientId;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 class MultiClientIdentifier {
-  TokenIssuer tokenIssuer;
+  TenantIdentifier tenantIdentifier;
   ClientId clientId;
 
-  public MultiClientIdentifier(TokenIssuer tokenIssuer, ClientId clientId) {
-    this.tokenIssuer = tokenIssuer;
+  public MultiClientIdentifier(TenantIdentifier tenantIdentifier, ClientId clientId) {
+    this.tenantIdentifier = tenantIdentifier;
     this.clientId = clientId;
   }
 
@@ -18,11 +18,12 @@ class MultiClientIdentifier {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     MultiClientIdentifier that = (MultiClientIdentifier) o;
-    return Objects.equals(tokenIssuer, that.tokenIssuer) && Objects.equals(clientId, that.clientId);
+    return Objects.equals(tenantIdentifier, that.tenantIdentifier)
+        && Objects.equals(clientId, that.clientId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(tokenIssuer, clientId);
+    return Objects.hash(tenantIdentifier, clientId);
   }
 }

@@ -13,9 +13,9 @@ import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.core.handler.ciba.io.CibaAuthorizeRequest;
 import org.idp.server.core.handler.ciba.io.CibaAuthorizeResponse;
 import org.idp.server.core.handler.ciba.io.CibaAuthorizeStatus;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.type.ciba.AuthReqId;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class CibaAuthorizeHandler {
 
@@ -45,14 +45,15 @@ public class CibaAuthorizeHandler {
 
   public CibaAuthorizeResponse handle(CibaAuthorizeRequest request) {
     AuthReqId authReqId = request.toAuthReqId();
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
+    Tenant tenant = request.tenant();
+    ServerConfiguration serverConfiguration =
+        serverConfigurationRepository.get(tenant.identifier());
     CibaGrant cibaGrant = cibaGrantRepository.find(authReqId);
 
     // TODO verify
 
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tokenIssuer, cibaGrant.authorizationGrant().clientId());
+        clientConfigurationRepository.get(tenant, cibaGrant.authorizationGrant().clientId());
     CibaGrant updated = cibaGrant.update(CibaGrantStatus.authorized);
     cibaGrantRepository.update(updated);
 

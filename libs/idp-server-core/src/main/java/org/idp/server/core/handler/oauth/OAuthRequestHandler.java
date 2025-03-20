@@ -16,7 +16,7 @@ import org.idp.server.core.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.oauth.service.*;
 import org.idp.server.core.oauth.validator.OAuthRequestValidator;
 import org.idp.server.core.oauth.verifier.OAuthRequestVerifier;
-import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.core.tenant.Tenant;
 
 /** OAuthRequestHandler */
 public class OAuthRequestHandler {
@@ -41,13 +41,14 @@ public class OAuthRequestHandler {
 
   public OAuthRequestContext handle(OAuthRequest oAuthRequest) {
     OAuthRequestParameters parameters = oAuthRequest.toParameters();
-    TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
+    Tenant tenant = oAuthRequest.tenant();
     OAuthRequestValidator validator = new OAuthRequestValidator(parameters);
     validator.validate();
 
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
+    ServerConfiguration serverConfiguration =
+        serverConfigurationRepository.get(tenant.identifier());
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tokenIssuer, parameters.clientId());
+        clientConfigurationRepository.get(tenant, parameters.clientId());
 
     OAuthRequestAnalyzer analyzer = new OAuthRequestAnalyzer(parameters);
     OAuthRequestPattern oAuthRequestPattern = analyzer.analyzePattern();

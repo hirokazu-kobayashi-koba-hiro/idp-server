@@ -5,6 +5,7 @@ import org.idp.server.core.oauth.OAuthSessionKey;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.*;
 import org.idp.server.core.type.pkce.CodeChallenge;
@@ -15,7 +16,7 @@ import org.idp.server.core.type.verifiablepresentation.PresentationDefinitionUri
 public class AuthorizationRequest {
 
   AuthorizationRequestIdentifier identifier = new AuthorizationRequestIdentifier();
-  TokenIssuer tokenIssuer;
+  TenantIdentifier tenantIdentifier;
   AuthorizationProfile profile = AuthorizationProfile.UNDEFINED;
   Scopes scopes;
   ResponseType responseType;
@@ -46,7 +47,7 @@ public class AuthorizationRequest {
 
   AuthorizationRequest(
       AuthorizationRequestIdentifier identifier,
-      TokenIssuer tokenIssuer,
+      TenantIdentifier tenantIdentifier,
       AuthorizationProfile profile,
       Scopes scopes,
       ResponseType responseType,
@@ -73,7 +74,7 @@ public class AuthorizationRequest {
       PresentationDefinitionUri presentationDefinitionUri,
       CustomParams customParams) {
     this.identifier = identifier;
-    this.tokenIssuer = tokenIssuer;
+    this.tenantIdentifier = tenantIdentifier;
     this.profile = profile;
     this.scopes = scopes;
     this.responseType = responseType;
@@ -105,12 +106,8 @@ public class AuthorizationRequest {
     return identifier;
   }
 
-  public TokenIssuer tokenIssuer() {
-    return tokenIssuer;
-  }
-
-  public boolean hasTokenIssuer() {
-    return tokenIssuer.exists();
+  public TenantIdentifier tenantIdentifier() {
+    return tenantIdentifier;
   }
 
   public AuthorizationProfile profile() {
@@ -358,6 +355,6 @@ public class AuthorizationRequest {
   }
 
   public OAuthSessionKey sessionKey() {
-    return new OAuthSessionKey(tokenIssuer.value(), clientId.value());
+    return new OAuthSessionKey(tenantIdentifier.value(), clientId.value());
   }
 }

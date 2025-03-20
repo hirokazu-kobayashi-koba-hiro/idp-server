@@ -1,11 +1,11 @@
 package org.idp.server.core.tenant;
 
-public class PublicTenantDomain {
+public class ServerDomain {
   String value;
 
-  public PublicTenantDomain() {}
+  public ServerDomain() {}
 
-  public PublicTenantDomain(String value) {
+  public ServerDomain(String value) {
     this.value = value;
   }
 

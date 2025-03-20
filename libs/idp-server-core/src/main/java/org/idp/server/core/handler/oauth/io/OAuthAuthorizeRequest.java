@@ -5,21 +5,20 @@ import java.util.Map;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** OAuthAuthorizeRequest */
 public class OAuthAuthorizeRequest {
+  Tenant tenant;
   String id;
-  String tokenIssuer;
   User user;
   Authentication authentication;
   Map<String, Object> customProperties = new HashMap<>();
 
-  public OAuthAuthorizeRequest(
-      String id, String tokenIssuer, User user, Authentication authentication) {
+  public OAuthAuthorizeRequest(Tenant tenant, String id, User user, Authentication authentication) {
+    this.tenant = tenant;
     this.id = id;
-    this.tokenIssuer = tokenIssuer;
     this.user = user;
     this.authentication = authentication;
   }
@@ -27,6 +26,10 @@ public class OAuthAuthorizeRequest {
   public OAuthAuthorizeRequest setCustomProperties(Map<String, Object> customProperties) {
     this.customProperties = customProperties;
     return this;
+  }
+
+  public Tenant tenant() {
+    return tenant;
   }
 
   public AuthorizationRequestIdentifier toIdentifier() {
@@ -43,9 +46,5 @@ public class OAuthAuthorizeRequest {
 
   public CustomProperties toCustomProperties() {
     return new CustomProperties(customProperties);
-  }
-
-  public TokenIssuer toTokenIssuer() {
-    return new TokenIssuer(tokenIssuer);
   }
 }

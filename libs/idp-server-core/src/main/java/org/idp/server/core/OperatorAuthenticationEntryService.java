@@ -33,7 +33,7 @@ public class OperatorAuthenticationEntryService implements OperatorAuthenticatio
     Tenant adminTenant = tenantRepository.getAdmin();
 
     TokenIntrospectionCreator tokenIntrospectionCreator =
-        new TokenIntrospectionCreator(authorizationHeader, adminTenant.issuer());
+        new TokenIntrospectionCreator(adminTenant, authorizationHeader);
     TokenIntrospectionRequest tokenIntrospectionRequest = tokenIntrospectionCreator.create();
 
     if (!tokenIntrospectionRequest.hasToken()) {

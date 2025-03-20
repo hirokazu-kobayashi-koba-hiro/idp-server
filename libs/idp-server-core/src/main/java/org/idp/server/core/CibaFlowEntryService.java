@@ -13,7 +13,6 @@ import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.ciba.UserCode;
-import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.core.user.UserRepository;
 
 @Transactional
@@ -37,7 +36,7 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
       String clientCert) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    CibaRequest cibaRequest = new CibaRequest(authorizationHeader, params, tenant.issuer());
+    CibaRequest cibaRequest = new CibaRequest(tenant, authorizationHeader, params);
     cibaRequest.setClientCert(clientCert);
 
     return cibaProtocol.request(cibaRequest, this);
@@ -46,8 +45,7 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
   public CibaAuthorizeResponse authorize(TenantIdentifier tenantIdentifier, String authReqId) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    CibaAuthorizeRequest cibaAuthorizeRequest =
-        new CibaAuthorizeRequest(authReqId, tenant.issuer());
+    CibaAuthorizeRequest cibaAuthorizeRequest = new CibaAuthorizeRequest(tenant, authReqId);
 
     return cibaProtocol.authorize(cibaAuthorizeRequest);
   }
@@ -55,14 +53,14 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
   public CibaDenyResponse deny(TenantIdentifier tenantIdentifier, String authReqId) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    CibaDenyRequest cibaDenyRequest = new CibaDenyRequest(authReqId, tenant.issuer());
+    CibaDenyRequest cibaDenyRequest = new CibaDenyRequest(tenant, authReqId);
 
     return cibaProtocol.deny(cibaDenyRequest);
   }
 
   @Override
-  public User find(TokenIssuer tokenIssuer, UserCriteria criteria) {
-    Tenant tenant = tenantRepository.find(tokenIssuer);
+  public User find(TenantIdentifier tenantIdentifier, UserCriteria criteria) {
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
     if (tenant.exists() && criteria.hasLoginHint()) {
       // TODO proverId
       return userRepository.findBy(tenant, criteria.loginHint().value(), "idp-server");
@@ -72,11 +70,11 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
 
   // TODO implement
   @Override
-  public boolean authenticate(TokenIssuer tokenIssuer, User user, UserCode userCode) {
+  public boolean authenticate(TenantIdentifier tenantIdentifier, User user, UserCode userCode) {
     return true;
   }
 
   @Override
   public void notify(
-      TokenIssuer tokenIssuer, User user, BackchannelAuthenticationRequest request) {}
+      TenantIdentifier tenantIdentifier, User user, BackchannelAuthenticationRequest request) {}
 }

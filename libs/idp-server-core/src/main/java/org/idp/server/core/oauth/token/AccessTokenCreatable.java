@@ -69,6 +69,7 @@ public interface AccessTokenCreatable {
       AccessTokenEntity accessTokenEntity = new AccessTokenEntity(jsonWebSignature.serialize());
 
       return new AccessToken(
+          serverConfiguration.tenantIdentifier(),
           serverConfiguration.tokenIssuer(),
           TokenType.Bearer,
           accessTokenEntity,

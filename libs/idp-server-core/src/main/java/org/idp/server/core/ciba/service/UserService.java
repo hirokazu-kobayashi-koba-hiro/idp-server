@@ -21,7 +21,7 @@ public class UserService {
         context.backchannelAuthenticationRequest();
     User user =
         cibaRequestDelegate.find(
-            context.tokenIssuer(),
+            context.tenantIdentifier(),
             new UserCriteria(
                 backchannelAuthenticationRequest.loginHint(),
                 backchannelAuthenticationRequest.loginHintToken(),
@@ -33,14 +33,14 @@ public class UserService {
     }
     if (context.hasUserCode()) {
       boolean authenticationResult =
-          cibaRequestDelegate.authenticate(context.tokenIssuer(), user, context.userCode());
+          cibaRequestDelegate.authenticate(context.tenantIdentifier(), user, context.userCode());
       if (!authenticationResult) {
         throw new BackchannelAuthenticationBadRequestException(
             "invalid_user_code", "backchannel authentication request user_code is invalid");
       }
     }
 
-    cibaRequestDelegate.notify(context.tokenIssuer(), user, backchannelAuthenticationRequest);
+    cibaRequestDelegate.notify(context.tenantIdentifier(), user, backchannelAuthenticationRequest);
     return user;
   }
 }

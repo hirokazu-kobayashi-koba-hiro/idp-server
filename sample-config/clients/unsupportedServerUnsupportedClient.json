@@ -1,7 +1,8 @@
 {
-  "server_id": "94d8598e-f238-4150-85c2-c4accf515784",
+  "tenant_id": "94d8598e-f238-4150-85c2-c4accf515784",
   "issuer": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784",
-  "client_id": "unsupportedClient",
+  "client_id": "9254dbd3-285a-4627-bfad-bf0d0a050ad7",
+  "client_id_alias": "unsupportedClient",
   "client_secret": "unsupportedClientSecret",
   "client_id_issued_at": 2893256800,
   "client_secret_expires_at": 2893276800,

@@ -2,10 +2,10 @@ package org.idp.server.core.ciba.request;
 
 import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.*;
 import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.Scopes;
-import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.core.type.oidc.AcrValues;
 import org.idp.server.core.type.oidc.IdTokenHint;
 import org.idp.server.core.type.oidc.LoginHint;
@@ -13,7 +13,7 @@ import org.idp.server.core.type.oidc.RequestObject;
 
 public class BackchannelAuthenticationRequest {
   BackchannelAuthenticationRequestIdentifier identifier;
-  TokenIssuer tokenIssuer;
+  TenantIdentifier tenantIdentifier;
   CibaProfile profile;
   BackchannelTokenDeliveryMode deliveryMode;
   Scopes scopes;
@@ -31,7 +31,7 @@ public class BackchannelAuthenticationRequest {
 
   BackchannelAuthenticationRequest(
       BackchannelAuthenticationRequestIdentifier identifier,
-      TokenIssuer tokenIssuer,
+      TenantIdentifier tenantIdentifier,
       CibaProfile profile,
       BackchannelTokenDeliveryMode deliveryMode,
       Scopes scopes,
@@ -47,7 +47,7 @@ public class BackchannelAuthenticationRequest {
       RequestObject requestObject,
       AuthorizationDetails authorizationDetails) {
     this.identifier = identifier;
-    this.tokenIssuer = tokenIssuer;
+    this.tenantIdentifier = tenantIdentifier;
     this.profile = profile;
     this.deliveryMode = deliveryMode;
     this.scopes = scopes;
@@ -68,8 +68,8 @@ public class BackchannelAuthenticationRequest {
     return identifier;
   }
 
-  public TokenIssuer tokenIssuer() {
-    return tokenIssuer;
+  public TenantIdentifier tenantIdentifier() {
+    return tenantIdentifier;
   }
 
   public CibaProfile profile() {

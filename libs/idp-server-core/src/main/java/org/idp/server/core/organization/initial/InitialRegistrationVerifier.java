@@ -1,26 +1,26 @@
 package org.idp.server.core.organization.initial;
 
 import org.idp.server.core.organization.OrganizationName;
-import org.idp.server.core.tenant.PublicTenantDomain;
+import org.idp.server.core.tenant.ServerDomain;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantName;
 
 public class InitialRegistrationVerifier {
   Tenant tenant;
   OrganizationName organizationName;
-  PublicTenantDomain publicTenantDomain;
+  ServerDomain serverDomain;
   TenantName tenantName;
   String serverConfig;
 
   public InitialRegistrationVerifier(
       Tenant tenant,
       OrganizationName organizationName,
-      PublicTenantDomain publicTenantDomain,
+      ServerDomain serverDomain,
       TenantName tenantName,
       String serverConfig) {
     this.tenant = tenant;
     this.organizationName = organizationName;
-    this.publicTenantDomain = publicTenantDomain;
+    this.serverDomain = serverDomain;
     this.tenantName = tenantName;
     this.serverConfig = serverConfig;
   }

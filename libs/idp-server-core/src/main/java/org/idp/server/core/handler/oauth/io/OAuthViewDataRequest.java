@@ -1,22 +1,22 @@
 package org.idp.server.core.handler.oauth.io;
 
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.core.tenant.Tenant;
 
 public class OAuthViewDataRequest {
+  Tenant tenant;
   String id;
-  String tokenIssuer;
 
-  public OAuthViewDataRequest(String id, String tokenIssuer) {
+  public OAuthViewDataRequest(Tenant tenant, String id) {
+    this.tenant = tenant;
     this.id = id;
-    this.tokenIssuer = tokenIssuer;
+  }
+
+  public Tenant tenant() {
+    return tenant;
   }
 
   public AuthorizationRequestIdentifier toIdentifier() {
     return new AuthorizationRequestIdentifier(id);
-  }
-
-  public TokenIssuer toTokenIssuer() {
-    return new TokenIssuer(tokenIssuer);
   }
 }

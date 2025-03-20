@@ -11,8 +11,8 @@ import org.idp.server.core.handler.configuration.io.ClientConfigurationManagemen
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementListStatus;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementStatus;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.oauth.ClientId;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class ClientConfigurationHandler {
 
@@ -25,17 +25,16 @@ public class ClientConfigurationHandler {
   }
 
   // TODO
-  public void handleRegistration(String json) {
+  public String handleRegistration(String json) {
     ClientConfiguration clientConfiguration = jsonConverter.read(json, ClientConfiguration.class);
     clientConfigurationRepository.register(clientConfiguration);
+    return json;
   }
 
-  public String handleRegistration(TokenIssuer tokenIssuer, String json) {
+  public String handleRegistrationFor(String json) {
     // FIXME
     String replacedJson =
-        json.replace("${ISSUER}", tokenIssuer.value())
-            .replace("${ISSUER_DOMAIN}", tokenIssuer.extractDomain())
-            .replace("${CLIENT_ID}", UUID.randomUUID().toString())
+        json.replace("${CLIENT_ID}", UUID.randomUUID().toString())
             .replace("${CLIENT_SECRET}", UUID.randomUUID().toString());
     ClientConfiguration clientConfiguration =
         jsonConverter.read(replacedJson, ClientConfiguration.class);
@@ -44,20 +43,18 @@ public class ClientConfigurationHandler {
   }
 
   public ClientConfigurationManagementListResponse handleFinding(
-      TokenIssuer tokenIssuer, int limit, int offset) {
+      Tenant tenant, int limit, int offset) {
 
     List<ClientConfiguration> clientConfigurations =
-        clientConfigurationRepository.find(tokenIssuer, limit, offset);
+        clientConfigurationRepository.find(tenant, limit, offset);
     Map<String, Object> content = ClientConfigurationResponseCreator.create(clientConfigurations);
     return new ClientConfigurationManagementListResponse(
         ClientConfigurationManagementListStatus.OK, content);
   }
 
-  public ClientConfigurationManagementResponse handleGetting(
-      TokenIssuer tokenIssuer, ClientId clientId) {
+  public ClientConfigurationManagementResponse handleGetting(Tenant tenant, ClientId clientId) {
 
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tokenIssuer, clientId);
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, clientId);
     Map<String, Object> content = ClientConfigurationResponseCreator.create(clientConfiguration);
     return new ClientConfigurationManagementResponse(
         ClientConfigurationManagementStatus.OK, content);

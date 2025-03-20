@@ -22,8 +22,8 @@ import org.idp.server.core.handler.ciba.io.CibaRequestResponse;
 import org.idp.server.core.handler.ciba.io.CibaRequestStatus;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.ciba.AuthReqId;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 /**
  * Handles CIBA (Client Initiated Backchannel Authentication) requests.
@@ -92,11 +92,12 @@ public class CibaRequestHandler {
    */
   public CibaRequestResponse handle(CibaRequest request, CibaRequestDelegate delegate) {
     CibaRequestParameters parameters = request.toParameters();
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
+    Tenant tenant = request.tenant();
 
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
+    ServerConfiguration serverConfiguration =
+        serverConfigurationRepository.get(tenant.identifier());
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tokenIssuer, request.clientId());
+        clientConfigurationRepository.get(tenant, request.clientId());
     CibaRequestAnalyzer analyzer = new CibaRequestAnalyzer(parameters);
     CibaRequestPattern pattern = analyzer.analyze();
     CibaRequestContextService cibaRequestContextService = contextServices.get(pattern);

@@ -4,6 +4,7 @@ import java.util.Objects;
 import org.idp.server.core.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.OAuthRequestKey;
 import org.idp.server.core.type.ciba.AuthReqId;
 import org.idp.server.core.type.ciba.BackchannelTokenDeliveryMode;
@@ -14,6 +15,7 @@ import org.idp.server.core.type.pkce.CodeVerifier;
 
 public class TokenRequestContext implements BackchannelRequestContext {
 
+  Tenant tenant;
   ClientSecretBasic clientSecretBasic;
   ClientCert clientCert;
   TokenRequestParameters parameters;
@@ -23,6 +25,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
   ClientConfiguration clientConfiguration;
 
   public TokenRequestContext(
+      Tenant tenant,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
       TokenRequestParameters parameters,
@@ -30,6 +33,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
       PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
+    this.tenant = tenant;
     this.clientSecretBasic = clientSecretBasic;
     this.clientCert = clientCert;
     this.parameters = parameters;
@@ -37,6 +41,10 @@ public class TokenRequestContext implements BackchannelRequestContext {
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
+  }
+
+  public Tenant tenant() {
+    return tenant;
   }
 
   @Override
@@ -154,7 +162,10 @@ public class TokenRequestContext implements BackchannelRequestContext {
   }
 
   public ClientId clientId() {
-    return clientConfiguration.clientId();
+    if (parameters.hasClientId()) {
+      return parameters.clientId();
+    }
+    return clientSecretBasic.clientId();
   }
 
   public BackchannelTokenDeliveryMode deliveryMode() {

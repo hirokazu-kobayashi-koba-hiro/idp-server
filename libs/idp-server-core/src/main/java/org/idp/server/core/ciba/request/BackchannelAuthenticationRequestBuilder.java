@@ -2,6 +2,7 @@ package org.idp.server.core.ciba.request;
 
 import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.*;
 import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.*;
@@ -9,7 +10,7 @@ import org.idp.server.core.type.oidc.*;
 public class BackchannelAuthenticationRequestBuilder {
 
   BackchannelAuthenticationRequestIdentifier identifier;
-  TokenIssuer tokenIssuer;
+  TenantIdentifier tenantIdentifier;
   CibaProfile profile;
   BackchannelTokenDeliveryMode deliveryMode;
   Scopes scopes;
@@ -33,8 +34,8 @@ public class BackchannelAuthenticationRequestBuilder {
     return this;
   }
 
-  public BackchannelAuthenticationRequestBuilder add(TokenIssuer tokenIssuer) {
-    this.tokenIssuer = tokenIssuer;
+  public BackchannelAuthenticationRequestBuilder add(TenantIdentifier tenantIdentifier) {
+    this.tenantIdentifier = tenantIdentifier;
     return this;
   }
 
@@ -112,7 +113,7 @@ public class BackchannelAuthenticationRequestBuilder {
   public BackchannelAuthenticationRequest build() {
     return new BackchannelAuthenticationRequest(
         identifier,
-        tokenIssuer,
+        tenantIdentifier,
         profile,
         deliveryMode,
         scopes,

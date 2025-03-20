@@ -2,13 +2,14 @@ package org.idp.server.core.ciba;
 
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.UserCode;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 public interface CibaRequestDelegate {
-  User find(TokenIssuer tokenIssuer, UserCriteria criteria);
+  User find(TenantIdentifier tenantIdentifier, UserCriteria criteria);
 
-  boolean authenticate(TokenIssuer tokenIssuer, User user, UserCode userCode);
+  boolean authenticate(TenantIdentifier tenantIdentifier, User user, UserCode userCode);
 
-  void notify(TokenIssuer tokenIssuer, User user, BackchannelAuthenticationRequest request);
+  void notify(
+      TenantIdentifier tenantIdentifier, User user, BackchannelAuthenticationRequest request);
 }

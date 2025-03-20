@@ -79,7 +79,7 @@ public class CibaGrantService
             cibaGrant.user(),
             new Authentication(),
             GrantFlow.ciba,
-            cibaGrant.scopes(),
+            authorizationGrant,
             new IdTokenClaims(),
             idTokenCustomClaims,
             serverConfiguration,

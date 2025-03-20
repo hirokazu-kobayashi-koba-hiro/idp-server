@@ -12,8 +12,8 @@ import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.organization.Organization;
 import org.idp.server.core.organization.OrganizationRepository;
 import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantDomain;
 import org.idp.server.core.tenant.TenantRepository;
-import org.idp.server.core.tenant.TenantServerAttribute;
 import org.idp.server.core.tenant.TenantType;
 import org.idp.server.core.user.PasswordEncodeDelegation;
 import org.idp.server.core.user.UserRepository;
@@ -48,8 +48,10 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     String encode = passwordEncodeDelegation.encode(user.rawPassword());
     user.setHashedPassword(encode);
 
-    OrganizationRegistrationRequest organizationRequest = jsonConverter.read(request.get("organization"), OrganizationRegistrationRequest.class);
-    TenantRegistrationRequest tenantRequest = jsonConverter.read(request.get("tenant"), TenantRegistrationRequest.class);
+    OrganizationRegistrationRequest organizationRequest =
+        jsonConverter.read(request.get("organization"), OrganizationRegistrationRequest.class);
+    TenantRegistrationRequest tenantRequest =
+        jsonConverter.read(request.get("tenant"), TenantRegistrationRequest.class);
     ServerConfiguration serverConfiguration =
         jsonConverter.read(request.get("server_configuration"), ServerConfiguration.class);
 
@@ -59,12 +61,11 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
             tenantRequest.tenantIdentifier(),
             tenantRequest.tenantName(),
             TenantType.ADMIN,
-            new TenantServerAttribute(
-                serverConfiguration.serverIdentifier(), serverConfiguration.tokenIssuer()));
+            new TenantDomain(serverConfiguration.tokenIssuer().value()));
     organization.assign(tenant);
 
-    serverConfigurationRepository.register(serverConfiguration);
     tenantRepository.register(tenant);
+    serverConfigurationRepository.register(serverConfiguration);
     organizationRepository.register(organization);
     userRepository.register(tenant, user);
 

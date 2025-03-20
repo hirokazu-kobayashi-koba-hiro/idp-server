@@ -50,12 +50,16 @@ public class CibaGrantVerifier {
     if (!cibaGrant.exists()) {
       throw new TokenBadRequestException(
           "invalid_grant",
-          String.format("auth_req_id is invalid (%s)", context.authReqId().value()));
+          String.format(
+              "auth_req_id is invalid (%s) (%s)",
+              context.authReqId().value(), context.clientId().value()));
     }
     if (!cibaGrant.isGrantedClient(context.clientId())) {
       throw new TokenBadRequestException(
           "invalid_grant",
-          String.format("auth_req_id is invalid (%s)", context.authReqId().value()));
+          String.format(
+              "auth_req_id is invalid (%s) (%s)",
+              context.authReqId().value(), context.clientId().value()));
     }
   }
 

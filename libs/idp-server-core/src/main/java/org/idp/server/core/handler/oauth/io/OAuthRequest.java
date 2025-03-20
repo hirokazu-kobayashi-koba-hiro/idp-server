@@ -3,48 +3,38 @@ package org.idp.server.core.handler.oauth.io;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
-import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.core.tenant.Tenant;
 
 /** OAuthRequest */
 public class OAuthRequest {
 
+  Tenant tenant;
   Map<String, String[]> params;
-  String issuer;
   String sessionId;
 
-  public OAuthRequest() {
-    this.params = Map.of();
-    this.issuer = "";
-    this.sessionId = "";
-  }
-
-  public OAuthRequest(Map<String, String[]> params, String issuer) {
+  public OAuthRequest(Tenant tenant, Map<String, String[]> params) {
+    this.tenant = tenant;
     this.params = params;
-    this.issuer = issuer;
   }
 
-  public static OAuthRequest singleMap(Map<String, String> params, String issuer) {
+  public static OAuthRequest singleMap(Tenant tenant, Map<String, String> params) {
     HashMap<String, String[]> map = new HashMap<>();
     params.forEach(
         (key, value) -> {
           map.put(key, new String[] {value});
         });
-    return new OAuthRequest(map, issuer);
+    return new OAuthRequest(tenant, map);
   }
 
   public Map<String, String[]> getParams() {
     return params;
   }
 
-  public String getIssuer() {
-    return issuer;
+  public Tenant tenant() {
+    return tenant;
   }
 
   public OAuthRequestParameters toParameters() {
     return new OAuthRequestParameters(params);
-  }
-
-  public TokenIssuer toTokenIssuer() {
-    return new TokenIssuer(issuer);
   }
 }

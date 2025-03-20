@@ -1,7 +1,5 @@
 package org.idp.server.adapters.springboot.restapi.admin;
 
-import java.util.UUID;
-
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.ServerManagementApi;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
@@ -18,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @Transactional
 public class ServerRegistrationV1Api implements ParameterTransformable {
 
-  PublicTenantDomain publicTenantDomain;
+  ServerDomain serverDomain;
   ServerManagementApi serverManagementApi;
 
 
@@ -27,14 +25,14 @@ public class ServerRegistrationV1Api implements ParameterTransformable {
       @Value("${idp.configurations.serverUrl}") String publicTenantDomainValue) {
     this.serverManagementApi = idpServerApplication.serverManagementFunction();
 
-    this.publicTenantDomain = new PublicTenantDomain(publicTenantDomainValue);
+    this.serverDomain = new ServerDomain(publicTenantDomainValue);
   }
 
   @PostMapping
   public ResponseEntity<?> post(
       @RequestBody(required = false) String body) {
 
-    String response = serverManagementApi.register(publicTenantDomain, body);
+    String response = serverManagementApi.register(TenantType.PUBLIC, serverDomain, body);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

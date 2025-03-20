@@ -6,6 +6,7 @@ import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.token.AccessToken;
 import org.idp.server.core.oauth.token.RefreshToken;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.IdToken;
 import org.idp.server.core.type.verifiablecredential.CNonce;
@@ -40,8 +41,8 @@ public class OAuthToken {
     return identifier;
   }
 
-  public TokenIssuer tokenIssuer() {
-    return accessToken.tokenIssuer();
+  public TenantIdentifier tenantIdentifier() {
+    return accessToken.tenantIdentifier();
   }
 
   public AuthorizationGrant authorizationGrant() {
@@ -126,5 +127,9 @@ public class OAuthToken {
 
   public boolean hasCNonceExpiresIn() {
     return cNonceExpiresIn.exists();
+  }
+
+  public TokenIssuer tokenIssuer() {
+    return accessToken.tokenIssuer();
   }
 }

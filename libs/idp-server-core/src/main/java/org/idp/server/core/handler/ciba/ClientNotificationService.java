@@ -83,7 +83,7 @@ public class ClientNotificationService
               cibaGrant.user(),
               new Authentication(),
               GrantFlow.ciba,
-              cibaGrant.scopes(),
+              cibaGrant.authorizationGrant(),
               new IdTokenClaims(),
               idTokenCustomClaims,
               serverConfiguration,

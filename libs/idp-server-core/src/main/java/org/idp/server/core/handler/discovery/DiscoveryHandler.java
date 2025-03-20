@@ -9,7 +9,7 @@ import org.idp.server.core.handler.discovery.io.JwksRequestResponse;
 import org.idp.server.core.handler.discovery.io.JwksRequestStatus;
 import org.idp.server.core.handler.discovery.io.ServerConfigurationRequestResponse;
 import org.idp.server.core.handler.discovery.io.ServerConfigurationRequestStatus;
-import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.core.tenant.TenantIdentifier;
 
 public class DiscoveryHandler {
 
@@ -19,9 +19,8 @@ public class DiscoveryHandler {
     this.serverConfigurationRepository = serverConfigurationRepository;
   }
 
-  public ServerConfigurationRequestResponse getConfiguration(String issuer) {
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(new TokenIssuer(issuer));
+  public ServerConfigurationRequestResponse getConfiguration(TenantIdentifier tenantIdentifier) {
+    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenantIdentifier);
 
     ServerConfigurationResponseCreator serverConfigurationResponseCreator =
         new ServerConfigurationResponseCreator(serverConfiguration);
@@ -30,9 +29,8 @@ public class DiscoveryHandler {
     return new ServerConfigurationRequestResponse(ServerConfigurationRequestStatus.OK, content);
   }
 
-  public JwksRequestResponse getJwks(String issuer) {
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(new TokenIssuer(issuer));
+  public JwksRequestResponse getJwks(TenantIdentifier tenantIdentifier) {
+    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenantIdentifier);
 
     JwksResponseCreator jwksResponseCreator = new JwksResponseCreator(serverConfiguration);
     Map<String, Object> content = jwksResponseCreator.create();

@@ -18,7 +18,7 @@ public class ServerConfigurationHandler {
   // TODO
   public ServerConfiguration handleRegistration(String json) {
     ServerConfiguration serverConfiguration = jsonConverter.read(json, ServerConfiguration.class);
-    serverConfiguration.setIdentifier(UUID.randomUUID().toString());
+    serverConfiguration.setTenantId(UUID.randomUUID().toString());
     serverConfigurationRepository.register(serverConfiguration);
 
     return serverConfiguration;

@@ -7,7 +7,7 @@ public class EventBuilder {
   EventIdentifier identifier;
   EventType type;
   EventDescription description;
-  EventServer server;
+  EventTenant server;
   EventClient client;
   EventUser user;
   IpAddress ipAddress;
@@ -30,7 +30,7 @@ public class EventBuilder {
     return this;
   }
 
-  public EventBuilder add(EventServer server) {
+  public EventBuilder add(EventTenant server) {
     this.server = server;
     return this;
   }

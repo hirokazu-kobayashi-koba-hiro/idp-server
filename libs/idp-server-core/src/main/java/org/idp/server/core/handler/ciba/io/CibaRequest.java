@@ -3,30 +3,23 @@ package org.idp.server.core.handler.ciba.io;
 import java.util.Map;
 import org.idp.server.core.basic.http.BasicAuth;
 import org.idp.server.core.ciba.CibaRequestParameters;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.AuthorizationHeaderHandlerable;
 import org.idp.server.core.type.mtls.ClientCert;
 import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecretBasic;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class CibaRequest implements AuthorizationHeaderHandlerable {
 
+  Tenant tenant;
   String authorizationHeaders;
   Map<String, String[]> params;
-  String issuer;
   String clientCert;
 
-  public CibaRequest() {
-    this.authorizationHeaders = "";
-    this.params = Map.of();
-    this.issuer = "";
-    this.clientCert = "";
-  }
-
-  public CibaRequest(String authorizationHeaders, Map<String, String[]> params, String issuer) {
+  public CibaRequest(Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
+    this.tenant = tenant;
     this.authorizationHeaders = authorizationHeaders;
     this.params = params;
-    this.issuer = issuer;
   }
 
   public CibaRequest setClientCert(String clientCert) {
@@ -38,12 +31,12 @@ public class CibaRequest implements AuthorizationHeaderHandlerable {
     return params;
   }
 
-  public String getIssuer() {
-    return issuer;
-  }
-
   public String clientCert() {
     return clientCert;
+  }
+
+  public Tenant tenant() {
+    return tenant;
   }
 
   public CibaRequestParameters toParameters() {
@@ -67,10 +60,6 @@ public class CibaRequest implements AuthorizationHeaderHandlerable {
       return new ClientSecretBasic(convertBasicAuth(authorizationHeaders));
     }
     return new ClientSecretBasic();
-  }
-
-  public TokenIssuer toTokenIssuer() {
-    return new TokenIssuer(issuer);
   }
 
   public ClientCert toClientCert() {

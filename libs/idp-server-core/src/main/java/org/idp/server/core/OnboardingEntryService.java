@@ -1,7 +1,6 @@
 package org.idp.server.core;
 
 import java.util.HashMap;
-import java.util.UUID;
 import org.idp.server.core.api.OnboardingApi;
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.configuration.ServerConfiguration;
@@ -38,24 +37,16 @@ public class OnboardingEntryService implements OnboardingApi {
   public Organization initialize(
       User operator,
       OrganizationName organizationName,
-      PublicTenantDomain publicTenantDomain,
+      ServerDomain serverDomain,
       TenantName tenantName,
       String serverConfig) {
 
-    String tenantId = UUID.randomUUID().toString();
-    TenantIdentifier tenantIdentifier = new TenantIdentifier(tenantId);
-    String issuer = publicTenantDomain.value() + tenantId;
-    String config = serverConfig.replaceAll("IDP_ISSUER", issuer);
-    ServerConfiguration serverConfiguration = serverConfigurationHandler.handleRegistration(config);
-
-    TenantCreator tenantCreator =
-        new TenantCreator(
-            tenantIdentifier,
-            tenantName,
-            serverConfiguration.serverIdentifier(),
-            serverConfiguration.tokenIssuer());
+    TenantCreator tenantCreator = new TenantCreator(TenantType.PUBLIC, serverDomain);
     Tenant tenant = tenantCreator.create();
     tenantRepository.register(tenant);
+
+    String config = serverConfig.replaceAll("IDP_ISSUER", tenant.tokenIssuerValue());
+    ServerConfiguration serverConfiguration = serverConfigurationHandler.handleRegistration(config);
 
     OrganizationCreator organizationCreator = new OrganizationCreator(organizationName, tenant);
     Organization organization = organizationCreator.create();

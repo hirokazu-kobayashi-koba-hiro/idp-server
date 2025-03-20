@@ -19,15 +19,15 @@ public class EventDataSource implements EventRepository {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                INSERT INTO public.events (id, type, description, server_id, server_name, client_id, client_name, user_id, user_name, detail)
+                INSERT INTO public.events (id, type, description, tenant_id, tenant_name, client_id, client_name, user_id, user_name, detail)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb);
                 """;
     List<Object> params = new ArrayList<>();
     params.add(event.identifier().value());
     params.add(event.type().value());
     params.add(event.description().value());
-    params.add(event.server().id());
-    params.add(event.server().name());
+    params.add(event.tenant().id());
+    params.add(event.tenant().name());
     params.add(event.client().id());
     params.add(event.client().name());
 

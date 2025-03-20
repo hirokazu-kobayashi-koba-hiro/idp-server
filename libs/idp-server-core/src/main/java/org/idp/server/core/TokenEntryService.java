@@ -18,7 +18,6 @@ import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.core.type.oauth.Password;
-import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.core.type.oauth.Username;
 import org.idp.server.core.user.UserRepository;
 
@@ -52,7 +51,7 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
       String clientCert) {
 
     Tenant tenant = tenantRepository.get(tenantId);
-    TokenRequest tokenRequest = new TokenRequest(authorizationHeader, params, tenant.issuer());
+    TokenRequest tokenRequest = new TokenRequest(tenant, authorizationHeader, params);
     tokenRequest.setClientCert(clientCert);
 
     return tokenProtocol.request(tokenRequest);
@@ -63,7 +62,7 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     TokenIntrospectionRequest tokenIntrospectionRequest =
-        new TokenIntrospectionRequest(params, tenant.issuer());
+        new TokenIntrospectionRequest(tenant, params);
 
     return tokenIntrospectionApi.inspect(tokenIntrospectionRequest);
   }
@@ -76,7 +75,7 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
 
     Tenant tenant = tenantRepository.get(tenantId);
     TokenRevocationRequest revocationRequest =
-        new TokenRevocationRequest(authorizationHeader, request, tenant.issuer());
+        new TokenRevocationRequest(tenant, authorizationHeader, request);
     revocationRequest.setClientCert(clientCert);
 
     return tokenRevocationProtocol.revoke(revocationRequest);
@@ -84,11 +83,7 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
 
   // FIXME this is bad code
   @Override
-  public User findAndAuthenticate(TokenIssuer tokenIssuer, Username username, Password password) {
-    Tenant tenant = tenantRepository.find(tokenIssuer);
-    if (!tenant.exists()) {
-      return User.notFound();
-    }
+  public User findAndAuthenticate(Tenant tenant, Username username, Password password) {
     User user = userRepository.findBy(tenant, username.value(), "idp-server");
     if (!user.exists()) {
       return User.notFound();

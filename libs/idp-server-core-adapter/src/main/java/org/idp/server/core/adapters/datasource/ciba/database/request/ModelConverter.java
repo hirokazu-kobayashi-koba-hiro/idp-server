@@ -9,10 +9,10 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestBuilder;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.*;
 import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.Scopes;
-import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.core.type.oidc.AcrValues;
 import org.idp.server.core.type.oidc.IdTokenHint;
 import org.idp.server.core.type.oidc.LoginHint;
@@ -23,7 +23,7 @@ class ModelConverter {
   static BackchannelAuthenticationRequest convert(Map<String, String> stringMap) {
     BackchannelAuthenticationRequestBuilder builder = new BackchannelAuthenticationRequestBuilder();
     builder.add(new BackchannelAuthenticationRequestIdentifier(stringMap.get("id")));
-    builder.add(new TokenIssuer(stringMap.get("token_issuer")));
+    builder.add(new TenantIdentifier(stringMap.get("tenant_id")));
     builder.add(CibaProfile.valueOf(stringMap.get("profile")));
     builder.add(BackchannelTokenDeliveryMode.valueOf(stringMap.get("delivery_mode")));
     builder.add(new Scopes(stringMap.get("scopes")));

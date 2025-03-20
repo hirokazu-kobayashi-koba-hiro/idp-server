@@ -1,28 +1,18 @@
 CREATE TABLE organization
 (
-    id          VARCHAR(255) PRIMARY KEY,
+    id          CHAR(36)                NOT NULL PRIMARY KEY,
     name        VARCHAR(255)            NOT NULL,
     description TEXT,
     created_at  TIMESTAMP DEFAULT now() NOT NULL,
     updated_at  TIMESTAMP DEFAULT now() NOT NULL
 );
 
-CREATE TABLE server_configuration
-(
-    id           VARCHAR(255)            NOT NULL PRIMARY KEY,
-    token_issuer TEXT                    NOT NULL,
-    payload      JSONB                   NOT NULL,
-    created_at   TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at   TIMESTAMP DEFAULT now() NOT NULL
-);
-
 CREATE TABLE tenant
 (
-    id         VARCHAR(255) NOT NULL PRIMARY KEY,
+    id         CHAR(36)     NOT NULL PRIMARY KEY,
     name       VARCHAR(255) NOT NULL,
     type       VARCHAR(10)  NOT NULL,
-    server_id  VARCHAR(255) NOT NULL REFERENCES server_configuration(id),
-    issuer     TEXT         NOT NULL,
+    domain     TEXT         NOT NULL,
     created_at TIMESTAMP    NOT NULL DEFAULT now(),
     updated_at TIMESTAMP    NOT NULL DEFAULT now()
 );
@@ -32,16 +22,26 @@ CREATE UNIQUE INDEX unique_admin_tenant ON tenant (type) WHERE type = 'ADMIN';
 CREATE TABLE organization_tenants
 (
     id              CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-    organization_id VARCHAR(255) REFERENCES organization (id) ON DELETE CASCADE,
-    tenant_id       VARCHAR(255) REFERENCES tenant (id) ON DELETE CASCADE,
+    organization_id CHAR(36) REFERENCES organization (id) ON DELETE CASCADE,
+    tenant_id       CHAR(36) REFERENCES tenant (id) ON DELETE CASCADE,
     assigned_at     TIMESTAMP            DEFAULT now() NOT NULL,
     UNIQUE (organization_id, tenant_id)
 );
 
+
+CREATE TABLE server_configuration
+(
+    tenant_id    CHAR(36)                NOT NULL PRIMARY KEY REFERENCES tenant (id) ON DELETE CASCADE,
+    token_issuer TEXT                    NOT NULL,
+    payload      JSONB                   NOT NULL,
+    created_at   TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at   TIMESTAMP DEFAULT now() NOT NULL
+);
+
 CREATE TABLE idp_user
 (
-    id                    VARCHAR(255)            NOT NULL PRIMARY KEY,
-    tenant_id             VARCHAR(255)            NOT NULL,
+    id                    CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id             CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     provider_id           VARCHAR(255)            NOT NULL,
     provider_user_id      VARCHAR(255)            NOT NULL,
     name                  VARCHAR(255),
@@ -82,30 +82,33 @@ CREATE TABLE organization_members
 
 CREATE TABLE idp_user_current_organization
 (
-    idp_user_id     VARCHAR(255) REFERENCES idp_user (id) ON DELETE CASCADE PRIMARY KEY,
-    organization_id VARCHAR(255) REFERENCES organization (id) ON DELETE CASCADE,
+    idp_user_id     CHAR(36) REFERENCES idp_user (id) ON DELETE CASCADE PRIMARY KEY,
+    organization_id CHAR(36) REFERENCES organization (id) ON DELETE CASCADE,
     created_at      TIMESTAMP DEFAULT now() NOT NULL,
     updated_at      TIMESTAMP DEFAULT now() NOT NULL
 );
 
 CREATE TABLE client_configuration
 (
-    id           VARCHAR(255)            NOT NULL PRIMARY KEY,
-    server_id    VARCHAR(255)            NOT NULL,
-    token_issuer TEXT                    NOT NULL,
-    payload      JSONB                   NOT NULL,
-    created_at   TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at   TIMESTAMP DEFAULT now() NOT NULL
+    id         CHAR(36)                NOT NULL PRIMARY KEY,
+    id_alias   VARCHAR(255),
+    tenant_id  CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    payload    JSONB                   NOT NULL,
+    created_at TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP DEFAULT now() NOT NULL,
+    CONSTRAINT uk_client_configuration_alias unique (id_alias, tenant_id)
 );
+
+CREATE INDEX idx_client_configuration_alias ON client_configuration (id_alias, tenant_id);
 
 CREATE TABLE authorization_request
 (
-    id                          VARCHAR(255)            NOT NULL PRIMARY KEY,
-    token_issuer                TEXT                    NOT NULL,
+    id                          CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id                   CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     profile                     VARCHAR(255)            NOT NULL,
     scopes                      TEXT                    NOT NULL,
     response_type               VARCHAR(255)            NOT NULL,
-    client_id                   VARCHAR(255)            NOT NULL,
+    client_id                   VARCHAR(255)               NOT NULL,
     redirect_uri                TEXT                    NOT NULL,
     state                       TEXT,
     response_mode               VARCHAR(255),
@@ -131,12 +134,12 @@ CREATE TABLE authorization_request
 
 CREATE TABLE authorization_code_grant
 (
-    authorization_request_id VARCHAR(255)            NOT NULL PRIMARY KEY,
+    authorization_request_id CHAR(36)                NOT NULL PRIMARY KEY,
     authorization_code       VARCHAR(255)            NOT NULL,
-    user_id                  VARCHAR(255)            NOT NULL,
+    user_id                  CHAR(36)                NOT NULL,
     user_payload             TEXT                    NOT NULL,
     authentication           TEXT                    NOT NULL,
-    client_id                VARCHAR(255)            NOT NULL,
+    client_id                VARCHAR(255)                NOT NULL,
     scopes                   TEXT                    NOT NULL,
     claims                   TEXT                    NOT NULL,
     custom_properties        JSONB,
@@ -152,7 +155,8 @@ CREATE TABLE authorization_code_grant
 
 CREATE TABLE oauth_token
 (
-    id                              VARCHAR(255)            NOT NULL PRIMARY KEY,
+    id                              CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id                       CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     token_issuer                    TEXT                    NOT NULL,
     token_type                      VARCHAR(10)             NOT NULL,
     access_token                    TEXT                    NOT NULL,
@@ -180,8 +184,8 @@ CREATE TABLE oauth_token
 
 CREATE TABLE backchannel_authentication_request
 (
-    id                        VARCHAR(255)            NOT NULL PRIMARY KEY,
-    token_issuer              TEXT                    NOT NULL,
+    id                        CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id                 CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     profile                   VARCHAR(255)            NOT NULL,
     delivery_mode             VARCHAR(10)             NOT NULL,
     scopes                    TEXT                    NOT NULL,
@@ -201,15 +205,15 @@ CREATE TABLE backchannel_authentication_request
 
 CREATE TABLE ciba_grant
 (
-    backchannel_authentication_request_id VARCHAR(255)            NOT NULL PRIMARY KEY,
+    backchannel_authentication_request_id CHAR(36)                NOT NULL PRIMARY KEY,
     auth_req_id                           VARCHAR(255)            NOT NULL,
     expired_at                            TEXT                    NOT NULL,
     interval                              TEXT                    NOT NULL,
     status                                VARCHAR(100)            NOT NULL,
-    user_id                               VARCHAR(255)            NOT NULL,
+    user_id                               CHAR(36)                NOT NULL,
     user_payload                          JSONB                   NOT NULL,
     authentication                        JSONB,
-    client_id                             VARCHAR(255)            NOT NULL,
+    client_id                             VARCHAR(255)                NOT NULL,
     scopes                                TEXT                    NOT NULL,
     claims                                JSONB                   NOT NULL,
     custom_properties                     JSONB,
@@ -225,8 +229,8 @@ CREATE TABLE verifiable_credential_transaction
 (
     transaction_id        VARCHAR(255)            NOT NULL,
     credential_issuer     TEXT                    NOT NULL,
-    client_id             TEXT                    NOT NULL,
-    user_id               VARCHAR(255)            NOT NULL,
+    client_id             VARCHAR(255)                NOT NULL,
+    user_id               CHAR(36)                NOT NULL,
     verifiable_credential JSONB                   NOT NULL,
     status                VARCHAR(10)             NOT NULL,
     created_at            TIMESTAMP DEFAULT now() NOT NULL,
@@ -235,7 +239,7 @@ CREATE TABLE verifiable_credential_transaction
 
 CREATE TABLE shared_signal_framework_configuration
 (
-    id         VARCHAR(255)            NOT NULL PRIMARY KEY,
+    id         CHAR(36)                NOT NULL PRIMARY KEY,
     payload    JSONB                   NOT NULL,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL
@@ -243,21 +247,21 @@ CREATE TABLE shared_signal_framework_configuration
 
 CREATE TABLE events
 (
-    id          char(36) PRIMARY KEY,
+    id          CHAR(36) PRIMARY KEY,
     type        VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
-    server_id   VARCHAR(255) NOT NULL,
-    server_name VARCHAR(255) NOT NULL,
-    client_id   VARCHAR(255) NOT NULL,
+    tenant_id   CHAR(36)     NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    tenant_name VARCHAR(255) NOT NULL,
+    client_id   VARCHAR(255)     NOT NULL,
     client_name VARCHAR(255) NOT NULL,
-    user_id     VARCHAR(255),
+    user_id     CHAR(36),
     user_name   VARCHAR(255),
     detail      JSONB        NOT NULL,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_events_type ON events (type);
-CREATE INDEX idx_events_server ON events (server_id);
+CREATE INDEX idx_events_tenant ON events (tenant_id);
 CREATE INDEX idx_events_client ON events (client_id);
 CREATE INDEX idx_events_user ON events (user_id);
 CREATE INDEX idx_events_created_at ON events (created_at);
@@ -265,7 +269,7 @@ CREATE INDEX idx_events_detail_jsonb ON events USING GIN (detail);
 
 CREATE TABLE federatable_idp_configuration
 (
-    id         VARCHAR(255)            NOT NULL PRIMARY KEY,
+    id         CHAR(36)                NOT NULL PRIMARY KEY,
     payload    JSONB                   NOT NULL,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL

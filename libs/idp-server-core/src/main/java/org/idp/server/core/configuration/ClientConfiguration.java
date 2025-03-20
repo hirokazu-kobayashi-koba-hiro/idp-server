@@ -3,6 +3,7 @@ package org.idp.server.core.configuration;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.core.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.type.oauth.*;
@@ -10,6 +11,7 @@ import org.idp.server.core.type.oauth.*;
 /** ClientConfiguration */
 public class ClientConfiguration implements JsonReadable {
   String clientId;
+  String clientIdAlias;
   String clientSecret;
   List<String> redirectUris = new ArrayList<>();
   String tokenEndpointAuthMethod;
@@ -46,13 +48,17 @@ public class ClientConfiguration implements JsonReadable {
   String authorizationEncryptedResponseEnc;
   // extension
   boolean supportedJar;
-  String serverId;
+  String tenantId;
   String issuer;
 
   public ClientConfiguration() {}
 
   public ClientId clientId() {
     return new ClientId(clientId);
+  }
+
+  public String clientIdAlias() {
+    return clientIdAlias;
   }
 
   public String clientIdValue() {
@@ -296,7 +302,11 @@ public class ClientConfiguration implements JsonReadable {
         && Objects.nonNull(idTokenEncryptedResponseEnc);
   }
 
-  public String serverId() {
-    return serverId;
+  public String tenantId() {
+    return tenantId;
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return new TenantIdentifier(tenantId);
   }
 }

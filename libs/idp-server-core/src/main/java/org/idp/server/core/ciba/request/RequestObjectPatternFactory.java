@@ -30,6 +30,7 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
   @Override
   public BackchannelAuthenticationRequest create(
       CibaProfile profile,
+      ClientSecretBasic clientSecretBasic,
       CibaRequestParameters parameters,
       JoseContext joseContext,
       Set<String> filteredScopes,
@@ -39,7 +40,7 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
     CibaRequestObjectParameters requestObjectParameters =
         new CibaRequestObjectParameters(jsonWebTokenClaims.payload());
     Scopes scopes = new Scopes(filteredScopes);
-    ClientId clientId = clientConfiguration.clientId();
+    ClientId clientId = getClientId(clientSecretBasic, parameters, requestObjectParameters);
     IdTokenHint idTokenHint =
         requestObjectParameters.hasIdTokenHint()
             ? requestObjectParameters.idTokenHint()
@@ -77,7 +78,7 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
 
     BackchannelAuthenticationRequestBuilder builder = new BackchannelAuthenticationRequestBuilder();
     builder.add(createIdentifier());
-    builder.add(serverConfiguration.tokenIssuer());
+    builder.add(serverConfiguration.tenantIdentifier());
     builder.add(profile);
     builder.add(clientConfiguration.backchannelTokenDeliveryMode());
     builder.add(scopes);
@@ -92,5 +93,19 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
     builder.add(clientNotificationToken);
     builder.add(requestedExpiry);
     return builder.build();
+  }
+
+  private static ClientId getClientId(
+      ClientSecretBasic clientSecretBasic,
+      CibaRequestParameters parameters,
+      CibaRequestObjectParameters requestObjectParameters) {
+    ClientId clientId =
+        requestObjectParameters.hasIdTokenHint()
+            ? requestObjectParameters.clientId()
+            : parameters.clientId();
+    if (clientId.exists()) {
+      return clientId;
+    }
+    return clientSecretBasic.clientId();
   }
 }

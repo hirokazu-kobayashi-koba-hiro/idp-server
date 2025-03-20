@@ -1,7 +1,8 @@
 {
-  "server_id": "217e863d-8aee-46e2-89a3-9bd20db19196",
+  "tenant_id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
   "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
-  "client_id": "publicClient",
+  "client_id": "a342a174-683a-42a1-bd25-3e67d68e745e",
+  "client_id_alias": "publicClient",
   "client_secret": "publicClientPassword1234567890123456789012345678901234567890123456789012345678901234567890",
   "client_id_issued_at": 2893256800,
   "client_secret_expires_at": 2893276800,

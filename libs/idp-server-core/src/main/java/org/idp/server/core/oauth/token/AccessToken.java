@@ -5,12 +5,14 @@ import java.util.Objects;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CreatedAt;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.extension.ExpiredAt;
 import org.idp.server.core.type.oauth.*;
 
 public class AccessToken {
+  TenantIdentifier tenantIdentifier;
   TokenIssuer tokenIssuer;
   TokenType tokenType;
   AccessTokenEntity accessTokenEntity;
@@ -23,6 +25,7 @@ public class AccessToken {
   public AccessToken() {}
 
   public AccessToken(
+      TenantIdentifier tenantIdentifier,
       TokenIssuer tokenIssuer,
       TokenType tokenType,
       AccessTokenEntity accessTokenEntity,
@@ -31,6 +34,7 @@ public class AccessToken {
       CreatedAt createdAt,
       ExpiresIn expiresIn,
       ExpiredAt expiredAt) {
+    this.tenantIdentifier = tenantIdentifier;
     this.tokenIssuer = tokenIssuer;
     this.tokenType = tokenType;
     this.accessTokenEntity = accessTokenEntity;
@@ -39,6 +43,10 @@ public class AccessToken {
     this.createdAt = createdAt;
     this.expiresIn = expiresIn;
     this.expiredAt = expiredAt;
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return tenantIdentifier;
   }
 
   public TokenIssuer tokenIssuer() {

@@ -3,6 +3,7 @@ package org.idp.server.core.sharedsignal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
@@ -11,7 +12,7 @@ public class Event {
   EventIdentifier identifier;
   EventType type;
   EventDescription description;
-  EventServer server;
+  EventTenant tenant;
   EventClient client;
   EventUser user;
   IpAddress ipAddress;
@@ -25,7 +26,7 @@ public class Event {
       EventIdentifier identifier,
       EventType type,
       EventDescription description,
-      EventServer server,
+      EventTenant tenant,
       EventClient client,
       EventUser user,
       IpAddress ipAddress,
@@ -35,7 +36,7 @@ public class Event {
     this.identifier = identifier;
     this.type = type;
     this.description = description;
-    this.server = server;
+    this.tenant = tenant;
     this.client = client;
     this.user = user;
     this.ipAddress = ipAddress;
@@ -56,8 +57,8 @@ public class Event {
     return description;
   }
 
-  public EventServer server() {
-    return server;
+  public EventTenant tenant() {
+    return tenant;
   }
 
   public EventClient client() {
@@ -97,7 +98,7 @@ public class Event {
     result.put("id", identifier.value());
     result.put("type", type.value());
     result.put("description", description.value());
-    result.put("server", server().toMap());
+    result.put("tenant", tenant().toMap());
     result.put("client", client().toMap());
     if (hasUser()) {
       result.put("user", user().toMap());
@@ -106,15 +107,23 @@ public class Event {
     return result;
   }
 
-  public TokenIssuer tokenIssuer() {
-    return server.issuer();
+  public TenantIdentifier tenantIdentifier() {
+    return tenant.id();
+  }
+
+  public String tenantIdentifierValue() {
+    return tenant.idAsString();
   }
 
   public String tokenIssuerValue() {
-    return server.id();
+    return tenant.issuerAsString();
   }
 
   public ClientId clientId() {
     return client.clientId();
+  }
+
+  public TokenIssuer tokenIssuer() {
+    return tenant.issuer();
   }
 }

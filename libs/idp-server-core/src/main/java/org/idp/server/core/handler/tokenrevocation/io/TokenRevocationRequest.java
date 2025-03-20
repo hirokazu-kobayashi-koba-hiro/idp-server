@@ -2,25 +2,25 @@ package org.idp.server.core.handler.tokenrevocation.io;
 
 import java.util.Map;
 import org.idp.server.core.basic.http.BasicAuth;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.AuthorizationHeaderHandlerable;
 import org.idp.server.core.tokenrevocation.TokenRevocationRequestParameters;
 import org.idp.server.core.type.mtls.ClientCert;
 import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecretBasic;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
 
+  Tenant tenant;
   String authorizationHeaders;
   Map<String, String[]> params;
-  String issuer;
   String clientCert;
 
   public TokenRevocationRequest(
-      String authorizationHeaders, Map<String, String[]> params, String issuer) {
+      Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
+    this.tenant = tenant;
     this.authorizationHeaders = authorizationHeaders;
     this.params = params;
-    this.issuer = issuer;
   }
 
   public TokenRevocationRequest setClientCert(String clientCert) {
@@ -36,12 +36,12 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
     return params;
   }
 
-  public String getIssuer() {
-    return issuer;
-  }
-
   public String getClientCert() {
     return clientCert;
+  }
+
+  public Tenant tenant() {
+    return tenant;
   }
 
   public ClientId clientId() {
@@ -65,10 +65,6 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
 
   public TokenRevocationRequestParameters toParameters() {
     return new TokenRevocationRequestParameters(params);
-  }
-
-  public TokenIssuer toTokenIssuer() {
-    return new TokenIssuer(issuer);
   }
 
   public ClientCert toClientCert() {

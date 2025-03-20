@@ -49,6 +49,10 @@ public class CibaGrant {
     return authorizationGrant;
   }
 
+  public ClientId clientId() {
+    return authorizationGrant.clientId();
+  }
+
   public AuthReqId authReqId() {
     return authReqId;
   }

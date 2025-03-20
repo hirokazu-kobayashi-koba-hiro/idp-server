@@ -6,29 +6,29 @@ import org.idp.server.core.tenant.TenantName;
 
 public class TenantRegistrationRequest implements JsonReadable {
 
-    String id;
-    String name;
+  String id;
+  String name;
 
-    public TenantRegistrationRequest() {}
+  public TenantRegistrationRequest() {}
 
-    public TenantRegistrationRequest(String id, String name) {
-        this.id = id;
-        this.name = name;
-    }
+  public TenantRegistrationRequest(String id, String name) {
+    this.id = id;
+    this.name = name;
+  }
 
-    public String id() {
-        return id;
-    }
+  public String id() {
+    return id;
+  }
 
-    public String name() {
-        return name;
-    }
+  public String name() {
+    return name;
+  }
 
-    public TenantIdentifier tenantIdentifier() {
-        return new TenantIdentifier(id);
-    }
+  public TenantIdentifier tenantIdentifier() {
+    return new TenantIdentifier(id);
+  }
 
-    public TenantName tenantName() {
-        return new TenantName(name);
-    }
+  public TenantName tenantName() {
+    return new TenantName(name);
+  }
 }

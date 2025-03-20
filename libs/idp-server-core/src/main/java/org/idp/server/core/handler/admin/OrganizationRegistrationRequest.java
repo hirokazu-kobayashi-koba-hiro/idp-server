@@ -8,26 +8,25 @@ import org.idp.server.core.organization.OrganizationName;
 
 public class OrganizationRegistrationRequest implements JsonReadable {
 
-    String id;
-    String name;
-    String description;
+  String id;
+  String name;
+  String description;
 
-    public OrganizationRegistrationRequest() {}
+  public OrganizationRegistrationRequest() {}
 
+  public String id() {
+    return id;
+  }
 
-    public String id() {
-        return id;
-    }
+  public String name() {
+    return name;
+  }
 
-    public String name() {
-        return name;
-    }
+  public Organization toOrganization() {
+    OrganizationIdentifier identifier = new OrganizationIdentifier(id);
+    OrganizationName organizationName = new OrganizationName(name);
+    OrganizationDescription organizationDescription = new OrganizationDescription(description);
 
-    public Organization toOrganization() {
-        OrganizationIdentifier identifier = new OrganizationIdentifier(id);
-        OrganizationName organizationName = new OrganizationName(name);
-        OrganizationDescription organizationDescription = new OrganizationDescription(description);
-
-        return new Organization(identifier, organizationName, organizationDescription);
-    }
+    return new Organization(identifier, organizationName, organizationDescription);
+  }
 }

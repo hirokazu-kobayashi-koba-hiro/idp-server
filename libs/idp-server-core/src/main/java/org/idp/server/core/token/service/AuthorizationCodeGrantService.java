@@ -143,7 +143,7 @@ public class AuthorizationCodeGrantService
               authorizationGrant.user(),
               authorizationCodeGrant.authentication(),
               GrantFlow.authorization_code,
-              authorizationCodeGrant.scopes(),
+              authorizationGrant,
               authorizationRequest.claimsPayload().idToken(),
               idTokenCustomClaims,
               serverConfiguration,

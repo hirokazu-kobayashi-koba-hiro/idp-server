@@ -9,6 +9,7 @@ import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.handler.tokenrevocation.io.TokenRevocationRequestStatus;
 import org.idp.server.core.handler.tokenrevocation.io.TokenRevocationResponse;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.tokenrevocation.TokenRevocationRequestContext;
@@ -16,7 +17,6 @@ import org.idp.server.core.tokenrevocation.TokenRevocationRequestParameters;
 import org.idp.server.core.tokenrevocation.validator.TokenRevocationValidator;
 import org.idp.server.core.type.oauth.AccessTokenEntity;
 import org.idp.server.core.type.oauth.RefreshTokenEntity;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class TokenRevocationHandler {
   OAuthTokenRepository oAuthTokenRepository;
@@ -38,10 +38,11 @@ public class TokenRevocationHandler {
     TokenRevocationValidator validator = new TokenRevocationValidator(request.toParameters());
     validator.validate();
 
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
+    Tenant tenant = request.tenant();
+    ServerConfiguration serverConfiguration =
+        serverConfigurationRepository.get(tenant.identifier());
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tokenIssuer, request.clientId());
+        clientConfigurationRepository.get(tenant, request.clientId());
     TokenRevocationRequestContext tokenRevocationRequestContext =
         new TokenRevocationRequestContext(
             request.clientSecretBasic(),
@@ -62,13 +63,13 @@ public class TokenRevocationHandler {
   OAuthToken find(TokenRevocationRequest request) {
     TokenRevocationRequestParameters parameters = request.toParameters();
     AccessTokenEntity accessTokenEntity = parameters.accessToken();
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenEntity);
+    Tenant tenant = request.tenant();
+    OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     if (oAuthToken.exists()) {
       return oAuthToken;
     } else {
       RefreshTokenEntity refreshTokenEntity = parameters.refreshToken();
-      return oAuthTokenRepository.find(tokenIssuer, refreshTokenEntity);
+      return oAuthTokenRepository.find(tenant, refreshTokenEntity);
     }
   }
 }

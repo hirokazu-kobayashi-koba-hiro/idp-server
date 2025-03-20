@@ -8,7 +8,7 @@ import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.AuthorizationResponse;
-import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.core.tenant.Tenant;
 
 /** OAuthApi */
 public class OAuthProtocolImpl implements OAuthProtocol {
@@ -51,11 +51,11 @@ public class OAuthProtocolImpl implements OAuthProtocol {
       OAuthSession session = oAuthRequestDelegate.findSession(context.sessionKey());
 
       if (requestHandler.canAuthorize(context, session, oAuthRequestDelegate)) {
-        TokenIssuer tokenIssuer = oAuthRequest.toTokenIssuer();
+        Tenant tenant = oAuthRequest.tenant();
         OAuthAuthorizeRequest oAuthAuthorizeRequest =
             new OAuthAuthorizeRequest(
+                    tenant,
                     context.authorizationRequestIdentifier().value(),
-                    tokenIssuer.value(),
                     session.user(),
                     session.authentication())
                 .setCustomProperties(session.customProperties());

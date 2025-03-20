@@ -10,7 +10,7 @@ import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
-import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.core.tenant.TenantIdentifier;
 
 public class ServerConfigurationDataSource implements ServerConfigurationRepository {
 
@@ -26,12 +26,12 @@ public class ServerConfigurationDataSource implements ServerConfigurationReposit
 
     String sqlTemplate =
         """
-                    INSERT INTO server_configuration (id, token_issuer, payload)
+                    INSERT INTO server_configuration (tenant_id, token_issuer, payload)
                     VALUES (?, ?, ?::jsonb);
                     """;
     String payload = jsonConverter.write(serverConfiguration);
     List<Object> params = new ArrayList<>();
-    params.add(serverConfiguration.identifier());
+    params.add(serverConfiguration.tenantId());
     params.add(serverConfiguration.tokenIssuer().value());
     params.add(payload);
 
@@ -39,20 +39,20 @@ public class ServerConfigurationDataSource implements ServerConfigurationReposit
   }
 
   @Override
-  public ServerConfiguration get(TokenIssuer tokenIssuer) {
+  public ServerConfiguration get(TenantIdentifier tenantIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                    SELECT token_issuer, payload
+                    SELECT tenant_id, token_issuer, payload
                     FROM server_configuration
-                    WHERE token_issuer = ?;
+                    WHERE tenant_id = ?;
                     """;
     Map<String, String> stringMap =
-        sqlExecutor.selectOne(sqlTemplate, List.of(tokenIssuer.value()));
+        sqlExecutor.selectOne(sqlTemplate, List.of(tenantIdentifier.value()));
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
       throw new ServerConfigurationNotFoundException(
-          String.format("unregistered server configuration (%s)", tokenIssuer.value()));
+          String.format("unregistered server configuration (%s)", tenantIdentifier.value()));
     }
 
     return ModelConverter.convert(stringMap);

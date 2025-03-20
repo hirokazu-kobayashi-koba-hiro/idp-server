@@ -10,6 +10,7 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ConfigurationInvalidException;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.type.extension.ExpiredAt;
 import org.idp.server.core.type.extension.GrantFlow;
 import org.idp.server.core.type.oauth.*;
@@ -21,7 +22,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       User user,
       Authentication authentication,
       GrantFlow grantFlow,
-      Scopes scopes,
+      AuthorizationGrant authorizationGrant,
       IdTokenClaims idTokenClaims,
       IdTokenCustomClaims customClaims,
       ServerConfiguration serverConfiguration,
@@ -34,10 +35,9 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
               authentication,
               grantFlow,
               customClaims,
-              scopes,
+              authorizationGrant,
               idTokenClaims,
               serverConfiguration.tokenIssuer(),
-              clientConfiguration.clientId(),
               serverConfiguration.idTokenDuration(),
               serverConfiguration.claimsSupported(),
               serverConfiguration.idTokenStrictMode());
@@ -69,10 +69,9 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       Authentication authentication,
       GrantFlow grantFlow,
       IdTokenCustomClaims idTokenCustomClaims,
-      Scopes scopes,
+      AuthorizationGrant authorizationGrant,
       IdTokenClaims idTokenClaims,
       TokenIssuer tokenIssuer,
-      ClientId clientId,
       long idTokenDuration,
       List<String> supportedClaims,
       boolean enableStrictMode) {
@@ -81,7 +80,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
     ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(idTokenDuration));
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("iss", tokenIssuer.value());
-    claims.put("aud", clientId.value());
+    claims.put("aud", authorizationGrant.clientIdValue());
     claims.put("exp", expiredAt.toEpochSecondWithUtc());
     claims.put("iat", now.toEpochSecond(SystemDateTime.zoneOffset));
 
@@ -110,7 +109,11 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
 
     IdTokenIndividualClaimsDecider idTokenIndividualClaimsDecider =
         new IdTokenIndividualClaimsDecider(
-            grantFlow, scopes, idTokenClaims, supportedClaims, enableStrictMode);
+            grantFlow,
+            authorizationGrant.scopes(),
+            idTokenClaims,
+            supportedClaims,
+            enableStrictMode);
     Map<String, Object> individualClaims =
         createIndividualClaims(user, idTokenIndividualClaimsDecider);
     claims.putAll(individualClaims);

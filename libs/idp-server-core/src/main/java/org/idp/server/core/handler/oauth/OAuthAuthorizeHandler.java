@@ -21,11 +21,11 @@ import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.*;
 import org.idp.server.core.oauth.validator.OAuthAuthorizeRequestValidator;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.oauth.ClientId;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** OAuthAuthorizeHandler */
 public class OAuthAuthorizeHandler {
@@ -54,7 +54,7 @@ public class OAuthAuthorizeHandler {
   public AuthorizationResponse handle(
       OAuthAuthorizeRequest request, OAuthRequestDelegate delegate) {
 
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
+    Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
     User user = request.user();
     Authentication authentication = request.authentication();
@@ -62,15 +62,15 @@ public class OAuthAuthorizeHandler {
 
     OAuthAuthorizeRequestValidator validator =
         new OAuthAuthorizeRequestValidator(
-            tokenIssuer, authorizationRequestIdentifier, user, authentication, customProperties);
+            authorizationRequestIdentifier, user, authentication, customProperties);
     validator.validate();
 
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.get(authorizationRequestIdentifier);
     ClientId clientId = authorizationRequest.clientId();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tokenIssuer, clientId);
+    ServerConfiguration serverConfiguration =
+        serverConfigurationRepository.get(tenant.identifier());
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, clientId);
 
     OAuthAuthorizeContext context =
         new OAuthAuthorizeContext(
@@ -98,7 +98,8 @@ public class OAuthAuthorizeHandler {
     }
 
     if (Objects.nonNull(delegate)) {
-      OAuthSessionKey oAuthSessionKey = new OAuthSessionKey(tokenIssuer.value(), clientId.value());
+      OAuthSessionKey oAuthSessionKey =
+          new OAuthSessionKey(tenant.identifierValue(), clientId.value());
       OAuthSession session =
           new OAuthSession(
               oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));

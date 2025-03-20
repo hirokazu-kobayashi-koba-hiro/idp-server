@@ -8,10 +8,10 @@ import org.idp.server.core.handler.userinfo.io.UserinfoRequest;
 import org.idp.server.core.handler.userinfo.io.UserinfoRequestResponse;
 import org.idp.server.core.handler.userinfo.io.UserinfoRequestStatus;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.type.oauth.AccessTokenEntity;
-import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.core.userinfo.UserinfoClaimsCreator;
 import org.idp.server.core.userinfo.UserinfoResponse;
 import org.idp.server.core.userinfo.verifier.UserinfoVerifier;
@@ -33,10 +33,11 @@ public class UserinfoHandler {
 
   public UserinfoRequestResponse handle(UserinfoRequest request, UserinfoDelegate delegate) {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenEntity);
-    User user = delegate.findUser(oAuthToken.tokenIssuer(), oAuthToken.subject());
+    Tenant tenant = request.tenant();
+    ServerConfiguration serverConfiguration =
+        serverConfigurationRepository.get(tenant.identifier());
+    OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
+    User user = delegate.findUser(tenant, oAuthToken.subject());
     UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken, request.toClientCert(), user);
     verifier.verify();
 

@@ -4,6 +4,7 @@ import java.util.Map;
 import org.idp.server.core.handler.discovery.DiscoveryHandler;
 import org.idp.server.core.handler.discovery.io.JwksRequestResponse;
 import org.idp.server.core.handler.discovery.io.JwksRequestStatus;
+import org.idp.server.core.tenant.TenantIdentifier;
 
 public class JwksProtocolImpl implements JwksProtocol {
 
@@ -13,9 +14,9 @@ public class JwksProtocolImpl implements JwksProtocol {
     this.discoveryHandler = discoveryHandler;
   }
 
-  public JwksRequestResponse getJwks(String issuer) {
+  public JwksRequestResponse getJwks(TenantIdentifier tenantIdentifier) {
     try {
-      return discoveryHandler.getJwks(issuer);
+      return discoveryHandler.getJwks(tenantIdentifier);
     } catch (Exception exception) {
       return new JwksRequestResponse(JwksRequestStatus.SERVER_ERROR, Map.of());
     }

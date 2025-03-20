@@ -7,6 +7,7 @@ import org.idp.server.core.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.Interval;
 import org.idp.server.core.type.ciba.UserCode;
 import org.idp.server.core.type.mtls.ClientCert;
@@ -131,7 +132,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
   }
 
   public ClientId clientId() {
-    return clientConfiguration.clientId();
+    return backchannelAuthenticationRequest.clientId();
   }
 
   public Scopes scopes() {
@@ -160,5 +161,9 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   public boolean isSupportedGrantTypeWithClient(GrantType grantType) {
     return clientConfiguration.isSupportedGrantType(grantType);
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return serverConfiguration.tenantIdentifier();
   }
 }

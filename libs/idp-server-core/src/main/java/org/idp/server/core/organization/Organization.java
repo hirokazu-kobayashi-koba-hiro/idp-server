@@ -13,9 +13,9 @@ public class Organization implements JsonReadable {
   public Organization() {}
 
   public Organization(
-          OrganizationIdentifier identifier,
-          OrganizationName name,
-          OrganizationDescription description) {
+      OrganizationIdentifier identifier,
+      OrganizationName name,
+      OrganizationDescription description) {
     this(identifier, name, description, new AssignedTenants());
   }
 

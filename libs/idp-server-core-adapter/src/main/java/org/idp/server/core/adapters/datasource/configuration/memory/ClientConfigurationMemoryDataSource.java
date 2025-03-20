@@ -8,8 +8,9 @@ import org.idp.server.core.basic.resource.ResourceReadable;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
+import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.ClientId;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** ClientConfigurationMemoryDataSource */
 public class ClientConfigurationMemoryDataSource
@@ -25,13 +26,14 @@ public class ClientConfigurationMemoryDataSource
   public void register(ClientConfiguration clientConfiguration) {
     MultiClientIdentifier multiClientIdentifier =
         new MultiClientIdentifier(
-            clientConfiguration.tokenIssuer(), clientConfiguration.clientId());
+            clientConfiguration.tenantIdentifier(), clientConfiguration.clientId());
     map.put(multiClientIdentifier, clientConfiguration);
   }
 
   @Override
-  public ClientConfiguration get(TokenIssuer tokenIssuer, ClientId clientId) {
-    MultiClientIdentifier multiClientIdentifier = new MultiClientIdentifier(tokenIssuer, clientId);
+  public ClientConfiguration get(Tenant tenant, ClientId clientId) {
+    MultiClientIdentifier multiClientIdentifier =
+        new MultiClientIdentifier(tenant.identifier(), clientId);
     ClientConfiguration clientConfiguration = map.get(multiClientIdentifier);
     if (Objects.isNull(clientConfiguration)) {
       throw new ClientConfigurationNotFoundException(
@@ -41,10 +43,11 @@ public class ClientConfigurationMemoryDataSource
   }
 
   @Override
-  public List<ClientConfiguration> find(TokenIssuer tokenIssuer, int limit, int offset) {
+  public List<ClientConfiguration> find(Tenant tenant, int limit, int offset) {
     ArrayList<ClientConfiguration> clientConfigurations = new ArrayList<>(map.values());
     return clientConfigurations.stream()
-        .filter(clientConfiguration -> clientConfiguration.tokenIssuer().equals(tokenIssuer))
+        .filter(
+            clientConfiguration -> clientConfiguration.tenantId().equals(tenant.identifierValue()))
         .toList();
   }
 
@@ -55,10 +58,10 @@ public class ClientConfigurationMemoryDataSource
         String json = read(path);
         ClientConfiguration clientConfiguration =
             jsonConverter.read(json, ClientConfiguration.class);
-        TokenIssuer tokenIssuer = clientConfiguration.tokenIssuer();
+        TenantIdentifier tenantIdentifier = clientConfiguration.tenantIdentifier();
         ClientId clientId = clientConfiguration.clientId();
         MultiClientIdentifier multiClientIdentifier =
-            new MultiClientIdentifier(tokenIssuer, clientId);
+            new MultiClientIdentifier(tenantIdentifier, clientId);
         map.put(multiClientIdentifier, clientConfiguration);
       }
     } catch (IOException e) {

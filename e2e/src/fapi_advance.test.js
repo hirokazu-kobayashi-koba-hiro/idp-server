@@ -2,7 +2,8 @@ import { describe, expect, it, xit } from "@jest/globals";
 
 import { getJwks, inspectToken, requestToken } from "./api/oauthClient";
 import {
-  clientSecretBasicClient, clientSecretPostClient, privateKeyJwtClient, publicClient,
+  clientSecretPostClient,
+  publicClient,
   selfSignedTlsAuthClient,
   serverConfig,
 } from "./testConfig";
@@ -10,8 +11,6 @@ import { requestAuthorizations, certThumbprint } from "./oauth";
 import { createJwtWithPrivateKey, generateJti, verifyAndDecodeJwt } from "./lib/jose";
 import {
   calculateCodeChallengeWithS256,
-  createClientAssertion,
-  createInvalidClientAssertionWithPrivateKey,
 } from "./lib/oauth";
 import { toEpocTime } from "./lib/util";
 
@@ -56,6 +55,8 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
       jwt: authorizationResponse.response,
       jwks: jwksResponse.data,
     });
+
+    console.log(decodedResponse)
 
     const tokenResponse = await requestToken({
       endpoint: serverConfig.tokenEndpoint,

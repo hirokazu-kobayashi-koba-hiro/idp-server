@@ -44,7 +44,7 @@ public class AuthorizationResponseTokenIdTokenCreator
             context.user(),
             context.authentication(),
             GrantFlow.oidc_implicit,
-            context.scopes(),
+            context.toAuthorizationGranted(),
             context.idTokenClaims(),
             idTokenCustomClaims,
             context.serverConfiguration(),

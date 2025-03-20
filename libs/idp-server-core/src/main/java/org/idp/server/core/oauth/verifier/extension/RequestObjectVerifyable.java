@@ -7,7 +7,6 @@ import org.idp.server.core.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.exception.RequestObjectInvalidException;
-import org.idp.server.core.type.oauth.ClientId;
 
 public interface RequestObjectVerifyable {
 
@@ -46,8 +45,8 @@ public interface RequestObjectVerifyable {
           "invalid_request_object",
           "request object is invalid, must contains iss claim in jwt payload");
     }
-    ClientId clientId = clientConfiguration.clientId();
-    if (!claims.getIss().equals(clientId.value())) {
+    if (!claims.getIss().equals(clientConfiguration.clientIdValue())
+        && !claims.getIss().equals(clientConfiguration.clientIdAlias())) {
       throw new RequestObjectInvalidException(
           "invalid_request_object", "request object is invalid, iss claim must be client_id");
     }

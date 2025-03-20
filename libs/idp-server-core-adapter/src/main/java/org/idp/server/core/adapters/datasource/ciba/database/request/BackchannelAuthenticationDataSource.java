@@ -23,13 +23,13 @@ public class BackchannelAuthenticationDataSource
     String sqlTemplate =
         """
                 INSERT INTO public.backchannel_authentication_request
-                (id, token_issuer, profile, delivery_mode, scopes, client_id, id_token_hint, login_hint, login_hint_token, acr_values, user_code, client_notification_token, binding_message, requested_expiry, request_object, authorization_details)
+                (id, tenant_id, profile, delivery_mode, scopes, client_id, id_token_hint, login_hint, login_hint_token, acr_values, user_code, client_notification_token, binding_message, requested_expiry, request_object, authorization_details)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb);
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(request.identifier().value());
-    params.add(request.tokenIssuer().value());
+    params.add(request.tenantIdentifier().value());
     params.add(request.profile().name());
     params.add(request.deliveryMode().name());
     params.add(request.scopes().toStringValues());
@@ -95,7 +95,7 @@ public class BackchannelAuthenticationDataSource
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                        SELECT id, token_issuer, profile, delivery_mode, scopes, client_id, id_token_hint, login_hint, login_hint_token, acr_values, user_code, client_notification_token, binding_message, requested_expiry, request_object, authorization_details
+                        SELECT id, tenant_id, profile, delivery_mode, scopes, client_id, id_token_hint, login_hint, login_hint_token, acr_values, user_code, client_notification_token, binding_message, requested_expiry, request_object, authorization_details
                         FROM backchannel_authentication_request
                         WHERE id = ?;
                         """;

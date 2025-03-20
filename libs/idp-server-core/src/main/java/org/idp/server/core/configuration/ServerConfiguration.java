@@ -2,13 +2,14 @@ package org.idp.server.core.configuration;
 
 import java.util.*;
 import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.GrantType;
 import org.idp.server.core.type.oauth.ResponseType;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
 /** ServerConfiguration */
 public class ServerConfiguration implements JsonReadable {
-  String identifier;
+  String tenantId;
   String issuer;
   String authorizationEndpoint;
   String tokenEndpoint = "";
@@ -75,17 +76,17 @@ public class ServerConfiguration implements JsonReadable {
 
   public ServerConfiguration() {}
 
-  public String identifier() {
-    return identifier;
+  public String tenantId() {
+    return tenantId;
   }
 
   // TODO
-  public void setIdentifier(String identifier) {
-    this.identifier = identifier;
+  public void setTenantId(String tenantId) {
+    this.tenantId = tenantId;
   }
 
-  public ServerIdentifier serverIdentifier() {
-    return new ServerIdentifier(identifier);
+  public TenantIdentifier tenantIdentifier() {
+    return new TenantIdentifier(tenantId);
   }
 
   public TokenIssuer tokenIssuer() {

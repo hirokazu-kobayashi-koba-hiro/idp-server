@@ -14,6 +14,7 @@ import org.idp.server.core.handler.token.io.TokenRequestStatus;
 import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.core.token.TokenRequestContext;
@@ -25,7 +26,6 @@ import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.mtls.ClientCert;
 import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecretBasic;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class TokenRequestHandler {
 
@@ -61,7 +61,7 @@ public class TokenRequestHandler {
   public TokenRequestResponse handle(
       TokenRequest tokenRequest,
       PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
-    TokenIssuer tokenIssuer = tokenRequest.toTokenIssuer();
+    Tenant tenant = tokenRequest.tenant();
     TokenRequestParameters parameters = tokenRequest.toParameters();
     TokenRequestValidator baseValidator = new TokenRequestValidator(parameters);
     baseValidator.validate();
@@ -70,12 +70,13 @@ public class TokenRequestHandler {
     ClientCert clientCert = tokenRequest.toClientCert();
     ClientId clientId = tokenRequest.clientId();
     CustomProperties customProperties = tokenRequest.toCustomProperties();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tokenIssuer, clientId);
+    ServerConfiguration serverConfiguration =
+        serverConfigurationRepository.get(tenant.identifier());
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, clientId);
 
     TokenRequestContext tokenRequestContext =
         new TokenRequestContext(
+            tenant,
             clientSecretBasic,
             clientCert,
             parameters,

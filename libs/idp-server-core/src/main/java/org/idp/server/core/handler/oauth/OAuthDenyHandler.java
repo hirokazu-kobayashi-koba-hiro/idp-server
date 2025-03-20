@@ -11,6 +11,7 @@ import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.*;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.oauth.*;
 
 public class OAuthDenyHandler {
@@ -29,15 +30,15 @@ public class OAuthDenyHandler {
   }
 
   public OAuthDenyResponse handle(OAuthDenyRequest request) {
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
+    Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
 
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.get(authorizationRequestIdentifier);
     ClientId clientId = authorizationRequest.clientId();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tokenIssuer, clientId);
+    ServerConfiguration serverConfiguration =
+        serverConfigurationRepository.get(tenant.identifier());
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, clientId);
     AuthorizationDenyErrorResponseCreator authorizationDenyErrorResponseCreator =
         new AuthorizationDenyErrorResponseCreator(
             authorizationRequest, request.denyReason(), serverConfiguration, clientConfiguration);

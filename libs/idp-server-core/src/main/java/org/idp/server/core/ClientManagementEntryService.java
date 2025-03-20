@@ -29,20 +29,20 @@ public class ClientManagementEntryService implements ClientManagementApi {
   public String register(String json) {
 
     Tenant tenant = tenantRepository.getAdmin();
-    return clientConfigurationHandler.handleRegistration(tenant.tokenIssuer(), json);
+    return clientConfigurationHandler.handleRegistration(json);
   }
 
   public String register(TenantIdentifier tenantIdentifier, String body) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    return clientConfigurationHandler.handleRegistration(tenant.tokenIssuer(), body);
+    return clientConfigurationHandler.handleRegistrationFor(body);
   }
 
   public ClientConfigurationManagementListResponse find(
       TenantIdentifier tenantIdentifier, int limit, int offset) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    return clientConfigurationHandler.handleFinding(tenant.tokenIssuer(), limit, offset);
+    return clientConfigurationHandler.handleFinding(tenant, limit, offset);
   }
 
   public ClientConfigurationManagementResponse get(
@@ -50,7 +50,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
     try {
       Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-      return clientConfigurationHandler.handleGetting(tenant.tokenIssuer(), clientId);
+      return clientConfigurationHandler.handleGetting(tenant, clientId);
     } catch (Exception e) {
 
       return errorHandler.handle(e);

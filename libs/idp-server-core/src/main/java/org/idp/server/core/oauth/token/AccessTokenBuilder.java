@@ -2,6 +2,7 @@ package org.idp.server.core.oauth.token;
 
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.mtls.ClientCertificationThumbprint;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CreatedAt;
 import org.idp.server.core.type.extension.ExpiredAt;
 import org.idp.server.core.type.oauth.AccessTokenEntity;
@@ -10,6 +11,7 @@ import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.core.type.oauth.TokenType;
 
 public class AccessTokenBuilder {
+  TenantIdentifier tenantIdentifier;
   TokenIssuer tokenIssuer;
   TokenType tokenType;
   AccessTokenEntity accessTokenEntity;
@@ -19,8 +21,13 @@ public class AccessTokenBuilder {
   ExpiresIn expiresIn;
   ExpiredAt expiredAt;
 
-  public AccessTokenBuilder(TokenIssuer tokenIssuer) {
+  public AccessTokenBuilder(TenantIdentifier tenantIdentifier) {
+    this.tenantIdentifier = tenantIdentifier;
+  }
+
+  public AccessTokenBuilder add(TokenIssuer tokenIssuer) {
     this.tokenIssuer = tokenIssuer;
+    return this;
   }
 
   public AccessTokenBuilder add(TokenType tokenType) {
@@ -60,6 +67,7 @@ public class AccessTokenBuilder {
 
   public AccessToken build() {
     return new AccessToken(
+        tenantIdentifier,
         tokenIssuer,
         tokenType,
         accessTokenEntity,

@@ -29,8 +29,7 @@ public class RefreshTokenGrantService
     RefreshTokenEntity refreshTokenEntity = context.refreshToken();
     ServerConfiguration serverConfiguration = context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
-    OAuthToken oAuthToken =
-        oAuthTokenRepository.find(serverConfiguration.tokenIssuer(), refreshTokenEntity);
+    OAuthToken oAuthToken = oAuthTokenRepository.find(context.tenant(), refreshTokenEntity);
 
     RefreshTokenVerifier verifier = new RefreshTokenVerifier(context, oAuthToken);
     verifier.verify();

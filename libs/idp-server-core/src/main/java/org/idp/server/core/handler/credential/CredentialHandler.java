@@ -9,10 +9,10 @@ import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.handler.credential.io.*;
 import org.idp.server.core.oauth.token.AccessToken;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.type.oauth.AccessTokenEntity;
-import org.idp.server.core.type.oauth.TokenIssuer;
 import org.idp.server.core.verifiablecredential.*;
 import org.idp.server.core.verifiablecredential.VerifiableCredential;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreators;
@@ -47,9 +47,10 @@ public class CredentialHandler {
   public CredentialResponse handleRequest(
       CredentialRequest request, VerifiableCredentialDelegate delegate) {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenEntity);
+    Tenant tenant = request.tenant();
+    ServerConfiguration serverConfiguration =
+        serverConfigurationRepository.get(tenant.identifier());
+    OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     CredentialRequestParameters parameters = request.toParameters();
 
     VerifiableCredentialVerifier verifier =
@@ -58,10 +59,10 @@ public class CredentialHandler {
     verifier.verify();
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tokenIssuer, accessToken.clientId());
+        clientConfigurationRepository.get(tenant, accessToken.clientId());
     CredentialDelegateResponse credentialDelegateResponse =
         delegate.getCredential(
-            tokenIssuer,
+            tenant,
             accessToken.subject(),
             accessToken.authorizationDetails().credentialDefinitions());
     VerifiableCredentialResponseBuilder builder =
@@ -92,9 +93,10 @@ public class CredentialHandler {
   public BatchCredentialResponse handleBatchRequest(
       BatchCredentialRequest request, VerifiableCredentialDelegate delegate) {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenEntity);
+    Tenant tenant = request.tenant();
+    ServerConfiguration serverConfiguration =
+        serverConfigurationRepository.get(tenant.identifier());
+    OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     BatchCredentialRequestParameters parameters = request.toParameters();
 
     BatchVerifiableCredentialVerifier verifier =
@@ -103,7 +105,7 @@ public class CredentialHandler {
     verifier.verify();
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tokenIssuer, accessToken.clientId());
+        clientConfigurationRepository.get(tenant, accessToken.clientId());
     BatchCredentialRequests batchCredentialRequests = parameters.toBatchCredentialRequest();
 
     // FIXME
@@ -113,7 +115,7 @@ public class CredentialHandler {
     for (VerifiableCredentialRequest batchCredentialRequest : batchCredentialRequests) {
       CredentialDelegateResponse credentialDelegateResponse =
           delegate.getCredential(
-              tokenIssuer,
+              tenant,
               accessToken.subject(),
               accessToken.authorizationDetails().credentialDefinitions());
 
@@ -153,9 +155,10 @@ public class CredentialHandler {
   public DeferredCredentialResponse handleDeferredRequest(
       DeferredCredentialRequest request, VerifiableCredentialDelegate delegate) {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
-    TokenIssuer tokenIssuer = request.toTokenIssuer();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tokenIssuer);
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tokenIssuer, accessTokenEntity);
+    Tenant tenant = request.tenant();
+    ServerConfiguration serverConfiguration =
+        serverConfigurationRepository.get(tenant.identifier());
+    OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     DeferredCredentialRequestParameters parameters = request.toParameters();
 
     VerifiableCredentialTransaction verifiableCredentialTransaction =
@@ -171,10 +174,10 @@ public class CredentialHandler {
 
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tokenIssuer, accessToken.clientId());
+        clientConfigurationRepository.get(tenant, accessToken.clientId());
     CredentialDelegateResponse credentialDelegateResponse =
         delegate.getCredential(
-            tokenIssuer,
+            tenant,
             accessToken.subject(),
             accessToken.authorizationDetails().credentialDefinitions());
 

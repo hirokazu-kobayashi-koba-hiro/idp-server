@@ -39,7 +39,6 @@ public class AssignedTenants implements Iterable<Tenant> {
       row.put("id", tenant.identifier().value());
       row.put("name", tenant.name().value());
       row.put("type", tenant.type().name());
-      row.put("issuer", tenant.issuer());
       result.add(row);
     }
     return result;

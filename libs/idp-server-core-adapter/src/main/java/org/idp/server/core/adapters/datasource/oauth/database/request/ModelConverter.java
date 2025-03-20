@@ -11,6 +11,7 @@ import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.*;
 import org.idp.server.core.type.pkce.CodeChallenge;
@@ -22,7 +23,7 @@ class ModelConverter {
   static AuthorizationRequest convert(Map<String, String> stringMap) {
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(new AuthorizationRequestIdentifier(stringMap.get("id")));
-    builder.add(new TokenIssuer(stringMap.get("token_issuer")));
+    builder.add(new TenantIdentifier(stringMap.get("tenant_id")));
     builder.add(AuthorizationProfile.valueOf(stringMap.get("profile")));
     builder.add(new Scopes(stringMap.get("scopes")));
     builder.add(ResponseType.valueOf(stringMap.get("response_type")));

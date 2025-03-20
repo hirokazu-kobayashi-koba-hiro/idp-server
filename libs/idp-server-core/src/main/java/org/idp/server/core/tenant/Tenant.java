@@ -4,26 +4,22 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.basic.json.JsonReadable;
-import org.idp.server.core.configuration.ServerIdentifier;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class Tenant implements JsonReadable {
   TenantIdentifier identifier;
   TenantName name;
   TenantType type;
-  TenantServerAttribute serverAttribute;
+  TenantDomain domain;
 
   public Tenant() {}
 
   public Tenant(
-      TenantIdentifier identifier,
-      TenantName name,
-      TenantType type,
-      TenantServerAttribute serverAttribute) {
+      TenantIdentifier identifier, TenantName name, TenantType type, TenantDomain domain) {
     this.identifier = identifier;
     this.name = name;
     this.type = type;
-    this.serverAttribute = serverAttribute;
+    this.domain = domain;
   }
 
   public TenantIdentifier identifier() {
@@ -40,22 +36,6 @@ public class Tenant implements JsonReadable {
 
   public TenantType type() {
     return type;
-  }
-
-  public TenantServerAttribute serverAttribute() {
-    return serverAttribute;
-  }
-
-  public ServerIdentifier serverIdentifier() {
-    return serverAttribute.serverIdentifier();
-  }
-
-  public String issuer() {
-    return serverAttribute.tokenIssuerValue();
-  }
-
-  public TokenIssuer tokenIssuer() {
-    return serverAttribute.tokenIssuer();
   }
 
   public boolean isAdmin() {
@@ -75,7 +55,18 @@ public class Tenant implements JsonReadable {
     map.put("id", identifier.value());
     map.put("name", name.value());
     map.put("type", type.name());
-    map.put("attributes", serverAttribute.toMap());
     return map;
+  }
+
+  public TokenIssuer tokenIssuer() {
+    return domain.toTokenIssuer();
+  }
+
+  public String tokenIssuerValue() {
+    return tokenIssuer().value();
+  }
+
+  public TenantDomain domain() {
+    return domain;
   }
 }
