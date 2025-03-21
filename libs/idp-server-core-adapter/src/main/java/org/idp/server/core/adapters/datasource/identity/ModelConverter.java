@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.user;
+package org.idp.server.core.adapters.datasource.identity;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

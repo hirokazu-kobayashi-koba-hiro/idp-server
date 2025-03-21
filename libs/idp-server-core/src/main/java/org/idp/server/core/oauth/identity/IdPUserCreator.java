@@ -1,7 +1,6 @@
-package org.idp.server.core.user;
+package org.idp.server.core.oauth.identity;
 
 import java.util.UUID;
-import org.idp.server.core.oauth.identity.User;
 
 public class IdPUserCreator {
 

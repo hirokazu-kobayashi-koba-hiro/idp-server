@@ -5,8 +5,8 @@ import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
 import org.idp.server.core.handler.federation.io.FederationRequest;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.protocol.FederationProtocol;
-import org.idp.server.core.user.UserRepository;
 
 public class FederationService implements FederationDelegate {
 

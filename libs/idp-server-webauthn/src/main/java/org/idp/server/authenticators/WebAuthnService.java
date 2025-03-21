@@ -12,13 +12,13 @@ import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.oauth.interaction.OAuthInteractorUnSupportedException;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.user.UserRepository;
 
 public class WebAuthnService implements OAuthUserInteractor {
 

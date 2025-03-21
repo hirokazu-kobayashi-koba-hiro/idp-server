@@ -10,6 +10,7 @@ import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionRespo
 import org.idp.server.core.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.protocol.TokenIntrospectionApi;
 import org.idp.server.core.protocol.TokenProtocol;
 import org.idp.server.core.protocol.TokenRevocationProtocol;
@@ -19,7 +20,6 @@ import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.core.type.oauth.Password;
 import org.idp.server.core.type.oauth.Username;
-import org.idp.server.core.user.UserRepository;
 
 @Transactional
 public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDelegate {

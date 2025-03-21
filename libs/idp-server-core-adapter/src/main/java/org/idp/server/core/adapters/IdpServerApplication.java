@@ -11,6 +11,9 @@ import org.idp.server.core.adapters.datasource.credential.database.VerifiableCre
 import org.idp.server.core.adapters.datasource.federation.FederatableIdProviderConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.federation.FederationSessionDataSource;
 import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedMemoryDataSource;
+import org.idp.server.core.adapters.datasource.identity.PermissionCommandDataSource;
+import org.idp.server.core.adapters.datasource.identity.RoleCommandDataSource;
+import org.idp.server.core.adapters.datasource.identity.UserDataSource;
 import org.idp.server.core.adapters.datasource.oauth.database.code.AuthorizationCodeGrantDataSource;
 import org.idp.server.core.adapters.datasource.oauth.database.request.AuthorizationRequestDataSource;
 import org.idp.server.core.adapters.datasource.organization.OrganizationDataSource;
@@ -18,7 +21,6 @@ import org.idp.server.core.adapters.datasource.sharedsignal.EventDataSource;
 import org.idp.server.core.adapters.datasource.sharedsignal.SharedSignalFrameworkConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.tenant.TenantDataSource;
 import org.idp.server.core.adapters.datasource.token.database.OAuthTokenDataSource;
-import org.idp.server.core.adapters.datasource.user.UserDataSource;
 import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialBlockCertClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialJwtClient;
@@ -48,6 +50,10 @@ import org.idp.server.core.handler.tokenintrospection.TokenIntrospectionHandler;
 import org.idp.server.core.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.core.handler.userinfo.UserinfoHandler;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
+import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
+import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
+import org.idp.server.core.oauth.identity.UserAuthenticationService;
+import org.idp.server.core.oauth.identity.UserRegistrationService;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractors;
@@ -55,7 +61,6 @@ import org.idp.server.core.protocol.*;
 import org.idp.server.core.sharedsignal.EventPublisher;
 import org.idp.server.core.sharedsignal.OAuthFlowEventPublisher;
 import org.idp.server.core.type.verifiablecredential.Format;
-import org.idp.server.core.user.*;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreator;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreators;
 
@@ -107,6 +112,8 @@ public class IdpServerApplication {
     UserDataSource userDataSource = new UserDataSource();
     OrganizationDataSource organizationDataSource = new OrganizationDataSource();
     TenantDataSource tenantDataSource = new TenantDataSource();
+    RoleCommandDataSource roleCommandDataSource = new RoleCommandDataSource();
+    PermissionCommandDataSource permissionCommandDataSource = new PermissionCommandDataSource();
 
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
@@ -247,6 +254,8 @@ public class IdpServerApplication {
                 organizationDataSource,
                 tenantDataSource,
                 userDataSource,
+                permissionCommandDataSource,
+                roleCommandDataSource,
                 serverConfigurationDataSource,
                 passwordEncodeDelegation),
             IdpServerStarterApi.class);

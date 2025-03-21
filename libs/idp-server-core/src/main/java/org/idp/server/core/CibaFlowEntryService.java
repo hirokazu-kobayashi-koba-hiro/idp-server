@@ -8,12 +8,12 @@ import org.idp.server.core.ciba.UserCriteria;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.handler.ciba.io.*;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.protocol.CibaProtocol;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.ciba.UserCode;
-import org.idp.server.core.user.UserRepository;
 
 @Transactional
 public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {

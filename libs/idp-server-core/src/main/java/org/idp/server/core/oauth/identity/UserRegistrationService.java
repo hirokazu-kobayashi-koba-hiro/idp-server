@@ -1,10 +1,9 @@
-package org.idp.server.core.user;
+package org.idp.server.core.oauth.identity;
 
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
-import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractor;

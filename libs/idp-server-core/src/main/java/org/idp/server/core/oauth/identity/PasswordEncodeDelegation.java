@@ -1,4 +1,4 @@
-package org.idp.server.core.user;
+package org.idp.server.core.oauth.identity;
 
 public interface PasswordEncodeDelegation {
 

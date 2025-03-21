@@ -38,6 +38,17 @@ CREATE TABLE server_configuration
     updated_at   TIMESTAMP DEFAULT now() NOT NULL
 );
 
+CREATE TABLE permission
+(
+    id          CHAR(36) NOT NULL PRIMARY KEY ,
+    tenant_id   CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    name        VARCHAR(255)                       NOT NULL UNIQUE,
+    description TEXT,
+    created_at  TIMESTAMP            DEFAULT now() NOT NULL,
+    updated_at  TIMESTAMP            DEFAULT now() NOT NULL,
+    CONSTRAINT uk_tenant_permission UNIQUE (tenant_id, name)
+);
+
 CREATE TABLE role
 (
     id          CHAR(36)                NOT NULL PRIMARY KEY,
@@ -50,6 +61,29 @@ CREATE TABLE role
 );
 
 CREATE INDEX idx_role_tenant_name ON role (tenant_id, name);
+
+CREATE TABLE role_permission
+(
+    id            CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+    role_id       CHAR(36)                           NOT NULL REFERENCES role (id) ON DELETE CASCADE,
+    permission_id CHAR(36)                           NOT NULL REFERENCES permission (id) ON DELETE CASCADE,
+    created_at    TIMESTAMP            DEFAULT now() NOT NULL,
+    UNIQUE (role_id, permission_id)
+);
+
+CREATE VIEW role_permission_view AS
+SELECT
+    rp.id                         AS id,
+    t.name                        AS tenant_name,
+    r.name                        AS role_name,
+    p.name                        AS permission_name,
+    p.description                 AS permission_description,
+    rp.created_at                 AS assigned_at
+FROM
+    role_permission rp
+        JOIN role r ON rp.role_id = r.id
+        JOIN permission p ON rp.permission_id = p.id
+        JOIN tenant t ON r.tenant_id = t.id;
 
 CREATE TABLE idp_user
 (
@@ -99,6 +133,16 @@ CREATE TABLE idp_user_roles
 );
 
 CREATE INDEX idx_idp_user_roles_user_role ON idp_user_roles (user_id, role_id);
+
+CREATE TABLE user_permission_override
+(
+    id            CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id       CHAR(36)                           NOT NULL REFERENCES idp_user (id) ON DELETE CASCADE,
+    permission_id CHAR(36)                           NOT NULL REFERENCES permission (id) ON DELETE CASCADE,
+    granted       BOOLEAN                            NOT NULL,
+    created_at    TIMESTAMP            DEFAULT now() NOT NULL,
+    UNIQUE (user_id, permission_id)
+);
 
 
 CREATE TABLE organization_members

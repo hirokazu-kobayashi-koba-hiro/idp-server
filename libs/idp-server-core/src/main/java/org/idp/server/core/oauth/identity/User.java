@@ -394,6 +394,7 @@ public class User implements JsonReadable, Serializable {
   public HashMap<String, Object> multiFactorAuthentication() {
     return multiFactorAuthentication;
   }
+
   public User setMultiFactorAuthentication(HashMap<String, Object> multiFactorAuthentication) {
     this.multiFactorAuthentication = multiFactorAuthentication;
     return this;
@@ -440,7 +441,8 @@ public class User implements JsonReadable, Serializable {
     if (hasAddress()) map.put("address", address.toMap());
     if (hasCustomProperties()) map.put("custom_properties", new HashMap<>(customProperties));
     if (hasHashedPassword()) map.put("hashed_password", "****");
-    if (hasMultiFactorAuthentication()) map.put("multi_factor_authentication", multiFactorAuthentication);
+    if (hasMultiFactorAuthentication())
+      map.put("multi_factor_authentication", multiFactorAuthentication);
     map.put("enabled", enabled);
 
     return map;
@@ -454,5 +456,4 @@ public class User implements JsonReadable, Serializable {
   public String rawPassword() {
     return rawPassword;
   }
-
 }

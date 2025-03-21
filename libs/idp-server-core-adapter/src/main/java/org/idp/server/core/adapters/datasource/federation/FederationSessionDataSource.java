@@ -6,7 +6,6 @@ import java.util.Objects;
 import org.idp.server.core.federation.FederationSession;
 import org.idp.server.core.federation.FederationSessionRepository;
 import org.idp.server.core.type.oauth.State;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class FederationSessionDataSource implements FederationSessionRepository {
 

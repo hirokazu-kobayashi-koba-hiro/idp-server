@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.user;
+package org.idp.server.core.adapters.datasource.identity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,14 +9,15 @@ import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.oauth.identity.UserNotFoundException;
+import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.user.UserNotFoundException;
-import org.idp.server.core.user.UserRepository;
 
 public class UserDataSource implements UserRepository {
 
   JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
-  String selectSql = "SELECT id, provider_id, provider_user_id, provider_user_original_payload, name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, email, email_verified, gender, birthdate, zoneinfo, locale, phone_number, phone_number_verified, address, custom_properties, credentials, hashed_password, multi_factor_authentication, enabled, created_at, updated_at \n";
+  String selectSql =
+      "SELECT id, provider_id, provider_user_id, provider_user_original_payload, name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, email, email_verified, gender, birthdate, zoneinfo, locale, phone_number, phone_number_verified, address, custom_properties, credentials, hashed_password, multi_factor_authentication, enabled, created_at, updated_at \n";
 
   @Override
   public void register(Tenant tenant, User user) {
@@ -88,8 +89,9 @@ public class UserDataSource implements UserRepository {
   @Override
   public User findBy(Tenant tenant, String email, String providerId) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
-    String sqlTemplate = selectSql +
-        """
+    String sqlTemplate =
+        selectSql
+            + """
                 FROM idp_user
                 WHERE tenant_id = ?
                 AND email = ?
@@ -112,8 +114,9 @@ public class UserDataSource implements UserRepository {
   @Override
   public List<User> findList(Tenant tenant, int limit, int offset) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
-    String sqlTemplate = selectSql +
-        """
+    String sqlTemplate =
+        selectSql
+            + """
                 FROM idp_user
                 WHERE tenant_id = ?
                 limit ?
@@ -171,8 +174,9 @@ public class UserDataSource implements UserRepository {
   @Override
   public User findByProvider(String tenantId, String providerId, String providerUserId) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
-    String sqlTemplate = selectSql +
-        """
+    String sqlTemplate =
+        selectSql
+            + """
                 FROM idp_user
                 WHERE
                 tenant_id = ?

@@ -2,7 +2,6 @@ package org.idp.server.core.handler.federation.io;
 
 import java.util.Map;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class FederationRequest {
 

@@ -1,7 +1,6 @@
-package org.idp.server.core.user;
+package org.idp.server.core.oauth.identity;
 
 import java.util.List;
-import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.tenant.Tenant;
 
 public interface UserRepository {

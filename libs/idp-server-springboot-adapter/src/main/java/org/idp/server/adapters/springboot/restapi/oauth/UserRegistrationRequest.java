@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.restapi.oauth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.idp.server.core.user.UserRegistration;
+import org.idp.server.core.oauth.identity.UserRegistration;
 
 public class UserRegistrationRequest {
 

@@ -16,6 +16,8 @@ import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.oauth.identity.UserRegistrationService;
+import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.oauth.interaction.*;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
@@ -26,8 +28,6 @@ import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.extension.OAuthDenyReason;
 import org.idp.server.core.type.extension.Pairs;
-import org.idp.server.core.user.UserRegistrationService;
-import org.idp.server.core.user.UserRepository;
 
 @Transactional
 public class OAuthFlowEntryService implements OAuthFlowApi {

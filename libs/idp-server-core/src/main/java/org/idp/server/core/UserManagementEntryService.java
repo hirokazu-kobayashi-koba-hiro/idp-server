@@ -4,10 +4,10 @@ import java.util.List;
 import org.idp.server.core.api.UserManagementApi;
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
-import org.idp.server.core.user.UserRepository;
 
 // TODO
 @Transactional

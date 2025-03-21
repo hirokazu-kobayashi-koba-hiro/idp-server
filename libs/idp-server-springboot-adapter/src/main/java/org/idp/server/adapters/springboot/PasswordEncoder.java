@@ -1,6 +1,6 @@
 package org.idp.server.adapters.springboot;
 
-import org.idp.server.core.user.PasswordEncodeDelegation;
+import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 public class PasswordEncoder implements PasswordEncodeDelegation {
