@@ -22,7 +22,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
   }
 
   @Override
-  public void register(ClientConfiguration clientConfiguration) {
+  public void register(Tenant tenant, ClientConfiguration clientConfiguration) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
     String sqlTemplate =
@@ -35,7 +35,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
     List<Object> params = new ArrayList<>();
     params.add(clientConfiguration.clientId().value());
     params.add(clientConfiguration.clientIdAlias());
-    params.add(clientConfiguration.tenantIdentifier().value());
+    params.add(tenant.identifierValue());
     params.add(payload);
 
     sqlExecutor.execute(sqlTemplate, params);

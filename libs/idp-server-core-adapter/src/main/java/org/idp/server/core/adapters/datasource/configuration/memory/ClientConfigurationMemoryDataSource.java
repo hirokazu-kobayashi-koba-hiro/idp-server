@@ -23,10 +23,9 @@ public class ClientConfigurationMemoryDataSource
   }
 
   @Override
-  public void register(ClientConfiguration clientConfiguration) {
+  public void register(Tenant tenant, ClientConfiguration clientConfiguration) {
     MultiClientIdentifier multiClientIdentifier =
-        new MultiClientIdentifier(
-            clientConfiguration.tenantIdentifier(), clientConfiguration.clientId());
+        new MultiClientIdentifier(tenant.identifier(), clientConfiguration.clientId());
     map.put(multiClientIdentifier, clientConfiguration);
   }
 

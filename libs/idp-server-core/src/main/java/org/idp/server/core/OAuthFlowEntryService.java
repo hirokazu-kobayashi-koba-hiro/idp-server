@@ -161,8 +161,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     User updatedUser = userRegistrationService.registerOrUpdate(tenant, session.user());
 
     OAuthAuthorizeRequest oAuthAuthorizeRequest =
-            new OAuthAuthorizeRequest(
-                    tenant, oauthRequestIdentifier, updatedUser, session.authentication());
+        new OAuthAuthorizeRequest(
+            tenant, oauthRequestIdentifier, updatedUser, session.authentication());
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 

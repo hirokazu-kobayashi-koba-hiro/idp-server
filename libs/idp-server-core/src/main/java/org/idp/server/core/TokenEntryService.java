@@ -9,9 +9,10 @@ import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionReque
 import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.handler.tokenrevocation.io.TokenRevocationResponse;
+import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
-import org.idp.server.core.protocol.TokenIntrospectionApi;
+import org.idp.server.core.protocol.TokenIntrospectionProtocol;
 import org.idp.server.core.protocol.TokenProtocol;
 import org.idp.server.core.protocol.TokenRevocationProtocol;
 import org.idp.server.core.tenant.Tenant;
@@ -25,23 +26,26 @@ import org.idp.server.core.type.oauth.Username;
 public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDelegate {
 
   TokenProtocol tokenProtocol;
-  TokenIntrospectionApi tokenIntrospectionApi;
+  TokenIntrospectionProtocol tokenIntrospectionProtocol;
   TokenRevocationProtocol tokenRevocationProtocol;
   TenantRepository tenantRepository;
   UserRepository userRepository;
+  PasswordVerificationDelegation passwordVerificationDelegation;
 
   public TokenEntryService(
       TokenProtocol tokenProtocol,
-      TokenIntrospectionApi tokenIntrospectionApi,
+      TokenIntrospectionProtocol tokenIntrospectionProtocol,
       TokenRevocationProtocol tokenRevocationProtocol,
       UserRepository userRepository,
-      TenantRepository tenantRepository) {
+      TenantRepository tenantRepository,
+      PasswordVerificationDelegation passwordVerificationDelegation) {
     this.tokenProtocol = tokenProtocol;
     tokenProtocol.setPasswordCredentialsGrantDelegate(this);
-    this.tokenIntrospectionApi = tokenIntrospectionApi;
+    this.tokenIntrospectionProtocol = tokenIntrospectionProtocol;
     this.tokenRevocationProtocol = tokenRevocationProtocol;
     this.tenantRepository = tenantRepository;
     this.userRepository = userRepository;
+    this.passwordVerificationDelegation = passwordVerificationDelegation;
   }
 
   public TokenRequestResponse request(
@@ -64,7 +68,7 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
     TokenIntrospectionRequest tokenIntrospectionRequest =
         new TokenIntrospectionRequest(tenant, params);
 
-    return tokenIntrospectionApi.inspect(tokenIntrospectionRequest);
+    return tokenIntrospectionProtocol.inspect(tokenIntrospectionRequest);
   }
 
   public TokenRevocationResponse revoke(
@@ -81,14 +85,18 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
     return tokenRevocationProtocol.revoke(revocationRequest);
   }
 
-  // FIXME this is bad code
+
   @Override
   public User findAndAuthenticate(Tenant tenant, Username username, Password password) {
     User user = userRepository.findBy(tenant, username.value(), "idp-server");
     if (!user.exists()) {
       return User.notFound();
     }
-    // TODO implement password authentication
+
+    if (!passwordVerificationDelegation.verify(password.value(), user.hashedPassword())) {
+      return User.notFound();
+    }
+
     return user;
   }
 }

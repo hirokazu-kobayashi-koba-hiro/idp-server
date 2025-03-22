@@ -29,13 +29,13 @@ public class ClientManagementEntryService implements ClientManagementApi {
   public String register(String json) {
 
     Tenant tenant = tenantRepository.getAdmin();
-    return clientConfigurationHandler.handleRegistration(json);
+    return clientConfigurationHandler.handleRegistration(tenant, json);
   }
 
   public String register(TenantIdentifier tenantIdentifier, String body) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    return clientConfigurationHandler.handleRegistrationFor(body);
+    return clientConfigurationHandler.handleRegistrationFor(tenant, body);
   }
 
   public ClientConfigurationManagementListResponse find(

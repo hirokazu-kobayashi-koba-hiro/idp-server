@@ -151,43 +151,32 @@ public class IdpServerApplication {
             federatableIdProviderConfigurationDataSource,
             federationSessionDataSource,
             new FederationClient());
-    FederationProtocol federationProtocol =
-        TransactionInterceptor.createProxy(
-            new FederationProtocolImpl(federationHandler), FederationProtocol.class);
+    FederationProtocol federationProtocol = new FederationProtocolImpl(federationHandler);
 
     FederationService federationService = new FederationService(federationProtocol, userDataSource);
 
     TokenIntrospectionHandler tokenIntrospectionHandler =
         new TokenIntrospectionHandler(oAuthTokenDataSource);
-    TokenIntrospectionApi tokenIntrospectionApi =
-        TransactionInterceptor.createProxy(
-            new TokenIntrospectionApiImpl(tokenIntrospectionHandler), TokenIntrospectionApi.class);
+    TokenIntrospectionProtocol tokenIntrospectionProtocol = new TokenIntrospectionProtocolImpl(tokenIntrospectionHandler);
     TokenRevocationHandler tokenRevocationHandler =
         new TokenRevocationHandler(
             oAuthTokenDataSource, serverConfigurationDataSource, clientConfigurationDataSource);
-    TokenRevocationProtocol tokenRevocationProtocol =
-        TransactionInterceptor.createProxy(
-            new TokenRevocationProtocolImpl(tokenRevocationHandler), TokenRevocationProtocol.class);
+
+    TokenRevocationProtocol tokenRevocationProtocol = new TokenRevocationProtocolImpl(tokenRevocationHandler);
     UserinfoHandler userinfoHandler =
         new UserinfoHandler(
             oAuthTokenDataSource, serverConfigurationDataSource, clientConfigurationDataSource);
-    UserinfoProtocol userinfoProtocol =
-        TransactionInterceptor.createProxy(
-            new UserinfoProtocolImpl(userinfoHandler), UserinfoProtocol.class);
+    UserinfoProtocol userinfoProtocol = new UserinfoProtocolImpl(userinfoHandler);
+
     DiscoveryHandler discoveryHandler = new DiscoveryHandler(serverConfigurationDataSource);
-    DiscoveryProtocol discoveryProtocol =
-        TransactionInterceptor.createProxy(
-            new DiscoveryProtocolImpl(discoveryHandler), DiscoveryProtocol.class);
-    JwksProtocol jwksProtocol =
-        TransactionInterceptor.createProxy(
-            new JwksProtocolImpl(discoveryHandler), JwksProtocol.class);
+    DiscoveryProtocol discoveryProtocol = new DiscoveryProtocolImpl(discoveryHandler);
+    JwksProtocol jwksProtocol = new JwksProtocolImpl(discoveryHandler);
+
     BackchannelAuthenticationDataSource backchannelAuthenticationDataSource =
         new BackchannelAuthenticationDataSource();
     CibaGrantDataSource cibaGrantDataSource = new CibaGrantDataSource();
     NotificationClient notificationClient = new NotificationClient();
-    CibaProtocol cibaProtocol =
-        TransactionInterceptor.createProxy(
-            new CibaProtocolImpl(
+    CibaProtocol cibaProtocol = new CibaProtocolImpl(
                 new CibaRequestHandler(
                     backchannelAuthenticationDataSource,
                     cibaGrantDataSource,
@@ -204,8 +193,8 @@ public class IdpServerApplication {
                 new CibaDenyHandler(
                     cibaGrantDataSource,
                     serverConfigurationDataSource,
-                    clientConfigurationDataSource)),
-            CibaProtocol.class);
+                    clientConfigurationDataSource));
+
     TokenRequestHandler tokenRequestHandler =
         new TokenRequestHandler(
             authorizationRequestDataSource,
@@ -216,9 +205,7 @@ public class IdpServerApplication {
             oAuthTokenDataSource,
             serverConfigurationDataSource,
             clientConfigurationDataSource);
-    TokenProtocol tokenProtocol =
-        TransactionInterceptor.createProxy(
-            new TokenProtocolImpl(tokenRequestHandler), TokenProtocol.class);
+    TokenProtocol tokenProtocol = new TokenProtocolImpl(tokenRequestHandler);
 
     Map<Format, VerifiableCredentialCreator> vcCreators = new HashMap<>();
     vcCreators.put(Format.jwt_vc_json, new VerifiableCredentialJwtClient());
@@ -279,10 +266,11 @@ public class IdpServerApplication {
         TransactionInterceptor.createProxy(
             new TokenEntryService(
                 tokenProtocol,
-                tokenIntrospectionApi,
+                    tokenIntrospectionProtocol,
                 tokenRevocationProtocol,
                 userDataSource,
-                tenantDataSource),
+                tenantDataSource,
+                passwordVerificationDelegation),
             TokenApi.class);
 
     this.oidcMetaDataApi =
@@ -331,7 +319,7 @@ public class IdpServerApplication {
     this.operatorAuthenticationApi =
         TransactionInterceptor.createProxy(
             new OperatorAuthenticationEntryService(
-                tokenIntrospectionApi, tenantDataSource, userDataSource),
+                    tokenIntrospectionProtocol, tenantDataSource, userDataSource),
             OperatorAuthenticationApi.class);
   }
 

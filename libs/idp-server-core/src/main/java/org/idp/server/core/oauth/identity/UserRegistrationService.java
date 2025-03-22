@@ -70,5 +70,4 @@ public class UserRegistrationService implements OAuthUserInteractor {
 
     return user;
   }
-
 }

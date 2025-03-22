@@ -25,20 +25,21 @@ public class ClientConfigurationHandler {
   }
 
   // TODO
-  public String handleRegistration(String json) {
+  public String handleRegistration(Tenant tenant, String json) {
     ClientConfiguration clientConfiguration = jsonConverter.read(json, ClientConfiguration.class);
-    clientConfigurationRepository.register(clientConfiguration);
+    clientConfigurationRepository.register(tenant, clientConfiguration);
     return json;
   }
 
-  public String handleRegistrationFor(String json) {
+  public String handleRegistrationFor(Tenant tenant, String json) {
     // FIXME
     String replacedJson =
         json.replace("${CLIENT_ID}", UUID.randomUUID().toString())
             .replace("${CLIENT_SECRET}", UUID.randomUUID().toString());
     ClientConfiguration clientConfiguration =
         jsonConverter.read(replacedJson, ClientConfiguration.class);
-    clientConfigurationRepository.register(clientConfiguration);
+
+    clientConfigurationRepository.register(tenant, clientConfiguration);
     return replacedJson;
   }
 

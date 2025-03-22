@@ -6,7 +6,7 @@ import org.idp.server.core.type.oauth.ClientId;
 
 public interface ClientConfigurationRepository {
 
-  void register(ClientConfiguration clientConfiguration);
+  void register(Tenant tenant, ClientConfiguration clientConfiguration);
 
   ClientConfiguration get(Tenant tenant, ClientId clientId);
 

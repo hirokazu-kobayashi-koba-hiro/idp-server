@@ -27,6 +27,7 @@ class PrivateKeyJwtAuthenticator
     ClientAuthenticationPublicKey clientAuthenticationPublicKey =
         new ClientAuthenticationPublicKey(joseContext.jsonWebKey());
     ClientAssertionJwt clientAssertionJwt = new ClientAssertionJwt(joseContext.jsonWebSignature());
+
     return new ClientCredentials(
         clientId,
         ClientAuthenticationType.private_key_jwt,

@@ -10,12 +10,12 @@ import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionRespo
 import org.idp.server.core.tokenintrospection.TokenIntrospectionContentsCreator;
 import org.idp.server.core.tokenintrospection.exception.TokenInvalidException;
 
-public class TokenIntrospectionApiImpl implements TokenIntrospectionApi {
+public class TokenIntrospectionProtocolImpl implements TokenIntrospectionProtocol {
 
   TokenIntrospectionHandler handler;
-  Logger log = Logger.getLogger(TokenIntrospectionApiImpl.class.getName());
+  Logger log = Logger.getLogger(TokenIntrospectionProtocolImpl.class.getName());
 
-  public TokenIntrospectionApiImpl(TokenIntrospectionHandler handler) {
+  public TokenIntrospectionProtocolImpl(TokenIntrospectionHandler handler) {
     this.handler = handler;
   }
 
