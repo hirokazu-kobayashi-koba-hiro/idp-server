@@ -30,7 +30,7 @@ class ModelConverter {
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);
     ClientId clientId = new ClientId(stringMap.get("client_id"));
     Scopes scopes = new Scopes(stringMap.get("scopes"));
-    CustomProperties customProperties = new CustomProperties();
+    CustomProperties customProperties = convertCustomProperties(stringMap.get("custom_properties"));
     ClaimsPayload claimsPayload = convertClaimsPayload(stringMap.get("claims"));
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
@@ -57,20 +57,34 @@ class ModelConverter {
       return new ClaimsPayload();
     }
     try {
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+
       return jsonConverter.read(value, ClaimsPayload.class);
     } catch (Exception exception) {
       return new ClaimsPayload();
     }
   }
 
-  // TODO
+  private static CustomProperties convertCustomProperties(String value) {
+    if (value == null || value.isEmpty()) {
+      return new CustomProperties();
+    }
+    try {
+
+      Map map = jsonConverter.read(value, Map.class);
+
+      return new CustomProperties(map);
+    } catch (Exception exception) {
+      return new CustomProperties();
+    }
+  }
+
+
   private static AuthorizationDetails convertAuthorizationDetails(String value) {
     if (value == null || value.isEmpty()) {
       return new AuthorizationDetails();
     }
     try {
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+
       List list = jsonConverter.read(value, List.class);
       List<Map> details = (List<Map>) list;
       List<AuthorizationDetail> authorizationDetailsList =
@@ -86,7 +100,7 @@ class ModelConverter {
       return new PresentationDefinition();
     }
     try {
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+
       return jsonConverter.read(value, PresentationDefinition.class);
     } catch (Exception exception) {
       return new PresentationDefinition();

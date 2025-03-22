@@ -8,12 +8,9 @@ import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
-import org.idp.server.core.handler.admin.OrganizationRegistrationRequest;
-import org.idp.server.core.handler.admin.TenantRegistrationRequest;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRegistrationService;
-import org.idp.server.core.organization.Organization;
-import org.idp.server.core.organization.OrganizationRepository;
+import org.idp.server.core.organization.*;
 import org.idp.server.core.tenant.*;
 
 @Transactional
@@ -40,20 +37,28 @@ public class OnboardingEntryService implements OnboardingApi {
   // TODO improve logic
   public Map<String, Object> initialize(User operator, Map<String, Object> request) {
 
-    OrganizationRegistrationRequest organizationRequest =
-        jsonConverter.read(request.get("organization"), OrganizationRegistrationRequest.class);
-    TenantRegistrationRequest tenantRequest =
-        jsonConverter.read(request.get("tenant"), TenantRegistrationRequest.class);
-    ServerConfiguration serverConfiguration =
-        jsonConverter.read(request.get("server_configuration"), ServerConfiguration.class);
+    String organizationName = (String) request.getOrDefault("organization_name", "");
+    String tenantName = (String) request.getOrDefault("tenant_name", "");
+    String serverDomain = (String) request.getOrDefault("server_domain", "");
+    String serverConfig = (String) request.get("server_configuration");
+    TenantIdentifier tenantIdentifier = new TenantIdentifier(UUID.randomUUID().toString());
+    TenantDomain tenantDomain = new TenantDomain(serverDomain + "/" + tenantIdentifier.value());
+    String replacedConfig =
+        serverConfig
+            .replace("ISSUER", tenantDomain.value())
+            .replace("TENANT_ID", tenantIdentifier.value());
 
-    Organization organization = organizationRequest.toOrganization();
+    ServerConfiguration serverConfiguration =
+        jsonConverter.read(replacedConfig, ServerConfiguration.class);
+
+    Organization organization =
+        new Organization(
+            new OrganizationIdentifier(UUID.randomUUID().toString()),
+            new OrganizationName(organizationName),
+            new OrganizationDescription(""));
+
     Tenant tenant =
-        new Tenant(
-            new TenantIdentifier(UUID.randomUUID().toString()),
-            tenantRequest.tenantName(),
-            TenantType.ADMIN,
-            new TenantDomain(serverConfiguration.tokenIssuer().value()));
+        new Tenant(tenantIdentifier, new TenantName(tenantName), TenantType.PUBLIC, tenantDomain);
     organization.assign(tenant);
 
     tenantRepository.register(tenant);
@@ -63,8 +68,8 @@ public class OnboardingEntryService implements OnboardingApi {
     HashMap<String, Object> newCustomProperties = new HashMap<>(operator.customPropertiesValue());
     newCustomProperties.put("organization", organization.toMap());
     operator.setCustomProperties(newCustomProperties);
-    userRegistrationService.registerOrUpdate(tenant, operator);
+    userRegistrationService.registerOrUpdate(tenantRepository.getAdmin(), operator);
 
-    return Map.of("organization", organization.toMap(), "tenant", tenant.toMap());
+    return organization.toMap();
   }
 }

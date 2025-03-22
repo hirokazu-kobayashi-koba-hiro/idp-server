@@ -365,7 +365,7 @@ public class User implements JsonReadable, Serializable {
     return new CustomProperties(customProperties);
   }
 
-  public Map<String, Object> customPropertiesValue() {
+  public HashMap<String, Object> customPropertiesValue() {
     return customProperties;
   }
 

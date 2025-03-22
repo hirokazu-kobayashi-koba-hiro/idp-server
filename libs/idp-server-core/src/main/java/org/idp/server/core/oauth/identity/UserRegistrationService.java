@@ -60,12 +60,15 @@ public class UserRegistrationService implements OAuthUserInteractor {
     User existingUser = userRepository.findBy(tenant, user.email(), user.providerId());
 
     if (existingUser.exists()) {
-      userRepository.update(user);
-      return user;
+      UserUpdater userUpdater = new UserUpdater(user, existingUser);
+      User updatedUser = userUpdater.update();
+      userRepository.update(updatedUser);
+      return updatedUser;
     }
 
     userRepository.register(tenant, user);
 
     return user;
   }
+
 }
