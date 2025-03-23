@@ -11,8 +11,13 @@ public interface ClientManagementApi {
 
   String register(TenantIdentifier tenantIdentifier, String body);
 
+  String update(TenantIdentifier tenantIdentifier, String body);
+
   ClientConfigurationManagementListResponse find(
       TenantIdentifier tenantIdentifier, int limit, int offset);
 
   ClientConfigurationManagementResponse get(TenantIdentifier tenantIdentifier, ClientId clientId);
+
+  ClientConfigurationManagementResponse delete(
+      TenantIdentifier tenantIdentifier, ClientId clientId);
 }

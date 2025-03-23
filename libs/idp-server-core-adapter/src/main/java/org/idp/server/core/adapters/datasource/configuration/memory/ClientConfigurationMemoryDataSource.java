@@ -50,6 +50,12 @@ public class ClientConfigurationMemoryDataSource
         .toList();
   }
 
+  @Override
+  public void update(Tenant tenant, ClientConfiguration clientConfiguration) {}
+
+  @Override
+  public void delete(Tenant tenant, ClientId clientId) {}
+
   void initialize(List<String> paths) {
     try {
       JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();

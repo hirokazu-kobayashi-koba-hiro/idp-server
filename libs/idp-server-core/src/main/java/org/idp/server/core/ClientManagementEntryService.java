@@ -38,6 +38,12 @@ public class ClientManagementEntryService implements ClientManagementApi {
     return clientConfigurationHandler.handleRegistrationFor(tenant, body);
   }
 
+  public String update(TenantIdentifier tenantIdentifier, String body) {
+
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    return clientConfigurationHandler.handleUpdating(tenant, body);
+  }
+
   public ClientConfigurationManagementListResponse find(
       TenantIdentifier tenantIdentifier, int limit, int offset) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
@@ -51,6 +57,18 @@ public class ClientManagementEntryService implements ClientManagementApi {
       Tenant tenant = tenantRepository.get(tenantIdentifier);
 
       return clientConfigurationHandler.handleGetting(tenant, clientId);
+    } catch (Exception e) {
+
+      return errorHandler.handle(e);
+    }
+  }
+
+  public ClientConfigurationManagementResponse delete(
+      TenantIdentifier tenantIdentifier, ClientId clientId) {
+    try {
+      Tenant tenant = tenantRepository.get(tenantIdentifier);
+
+      return clientConfigurationHandler.handleDeletion(tenant, clientId);
     } catch (Exception e) {
 
       return errorHandler.handle(e);

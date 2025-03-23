@@ -85,7 +85,6 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
     return tokenRevocationProtocol.revoke(revocationRequest);
   }
 
-
   @Override
   public User findAndAuthenticate(Tenant tenant, Username username, Password password) {
     User user = userRepository.findBy(tenant, username.value(), "idp-server");

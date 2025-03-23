@@ -157,12 +157,14 @@ public class IdpServerApplication {
 
     TokenIntrospectionHandler tokenIntrospectionHandler =
         new TokenIntrospectionHandler(oAuthTokenDataSource);
-    TokenIntrospectionProtocol tokenIntrospectionProtocol = new TokenIntrospectionProtocolImpl(tokenIntrospectionHandler);
+    TokenIntrospectionProtocol tokenIntrospectionProtocol =
+        new TokenIntrospectionProtocolImpl(tokenIntrospectionHandler);
     TokenRevocationHandler tokenRevocationHandler =
         new TokenRevocationHandler(
             oAuthTokenDataSource, serverConfigurationDataSource, clientConfigurationDataSource);
 
-    TokenRevocationProtocol tokenRevocationProtocol = new TokenRevocationProtocolImpl(tokenRevocationHandler);
+    TokenRevocationProtocol tokenRevocationProtocol =
+        new TokenRevocationProtocolImpl(tokenRevocationHandler);
     UserinfoHandler userinfoHandler =
         new UserinfoHandler(
             oAuthTokenDataSource, serverConfigurationDataSource, clientConfigurationDataSource);
@@ -176,24 +178,23 @@ public class IdpServerApplication {
         new BackchannelAuthenticationDataSource();
     CibaGrantDataSource cibaGrantDataSource = new CibaGrantDataSource();
     NotificationClient notificationClient = new NotificationClient();
-    CibaProtocol cibaProtocol = new CibaProtocolImpl(
-                new CibaRequestHandler(
-                    backchannelAuthenticationDataSource,
-                    cibaGrantDataSource,
-                    serverConfigurationDataSource,
-                    clientConfigurationDataSource),
-                new CibaAuthorizeHandler(
-                    backchannelAuthenticationDataSource,
-                    cibaGrantDataSource,
-                    authorizationGrantedDataSource,
-                    oAuthTokenDataSource,
-                    notificationClient,
-                    serverConfigurationDataSource,
-                    clientConfigurationDataSource),
-                new CibaDenyHandler(
-                    cibaGrantDataSource,
-                    serverConfigurationDataSource,
-                    clientConfigurationDataSource));
+    CibaProtocol cibaProtocol =
+        new CibaProtocolImpl(
+            new CibaRequestHandler(
+                backchannelAuthenticationDataSource,
+                cibaGrantDataSource,
+                serverConfigurationDataSource,
+                clientConfigurationDataSource),
+            new CibaAuthorizeHandler(
+                backchannelAuthenticationDataSource,
+                cibaGrantDataSource,
+                authorizationGrantedDataSource,
+                oAuthTokenDataSource,
+                notificationClient,
+                serverConfigurationDataSource,
+                clientConfigurationDataSource),
+            new CibaDenyHandler(
+                cibaGrantDataSource, serverConfigurationDataSource, clientConfigurationDataSource));
 
     TokenRequestHandler tokenRequestHandler =
         new TokenRequestHandler(
@@ -266,7 +267,7 @@ public class IdpServerApplication {
         TransactionInterceptor.createProxy(
             new TokenEntryService(
                 tokenProtocol,
-                    tokenIntrospectionProtocol,
+                tokenIntrospectionProtocol,
                 tokenRevocationProtocol,
                 userDataSource,
                 tenantDataSource,
@@ -319,7 +320,7 @@ public class IdpServerApplication {
     this.operatorAuthenticationApi =
         TransactionInterceptor.createProxy(
             new OperatorAuthenticationEntryService(
-                    tokenIntrospectionProtocol, tenantDataSource, userDataSource),
+                tokenIntrospectionProtocol, tenantDataSource, userDataSource),
             OperatorAuthenticationApi.class);
   }
 

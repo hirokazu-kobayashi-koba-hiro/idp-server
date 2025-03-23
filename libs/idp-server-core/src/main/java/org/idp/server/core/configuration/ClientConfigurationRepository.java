@@ -11,4 +11,8 @@ public interface ClientConfigurationRepository {
   ClientConfiguration get(Tenant tenant, ClientId clientId);
 
   List<ClientConfiguration> find(Tenant tenant, int limit, int offset);
+
+  void update(Tenant tenant, ClientConfiguration clientConfiguration);
+
+  void delete(Tenant tenant, ClientId clientId);
 }

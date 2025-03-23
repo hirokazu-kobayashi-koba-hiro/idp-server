@@ -90,4 +90,45 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
     }
     return maps.stream().map(ModelConverter::convert).toList();
   }
+
+  @Override
+  public void update(Tenant tenant, ClientConfiguration clientConfiguration) {
+    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+
+    String sqlTemplate =
+        """
+                UPDATE client_configuration
+                SET id_alias = ?,
+                payload = ?::jsonb
+                WHERE tenant_id = ?
+                AND id = ?
+                """;
+
+    String payload = jsonConverter.write(clientConfiguration);
+    List<Object> params = new ArrayList<>();
+    params.add(clientConfiguration.clientIdAlias());
+    params.add(payload);
+    params.add(tenant.identifierValue());
+    params.add(clientConfiguration.clientId().value());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void delete(Tenant tenant, ClientId clientId) {
+    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+
+    String sqlTemplate =
+        """
+                DELETE FROM client_configuration
+                WHERE tenant_id = ?
+                AND id = ?
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+    params.add(clientId.value());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
 }

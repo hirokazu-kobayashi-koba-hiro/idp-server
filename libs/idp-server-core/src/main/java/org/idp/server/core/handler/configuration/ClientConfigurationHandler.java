@@ -34,13 +34,23 @@ public class ClientConfigurationHandler {
   public String handleRegistrationFor(Tenant tenant, String json) {
     // FIXME
     String replacedJson =
-        json.replace("${CLIENT_ID}", UUID.randomUUID().toString())
+        json.replace("${ISSUER}", tenant.tokenIssuerValue())
+            .replace("${ISSUER_DOMAIN}", tenant.domain().value())
+            .replace("${CLIENT_ID}", UUID.randomUUID().toString())
             .replace("${CLIENT_SECRET}", UUID.randomUUID().toString());
     ClientConfiguration clientConfiguration =
         jsonConverter.read(replacedJson, ClientConfiguration.class);
 
     clientConfigurationRepository.register(tenant, clientConfiguration);
     return replacedJson;
+  }
+
+  public String handleUpdating(Tenant tenant, String json) {
+    ClientConfiguration clientConfiguration = jsonConverter.read(json, ClientConfiguration.class);
+
+    clientConfigurationRepository.update(tenant, clientConfiguration);
+
+    return json;
   }
 
   public ClientConfigurationManagementListResponse handleFinding(
@@ -59,5 +69,13 @@ public class ClientConfigurationHandler {
     Map<String, Object> content = ClientConfigurationResponseCreator.create(clientConfiguration);
     return new ClientConfigurationManagementResponse(
         ClientConfigurationManagementStatus.OK, content);
+  }
+
+  public ClientConfigurationManagementResponse handleDeletion(Tenant tenant, ClientId clientId) {
+
+    clientConfigurationRepository.delete(tenant, clientId);
+
+    return new ClientConfigurationManagementResponse(
+        ClientConfigurationManagementStatus.OK, Map.of());
   }
 }

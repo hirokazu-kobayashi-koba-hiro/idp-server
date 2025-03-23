@@ -68,4 +68,31 @@ public class ClientManagementV1Api implements ParameterTransformable {
     return new ResponseEntity<>(
         response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
+
+  @PutMapping("/{client-id}")
+  public ResponseEntity<?> put(
+          @AuthenticationPrincipal User operator,
+          @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+          @RequestBody(required = false) String body) {
+
+    String client = clientManagementApi.update(tenantIdentifier, body);
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(client, httpHeaders, HttpStatus.OK);
+  }
+
+  @DeleteMapping("/{client-id}")
+  public ResponseEntity<?> delete(
+          @AuthenticationPrincipal User operator,
+          @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+          @PathVariable("client-id") String clientId) {
+
+    ClientConfigurationManagementResponse response =
+            clientManagementApi.delete(tenantIdentifier, new ClientId(clientId));
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+            response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
 }
