@@ -144,6 +144,37 @@ CREATE TABLE user_permission_override
     UNIQUE (user_id, permission_id)
 );
 
+CREATE VIEW user_effective_permissions_view AS
+SELECT
+    u.id              AS user_id,
+    u.tenant_id       AS tenant_id,
+    p.name            AS permission_name,
+    p.description     AS permission_description,
+    'ROLE'            AS source,
+    rp.created_at     AS granted_at
+FROM
+    idp_user u
+        JOIN idp_user_roles ur ON u.id = ur.user_id
+        JOIN role_permission rp ON ur.role_id = rp.role_id
+        JOIN permission p ON rp.permission_id = p.id
+        LEFT JOIN user_permission_override ovr
+                  ON u.id = ovr.user_id AND ovr.permission_id = p.id AND ovr.granted = false
+WHERE ovr.id IS NULL
+
+UNION
+
+SELECT
+    u.id              AS user_id,
+    u.tenant_id       AS tenant_id,
+    p.name            AS permission_name,
+    p.description     AS permission_description,
+    'OVERRIDE'        AS source,
+    ovr.created_at    AS granted_at
+FROM
+    user_permission_override ovr
+        JOIN idp_user u ON ovr.user_id = u.id
+        JOIN permission p ON ovr.permission_id = p.id
+WHERE ovr.granted = true;
 
 CREATE TABLE organization_members
 (
