@@ -148,15 +148,18 @@ public class SqlExecutor {
   private List<Map<String, String>> select(String sql, PreparedStatement preparedStatement)
       throws SQLException {
     ResultSet resultSet = preparedStatement.executeQuery();
-    List<String> columnNames = SqlAnalyzer.columnNames(sql);
+    ResultSetMetaData metaData = resultSet.getMetaData();
+    int columnCount = metaData.getColumnCount();
+
     List<Map<String, String>> results = new ArrayList<>();
     while (resultSet.next()) {
-      Map<String, String> map = new HashMap<>();
-      for (String columnName : columnNames) {
+      Map<String, String> row = new HashMap<>();
+      for (int i = 1; i <= columnCount; i++) {
+        String columnName = metaData.getColumnLabel(i);
         String value = resultSet.getString(columnName);
-        map.put(columnName, value);
+        row.put(columnName, value);
       }
-      results.add(map);
+      results.add(row);
     }
     return results;
   }

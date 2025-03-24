@@ -60,6 +60,15 @@ class ModelConverter {
           jsonConverter.read(stringMap.get("credentials"), List.class);
       user.setCredentials(credentials);
     }
+    if (stringMap.containsKey("roles") && !stringMap.get("roles").equals("[]")) {
+      List<String> roles = jsonConverter.read(stringMap.get("roles"), List.class);
+      user.setRoles(roles);
+    }
+
+    if (stringMap.containsKey("permissions") && !stringMap.get("permissions").equals("[]")) {
+      List<String> roles = jsonConverter.read(stringMap.get("permissions"), List.class);
+      user.setPermissions(roles);
+    }
 
     return user;
   }

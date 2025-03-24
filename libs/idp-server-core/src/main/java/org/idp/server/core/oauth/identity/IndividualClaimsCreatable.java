@@ -8,8 +8,7 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
   default Map<String, Object> createIndividualClaims(
       User user, IdTokenIndividualClaimsDecider claimsDecider) {
 
-    // TODO handle claim
-    HashMap<String, Object> claims = new HashMap<>(user.customPropertiesValue());
+    HashMap<String, Object> claims = new HashMap<>();
 
     claims.put("sub", user.sub());
     if (claimsDecider.shouldAddName() && user.hasName()) {
@@ -68,6 +67,18 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     }
     if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
       claims.put("updated_at", user.updateAtAsLong());
+    }
+
+    if (!claimsDecider.isEnabledStrictMode() && user.hasRoles()) {
+      claims.put("roles", user.roles());
+    }
+
+    if (!claimsDecider.isEnabledStrictMode() && user.hasPermissions()) {
+      claims.put("permissions", user.permissions());
+    }
+
+    if (!claimsDecider.isEnabledStrictMode() && user.hasCustomProperties()) {
+      claims.putAll(user.customPropertiesValue());
     }
 
     return claims;
@@ -76,8 +87,7 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
   default Map<String, Object> createIndividualClaims(
       User user, UserinfoIndividualClaimsDecider claimsDecider) {
 
-    // TODO handle claim
-    HashMap<String, Object> claims = new HashMap<>(user.customPropertiesValue());
+    HashMap<String, Object> claims = new HashMap<>();
 
     claims.put("sub", user.sub());
     if (claimsDecider.shouldAddName() && user.hasName()) {
@@ -136,6 +146,18 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     }
     if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
       claims.put("updated_at", user.updateAtAsLong());
+    }
+
+    if (user.hasRoles()) {
+      claims.put("roles", user.roles());
+    }
+
+    if (user.hasPermissions()) {
+      claims.put("permissions", user.permissions());
+    }
+
+    if (user.hasCustomProperties()) {
+      claims.putAll(user.customPropertiesValue());
     }
 
     return claims;
