@@ -27,6 +27,10 @@ public class IdTokenIndividualClaimsDecider {
     this.enabledStrictMode = enabledStrictMode;
   }
 
+  public boolean isEnabledStrictMode() {
+    return enabledStrictMode;
+  }
+
   public Claims decide() {
     Set<String> claimValues = new HashSet<>();
     if (shouldAddName()) {

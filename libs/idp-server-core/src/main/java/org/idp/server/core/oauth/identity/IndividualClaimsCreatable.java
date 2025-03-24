@@ -70,6 +70,14 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       claims.put("updated_at", user.updateAtAsLong());
     }
 
+    if (!claimsDecider.isEnabledStrictMode() && user.hasRoles()) {
+      claims.put("roles", user.roles());
+    }
+
+    if (!claimsDecider.isEnabledStrictMode() && user.hasPermissions()) {
+      claims.put("permissions", user.permissions());
+    }
+
     return claims;
   }
 
@@ -136,6 +144,14 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     }
     if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
       claims.put("updated_at", user.updateAtAsLong());
+    }
+
+    if (user.hasRoles()) {
+      claims.put("roles", user.roles());
+    }
+
+    if (user.hasPermissions()) {
+      claims.put("permissions", user.permissions());
     }
 
     return claims;

@@ -37,6 +37,8 @@ public class User implements JsonReadable, Serializable {
   HashMap<String, Object> customProperties = new HashMap<>();
   List<HashMap<String, Object>> credentials = new ArrayList<>();
   HashMap<String, Object> multiFactorAuthentication = new HashMap<>();
+  List<String> roles = new ArrayList<>();
+  List<String> permissions = new ArrayList<>();
   boolean enabled = true;
 
   public static User notFound() {
@@ -404,6 +406,32 @@ public class User implements JsonReadable, Serializable {
     return multiFactorAuthentication != null && !multiFactorAuthentication.isEmpty();
   }
 
+  public List<String> roles() {
+    return roles;
+  }
+
+  public User setRoles(List<String> roles) {
+    this.roles = roles;
+    return this;
+  }
+
+  public boolean hasRoles() {
+    return roles != null && !roles.isEmpty();
+  }
+
+  public List<String> permissions() {
+    return permissions;
+  }
+
+  public User setPermissions(List<String> permissions) {
+    this.permissions = permissions;
+    return this;
+  }
+
+  public boolean hasPermissions() {
+    return permissions != null && !permissions.isEmpty();
+  }
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -443,6 +471,8 @@ public class User implements JsonReadable, Serializable {
     if (hasHashedPassword()) map.put("hashed_password", "****");
     if (hasMultiFactorAuthentication())
       map.put("multi_factor_authentication", multiFactorAuthentication);
+    if (hasRoles()) map.put("roles", roles);
+    if (hasPermissions()) map.put("permissions", permissions);
     map.put("enabled", enabled);
 
     return map;
