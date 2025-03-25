@@ -2,6 +2,9 @@ package org.idp.server.core.adapters.datasource.token.database;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.idp.server.core.basic.crypto.AesCipher;
+import org.idp.server.core.basic.crypto.EncryptedData;
+import org.idp.server.core.basic.crypto.HmacHasher;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.token.OAuthToken;
@@ -10,14 +13,15 @@ class InsertSqlParamsCreator {
 
   static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
-  static List<Object> create(OAuthToken oAuthToken) {
+  static List<Object> create(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher) {
     AuthorizationGrant authorizationGrant = oAuthToken.accessToken().authorizationGrant();
     List<Object> params = new ArrayList<>();
     params.add(oAuthToken.identifier().value());
     params.add(oAuthToken.tenantIdentifier().value());
     params.add(oAuthToken.tokenIssuer().value());
     params.add(oAuthToken.tokenType().name());
-    params.add(oAuthToken.accessTokenValue().value());
+    params.add(toEncryptedJson(oAuthToken.accessTokenEntity().value(), aesCipher));
+    params.add(hmacHasher.hash(oAuthToken.accessTokenEntity().value()));
 
     if (authorizationGrant.hasUser()) {
       params.add((authorizationGrant.user().sub()));
@@ -54,10 +58,12 @@ class InsertSqlParamsCreator {
     params.add(oAuthToken.accessToken().createdAt().toStringValue());
 
     if (oAuthToken.hasRefreshToken()) {
-      params.add(oAuthToken.refreshTokenValue().value());
+      params.add(toEncryptedJson(oAuthToken.refreshTokenEntity().value(), aesCipher));
+      params.add(hmacHasher.hash(oAuthToken.refreshTokenEntity().value()));
       params.add(oAuthToken.refreshToken().createdAt().toStringValue());
       params.add(oAuthToken.refreshToken().expiredAt().toStringValue());
     } else {
+      params.add("{}");
       params.add("");
       params.add("");
       params.add("");
@@ -91,5 +97,10 @@ class InsertSqlParamsCreator {
 
   private static String toJson(Object value) {
     return jsonConverter.write(value);
+  }
+
+  private static String toEncryptedJson(String value, AesCipher aesCipher) {
+    EncryptedData encrypted = aesCipher.encrypt(value);
+    return toJson(encrypted);
   }
 }

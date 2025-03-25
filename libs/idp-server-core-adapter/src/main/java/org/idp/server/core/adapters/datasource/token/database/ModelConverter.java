@@ -3,6 +3,8 @@ package org.idp.server.core.adapters.datasource.token.database;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.basic.crypto.AesCipher;
+import org.idp.server.core.basic.crypto.EncryptedData;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
@@ -30,13 +32,15 @@ class ModelConverter {
 
   static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
-  static OAuthToken convert(Map<String, String> stringMap) {
+  // TODO refactor
+  static OAuthToken convert(Map<String, String> stringMap, AesCipher aesCipher) {
     OAuthTokenIdentifier id = new OAuthTokenIdentifier(stringMap.get("id"));
     TenantIdentifier tenantIdentifier = new TenantIdentifier(stringMap.get("tenant_id"));
     TokenIssuer tokenIssuer = new TokenIssuer(stringMap.get("token_issuer"));
     TokenType tokenType = TokenType.valueOf(stringMap.get("token_type"));
-    AccessTokenEntity accessTokenEntity = new AccessTokenEntity(stringMap.get("access_token"));
-    // TODO refactor
+    AccessTokenEntity accessTokenEntity =
+        new AccessTokenEntity(decrypt(stringMap.get("encrypted_access_token"), aesCipher));
+
     User user;
     if (Objects.nonNull(stringMap.get("user_payload"))
         && !stringMap.get("user_payload").isEmpty()) {
@@ -80,10 +84,10 @@ class ModelConverter {
             accessTokenCreatedAt,
             expiresIn,
             accessTokenExpiredAt);
-    if (!Objects.nonNull(stringMap.get("refresh_token"))
-        && !stringMap.get("refresh_token").isEmpty()) {
+    if (!Objects.nonNull(stringMap.get("encrypted_refresh_token"))
+        && !stringMap.get("refresh_token").equals("{}")) {
       RefreshTokenEntity refreshTokenEntity =
-          new RefreshTokenEntity(stringMap.get("refresh_token"));
+          new RefreshTokenEntity(decrypt(stringMap.get("encrypted_refresh_token"), aesCipher));
       ExpiredAt refreshTokenExpiredAt = new ExpiredAt(stringMap.get("refresh_token_expired_at"));
       CreatedAt refreshTokenCreatedAt = new CreatedAt(stringMap.get("refresh_token_created_at"));
       RefreshToken refreshToken =
@@ -96,6 +100,19 @@ class ModelConverter {
     CNonceExpiresIn cNonceExpiresIn = new CNonceExpiresIn(stringMap.get("c_nonce_expires_in"));
 
     return oAuthTokenBuilder.add(accessToken).add(idToken).add(cNonce).add(cNonceExpiresIn).build();
+  }
+
+  static String toJson(Object obj) {
+    return jsonConverter.write(obj);
+  }
+
+  private static String decrypt(String encryptedData, AesCipher aesCipher) {
+    if (encryptedData == null || encryptedData.isEmpty()) {
+      return "";
+    }
+
+    EncryptedData data = jsonConverter.read(encryptedData, EncryptedData.class);
+    return aesCipher.decrypt(data);
   }
 
   private static ClaimsPayload convertClaimsPayload(String value) {

@@ -34,6 +34,9 @@ public class IdPServerConfiguration {
   @Value("${spring.datasource.password}")
   String databasePassword;
 
+  @Value("${idp.configurations.encryptionKey}")
+  String encryptionKey;
+
   @Bean
   public IdpServerApplication idpServerApplication(OAuthSessionService oAuthSessionService, EmailAuthenticationService emailAuthenticationService, EventPublisherService eventPublisherService) {
 
@@ -58,7 +61,7 @@ public class IdPServerConfiguration {
     additionalUserInteractions.put(OAuthUserInteractionType.EMAIL_VERIFICATION_CHALLENGE, emailAuthenticationService);
     additionalUserInteractions.put(OAuthUserInteractionType.EMAIL_VERIFICATION, emailAuthenticationService);
 
-    return new IdpServerApplication(databaseConfig, oAuthSessionService, additionalUserInteractions, passwordEncoder, passwordVerification, eventPublisherService);
+    return new IdpServerApplication(databaseConfig, encryptionKey, oAuthSessionService, additionalUserInteractions, passwordEncoder, passwordVerification, eventPublisherService);
   }
 
 

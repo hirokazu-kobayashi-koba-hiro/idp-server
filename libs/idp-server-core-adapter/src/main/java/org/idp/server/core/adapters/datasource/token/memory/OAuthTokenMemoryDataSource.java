@@ -29,12 +29,12 @@ public class OAuthTokenMemoryDataSource implements OAuthTokenRepository {
   }
 
   void registerWithAccessTokenKey(OAuthToken oAuthToken) {
-    String key = accessTokenKey(oAuthToken.tenantIdentifier(), oAuthToken.accessTokenValue());
+    String key = accessTokenKey(oAuthToken.tenantIdentifier(), oAuthToken.accessTokenEntity());
     accessTokens.put(key, oAuthToken);
   }
 
   void registerWithRefreshTokenKey(OAuthToken oAuthToken) {
-    String key = refreshTokenKey(oAuthToken.tenantIdentifier(), oAuthToken.refreshTokenValue());
+    String key = refreshTokenKey(oAuthToken.tenantIdentifier(), oAuthToken.refreshTokenEntity());
     refreshTokens.put(key, oAuthToken);
   }
 
@@ -65,12 +65,12 @@ public class OAuthTokenMemoryDataSource implements OAuthTokenRepository {
   }
 
   void deleteWithAccessTokenKey(OAuthToken oAuthToken) {
-    String key = accessTokenKey(oAuthToken.tenantIdentifier(), oAuthToken.accessTokenValue());
+    String key = accessTokenKey(oAuthToken.tenantIdentifier(), oAuthToken.accessTokenEntity());
     accessTokens.remove(key);
   }
 
   void deleteWithRefreshTokenKey(OAuthToken oAuthToken) {
-    String key = refreshTokenKey(oAuthToken.tenantIdentifier(), oAuthToken.refreshTokenValue());
+    String key = refreshTokenKey(oAuthToken.tenantIdentifier(), oAuthToken.refreshTokenEntity());
     refreshTokens.remove(key);
   }
 

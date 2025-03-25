@@ -82,6 +82,7 @@ public class IdpServerApplication {
 
   public IdpServerApplication(
       DatabaseConfig databaseConfig,
+      String encryptionKey,
       OAuthRequestDelegate oAuthRequestDelegate,
       Map<OAuthUserInteractionType, OAuthUserInteractor> additionalUserInteractions,
       PasswordEncodeDelegation passwordEncodeDelegation,
@@ -96,7 +97,7 @@ public class IdpServerApplication {
         new AuthorizationCodeGrantDataSource();
     AuthorizationGrantedMemoryDataSource authorizationGrantedDataSource =
         new AuthorizationGrantedMemoryDataSource();
-    OAuthTokenDataSource oAuthTokenDataSource = new OAuthTokenDataSource();
+    OAuthTokenDataSource oAuthTokenDataSource = new OAuthTokenDataSource(encryptionKey);
     ServerConfigurationDataSource serverConfigurationDataSource =
         new ServerConfigurationDataSource();
     ClientConfigurationDataSource clientConfigurationDataSource =

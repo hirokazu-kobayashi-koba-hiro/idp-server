@@ -86,6 +86,7 @@ docker-compose up -d
 export IDP_SERVER_DOMAIN=http://localhost:8080/
 export IDP_SERVER_API_KEY=xxx
 export IDP_SERVER_API_SECRET=xxx
+export ENCRYPTION_KEY=xxx
 ```
 
 ### bootRun

@@ -52,7 +52,7 @@ public class AuthorizationResponseBuilder {
 
   public AuthorizationResponseBuilder add(AccessToken accessToken) {
     this.accessToken = accessToken;
-    this.queryParams.add("access_token", accessToken.accessTokenValue().value());
+    this.queryParams.add("access_token", accessToken.accessTokenEntity().value());
     return this;
   }
 
