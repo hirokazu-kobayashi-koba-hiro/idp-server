@@ -89,10 +89,10 @@ public class ClientNotificationService
               serverConfiguration,
               clientConfiguration);
       builder
-          .add(accessToken.accessTokenValue())
+          .add(accessToken.accessTokenEntity())
           .add(TokenType.Bearer)
           .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
-          .add(refreshToken.refreshTokenValue())
+          .add(refreshToken.refreshTokenEntity())
           .add(idToken);
 
       ClientNotificationRequest clientNotificationRequest =

@@ -2,7 +2,7 @@ idp:
   configurations:
    apiKey: ${IDP_SERVER_API_KEY}
    apiSecret: ${IDP_SERVER_API_SECRET}
-   basePath: "src/main/resources/config/sample"
+   encryptionKey: ${ENCRYPTION_KEY}
    serverUrl: "${IDP_SERVER_DOMAIN:http://localhost:8080/}"
    adminAuthViewUrl: "${IDP_AUTH_ADMIN_VIEW_URL:http://localhost:3100/}"
    authViewUrl: "${IDP_AUTH_VIEW_URL:http://localhost:3100/}"

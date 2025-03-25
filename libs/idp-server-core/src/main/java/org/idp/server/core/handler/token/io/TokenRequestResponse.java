@@ -17,8 +17,8 @@ public class TokenRequestResponse {
     this.status = status;
     this.tokenResponse =
         new TokenResponseBuilder()
-            .add(oAuthToken.accessTokenValue())
-            .add(oAuthToken.refreshTokenValue())
+            .add(oAuthToken.accessTokenEntity())
+            .add(oAuthToken.refreshTokenEntity())
             .add(oAuthToken.scopes())
             .add(oAuthToken.tokenType())
             .add(oAuthToken.expiresIn())

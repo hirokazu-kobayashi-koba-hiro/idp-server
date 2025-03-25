@@ -11,6 +11,7 @@ import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.core.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.core.type.oauth.AccessTokenEntity;
 import org.idp.server.core.userinfo.UserinfoClaimsCreator;
 import org.idp.server.core.userinfo.UserinfoResponse;
@@ -37,6 +38,11 @@ public class UserinfoHandler {
     ServerConfiguration serverConfiguration =
         serverConfigurationRepository.get(tenant.identifier());
     OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
+
+    if (!oAuthToken.exists()) {
+      throw new TokenInvalidException("not found token");
+    }
+
     User user = delegate.findUser(tenant, oAuthToken.subject());
     UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken, request.toClientCert(), user);
     verifier.verify();

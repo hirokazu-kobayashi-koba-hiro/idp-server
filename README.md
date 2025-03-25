@@ -31,7 +31,7 @@ This library provides java api supported OAuth2.0 and OIDC spec.
 | **Security**        | Authentication Flows with Actions     | ❌         | ❌    | ❌     | ✅            | Enables custom authentication flows using serverless functions.                                                                                                                           |
 |                     | Extensible Identity Workflows         | ❌         | ❌    | ❌     | ✅            | Supports custom rules and hooks for advanced identity management.                                                                                                                         |
 |                     | User Consent & Privacy Compliance     | ❌         | ❌    | ✅     | ✅            | Ensures GDPR, CCPA, and other regulatory compliance.                                                                                                                                      |
-|                     | Secure Token Storage                  | ❌         | ✅    | ✅     | ✅            | Manages access tokens securely to prevent leaks.                                                                                                                                          |
+|                     | Secure Token Storage                  | ✅         | ✅    | ✅     | ✅            | Manages access tokens securely to prevent leaks.                                                                                                                                          |
 |                     | Financial-Grade API (FAPI) Compliance | ✅         | ✅    | ✅     | ✅            | Meets security standards for financial institutions.                                                                                                                                      |
 |                     | Shared signal framework(SSF)          | ✅         | ✅    | ✅     | ✅            | Share Security Events to Relaying Party.                                                                                                                                                  |
 | **Management**      | Organization                          | ❌         | ✅    | ✅     | ✅            | Organizations is a centralized management platform that enables organizations to oversee multiple tenants, manage team members, enforce SSO, control tenant creation, and handle billing. |
@@ -86,6 +86,7 @@ docker-compose up -d
 export IDP_SERVER_DOMAIN=http://localhost:8080/
 export IDP_SERVER_API_KEY=xxx
 export IDP_SERVER_API_SECRET=xxx
+export ENCRYPTION_KEY=xxx
 ```
 
 ### bootRun

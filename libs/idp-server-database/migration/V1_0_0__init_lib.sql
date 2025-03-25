@@ -40,12 +40,12 @@ CREATE TABLE server_configuration
 
 CREATE TABLE permission
 (
-    id          CHAR(36) NOT NULL PRIMARY KEY ,
+    id          CHAR(36)                NOT NULL PRIMARY KEY,
     tenant_id   CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
-    name        VARCHAR(255)                       NOT NULL UNIQUE,
+    name        VARCHAR(255)            NOT NULL UNIQUE,
     description TEXT,
-    created_at  TIMESTAMP            DEFAULT now() NOT NULL,
-    updated_at  TIMESTAMP            DEFAULT now() NOT NULL,
+    created_at  TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at  TIMESTAMP DEFAULT now() NOT NULL,
     CONSTRAINT uk_tenant_permission UNIQUE (tenant_id, name)
 );
 
@@ -72,18 +72,16 @@ CREATE TABLE role_permission
 );
 
 CREATE VIEW role_permission_view AS
-SELECT
-    rp.id                         AS id,
-    t.name                        AS tenant_name,
-    r.name                        AS role_name,
-    p.name                        AS permission_name,
-    p.description                 AS permission_description,
-    rp.created_at                 AS assigned_at
-FROM
-    role_permission rp
-        JOIN role r ON rp.role_id = r.id
-        JOIN permission p ON rp.permission_id = p.id
-        JOIN tenant t ON r.tenant_id = t.id;
+SELECT rp.id         AS id,
+       t.name        AS tenant_name,
+       r.name        AS role_name,
+       p.name        AS permission_name,
+       p.description AS permission_description,
+       rp.created_at AS assigned_at
+FROM role_permission rp
+         JOIN role r ON rp.role_id = r.id
+         JOIN permission p ON rp.permission_id = p.id
+         JOIN tenant t ON r.tenant_id = t.id;
 
 CREATE TABLE idp_user
 (
@@ -145,35 +143,31 @@ CREATE TABLE user_permission_override
 );
 
 CREATE VIEW user_effective_permissions_view AS
-SELECT
-    u.id              AS user_id,
-    u.tenant_id       AS tenant_id,
-    p.name            AS permission_name,
-    p.description     AS permission_description,
-    'ROLE'            AS source,
-    rp.created_at     AS granted_at
-FROM
-    idp_user u
-        JOIN idp_user_roles ur ON u.id = ur.user_id
-        JOIN role_permission rp ON ur.role_id = rp.role_id
-        JOIN permission p ON rp.permission_id = p.id
-        LEFT JOIN user_permission_override ovr
-                  ON u.id = ovr.user_id AND ovr.permission_id = p.id AND ovr.granted = false
+SELECT u.id          AS user_id,
+       u.tenant_id   AS tenant_id,
+       p.name        AS permission_name,
+       p.description AS permission_description,
+       'ROLE'        AS source,
+       rp.created_at AS granted_at
+FROM idp_user u
+         JOIN idp_user_roles ur ON u.id = ur.user_id
+         JOIN role_permission rp ON ur.role_id = rp.role_id
+         JOIN permission p ON rp.permission_id = p.id
+         LEFT JOIN user_permission_override ovr
+                   ON u.id = ovr.user_id AND ovr.permission_id = p.id AND ovr.granted = false
 WHERE ovr.id IS NULL
 
 UNION
 
-SELECT
-    u.id              AS user_id,
-    u.tenant_id       AS tenant_id,
-    p.name            AS permission_name,
-    p.description     AS permission_description,
-    'OVERRIDE'        AS source,
-    ovr.created_at    AS granted_at
-FROM
-    user_permission_override ovr
-        JOIN idp_user u ON ovr.user_id = u.id
-        JOIN permission p ON ovr.permission_id = p.id
+SELECT u.id           AS user_id,
+       u.tenant_id    AS tenant_id,
+       p.name         AS permission_name,
+       p.description  AS permission_description,
+       'OVERRIDE'     AS source,
+       ovr.created_at AS granted_at
+FROM user_permission_override ovr
+         JOIN idp_user u ON ovr.user_id = u.id
+         JOIN permission p ON ovr.permission_id = p.id
 WHERE ovr.granted = true;
 
 CREATE TABLE organization_members
@@ -268,7 +262,8 @@ CREATE TABLE oauth_token
     tenant_id                       CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     token_issuer                    TEXT                    NOT NULL,
     token_type                      VARCHAR(10)             NOT NULL,
-    access_token                    TEXT                    NOT NULL,
+    encrypted_access_token          TEXT                   NOT NULL,
+    hashed_access_token             TEXT                    NOT NULL,
     user_id                         CHAR(36),
     user_payload                    JSONB,
     authentication                  JSONB                   NOT NULL,
@@ -280,7 +275,8 @@ CREATE TABLE oauth_token
     expires_in                      TEXT                    NOT NULL,
     access_token_expired_at         TEXT                    NOT NULL,
     access_token_created_at         TEXT                    NOT NULL,
-    refresh_token                   TEXT                    NOT NULL,
+    encrypted_refresh_token         TEXT                   NOT NULL,
+    hashed_refresh_token            TEXT                    NOT NULL,
     refresh_token_expired_at        TEXT                    NOT NULL,
     refresh_token_created_at        TEXT                    NOT NULL,
     id_token                        TEXT                    NOT NULL,
@@ -290,6 +286,9 @@ CREATE TABLE oauth_token
     created_at                      TIMESTAMP DEFAULT now() NOT NULL,
     updated_at                      TIMESTAMP DEFAULT now() NOT NULL
 );
+
+CREATE INDEX idx_oauth_token_hashed_access_token ON oauth_token (tenant_id, hashed_access_token);
+CREATE INDEX idx_oauth_token_hashed_refresh_token ON oauth_token (tenant_id, hashed_refresh_token);
 
 CREATE TABLE backchannel_authentication_request
 (

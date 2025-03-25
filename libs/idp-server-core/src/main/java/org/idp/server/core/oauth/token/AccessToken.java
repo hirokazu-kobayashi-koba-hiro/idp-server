@@ -57,7 +57,7 @@ public class AccessToken {
     return tokenType;
   }
 
-  public AccessTokenEntity accessTokenValue() {
+  public AccessTokenEntity accessTokenEntity() {
     return accessTokenEntity;
   }
 

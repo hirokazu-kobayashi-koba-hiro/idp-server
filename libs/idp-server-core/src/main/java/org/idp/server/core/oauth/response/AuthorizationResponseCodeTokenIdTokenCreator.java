@@ -39,7 +39,7 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
         new IdTokenCustomClaimsBuilder()
             .add(authorizationRequest.state())
             .add(authorizationRequest.nonce())
-            .add(accessToken.accessTokenValue())
+            .add(accessToken.accessTokenEntity())
             .add(authorizationCode)
             .build();
     IdToken idToken =

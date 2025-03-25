@@ -57,8 +57,8 @@ public class OAuthToken {
     return accessToken.isExpired(other);
   }
 
-  public AccessTokenEntity accessTokenValue() {
-    return accessToken.accessTokenValue();
+  public AccessTokenEntity accessTokenEntity() {
+    return accessToken.accessTokenEntity();
   }
 
   public AccessToken accessToken() {
@@ -69,8 +69,8 @@ public class OAuthToken {
     return refreshToken;
   }
 
-  public RefreshTokenEntity refreshTokenValue() {
-    return refreshToken.refreshTokenValue();
+  public RefreshTokenEntity refreshTokenEntity() {
+    return refreshToken.refreshTokenEntity();
   }
 
   public IdToken idToken() {

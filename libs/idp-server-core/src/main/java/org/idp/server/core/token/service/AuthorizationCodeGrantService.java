@@ -134,7 +134,7 @@ public class AuthorizationCodeGrantService
       IdTokenCustomClaims idTokenCustomClaims =
           new IdTokenCustomClaimsBuilder()
               .add(authorizationCodeGrant.authorizationCode())
-              .add(accessToken.accessTokenValue())
+              .add(accessToken.accessTokenEntity())
               .add(authorizationRequest.nonce())
               .add(authorizationRequest.state())
               .build();

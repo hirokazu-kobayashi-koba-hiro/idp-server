@@ -39,7 +39,8 @@ public interface JarmCreatable {
         payload.put("code", authorizationResponse.authorizationCode().value());
       }
       if (authorizationResponse.hasAccessToken()) {
-        payload.put("access_token", authorizationResponse.accessToken().accessTokenValue().value());
+        payload.put(
+            "access_token", authorizationResponse.accessToken().accessTokenEntity().value());
         payload.put("token_type", authorizationResponse.tokenType().name());
         payload.put("expires_in", authorizationResponse.expiresIn().toStringValue());
         payload.put("scope", authorizationResponse.scopes().toStringValues());

@@ -20,7 +20,7 @@ public class RefreshToken {
     this.expiredAt = expiredAt;
   }
 
-  public RefreshTokenEntity refreshTokenValue() {
+  public RefreshTokenEntity refreshTokenEntity() {
     return refreshTokenEntity;
   }
 
