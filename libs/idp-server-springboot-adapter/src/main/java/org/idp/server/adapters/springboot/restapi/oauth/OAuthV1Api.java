@@ -79,6 +79,7 @@ public class OAuthV1Api implements ParameterTransformable {
     }
   }
 
+  //TODO move to core logic
   private String createUrl(Tenant tenant, OAuthRequestResponse response) {
     String url = tenant.isAdmin() ? adminAuthViewUrl : authViewUrl;
 
@@ -95,6 +96,7 @@ public class OAuthV1Api implements ParameterTransformable {
         tenant.identifier().value());
   }
 
+  //TODO move to core logic
   private String createErrorUrl(Tenant tenant, OAuthRequestResponse response) {
     String url = tenant.isAdmin() ? adminAuthViewUrl : authViewUrl;
 
