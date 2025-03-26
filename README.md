@@ -4,7 +4,6 @@
 [![GitHub Issues](https://img.shields.io/github/issues/hirokazu-kobayashi-koba-hiro/idp-server)](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues)
 [![GitHub License](https://img.shields.io/github/license/hirokazu-kobayashi-koba-hiro/idp-server)](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/blob/main/LICENSE)
 
-
 ## Overview
 
 This library provides java api supported OAuth2.0 and OIDC spec.
@@ -28,7 +27,7 @@ This library provides java api supported OAuth2.0 and OIDC spec.
 |                     | API Authorization                     | ✅         | ✅    | ✅     | ✅            | Secures APIs and issues JWT-based access tokens using OAuth 2.0.                                                                                                                          |
 |                     | Machine-to-Machine Authentication     | ✅         | ✅    | ✅     | ✅            | Enables authentication for services using client credentials.                                                                                                                             |
 |                     | Secure Session Management             | ✅         | ✅    | ✅     | ✅            | Supports token expiration, refresh tokens, and logout mechanisms.                                                                                                                         |
-| **Security**        | Authentication Flows with Actions     | ❌         | ❌    | ❌     | ✅            | Enables custom authentication flows using serverless functions.                                                                                                                           |
+| **Security**        | Authentication Flows with Hooks       | ✅         | ✅    | ✅     | ✅            | Supports executing multiple custom hooks in a specific order for each authentication event, based on tenant-configurable settings.                                                        |
 |                     | Extensible Identity Workflows         | ❌         | ❌    | ❌     | ✅            | Supports custom rules and hooks for advanced identity management.                                                                                                                         |
 |                     | User Consent & Privacy Compliance     | ❌         | ❌    | ✅     | ✅            | Ensures GDPR, CCPA, and other regulatory compliance.                                                                                                                                      |
 |                     | Secure Token Storage                  | ✅         | ✅    | ✅     | ✅            | Manages access tokens securely to prevent leaks.                                                                                                                                          |
@@ -49,7 +48,6 @@ This library provides java api supported OAuth2.0 and OIDC spec.
 | **Developer Tools** | SDKs & Libraries                      | ❌         | ✅    | ✅     | ✅            | Provides SDKs for React, Angular, Vue, Node.js, .NET, Java, and more.                                                                                                                     |
 |                     | Custom Hooks & Rules                  | ❌         | ❌    | ❌     | ✅            | Allows developers to implement custom business logic.                                                                                                                                     |
 |                     | Custom Branding                       | ❌         | ❌    | ❌     | ✅            | Enables UI customization for authentication pages, emails, and error messages.                                                                                                            |
-
 
 ## Getting Started
 
@@ -82,6 +80,7 @@ docker-compose up -d
 ```
 
 * set variable
+
 ```shell
 export IDP_SERVER_DOMAIN=http://localhost:8080/
 export IDP_SERVER_API_KEY=xxx
