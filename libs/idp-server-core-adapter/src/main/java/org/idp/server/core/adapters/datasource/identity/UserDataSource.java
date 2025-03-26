@@ -115,15 +115,19 @@ public class UserDataSource implements UserRepository {
             selectSql,
             """
                 WHERE idp_user.tenant_id = ?
-                limit ?
-                OFFSET ?
             """);
+
+    String pagedSql = sqlTemplate + """
+            limit ? 
+            OFFSET ? 
+            """;
+
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(limit);
     params.add(offset);
 
-    List<Map<String, String>> results = sqlExecutor.selectList(sqlTemplate, params);
+    List<Map<String, String>> results = sqlExecutor.selectList(pagedSql, params);
     if (Objects.isNull(results) || results.isEmpty()) {
       return List.of();
     }
