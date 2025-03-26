@@ -17,7 +17,7 @@ public class HookQueryDataSource implements HookQueryRepository {
   JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   String selectSql =
       """
-            SELECT id, tigger, payload FROM hook_configuration \n
+            SELECT id, trigger, payload FROM hook_configuration \n
             """;
 
   @Override
@@ -26,7 +26,7 @@ public class HookQueryDataSource implements HookQueryRepository {
 
     String sqlTemplate =
         selectSql + """
-                WHERE tenant_id = ? AND tigger = ?;"
+                WHERE tenant_id = ? AND trigger = ?;"
                 """;
 
     List<Object> params = new ArrayList<>();
