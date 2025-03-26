@@ -1,5 +1,6 @@
 package org.idp.server.core;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.api.OAuthFlowApi;
@@ -11,6 +12,7 @@ import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
 import org.idp.server.core.handler.federation.io.FederationRequest;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
 import org.idp.server.core.handler.oauth.io.*;
+import org.idp.server.core.hook.*;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
@@ -36,29 +38,35 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   OAuthRequestDelegate oAuthRequestDelegate;
   UserRepository userRepository;
   OAuthUserInteractors oAuthUserInteractors;
+  AuthenticationHooks authenticationHooks;
   UserRegistrationService userRegistrationService;
   TenantRepository tenantRepository;
   FederationService federationService;
   OAuthFlowEventPublisher eventPublisher;
+  HookQueryRepository hookQueryRepository;
 
   public OAuthFlowEntryService(
       OAuthProtocol oAuthProtocol,
       OAuthRequestDelegate oAuthSessionService,
       OAuthUserInteractors oAuthUserInteractors,
+      AuthenticationHooks authenticationHooks,
       UserRepository userRepository,
       UserRegistrationService userRegistrationService,
       TenantRepository tenantRepository,
       FederationService federationService,
-      OAuthFlowEventPublisher eventPublisher) {
+      OAuthFlowEventPublisher eventPublisher,
+      HookQueryRepository hookQueryRepository) {
     this.oAuthProtocol = oAuthProtocol;
     oAuthProtocol.setOAuthRequestDelegate(oAuthSessionService);
     this.oAuthRequestDelegate = oAuthSessionService;
     this.oAuthUserInteractors = oAuthUserInteractors;
+    this.authenticationHooks = authenticationHooks;
     this.userRepository = userRepository;
     this.userRegistrationService = userRegistrationService;
     this.tenantRepository = tenantRepository;
     this.federationService = federationService;
     this.eventPublisher = eventPublisher;
+    this.hookQueryRepository = hookQueryRepository;
   }
 
   public Pairs<Tenant, OAuthRequestResponse> request(
@@ -167,6 +175,18 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 
     eventPublisher.publish(tenant, authorizationRequest, updatedUser, DefaultEventType.login);
+
+    HookConfiguration hookConfiguration =
+        hookQueryRepository.find(tenant, HookTriggerType.POST_LOGIN);
+    if (hookConfiguration.exists()) {
+      HookExecutor hookExecutor = authenticationHooks.get(HookTriggerType.POST_LOGIN);
+      Map<String, Object> request = new HashMap<>();
+      request.put("user", updatedUser.toMap());
+      request.put("tenant", tenant.toMap());
+      request.put("client", Map.of("id", authorizationRequest.clientId().value()));
+      HookRequest hookRequest = new HookRequest(request);
+      hookExecutor.execute(tenant, HookTriggerType.POST_LOGIN, hookRequest, hookConfiguration);
+    }
 
     return authorize;
   }

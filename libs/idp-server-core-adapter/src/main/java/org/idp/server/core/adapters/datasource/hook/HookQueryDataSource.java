@@ -7,7 +7,6 @@ import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.hook.HookConfiguration;
-import org.idp.server.core.hook.HookConfigurationNotFoundException;
 import org.idp.server.core.hook.HookQueryRepository;
 import org.idp.server.core.hook.HookTriggerType;
 import org.idp.server.core.tenant.Tenant;
@@ -21,12 +20,12 @@ public class HookQueryDataSource implements HookQueryRepository {
             """;
 
   @Override
-  public HookConfiguration get(Tenant tenant, HookTriggerType triggerType) {
+  public HookConfiguration find(Tenant tenant, HookTriggerType triggerType) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
     String sqlTemplate =
         selectSql + """
-                WHERE tenant_id = ? AND trigger = ?;"
+                WHERE tenant_id = ? AND trigger = ?;
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -36,10 +35,7 @@ public class HookQueryDataSource implements HookQueryRepository {
     Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
 
     if (result == null || result.isEmpty()) {
-      throw new HookConfigurationNotFoundException(
-          String.format(
-              "Hook configuration not found (%s) (%s)",
-              tenant.identifierValue(), triggerType.name()));
+      return new HookConfiguration();
     }
 
     return jsonConverter.read(result.get("payload"), HookConfiguration.class);

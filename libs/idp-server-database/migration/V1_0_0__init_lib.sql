@@ -262,7 +262,7 @@ CREATE TABLE oauth_token
     tenant_id                       CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     token_issuer                    TEXT                    NOT NULL,
     token_type                      VARCHAR(10)             NOT NULL,
-    encrypted_access_token          TEXT                   NOT NULL,
+    encrypted_access_token          TEXT                    NOT NULL,
     hashed_access_token             TEXT                    NOT NULL,
     user_id                         CHAR(36),
     user_payload                    JSONB,
@@ -275,7 +275,7 @@ CREATE TABLE oauth_token
     expires_in                      TEXT                    NOT NULL,
     access_token_expired_at         TEXT                    NOT NULL,
     access_token_created_at         TEXT                    NOT NULL,
-    encrypted_refresh_token         TEXT                   NOT NULL,
+    encrypted_refresh_token         TEXT                    NOT NULL,
     hashed_refresh_token            TEXT                    NOT NULL,
     refresh_token_expired_at        TEXT                    NOT NULL,
     refresh_token_created_at        TEXT                    NOT NULL,
@@ -380,6 +380,16 @@ CREATE INDEX idx_events_detail_jsonb ON events USING GIN (detail);
 CREATE TABLE federatable_idp_configuration
 (
     id         CHAR(36)                NOT NULL PRIMARY KEY,
+    payload    JSONB                   NOT NULL,
+    created_at TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP DEFAULT now() NOT NULL
+);
+
+CREATE TABLE hook_configuration
+(
+    id         CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id  CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    trigger    VARCHAR(255)            NOT NULL,
     payload    JSONB                   NOT NULL,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL

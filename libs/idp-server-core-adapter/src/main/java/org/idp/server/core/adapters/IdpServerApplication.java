@@ -11,6 +11,7 @@ import org.idp.server.core.adapters.datasource.credential.database.VerifiableCre
 import org.idp.server.core.adapters.datasource.federation.FederatableIdProviderConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.federation.FederationSessionDataSource;
 import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedMemoryDataSource;
+import org.idp.server.core.adapters.datasource.hook.HookQueryDataSource;
 import org.idp.server.core.adapters.datasource.identity.PermissionCommandDataSource;
 import org.idp.server.core.adapters.datasource.identity.RoleCommandDataSource;
 import org.idp.server.core.adapters.datasource.identity.UserDataSource;
@@ -21,6 +22,7 @@ import org.idp.server.core.adapters.datasource.sharedsignal.EventDataSource;
 import org.idp.server.core.adapters.datasource.sharedsignal.SharedSignalFrameworkConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.tenant.TenantDataSource;
 import org.idp.server.core.adapters.datasource.token.database.OAuthTokenDataSource;
+import org.idp.server.core.adapters.hook.SlacklNotificationHookExecutor;
 import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialBlockCertClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialJwtClient;
@@ -49,6 +51,9 @@ import org.idp.server.core.handler.token.TokenRequestHandler;
 import org.idp.server.core.handler.tokenintrospection.TokenIntrospectionHandler;
 import org.idp.server.core.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.core.handler.userinfo.UserinfoHandler;
+import org.idp.server.core.hook.AuthenticationHooks;
+import org.idp.server.core.hook.HookExecutor;
+import org.idp.server.core.hook.HookTriggerType;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
@@ -115,6 +120,7 @@ public class IdpServerApplication {
     TenantDataSource tenantDataSource = new TenantDataSource();
     RoleCommandDataSource roleCommandDataSource = new RoleCommandDataSource();
     PermissionCommandDataSource permissionCommandDataSource = new PermissionCommandDataSource();
+    HookQueryDataSource hookQueryDataSource = new HookQueryDataSource();
 
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
@@ -237,6 +243,10 @@ public class IdpServerApplication {
     interactors.put(OAuthUserInteractionType.PASSWORD_AUTHENTICATION, userAuthenticationService);
     OAuthUserInteractors oAuthUserInteractors = new OAuthUserInteractors(interactors);
 
+    HashMap<HookTriggerType, HookExecutor> hooks = new HashMap<>();
+    hooks.put(HookTriggerType.POST_LOGIN, new SlacklNotificationHookExecutor());
+    AuthenticationHooks authenticationHooks = new AuthenticationHooks(hooks);
+
     this.idpServerStarterApi =
         TransactionInterceptor.createProxy(
             new IdpServerStarterEntryService(
@@ -257,11 +267,13 @@ public class IdpServerApplication {
                 oAuthProtocol,
                 oAuthRequestDelegate,
                 oAuthUserInteractors,
+                authenticationHooks,
                 userDataSource,
                 userRegistrationService,
                 tenantDataSource,
                 federationService,
-                oAuthFLowEventPublisher),
+                oAuthFLowEventPublisher,
+                hookQueryDataSource),
             OAuthFlowApi.class);
 
     this.tokenApi =

@@ -111,15 +111,13 @@ public class UserDataSource implements UserRepository {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
     String sqlTemplate =
-        String.format(
-            selectSql,
-            """
+        String.format(selectSql, """
                 WHERE idp_user.tenant_id = ?
             """);
 
     String pagedSql = sqlTemplate + """
-            limit ? 
-            OFFSET ? 
+            limit ?
+            OFFSET ?
             """;
 
     List<Object> params = new ArrayList<>();
