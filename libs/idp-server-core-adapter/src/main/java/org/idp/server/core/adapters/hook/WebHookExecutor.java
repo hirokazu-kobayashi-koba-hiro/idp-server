@@ -80,17 +80,21 @@ public class WebHookExecutor implements HookExecutor {
     switch (webhookMethod) {
       case GET:
         builder.GET();
+        break;
       case POST:
         {
           builder.POST(HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
+          break;
         }
       case PUT:
         {
           builder.PUT(HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
+          break;
         }
       case DELETE:
         {
           builder.DELETE();
+          break;
         }
     }
   }
