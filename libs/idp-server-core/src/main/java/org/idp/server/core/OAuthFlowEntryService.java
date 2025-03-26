@@ -176,16 +176,21 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     eventPublisher.publish(tenant, authorizationRequest, updatedUser, DefaultEventType.login);
 
-    HookConfiguration hookConfiguration =
+    HookConfigurations hookConfigurations =
         hookQueryRepository.find(tenant, HookTriggerType.POST_LOGIN);
-    if (hookConfiguration.exists()) {
-      HookExecutor hookExecutor = authenticationHooks.get(HookTriggerType.POST_LOGIN);
+    if (hookConfigurations.exists()) {
       Map<String, Object> request = new HashMap<>();
       request.put("user", updatedUser.toMap());
       request.put("tenant", tenant.toMap());
       request.put("client", Map.of("id", authorizationRequest.clientId().value()));
       HookRequest hookRequest = new HookRequest(request);
-      hookExecutor.execute(tenant, HookTriggerType.POST_LOGIN, hookRequest, hookConfiguration);
+
+      hookConfigurations.forEach(
+          hookConfiguration -> {
+            HookExecutor hookExecutor = authenticationHooks.get(hookConfiguration.hookType());
+            hookExecutor.execute(
+                tenant, HookTriggerType.POST_LOGIN, hookRequest, hookConfiguration);
+          });
     }
 
     return authorize;

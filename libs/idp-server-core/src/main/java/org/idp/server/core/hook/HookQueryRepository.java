@@ -4,5 +4,5 @@ import org.idp.server.core.tenant.Tenant;
 
 public interface HookQueryRepository {
 
-  HookConfiguration find(Tenant tenant, HookTriggerType triggerType);
+  HookConfigurations find(Tenant tenant, HookTriggerType triggerType);
 }

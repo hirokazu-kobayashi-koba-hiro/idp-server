@@ -7,6 +7,7 @@ import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.hook.HookConfiguration;
+import org.idp.server.core.hook.HookConfigurations;
 import org.idp.server.core.hook.HookQueryRepository;
 import org.idp.server.core.hook.HookTriggerType;
 import org.idp.server.core.tenant.Tenant;
@@ -20,24 +21,33 @@ public class HookQueryDataSource implements HookQueryRepository {
             """;
 
   @Override
-  public HookConfiguration find(Tenant tenant, HookTriggerType triggerType) {
+  public HookConfigurations find(Tenant tenant, HookTriggerType triggerType) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
     String sqlTemplate =
-        selectSql + """
-                WHERE tenant_id = ? AND trigger = ?;
+        selectSql
+            + """
+                WHERE tenant_id = ?
+                AND trigger = ?
+                AND enabled = true
+                ORDER BY execution_order;
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(triggerType.name());
 
-    Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
+    List<Map<String, String>> results = sqlExecutor.selectList(sqlTemplate, params);
 
-    if (result == null || result.isEmpty()) {
-      return new HookConfiguration();
+    if (results == null || results.isEmpty()) {
+      return new HookConfigurations();
     }
 
-    return jsonConverter.read(result.get("payload"), HookConfiguration.class);
+    List<HookConfiguration> list =
+        results.stream()
+            .map(result -> jsonConverter.read(result.get("payload"), HookConfiguration.class))
+            .toList();
+
+    return new HookConfigurations(list);
   }
 }

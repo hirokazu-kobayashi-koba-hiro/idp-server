@@ -23,6 +23,7 @@ import org.idp.server.core.adapters.datasource.sharedsignal.SharedSignalFramewor
 import org.idp.server.core.adapters.datasource.tenant.TenantDataSource;
 import org.idp.server.core.adapters.datasource.token.database.OAuthTokenDataSource;
 import org.idp.server.core.adapters.hook.SlacklNotificationHookExecutor;
+import org.idp.server.core.adapters.hook.WebHookExecutor;
 import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialBlockCertClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialJwtClient;
@@ -53,7 +54,7 @@ import org.idp.server.core.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.core.handler.userinfo.UserinfoHandler;
 import org.idp.server.core.hook.AuthenticationHooks;
 import org.idp.server.core.hook.HookExecutor;
-import org.idp.server.core.hook.HookTriggerType;
+import org.idp.server.core.hook.HookType;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
@@ -243,8 +244,9 @@ public class IdpServerApplication {
     interactors.put(OAuthUserInteractionType.PASSWORD_AUTHENTICATION, userAuthenticationService);
     OAuthUserInteractors oAuthUserInteractors = new OAuthUserInteractors(interactors);
 
-    HashMap<HookTriggerType, HookExecutor> hooks = new HashMap<>();
-    hooks.put(HookTriggerType.POST_LOGIN, new SlacklNotificationHookExecutor());
+    HashMap<HookType, HookExecutor> hooks = new HashMap<>();
+    hooks.put(HookType.SLACK, new SlacklNotificationHookExecutor());
+    hooks.put(HookType.WEBHOOK, new WebHookExecutor());
     AuthenticationHooks authenticationHooks = new AuthenticationHooks(hooks);
 
     this.idpServerStarterApi =

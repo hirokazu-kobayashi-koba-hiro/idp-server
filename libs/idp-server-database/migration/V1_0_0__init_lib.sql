@@ -387,10 +387,16 @@ CREATE TABLE federatable_idp_configuration
 
 CREATE TABLE hook_configuration
 (
-    id         CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id  CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
-    trigger    VARCHAR(255)            NOT NULL,
-    payload    JSONB                   NOT NULL,
-    created_at TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at TIMESTAMP DEFAULT now() NOT NULL
+    id               CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id        CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    trigger          VARCHAR(255)            NOT NULL,
+    payload          JSONB                   NOT NULL,
+    execution_order  INTEGER                 NOT NULL DEFAULT 0,
+    enabled          BOOLEAN                 NOT NULL DEFAULT TRUE,
+    created_at       TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at       TIMESTAMP DEFAULT now() NOT NULL
 );
+
+CREATE INDEX idx_hook_configuration_trigger ON hook_configuration (tenant_id, trigger);
+CREATE INDEX idx_hook_configuration_order ON hook_configuration (tenant_id, trigger, execution_order);
+

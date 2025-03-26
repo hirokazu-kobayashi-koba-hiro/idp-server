@@ -12,6 +12,7 @@ public class HookConfiguration implements JsonReadable {
 
   String id;
   String trigger;
+  String type;
 
   // webhook
   String webhookUrl;
@@ -29,8 +30,12 @@ public class HookConfiguration implements JsonReadable {
     return id;
   }
 
-  public String trigger() {
-    return trigger;
+  public HookTriggerType triggerType() {
+    return HookTriggerType.valueOf(trigger);
+  }
+
+  public HookType hookType() {
+    return HookType.valueOf(type);
   }
 
   public WebhookUrl webhookUrl() {

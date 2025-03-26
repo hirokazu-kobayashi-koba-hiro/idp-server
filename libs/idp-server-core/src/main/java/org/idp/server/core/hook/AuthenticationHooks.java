@@ -5,13 +5,13 @@ import org.idp.server.core.type.exception.UnSupportedException;
 
 public class AuthenticationHooks {
 
-  Map<HookTriggerType, HookExecutor> values;
+  Map<HookType, HookExecutor> values;
 
-  public AuthenticationHooks(Map<HookTriggerType, HookExecutor> values) {
+  public AuthenticationHooks(Map<HookType, HookExecutor> values) {
     this.values = values;
   }
 
-  public HookExecutor get(HookTriggerType type) {
+  public HookExecutor get(HookType type) {
 
     HookExecutor hookExecutor = values.get(type);
 
