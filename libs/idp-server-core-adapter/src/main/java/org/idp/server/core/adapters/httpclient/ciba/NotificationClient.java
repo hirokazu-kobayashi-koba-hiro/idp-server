@@ -23,13 +23,14 @@ public class NotificationClient implements ClientNotificationGateway {
     try {
       log.info("notification endpoint: " + clientNotificationRequest.endpoint());
       log.info("notification body: " + clientNotificationRequest.body());
-      log.info("notification token: " + clientNotificationRequest.token());
+
       HttpRequest request =
           HttpRequest.newBuilder()
               .uri(new URI(clientNotificationRequest.endpoint()))
               .header("Content-Type", "application/json")
               .POST(HttpRequest.BodyPublishers.ofString(clientNotificationRequest.body()))
               .build();
+
       httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     } catch (Exception exception) {
       // TODO

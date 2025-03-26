@@ -48,7 +48,6 @@ public class FederationClient implements FederationGateway {
       HttpResponse<String> httpResponse =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String body = httpResponse.body();
-      log.info("token response:" + body);
 
       validateResponse(httpResponse, body);
 
@@ -109,7 +108,6 @@ public class FederationClient implements FederationGateway {
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
       String body = httpResponse.body();
-      log.info("userinfo response:" + body);
 
       validateResponse(httpResponse, body);
 
@@ -142,7 +140,6 @@ public class FederationClient implements FederationGateway {
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
       String body = httpResponse.body();
-      log.info("userinfo response:" + body);
 
       validateResponse(httpResponse, body);
 
