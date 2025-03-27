@@ -1,20 +1,32 @@
 package org.idp.server.core.handler.sharedsignal;
 
 import java.util.logging.Logger;
+import org.idp.server.core.hook.*;
 import org.idp.server.core.sharedsignal.*;
+import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantRepository;
 
 public class EventHandler {
 
+  TenantRepository tenantRepository;
   EventRepository eventRepository;
+  AuthenticationHooks authenticationHooks;
+  HookQueryRepository hookQueryRepository;
   SharedSignalFrameworkConfigurationRepository sharedSignalFrameworkConfigurationRepository;
   SharedSignalEventGateway eventGateway;
   Logger log = Logger.getLogger(EventHandler.class.getName());
 
   public EventHandler(
+      TenantRepository tenantRepository,
       EventRepository eventRepository,
+      AuthenticationHooks authenticationHooks,
+      HookQueryRepository hookQueryRepository,
       SharedSignalFrameworkConfigurationRepository sharedSignalFrameworkConfigurationRepository,
       SharedSignalEventGateway eventGateway) {
+    this.tenantRepository = tenantRepository;
     this.eventRepository = eventRepository;
+    this.authenticationHooks = authenticationHooks;
+    this.hookQueryRepository = hookQueryRepository;
     this.sharedSignalFrameworkConfigurationRepository =
         sharedSignalFrameworkConfigurationRepository;
     this.eventGateway = eventGateway;
@@ -22,6 +34,21 @@ public class EventHandler {
 
   public void handle(Event event) {
     eventRepository.register(event);
+
+    Tenant tenant = tenantRepository.get(event.tenantIdentifier());
+
+    HookConfigurations hookConfigurations =
+        hookQueryRepository.find(tenant, HookTriggerType.POST_LOGIN);
+    if (hookConfigurations.exists()) {
+      HookRequest hookRequest = new HookRequest(event.toMap());
+
+      hookConfigurations.forEach(
+          hookConfiguration -> {
+            HookExecutor hookExecutor = authenticationHooks.get(hookConfiguration.hookType());
+            hookExecutor.execute(
+                tenant, HookTriggerType.POST_LOGIN, hookRequest, hookConfiguration);
+          });
+    }
 
     SecurityEventTokenEntityConvertor convertor = new SecurityEventTokenEntityConvertor(event);
     SecurityEventTokenEntity securityEventTokenEntity = convertor.convert();

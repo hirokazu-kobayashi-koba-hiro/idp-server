@@ -1,6 +1,5 @@
 package org.idp.server.core;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.api.OAuthFlowApi;
@@ -38,35 +37,29 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   OAuthRequestDelegate oAuthRequestDelegate;
   UserRepository userRepository;
   OAuthUserInteractors oAuthUserInteractors;
-  AuthenticationHooks authenticationHooks;
   UserRegistrationService userRegistrationService;
   TenantRepository tenantRepository;
   FederationService federationService;
   OAuthFlowEventPublisher eventPublisher;
-  HookQueryRepository hookQueryRepository;
 
   public OAuthFlowEntryService(
       OAuthProtocol oAuthProtocol,
       OAuthRequestDelegate oAuthSessionService,
       OAuthUserInteractors oAuthUserInteractors,
-      AuthenticationHooks authenticationHooks,
       UserRepository userRepository,
       UserRegistrationService userRegistrationService,
       TenantRepository tenantRepository,
       FederationService federationService,
-      OAuthFlowEventPublisher eventPublisher,
-      HookQueryRepository hookQueryRepository) {
+      OAuthFlowEventPublisher eventPublisher) {
     this.oAuthProtocol = oAuthProtocol;
     oAuthProtocol.setOAuthRequestDelegate(oAuthSessionService);
     this.oAuthRequestDelegate = oAuthSessionService;
     this.oAuthUserInteractors = oAuthUserInteractors;
-    this.authenticationHooks = authenticationHooks;
     this.userRepository = userRepository;
     this.userRegistrationService = userRegistrationService;
     this.tenantRepository = tenantRepository;
     this.federationService = federationService;
     this.eventPublisher = eventPublisher;
-    this.hookQueryRepository = hookQueryRepository;
   }
 
   public Pairs<Tenant, OAuthRequestResponse> request(
@@ -175,23 +168,6 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 
     eventPublisher.publish(tenant, authorizationRequest, updatedUser, DefaultEventType.login);
-
-    HookConfigurations hookConfigurations =
-        hookQueryRepository.find(tenant, HookTriggerType.POST_LOGIN);
-    if (hookConfigurations.exists()) {
-      Map<String, Object> request = new HashMap<>();
-      request.put("user", updatedUser.toMap());
-      request.put("tenant", tenant.toMap());
-      request.put("client", Map.of("id", authorizationRequest.clientId().value()));
-      HookRequest hookRequest = new HookRequest(request);
-
-      hookConfigurations.forEach(
-          hookConfiguration -> {
-            HookExecutor hookExecutor = authenticationHooks.get(hookConfiguration.hookType());
-            hookExecutor.execute(
-                tenant, HookTriggerType.POST_LOGIN, hookRequest, hookConfiguration);
-          });
-    }
 
     return authorize;
   }

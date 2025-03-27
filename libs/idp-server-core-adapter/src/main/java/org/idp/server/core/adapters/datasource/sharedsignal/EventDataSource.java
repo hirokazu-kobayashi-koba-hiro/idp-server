@@ -26,7 +26,7 @@ public class EventDataSource implements EventRepository {
     params.add(event.identifier().value());
     params.add(event.type().value());
     params.add(event.description().value());
-    params.add(event.tenant().id());
+    params.add(event.tenant().idAsString());
     params.add(event.tenant().name());
     params.add(event.client().id());
     params.add(event.client().name());

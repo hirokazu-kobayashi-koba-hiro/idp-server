@@ -79,7 +79,7 @@ public class IdpServerApplication {
   OidcMetaDataApi oidcMetaDataApi;
   UserinfoApi userinfoApi;
   CibaFlowApi cibaFlowApi;
-  EventApi eventApi;
+  SecurityEventApi securityEventApi;
   OnboardingApi onboardingApi;
   ServerManagementApi serverManagementApi;
   ClientManagementApi clientManagementApi;
@@ -230,9 +230,20 @@ public class IdpServerApplication {
             creators);
 
     SharedSignalEventClient sharedSignalEventClient = new SharedSignalEventClient();
+
+    HashMap<HookType, HookExecutor> hooks = new HashMap<>();
+    hooks.put(HookType.SLACK, new SlacklNotificationHookExecutor());
+    hooks.put(HookType.WEBHOOK, new WebHookExecutor());
+    AuthenticationHooks authenticationHooks = new AuthenticationHooks(hooks);
+
     EventHandler eventHandler =
         new EventHandler(
-            eventDataSource, sharedSignalFrameworkConfigurationDataSource, sharedSignalEventClient);
+            tenantDataSource,
+            eventDataSource,
+            authenticationHooks,
+            hookQueryDataSource,
+            sharedSignalFrameworkConfigurationDataSource,
+            sharedSignalEventClient);
 
     ServerConfigurationHandler serverConfigurationHandler =
         new ServerConfigurationHandler(serverConfigurationDataSource);
@@ -243,11 +254,6 @@ public class IdpServerApplication {
     interactors.put(OAuthUserInteractionType.SIGNUP_REQUEST, userRegistrationService);
     interactors.put(OAuthUserInteractionType.PASSWORD_AUTHENTICATION, userAuthenticationService);
     OAuthUserInteractors oAuthUserInteractors = new OAuthUserInteractors(interactors);
-
-    HashMap<HookType, HookExecutor> hooks = new HashMap<>();
-    hooks.put(HookType.SLACK, new SlacklNotificationHookExecutor());
-    hooks.put(HookType.WEBHOOK, new WebHookExecutor());
-    AuthenticationHooks authenticationHooks = new AuthenticationHooks(hooks);
 
     this.idpServerStarterApi =
         TransactionInterceptor.createProxy(
@@ -269,13 +275,11 @@ public class IdpServerApplication {
                 oAuthProtocol,
                 oAuthRequestDelegate,
                 oAuthUserInteractors,
-                authenticationHooks,
                 userDataSource,
                 userRegistrationService,
                 tenantDataSource,
                 federationService,
-                oAuthFLowEventPublisher,
-                hookQueryDataSource),
+                oAuthFLowEventPublisher),
             OAuthFlowApi.class);
 
     this.tokenApi =
@@ -304,8 +308,9 @@ public class IdpServerApplication {
             new CibaFlowEntryService(cibaProtocol, userDataSource, tenantDataSource),
             CibaFlowApi.class);
 
-    this.eventApi =
-        TransactionInterceptor.createProxy(new EventEntryService(eventHandler), EventApi.class);
+    this.securityEventApi =
+        TransactionInterceptor.createProxy(
+            new SecurityEventEntryService(eventHandler), SecurityEventApi.class);
 
     this.onboardingApi =
         TransactionInterceptor.createProxy(
@@ -359,8 +364,8 @@ public class IdpServerApplication {
     return cibaFlowApi;
   }
 
-  public EventApi eventFunction() {
-    return eventApi;
+  public SecurityEventApi eventFunction() {
+    return securityEventApi;
   }
 
   public OnboardingApi onboardingFunction() {
