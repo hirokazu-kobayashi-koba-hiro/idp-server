@@ -7,12 +7,12 @@ import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.hook.HookConfiguration;
+import org.idp.server.core.hook.HookConfigurationQueryRepository;
 import org.idp.server.core.hook.HookConfigurations;
-import org.idp.server.core.hook.HookQueryRepository;
 import org.idp.server.core.hook.HookTriggerType;
 import org.idp.server.core.tenant.Tenant;
 
-public class HookQueryDataSource implements HookQueryRepository {
+public class HookConfigurationQueryDataSource implements HookConfigurationQueryRepository {
 
   JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   String selectSql =

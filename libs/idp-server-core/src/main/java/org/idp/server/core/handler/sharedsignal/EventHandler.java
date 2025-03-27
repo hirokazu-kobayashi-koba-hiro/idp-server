@@ -11,7 +11,7 @@ public class EventHandler {
   TenantRepository tenantRepository;
   EventRepository eventRepository;
   AuthenticationHooks authenticationHooks;
-  HookQueryRepository hookQueryRepository;
+  HookConfigurationQueryRepository hookConfigurationQueryRepository;
   SharedSignalFrameworkConfigurationRepository sharedSignalFrameworkConfigurationRepository;
   SharedSignalEventGateway eventGateway;
   Logger log = Logger.getLogger(EventHandler.class.getName());
@@ -20,13 +20,13 @@ public class EventHandler {
       TenantRepository tenantRepository,
       EventRepository eventRepository,
       AuthenticationHooks authenticationHooks,
-      HookQueryRepository hookQueryRepository,
+      HookConfigurationQueryRepository hookConfigurationQueryRepository,
       SharedSignalFrameworkConfigurationRepository sharedSignalFrameworkConfigurationRepository,
       SharedSignalEventGateway eventGateway) {
     this.tenantRepository = tenantRepository;
     this.eventRepository = eventRepository;
     this.authenticationHooks = authenticationHooks;
-    this.hookQueryRepository = hookQueryRepository;
+    this.hookConfigurationQueryRepository = hookConfigurationQueryRepository;
     this.sharedSignalFrameworkConfigurationRepository =
         sharedSignalFrameworkConfigurationRepository;
     this.eventGateway = eventGateway;
@@ -38,12 +38,20 @@ public class EventHandler {
     Tenant tenant = tenantRepository.get(event.tenantIdentifier());
 
     HookConfigurations hookConfigurations =
-        hookQueryRepository.find(tenant, HookTriggerType.POST_LOGIN);
+        hookConfigurationQueryRepository.find(tenant, HookTriggerType.POST_LOGIN);
     if (hookConfigurations.exists()) {
       HookRequest hookRequest = new HookRequest(event.toMap());
 
       hookConfigurations.forEach(
           hookConfiguration -> {
+            log.info(
+                String.format(
+                    "hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
+                    hookConfiguration.triggerType().name(),
+                    hookConfiguration.hookType().name(),
+                    event.tenantIdentifierValue(),
+                    event.clientId().value(),
+                    event.user().id()));
             HookExecutor hookExecutor = authenticationHooks.get(hookConfiguration.hookType());
             hookExecutor.execute(
                 tenant, HookTriggerType.POST_LOGIN, hookRequest, hookConfiguration);

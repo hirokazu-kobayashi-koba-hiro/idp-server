@@ -11,7 +11,7 @@ import org.idp.server.core.adapters.datasource.credential.database.VerifiableCre
 import org.idp.server.core.adapters.datasource.federation.FederatableIdProviderConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.federation.FederationSessionDataSource;
 import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedMemoryDataSource;
-import org.idp.server.core.adapters.datasource.hook.HookQueryDataSource;
+import org.idp.server.core.adapters.datasource.hook.HookConfigurationQueryDataSource;
 import org.idp.server.core.adapters.datasource.identity.PermissionCommandDataSource;
 import org.idp.server.core.adapters.datasource.identity.RoleCommandDataSource;
 import org.idp.server.core.adapters.datasource.identity.UserDataSource;
@@ -121,7 +121,7 @@ public class IdpServerApplication {
     TenantDataSource tenantDataSource = new TenantDataSource();
     RoleCommandDataSource roleCommandDataSource = new RoleCommandDataSource();
     PermissionCommandDataSource permissionCommandDataSource = new PermissionCommandDataSource();
-    HookQueryDataSource hookQueryDataSource = new HookQueryDataSource();
+    HookConfigurationQueryDataSource hookQueryDataSource = new HookConfigurationQueryDataSource();
 
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
