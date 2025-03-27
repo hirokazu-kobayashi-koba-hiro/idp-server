@@ -10,16 +10,32 @@ import org.idp.server.core.hook.webhook.WebhookUrl;
 
 public class HookConfiguration implements JsonReadable {
 
+  String id;
   String trigger;
+  String type;
+
+  // webhook
   String webhookUrl;
   String webhookMethod;
   Map<String, String> webhookHeaders;
   List<String> webhookParameters;
 
+  // slack notification
+  String slackUrl;
+  String slackMessageTemplate;
+
   public HookConfiguration() {}
 
-  public String trigger() {
-    return trigger;
+  public String id() {
+    return id;
+  }
+
+  public HookTriggerType triggerType() {
+    return HookTriggerType.valueOf(trigger);
+  }
+
+  public HookType hookType() {
+    return HookType.valueOf(type);
   }
 
   public WebhookUrl webhookUrl() {
@@ -36,5 +52,17 @@ public class HookConfiguration implements JsonReadable {
 
   public WebhookParameters webhookParameters() {
     return new WebhookParameters(webhookParameters);
+  }
+
+  public String slackUrl() {
+    return slackUrl;
+  }
+
+  public String slackMessageTemplate() {
+    return slackMessageTemplate;
+  }
+
+  public boolean exists() {
+    return id != null && !id.isEmpty();
   }
 }

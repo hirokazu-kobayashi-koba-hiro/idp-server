@@ -24,6 +24,10 @@ public class SharedSignalFrameworkConfigurationDataSource
 
     Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
 
+    if (result == null || result.isEmpty()) {
+      return new SharedSignalFrameworkConfiguration();
+    }
+
     return converter.read(result.get("payload"), SharedSignalFrameworkConfiguration.class);
   }
 }

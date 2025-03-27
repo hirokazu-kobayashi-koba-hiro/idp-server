@@ -262,7 +262,7 @@ CREATE TABLE oauth_token
     tenant_id                       CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     token_issuer                    TEXT                    NOT NULL,
     token_type                      VARCHAR(10)             NOT NULL,
-    encrypted_access_token          TEXT                   NOT NULL,
+    encrypted_access_token          TEXT                    NOT NULL,
     hashed_access_token             TEXT                    NOT NULL,
     user_id                         CHAR(36),
     user_payload                    JSONB,
@@ -275,7 +275,7 @@ CREATE TABLE oauth_token
     expires_in                      TEXT                    NOT NULL,
     access_token_expired_at         TEXT                    NOT NULL,
     access_token_created_at         TEXT                    NOT NULL,
-    encrypted_refresh_token         TEXT                   NOT NULL,
+    encrypted_refresh_token         TEXT                    NOT NULL,
     hashed_refresh_token            TEXT                    NOT NULL,
     refresh_token_expired_at        TEXT                    NOT NULL,
     refresh_token_created_at        TEXT                    NOT NULL,
@@ -384,3 +384,19 @@ CREATE TABLE federatable_idp_configuration
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL
 );
+
+CREATE TABLE hook_configuration
+(
+    id               CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id        CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    trigger          VARCHAR(255)            NOT NULL,
+    payload          JSONB                   NOT NULL,
+    execution_order  INTEGER                 NOT NULL DEFAULT 0,
+    enabled          BOOLEAN                 NOT NULL DEFAULT TRUE,
+    created_at       TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at       TIMESTAMP DEFAULT now() NOT NULL
+);
+
+CREATE INDEX idx_hook_configuration_trigger ON hook_configuration (tenant_id, trigger);
+CREATE INDEX idx_hook_configuration_order ON hook_configuration (tenant_id, trigger, execution_order);
+

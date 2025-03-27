@@ -20,13 +20,13 @@ public class EventDataSource implements EventRepository {
     String sqlTemplate =
         """
                 INSERT INTO public.events (id, type, description, tenant_id, tenant_name, client_id, client_name, user_id, user_name, detail)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb);
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb) ON CONFLICT DO NOTHING;
                 """;
     List<Object> params = new ArrayList<>();
     params.add(event.identifier().value());
     params.add(event.type().value());
     params.add(event.description().value());
-    params.add(event.tenant().id());
+    params.add(event.tenant().idAsString());
     params.add(event.tenant().name());
     params.add(event.client().id());
     params.add(event.client().name());

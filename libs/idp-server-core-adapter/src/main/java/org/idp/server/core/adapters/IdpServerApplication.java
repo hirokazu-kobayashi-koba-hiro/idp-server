@@ -11,6 +11,7 @@ import org.idp.server.core.adapters.datasource.credential.database.VerifiableCre
 import org.idp.server.core.adapters.datasource.federation.FederatableIdProviderConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.federation.FederationSessionDataSource;
 import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedMemoryDataSource;
+import org.idp.server.core.adapters.datasource.hook.HookConfigurationQueryDataSource;
 import org.idp.server.core.adapters.datasource.identity.PermissionCommandDataSource;
 import org.idp.server.core.adapters.datasource.identity.RoleCommandDataSource;
 import org.idp.server.core.adapters.datasource.identity.UserDataSource;
@@ -21,6 +22,8 @@ import org.idp.server.core.adapters.datasource.sharedsignal.EventDataSource;
 import org.idp.server.core.adapters.datasource.sharedsignal.SharedSignalFrameworkConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.tenant.TenantDataSource;
 import org.idp.server.core.adapters.datasource.token.database.OAuthTokenDataSource;
+import org.idp.server.core.adapters.hook.SlacklNotificationHookExecutor;
+import org.idp.server.core.adapters.hook.WebHookExecutor;
 import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialBlockCertClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialJwtClient;
@@ -49,6 +52,9 @@ import org.idp.server.core.handler.token.TokenRequestHandler;
 import org.idp.server.core.handler.tokenintrospection.TokenIntrospectionHandler;
 import org.idp.server.core.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.core.handler.userinfo.UserinfoHandler;
+import org.idp.server.core.hook.AuthenticationHooks;
+import org.idp.server.core.hook.HookExecutor;
+import org.idp.server.core.hook.HookType;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
@@ -73,7 +79,7 @@ public class IdpServerApplication {
   OidcMetaDataApi oidcMetaDataApi;
   UserinfoApi userinfoApi;
   CibaFlowApi cibaFlowApi;
-  EventApi eventApi;
+  SecurityEventApi securityEventApi;
   OnboardingApi onboardingApi;
   ServerManagementApi serverManagementApi;
   ClientManagementApi clientManagementApi;
@@ -115,6 +121,7 @@ public class IdpServerApplication {
     TenantDataSource tenantDataSource = new TenantDataSource();
     RoleCommandDataSource roleCommandDataSource = new RoleCommandDataSource();
     PermissionCommandDataSource permissionCommandDataSource = new PermissionCommandDataSource();
+    HookConfigurationQueryDataSource hookQueryDataSource = new HookConfigurationQueryDataSource();
 
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
@@ -223,9 +230,20 @@ public class IdpServerApplication {
             creators);
 
     SharedSignalEventClient sharedSignalEventClient = new SharedSignalEventClient();
+
+    HashMap<HookType, HookExecutor> hooks = new HashMap<>();
+    hooks.put(HookType.SLACK, new SlacklNotificationHookExecutor());
+    hooks.put(HookType.WEBHOOK, new WebHookExecutor());
+    AuthenticationHooks authenticationHooks = new AuthenticationHooks(hooks);
+
     EventHandler eventHandler =
         new EventHandler(
-            eventDataSource, sharedSignalFrameworkConfigurationDataSource, sharedSignalEventClient);
+            tenantDataSource,
+            eventDataSource,
+            authenticationHooks,
+            hookQueryDataSource,
+            sharedSignalFrameworkConfigurationDataSource,
+            sharedSignalEventClient);
 
     ServerConfigurationHandler serverConfigurationHandler =
         new ServerConfigurationHandler(serverConfigurationDataSource);
@@ -290,8 +308,9 @@ public class IdpServerApplication {
             new CibaFlowEntryService(cibaProtocol, userDataSource, tenantDataSource),
             CibaFlowApi.class);
 
-    this.eventApi =
-        TransactionInterceptor.createProxy(new EventEntryService(eventHandler), EventApi.class);
+    this.securityEventApi =
+        TransactionInterceptor.createProxy(
+            new SecurityEventEntryService(eventHandler), SecurityEventApi.class);
 
     this.onboardingApi =
         TransactionInterceptor.createProxy(
@@ -345,8 +364,8 @@ public class IdpServerApplication {
     return cibaFlowApi;
   }
 
-  public EventApi eventFunction() {
-    return eventApi;
+  public SecurityEventApi eventFunction() {
+    return securityEventApi;
   }
 
   public OnboardingApi onboardingFunction() {

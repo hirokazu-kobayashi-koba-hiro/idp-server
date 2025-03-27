@@ -1,16 +1,16 @@
 package org.idp.server.core;
 
-import org.idp.server.core.api.EventApi;
+import org.idp.server.core.api.SecurityEventApi;
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.handler.sharedsignal.EventHandler;
 import org.idp.server.core.sharedsignal.*;
 
 @Transactional
-public class EventEntryService implements EventApi {
+public class SecurityEventEntryService implements SecurityEventApi {
 
   EventHandler eventHandler;
 
-  public EventEntryService(EventHandler eventHandler) {
+  public SecurityEventEntryService(EventHandler eventHandler) {
     this.eventHandler = eventHandler;
   }
 
