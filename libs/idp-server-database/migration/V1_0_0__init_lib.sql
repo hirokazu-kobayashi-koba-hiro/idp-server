@@ -235,6 +235,7 @@ CREATE TABLE authorization_request
 CREATE TABLE authorization_code_grant
 (
     authorization_request_id CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id                   CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     authorization_code       VARCHAR(255)            NOT NULL,
     user_id                  CHAR(36)                NOT NULL,
     user_payload             JSONB                    NOT NULL,
@@ -316,6 +317,7 @@ CREATE TABLE backchannel_authentication_request
 CREATE TABLE ciba_grant
 (
     backchannel_authentication_request_id CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id                   CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     auth_req_id                           VARCHAR(255)            NOT NULL,
     expired_at                            TEXT                    NOT NULL,
     interval                              TEXT                    NOT NULL,
@@ -341,6 +343,7 @@ CREATE INDEX idx_ciba_grant_auth_req ON ciba_grant (auth_req_id);
 CREATE TABLE verifiable_credential_transaction
 (
     transaction_id        VARCHAR(255)            NOT NULL,
+    tenant_id                   CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     credential_issuer     TEXT                    NOT NULL,
     client_id             VARCHAR(255)            NOT NULL,
     user_id               CHAR(36)                NOT NULL,

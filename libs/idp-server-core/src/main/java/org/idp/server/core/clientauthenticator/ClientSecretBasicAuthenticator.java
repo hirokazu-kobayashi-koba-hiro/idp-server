@@ -7,9 +7,9 @@ import org.idp.server.core.oauth.clientcredentials.ClientAuthenticationPublicKey
 import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.mtls.ClientCertification;
 import org.idp.server.core.type.oauth.ClientAuthenticationType;
-import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecret;
 import org.idp.server.core.type.oauth.ClientSecretBasic;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 /**
  * client secret basic
@@ -33,10 +33,10 @@ class ClientSecretBasicAuthenticator implements ClientAuthenticator {
   public ClientCredentials authenticate(BackchannelRequestContext context) {
     throwExceptionIfNotContainsClientSecretBasic(context);
     throwExceptionIfUnMatchClientSecret(context);
-    ClientId clientId = context.clientId();
+    RequestedClientId requestedClientId = context.requestedClientId();
     ClientSecret clientSecret = context.clientSecretBasic().clientSecret();
     return new ClientCredentials(
-        clientId,
+        requestedClientId,
         ClientAuthenticationType.client_secret_basic,
         clientSecret,
         new ClientAuthenticationPublicKey(),

@@ -9,16 +9,18 @@ import org.idp.server.core.oauth.identity.IdTokenClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.Scopes;
 import org.idp.server.core.type.oauth.Subject;
 
 public class AuthorizationGrant {
 
+  TenantIdentifier tenantIdentifier;
   User user;
   Authentication authentication;
-  ClientId clientId;
+  RequestedClientId requestedClientId;
   Client client;
   Scopes scopes;
   ClaimsPayload claimsPayload;
@@ -29,24 +31,30 @@ public class AuthorizationGrant {
   public AuthorizationGrant() {}
 
   public AuthorizationGrant(
+      TenantIdentifier tenantIdentifier,
       User user,
       Authentication authentication,
-      ClientId clientId,
+      RequestedClientId requestedClientId,
       Client client,
       Scopes scopes,
       ClaimsPayload claimsPayload,
       CustomProperties customProperties,
       AuthorizationDetails authorizationDetails,
       PresentationDefinition presentationDefinition) {
+    this.tenantIdentifier = tenantIdentifier;
     this.user = user;
     this.authentication = authentication;
-    this.clientId = clientId;
+    this.requestedClientId = requestedClientId;
     this.client = client;
     this.scopes = scopes;
     this.claimsPayload = claimsPayload;
     this.customProperties = customProperties;
     this.authorizationDetails = authorizationDetails;
     this.presentationDefinition = presentationDefinition;
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return tenantIdentifier;
   }
 
   public User user() {
@@ -65,8 +73,8 @@ public class AuthorizationGrant {
     return new Subject(user.sub());
   }
 
-  public ClientId clientId() {
-    return clientId;
+  public RequestedClientId clientId() {
+    return requestedClientId;
   }
 
   public Client client() {

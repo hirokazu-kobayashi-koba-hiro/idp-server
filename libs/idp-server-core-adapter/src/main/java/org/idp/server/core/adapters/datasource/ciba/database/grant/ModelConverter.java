@@ -14,11 +14,12 @@ import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.AuthReqId;
 import org.idp.server.core.type.ciba.Interval;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.extension.ExpiredAt;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.Scopes;
 
 class ModelConverter {
@@ -29,6 +30,7 @@ class ModelConverter {
     BackchannelAuthenticationRequestIdentifier id =
         new BackchannelAuthenticationRequestIdentifier(
             stringMap.get("backchannel_authentication_request_id"));
+    TenantIdentifier tenantIdentifier = new TenantIdentifier(stringMap.get("tenant_id"));
     AuthReqId authReqId = new AuthReqId(stringMap.get("auth_req_id"));
     ExpiredAt expiredAt = new ExpiredAt(stringMap.get("expired_at"));
     Interval interval = new Interval(stringMap.get("interval"));
@@ -36,7 +38,7 @@ class ModelConverter {
     User user = jsonConverter.read(stringMap.get("user_payload"), User.class);
     Authentication authentication =
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);
-    ClientId clientId = new ClientId(stringMap.get("client_id"));
+    RequestedClientId requestedClientId = new RequestedClientId(stringMap.get("client_id"));
     Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = new CustomProperties();
@@ -45,7 +47,7 @@ class ModelConverter {
         convertAuthorizationDetails(stringMap.get("authorization_details"));
 
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrantBuilder(clientId, scopes)
+        new AuthorizationGrantBuilder(tenantIdentifier, requestedClientId, scopes)
             .add(user)
             .add(client)
             .add(authentication)

@@ -27,7 +27,7 @@ class ModelConverter {
     builder.add(AuthorizationProfile.valueOf(stringMap.get("profile")));
     builder.add(new Scopes(stringMap.get("scopes")));
     builder.add(ResponseType.valueOf(stringMap.get("response_type")));
-    builder.add(new ClientId(stringMap.get("client_id")));
+    builder.add(new RequestedClientId(stringMap.get("client_id")));
     builder.add(new RedirectUri(stringMap.get("redirect_uri")));
     builder.add(new State(stringMap.get("state")));
     builder.add(ResponseMode.of(stringMap.get("response_mode")));

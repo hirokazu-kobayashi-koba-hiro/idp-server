@@ -197,7 +197,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     return authorizationRequest.authorizationDetails();
   }
 
-  public ClientId clientId() {
+  public RequestedClientId clientId() {
     return authorizationRequest.clientId();
   }
 

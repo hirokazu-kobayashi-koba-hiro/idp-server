@@ -4,7 +4,7 @@ import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.*;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.Scopes;
 import org.idp.server.core.type.oidc.AcrValues;
 import org.idp.server.core.type.oidc.IdTokenHint;
@@ -17,7 +17,7 @@ public class BackchannelAuthenticationRequest {
   CibaProfile profile;
   BackchannelTokenDeliveryMode deliveryMode;
   Scopes scopes;
-  ClientId clientId;
+  RequestedClientId requestedClientId;
   IdTokenHint idTokenHint;
   LoginHint loginHint;
   LoginHintToken loginHintToken;
@@ -35,7 +35,7 @@ public class BackchannelAuthenticationRequest {
       CibaProfile profile,
       BackchannelTokenDeliveryMode deliveryMode,
       Scopes scopes,
-      ClientId clientId,
+      RequestedClientId requestedClientId,
       IdTokenHint idTokenHint,
       LoginHint loginHint,
       LoginHintToken loginHintToken,
@@ -51,7 +51,7 @@ public class BackchannelAuthenticationRequest {
     this.profile = profile;
     this.deliveryMode = deliveryMode;
     this.scopes = scopes;
-    this.clientId = clientId;
+    this.requestedClientId = requestedClientId;
     this.idTokenHint = idTokenHint;
     this.loginHint = loginHint;
     this.loginHintToken = loginHintToken;
@@ -88,12 +88,12 @@ public class BackchannelAuthenticationRequest {
     return scopes.exists();
   }
 
-  public ClientId clientId() {
-    return clientId;
+  public RequestedClientId clientId() {
+    return requestedClientId;
   }
 
   public boolean hasClientId() {
-    return clientId.exists();
+    return requestedClientId.exists();
   }
 
   public IdTokenHint idTokenHint() {

@@ -3,7 +3,7 @@ package org.idp.server.core.api;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementListResponse;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 public interface ClientManagementApi {
 
@@ -16,8 +16,9 @@ public interface ClientManagementApi {
   ClientConfigurationManagementListResponse find(
       TenantIdentifier tenantIdentifier, int limit, int offset);
 
-  ClientConfigurationManagementResponse get(TenantIdentifier tenantIdentifier, ClientId clientId);
+  ClientConfigurationManagementResponse get(
+      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId);
 
   ClientConfigurationManagementResponse delete(
-      TenantIdentifier tenantIdentifier, ClientId clientId);
+      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId);
 }

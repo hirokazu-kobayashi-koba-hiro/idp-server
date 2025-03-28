@@ -16,12 +16,12 @@ import java.util.Objects;
  *
  * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-2.2">2.2. Client Identifier</a>
  */
-public class ClientId {
+public class RequestedClientId {
   String value;
 
-  public ClientId() {}
+  public RequestedClientId() {}
 
-  public ClientId(String value) {
+  public RequestedClientId(String value) {
     this.value = value;
   }
 
@@ -37,8 +37,8 @@ public class ClientId {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    ClientId clientId = (ClientId) o;
-    return Objects.equals(value, clientId.value);
+    RequestedClientId requestedClientId = (RequestedClientId) o;
+    return Objects.equals(value, requestedClientId.value);
   }
 
   @Override

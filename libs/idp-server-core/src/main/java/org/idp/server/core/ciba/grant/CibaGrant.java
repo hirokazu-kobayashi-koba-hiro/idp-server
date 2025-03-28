@@ -5,10 +5,10 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifi
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.AuthReqId;
 import org.idp.server.core.type.ciba.Interval;
 import org.idp.server.core.type.extension.ExpiredAt;
-import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.Scopes;
 
 public class CibaGrant {
@@ -40,6 +40,10 @@ public class CibaGrant {
 
   public BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier() {
     return backchannelAuthenticationRequestIdentifier;
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return authorizationGrant.tenantIdentifier();
   }
 
   public User user() {

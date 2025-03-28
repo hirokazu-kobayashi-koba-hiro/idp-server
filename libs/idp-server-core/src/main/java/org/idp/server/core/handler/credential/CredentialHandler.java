@@ -57,7 +57,7 @@ public class CredentialHandler {
         new VerifiableCredentialVerifier(
             oAuthToken, request.toClientCert(), parameters, serverConfiguration);
     verifier.verify();
-    
+
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tenant, accessToken.clientIdentifier());

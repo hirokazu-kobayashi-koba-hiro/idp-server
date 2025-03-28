@@ -6,7 +6,7 @@ import org.idp.server.core.basic.jose.JoseContext;
 import org.idp.server.core.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 public interface ClientAuthenticationJwtValidatable {
 
@@ -26,7 +26,7 @@ public interface ClientAuthenticationJwtValidatable {
           "client assertion is invalid, must contains iss claim in jwt payload");
     }
     // TODO
-    ClientId clientId = context.parameters().clientId();
+    RequestedClientId requestedClientId = context.parameters().clientId();
     //    if (!claims.getIss().equals(clientId.value())) {
     //      throw new ClientUnAuthorizedException(
     //          "client assertion is invalid, iss claim must be client_id");
@@ -41,7 +41,7 @@ public interface ClientAuthenticationJwtValidatable {
           "client assertion is invalid, must contains sub claim in jwt payload");
     }
     // TODO
-    ClientId clientId = context.parameters().clientId();
+    RequestedClientId requestedClientId = context.parameters().clientId();
     //    if (!claims.getSub().equals(clientId.value())) {
     //      throw new ClientUnAuthorizedException(
     //          "client assertion is invalid, sub claim must be client_id");

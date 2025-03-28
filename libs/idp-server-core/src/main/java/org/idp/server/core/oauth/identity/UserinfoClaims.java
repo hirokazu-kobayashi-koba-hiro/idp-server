@@ -4,7 +4,7 @@ import java.util.Objects;
 import org.idp.server.core.basic.json.JsonReadable;
 
 public class UserinfoClaims implements JsonReadable {
-  //basic
+  // basic
   ClaimsObject sub;
   ClaimsObject name;
   ClaimsObject givenName;
@@ -25,7 +25,7 @@ public class UserinfoClaims implements JsonReadable {
   ClaimsObject address;
   ClaimsObject updatedAt;
 
-  //extension
+  // extension
   ClaimsObject termsAccepted;
   ClaimsObject termsVersion;
   ClaimsObject termsAcceptedAt;

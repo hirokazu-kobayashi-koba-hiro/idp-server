@@ -12,7 +12,7 @@ import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 public class ClientConfigurationDataSource implements ClientConfigurationRepository {
 
@@ -43,7 +43,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
   }
 
   @Override
-  public ClientConfiguration get(Tenant tenant, ClientId clientId) {
+  public ClientConfiguration get(Tenant tenant, RequestedClientId requestedClientId) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
@@ -51,7 +51,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
                     FROM client_configuration
                     WHERE tenant_id = ? AND id = ?;
                     """;
-    List<Object> params = List.of(tenant.identifierValue(), clientId.value());
+    List<Object> params = List.of(tenant.identifierValue(), requestedClientId.value());
     Map<String, String> resultClientId = sqlExecutor.selectOne(sqlTemplate, params);
 
     if (resultClientId != null && !resultClientId.isEmpty()) {
@@ -64,13 +64,13 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
                         FROM client_configuration
                         WHERE tenant_id = ? AND id_alias = ?;
                         """;
-    List<Object> paramsClientIdAlias = List.of(tenant.identifierValue(), clientId.value());
+    List<Object> paramsClientIdAlias = List.of(tenant.identifierValue(), requestedClientId.value());
     Map<String, String> resultClientIdAlias =
         sqlExecutor.selectOne(sqlTemplateClientIdAlias, paramsClientIdAlias);
 
     if (resultClientIdAlias == null || resultClientIdAlias.isEmpty()) {
       throw new ClientConfigurationNotFoundException(
-          String.format("unregistered client (%s)", clientId.value()));
+          String.format("unregistered client (%s)", requestedClientId.value()));
     }
     return ModelConverter.convert(resultClientIdAlias);
   }
@@ -79,7 +79,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
   public ClientConfiguration get(Tenant tenant, ClientIdentifier clientIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
-            """
+        """
                         SELECT id, id_alias, tenant_id, payload
                         FROM client_configuration
                         WHERE tenant_id = ? AND id = ?;
@@ -87,10 +87,9 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
     List<Object> params = List.of(tenant.identifierValue(), clientIdentifier.value());
     Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
 
-
     if (result == null || result.isEmpty()) {
       throw new ClientConfigurationNotFoundException(
-              String.format("unregistered client (%s)", clientIdentifier.value()));
+          String.format("unregistered client (%s)", clientIdentifier.value()));
     }
     return ModelConverter.convert(result);
   }
@@ -136,7 +135,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
   }
 
   @Override
-  public void delete(Tenant tenant, ClientId clientId) {
+  public void delete(Tenant tenant, RequestedClientId requestedClientId) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
     String sqlTemplate =
@@ -148,7 +147,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-    params.add(clientId.value());
+    params.add(requestedClientId.value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

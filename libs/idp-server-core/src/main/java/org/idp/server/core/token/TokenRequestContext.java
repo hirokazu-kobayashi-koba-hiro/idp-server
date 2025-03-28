@@ -6,6 +6,7 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.OAuthRequestKey;
 import org.idp.server.core.type.ciba.AuthReqId;
 import org.idp.server.core.type.ciba.BackchannelTokenDeliveryMode;
@@ -46,6 +47,10 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public Tenant tenant() {
     return tenant;
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return tenant.identifier();
   }
 
   @Override
@@ -162,7 +167,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
     return parameters.authReqId();
   }
 
-  public ClientId clientId() {
+  public RequestedClientId requestedClientId() {
     if (parameters.hasClientId()) {
       return parameters.clientId();
     }

@@ -47,7 +47,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
         requestObjectParameters.hasResponseType()
             ? requestObjectParameters.responseType()
             : parameters.responseType();
-    ClientId clientId =
+    RequestedClientId requestedClientId =
         requestObjectParameters.hasClientId()
             ? requestObjectParameters.clientId()
             : parameters.clientId();
@@ -116,7 +116,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
     builder.add(profile);
     builder.add(scopes);
     builder.add(responseType);
-    builder.add(clientId);
+    builder.add(requestedClientId);
     builder.add(clientConfiguration.client());
     builder.add(redirectUri);
     builder.add(state);

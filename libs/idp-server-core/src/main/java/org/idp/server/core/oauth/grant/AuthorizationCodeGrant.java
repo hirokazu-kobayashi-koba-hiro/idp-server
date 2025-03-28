@@ -7,6 +7,7 @@ import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.ExpiredAt;
 import org.idp.server.core.type.oauth.*;
 
@@ -68,7 +69,7 @@ public class AuthorizationCodeGrant {
     return authorizationGrant.authentication();
   }
 
-  public ClientId clientId() {
+  public RequestedClientId clientId() {
     return authorizationGrant.clientId();
   }
 
@@ -78,5 +79,9 @@ public class AuthorizationCodeGrant {
 
   public Client client() {
     return authorizationGrant.client();
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return authorizationGrant.tenantIdentifier();
   }
 }

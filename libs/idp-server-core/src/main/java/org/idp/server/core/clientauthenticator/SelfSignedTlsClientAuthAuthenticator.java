@@ -14,8 +14,8 @@ import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.mtls.ClientCertification;
 import org.idp.server.core.type.mtls.ClientCert;
 import org.idp.server.core.type.oauth.ClientAuthenticationType;
-import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecret;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator {
 
@@ -24,10 +24,10 @@ class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator {
     throwExceptionIfNotContainsClientCert(context);
     ClientCertification clientCertification =
         parseOrThrowExceptionIfUnSpecifiedOrUnMatchKey(context);
-    ClientId clientId = context.clientId();
+    RequestedClientId requestedClientId = context.requestedClientId();
     ClientSecret clientSecret = new ClientSecret();
     return new ClientCredentials(
-        clientId,
+        requestedClientId,
         ClientAuthenticationType.self_signed_tls_client_auth,
         clientSecret,
         new ClientAuthenticationPublicKey(),

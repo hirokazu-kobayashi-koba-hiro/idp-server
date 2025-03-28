@@ -61,7 +61,7 @@ public class TokenRevocationRequestContext implements BackchannelRequestContext 
     return clientConfiguration.clientAuthenticationType();
   }
 
-  public ClientId clientId() {
+  public RequestedClientId requestedClientId() {
     if (parameters.hasClientId()) {
       return parameters.clientId();
     }

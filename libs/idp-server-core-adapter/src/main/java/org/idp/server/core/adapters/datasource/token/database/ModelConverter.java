@@ -51,7 +51,7 @@ class ModelConverter {
     }
     Authentication authentication =
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);
-    ClientId clientId = new ClientId(stringMap.get("client_id"));
+    RequestedClientId requestedClientId = new RequestedClientId(stringMap.get("client_id"));
     Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = new CustomProperties();
@@ -59,7 +59,7 @@ class ModelConverter {
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrantBuilder(clientId, scopes)
+        new AuthorizationGrantBuilder(tenantIdentifier, requestedClientId, scopes)
             .add(user)
             .add(client)
             .add(authentication)

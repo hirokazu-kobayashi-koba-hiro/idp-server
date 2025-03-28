@@ -9,7 +9,7 @@ import org.idp.server.core.type.oauth.*;
 public class AccessTokenPayload {
   TokenIssuer tokenIssuer;
   Subject subject;
-  ClientId clientId;
+  RequestedClientId requestedClientId;
   Scopes scopes;
   CustomProperties customProperties;
   CreatedAt createdAt;
@@ -21,7 +21,7 @@ public class AccessTokenPayload {
   AccessTokenPayload(
       TokenIssuer tokenIssuer,
       Subject subject,
-      ClientId clientId,
+      RequestedClientId requestedClientId,
       Scopes scopes,
       CustomProperties customProperties,
       CreatedAt createdAt,
@@ -29,7 +29,7 @@ public class AccessTokenPayload {
       Map<String, Object> values) {
     this.tokenIssuer = tokenIssuer;
     this.subject = subject;
-    this.clientId = clientId;
+    this.requestedClientId = requestedClientId;
     this.scopes = scopes;
     this.customProperties = customProperties;
     this.createdAt = createdAt;
@@ -45,8 +45,8 @@ public class AccessTokenPayload {
     return subject;
   }
 
-  public ClientId clientId() {
-    return clientId;
+  public RequestedClientId clientId() {
+    return requestedClientId;
   }
 
   public Scopes scopes() {

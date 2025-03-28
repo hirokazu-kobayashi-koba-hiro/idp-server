@@ -15,7 +15,7 @@ import org.idp.server.core.oauth.request.OAuthLogoutParameters;
 import org.idp.server.core.oauth.view.OAuthViewData;
 import org.idp.server.core.oauth.view.OAuthViewDataCreator;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 public class OAuthHandler {
 
@@ -39,10 +39,11 @@ public class OAuthHandler {
 
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.get(authorizationRequestIdentifier);
-    ClientId clientId = authorizationRequest.clientId();
+    RequestedClientId requestedClientId = authorizationRequest.clientId();
     ServerConfiguration serverConfiguration =
         serverConfigurationRepository.get(tenant.identifier());
-    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, clientId);
+    ClientConfiguration clientConfiguration =
+        clientConfigurationRepository.get(tenant, requestedClientId);
 
     OAuthSession session = oAuthRequestDelegate.findSession(authorizationRequest.sessionKey());
 

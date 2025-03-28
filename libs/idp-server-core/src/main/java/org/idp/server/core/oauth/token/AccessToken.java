@@ -2,7 +2,6 @@ package org.idp.server.core.oauth.token;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.mtls.ClientCertificationThumbprint;
@@ -111,7 +110,7 @@ public class AccessToken {
     return authorizationGrant.clientIdentifier();
   }
 
-  public ClientId clientId() {
+  public RequestedClientId clientId() {
     return authorizationGrant.clientId();
   }
 

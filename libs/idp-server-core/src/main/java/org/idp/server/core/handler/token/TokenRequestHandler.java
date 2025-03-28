@@ -24,8 +24,8 @@ import org.idp.server.core.token.service.*;
 import org.idp.server.core.token.validator.TokenRequestValidator;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.mtls.ClientCert;
-import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecretBasic;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 public class TokenRequestHandler {
 
@@ -68,11 +68,12 @@ public class TokenRequestHandler {
 
     ClientSecretBasic clientSecretBasic = tokenRequest.clientSecretBasic();
     ClientCert clientCert = tokenRequest.toClientCert();
-    ClientId clientId = tokenRequest.clientId();
+    RequestedClientId requestedClientId = tokenRequest.clientId();
     CustomProperties customProperties = tokenRequest.toCustomProperties();
     ServerConfiguration serverConfiguration =
         serverConfigurationRepository.get(tenant.identifier());
-    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, clientId);
+    ClientConfiguration clientConfiguration =
+        clientConfigurationRepository.get(tenant, requestedClientId);
 
     TokenRequestContext tokenRequestContext =
         new TokenRequestContext(

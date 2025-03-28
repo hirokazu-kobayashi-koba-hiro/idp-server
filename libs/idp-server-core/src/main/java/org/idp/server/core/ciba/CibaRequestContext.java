@@ -132,7 +132,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
     return backchannelAuthenticationRequest.userCode();
   }
 
-  public ClientId clientId() {
+  public RequestedClientId requestedClientId() {
     return backchannelAuthenticationRequest.clientId();
   }
 

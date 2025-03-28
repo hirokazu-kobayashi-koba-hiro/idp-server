@@ -22,7 +22,7 @@ public class AuthorizationRequest {
   Scopes scopes;
   ResponseType responseType;
   Client client;
-  ClientId clientId;
+  RequestedClientId requestedClientId;
   RedirectUri redirectUri;
   State state;
   ResponseMode responseMode;
@@ -53,7 +53,7 @@ public class AuthorizationRequest {
       AuthorizationProfile profile,
       Scopes scopes,
       ResponseType responseType,
-      ClientId clientId,
+      RequestedClientId requestedClientId,
       Client client,
       RedirectUri redirectUri,
       State state,
@@ -81,7 +81,7 @@ public class AuthorizationRequest {
     this.profile = profile;
     this.scopes = scopes;
     this.responseType = responseType;
-    this.clientId = clientId;
+    this.requestedClientId = requestedClientId;
     this.client = client;
     this.redirectUri = redirectUri;
     this.state = state;
@@ -138,12 +138,12 @@ public class AuthorizationRequest {
     return !responseType.isUndefined();
   }
 
-  public ClientId clientId() {
-    return clientId;
+  public RequestedClientId clientId() {
+    return requestedClientId;
   }
 
   public boolean hasClientId() {
-    return clientId.exists();
+    return requestedClientId.exists();
   }
 
   public Client client() {
@@ -363,6 +363,6 @@ public class AuthorizationRequest {
   }
 
   public OAuthSessionKey sessionKey() {
-    return new OAuthSessionKey(tenantIdentifier.value(), clientId.value());
+    return new OAuthSessionKey(tenantIdentifier.value(), requestedClientId.value());
   }
 }

@@ -20,7 +20,7 @@ public class AuthorizationRequestBuilder {
   AuthorizationProfile profile = AuthorizationProfile.UNDEFINED;
   Scopes scopes = new Scopes();
   ResponseType responseType = ResponseType.undefined;
-  ClientId clientId = new ClientId();
+  RequestedClientId requestedClientId = new RequestedClientId();
   Client client = new Client();
   RedirectUri redirectUri = new RedirectUri();
   State state = new State();
@@ -71,8 +71,8 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
-  public AuthorizationRequestBuilder add(ClientId clientId) {
-    this.clientId = clientId;
+  public AuthorizationRequestBuilder add(RequestedClientId requestedClientId) {
+    this.requestedClientId = requestedClientId;
     return this;
   }
 
@@ -193,7 +193,7 @@ public class AuthorizationRequestBuilder {
         profile,
         scopes,
         responseType,
-        clientId,
+        requestedClientId,
         client,
         redirectUri,
         state,

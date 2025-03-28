@@ -1,16 +1,15 @@
 package org.idp.server.core.configuration;
 
 import java.util.List;
-
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 public interface ClientConfigurationRepository {
 
   void register(Tenant tenant, ClientConfiguration clientConfiguration);
 
-  ClientConfiguration get(Tenant tenant, ClientId clientId);
+  ClientConfiguration get(Tenant tenant, RequestedClientId requestedClientId);
 
   ClientConfiguration get(Tenant tenant, ClientIdentifier clientIdentifier);
 
@@ -18,5 +17,5 @@ public interface ClientConfigurationRepository {
 
   void update(Tenant tenant, ClientConfiguration clientConfiguration);
 
-  void delete(Tenant tenant, ClientId clientId);
+  void delete(Tenant tenant, RequestedClientId requestedClientId);
 }

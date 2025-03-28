@@ -13,8 +13,8 @@ public class ClientSecretBasic {
     this.basicAuth = basicAuth;
   }
 
-  public ClientId clientId() {
-    return new ClientId(basicAuth.username());
+  public RequestedClientId clientId() {
+    return new RequestedClientId(basicAuth.username());
   }
 
   public ClientSecret clientSecret() {

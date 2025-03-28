@@ -47,8 +47,8 @@ public class RequestObjectParameters {
     return contains(response_type);
   }
 
-  public ClientId clientId() {
-    return new ClientId(getValueOrEmpty(client_id));
+  public RequestedClientId clientId() {
+    return new RequestedClientId(getValueOrEmpty(client_id));
   }
 
   public boolean hasClientId() {

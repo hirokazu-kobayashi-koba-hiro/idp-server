@@ -8,8 +8,8 @@ import org.idp.server.core.token.AuthorizationHeaderHandlerable;
 import org.idp.server.core.token.TokenRequestParameters;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.mtls.ClientCert;
-import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecretBasic;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 public class TokenRequest implements AuthorizationHeaderHandlerable {
   Tenant tenant;
@@ -50,16 +50,16 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
     return this;
   }
 
-  public ClientId clientId() {
+  public RequestedClientId clientId() {
     TokenRequestParameters parameters = toParameters();
     if (parameters.hasClientId()) {
       return parameters.clientId();
     }
     if (isBasicAuth(authorizationHeaders)) {
       BasicAuth basicAuth = convertBasicAuth(authorizationHeaders);
-      return new ClientId(basicAuth.username());
+      return new RequestedClientId(basicAuth.username());
     }
-    return new ClientId();
+    return new RequestedClientId();
   }
 
   public ClientSecretBasic clientSecretBasic() {

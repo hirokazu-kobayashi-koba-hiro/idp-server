@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class Event {
@@ -119,7 +119,7 @@ public class Event {
     return tenant.issuerAsString();
   }
 
-  public ClientId clientId() {
+  public RequestedClientId clientId() {
     return client.clientId();
   }
 

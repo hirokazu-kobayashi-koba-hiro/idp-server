@@ -30,8 +30,8 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
   }
 
   @Override
-  public ClientId clientId() {
-    return new ClientId(getValueOrEmpty(OAuthRequestKey.client_id));
+  public RequestedClientId clientId() {
+    return new RequestedClientId(getValueOrEmpty(OAuthRequestKey.client_id));
   }
 
   @Override

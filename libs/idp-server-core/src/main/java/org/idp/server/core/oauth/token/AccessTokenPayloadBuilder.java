@@ -26,8 +26,8 @@ public class AccessTokenPayloadBuilder {
     return this;
   }
 
-  public AccessTokenPayloadBuilder add(ClientId clientId) {
-    values.put("client_id", clientId.value());
+  public AccessTokenPayloadBuilder add(RequestedClientId requestedClientId) {
+    values.put("client_id", requestedClientId.value());
     return this;
   }
 

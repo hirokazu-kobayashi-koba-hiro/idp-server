@@ -4,7 +4,7 @@ import java.util.UUID;
 import org.idp.server.core.basic.vc.Credential;
 import org.idp.server.core.configuration.VerifiableCredentialConfiguration;
 import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.Subject;
 import org.idp.server.core.type.verifiablecredential.CredentialIssuer;
 import org.idp.server.core.type.verifiablecredential.TransactionId;
@@ -28,12 +28,12 @@ public class VerifiableCredentialTransactionCreator {
 
     TransactionId transactionId = new TransactionId(UUID.randomUUID().toString());
     CredentialIssuer credentialIssuer = verifiableCredentialConfiguration.credentialIssuer();
-    ClientId clientId = oAuthToken.accessToken().clientId();
+    RequestedClientId requestedClientId = oAuthToken.accessToken().clientId();
     Subject subject = oAuthToken.subject();
     Credential credential = delegateResponse.credential();
     VerifiableCredentialTransactionStatus status = delegateResponse.status();
 
     return new VerifiableCredentialTransaction(
-        transactionId, credentialIssuer, clientId, subject, credential, status);
+        transactionId, credentialIssuer, requestedClientId, subject, credential, status);
   }
 }

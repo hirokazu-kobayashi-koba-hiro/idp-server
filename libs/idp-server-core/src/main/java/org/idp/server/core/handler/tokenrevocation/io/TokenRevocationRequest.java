@@ -6,8 +6,8 @@ import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.AuthorizationHeaderHandlerable;
 import org.idp.server.core.tokenrevocation.TokenRevocationRequestParameters;
 import org.idp.server.core.type.mtls.ClientCert;
-import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecretBasic;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
 
@@ -44,16 +44,16 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
     return tenant;
   }
 
-  public ClientId clientId() {
+  public RequestedClientId clientId() {
     TokenRevocationRequestParameters parameters = toParameters();
     if (parameters.hasClientId()) {
       return parameters.clientId();
     }
     if (isBasicAuth(authorizationHeaders)) {
       BasicAuth basicAuth = convertBasicAuth(authorizationHeaders);
-      return new ClientId(basicAuth.username());
+      return new RequestedClientId(basicAuth.username());
     }
-    return new ClientId();
+    return new RequestedClientId();
   }
 
   public ClientSecretBasic clientSecretBasic() {
