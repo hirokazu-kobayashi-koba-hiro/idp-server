@@ -10,6 +10,8 @@ import org.idp.server.core.type.oauth.CustomParams;
 
 public class InsertSqlCreator {
 
+  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+
   static List<Object> createInsert(AuthorizationRequest authorizationRequest) {
     List<Object> params = new ArrayList<>();
     params.add(authorizationRequest.identifier().value());
@@ -18,6 +20,7 @@ public class InsertSqlCreator {
     params.add(authorizationRequest.scope().toStringValues());
     params.add(authorizationRequest.responseType().name());
     params.add(authorizationRequest.clientId().value());
+    params.add(toJson(authorizationRequest.client()));
 
     if (authorizationRequest.hasRedirectUri()) {
       params.add(authorizationRequest.redirectUri().value());
@@ -134,7 +137,7 @@ public class InsertSqlCreator {
     }
 
     if (authorizationRequest.hasCustomParams()) {
-      params.add(convertJson(authorizationRequest.customParams()));
+      params.add(convertJsonCustomParams(authorizationRequest.customParams()));
     } else {
       params.add("{}");
     }
@@ -143,18 +146,22 @@ public class InsertSqlCreator {
   }
 
   private static String convertJsonAuthorizationDetails(AuthorizationDetails authorizationDetails) {
-    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
-    return jsonConverter.write(authorizationDetails.toMapValues());
+
+    return toJson(authorizationDetails.toMapValues());
   }
 
   private static String convertJsonPresentationDefinition(
       PresentationDefinition presentationDefinition) {
-    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
-    return jsonConverter.write(presentationDefinition);
+
+    return toJson(presentationDefinition);
   }
 
-  private static String convertJson(CustomParams customParams) {
-    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
-    return jsonConverter.write(customParams.values());
+  private static String convertJsonCustomParams(CustomParams customParams) {
+
+    return toJson(customParams.values());
+  }
+
+  private static String toJson(Object value) {
+    return jsonConverter.write(value);
   }
 }

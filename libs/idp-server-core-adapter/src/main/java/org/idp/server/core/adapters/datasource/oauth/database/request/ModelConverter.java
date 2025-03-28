@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.AuthorizationProfile;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
@@ -20,6 +21,8 @@ import org.idp.server.core.type.verifiablepresentation.PresentationDefinitionUri
 
 class ModelConverter {
 
+  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+
   static AuthorizationRequest convert(Map<String, String> stringMap) {
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(new AuthorizationRequestIdentifier(stringMap.get("id")));
@@ -28,6 +31,7 @@ class ModelConverter {
     builder.add(new Scopes(stringMap.get("scopes")));
     builder.add(ResponseType.valueOf(stringMap.get("response_type")));
     builder.add(new RequestedClientId(stringMap.get("client_id")));
+    builder.add(convertClient(stringMap.get("client_payload")));
     builder.add(new RedirectUri(stringMap.get("redirect_uri")));
     builder.add(new State(stringMap.get("state")));
     builder.add(ResponseMode.of(stringMap.get("response_mode")));
@@ -52,12 +56,18 @@ class ModelConverter {
     return builder.build();
   }
 
+  private static Client convertClient(String value) {
+    if (value == null || value.isEmpty()) {
+      return new Client();
+    }
+    return jsonConverter.read(value, Client.class);
+  }
+
   private static ClaimsPayload convertClaimsPayload(String value) {
     if (value == null || value.isEmpty()) {
       return new ClaimsPayload();
     }
     try {
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
       return jsonConverter.read(value, ClaimsPayload.class);
     } catch (Exception exception) {
       return new ClaimsPayload();
@@ -70,7 +80,6 @@ class ModelConverter {
     }
     try {
 
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
       List list = jsonConverter.read(value, List.class);
       List<Map> details = (List<Map>) list;
       List<AuthorizationDetail> authorizationDetailsList =
@@ -88,8 +97,6 @@ class ModelConverter {
     }
     try {
 
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
-
       return jsonConverter.read(value, PresentationDefinition.class);
     } catch (Exception exception) {
       return new PresentationDefinition();
@@ -102,7 +109,6 @@ class ModelConverter {
     }
     try {
 
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
       Map<String, String> read = jsonConverter.read(value, Map.class);
 
       return new CustomParams(read);

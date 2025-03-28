@@ -209,6 +209,7 @@ CREATE TABLE authorization_request
     scopes                      TEXT                    NOT NULL,
     response_type               VARCHAR(255)            NOT NULL,
     client_id                   VARCHAR(255)            NOT NULL,
+    client_payload              JSONB                   NOT NULL,
     redirect_uri                TEXT                    NOT NULL,
     state                       TEXT,
     response_mode               VARCHAR(255),

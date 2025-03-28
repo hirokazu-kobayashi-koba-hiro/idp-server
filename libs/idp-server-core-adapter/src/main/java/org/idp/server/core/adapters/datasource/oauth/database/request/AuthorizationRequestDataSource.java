@@ -19,8 +19,8 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
     String sqlTemplate =
         """
                 INSERT INTO public.authorization_request
-                (id, tenant_id, profile, scopes, response_type, client_id, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, presentation_definition, presentation_definition_uri, custom_params)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb);
+                (id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, presentation_definition, presentation_definition_uri, custom_params)
+                VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb);
                 """;
 
     List<Object> params = InsertSqlCreator.createInsert(authorizationRequest);
@@ -32,7 +32,7 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-            SELECT id, tenant_id, profile, scopes, response_type, client_id, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, presentation_definition, presentation_definition_uri, custom_params FROM authorization_request
+            SELECT id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, presentation_definition, presentation_definition_uri, custom_params FROM authorization_request
             WHERE id = ?;
             """;
     List<Object> params = List.of(authorizationRequestIdentifier.value());
@@ -53,7 +53,7 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
 
     String sqlTemplate =
         """
-                SELECT id, tenant_id, profile, scopes, response_type, client_id, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, presentation_definition, presentation_definition_uri, custom_params FROM authorization_request
+                SELECT id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, presentation_definition, presentation_definition_uri, custom_params FROM authorization_request
                 WHERE id = ?;
                 """;
     List<Object> params = List.of(authorizationRequestIdentifier.value());

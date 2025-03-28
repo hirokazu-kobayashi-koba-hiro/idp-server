@@ -150,6 +150,10 @@ public class AuthorizationRequest {
     return client;
   }
 
+  public String clientNameValue() {
+    return client.name().value();
+  }
+
   public RedirectUri redirectUri() {
     return redirectUri;
   }
