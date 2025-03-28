@@ -21,4 +21,19 @@ public class AuthorizationGranted {
   public AuthorizationGrant authorizationGrant() {
     return authorizationGrant;
   }
+
+  public AuthorizationGranted replace(AuthorizationGrant authorizationGrant) {
+
+    return new AuthorizationGranted(identifier, authorizationGrant);
+  }
+
+  public AuthorizationGranted merge(AuthorizationGrant newAuthorizationGrant) {
+
+    AuthorizationGrant merged = authorizationGrant.merge(newAuthorizationGrant);
+    return new AuthorizationGranted(identifier, merged);
+  }
+
+  public boolean exists() {
+    return identifier != null && identifier.exists();
+  }
 }

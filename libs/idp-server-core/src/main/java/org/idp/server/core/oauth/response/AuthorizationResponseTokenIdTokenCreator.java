@@ -53,7 +53,7 @@ public class AuthorizationResponseTokenIdTokenCreator
         new AuthorizationResponseBuilder(
                 decideRedirectUri(authorizationRequest, context.clientConfiguration()),
                 context.responseMode(),
-                new ResponseModeValue("#"),
+                ResponseModeValue.fragment(),
                 context.tokenIssuer())
             .add(TokenType.Bearer)
             .add(new ExpiresIn(context.serverConfiguration().accessTokenDuration()))

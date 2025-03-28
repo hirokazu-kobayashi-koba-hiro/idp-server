@@ -157,12 +157,7 @@ public class AuthorizationCodeGrantService
       oAuthTokenBuilder.add(cNonceExpiresIn);
     }
 
-    AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
-        new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
-    AuthorizationGranted authorizationGranted =
-        new AuthorizationGranted(
-            authorizationGrantedIdentifier, authorizationCodeGrant.authorizationGrant());
-    authorizationGrantedRepository.register(authorizationGranted);
+    registerOrUpdate(authorizationGrant);
 
     OAuthToken oAuthToken = oAuthTokenBuilder.build();
 
@@ -170,5 +165,25 @@ public class AuthorizationCodeGrantService
     authorizationCodeGrantRepository.delete(authorizationCodeGrant);
 
     return oAuthToken;
+  }
+
+  private void registerOrUpdate(AuthorizationGrant authorizationGrant) {
+    AuthorizationGranted latest =
+        authorizationGrantedRepository.find(
+            authorizationGrant.tenantIdentifier(),
+            authorizationGrant.requestedClientId(),
+            authorizationGrant.user());
+
+    if (latest.exists()) {
+      AuthorizationGranted merge = latest.merge(authorizationGrant);
+
+      authorizationGrantedRepository.update(merge);
+      return;
+    }
+    AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
+        new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
+    AuthorizationGranted authorizationGranted =
+        new AuthorizationGranted(authorizationGrantedIdentifier, authorizationGrant);
+    authorizationGrantedRepository.register(authorizationGranted);
   }
 }

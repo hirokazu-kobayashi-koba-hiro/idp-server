@@ -9,6 +9,7 @@ import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.AuthReqId;
 import org.idp.server.core.type.ciba.Interval;
 import org.idp.server.core.type.extension.ExpiredAt;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.Scopes;
 
 public class CibaGrant {
@@ -100,6 +101,10 @@ public class CibaGrant {
 
   public boolean isAccessDenied() {
     return status.isAccessDenied();
+  }
+
+  public RequestedClientId requestedClientId() {
+    return authorizationGrant.requestedClientId();
   }
 
   public CibaGrant update(CibaGrantStatus cibaGrantStatus) {

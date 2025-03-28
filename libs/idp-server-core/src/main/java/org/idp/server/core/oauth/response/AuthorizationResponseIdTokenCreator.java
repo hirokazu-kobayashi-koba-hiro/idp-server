@@ -35,7 +35,7 @@ public class AuthorizationResponseIdTokenCreator
         new AuthorizationResponseBuilder(
                 decideRedirectUri(authorizationRequest, context.clientConfiguration()),
                 context.responseMode(),
-                new ResponseModeValue("#"),
+                ResponseModeValue.fragment(),
                 context.tokenIssuer())
             .add(idToken);
 

@@ -9,14 +9,18 @@ public interface ResponseModeDecidable {
 
   default ResponseModeValue decideResponseModeValue(
       ResponseType responseType, ResponseMode responseMode) {
+
     if (responseMode.isDefinedResponseModeValue()) {
+
       return new ResponseModeValue(responseMode.responseModeValue());
     } else if (responseType.isAuthorizationCodeFlow()
         || responseType.isUndefined()
         || responseType.isUnknown()) {
-      return new ResponseModeValue("?");
+
+      return ResponseModeValue.query();
     } else {
-      return new ResponseModeValue("#");
+
+      return ResponseModeValue.fragment();
     }
   }
 

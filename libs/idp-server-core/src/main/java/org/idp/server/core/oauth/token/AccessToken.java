@@ -111,7 +111,7 @@ public class AccessToken {
   }
 
   public RequestedClientId clientId() {
-    return authorizationGrant.clientId();
+    return authorizationGrant.requestedClientId();
   }
 
   public Scopes scopes() {

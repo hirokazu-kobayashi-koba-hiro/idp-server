@@ -86,11 +86,7 @@ public class CibaGrantService
             clientConfiguration);
     oAuthTokenBuilder.add(idToken);
 
-    AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
-        new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
-    AuthorizationGranted authorizationGranted =
-        new AuthorizationGranted(authorizationGrantedIdentifier, cibaGrant.authorizationGrant());
-    authorizationGrantedRepository.register(authorizationGranted);
+    registerOrUpdate(cibaGrant);
 
     OAuthToken oAuthToken = oAuthTokenBuilder.build();
 
@@ -98,5 +94,23 @@ public class CibaGrantService
     cibaGrantRepository.delete(cibaGrant);
 
     return oAuthToken;
+  }
+
+  private void registerOrUpdate(CibaGrant cibaGrant) {
+    AuthorizationGranted latest =
+        authorizationGrantedRepository.find(
+            cibaGrant.tenantIdentifier(), cibaGrant.requestedClientId(), cibaGrant.user());
+
+    if (latest.exists()) {
+      AuthorizationGranted merge = latest.merge(cibaGrant.authorizationGrant());
+
+      authorizationGrantedRepository.update(merge);
+      return;
+    }
+    AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
+        new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
+    AuthorizationGranted authorizationGranted =
+        new AuthorizationGranted(authorizationGrantedIdentifier, cibaGrant.authorizationGrant());
+    authorizationGrantedRepository.register(authorizationGranted);
   }
 }

@@ -36,7 +36,7 @@ public class CibaGrantDataSource implements CibaGrantRepository {
     params.add(authorizationGrant.user().sub());
     params.add(toJson(authorizationGrant.user()));
     params.add(toJson(authorizationGrant.authentication()));
-    params.add(authorizationGrant.clientId().value());
+    params.add(authorizationGrant.requestedClientId().value());
     params.add(toJson(authorizationGrant.client()));
     params.add(authorizationGrant.scopes().toStringValues());
     if (authorizationGrant.hasClaim()) {

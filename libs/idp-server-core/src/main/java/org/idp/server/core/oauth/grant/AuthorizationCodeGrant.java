@@ -70,7 +70,7 @@ public class AuthorizationCodeGrant {
   }
 
   public RequestedClientId clientId() {
-    return authorizationGrant.clientId();
+    return authorizationGrant.requestedClientId();
   }
 
   public ExpiredAt expiredAt() {

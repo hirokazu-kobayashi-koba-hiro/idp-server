@@ -10,7 +10,7 @@ import org.idp.server.core.adapters.datasource.configuration.database.server.Ser
 import org.idp.server.core.adapters.datasource.credential.database.VerifiableCredentialTransactionDataSource;
 import org.idp.server.core.adapters.datasource.federation.FederatableIdProviderConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.federation.FederationSessionDataSource;
-import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedMemoryDataSource;
+import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedDataSource;
 import org.idp.server.core.adapters.datasource.hook.HookConfigurationQueryDataSource;
 import org.idp.server.core.adapters.datasource.identity.PermissionCommandDataSource;
 import org.idp.server.core.adapters.datasource.identity.RoleCommandDataSource;
@@ -101,8 +101,8 @@ public class IdpServerApplication {
         new AuthorizationRequestDataSource();
     AuthorizationCodeGrantDataSource authorizationCodeGrantDataSource =
         new AuthorizationCodeGrantDataSource();
-    AuthorizationGrantedMemoryDataSource authorizationGrantedDataSource =
-        new AuthorizationGrantedMemoryDataSource();
+    AuthorizationGrantedDataSource authorizationGrantedDataSource =
+        new AuthorizationGrantedDataSource();
     OAuthTokenDataSource oAuthTokenDataSource = new OAuthTokenDataSource(encryptionKey);
     ServerConfigurationDataSource serverConfigurationDataSource =
         new ServerConfigurationDataSource();

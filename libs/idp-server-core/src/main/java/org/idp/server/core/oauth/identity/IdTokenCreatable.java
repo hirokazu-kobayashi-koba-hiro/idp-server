@@ -80,7 +80,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
     ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(idTokenDuration));
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("iss", tokenIssuer.value());
-    claims.put("aud", authorizationGrant.clientId().value());
+    claims.put("aud", authorizationGrant.requestedClientId().value());
     claims.put("exp", expiredAt.toEpochSecondWithUtc());
     claims.put("iat", now.toEpochSecond(SystemDateTime.zoneOffset));
 

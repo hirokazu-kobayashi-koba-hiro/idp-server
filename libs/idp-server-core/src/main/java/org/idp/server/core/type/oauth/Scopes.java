@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * indicating an invalid scope. The authorization server SHOULD document its scope requirements and
  * default value (if defined).
  */
-public class Scopes {
+public class Scopes implements Iterable<String> {
   Set<String> values;
 
   public Scopes() {
@@ -62,7 +62,16 @@ public class Scopes {
     return values.stream().toList();
   }
 
+  public Set<String> toStringSet() {
+    return values;
+  }
+
   public boolean hasOpenidScope() {
     return values.contains("openid");
+  }
+
+  @Override
+  public Iterator<String> iterator() {
+    return values.iterator();
   }
 }

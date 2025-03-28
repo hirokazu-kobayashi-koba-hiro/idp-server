@@ -1,5 +1,7 @@
 package org.idp.server.core.oauth.grant;
 
+import java.util.HashSet;
+import java.util.Set;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.client.ClientIdentifier;
@@ -73,7 +75,7 @@ public class AuthorizationGrant {
     return new Subject(user.sub());
   }
 
-  public RequestedClientId clientId() {
+  public RequestedClientId requestedClientId() {
     return requestedClientId;
   }
 
@@ -147,5 +149,32 @@ public class AuthorizationGrant {
 
   public boolean hasPresentationDefinition() {
     return presentationDefinition.exists();
+  }
+
+  public AuthorizationGrant merge(AuthorizationGrant newAuthorizationGrant) {
+    User newUser = newAuthorizationGrant.user();
+    Authentication newAuthentication = newAuthorizationGrant.authentication();
+    RequestedClientId newRequestClientId = newAuthorizationGrant.requestedClientId();
+    Client newClient = newAuthorizationGrant.client();
+    Set<String> newScopeValues = new HashSet<>(this.scopes.toStringSet());
+    scopes.forEach(newScopeValues::add);
+    Scopes newScopes = new Scopes(newScopeValues);
+    ClaimsPayload newClaimsPayload = newAuthorizationGrant.claimsPayload();
+    CustomProperties newCustomProperties = newAuthorizationGrant.customProperties();
+    AuthorizationDetails newAuthorizationDetails = newAuthorizationGrant.authorizationDetails();
+    PresentationDefinition newPresentationDefinition =
+        newAuthorizationGrant.presentationDefinition();
+
+    return new AuthorizationGrant(
+        tenantIdentifier,
+        newUser,
+        newAuthentication,
+        newRequestClientId,
+        newClient,
+        newScopes,
+        newClaimsPayload,
+        newCustomProperties,
+        newAuthorizationDetails,
+        newPresentationDefinition);
   }
 }
