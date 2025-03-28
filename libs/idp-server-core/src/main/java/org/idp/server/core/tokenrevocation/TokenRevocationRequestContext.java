@@ -61,6 +61,13 @@ public class TokenRevocationRequestContext implements BackchannelRequestContext 
     return clientConfiguration.clientAuthenticationType();
   }
 
+  public ClientId clientId() {
+    if (parameters.hasClientId()) {
+      return parameters.clientId();
+    }
+    return clientSecretBasic.clientId();
+  }
+
   public boolean isSupportedGrantTypeWithServer(GrantType grantType) {
     // FIXME server and client isSupportedGrantType
     return true;

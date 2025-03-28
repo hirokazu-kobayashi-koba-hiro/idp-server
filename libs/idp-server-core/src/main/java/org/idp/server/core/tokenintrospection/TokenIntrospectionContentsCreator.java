@@ -15,7 +15,7 @@ public class TokenIntrospectionContentsCreator {
     if (accessToken.hasSubject()) {
       contents.put("sub", accessToken.subject().value());
     }
-    contents.put("client_id", accessToken.clientId().value());
+    contents.put("client_id", accessToken.clientIdentifier().value());
     contents.put("scope", accessToken.scopes().toStringValues());
     if (accessToken.hasCustomProperties()) {
       contents.putAll(accessToken.customProperties().values());

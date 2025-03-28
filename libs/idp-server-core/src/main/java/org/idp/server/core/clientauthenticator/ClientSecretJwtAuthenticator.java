@@ -22,7 +22,7 @@ class ClientSecretJwtAuthenticator
   public ClientCredentials authenticate(BackchannelRequestContext context) {
     throwExceptionIfNotContainsClientAssertion(context);
     JoseContext joseContext = parseOrThrowExceptionIfUnMatchClientAssertion(context);
-    ClientId clientId = context.clientConfiguration().clientId();
+    ClientId clientId = context.clientId();
     ClientSecret clientSecret = new ClientSecret(context.clientConfiguration().clientSecretValue());
     ClientAssertionJwt clientAssertionJwt = new ClientAssertionJwt(joseContext.jsonWebSignature());
     return new ClientCredentials(

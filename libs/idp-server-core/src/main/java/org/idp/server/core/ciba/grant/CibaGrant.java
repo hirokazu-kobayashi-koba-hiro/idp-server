@@ -2,6 +2,7 @@ package org.idp.server.core.ciba.grant;
 
 import java.time.LocalDateTime;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.type.ciba.AuthReqId;
@@ -49,16 +50,16 @@ public class CibaGrant {
     return authorizationGrant;
   }
 
-  public ClientId clientId() {
-    return authorizationGrant.clientId();
+  public ClientIdentifier clientIdentifier() {
+    return authorizationGrant.clientIdentifier();
   }
 
   public AuthReqId authReqId() {
     return authReqId;
   }
 
-  public boolean isGrantedClient(ClientId clientId) {
-    return authorizationGrant.isGranted(clientId);
+  public boolean isGrantedClient(ClientIdentifier clientIdentifier) {
+    return authorizationGrant.isGranted(clientIdentifier);
   }
 
   public boolean isExpire(LocalDateTime other) {

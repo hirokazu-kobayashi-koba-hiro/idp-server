@@ -2,6 +2,7 @@ package org.idp.server.core.oauth.request;
 
 import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.OAuthSessionKey;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
@@ -20,6 +21,7 @@ public class AuthorizationRequest {
   AuthorizationProfile profile = AuthorizationProfile.UNDEFINED;
   Scopes scopes;
   ResponseType responseType;
+  Client client;
   ClientId clientId;
   RedirectUri redirectUri;
   State state;
@@ -52,6 +54,7 @@ public class AuthorizationRequest {
       Scopes scopes,
       ResponseType responseType,
       ClientId clientId,
+      Client client,
       RedirectUri redirectUri,
       State state,
       ResponseMode responseMode,
@@ -79,6 +82,7 @@ public class AuthorizationRequest {
     this.scopes = scopes;
     this.responseType = responseType;
     this.clientId = clientId;
+    this.client = client;
     this.redirectUri = redirectUri;
     this.state = state;
     this.responseMode = responseMode;
@@ -140,6 +144,10 @@ public class AuthorizationRequest {
 
   public boolean hasClientId() {
     return clientId.exists();
+  }
+
+  public Client client() {
+    return client;
   }
 
   public RedirectUri redirectUri() {

@@ -25,12 +25,14 @@ public class VerifiableCredentialTransactionCreator {
   }
 
   public VerifiableCredentialTransaction create() {
+
     TransactionId transactionId = new TransactionId(UUID.randomUUID().toString());
     CredentialIssuer credentialIssuer = verifiableCredentialConfiguration.credentialIssuer();
     ClientId clientId = oAuthToken.accessToken().clientId();
     Subject subject = oAuthToken.subject();
     Credential credential = delegateResponse.credential();
     VerifiableCredentialTransactionStatus status = delegateResponse.status();
+
     return new VerifiableCredentialTransaction(
         transactionId, credentialIssuer, clientId, subject, credential, status);
   }

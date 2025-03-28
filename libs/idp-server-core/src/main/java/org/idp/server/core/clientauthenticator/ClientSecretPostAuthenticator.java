@@ -28,7 +28,7 @@ class ClientSecretPostAuthenticator implements ClientAuthenticator {
   public ClientCredentials authenticate(BackchannelRequestContext context) {
     throwExceptionIfNotContainsClientSecretPost(context);
     throwExceptionIfUnMatchClientSecret(context);
-    ClientId clientId = context.clientConfiguration().clientId();
+    ClientId clientId = context.clientId();
     ClientSecret clientSecret = context.parameters().clientSecret();
     return new ClientCredentials(
         clientId,

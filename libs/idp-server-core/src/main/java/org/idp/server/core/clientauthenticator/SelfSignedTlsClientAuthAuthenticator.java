@@ -24,7 +24,7 @@ class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator {
     throwExceptionIfNotContainsClientCert(context);
     ClientCertification clientCertification =
         parseOrThrowExceptionIfUnSpecifiedOrUnMatchKey(context);
-    ClientId clientId = context.clientConfiguration().clientId();
+    ClientId clientId = context.clientId();
     ClientSecret clientSecret = new ClientSecret();
     return new ClientCredentials(
         clientId,

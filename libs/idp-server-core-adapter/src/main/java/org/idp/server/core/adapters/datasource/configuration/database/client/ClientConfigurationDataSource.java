@@ -10,6 +10,7 @@ import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
+import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.oauth.ClientId;
 
@@ -33,7 +34,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
     String payload = jsonConverter.write(clientConfiguration);
     List<Object> params = new ArrayList<>();
-    params.add(clientConfiguration.clientId().value());
+    params.add(clientConfiguration.clientIdentifier().value());
     params.add(clientConfiguration.clientIdAlias());
     params.add(tenant.identifierValue());
     params.add(payload);
@@ -75,6 +76,26 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
   }
 
   @Override
+  public ClientConfiguration get(Tenant tenant, ClientIdentifier clientIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    String sqlTemplate =
+            """
+                        SELECT id, id_alias, tenant_id, payload
+                        FROM client_configuration
+                        WHERE tenant_id = ? AND id = ?;
+                        """;
+    List<Object> params = List.of(tenant.identifierValue(), clientIdentifier.value());
+    Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
+
+
+    if (result == null || result.isEmpty()) {
+      throw new ClientConfigurationNotFoundException(
+              String.format("unregistered client (%s)", clientIdentifier.value()));
+    }
+    return ModelConverter.convert(result);
+  }
+
+  @Override
   public List<ClientConfiguration> find(Tenant tenant, int limit, int offset) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
@@ -109,7 +130,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
     params.add(clientConfiguration.clientIdAlias());
     params.add(payload);
     params.add(tenant.identifierValue());
-    params.add(clientConfiguration.clientId().value());
+    params.add(clientConfiguration.clientIdentifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

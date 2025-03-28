@@ -68,8 +68,9 @@ public class ResourceOwnerPasswordCredentialsGrantService
 
     CustomProperties customProperties = context.customProperties();
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrantBuilder(clientConfiguration.clientId(), scopes)
+        new AuthorizationGrantBuilder(context.clientId(), scopes)
             .add(user)
+            .add(clientConfiguration.client())
             .add(customProperties)
             .build();
 

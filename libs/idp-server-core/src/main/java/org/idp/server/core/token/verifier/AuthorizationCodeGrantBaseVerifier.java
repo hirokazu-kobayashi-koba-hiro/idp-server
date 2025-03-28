@@ -76,7 +76,7 @@ public class AuthorizationCodeGrantBaseVerifier implements AuthorizationCodeGran
           "invalid_grant",
           String.format("not found authorization code (%s)", tokenRequestContext.code().value()));
     }
-    if (!authorizationCodeGrant.isGrantedClient(tokenRequestContext.clientId())) {
+    if (!authorizationCodeGrant.isGrantedClient(tokenRequestContext.clientIdentifier())) {
       throw new TokenBadRequestException(
           "invalid_grant",
           String.format("not found authorization code (%s)", tokenRequestContext.code().value()));

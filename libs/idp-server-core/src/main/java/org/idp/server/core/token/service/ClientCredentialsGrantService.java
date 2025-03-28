@@ -38,8 +38,9 @@ public class ClientCredentialsGrantService
 
     CustomProperties customProperties = context.customProperties();
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrantBuilder(clientConfiguration.clientId(), scopes)
+        new AuthorizationGrantBuilder(context.clientId(), scopes)
             .add(customProperties)
+            .add(clientConfiguration.client())
             .build();
 
     AccessToken accessToken =

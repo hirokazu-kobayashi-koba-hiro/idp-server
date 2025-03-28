@@ -22,7 +22,7 @@ class PrivateKeyJwtAuthenticator
   public ClientCredentials authenticate(BackchannelRequestContext context) {
     throwExceptionIfNotContainsClientAssertion(context);
     JoseContext joseContext = parseOrThrowExceptionIfUnMatchClientAssertion(context);
-    ClientId clientId = context.clientConfiguration().clientId();
+    ClientId clientId = context.clientId();
     ClientSecret clientSecret = new ClientSecret();
     ClientAuthenticationPublicKey clientAuthenticationPublicKey =
         new ClientAuthenticationPublicKey(joseContext.jsonWebKey());

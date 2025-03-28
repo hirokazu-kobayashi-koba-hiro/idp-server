@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
@@ -29,6 +30,7 @@ class ModelConverter {
     Authentication authentication =
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);
     ClientId clientId = new ClientId(stringMap.get("client_id"));
+    Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = convertCustomProperties(stringMap.get("custom_properties"));
     ClaimsPayload claimsPayload = convertClaimsPayload(stringMap.get("claims"));
@@ -36,16 +38,19 @@ class ModelConverter {
         convertAuthorizationDetails(stringMap.get("authorization_details"));
     PresentationDefinition presentationDefinition =
         convertPresentationDefinition(stringMap.get("presentation_definition"));
+
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrant(
             user,
             authentication,
             clientId,
+            client,
             scopes,
             claimsPayload,
             customProperties,
             authorizationDetails,
             presentationDefinition);
+
     AuthorizationCode authorizationCode =
         new AuthorizationCode(stringMap.get("authorization_code"));
     ExpiredAt expiredAt = new ExpiredAt(stringMap.get("expired_at"));

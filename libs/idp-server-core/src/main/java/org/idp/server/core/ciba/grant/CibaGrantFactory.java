@@ -6,6 +6,7 @@ import org.idp.server.core.ciba.CibaRequestContext;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.oauth.identity.User;
@@ -37,10 +38,14 @@ public class CibaGrantFactory {
     BackchannelAuthenticationRequestIdentifier identifier =
         context.backchannelAuthenticationRequestIdentifier();
     ClientId clientId = context.clientId();
+    Client client = context.client();
     Scopes scopes = context.scopes();
     // TODO authorization_details
     AuthorizationGrantBuilder builder =
-        new AuthorizationGrantBuilder(clientId, scopes).add(user).add(authentication);
+        new AuthorizationGrantBuilder(clientId, scopes)
+                .add(client)
+                .add(user)
+                .add(authentication);
     if (user.hasCustomProperties()) {
       builder.add(user.customProperties());
     }

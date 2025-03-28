@@ -19,7 +19,7 @@ class TlsClientAuthAuthenticator implements ClientAuthenticator {
   public ClientCredentials authenticate(BackchannelRequestContext context) {
     throwExceptionIfNotContainsClientCert(context);
     X509Certification x509Certification = parseOrThrowExceptionIfNoneMatch(context);
-    ClientId clientId = context.clientConfiguration().clientId();
+    ClientId clientId = context.clientId();
     ClientSecret clientSecret = new ClientSecret();
     ClientCertification clientCertification = new ClientCertification(x509Certification);
     return new ClientCredentials(

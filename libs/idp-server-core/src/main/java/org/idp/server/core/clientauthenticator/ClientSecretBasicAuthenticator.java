@@ -33,7 +33,7 @@ class ClientSecretBasicAuthenticator implements ClientAuthenticator {
   public ClientCredentials authenticate(BackchannelRequestContext context) {
     throwExceptionIfNotContainsClientSecretBasic(context);
     throwExceptionIfUnMatchClientSecret(context);
-    ClientId clientId = context.clientConfiguration().clientId();
+    ClientId clientId = context.clientId();
     ClientSecret clientSecret = context.clientSecretBasic().clientSecret();
     return new ClientCredentials(
         clientId,

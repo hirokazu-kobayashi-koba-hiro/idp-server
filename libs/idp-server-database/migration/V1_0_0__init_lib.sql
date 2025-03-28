@@ -237,9 +237,10 @@ CREATE TABLE authorization_code_grant
     authorization_request_id CHAR(36)                NOT NULL PRIMARY KEY,
     authorization_code       VARCHAR(255)            NOT NULL,
     user_id                  CHAR(36)                NOT NULL,
-    user_payload             TEXT                    NOT NULL,
-    authentication           TEXT                    NOT NULL,
+    user_payload             JSONB                    NOT NULL,
+    authentication           JSONB                    NOT NULL,
     client_id                VARCHAR(255)            NOT NULL,
+    client_payload           JSONB                   NOT NULL,
     scopes                   TEXT                    NOT NULL,
     claims                   TEXT                    NOT NULL,
     custom_properties        JSONB,
@@ -268,6 +269,7 @@ CREATE TABLE oauth_token
     user_payload                    JSONB,
     authentication                  JSONB                   NOT NULL,
     client_id                       VARCHAR(255)            NOT NULL,
+    client_payload                  JSONB                   NOT NULL,
     scopes                          TEXT                    NOT NULL,
     claims                          TEXT                    NOT NULL,
     custom_properties               JSONB,
@@ -322,6 +324,7 @@ CREATE TABLE ciba_grant
     user_payload                          JSONB                   NOT NULL,
     authentication                        JSONB,
     client_id                             VARCHAR(255)            NOT NULL,
+    client_payload                        JSONB                   NOT NULL,
     scopes                                TEXT                    NOT NULL,
     claims                                JSONB                   NOT NULL,
     custom_properties                     JSONB,
@@ -387,14 +390,14 @@ CREATE TABLE federatable_idp_configuration
 
 CREATE TABLE hook_configuration
 (
-    id               CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id        CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
-    trigger          VARCHAR(255)            NOT NULL,
-    payload          JSONB                   NOT NULL,
-    execution_order  INTEGER                 NOT NULL DEFAULT 0,
-    enabled          BOOLEAN                 NOT NULL DEFAULT TRUE,
-    created_at       TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at       TIMESTAMP DEFAULT now() NOT NULL
+    id              CHAR(36)     NOT NULL PRIMARY KEY,
+    tenant_id       CHAR(36)     NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    trigger         VARCHAR(255) NOT NULL,
+    payload         JSONB        NOT NULL,
+    execution_order INTEGER      NOT NULL DEFAULT 0,
+    enabled         BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMP             DEFAULT now() NOT NULL,
+    updated_at      TIMESTAMP             DEFAULT now() NOT NULL
 );
 
 CREATE INDEX idx_hook_configuration_trigger ON hook_configuration (tenant_id, trigger);

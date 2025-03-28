@@ -1,6 +1,9 @@
 package org.idp.server.core.oauth.grant;
 
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.client.Client;
+import org.idp.server.core.oauth.client.ClientIdentifier;
+import org.idp.server.core.oauth.client.ClientName;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.identity.IdTokenClaims;
 import org.idp.server.core.oauth.identity.User;
@@ -16,6 +19,7 @@ public class AuthorizationGrant {
   User user;
   Authentication authentication;
   ClientId clientId;
+  Client client;
   Scopes scopes;
   ClaimsPayload claimsPayload;
   CustomProperties customProperties;
@@ -28,6 +32,7 @@ public class AuthorizationGrant {
       User user,
       Authentication authentication,
       ClientId clientId,
+      Client client,
       Scopes scopes,
       ClaimsPayload claimsPayload,
       CustomProperties customProperties,
@@ -36,6 +41,7 @@ public class AuthorizationGrant {
     this.user = user;
     this.authentication = authentication;
     this.clientId = clientId;
+    this.client = client;
     this.scopes = scopes;
     this.claimsPayload = claimsPayload;
     this.customProperties = customProperties;
@@ -63,8 +69,20 @@ public class AuthorizationGrant {
     return clientId;
   }
 
-  public String clientIdValue() {
-    return clientId.value();
+  public Client client() {
+    return client;
+  }
+
+  public ClientIdentifier clientIdentifier() {
+    return client.identifier();
+  }
+
+  public ClientName clientName() {
+    return client.name();
+  }
+
+  public String clientIdentifierValue() {
+    return client.identifier().value();
   }
 
   public Scopes scopes() {
@@ -87,8 +105,8 @@ public class AuthorizationGrant {
     return customProperties.exists();
   }
 
-  public boolean isGranted(ClientId clientId) {
-    return this.clientId.equals(clientId);
+  public boolean isGranted(ClientIdentifier clientIdentifier) {
+    return this.clientIdentifier().equals(clientIdentifier);
   }
 
   public boolean hasUser() {

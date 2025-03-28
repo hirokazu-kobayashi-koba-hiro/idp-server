@@ -4,6 +4,7 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.type.mtls.ClientCert;
 import org.idp.server.core.type.oauth.ClientAuthenticationType;
+import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecretBasic;
 
 public interface BackchannelRequestContext {
@@ -21,4 +22,6 @@ public interface BackchannelRequestContext {
   ClientConfiguration clientConfiguration();
 
   ClientAuthenticationType clientAuthenticationType();
+
+  ClientId clientId();
 }

@@ -5,6 +5,7 @@ import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.identity.IdTokenClaims;
@@ -65,15 +66,19 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
   }
 
   public AuthorizationGrant toAuthorizationGranted() {
+
     ClientId clientId = authorizationRequest.clientId();
+    Client client = clientConfiguration.client();
     Scopes scopes = authorizationRequest.scope();
     ClaimsPayload claimsPayload = authorizationRequest.claimsPayload();
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
     PresentationDefinition presentationDefinition = authorizationRequest.presentationDefinition();
+    
     return new AuthorizationGrant(
         user,
         authentication,
         clientId,
+        client,
         scopes,
         claimsPayload,
         customProperties,

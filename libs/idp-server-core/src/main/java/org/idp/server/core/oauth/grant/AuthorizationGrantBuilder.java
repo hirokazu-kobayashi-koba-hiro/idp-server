@@ -1,6 +1,7 @@
 package org.idp.server.core.oauth.grant;
 
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
@@ -14,6 +15,7 @@ public class AuthorizationGrantBuilder {
   User user = new User();
   Authentication authentication = new Authentication();
   ClientId clientId;
+  Client client = new Client();
   Scopes scopes;
   ClaimsPayload claimsPayload = new ClaimsPayload();
   CustomProperties customProperties = new CustomProperties();
@@ -32,6 +34,11 @@ public class AuthorizationGrantBuilder {
 
   public AuthorizationGrantBuilder add(Authentication authentication) {
     this.authentication = authentication;
+    return this;
+  }
+
+  public AuthorizationGrantBuilder add(Client client) {
+    this.client = client;
     return this;
   }
 
@@ -60,6 +67,7 @@ public class AuthorizationGrantBuilder {
         user,
         authentication,
         clientId,
+        client,
         scopes,
         claimsPayload,
         customProperties,

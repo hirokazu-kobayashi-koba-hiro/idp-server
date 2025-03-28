@@ -7,6 +7,7 @@ import org.idp.server.core.ciba.grant.CibaGrant;
 import org.idp.server.core.ciba.grant.CibaGrantStatus;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
@@ -36,19 +37,23 @@ class ModelConverter {
     Authentication authentication =
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);
     ClientId clientId = new ClientId(stringMap.get("client_id"));
+    Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = new CustomProperties();
     ClaimsPayload claimsPayload = convertClaimsPayload(stringMap.get("claims"));
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
+
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrantBuilder(clientId, scopes)
             .add(user)
+            .add(client)
             .add(authentication)
             .add(claimsPayload)
             .add(customProperties)
             .add(authorizationDetails)
             .build();
+
     return new CibaGrant(id, authorizationGrant, authReqId, expiredAt, interval, status);
   }
 

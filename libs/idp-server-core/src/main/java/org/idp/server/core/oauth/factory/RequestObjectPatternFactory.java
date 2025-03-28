@@ -117,6 +117,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
     builder.add(scopes);
     builder.add(responseType);
     builder.add(clientId);
+    builder.add(clientConfiguration.client());
     builder.add(redirectUri);
     builder.add(state);
     builder.add(responseMode);

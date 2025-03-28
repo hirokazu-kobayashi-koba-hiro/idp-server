@@ -17,8 +17,8 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
     String sqlTemplate =
         """
                     INSERT INTO public.authorization_code_grant
-                    (authorization_request_id, authorization_code, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expired_at, presentation_definition)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb);
+                    (authorization_request_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, claims, custom_properties, authorization_details, expired_at, presentation_definition)
+                    VALUES (?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb);;
                     """;
     List<Object> params = InsertSqlParamsCreator.create(authorizationCodeGrant);
 
@@ -30,7 +30,7 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                SELECT authorization_request_id, authorization_code, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details, expired_at, presentation_definition
+                SELECT authorization_request_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, claims, custom_properties, authorization_details, expired_at, presentation_definition
                 FROM authorization_code_grant
                 WHERE authorization_code = ?;
                 """;

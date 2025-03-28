@@ -33,6 +33,7 @@ class InsertSqlParamsCreator {
 
     params.add(toJson(authorizationGrant.authentication()));
     params.add(authorizationGrant.clientId().value());
+    params.add(toJson(authorizationGrant.client()));
     params.add(authorizationGrant.scopes().toStringValues());
 
     if (authorizationGrant.hasClaim()) {
