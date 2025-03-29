@@ -7,7 +7,7 @@ import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
-import org.idp.server.core.oauth.identity.ClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.identity.IdTokenClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
@@ -62,7 +62,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     return authorizationRequest.scope();
   }
 
-  public ClaimsPayload claimsPayload() {
+  public RequestedClaimsPayload claimsPayload() {
     return authorizationRequest.claimsPayload();
   }
 
@@ -72,9 +72,8 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     RequestedClientId requestedClientId = authorizationRequest.clientId();
     Client client = clientConfiguration.client();
     Scopes scopes = authorizationRequest.scope();
-    ClaimsPayload claimsPayload = authorizationRequest.claimsPayload();
+    RequestedClaimsPayload requestedClaimsPayload = authorizationRequest.claimsPayload();
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
-    PresentationDefinition presentationDefinition = authorizationRequest.presentationDefinition();
 
     return new AuthorizationGrant(
         tenantIdentifier,
@@ -83,10 +82,9 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
         requestedClientId,
         client,
         scopes,
-        claimsPayload,
+            requestedClaimsPayload,
         customProperties,
-        authorizationDetails,
-        presentationDefinition);
+        authorizationDetails);
   }
 
   public CustomProperties customProperties() {

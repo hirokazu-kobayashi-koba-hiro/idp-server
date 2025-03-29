@@ -5,7 +5,7 @@ import java.util.Map;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.client.Client;
-import org.idp.server.core.oauth.identity.ClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
@@ -50,8 +50,6 @@ class ModelConverter {
     builder.add(new CodeChallenge(stringMap.get("code_challenge")));
     builder.add(CodeChallengeMethod.of(stringMap.get("code_challenge_method")));
     builder.add(convertAuthorizationDetails(stringMap.get("authorization_details")));
-    builder.add(convertPresentationDefinition(stringMap.get("presentation_definition")));
-    builder.add(new PresentationDefinitionUri(stringMap.get("presentation_definition_uri")));
     builder.add(convertCustomParams(stringMap.get("custom_params")));
     return builder.build();
   }
@@ -63,14 +61,14 @@ class ModelConverter {
     return jsonConverter.read(value, Client.class);
   }
 
-  private static ClaimsPayload convertClaimsPayload(String value) {
+  private static RequestedClaimsPayload convertClaimsPayload(String value) {
     if (value == null || value.isEmpty()) {
-      return new ClaimsPayload();
+      return new RequestedClaimsPayload();
     }
     try {
-      return jsonConverter.read(value, ClaimsPayload.class);
+      return jsonConverter.read(value, RequestedClaimsPayload.class);
     } catch (Exception exception) {
-      return new ClaimsPayload();
+      return new RequestedClaimsPayload();
     }
   }
 
@@ -88,18 +86,6 @@ class ModelConverter {
       return new AuthorizationDetails(authorizationDetailsList);
     } catch (Exception exception) {
       return new AuthorizationDetails();
-    }
-  }
-
-  private static PresentationDefinition convertPresentationDefinition(String value) {
-    if (value == null || value.isEmpty()) {
-      return new PresentationDefinition();
-    }
-    try {
-
-      return jsonConverter.read(value, PresentationDefinition.class);
-    } catch (Exception exception) {
-      return new PresentationDefinition();
     }
   }
 

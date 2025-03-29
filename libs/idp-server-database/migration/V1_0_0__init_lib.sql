@@ -227,8 +227,6 @@ CREATE TABLE authorization_request
     code_challenge              TEXT,
     code_challenge_method       VARCHAR(10),
     authorization_details       JSONB,
-    presentation_definition     JSONB,
-    presentation_definition_uri TEXT,
     custom_params               JSONB                   NOT NULL,
     created_at                  TIMESTAMP DEFAULT now() NOT NULL
 );
@@ -248,7 +246,6 @@ CREATE TABLE authorization_code_grant
     custom_properties        JSONB,
     authorization_details    JSONB,
     expired_at               TEXT                    NOT NULL,
-    presentation_definition  JSONB                   NOT NULL,
     created_at               TIMESTAMP DEFAULT now() NOT NULL,
     CONSTRAINT fk_authorization_code_grant_authorization_request_id
         FOREIGN KEY (authorization_request_id)
@@ -354,7 +351,6 @@ CREATE TABLE authorization_granted
     claims                  TEXT                    NOT NULL,
     custom_properties       JSONB,
     authorization_details   JSONB,
-    presentation_definition JSONB                   NOT NULL,
     created_at              TIMESTAMP DEFAULT now() NOT NULL,
     updated_at              TIMESTAMP DEFAULT now() NOT NULL,
     revoked_at              TIMESTAMP

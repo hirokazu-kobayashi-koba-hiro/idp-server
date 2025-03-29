@@ -9,7 +9,7 @@ import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.AuthorizationProfile;
-import org.idp.server.core.oauth.identity.ClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
@@ -32,14 +32,14 @@ public interface AuthorizationRequestFactory {
     return new AuthorizationRequestIdentifier(UUID.randomUUID().toString());
   }
 
-  default ClaimsPayload convertClaimsPayload(ClaimsValue claimsValue) {
+  default RequestedClaimsPayload convertClaimsPayload(ClaimsValue claimsValue) {
     try {
       JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
       return claimsValue.exists()
-          ? jsonConverter.read(claimsValue.value(), ClaimsPayload.class)
-          : new ClaimsPayload();
+          ? jsonConverter.read(claimsValue.value(), RequestedClaimsPayload.class)
+          : new RequestedClaimsPayload();
     } catch (Exception exception) {
-      return new ClaimsPayload();
+      return new RequestedClaimsPayload();
     }
   }
 

@@ -8,7 +8,7 @@ import org.idp.server.core.grantmangment.AuthorizationGrantedIdentifier;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
-import org.idp.server.core.oauth.identity.ClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
@@ -36,11 +36,9 @@ class ModelConverter {
 
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = convertCustomProperties(stringMap.get("custom_properties"));
-    ClaimsPayload claimsPayload = convertClaimsPayload(stringMap.get("claims"));
+    RequestedClaimsPayload requestedClaimsPayload = convertClaimsPayload(stringMap.get("claims"));
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
-    PresentationDefinition presentationDefinition =
-        convertPresentationDefinition(stringMap.get("presentation_definition"));
 
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrant(
@@ -50,23 +48,22 @@ class ModelConverter {
             requestedClientId,
             client,
             scopes,
-            claimsPayload,
+            requestedClaimsPayload,
             customProperties,
-            authorizationDetails,
-            presentationDefinition);
+            authorizationDetails);
 
     return new AuthorizationGranted(identifier, authorizationGrant);
   }
 
-  private static ClaimsPayload convertClaimsPayload(String value) {
+  private static RequestedClaimsPayload convertClaimsPayload(String value) {
     if (value == null || value.isEmpty()) {
-      return new ClaimsPayload();
+      return new RequestedClaimsPayload();
     }
     try {
 
-      return jsonConverter.read(value, ClaimsPayload.class);
+      return jsonConverter.read(value, RequestedClaimsPayload.class);
     } catch (Exception exception) {
-      return new ClaimsPayload();
+      return new RequestedClaimsPayload();
     }
   }
 
@@ -100,15 +97,4 @@ class ModelConverter {
     }
   }
 
-  private static PresentationDefinition convertPresentationDefinition(String value) {
-    if (value == null || value.isEmpty()) {
-      return new PresentationDefinition();
-    }
-    try {
-
-      return jsonConverter.read(value, PresentationDefinition.class);
-    } catch (Exception exception) {
-      return new PresentationDefinition();
-    }
-  }
 }

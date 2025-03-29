@@ -6,7 +6,7 @@ import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.client.ClientName;
-import org.idp.server.core.oauth.identity.ClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.identity.IdTokenClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
@@ -25,10 +25,9 @@ public class AuthorizationGrant {
   RequestedClientId requestedClientId;
   Client client;
   Scopes scopes;
-  ClaimsPayload claimsPayload;
+  RequestedClaimsPayload requestedClaimsPayload;
   CustomProperties customProperties;
   AuthorizationDetails authorizationDetails;
-  PresentationDefinition presentationDefinition;
 
   public AuthorizationGrant() {}
 
@@ -39,20 +38,18 @@ public class AuthorizationGrant {
       RequestedClientId requestedClientId,
       Client client,
       Scopes scopes,
-      ClaimsPayload claimsPayload,
+      RequestedClaimsPayload requestedClaimsPayload,
       CustomProperties customProperties,
-      AuthorizationDetails authorizationDetails,
-      PresentationDefinition presentationDefinition) {
+      AuthorizationDetails authorizationDetails) {
     this.tenantIdentifier = tenantIdentifier;
     this.user = user;
     this.authentication = authentication;
     this.requestedClientId = requestedClientId;
     this.client = client;
     this.scopes = scopes;
-    this.claimsPayload = claimsPayload;
+    this.requestedClaimsPayload = requestedClaimsPayload;
     this.customProperties = customProperties;
     this.authorizationDetails = authorizationDetails;
-    this.presentationDefinition = presentationDefinition;
   }
 
   public TenantIdentifier tenantIdentifier() {
@@ -99,8 +96,8 @@ public class AuthorizationGrant {
     return scopes;
   }
 
-  public ClaimsPayload claimsPayload() {
-    return claimsPayload;
+  public RequestedClaimsPayload claimsPayload() {
+    return requestedClaimsPayload;
   }
 
   public String scopesValue() {
@@ -124,7 +121,7 @@ public class AuthorizationGrant {
   }
 
   public IdTokenClaims idTokenClaims() {
-    return claimsPayload.idToken();
+    return requestedClaimsPayload.idToken();
   }
 
   public boolean hasOpenidScope() {
@@ -140,16 +137,9 @@ public class AuthorizationGrant {
   }
 
   public boolean hasClaim() {
-    return claimsPayload.exists();
+    return requestedClaimsPayload.exists();
   }
 
-  public PresentationDefinition presentationDefinition() {
-    return presentationDefinition;
-  }
-
-  public boolean hasPresentationDefinition() {
-    return presentationDefinition.exists();
-  }
 
   public AuthorizationGrant merge(AuthorizationGrant newAuthorizationGrant) {
     User newUser = newAuthorizationGrant.user();
@@ -159,11 +149,9 @@ public class AuthorizationGrant {
     Set<String> newScopeValues = new HashSet<>(this.scopes.toStringSet());
     newAuthorizationGrant.scopes().forEach(newScopeValues::add);
     Scopes newScopes = new Scopes(newScopeValues);
-    ClaimsPayload newClaimsPayload = newAuthorizationGrant.claimsPayload();
+    RequestedClaimsPayload newRequestedClaimsPayload = newAuthorizationGrant.claimsPayload();
     CustomProperties newCustomProperties = newAuthorizationGrant.customProperties();
     AuthorizationDetails newAuthorizationDetails = newAuthorizationGrant.authorizationDetails();
-    PresentationDefinition newPresentationDefinition =
-        newAuthorizationGrant.presentationDefinition();
 
     return new AuthorizationGrant(
         tenantIdentifier,
@@ -172,9 +160,8 @@ public class AuthorizationGrant {
         newRequestClientId,
         newClient,
         newScopes,
-        newClaimsPayload,
+            newRequestedClaimsPayload,
         newCustomProperties,
-        newAuthorizationDetails,
-        newPresentationDefinition);
+        newAuthorizationDetails);
   }
 }

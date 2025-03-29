@@ -2,7 +2,7 @@ package org.idp.server.core.oauth.grant;
 
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
-import org.idp.server.core.oauth.identity.ClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
@@ -19,7 +19,7 @@ public class AuthorizationGrantBuilder {
   RequestedClientId requestedClientId;
   Client client = new Client();
   Scopes scopes;
-  ClaimsPayload claimsPayload = new ClaimsPayload();
+  RequestedClaimsPayload requestedClaimsPayload = new RequestedClaimsPayload();
   CustomProperties customProperties = new CustomProperties();
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
   PresentationDefinition presentationDefinition = new PresentationDefinition();
@@ -46,8 +46,8 @@ public class AuthorizationGrantBuilder {
     return this;
   }
 
-  public AuthorizationGrantBuilder add(ClaimsPayload claimsPayload) {
-    this.claimsPayload = claimsPayload;
+  public AuthorizationGrantBuilder add(RequestedClaimsPayload requestedClaimsPayload) {
+    this.requestedClaimsPayload = requestedClaimsPayload;
     return this;
   }
 
@@ -61,11 +61,6 @@ public class AuthorizationGrantBuilder {
     return this;
   }
 
-  public AuthorizationGrantBuilder add(PresentationDefinition presentationDefinition) {
-    this.presentationDefinition = presentationDefinition;
-    return this;
-  }
-
   public AuthorizationGrant build() {
     return new AuthorizationGrant(
         tenantIdentifier,
@@ -74,9 +69,8 @@ public class AuthorizationGrantBuilder {
         requestedClientId,
         client,
         scopes,
-        claimsPayload,
+            requestedClaimsPayload,
         customProperties,
-        authorizationDetails,
-        presentationDefinition);
+        authorizationDetails);
   }
 }

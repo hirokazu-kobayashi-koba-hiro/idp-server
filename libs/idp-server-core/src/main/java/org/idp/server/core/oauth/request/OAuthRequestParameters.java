@@ -188,22 +188,6 @@ public class OAuthRequestParameters {
     return contains(code_challenge_method);
   }
 
-  public PresentationDefinitionEntity presentationDefinition() {
-    return new PresentationDefinitionEntity(getValueOrEmpty(presentation_definition));
-  }
-
-  public boolean hasPresentationDefinition() {
-    return contains(presentation_definition);
-  }
-
-  public PresentationDefinitionUri presentationDefinitionUri() {
-    return new PresentationDefinitionUri(getValueOrEmpty(presentation_definition_uri));
-  }
-
-  public boolean hasPresentationDefinitionUri() {
-    return contains(presentation_definition_uri);
-  }
-
   public String getValueOrEmpty(OAuthRequestKey key) {
     return values.getFirstOrEmpty(key.name());
   }

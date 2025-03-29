@@ -211,19 +211,4 @@ public class RequestObjectParameters {
     return new AuthorizationDetailsEntity(getList(authorization_details));
   }
 
-  public PresentationDefinitionEntity presentationDefinition() {
-    return new PresentationDefinitionEntity(values.get(presentation_definition.name()));
-  }
-
-  public boolean hasPresentationDefinition() {
-    return contains(presentation_definition);
-  }
-
-  public PresentationDefinitionUri presentationDefinitionUri() {
-    return new PresentationDefinitionUri(getValueOrEmpty(presentation_definition_uri));
-  }
-
-  public boolean hasPresentationDefinitionUri() {
-    return contains(presentation_definition_uri);
-  }
 }

@@ -48,8 +48,6 @@ public enum OAuthRequestKey {
   format,
   credential_definition,
   proof,
-  presentation_definition,
-  presentation_definition_uri,
   client_id_scheme,
   client_metadata,
   client_metadata_uri,

@@ -124,18 +124,6 @@ public class InsertSqlCreator {
       params.add("[]");
     }
 
-    if (authorizationRequest.hasPresentationDefinition()) {
-      params.add(convertJsonPresentationDefinition(authorizationRequest.presentationDefinition()));
-    } else {
-      params.add("{}");
-    }
-
-    if (authorizationRequest.hasPresentationDefinitionUri()) {
-      params.add(authorizationRequest.presentationDefinitionUri().value());
-    } else {
-      params.add(null);
-    }
-
     if (authorizationRequest.hasCustomParams()) {
       params.add(convertJsonCustomParams(authorizationRequest.customParams()));
     } else {
@@ -148,12 +136,6 @@ public class InsertSqlCreator {
   private static String convertJsonAuthorizationDetails(AuthorizationDetails authorizationDetails) {
 
     return toJson(authorizationDetails.toMapValues());
-  }
-
-  private static String convertJsonPresentationDefinition(
-      PresentationDefinition presentationDefinition) {
-
-    return toJson(presentationDefinition);
   }
 
   private static String convertJsonCustomParams(CustomParams customParams) {
