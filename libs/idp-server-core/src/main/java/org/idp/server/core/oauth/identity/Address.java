@@ -1,17 +1,19 @@
 package org.idp.server.core.oauth.identity;
 
+import org.idp.server.core.basic.json.JsonReadable;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Address implements Serializable {
+public class Address implements JsonReadable, Serializable {
+
   String formatted;
   String streetAddress;
   String locality;
   String region;
   String postalCode;
   String country;
-  Map<String, Object> values = new HashMap<>();
 
   public Address() {}
 
@@ -21,7 +23,6 @@ public class Address implements Serializable {
 
   public Address setFormatted(String formatted) {
     this.formatted = formatted;
-    this.values.put("formatted", formatted);
     return this;
   }
 
@@ -31,7 +32,6 @@ public class Address implements Serializable {
 
   public Address setStreetAddress(String streetAddress) {
     this.streetAddress = streetAddress;
-    this.values.put("street_address", streetAddress);
     return this;
   }
 
@@ -41,7 +41,6 @@ public class Address implements Serializable {
 
   public Address setLocality(String locality) {
     this.locality = locality;
-    this.values.put("locality", locality);
     return this;
   }
 
@@ -51,7 +50,6 @@ public class Address implements Serializable {
 
   public Address setRegion(String region) {
     this.region = region;
-    this.values.put("region", region);
     return this;
   }
 
@@ -61,7 +59,6 @@ public class Address implements Serializable {
 
   public Address setPostalCode(String postalCode) {
     this.postalCode = postalCode;
-    this.values.put("postal_code", postalCode);
     return this;
   }
 
@@ -71,15 +68,44 @@ public class Address implements Serializable {
 
   public Address setCountry(String country) {
     this.country = country;
-    this.values.put("country", country);
     return this;
   }
 
   public boolean exists() {
-    return !values.isEmpty();
+    return hasFormatted() || hasStreetAddress() || hasLocality() || hasRegion() || hasPostalCode() || hasCountry();
+  }
+
+  public boolean hasFormatted() {
+    return formatted != null && !formatted.isEmpty();
+  }
+  public boolean hasStreetAddress() {
+    return streetAddress != null && !streetAddress.isEmpty();
+  }
+
+  public boolean hasLocality() {
+    return locality != null && !locality.isEmpty();
+  }
+
+  public boolean hasRegion() {
+    return region != null && !region.isEmpty();
+  }
+
+  public boolean hasPostalCode() {
+    return postalCode != null && !postalCode.isEmpty();
+  }
+
+  public boolean hasCountry() {
+    return country != null && !country.isEmpty();
   }
 
   public Map<String, Object> toMap() {
-    return values;
+    Map<String, Object> map = new HashMap<>();
+    if (hasFormatted()) map.put("formatted", formatted);
+    if (hasStreetAddress()) map.put("street_address", streetAddress);
+    if (hasLocality()) map.put("locality", locality);
+    if (hasRegion()) map.put("region", region);
+    if (hasPostalCode()) map.put("postal_code", postalCode);
+    if (hasCountry()) map.put("country", country);
+    return map;
   }
 }

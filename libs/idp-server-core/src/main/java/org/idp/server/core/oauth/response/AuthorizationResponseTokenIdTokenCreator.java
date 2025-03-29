@@ -9,7 +9,6 @@ import org.idp.server.core.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.token.AccessToken;
 import org.idp.server.core.oauth.token.AccessTokenCreatable;
-import org.idp.server.core.type.extension.GrantFlow;
 import org.idp.server.core.type.extension.JarmPayload;
 import org.idp.server.core.type.extension.ResponseModeValue;
 import org.idp.server.core.type.oauth.*;
@@ -25,7 +24,7 @@ public class AuthorizationResponseTokenIdTokenCreator
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
-    AuthorizationGrant authorizationGrant = context.toAuthorizationGranted();
+    AuthorizationGrant authorizationGrant = context.toAuthorizationGrant();
 
     AccessToken accessToken =
         createAccessToken(
@@ -33,22 +32,23 @@ public class AuthorizationResponseTokenIdTokenCreator
             context.serverConfiguration(),
             context.clientConfiguration(),
             new ClientCredentials());
+
     IdTokenCustomClaims idTokenCustomClaims =
         new IdTokenCustomClaimsBuilder()
             .add(authorizationRequest.state())
             .add(authorizationRequest.nonce())
             .add(accessToken.accessTokenEntity())
             .build();
+
     IdToken idToken =
         createIdToken(
             context.user(),
             context.authentication(),
-            GrantFlow.oidc_implicit,
-            context.toAuthorizationGranted(),
-            context.idTokenClaims(),
+            context.toAuthorizationGrant(),
             idTokenCustomClaims,
             context.serverConfiguration(),
             context.clientConfiguration());
+
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(
                 decideRedirectUri(authorizationRequest, context.clientConfiguration()),

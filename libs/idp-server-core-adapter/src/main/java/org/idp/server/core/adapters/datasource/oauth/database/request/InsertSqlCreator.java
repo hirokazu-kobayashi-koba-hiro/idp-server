@@ -5,7 +5,6 @@ import java.util.List;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.type.oauth.CustomParams;
 
 public class InsertSqlCreator {
@@ -17,7 +16,7 @@ public class InsertSqlCreator {
     params.add(authorizationRequest.identifier().value());
     params.add(authorizationRequest.tenantIdentifier().value());
     params.add(authorizationRequest.profile().name());
-    params.add(authorizationRequest.scope().toStringValues());
+    params.add(authorizationRequest.scopes().toStringValues());
     params.add(authorizationRequest.responseType().name());
     params.add(authorizationRequest.clientId().value());
     params.add(toJson(authorizationRequest.client()));

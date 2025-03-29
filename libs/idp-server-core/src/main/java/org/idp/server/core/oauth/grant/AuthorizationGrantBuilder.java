@@ -2,10 +2,8 @@ package org.idp.server.core.oauth.grant;
 
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
-import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
-import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.oauth.RequestedClientId;
@@ -19,10 +17,10 @@ public class AuthorizationGrantBuilder {
   RequestedClientId requestedClientId;
   Client client = new Client();
   Scopes scopes;
-  RequestedClaimsPayload requestedClaimsPayload = new RequestedClaimsPayload();
+  GrantIdTokenClaims grantIdTokenClaims = new GrantIdTokenClaims();
+  GrantUserinfoClaims grantUserinfoClaims = new GrantUserinfoClaims();
   CustomProperties customProperties = new CustomProperties();
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
-  PresentationDefinition presentationDefinition = new PresentationDefinition();
 
   public AuthorizationGrantBuilder(
       TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, Scopes scopes) {
@@ -46,8 +44,13 @@ public class AuthorizationGrantBuilder {
     return this;
   }
 
-  public AuthorizationGrantBuilder add(RequestedClaimsPayload requestedClaimsPayload) {
-    this.requestedClaimsPayload = requestedClaimsPayload;
+  public AuthorizationGrantBuilder add(GrantIdTokenClaims grantIdTokenClaims) {
+    this.grantIdTokenClaims = grantIdTokenClaims;
+    return this;
+  }
+
+  public AuthorizationGrantBuilder add(GrantUserinfoClaims grantUserinfoClaims) {
+    this.grantUserinfoClaims = grantUserinfoClaims;
     return this;
   }
 
@@ -69,7 +72,8 @@ public class AuthorizationGrantBuilder {
         requestedClientId,
         client,
         scopes,
-            requestedClaimsPayload,
+        grantIdTokenClaims,
+        grantUserinfoClaims,
         customProperties,
         authorizationDetails);
   }

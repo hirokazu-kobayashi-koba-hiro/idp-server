@@ -10,7 +10,8 @@ import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.grant.AuthorizationGrantBuilder;
-import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
+import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
+import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
@@ -55,7 +56,9 @@ class ModelConverter {
     Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = new CustomProperties();
-    RequestedClaimsPayload requestedClaimsPayload = convertClaimsPayload(stringMap.get("claims"));
+    GrantIdTokenClaims idTokenClaims = new GrantIdTokenClaims(stringMap.get("id_token_claims"));
+    GrantUserinfoClaims userinfoClaims = new GrantUserinfoClaims(stringMap.get("userinfo_claims"));
+
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
     AuthorizationGrant authorizationGrant =
@@ -63,7 +66,8 @@ class ModelConverter {
             .add(user)
             .add(client)
             .add(authentication)
-            .add(requestedClaimsPayload)
+            .add(idTokenClaims)
+            .add(userinfoClaims)
             .add(customProperties)
             .add(authorizationDetails)
             .build();
@@ -116,18 +120,6 @@ class ModelConverter {
 
     EncryptedData data = jsonConverter.read(encryptedData, EncryptedData.class);
     return aesCipher.decrypt(data);
-  }
-
-  private static RequestedClaimsPayload convertClaimsPayload(String value) {
-    if (value.isEmpty()) {
-      return new RequestedClaimsPayload();
-    }
-    try {
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
-      return jsonConverter.read(value, RequestedClaimsPayload.class);
-    } catch (Exception exception) {
-      return new RequestedClaimsPayload();
-    }
   }
 
   // TODO

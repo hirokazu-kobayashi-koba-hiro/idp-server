@@ -2,82 +2,84 @@ package org.idp.server.core.oauth.identity;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
+import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
 
 public interface IndividualClaimsCreatable extends ClaimHashable {
 
   default Map<String, Object> createIndividualClaims(
-      User user, IdTokenIndividualClaimsDecider claimsDecider) {
+      User user, GrantIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
 
     HashMap<String, Object> claims = new HashMap<>();
 
     claims.put("sub", user.sub());
-    if (claimsDecider.shouldAddName() && user.hasName()) {
+    if (idTokenClaims.hasName() && user.hasName()) {
       claims.put("name", user.name());
     }
-    if (claimsDecider.shouldAddGivenName() && user.hasGivenName()) {
+    if (idTokenClaims.hasGivenName() && user.hasGivenName()) {
       claims.put("given_name", user.givenName());
     }
-    if (claimsDecider.shouldAddFamilyName() && user.hasFamilyName()) {
+    if (idTokenClaims.hasFamilyName() && user.hasFamilyName()) {
       claims.put("family_name", user.familyName());
     }
-    if (claimsDecider.shouldAddMiddleName() && user.hasMiddleName()) {
+    if (idTokenClaims.hasMiddleName() && user.hasMiddleName()) {
       claims.put("middle_name", user.middleName());
     }
-    if (claimsDecider.shouldAddNickname() && user.hasNickname()) {
+    if (idTokenClaims.hasNickname() && user.hasNickname()) {
       claims.put("nickname", user.nickname());
     }
-    if (claimsDecider.shouldAddPreferredUsername() && user.hasPreferredUsername()) {
+    if (idTokenClaims.hasPreferredUsername() && user.hasPreferredUsername()) {
       claims.put("preferred_username", user.preferredUsername());
     }
-    if (claimsDecider.shouldAddProfile() && user.hasProfile()) {
+    if (idTokenClaims.hasProfile() && user.hasProfile()) {
       claims.put("profile", user.profile());
     }
-    if (claimsDecider.shouldAddPicture() && user.hasPicture()) {
+    if (idTokenClaims.hasPicture() && user.hasPicture()) {
       claims.put("picture", user.picture());
     }
-    if (claimsDecider.shouldAddWebsite() && user.hasWebsite()) {
+    if (idTokenClaims.hasWebsite() && user.hasWebsite()) {
       claims.put("website", user.website());
     }
-    if (claimsDecider.shouldAddEmail() && user.hasEmail()) {
+    if (idTokenClaims.hasEmail() && user.hasEmail()) {
       claims.put("email", user.email());
     }
-    if (claimsDecider.shouldAddEmailVerified() && user.hasEmailVerified()) {
+    if (idTokenClaims.hasEmailVerified() && user.hasEmailVerified()) {
       claims.put("email_verified", user.emailVerified());
     }
-    if (claimsDecider.shouldAddGender() && user.hasGender()) {
+    if (idTokenClaims.hasGender() && user.hasGender()) {
       claims.put("gender", user.gender());
     }
-    if (claimsDecider.shouldAddBirthdate() && user.hasBirthdate()) {
+    if (idTokenClaims.hasBirthdate() && user.hasBirthdate()) {
       claims.put("birthdate", user.birthdate());
     }
-    if (claimsDecider.shouldAddZoneinfo() && user.hasZoneinfo()) {
+    if (idTokenClaims.hasZoneinfo() && user.hasZoneinfo()) {
       claims.put("zoneinfo", user.zoneinfo());
     }
-    if (claimsDecider.shouldAddLocale() && user.hasLocale()) {
+    if (idTokenClaims.hasLocale() && user.hasLocale()) {
       claims.put("locale", user.locale());
     }
-    if (claimsDecider.shouldAddPhoneNumber() && user.hasPhoneNumber()) {
+    if (idTokenClaims.hasPhoneNumber() && user.hasPhoneNumber()) {
       claims.put("phone_number", user.phoneNumber());
     }
-    if (claimsDecider.shouldAddPhoneNumberVerified() && user.hasPhoneNumberVerified()) {
+    if (idTokenClaims.hasPhoneNumberVerified() && user.hasPhoneNumberVerified()) {
       claims.put("phone_number_verified", user.phoneNumberVerified());
     }
-    if (claimsDecider.shouldAddAddress() && user.hasAddress()) {
+    if (idTokenClaims.hasAddress() && user.hasAddress()) {
       claims.put("address", user.address().toMap());
     }
-    if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
+    if (idTokenClaims.hasUpdatedAt() && user.hasUpdatedAt()) {
       claims.put("updated_at", user.updateAtAsLong());
     }
 
-    if (!claimsDecider.isEnabledStrictMode() && user.hasRoles()) {
+    if (!idTokenStrictMode && user.hasRoles()) {
       claims.put("roles", user.roles());
     }
 
-    if (!claimsDecider.isEnabledStrictMode() && user.hasPermissions()) {
+    if (!idTokenStrictMode && user.hasPermissions()) {
       claims.put("permissions", user.permissions());
     }
 
-    if (!claimsDecider.isEnabledStrictMode() && user.hasCustomProperties()) {
+    if (!idTokenStrictMode && user.hasCustomProperties()) {
       claims.putAll(user.customPropertiesValue());
     }
 
@@ -85,66 +87,66 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
   }
 
   default Map<String, Object> createIndividualClaims(
-      User user, UserinfoIndividualClaimsDecider claimsDecider) {
+      User user, GrantUserinfoClaims userinfoClaims) {
 
     HashMap<String, Object> claims = new HashMap<>();
 
     claims.put("sub", user.sub());
-    if (claimsDecider.shouldAddName() && user.hasName()) {
+    if (userinfoClaims.hasName() && user.hasName()) {
       claims.put("name", user.name());
     }
-    if (claimsDecider.shouldAddGivenName() && user.hasGivenName()) {
+    if (userinfoClaims.hasGivenName() && user.hasGivenName()) {
       claims.put("given_name", user.givenName());
     }
-    if (claimsDecider.shouldAddFamilyName() && user.hasFamilyName()) {
+    if (userinfoClaims.hasFamilyName() && user.hasFamilyName()) {
       claims.put("family_name", user.familyName());
     }
-    if (claimsDecider.shouldAddMiddleName() && user.hasMiddleName()) {
+    if (userinfoClaims.hasMiddleName() && user.hasMiddleName()) {
       claims.put("middle_name", user.middleName());
     }
-    if (claimsDecider.shouldAddNickname() && user.hasNickname()) {
+    if (userinfoClaims.hasNickname() && user.hasNickname()) {
       claims.put("nickname", user.nickname());
     }
-    if (claimsDecider.shouldAddPreferredUsername() && user.hasPreferredUsername()) {
+    if (userinfoClaims.hasPreferredUsername() && user.hasPreferredUsername()) {
       claims.put("preferred_username", user.preferredUsername());
     }
-    if (claimsDecider.shouldAddProfile() && user.hasProfile()) {
+    if (userinfoClaims.hasProfile() && user.hasProfile()) {
       claims.put("profile", user.profile());
     }
-    if (claimsDecider.shouldAddPicture() && user.hasPicture()) {
+    if (userinfoClaims.hasPicture() && user.hasPicture()) {
       claims.put("picture", user.picture());
     }
-    if (claimsDecider.shouldAddWebsite() && user.hasWebsite()) {
+    if (userinfoClaims.hasWebsite() && user.hasWebsite()) {
       claims.put("website", user.website());
     }
-    if (claimsDecider.shouldAddEmail() && user.hasEmail()) {
+    if (userinfoClaims.hasEmail() && user.hasEmail()) {
       claims.put("email", user.email());
     }
-    if (claimsDecider.shouldAddEmailVerified() && user.hasEmailVerified()) {
+    if (userinfoClaims.hasEmailVerified() && user.hasEmailVerified()) {
       claims.put("email_verified", user.emailVerified());
     }
-    if (claimsDecider.shouldAddGender() && user.hasGender()) {
+    if (userinfoClaims.hasGender() && user.hasGender()) {
       claims.put("gender", user.gender());
     }
-    if (claimsDecider.shouldAddBirthdate() && user.hasBirthdate()) {
+    if (userinfoClaims.hasBirthdate() && user.hasBirthdate()) {
       claims.put("birthdate", user.birthdate());
     }
-    if (claimsDecider.shouldAddZoneinfo() && user.hasZoneinfo()) {
+    if (userinfoClaims.hasZoneinfo() && user.hasZoneinfo()) {
       claims.put("zoneinfo", user.zoneinfo());
     }
-    if (claimsDecider.shouldAddLocale() && user.hasLocale()) {
+    if (userinfoClaims.hasLocale() && user.hasLocale()) {
       claims.put("locale", user.locale());
     }
-    if (claimsDecider.shouldAddPhoneNumber() && user.hasPhoneNumber()) {
+    if (userinfoClaims.hasPhoneNumber() && user.hasPhoneNumber()) {
       claims.put("phone_number", user.phoneNumber());
     }
-    if (claimsDecider.shouldAddPhoneNumberVerified() && user.hasPhoneNumberVerified()) {
+    if (userinfoClaims.hasPhoneNumberVerified() && user.hasPhoneNumberVerified()) {
       claims.put("phone_number_verified", user.phoneNumberVerified());
     }
-    if (claimsDecider.shouldAddAddress() && user.hasAddress()) {
+    if (userinfoClaims.hasAddress() && user.hasAddress()) {
       claims.put("address", user.address().toMap());
     }
-    if (claimsDecider.shouldAddUpdatedAt() && user.hasUpdatedAt()) {
+    if (userinfoClaims.hasUpdatedAt() && user.hasUpdatedAt()) {
       claims.put("updated_at", user.updateAtAsLong());
     }
 

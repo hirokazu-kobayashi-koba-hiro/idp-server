@@ -122,7 +122,7 @@ public class AuthorizationRequest {
     return profile.isDefined();
   }
 
-  public Scopes scope() {
+  public Scopes scopes() {
     return scopes;
   }
 
@@ -266,7 +266,7 @@ public class AuthorizationRequest {
     return requestUri.exists();
   }
 
-  public RequestedClaimsPayload claimsPayload() {
+  public RequestedClaimsPayload requestedClaimsPayload() {
     return requestedClaimsPayload;
   }
 

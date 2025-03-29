@@ -11,13 +11,11 @@ import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.*;
 import org.idp.server.core.type.pkce.CodeChallenge;
 import org.idp.server.core.type.pkce.CodeChallengeMethod;
-import org.idp.server.core.type.verifiablepresentation.PresentationDefinitionUri;
 
 class ModelConverter {
 

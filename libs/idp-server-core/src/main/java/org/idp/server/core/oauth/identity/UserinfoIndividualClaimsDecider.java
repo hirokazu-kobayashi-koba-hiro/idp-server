@@ -8,13 +8,15 @@ import org.idp.server.core.type.oidc.Claims;
 
 public class UserinfoIndividualClaimsDecider {
   Scopes scopes;
-  UserinfoClaims userinfoClaims;
+  RequestedUserinfoClaims requestedUserinfoClaims;
   List<String> supportedClaims;
 
   public UserinfoIndividualClaimsDecider(
-      Scopes scopes, UserinfoClaims userinfoClaims, List<String> supportedClaims) {
+      Scopes scopes,
+      RequestedUserinfoClaims requestedUserinfoClaims,
+      List<String> supportedClaims) {
     this.scopes = scopes;
-    this.userinfoClaims = userinfoClaims;
+    this.requestedUserinfoClaims = requestedUserinfoClaims;
     this.supportedClaims = supportedClaims;
   }
 
@@ -85,132 +87,132 @@ public class UserinfoIndividualClaimsDecider {
     if (!supportedClaims.contains("name")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasName();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasName();
   }
 
   public boolean shouldAddGivenName() {
     if (!supportedClaims.contains("given_name")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasGivenName();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasGivenName();
   }
 
   public boolean shouldAddFamilyName() {
     if (!supportedClaims.contains("family_name")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasMiddleName();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasMiddleName();
   }
 
   public boolean shouldAddMiddleName() {
     if (!supportedClaims.contains("middle_name")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasMiddleName();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasMiddleName();
   }
 
   public boolean shouldAddNickname() {
     if (!supportedClaims.contains("nickname")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasNickname();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasNickname();
   }
 
   public boolean shouldAddPreferredUsername() {
     if (!supportedClaims.contains("preferred_username")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasPreferredUsername();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasPreferredUsername();
   }
 
   public boolean shouldAddProfile() {
     if (!supportedClaims.contains("profile")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasProfile();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasProfile();
   }
 
   public boolean shouldAddPicture() {
     if (!supportedClaims.contains("picture")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasPicture();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasPicture();
   }
 
   public boolean shouldAddWebsite() {
     if (!supportedClaims.contains("website")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasWebsite();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasWebsite();
   }
 
   public boolean shouldAddEmail() {
     if (!supportedClaims.contains("email")) {
       return false;
     }
-    return scopes.contains("email") || userinfoClaims.hasEmail();
+    return scopes.contains("email") || requestedUserinfoClaims.hasEmail();
   }
 
   public boolean shouldAddEmailVerified() {
     if (!supportedClaims.contains("email_verified")) {
       return false;
     }
-    return scopes.contains("email") || userinfoClaims.hasEmailVerified();
+    return scopes.contains("email") || requestedUserinfoClaims.hasEmailVerified();
   }
 
   public boolean shouldAddGender() {
     if (!supportedClaims.contains("gender")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasGender();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasGender();
   }
 
   public boolean shouldAddBirthdate() {
     if (!supportedClaims.contains("birthdate")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasBirthdate();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasBirthdate();
   }
 
   public boolean shouldAddZoneinfo() {
     if (!supportedClaims.contains("zoneinfo")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasZoneinfo();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasZoneinfo();
   }
 
   public boolean shouldAddLocale() {
     if (!supportedClaims.contains("locale")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasLocale();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasLocale();
   }
 
   public boolean shouldAddPhoneNumber() {
     if (!supportedClaims.contains("phone_number")) {
       return false;
     }
-    return scopes.contains("phone") || userinfoClaims.hasPhoneNumber();
+    return scopes.contains("phone") || requestedUserinfoClaims.hasPhoneNumber();
   }
 
   public boolean shouldAddPhoneNumberVerified() {
     if (!supportedClaims.contains("phone_number_verified")) {
       return false;
     }
-    return scopes.contains("phone") || userinfoClaims.hasPhoneNumberVerified();
+    return scopes.contains("phone") || requestedUserinfoClaims.hasPhoneNumberVerified();
   }
 
   public boolean shouldAddAddress() {
     if (!supportedClaims.contains("address")) {
       return false;
     }
-    return scopes.contains("address") || userinfoClaims.hasAddress();
+    return scopes.contains("address") || requestedUserinfoClaims.hasAddress();
   }
 
   public boolean shouldAddUpdatedAt() {
     if (!supportedClaims.contains("updated_at")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasUpdatedAt();
+    return scopes.contains("profile") || requestedUserinfoClaims.hasUpdatedAt();
   }
 }

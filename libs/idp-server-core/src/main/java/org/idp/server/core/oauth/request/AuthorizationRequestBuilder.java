@@ -209,7 +209,7 @@ public class AuthorizationRequestBuilder {
         claimsValue,
         requestObject,
         requestUri,
-            requestedClaimsPayload,
+        requestedClaimsPayload,
         codeChallenge,
         codeChallengeMethod,
         authorizationDetails,

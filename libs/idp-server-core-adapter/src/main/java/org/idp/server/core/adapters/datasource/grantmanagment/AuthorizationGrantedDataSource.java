@@ -23,8 +23,8 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
     String sqlTemplate =
         """
                         INSERT INTO public.authorization_granted
-                        (id, tenant_id, user_id, user_payload, authentication, client_id, client_payload, scopes, claims, custom_properties, authorization_details)
-                        VALUES (?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?::jsonb, ?::jsonb);
+                        (id, tenant_id, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details)
+                        VALUES (?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb);
                         """;
     List<Object> params = new ArrayList<>();
 
@@ -38,10 +38,16 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
     params.add(toJson(authorizationGrant.client()));
     params.add(authorizationGrant.scopes().toStringValues());
 
-    if (authorizationGrant.hasClaim()) {
-      params.add(toJson(authorizationGrant.claimsPayload()));
+    if (authorizationGrant.hasIdTokenClaims()) {
+      params.add(authorizationGrant.idTokenClaims().toStringValues());
     } else {
-      params.add("{}");
+      params.add("");
+    }
+
+    if (authorizationGrant.hasUserinfoClaim()) {
+      params.add(authorizationGrant.userinfoClaims().toStringValues());
+    } else {
+      params.add("");
     }
 
     if (authorizationGrant.hasCustomProperties()) {
@@ -83,7 +89,7 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
 
     String sqlTemplate =
         """
-              SELECT id, tenant_id, user_id, user_payload, authentication, client_id, client_payload, scopes, claims, custom_properties, authorization_details
+              SELECT id, tenant_id, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details
                 FROM authorization_granted
               WHERE tenant_id = ?
               AND client_id = ?
@@ -115,7 +121,8 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
                 authentication = ?::jsonb,
                 client_payload = ?::jsonb,
                 scopes = ?,
-                claims = ?,
+                id_token_claims = ?,
+                userinfo_claims = ?,
                 custom_properties = ?::jsonb,
                 authorization_details = ?::jsonb,
                 updated_at = now()
@@ -129,10 +136,16 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
     params.add(toJson(authorizationGrant.client()));
     params.add(authorizationGrant.scopes().toStringValues());
 
-    if (authorizationGrant.hasClaim()) {
-      params.add(toJson(authorizationGrant.claimsPayload()));
+    if (authorizationGrant.hasIdTokenClaims()) {
+      params.add(authorizationGrant.idTokenClaims().toStringValues());
     } else {
-      params.add("{}");
+      params.add("");
+    }
+
+    if (authorizationGrant.hasUserinfoClaim()) {
+      params.add(authorizationGrant.userinfoClaims().toStringValues());
+    } else {
+      params.add("");
     }
 
     if (authorizationGrant.hasCustomProperties()) {

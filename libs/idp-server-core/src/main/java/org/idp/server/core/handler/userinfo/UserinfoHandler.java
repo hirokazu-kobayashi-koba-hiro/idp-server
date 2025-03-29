@@ -2,7 +2,6 @@ package org.idp.server.core.handler.userinfo;
 
 import java.util.Map;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
-import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.handler.userinfo.io.UserinfoRequest;
 import org.idp.server.core.handler.userinfo.io.UserinfoRequestResponse;
@@ -35,8 +34,7 @@ public class UserinfoHandler {
   public UserinfoRequestResponse handle(UserinfoRequest request, UserinfoDelegate delegate) {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
     Tenant tenant = request.tenant();
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(tenant.identifier());
+
     OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
 
     if (!oAuthToken.exists()) {
@@ -48,8 +46,7 @@ public class UserinfoHandler {
     verifier.verify();
 
     UserinfoClaimsCreator claimsCreator =
-        new UserinfoClaimsCreator(
-            user, oAuthToken.authorizationGrant(), serverConfiguration.claimsSupported());
+        new UserinfoClaimsCreator(user, oAuthToken.authorizationGrant());
     Map<String, Object> claims = claimsCreator.createClaims();
     UserinfoResponse userinfoResponse = new UserinfoResponse(user, claims);
     return new UserinfoRequestResponse(UserinfoRequestStatus.OK, userinfoResponse);

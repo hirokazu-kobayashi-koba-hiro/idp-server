@@ -127,7 +127,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   }
 
   public Scopes scopes() {
-    return authorizationRequest.scope();
+    return authorizationRequest.scopes();
   }
 
   public RedirectUri redirectUri() {

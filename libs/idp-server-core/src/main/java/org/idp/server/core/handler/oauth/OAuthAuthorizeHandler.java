@@ -86,7 +86,7 @@ public class OAuthAuthorizeHandler {
         creators.get(context.responseType());
     AuthorizationResponse authorizationResponse = authorizationResponseCreator.create(context);
 
-    AuthorizationGrant authorizationGrant = context.toAuthorizationGranted();
+    AuthorizationGrant authorizationGrant = context.toAuthorizationGrant();
     if (authorizationResponse.hasAuthorizationCode()) {
       AuthorizationCodeGrant authorizationCodeGrant =
           AuthorizationCodeGrantCreator.create(context, authorizationResponse);

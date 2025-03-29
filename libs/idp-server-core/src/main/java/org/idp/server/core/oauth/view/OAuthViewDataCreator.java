@@ -35,7 +35,7 @@ public class OAuthViewDataCreator {
     String tosUri = clientConfiguration.tosUri();
     String policyUri = clientConfiguration.policyUri();
     Map<String, String> customParams = authorizationRequest.customParams().values();
-    List<String> scopes = authorizationRequest.scope().toStringList();
+    List<String> scopes = authorizationRequest.scopes().toStringList();
     Map<String, Object> contents = new HashMap<>();
     contents.put("client_id", clientId);
     contents.put("client_name", clientName);

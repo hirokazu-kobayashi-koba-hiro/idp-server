@@ -8,11 +8,12 @@ import org.idp.server.core.grantmangment.AuthorizationGrantedIdentifier;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
+import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
+import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
 import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
-import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.oauth.RequestedClientId;
@@ -36,7 +37,8 @@ class ModelConverter {
 
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = convertCustomProperties(stringMap.get("custom_properties"));
-    RequestedClaimsPayload requestedClaimsPayload = convertClaimsPayload(stringMap.get("claims"));
+    GrantIdTokenClaims idTokenClaims = new GrantIdTokenClaims(stringMap.get("id_token_claims"));
+    GrantUserinfoClaims userinfoClaims = new GrantUserinfoClaims(stringMap.get("userinfo_claims"));
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
 
@@ -48,7 +50,8 @@ class ModelConverter {
             requestedClientId,
             client,
             scopes,
-            requestedClaimsPayload,
+            idTokenClaims,
+            userinfoClaims,
             customProperties,
             authorizationDetails);
 
@@ -96,5 +99,4 @@ class ModelConverter {
       return new AuthorizationDetails();
     }
   }
-
 }

@@ -13,8 +13,6 @@ import org.idp.server.core.type.oidc.*;
 import org.idp.server.core.type.pkce.CodeChallenge;
 import org.idp.server.core.type.pkce.CodeChallengeMethod;
 import org.idp.server.core.type.rar.AuthorizationDetailsEntity;
-import org.idp.server.core.type.verifiablepresentation.PresentationDefinitionEntity;
-import org.idp.server.core.type.verifiablepresentation.PresentationDefinitionUri;
 
 /** OAuthRequestParameters */
 public class OAuthRequestParameters {

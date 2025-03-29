@@ -14,7 +14,6 @@ import org.idp.server.core.grantmangment.AuthorizationGrantedIdentifier;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
-import org.idp.server.core.oauth.identity.IdTokenClaims;
 import org.idp.server.core.oauth.identity.IdTokenCreatable;
 import org.idp.server.core.oauth.identity.IdTokenCustomClaims;
 import org.idp.server.core.oauth.identity.IdTokenCustomClaimsBuilder;
@@ -23,7 +22,6 @@ import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.OAuthTokenBuilder;
 import org.idp.server.core.token.OAuthTokenIdentifier;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
-import org.idp.server.core.type.extension.GrantFlow;
 import org.idp.server.core.type.oauth.ExpiresIn;
 import org.idp.server.core.type.oauth.TokenType;
 import org.idp.server.core.type.oidc.IdToken;
@@ -82,9 +80,7 @@ public class ClientNotificationService
           createIdToken(
               cibaGrant.user(),
               new Authentication(),
-              GrantFlow.ciba,
               cibaGrant.authorizationGrant(),
-              new IdTokenClaims(),
               idTokenCustomClaims,
               serverConfiguration,
               clientConfiguration);

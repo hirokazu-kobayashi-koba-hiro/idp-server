@@ -9,8 +9,8 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifi
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
-import org.idp.server.core.oauth.grant.AuthorizationGrantBuilder;
-import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
+import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
+import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
@@ -42,36 +42,27 @@ class ModelConverter {
     Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = new CustomProperties();
-    RequestedClaimsPayload requestedClaimsPayload = convertClaimsPayload(stringMap.get("claims"));
+    GrantIdTokenClaims idTokenClaims = new GrantIdTokenClaims(stringMap.get("id_token_claims"));
+    GrantUserinfoClaims userinfoClaims = new GrantUserinfoClaims(stringMap.get("userinfo_claims"));
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
 
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrantBuilder(tenantIdentifier, requestedClientId, scopes)
-            .add(user)
-            .add(client)
-            .add(authentication)
-            .add(requestedClaimsPayload)
-            .add(customProperties)
-            .add(authorizationDetails)
-            .build();
+        new AuthorizationGrant(
+            tenantIdentifier,
+            user,
+            authentication,
+            requestedClientId,
+            client,
+            scopes,
+            idTokenClaims,
+            userinfoClaims,
+            customProperties,
+            authorizationDetails);
 
     return new CibaGrant(id, authorizationGrant, authReqId, expiredAt, interval, status);
   }
 
-  private static RequestedClaimsPayload convertClaimsPayload(String value) {
-    if (value == null || value.isEmpty()) {
-      return new RequestedClaimsPayload();
-    }
-    try {
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
-      return jsonConverter.read(value, RequestedClaimsPayload.class);
-    } catch (Exception exception) {
-      return new RequestedClaimsPayload();
-    }
-  }
-
-  // TODO
   private static AuthorizationDetails convertAuthorizationDetails(String value) {
     if (value == null || value.isEmpty()) {
       return new AuthorizationDetails();

@@ -20,7 +20,6 @@ import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.CibaGrantValidator;
 import org.idp.server.core.token.verifier.CibaGrantVerifier;
 import org.idp.server.core.type.ciba.AuthReqId;
-import org.idp.server.core.type.extension.GrantFlow;
 import org.idp.server.core.type.oidc.IdToken;
 
 public class CibaGrantService
@@ -78,9 +77,7 @@ public class CibaGrantService
         createIdToken(
             cibaGrant.user(),
             new Authentication(),
-            GrantFlow.ciba,
             authorizationGrant,
-            new IdTokenClaims(),
             idTokenCustomClaims,
             serverConfiguration,
             clientConfiguration);

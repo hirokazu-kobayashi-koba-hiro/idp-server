@@ -314,7 +314,7 @@ public class ServerConfiguration implements JsonReadable {
     return idTokenDuration;
   }
 
-  public boolean idTokenStrictMode() {
+  public boolean isIdTokenStrictMode() {
     return idTokenStrictMode;
   }
 

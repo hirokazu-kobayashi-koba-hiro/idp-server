@@ -7,12 +7,12 @@ import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
-import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
+import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
+import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.extension.ExpiredAt;
@@ -35,7 +35,8 @@ class ModelConverter {
     Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = convertCustomProperties(stringMap.get("custom_properties"));
-    RequestedClaimsPayload requestedClaimsPayload = convertClaimsPayload(stringMap.get("claims"));
+    GrantIdTokenClaims idTokenClaims = new GrantIdTokenClaims(stringMap.get("id_token_claims"));
+    GrantUserinfoClaims userinfoClaims = new GrantUserinfoClaims(stringMap.get("userinfo_claims"));
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
 
@@ -47,7 +48,8 @@ class ModelConverter {
             requestedClientId,
             client,
             scopes,
-                requestedClaimsPayload,
+            idTokenClaims,
+            userinfoClaims,
             customProperties,
             authorizationDetails);
 
@@ -55,18 +57,6 @@ class ModelConverter {
         new AuthorizationCode(stringMap.get("authorization_code"));
     ExpiredAt expiredAt = new ExpiredAt(stringMap.get("expired_at"));
     return new AuthorizationCodeGrant(id, authorizationGrant, authorizationCode, expiredAt);
-  }
-
-  private static RequestedClaimsPayload convertClaimsPayload(String value) {
-    if (value == null || value.isEmpty()) {
-      return new RequestedClaimsPayload();
-    }
-    try {
-
-      return jsonConverter.read(value, RequestedClaimsPayload.class);
-    } catch (Exception exception) {
-      return new RequestedClaimsPayload();
-    }
   }
 
   private static CustomProperties convertCustomProperties(String value) {
@@ -98,5 +88,4 @@ class ModelConverter {
       return new AuthorizationDetails();
     }
   }
-
 }

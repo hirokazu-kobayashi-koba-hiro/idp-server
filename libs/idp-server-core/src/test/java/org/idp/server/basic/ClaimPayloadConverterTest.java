@@ -30,7 +30,8 @@ public class ClaimPayloadConverterTest {
                 """;
 
     JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
-    RequestedClaimsPayload requestedClaimsPayload = jsonConverter.read(claimsValue, RequestedClaimsPayload.class);
+    RequestedClaimsPayload requestedClaimsPayload =
+        jsonConverter.read(claimsValue, RequestedClaimsPayload.class);
     System.out.println(requestedClaimsPayload);
     Assertions.assertTrue(requestedClaimsPayload.exists());
   }
