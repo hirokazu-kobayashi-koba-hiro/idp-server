@@ -12,7 +12,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 userinfo", () => {
       clientId: clientSecretPostClient.clientId,
       responseType: "code",
       state: "aiueo",
-      scope: "openid profile phone email" + clientSecretPostClient.scope,
+      scope: "openid profile phone email address " + clientSecretPostClient.scope,
       redirectUri: clientSecretPostClient.redirectUri,
     });
     console.log(authorizationResponse);

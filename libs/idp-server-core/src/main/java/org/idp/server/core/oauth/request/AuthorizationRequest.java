@@ -3,7 +3,7 @@ package org.idp.server.core.oauth.request;
 import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.OAuthSessionKey;
 import org.idp.server.core.oauth.client.Client;
-import org.idp.server.core.oauth.identity.ClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -37,7 +37,7 @@ public class AuthorizationRequest {
   ClaimsValue claimsValue;
   RequestObject requestObject;
   RequestUri requestUri;
-  ClaimsPayload claimsPayload;
+  RequestedClaimsPayload requestedClaimsPayload;
   CodeChallenge codeChallenge;
   CodeChallengeMethod codeChallengeMethod;
   AuthorizationDetails authorizationDetails;
@@ -69,7 +69,7 @@ public class AuthorizationRequest {
       ClaimsValue claimsValue,
       RequestObject requestObject,
       RequestUri requestUri,
-      ClaimsPayload claimsPayload,
+      RequestedClaimsPayload requestedClaimsPayload,
       CodeChallenge codeChallenge,
       CodeChallengeMethod codeChallengeMethod,
       AuthorizationDetails authorizationDetails,
@@ -97,7 +97,7 @@ public class AuthorizationRequest {
     this.claimsValue = claimsValue;
     this.requestObject = requestObject;
     this.requestUri = requestUri;
-    this.claimsPayload = claimsPayload;
+    this.requestedClaimsPayload = requestedClaimsPayload;
     this.codeChallenge = codeChallenge;
     this.codeChallengeMethod = codeChallengeMethod;
     this.authorizationDetails = authorizationDetails;
@@ -122,7 +122,7 @@ public class AuthorizationRequest {
     return profile.isDefined();
   }
 
-  public Scopes scope() {
+  public Scopes scopes() {
     return scopes;
   }
 
@@ -266,12 +266,12 @@ public class AuthorizationRequest {
     return requestUri.exists();
   }
 
-  public ClaimsPayload claimsPayload() {
-    return claimsPayload;
+  public RequestedClaimsPayload requestedClaimsPayload() {
+    return requestedClaimsPayload;
   }
 
   public boolean hasClaimsPayload() {
-    return claimsPayload.exists();
+    return requestedClaimsPayload.exists();
   }
 
   public CodeChallenge codeChallenge() {

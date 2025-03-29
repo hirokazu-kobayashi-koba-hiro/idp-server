@@ -45,7 +45,8 @@ public class OAuthFlowEventCreator {
         new EventTenant(tenant.identifier(), tenant.tokenIssuer(), tenant.name().value());
     builder.add(eventTenant);
 
-    EventClient eventClient = new EventClient(authorizationRequest.clientId(), authorizationRequest.clientNameValue());
+    EventClient eventClient =
+        new EventClient(authorizationRequest.clientId(), authorizationRequest.clientNameValue());
     builder.add(eventClient);
 
     EventUser eventUser = new EventUser(user.sub(), user.name());

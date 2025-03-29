@@ -21,7 +21,6 @@ import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.TokenRequestCodeGrantValidator;
 import org.idp.server.core.token.verifier.AuthorizationCodeGrantVerifier;
-import org.idp.server.core.type.extension.GrantFlow;
 import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.IdToken;
 import org.idp.server.core.type.verifiablecredential.CNonce;
@@ -142,9 +141,7 @@ public class AuthorizationCodeGrantService
           createIdToken(
               authorizationGrant.user(),
               authorizationCodeGrant.authentication(),
-              GrantFlow.authorization_code,
               authorizationGrant,
-              authorizationRequest.claimsPayload().idToken(),
               idTokenCustomClaims,
               serverConfiguration,
               clientConfiguration);

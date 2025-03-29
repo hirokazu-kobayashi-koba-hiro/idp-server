@@ -5,7 +5,6 @@ import org.idp.server.core.oauth.identity.IdTokenCreatable;
 import org.idp.server.core.oauth.identity.IdTokenCustomClaims;
 import org.idp.server.core.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.type.extension.GrantFlow;
 import org.idp.server.core.type.extension.JarmPayload;
 import org.idp.server.core.type.extension.ResponseModeValue;
 import org.idp.server.core.type.oidc.IdToken;
@@ -25,9 +24,7 @@ public class AuthorizationResponseIdTokenCreator
         createIdToken(
             context.user(),
             context.authentication(),
-            GrantFlow.oidc_id_token_only_implicit,
-            context.toAuthorizationGranted(),
-            context.idTokenClaims(),
+            context.authorize(),
             idTokenCustomClaims,
             context.serverConfiguration(),
             context.clientConfiguration());

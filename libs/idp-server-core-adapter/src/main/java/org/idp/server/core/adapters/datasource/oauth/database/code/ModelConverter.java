@@ -7,12 +7,13 @@ import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
-import org.idp.server.core.oauth.identity.ClaimsPayload;
+import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
+import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
+import org.idp.server.core.oauth.grant.consent.ConsentClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.extension.ExpiredAt;
@@ -35,11 +36,11 @@ class ModelConverter {
     Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = convertCustomProperties(stringMap.get("custom_properties"));
-    ClaimsPayload claimsPayload = convertClaimsPayload(stringMap.get("claims"));
+    GrantIdTokenClaims idTokenClaims = new GrantIdTokenClaims(stringMap.get("id_token_claims"));
+    GrantUserinfoClaims userinfoClaims = new GrantUserinfoClaims(stringMap.get("userinfo_claims"));
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
-    PresentationDefinition presentationDefinition =
-        convertPresentationDefinition(stringMap.get("presentation_definition"));
+    ConsentClaims consentClaims = convertConsentClaims(stringMap.get("consent_claims"));
 
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrant(
@@ -49,27 +50,16 @@ class ModelConverter {
             requestedClientId,
             client,
             scopes,
-            claimsPayload,
+            idTokenClaims,
+            userinfoClaims,
             customProperties,
             authorizationDetails,
-            presentationDefinition);
+            consentClaims);
 
     AuthorizationCode authorizationCode =
         new AuthorizationCode(stringMap.get("authorization_code"));
     ExpiredAt expiredAt = new ExpiredAt(stringMap.get("expired_at"));
     return new AuthorizationCodeGrant(id, authorizationGrant, authorizationCode, expiredAt);
-  }
-
-  private static ClaimsPayload convertClaimsPayload(String value) {
-    if (value == null || value.isEmpty()) {
-      return new ClaimsPayload();
-    }
-    try {
-
-      return jsonConverter.read(value, ClaimsPayload.class);
-    } catch (Exception exception) {
-      return new ClaimsPayload();
-    }
   }
 
   private static CustomProperties convertCustomProperties(String value) {
@@ -102,15 +92,15 @@ class ModelConverter {
     }
   }
 
-  private static PresentationDefinition convertPresentationDefinition(String value) {
+  private static ConsentClaims convertConsentClaims(String value) {
     if (value == null || value.isEmpty()) {
-      return new PresentationDefinition();
+      return new ConsentClaims();
     }
     try {
-
-      return jsonConverter.read(value, PresentationDefinition.class);
+      Map read = jsonConverter.read(value, Map.class);
+      return new ConsentClaims(read);
     } catch (Exception exception) {
-      return new PresentationDefinition();
+      return new ConsentClaims();
     }
   }
 }

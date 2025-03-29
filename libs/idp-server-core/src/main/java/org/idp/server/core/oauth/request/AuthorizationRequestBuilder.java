@@ -2,7 +2,7 @@ package org.idp.server.core.oauth.request;
 
 import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.client.Client;
-import org.idp.server.core.oauth.identity.ClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -36,7 +36,7 @@ public class AuthorizationRequestBuilder {
   ClaimsValue claimsValue = new ClaimsValue();
   RequestObject requestObject = new RequestObject();
   RequestUri requestUri = new RequestUri();
-  ClaimsPayload claimsPayload = new ClaimsPayload();
+  RequestedClaimsPayload requestedClaimsPayload = new RequestedClaimsPayload();
   CodeChallenge codeChallenge = new CodeChallenge();
   CodeChallengeMethod codeChallengeMethod = CodeChallengeMethod.undefined;
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
@@ -151,8 +151,8 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
-  public AuthorizationRequestBuilder add(ClaimsPayload claimsPayload) {
-    this.claimsPayload = claimsPayload;
+  public AuthorizationRequestBuilder add(RequestedClaimsPayload requestedClaimsPayload) {
+    this.requestedClaimsPayload = requestedClaimsPayload;
     return this;
   }
 
@@ -209,7 +209,7 @@ public class AuthorizationRequestBuilder {
         claimsValue,
         requestObject,
         requestUri,
-        claimsPayload,
+        requestedClaimsPayload,
         codeChallenge,
         codeChallengeMethod,
         authorizationDetails,

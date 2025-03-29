@@ -3,11 +3,8 @@ package org.idp.server.core.oauth.identity;
 import java.util.Objects;
 import org.idp.server.core.basic.json.JsonReadable;
 
-public class IdTokenClaims implements JsonReadable {
-  ClaimsObject authTime;
-  ClaimsObject acr;
-  ClaimsObject amr;
-  ClaimsObject azp;
+public class RequestedUserinfoClaims implements JsonReadable {
+  // basic
   ClaimsObject sub;
   ClaimsObject name;
   ClaimsObject givenName;
@@ -28,23 +25,12 @@ public class IdTokenClaims implements JsonReadable {
   ClaimsObject address;
   ClaimsObject updatedAt;
 
-  public IdTokenClaims() {}
+  // extension
+  ClaimsObject termsAccepted;
+  ClaimsObject termsVersion;
+  ClaimsObject termsAcceptedAt;
 
-  public ClaimsObject authTime() {
-    return authTime;
-  }
-
-  public ClaimsObject acr() {
-    return acr;
-  }
-
-  public ClaimsObject amr() {
-    return amr;
-  }
-
-  public ClaimsObject azp() {
-    return azp;
-  }
+  public RequestedUserinfoClaims() {}
 
   public ClaimsObject sub() {
     return sub;
@@ -122,20 +108,16 @@ public class IdTokenClaims implements JsonReadable {
     return updatedAt;
   }
 
-  public boolean hasAuthTime() {
-    return Objects.nonNull(authTime);
+  public ClaimsObject termsAccepted() {
+    return termsAccepted;
   }
 
-  public boolean hasAcr() {
-    return Objects.nonNull(acr);
+  public ClaimsObject termsVersion() {
+    return termsVersion;
   }
 
-  public boolean hasAmr() {
-    return Objects.nonNull(amr);
-  }
-
-  public boolean hasAzp() {
-    return Objects.nonNull(azp);
+  public ClaimsObject termsAcceptedAt() {
+    return termsAcceptedAt;
   }
 
   public boolean hasSub() {
@@ -212,5 +194,17 @@ public class IdTokenClaims implements JsonReadable {
 
   public boolean hasUpdatedAt() {
     return Objects.nonNull(updatedAt);
+  }
+
+  public boolean hasTermsAccepted() {
+    return Objects.nonNull(termsAccepted);
+  }
+
+  public boolean hasTermsVersion() {
+    return Objects.nonNull(termsVersion);
+  }
+
+  public boolean hasTermsAcceptedAt() {
+    return Objects.nonNull(termsAcceptedAt);
   }
 }

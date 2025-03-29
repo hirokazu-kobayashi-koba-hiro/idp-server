@@ -2,7 +2,6 @@ package org.idp.server.core.oauth.identity;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.jose.*;
@@ -12,7 +11,6 @@ import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.type.extension.ExpiredAt;
-import org.idp.server.core.type.extension.GrantFlow;
 import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.IdToken;
 
@@ -21,9 +19,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
   default IdToken createIdToken(
       User user,
       Authentication authentication,
-      GrantFlow grantFlow,
       AuthorizationGrant authorizationGrant,
-      IdTokenClaims idTokenClaims,
       IdTokenCustomClaims customClaims,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
@@ -33,14 +29,11 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
           createClaims(
               user,
               authentication,
-              grantFlow,
               customClaims,
               authorizationGrant,
-              idTokenClaims,
               serverConfiguration.tokenIssuer(),
               serverConfiguration.idTokenDuration(),
-              serverConfiguration.claimsSupported(),
-              serverConfiguration.idTokenStrictMode());
+              serverConfiguration.isIdTokenStrictMode());
 
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
       JsonWebSignature jsonWebSignature =
@@ -48,6 +41,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
               claims, Map.of(), serverConfiguration.jwks(), serverConfiguration.tokenSignedKeyId());
 
       if (clientConfiguration.hasEncryptedIdTokenMeta()) {
+
         NestedJsonWebEncryptionCreator nestedJsonWebEncryptionCreator =
             new NestedJsonWebEncryptionCreator(
                 jsonWebSignature,
@@ -67,14 +61,11 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
   private Map<String, Object> createClaims(
       User user,
       Authentication authentication,
-      GrantFlow grantFlow,
       IdTokenCustomClaims idTokenCustomClaims,
       AuthorizationGrant authorizationGrant,
-      IdTokenClaims idTokenClaims,
       TokenIssuer tokenIssuer,
       long idTokenDuration,
-      List<String> supportedClaims,
-      boolean enableStrictMode) {
+      boolean idTokenStrictMode) {
 
     LocalDateTime now = SystemDateTime.now();
     ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(idTokenDuration));
@@ -107,15 +98,8 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       claims.put("acr", authentication.toAcr());
     }
 
-    IdTokenIndividualClaimsDecider idTokenIndividualClaimsDecider =
-        new IdTokenIndividualClaimsDecider(
-            grantFlow,
-            authorizationGrant.scopes(),
-            idTokenClaims,
-            supportedClaims,
-            enableStrictMode);
     Map<String, Object> individualClaims =
-        createIndividualClaims(user, idTokenIndividualClaimsDecider);
+        createIndividualClaims(user, authorizationGrant.idTokenClaims(), idTokenStrictMode);
     claims.putAll(individualClaims);
     return claims;
   }

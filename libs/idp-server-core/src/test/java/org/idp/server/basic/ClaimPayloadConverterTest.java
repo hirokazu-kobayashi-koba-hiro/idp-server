@@ -1,7 +1,7 @@
 package org.idp.server.basic;
 
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.oauth.identity.ClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -30,8 +30,9 @@ public class ClaimPayloadConverterTest {
                 """;
 
     JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
-    ClaimsPayload claimsPayload = jsonConverter.read(claimsValue, ClaimsPayload.class);
-    System.out.println(claimsPayload);
-    Assertions.assertTrue(claimsPayload.exists());
+    RequestedClaimsPayload requestedClaimsPayload =
+        jsonConverter.read(claimsValue, RequestedClaimsPayload.class);
+    System.out.println(requestedClaimsPayload);
+    Assertions.assertTrue(requestedClaimsPayload.exists());
   }
 }

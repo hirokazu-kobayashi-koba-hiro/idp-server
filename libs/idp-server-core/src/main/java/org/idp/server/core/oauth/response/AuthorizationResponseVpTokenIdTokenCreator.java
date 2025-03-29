@@ -8,7 +8,6 @@ import org.idp.server.core.oauth.identity.IdTokenCustomClaims;
 import org.idp.server.core.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.token.VpTokenCreatable;
-import org.idp.server.core.type.extension.GrantFlow;
 import org.idp.server.core.type.extension.JarmPayload;
 import org.idp.server.core.type.extension.ResponseModeValue;
 import org.idp.server.core.type.oidc.IdToken;
@@ -24,7 +23,7 @@ public class AuthorizationResponseVpTokenIdTokenCreator
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
-    AuthorizationGrant authorizationGrant = context.toAuthorizationGranted();
+    AuthorizationGrant authorizationGrant = context.authorize();
 
     VpToken vpToken =
         createVpToken(
@@ -42,9 +41,7 @@ public class AuthorizationResponseVpTokenIdTokenCreator
         createIdToken(
             context.user(),
             context.authentication(),
-            GrantFlow.oidc_implicit,
-            context.toAuthorizationGranted(),
-            context.idTokenClaims(),
+            context.authorize(),
             idTokenCustomClaims,
             context.serverConfiguration(),
             context.clientConfiguration());

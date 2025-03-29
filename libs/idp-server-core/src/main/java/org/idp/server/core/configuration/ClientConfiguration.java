@@ -136,8 +136,16 @@ public class ClientConfiguration implements JsonReadable {
     return tosUri;
   }
 
+  public boolean hasTosUri() {
+    return tosUri != null && !tosUri.isEmpty();
+  }
+
   public String policyUri() {
     return policyUri;
+  }
+
+  public boolean hasPolicyUri() {
+    return policyUri != null && !policyUri.isEmpty();
   }
 
   public String jwksUri() {

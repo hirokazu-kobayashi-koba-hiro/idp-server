@@ -89,7 +89,7 @@ public class OAuthRequestResponse {
   }
 
   public List<String> scopeList() {
-    return authorizationRequest.scope().toStringList();
+    return authorizationRequest.scopes().toStringList();
   }
 
   public String error() {

@@ -16,7 +16,7 @@ public class AuthorizationResponseVpTokenCreator
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
 
-    AuthorizationGrant authorizationGrant = context.toAuthorizationGranted();
+    AuthorizationGrant authorizationGrant = context.authorize();
 
     VpToken vpToken =
         createVpToken(

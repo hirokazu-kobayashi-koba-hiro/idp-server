@@ -13,8 +13,6 @@ import org.idp.server.core.type.oidc.*;
 import org.idp.server.core.type.pkce.CodeChallenge;
 import org.idp.server.core.type.pkce.CodeChallengeMethod;
 import org.idp.server.core.type.rar.AuthorizationDetailsEntity;
-import org.idp.server.core.type.verifiablepresentation.PresentationDefinitionEntity;
-import org.idp.server.core.type.verifiablepresentation.PresentationDefinitionUri;
 
 /** OAuthRequestParameters */
 public class OAuthRequestParameters {
@@ -186,22 +184,6 @@ public class OAuthRequestParameters {
 
   public boolean hasCodeChallengeMethod() {
     return contains(code_challenge_method);
-  }
-
-  public PresentationDefinitionEntity presentationDefinition() {
-    return new PresentationDefinitionEntity(getValueOrEmpty(presentation_definition));
-  }
-
-  public boolean hasPresentationDefinition() {
-    return contains(presentation_definition);
-  }
-
-  public PresentationDefinitionUri presentationDefinitionUri() {
-    return new PresentationDefinitionUri(getValueOrEmpty(presentation_definition_uri));
-  }
-
-  public boolean hasPresentationDefinitionUri() {
-    return contains(presentation_definition_uri);
   }
 
   public String getValueOrEmpty(OAuthRequestKey key) {

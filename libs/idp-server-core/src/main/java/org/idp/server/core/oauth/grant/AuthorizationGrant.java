@@ -6,11 +6,9 @@ import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.client.ClientName;
-import org.idp.server.core.oauth.identity.ClaimsPayload;
-import org.idp.server.core.oauth.identity.IdTokenClaims;
+import org.idp.server.core.oauth.grant.consent.ConsentClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
-import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.oauth.RequestedClientId;
@@ -25,10 +23,11 @@ public class AuthorizationGrant {
   RequestedClientId requestedClientId;
   Client client;
   Scopes scopes;
-  ClaimsPayload claimsPayload;
+  GrantIdTokenClaims idTokenClaims;
+  GrantUserinfoClaims userinfoClaims;
   CustomProperties customProperties;
   AuthorizationDetails authorizationDetails;
-  PresentationDefinition presentationDefinition;
+  ConsentClaims consentClaims;
 
   public AuthorizationGrant() {}
 
@@ -39,20 +38,22 @@ public class AuthorizationGrant {
       RequestedClientId requestedClientId,
       Client client,
       Scopes scopes,
-      ClaimsPayload claimsPayload,
+      GrantIdTokenClaims idTokenClaims,
+      GrantUserinfoClaims userinfoClaims,
       CustomProperties customProperties,
       AuthorizationDetails authorizationDetails,
-      PresentationDefinition presentationDefinition) {
+      ConsentClaims consentClaims) {
     this.tenantIdentifier = tenantIdentifier;
     this.user = user;
     this.authentication = authentication;
     this.requestedClientId = requestedClientId;
     this.client = client;
     this.scopes = scopes;
-    this.claimsPayload = claimsPayload;
+    this.idTokenClaims = idTokenClaims;
+    this.userinfoClaims = userinfoClaims;
     this.customProperties = customProperties;
     this.authorizationDetails = authorizationDetails;
-    this.presentationDefinition = presentationDefinition;
+    this.consentClaims = consentClaims;
   }
 
   public TenantIdentifier tenantIdentifier() {
@@ -99,8 +100,12 @@ public class AuthorizationGrant {
     return scopes;
   }
 
-  public ClaimsPayload claimsPayload() {
-    return claimsPayload;
+  public GrantIdTokenClaims idTokenClaims() {
+    return idTokenClaims;
+  }
+
+  public GrantUserinfoClaims userinfoClaims() {
+    return userinfoClaims;
   }
 
   public String scopesValue() {
@@ -123,10 +128,6 @@ public class AuthorizationGrant {
     return user.exists();
   }
 
-  public IdTokenClaims idTokenClaims() {
-    return claimsPayload.idToken();
-  }
-
   public boolean hasOpenidScope() {
     return scopes.contains("openid");
   }
@@ -139,31 +140,45 @@ public class AuthorizationGrant {
     return authorizationDetails.exists();
   }
 
-  public boolean hasClaim() {
-    return claimsPayload.exists();
+  public boolean hasIdTokenClaims() {
+    return idTokenClaims.exists();
   }
 
-  public PresentationDefinition presentationDefinition() {
-    return presentationDefinition;
+  public boolean hasUserinfoClaim() {
+    return userinfoClaims.exists();
   }
 
-  public boolean hasPresentationDefinition() {
-    return presentationDefinition.exists();
+  public ConsentClaims consentClaims() {
+    return consentClaims;
   }
 
+  public boolean hasConsentClaims() {
+    return consentClaims.exists();
+  }
+
+  // TODO
   public AuthorizationGrant merge(AuthorizationGrant newAuthorizationGrant) {
     User newUser = newAuthorizationGrant.user();
     Authentication newAuthentication = newAuthorizationGrant.authentication();
     RequestedClientId newRequestClientId = newAuthorizationGrant.requestedClientId();
     Client newClient = newAuthorizationGrant.client();
+
     Set<String> newScopeValues = new HashSet<>(this.scopes.toStringSet());
-    scopes.forEach(newScopeValues::add);
+    newAuthorizationGrant.scopes().forEach(newScopeValues::add);
     Scopes newScopes = new Scopes(newScopeValues);
-    ClaimsPayload newClaimsPayload = newAuthorizationGrant.claimsPayload();
+
+    Set<String> newIdTokenClaims = new HashSet<>(idTokenClaims.toStringSet());
+    newAuthorizationGrant.idTokenClaims().forEach(newIdTokenClaims::add);
+    GrantIdTokenClaims newGrantIdToken = new GrantIdTokenClaims(newIdTokenClaims);
+
+    Set<String> newClaims = new HashSet<>(userinfoClaims.toStringSet());
+    newAuthorizationGrant.userinfoClaims().forEach(newClaims::add);
+    GrantUserinfoClaims newGrantUserinfo = new GrantUserinfoClaims(newClaims);
+
     CustomProperties newCustomProperties = newAuthorizationGrant.customProperties();
     AuthorizationDetails newAuthorizationDetails = newAuthorizationGrant.authorizationDetails();
-    PresentationDefinition newPresentationDefinition =
-        newAuthorizationGrant.presentationDefinition();
+
+    ConsentClaims newConsentClaims = consentClaims.merge(newAuthorizationGrant.consentClaims());
 
     return new AuthorizationGrant(
         tenantIdentifier,
@@ -172,9 +187,10 @@ public class AuthorizationGrant {
         newRequestClientId,
         newClient,
         newScopes,
-        newClaimsPayload,
+        newGrantIdToken,
+        newGrantUserinfo,
         newCustomProperties,
         newAuthorizationDetails,
-        newPresentationDefinition);
+        newConsentClaims);
   }
 }

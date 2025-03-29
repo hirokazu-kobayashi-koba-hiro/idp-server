@@ -22,8 +22,8 @@ public class CibaGrantDataSource implements CibaGrantRepository {
     String sqlTemplate =
         """
                     INSERT INTO public.ciba_grant
-                    (backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, claims, custom_properties, authorization_details)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?::jsonb, ?::jsonb, ?::jsonb);
+                    (backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb);
                     """;
     List<Object> params = new ArrayList<>();
     AuthorizationGrant authorizationGrant = cibaGrant.authorizationGrant();
@@ -39,10 +39,17 @@ public class CibaGrantDataSource implements CibaGrantRepository {
     params.add(authorizationGrant.requestedClientId().value());
     params.add(toJson(authorizationGrant.client()));
     params.add(authorizationGrant.scopes().toStringValues());
-    if (authorizationGrant.hasClaim()) {
-      params.add(toJson(authorizationGrant.claimsPayload()));
+
+    if (authorizationGrant.hasIdTokenClaims()) {
+      params.add(authorizationGrant.idTokenClaims().toStringValues());
     } else {
-      params.add(null);
+      params.add("");
+    }
+
+    if (authorizationGrant.hasUserinfoClaim()) {
+      params.add(authorizationGrant.userinfoClaims().toStringValues());
+    } else {
+      params.add("");
     }
 
     if (authorizationGrant.hasCustomProperties()) {
@@ -53,6 +60,12 @@ public class CibaGrantDataSource implements CibaGrantRepository {
 
     if (authorizationGrant.hasAuthorizationDetails()) {
       params.add(toJson(authorizationGrant.authorizationDetails().toMapValues()));
+    } else {
+      params.add(null);
+    }
+
+    if (authorizationGrant.hasConsentClaims()) {
+      params.add(toJson(authorizationGrant.consentClaims().toMap()));
     } else {
       params.add(null);
     }
@@ -84,7 +97,7 @@ public class CibaGrantDataSource implements CibaGrantRepository {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-            SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, claims, custom_properties, authorization_details
+            SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
             FROM ciba_grant
             WHERE auth_req_id = ?;
             """;

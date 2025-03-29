@@ -9,7 +9,6 @@ import org.idp.server.core.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.token.AccessToken;
 import org.idp.server.core.oauth.token.AccessTokenCreatable;
-import org.idp.server.core.type.extension.GrantFlow;
 import org.idp.server.core.type.extension.JarmPayload;
 import org.idp.server.core.type.extension.ResponseModeValue;
 import org.idp.server.core.type.oauth.*;
@@ -27,7 +26,7 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     AuthorizationCode authorizationCode = createAuthorizationCode();
-    AuthorizationGrant authorizationGrant = context.toAuthorizationGranted();
+    AuthorizationGrant authorizationGrant = context.authorize();
 
     AccessToken accessToken =
         createAccessToken(
@@ -35,6 +34,7 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
             context.serverConfiguration(),
             context.clientConfiguration(),
             new ClientCredentials());
+
     IdTokenCustomClaims idTokenCustomClaims =
         new IdTokenCustomClaimsBuilder()
             .add(authorizationRequest.state())
@@ -42,16 +42,16 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
             .add(accessToken.accessTokenEntity())
             .add(authorizationCode)
             .build();
+
     IdToken idToken =
         createIdToken(
             context.user(),
             context.authentication(),
-            GrantFlow.hybrid,
-            context.toAuthorizationGranted(),
-            context.idTokenClaims(),
+            context.authorize(),
             idTokenCustomClaims,
             context.serverConfiguration(),
             context.clientConfiguration());
+
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(
                 decideRedirectUri(authorizationRequest, context.clientConfiguration()),

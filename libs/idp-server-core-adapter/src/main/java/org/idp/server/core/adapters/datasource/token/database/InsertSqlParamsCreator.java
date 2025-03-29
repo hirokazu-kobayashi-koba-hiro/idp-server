@@ -36,10 +36,16 @@ class InsertSqlParamsCreator {
     params.add(toJson(authorizationGrant.client()));
     params.add(authorizationGrant.scopes().toStringValues());
 
-    if (authorizationGrant.hasClaim()) {
-      params.add(toJson(authorizationGrant.claimsPayload()));
+    if (authorizationGrant.hasIdTokenClaims()) {
+      params.add(authorizationGrant.idTokenClaims().toStringValues());
     } else {
-      params.add("{}");
+      params.add("");
+    }
+
+    if (authorizationGrant.hasUserinfoClaim()) {
+      params.add(authorizationGrant.userinfoClaims().toStringValues());
+    } else {
+      params.add("");
     }
 
     if (authorizationGrant.hasCustomProperties()) {

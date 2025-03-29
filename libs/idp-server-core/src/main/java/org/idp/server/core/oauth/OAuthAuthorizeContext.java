@@ -1,19 +1,24 @@
 package org.idp.server.core.oauth;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
-import org.idp.server.core.oauth.identity.ClaimsPayload;
-import org.idp.server.core.oauth.identity.IdTokenClaims;
+import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
+import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
+import org.idp.server.core.oauth.grant.consent.ConsentClaims;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedIdTokenClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.response.ResponseModeDecidable;
-import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.extension.ExpiredAt;
@@ -59,22 +64,36 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
   }
 
   public Scopes scopes() {
-    return authorizationRequest.scope();
+    return authorizationRequest.scopes();
   }
 
-  public ClaimsPayload claimsPayload() {
-    return authorizationRequest.claimsPayload();
+  public RequestedClaimsPayload claimsPayload() {
+    return authorizationRequest.requestedClaimsPayload();
   }
 
-  public AuthorizationGrant toAuthorizationGranted() {
+  public AuthorizationGrant authorize() {
 
     TenantIdentifier tenantIdentifier = authorizationRequest.tenantIdentifier();
     RequestedClientId requestedClientId = authorizationRequest.clientId();
     Client client = clientConfiguration.client();
-    Scopes scopes = authorizationRequest.scope();
-    ClaimsPayload claimsPayload = authorizationRequest.claimsPayload();
+
+    Scopes scopes = authorizationRequest.scopes();
+    ResponseType responseType = authorizationRequest.responseType();
+    List<String> supportedClaims = serverConfiguration.claimsSupported();
+    RequestedClaimsPayload requestedClaimsPayload = authorizationRequest.requestedClaimsPayload();
+    boolean idTokenStrictMode = serverConfiguration().isIdTokenStrictMode();
+
+    GrantIdTokenClaims grantIdTokenClaims =
+        GrantIdTokenClaims.create(
+            scopes,
+            responseType,
+            supportedClaims,
+            requestedClaimsPayload.idToken(),
+            idTokenStrictMode);
+    GrantUserinfoClaims grantUserinfoClaims =
+        GrantUserinfoClaims.create(scopes, supportedClaims, requestedClaimsPayload.userinfo());
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
-    PresentationDefinition presentationDefinition = authorizationRequest.presentationDefinition();
+    ConsentClaims consentClaims = new ConsentClaims(consent());
 
     return new AuthorizationGrant(
         tenantIdentifier,
@@ -83,10 +102,23 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
         requestedClientId,
         client,
         scopes,
-        claimsPayload,
+        grantIdTokenClaims,
+        grantUserinfoClaims,
         customProperties,
         authorizationDetails,
-        presentationDefinition);
+        consentClaims);
+  }
+
+  private Map<String, Object> consent() {
+    Map<String, Object> contents = new HashMap<>();
+    LocalDateTime now = SystemDateTime.now();
+    if (clientConfiguration.hasTosUri())
+      contents.put("terms", Map.of("tos_uri", clientConfiguration.tosUri(), "consented_at", now));
+
+    if (clientConfiguration.hasPolicyUri())
+      contents.put(
+          "privacy", Map.of("policy_uri", clientConfiguration.policyUri(), "consented_at", now));
+    return contents;
   }
 
   public CustomProperties customProperties() {
@@ -123,8 +155,8 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     return new ExpiredAt(localDateTime.plusMinutes(duration));
   }
 
-  public IdTokenClaims idTokenClaims() {
-    return authorizationRequest.claimsPayload().idToken();
+  public RequestedIdTokenClaims idTokenClaims() {
+    return authorizationRequest.requestedClaimsPayload().idToken();
   }
 
   public boolean hasState() {
