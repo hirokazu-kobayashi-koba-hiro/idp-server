@@ -21,7 +21,7 @@ public class AuthorizationResponseCodeTokenCreator
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     AuthorizationCode authorizationCode = createAuthorizationCode();
-    AuthorizationGrant authorizationGrant = context.toAuthorizationGrant();
+    AuthorizationGrant authorizationGrant = context.authorize();
 
     AccessToken accessToken =
         createAccessToken(

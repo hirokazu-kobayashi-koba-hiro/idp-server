@@ -13,7 +13,7 @@ public class AuthorizationCodeGrantCreator {
     AuthorizationRequestIdentifier authorizationRequestIdentifier =
         oAuthAuthorizeContext.authorizationRequest().identifier();
 
-    AuthorizationGrant authorizationGrant = oAuthAuthorizeContext.toAuthorizationGrant();
+    AuthorizationGrant authorizationGrant = oAuthAuthorizeContext.authorize();
     AuthorizationCode authorizationCode = authorizationResponse.authorizationCode();
     ExpiredAt expiredAt = oAuthAuthorizeContext.authorizationCodeGrantExpiresDateTime();
 

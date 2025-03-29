@@ -21,8 +21,8 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
     String sqlTemplate =
         """
                     INSERT INTO public.authorization_code_grant
-                    (authorization_request_id, tenant_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, expired_at)
-                    VALUES (?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?);;
+                    (authorization_request_id, tenant_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, expired_at, consent_claims)
+                    VALUES (?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb);
                     """;
     List<Object> params = new ArrayList<>();
 
@@ -63,6 +63,12 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
 
     params.add(authorizationCodeGrant.expiredAt().toStringValue());
 
+    if (authorizationCodeGrant.authorizationGrant().hasConsentClaims()) {
+      params.add(toJson(authorizationCodeGrant.authorizationGrant().consentClaims().toMap()));
+    } else {
+      params.add(null);
+    }
+
     sqlExecutor.execute(sqlTemplate, params);
   }
 
@@ -71,7 +77,7 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                SELECT authorization_request_id, tenant_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, expired_at
+                SELECT authorization_request_id, tenant_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, expired_at, consent_claims
                 FROM authorization_code_grant
                 WHERE authorization_code = ?;
                 """;

@@ -1,7 +1,9 @@
 package org.idp.server.core.oauth;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
@@ -10,6 +12,7 @@ import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
 import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
+import org.idp.server.core.oauth.grant.consent.ConsentClaims;
 import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.identity.RequestedIdTokenClaims;
 import org.idp.server.core.oauth.identity.User;
@@ -68,7 +71,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     return authorizationRequest.requestedClaimsPayload();
   }
 
-  public AuthorizationGrant toAuthorizationGrant() {
+  public AuthorizationGrant authorize() {
 
     TenantIdentifier tenantIdentifier = authorizationRequest.tenantIdentifier();
     RequestedClientId requestedClientId = authorizationRequest.clientId();
@@ -90,6 +93,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     GrantUserinfoClaims grantUserinfoClaims =
         GrantUserinfoClaims.create(scopes, supportedClaims, requestedClaimsPayload.userinfo());
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
+    ConsentClaims consentClaims = new ConsentClaims(consent());
 
     return new AuthorizationGrant(
         tenantIdentifier,
@@ -101,7 +105,20 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
         grantIdTokenClaims,
         grantUserinfoClaims,
         customProperties,
-        authorizationDetails);
+        authorizationDetails,
+        consentClaims);
+  }
+
+  private Map<String, Object> consent() {
+    Map<String, Object> contents = new HashMap<>();
+    LocalDateTime now = SystemDateTime.now();
+    if (clientConfiguration.hasTosUri())
+      contents.put("terms", Map.of("tos_uri", clientConfiguration.tosUri(), "consented_at", now));
+
+    if (clientConfiguration.hasPolicyUri())
+      contents.put(
+          "privacy", Map.of("policy_uri", clientConfiguration.policyUri(), "consented_at", now));
+    return contents;
   }
 
   public CustomProperties customProperties() {

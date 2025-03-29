@@ -20,7 +20,7 @@ public class AuthorizationResponseTokenCreator
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
 
-    AuthorizationGrant authorizationGrant = context.toAuthorizationGrant();
+    AuthorizationGrant authorizationGrant = context.authorize();
 
     AccessToken accessToken =
         createAccessToken(

@@ -9,9 +9,9 @@ import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
-import org.idp.server.core.oauth.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
 import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
+import org.idp.server.core.oauth.grant.consent.ConsentClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
@@ -61,16 +61,21 @@ class ModelConverter {
 
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
+    ConsentClaims consentClaims = convertConsentClaims(stringMap.get("consent_claims"));
+
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrantBuilder(tenantIdentifier, requestedClientId, scopes)
-            .add(user)
-            .add(client)
-            .add(authentication)
-            .add(idTokenClaims)
-            .add(userinfoClaims)
-            .add(customProperties)
-            .add(authorizationDetails)
-            .build();
+        new AuthorizationGrant(
+            tenantIdentifier,
+            user,
+            authentication,
+            requestedClientId,
+            client,
+            scopes,
+            idTokenClaims,
+            userinfoClaims,
+            customProperties,
+            authorizationDetails,
+            consentClaims);
 
     ClientCertificationThumbprint thumbprint =
         new ClientCertificationThumbprint(stringMap.get("client_certification_thumbprint"));
@@ -136,6 +141,18 @@ class ModelConverter {
       return new AuthorizationDetails(authorizationDetailsList);
     } catch (Exception exception) {
       return new AuthorizationDetails();
+    }
+  }
+
+  private static ConsentClaims convertConsentClaims(String value) {
+    if (value == null || value.isEmpty()) {
+      return new ConsentClaims();
+    }
+    try {
+      Map read = jsonConverter.read(value, Map.class);
+      return new ConsentClaims(read);
+    } catch (Exception exception) {
+      return new ConsentClaims();
     }
   }
 }

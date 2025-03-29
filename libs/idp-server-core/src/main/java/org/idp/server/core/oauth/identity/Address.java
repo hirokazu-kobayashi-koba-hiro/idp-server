@@ -1,10 +1,9 @@
 package org.idp.server.core.oauth.identity;
 
-import org.idp.server.core.basic.json.JsonReadable;
-
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.basic.json.JsonReadable;
 
 public class Address implements JsonReadable, Serializable {
 
@@ -72,12 +71,18 @@ public class Address implements JsonReadable, Serializable {
   }
 
   public boolean exists() {
-    return hasFormatted() || hasStreetAddress() || hasLocality() || hasRegion() || hasPostalCode() || hasCountry();
+    return hasFormatted()
+        || hasStreetAddress()
+        || hasLocality()
+        || hasRegion()
+        || hasPostalCode()
+        || hasCountry();
   }
 
   public boolean hasFormatted() {
     return formatted != null && !formatted.isEmpty();
   }
+
   public boolean hasStreetAddress() {
     return streetAddress != null && !streetAddress.isEmpty();
   }

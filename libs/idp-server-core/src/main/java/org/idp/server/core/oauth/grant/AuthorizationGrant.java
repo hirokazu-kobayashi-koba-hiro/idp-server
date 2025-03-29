@@ -6,6 +6,7 @@ import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.client.ClientName;
+import org.idp.server.core.oauth.grant.consent.ConsentClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -26,6 +27,7 @@ public class AuthorizationGrant {
   GrantUserinfoClaims userinfoClaims;
   CustomProperties customProperties;
   AuthorizationDetails authorizationDetails;
+  ConsentClaims consentClaims;
 
   public AuthorizationGrant() {}
 
@@ -39,7 +41,8 @@ public class AuthorizationGrant {
       GrantIdTokenClaims idTokenClaims,
       GrantUserinfoClaims userinfoClaims,
       CustomProperties customProperties,
-      AuthorizationDetails authorizationDetails) {
+      AuthorizationDetails authorizationDetails,
+      ConsentClaims consentClaims) {
     this.tenantIdentifier = tenantIdentifier;
     this.user = user;
     this.authentication = authentication;
@@ -50,6 +53,7 @@ public class AuthorizationGrant {
     this.userinfoClaims = userinfoClaims;
     this.customProperties = customProperties;
     this.authorizationDetails = authorizationDetails;
+    this.consentClaims = consentClaims;
   }
 
   public TenantIdentifier tenantIdentifier() {
@@ -144,6 +148,15 @@ public class AuthorizationGrant {
     return userinfoClaims.exists();
   }
 
+  public ConsentClaims consentClaims() {
+    return consentClaims;
+  }
+
+  public boolean hasConsentClaims() {
+    return consentClaims.exists();
+  }
+
+  // TODO
   public AuthorizationGrant merge(AuthorizationGrant newAuthorizationGrant) {
     User newUser = newAuthorizationGrant.user();
     Authentication newAuthentication = newAuthorizationGrant.authentication();
@@ -165,6 +178,8 @@ public class AuthorizationGrant {
     CustomProperties newCustomProperties = newAuthorizationGrant.customProperties();
     AuthorizationDetails newAuthorizationDetails = newAuthorizationGrant.authorizationDetails();
 
+    ConsentClaims newConsentClaims = consentClaims.merge(newAuthorizationGrant.consentClaims());
+
     return new AuthorizationGrant(
         tenantIdentifier,
         newUser,
@@ -175,6 +190,7 @@ public class AuthorizationGrant {
         newGrantIdToken,
         newGrantUserinfo,
         newCustomProperties,
-        newAuthorizationDetails);
+        newAuthorizationDetails,
+        newConsentClaims);
   }
 }

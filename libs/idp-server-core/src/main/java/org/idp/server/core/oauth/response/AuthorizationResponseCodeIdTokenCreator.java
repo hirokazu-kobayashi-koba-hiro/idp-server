@@ -33,7 +33,7 @@ public class AuthorizationResponseCodeIdTokenCreator
         createIdToken(
             context.user(),
             context.authentication(),
-            context.toAuthorizationGrant(),
+            context.authorize(),
             idTokenCustomClaims,
             context.serverConfiguration(),
             context.clientConfiguration());

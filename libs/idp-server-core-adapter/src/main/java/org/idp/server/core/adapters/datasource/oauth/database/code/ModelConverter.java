@@ -9,6 +9,7 @@ import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
 import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
+import org.idp.server.core.oauth.grant.consent.ConsentClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
@@ -39,6 +40,7 @@ class ModelConverter {
     GrantUserinfoClaims userinfoClaims = new GrantUserinfoClaims(stringMap.get("userinfo_claims"));
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
+    ConsentClaims consentClaims = convertConsentClaims(stringMap.get("consent_claims"));
 
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrant(
@@ -51,7 +53,8 @@ class ModelConverter {
             idTokenClaims,
             userinfoClaims,
             customProperties,
-            authorizationDetails);
+            authorizationDetails,
+            consentClaims);
 
     AuthorizationCode authorizationCode =
         new AuthorizationCode(stringMap.get("authorization_code"));
@@ -86,6 +89,18 @@ class ModelConverter {
       return new AuthorizationDetails(authorizationDetailsList);
     } catch (Exception exception) {
       return new AuthorizationDetails();
+    }
+  }
+
+  private static ConsentClaims convertConsentClaims(String value) {
+    if (value == null || value.isEmpty()) {
+      return new ConsentClaims();
+    }
+    try {
+      Map read = jsonConverter.read(value, Map.class);
+      return new ConsentClaims(read);
+    } catch (Exception exception) {
+      return new ConsentClaims();
     }
   }
 }

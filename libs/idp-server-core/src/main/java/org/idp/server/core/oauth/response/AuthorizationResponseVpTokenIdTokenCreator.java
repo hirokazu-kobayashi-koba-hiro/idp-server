@@ -23,7 +23,7 @@ public class AuthorizationResponseVpTokenIdTokenCreator
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
-    AuthorizationGrant authorizationGrant = context.toAuthorizationGrant();
+    AuthorizationGrant authorizationGrant = context.authorize();
 
     VpToken vpToken =
         createVpToken(
@@ -41,7 +41,7 @@ public class AuthorizationResponseVpTokenIdTokenCreator
         createIdToken(
             context.user(),
             context.authentication(),
-            context.toAuthorizationGrant(),
+            context.authorize(),
             idTokenCustomClaims,
             context.serverConfiguration(),
             context.clientConfiguration());

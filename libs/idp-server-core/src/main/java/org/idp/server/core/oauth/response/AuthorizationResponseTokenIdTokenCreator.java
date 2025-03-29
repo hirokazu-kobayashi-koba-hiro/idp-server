@@ -24,7 +24,7 @@ public class AuthorizationResponseTokenIdTokenCreator
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
-    AuthorizationGrant authorizationGrant = context.toAuthorizationGrant();
+    AuthorizationGrant authorizationGrant = context.authorize();
 
     AccessToken accessToken =
         createAccessToken(
@@ -44,7 +44,7 @@ public class AuthorizationResponseTokenIdTokenCreator
         createIdToken(
             context.user(),
             context.authentication(),
-            context.toAuthorizationGrant(),
+            context.authorize(),
             idTokenCustomClaims,
             context.serverConfiguration(),
             context.clientConfiguration());

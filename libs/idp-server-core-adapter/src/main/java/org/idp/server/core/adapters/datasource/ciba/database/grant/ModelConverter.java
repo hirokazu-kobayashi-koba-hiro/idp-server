@@ -11,6 +11,7 @@ import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
 import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
+import org.idp.server.core.oauth.grant.consent.ConsentClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
@@ -47,6 +48,8 @@ class ModelConverter {
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
 
+    ConsentClaims consentClaims = convertConsentClaims(stringMap.get("consent_claims"));
+
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrant(
             tenantIdentifier,
@@ -58,7 +61,8 @@ class ModelConverter {
             idTokenClaims,
             userinfoClaims,
             customProperties,
-            authorizationDetails);
+            authorizationDetails,
+            consentClaims);
 
     return new CibaGrant(id, authorizationGrant, authReqId, expiredAt, interval, status);
   }
@@ -68,7 +72,6 @@ class ModelConverter {
       return new AuthorizationDetails();
     }
     try {
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
       List list = jsonConverter.read(value, List.class);
       List<Map> details = (List<Map>) list;
       List<AuthorizationDetail> authorizationDetailsList =
@@ -76,6 +79,18 @@ class ModelConverter {
       return new AuthorizationDetails(authorizationDetailsList);
     } catch (Exception exception) {
       return new AuthorizationDetails();
+    }
+  }
+
+  private static ConsentClaims convertConsentClaims(String value) {
+    if (value == null || value.isEmpty()) {
+      return new ConsentClaims();
+    }
+    try {
+      Map read = jsonConverter.read(value, Map.class);
+      return new ConsentClaims(read);
+    } catch (Exception exception) {
+      return new ConsentClaims();
     }
   }
 }

@@ -2,6 +2,7 @@ package org.idp.server.core.oauth.grant;
 
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
+import org.idp.server.core.oauth.grant.consent.ConsentClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -21,6 +22,7 @@ public class AuthorizationGrantBuilder {
   GrantUserinfoClaims grantUserinfoClaims = new GrantUserinfoClaims();
   CustomProperties customProperties = new CustomProperties();
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
+  ConsentClaims consentClaims = new ConsentClaims();
 
   public AuthorizationGrantBuilder(
       TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, Scopes scopes) {
@@ -64,6 +66,11 @@ public class AuthorizationGrantBuilder {
     return this;
   }
 
+  public AuthorizationGrantBuilder add(ConsentClaims consentClaims) {
+    this.consentClaims = consentClaims;
+    return this;
+  }
+
   public AuthorizationGrant build() {
     return new AuthorizationGrant(
         tenantIdentifier,
@@ -75,6 +82,7 @@ public class AuthorizationGrantBuilder {
         grantIdTokenClaims,
         grantUserinfoClaims,
         customProperties,
-        authorizationDetails);
+        authorizationDetails,
+        consentClaims);
   }
 }
