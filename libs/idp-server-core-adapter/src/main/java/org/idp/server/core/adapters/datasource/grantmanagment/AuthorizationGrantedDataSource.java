@@ -159,7 +159,7 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
     } else {
       params.add("{}");
     }
-    params.add(authorizationGrant.tenantIdentifier().value());
+    params.add(authorizationGranted.identifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

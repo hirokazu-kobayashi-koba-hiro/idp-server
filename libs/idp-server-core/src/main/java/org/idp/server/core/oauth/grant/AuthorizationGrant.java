@@ -157,7 +157,7 @@ public class AuthorizationGrant {
     RequestedClientId newRequestClientId = newAuthorizationGrant.requestedClientId();
     Client newClient = newAuthorizationGrant.client();
     Set<String> newScopeValues = new HashSet<>(this.scopes.toStringSet());
-    scopes.forEach(newScopeValues::add);
+    newAuthorizationGrant.scopes().forEach(newScopeValues::add);
     Scopes newScopes = new Scopes(newScopeValues);
     ClaimsPayload newClaimsPayload = newAuthorizationGrant.claimsPayload();
     CustomProperties newCustomProperties = newAuthorizationGrant.customProperties();
