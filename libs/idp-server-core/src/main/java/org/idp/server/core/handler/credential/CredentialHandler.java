@@ -57,9 +57,10 @@ public class CredentialHandler {
         new VerifiableCredentialVerifier(
             oAuthToken, request.toClientCert(), parameters, serverConfiguration);
     verifier.verify();
+
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, accessToken.clientId());
+        clientConfigurationRepository.get(tenant, accessToken.clientIdentifier());
     CredentialDelegateResponse credentialDelegateResponse =
         delegate.getCredential(
             tenant,
@@ -105,7 +106,7 @@ public class CredentialHandler {
     verifier.verify();
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, accessToken.clientId());
+        clientConfigurationRepository.get(tenant, accessToken.clientIdentifier());
     BatchCredentialRequests batchCredentialRequests = parameters.toBatchCredentialRequest();
 
     // FIXME
@@ -174,7 +175,7 @@ public class CredentialHandler {
 
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, accessToken.clientId());
+        clientConfigurationRepository.get(tenant, accessToken.clientIdentifier());
     CredentialDelegateResponse credentialDelegateResponse =
         delegate.getCredential(
             tenant,

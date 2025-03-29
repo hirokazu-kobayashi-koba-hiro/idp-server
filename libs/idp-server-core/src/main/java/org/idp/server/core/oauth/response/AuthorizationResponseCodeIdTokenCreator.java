@@ -22,12 +22,14 @@ public class AuthorizationResponseCodeIdTokenCreator
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     AuthorizationCode authorizationCode = createAuthorizationCode();
+
     IdTokenCustomClaims idTokenCustomClaims =
         new IdTokenCustomClaimsBuilder()
             .add(authorizationCode)
             .add(authorizationRequest.state())
             .add(authorizationRequest.nonce())
             .build();
+
     IdToken idToken =
         createIdToken(
             context.user(),
@@ -38,11 +40,12 @@ public class AuthorizationResponseCodeIdTokenCreator
             idTokenCustomClaims,
             context.serverConfiguration(),
             context.clientConfiguration());
+
     AuthorizationResponseBuilder authorizationResponseBuilder =
         new AuthorizationResponseBuilder(
                 decideRedirectUri(authorizationRequest, context.clientConfiguration()),
                 context.responseMode(),
-                new ResponseModeValue("#"),
+                ResponseModeValue.fragment(),
                 context.tokenIssuer())
             .add(authorizationCode)
             .add(idToken);

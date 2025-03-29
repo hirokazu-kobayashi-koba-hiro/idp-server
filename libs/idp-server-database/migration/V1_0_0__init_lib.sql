@@ -209,6 +209,7 @@ CREATE TABLE authorization_request
     scopes                      TEXT                    NOT NULL,
     response_type               VARCHAR(255)            NOT NULL,
     client_id                   VARCHAR(255)            NOT NULL,
+    client_payload              JSONB                   NOT NULL,
     redirect_uri                TEXT                    NOT NULL,
     state                       TEXT,
     response_mode               VARCHAR(255),
@@ -235,11 +236,13 @@ CREATE TABLE authorization_request
 CREATE TABLE authorization_code_grant
 (
     authorization_request_id CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id                CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     authorization_code       VARCHAR(255)            NOT NULL,
     user_id                  CHAR(36)                NOT NULL,
-    user_payload             TEXT                    NOT NULL,
-    authentication           TEXT                    NOT NULL,
+    user_payload             JSONB                   NOT NULL,
+    authentication           JSONB                   NOT NULL,
     client_id                VARCHAR(255)            NOT NULL,
+    client_payload           JSONB                   NOT NULL,
     scopes                   TEXT                    NOT NULL,
     claims                   TEXT                    NOT NULL,
     custom_properties        JSONB,
@@ -268,6 +271,7 @@ CREATE TABLE oauth_token
     user_payload                    JSONB,
     authentication                  JSONB                   NOT NULL,
     client_id                       VARCHAR(255)            NOT NULL,
+    client_payload                  JSONB                   NOT NULL,
     scopes                          TEXT                    NOT NULL,
     claims                          TEXT                    NOT NULL,
     custom_properties               JSONB,
@@ -314,6 +318,7 @@ CREATE TABLE backchannel_authentication_request
 CREATE TABLE ciba_grant
 (
     backchannel_authentication_request_id CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id                             CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     auth_req_id                           VARCHAR(255)            NOT NULL,
     expired_at                            TEXT                    NOT NULL,
     interval                              TEXT                    NOT NULL,
@@ -322,6 +327,7 @@ CREATE TABLE ciba_grant
     user_payload                          JSONB                   NOT NULL,
     authentication                        JSONB,
     client_id                             VARCHAR(255)            NOT NULL,
+    client_payload                        JSONB                   NOT NULL,
     scopes                                TEXT                    NOT NULL,
     claims                                JSONB                   NOT NULL,
     custom_properties                     JSONB,
@@ -335,9 +341,32 @@ CREATE TABLE ciba_grant
 
 CREATE INDEX idx_ciba_grant_auth_req ON ciba_grant (auth_req_id);
 
+CREATE TABLE authorization_granted
+(
+    id                      CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id               CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    user_id                 CHAR(36)                NOT NULL,
+    user_payload            JSONB                   NOT NULL,
+    authentication          JSONB                   NOT NULL,
+    client_id               VARCHAR(255)            NOT NULL,
+    client_payload          JSONB                   NOT NULL,
+    scopes                  TEXT                    NOT NULL,
+    claims                  TEXT                    NOT NULL,
+    custom_properties       JSONB,
+    authorization_details   JSONB,
+    presentation_definition JSONB                   NOT NULL,
+    created_at              TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at              TIMESTAMP DEFAULT now() NOT NULL,
+    revoked_at              TIMESTAMP
+);
+
+CREATE INDEX idx_authorization_granted_tenant_client_user ON authorization_granted (tenant_id, client_id, user_id);
+
+
 CREATE TABLE verifiable_credential_transaction
 (
     transaction_id        VARCHAR(255)            NOT NULL,
+    tenant_id             CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     credential_issuer     TEXT                    NOT NULL,
     client_id             VARCHAR(255)            NOT NULL,
     user_id               CHAR(36)                NOT NULL,
@@ -387,14 +416,14 @@ CREATE TABLE federatable_idp_configuration
 
 CREATE TABLE hook_configuration
 (
-    id               CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id        CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
-    trigger          VARCHAR(255)            NOT NULL,
-    payload          JSONB                   NOT NULL,
-    execution_order  INTEGER                 NOT NULL DEFAULT 0,
-    enabled          BOOLEAN                 NOT NULL DEFAULT TRUE,
-    created_at       TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at       TIMESTAMP DEFAULT now() NOT NULL
+    id              CHAR(36)     NOT NULL PRIMARY KEY,
+    tenant_id       CHAR(36)     NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    trigger         VARCHAR(255) NOT NULL,
+    payload         JSONB        NOT NULL,
+    execution_order INTEGER      NOT NULL DEFAULT 0,
+    enabled         BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMP             DEFAULT now() NOT NULL,
+    updated_at      TIMESTAMP             DEFAULT now() NOT NULL
 );
 
 CREATE INDEX idx_hook_configuration_trigger ON hook_configuration (tenant_id, trigger);

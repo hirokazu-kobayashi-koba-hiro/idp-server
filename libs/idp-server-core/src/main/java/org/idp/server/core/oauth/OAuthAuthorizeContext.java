@@ -5,6 +5,7 @@ import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.identity.IdTokenClaims;
@@ -13,6 +14,7 @@ import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.response.ResponseModeDecidable;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.extension.ExpiredAt;
 import org.idp.server.core.type.oauth.*;
@@ -65,15 +67,21 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
   }
 
   public AuthorizationGrant toAuthorizationGranted() {
-    ClientId clientId = authorizationRequest.clientId();
+
+    TenantIdentifier tenantIdentifier = authorizationRequest.tenantIdentifier();
+    RequestedClientId requestedClientId = authorizationRequest.clientId();
+    Client client = clientConfiguration.client();
     Scopes scopes = authorizationRequest.scope();
     ClaimsPayload claimsPayload = authorizationRequest.claimsPayload();
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
     PresentationDefinition presentationDefinition = authorizationRequest.presentationDefinition();
+
     return new AuthorizationGrant(
+        tenantIdentifier,
         user,
         authentication,
-        clientId,
+        requestedClientId,
+        client,
         scopes,
         claimsPayload,
         customProperties,

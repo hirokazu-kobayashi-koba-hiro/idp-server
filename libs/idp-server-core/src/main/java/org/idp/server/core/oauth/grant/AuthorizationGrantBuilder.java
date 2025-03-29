@@ -1,27 +1,33 @@
 package org.idp.server.core.oauth.grant;
 
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.Scopes;
 
 public class AuthorizationGrantBuilder {
 
+  TenantIdentifier tenantIdentifier;
   User user = new User();
   Authentication authentication = new Authentication();
-  ClientId clientId;
+  RequestedClientId requestedClientId;
+  Client client = new Client();
   Scopes scopes;
   ClaimsPayload claimsPayload = new ClaimsPayload();
   CustomProperties customProperties = new CustomProperties();
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
   PresentationDefinition presentationDefinition = new PresentationDefinition();
 
-  public AuthorizationGrantBuilder(ClientId clientId, Scopes scopes) {
-    this.clientId = clientId;
+  public AuthorizationGrantBuilder(
+      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, Scopes scopes) {
+    this.tenantIdentifier = tenantIdentifier;
+    this.requestedClientId = requestedClientId;
     this.scopes = scopes;
   }
 
@@ -32,6 +38,11 @@ public class AuthorizationGrantBuilder {
 
   public AuthorizationGrantBuilder add(Authentication authentication) {
     this.authentication = authentication;
+    return this;
+  }
+
+  public AuthorizationGrantBuilder add(Client client) {
+    this.client = client;
     return this;
   }
 
@@ -57,9 +68,11 @@ public class AuthorizationGrantBuilder {
 
   public AuthorizationGrant build() {
     return new AuthorizationGrant(
+        tenantIdentifier,
         user,
         authentication,
-        clientId,
+        requestedClientId,
+        client,
         scopes,
         claimsPayload,
         customProperties,

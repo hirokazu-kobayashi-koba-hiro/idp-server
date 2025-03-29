@@ -7,6 +7,7 @@ import org.idp.server.core.basic.crypto.AesCipher;
 import org.idp.server.core.basic.crypto.EncryptedData;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
@@ -50,15 +51,17 @@ class ModelConverter {
     }
     Authentication authentication =
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);
-    ClientId clientId = new ClientId(stringMap.get("client_id"));
+    RequestedClientId requestedClientId = new RequestedClientId(stringMap.get("client_id"));
+    Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = new CustomProperties();
     ClaimsPayload claimsPayload = convertClaimsPayload(stringMap.get("claims"));
     AuthorizationDetails authorizationDetails =
         convertAuthorizationDetails(stringMap.get("authorization_details"));
     AuthorizationGrant authorizationGrant =
-        new AuthorizationGrantBuilder(clientId, scopes)
+        new AuthorizationGrantBuilder(tenantIdentifier, requestedClientId, scopes)
             .add(user)
+            .add(client)
             .add(authentication)
             .add(claimsPayload)
             .add(customProperties)

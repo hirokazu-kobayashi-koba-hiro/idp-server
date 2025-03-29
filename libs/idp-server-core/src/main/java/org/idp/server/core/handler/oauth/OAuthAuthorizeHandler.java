@@ -25,7 +25,7 @@ import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 /** OAuthAuthorizeHandler */
 public class OAuthAuthorizeHandler {
@@ -67,10 +67,11 @@ public class OAuthAuthorizeHandler {
 
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.get(authorizationRequestIdentifier);
-    ClientId clientId = authorizationRequest.clientId();
+    RequestedClientId requestedClientId = authorizationRequest.clientId();
     ServerConfiguration serverConfiguration =
         serverConfigurationRepository.get(tenant.identifier());
-    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, clientId);
+    ClientConfiguration clientConfiguration =
+        clientConfigurationRepository.get(tenant, requestedClientId);
 
     OAuthAuthorizeContext context =
         new OAuthAuthorizeContext(
@@ -99,7 +100,7 @@ public class OAuthAuthorizeHandler {
 
     if (Objects.nonNull(delegate)) {
       OAuthSessionKey oAuthSessionKey =
-          new OAuthSessionKey(tenant.identifierValue(), clientId.value());
+          new OAuthSessionKey(tenant.identifierValue(), requestedClientId.value());
       OAuthSession session =
           new OAuthSession(
               oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));

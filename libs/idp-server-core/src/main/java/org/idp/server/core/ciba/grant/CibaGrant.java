@@ -2,12 +2,14 @@ package org.idp.server.core.ciba.grant;
 
 import java.time.LocalDateTime;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.AuthReqId;
 import org.idp.server.core.type.ciba.Interval;
 import org.idp.server.core.type.extension.ExpiredAt;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.Scopes;
 
 public class CibaGrant {
@@ -41,6 +43,10 @@ public class CibaGrant {
     return backchannelAuthenticationRequestIdentifier;
   }
 
+  public TenantIdentifier tenantIdentifier() {
+    return authorizationGrant.tenantIdentifier();
+  }
+
   public User user() {
     return authorizationGrant.user();
   }
@@ -49,16 +55,16 @@ public class CibaGrant {
     return authorizationGrant;
   }
 
-  public ClientId clientId() {
-    return authorizationGrant.clientId();
+  public ClientIdentifier clientIdentifier() {
+    return authorizationGrant.clientIdentifier();
   }
 
   public AuthReqId authReqId() {
     return authReqId;
   }
 
-  public boolean isGrantedClient(ClientId clientId) {
-    return authorizationGrant.isGranted(clientId);
+  public boolean isGrantedClient(ClientIdentifier clientIdentifier) {
+    return authorizationGrant.isGranted(clientIdentifier);
   }
 
   public boolean isExpire(LocalDateTime other) {
@@ -95,6 +101,10 @@ public class CibaGrant {
 
   public boolean isAccessDenied() {
     return status.isAccessDenied();
+  }
+
+  public RequestedClientId requestedClientId() {
+    return authorizationGrant.requestedClientId();
   }
 
   public CibaGrant update(CibaGrantStatus cibaGrantStatus) {

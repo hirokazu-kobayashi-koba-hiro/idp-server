@@ -12,7 +12,7 @@ import org.idp.server.core.handler.configuration.io.ClientConfigurationManagemen
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementStatus;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 public class ClientConfigurationHandler {
 
@@ -63,17 +63,20 @@ public class ClientConfigurationHandler {
         ClientConfigurationManagementListStatus.OK, content);
   }
 
-  public ClientConfigurationManagementResponse handleGetting(Tenant tenant, ClientId clientId) {
+  public ClientConfigurationManagementResponse handleGetting(
+      Tenant tenant, RequestedClientId requestedClientId) {
 
-    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, clientId);
+    ClientConfiguration clientConfiguration =
+        clientConfigurationRepository.get(tenant, requestedClientId);
     Map<String, Object> content = ClientConfigurationResponseCreator.create(clientConfiguration);
     return new ClientConfigurationManagementResponse(
         ClientConfigurationManagementStatus.OK, content);
   }
 
-  public ClientConfigurationManagementResponse handleDeletion(Tenant tenant, ClientId clientId) {
+  public ClientConfigurationManagementResponse handleDeletion(
+      Tenant tenant, RequestedClientId requestedClientId) {
 
-    clientConfigurationRepository.delete(tenant, clientId);
+    clientConfigurationRepository.delete(tenant, requestedClientId);
 
     return new ClientConfigurationManagementResponse(
         ClientConfigurationManagementStatus.OK, Map.of());

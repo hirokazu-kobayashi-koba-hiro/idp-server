@@ -40,7 +40,8 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
     CibaRequestObjectParameters requestObjectParameters =
         new CibaRequestObjectParameters(jsonWebTokenClaims.payload());
     Scopes scopes = new Scopes(filteredScopes);
-    ClientId clientId = getClientId(clientSecretBasic, parameters, requestObjectParameters);
+    RequestedClientId requestedClientId =
+        getClientId(clientSecretBasic, parameters, requestObjectParameters);
     IdTokenHint idTokenHint =
         requestObjectParameters.hasIdTokenHint()
             ? requestObjectParameters.idTokenHint()
@@ -82,7 +83,7 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
     builder.add(profile);
     builder.add(clientConfiguration.backchannelTokenDeliveryMode());
     builder.add(scopes);
-    builder.add(clientId);
+    builder.add(requestedClientId);
     builder.add(idTokenHint);
     builder.add(loginHint);
     builder.add(acrValues);
@@ -95,16 +96,16 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
     return builder.build();
   }
 
-  private static ClientId getClientId(
+  private static RequestedClientId getClientId(
       ClientSecretBasic clientSecretBasic,
       CibaRequestParameters parameters,
       CibaRequestObjectParameters requestObjectParameters) {
-    ClientId clientId =
+    RequestedClientId requestedClientId =
         requestObjectParameters.hasIdTokenHint()
             ? requestObjectParameters.clientId()
             : parameters.clientId();
-    if (clientId.exists()) {
-      return clientId;
+    if (requestedClientId.exists()) {
+      return requestedClientId;
     }
     return clientSecretBasic.clientId();
   }

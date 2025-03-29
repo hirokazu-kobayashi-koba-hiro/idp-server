@@ -1,6 +1,7 @@
 package org.idp.server.core.oauth.request;
 
 import org.idp.server.core.oauth.AuthorizationProfile;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
@@ -19,7 +20,8 @@ public class AuthorizationRequestBuilder {
   AuthorizationProfile profile = AuthorizationProfile.UNDEFINED;
   Scopes scopes = new Scopes();
   ResponseType responseType = ResponseType.undefined;
-  ClientId clientId = new ClientId();
+  RequestedClientId requestedClientId = new RequestedClientId();
+  Client client = new Client();
   RedirectUri redirectUri = new RedirectUri();
   State state = new State();
   ResponseMode responseMode = ResponseMode.undefined;
@@ -69,8 +71,13 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
-  public AuthorizationRequestBuilder add(ClientId clientId) {
-    this.clientId = clientId;
+  public AuthorizationRequestBuilder add(RequestedClientId requestedClientId) {
+    this.requestedClientId = requestedClientId;
+    return this;
+  }
+
+  public AuthorizationRequestBuilder add(Client client) {
+    this.client = client;
     return this;
   }
 
@@ -186,7 +193,8 @@ public class AuthorizationRequestBuilder {
         profile,
         scopes,
         responseType,
-        clientId,
+        requestedClientId,
+        client,
         redirectUri,
         state,
         responseMode,

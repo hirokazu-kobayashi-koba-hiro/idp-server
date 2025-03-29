@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
@@ -12,10 +13,11 @@ import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.extension.ExpiredAt;
 import org.idp.server.core.type.oauth.AuthorizationCode;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.Scopes;
 
 class ModelConverter {
@@ -25,10 +27,12 @@ class ModelConverter {
   static AuthorizationCodeGrant convert(Map<String, String> stringMap) {
     AuthorizationRequestIdentifier id =
         new AuthorizationRequestIdentifier(stringMap.get("authorization_request_id"));
+    TenantIdentifier tenantIdentifier = new TenantIdentifier(stringMap.get("tenant_id"));
     User user = jsonConverter.read(stringMap.get("user_payload"), User.class);
     Authentication authentication =
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);
-    ClientId clientId = new ClientId(stringMap.get("client_id"));
+    RequestedClientId requestedClientId = new RequestedClientId(stringMap.get("client_id"));
+    Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = convertCustomProperties(stringMap.get("custom_properties"));
     ClaimsPayload claimsPayload = convertClaimsPayload(stringMap.get("claims"));
@@ -36,16 +40,20 @@ class ModelConverter {
         convertAuthorizationDetails(stringMap.get("authorization_details"));
     PresentationDefinition presentationDefinition =
         convertPresentationDefinition(stringMap.get("presentation_definition"));
+
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrant(
+            tenantIdentifier,
             user,
             authentication,
-            clientId,
+            requestedClientId,
+            client,
             scopes,
             claimsPayload,
             customProperties,
             authorizationDetails,
             presentationDefinition);
+
     AuthorizationCode authorizationCode =
         new AuthorizationCode(stringMap.get("authorization_code"));
     ExpiredAt expiredAt = new ExpiredAt(stringMap.get("expired_at"));

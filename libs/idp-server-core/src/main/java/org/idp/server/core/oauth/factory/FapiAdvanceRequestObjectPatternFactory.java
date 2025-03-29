@@ -35,7 +35,7 @@ public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequ
         new RequestObjectParameters(jsonWebTokenClaims.payload());
     Scopes scopes = new Scopes(filteredScopes);
     ResponseType responseType = requestObjectParameters.responseType();
-    ClientId clientId = requestObjectParameters.clientId();
+    RequestedClientId requestedClientId = requestObjectParameters.clientId();
     RedirectUri redirectUri = requestObjectParameters.redirectUri();
     State state = requestObjectParameters.state();
     ResponseMode responseMode = requestObjectParameters.responseMode();
@@ -61,7 +61,8 @@ public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequ
     builder.add(profile);
     builder.add(scopes);
     builder.add(responseType);
-    builder.add(clientId);
+    builder.add(requestedClientId);
+    builder.add(clientConfiguration.client());
     builder.add(redirectUri);
     builder.add(state);
     builder.add(responseMode);

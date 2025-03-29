@@ -2,6 +2,7 @@ package org.idp.server.core.oauth.request;
 
 import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.OAuthSessionKey;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
@@ -20,7 +21,8 @@ public class AuthorizationRequest {
   AuthorizationProfile profile = AuthorizationProfile.UNDEFINED;
   Scopes scopes;
   ResponseType responseType;
-  ClientId clientId;
+  Client client;
+  RequestedClientId requestedClientId;
   RedirectUri redirectUri;
   State state;
   ResponseMode responseMode;
@@ -51,7 +53,8 @@ public class AuthorizationRequest {
       AuthorizationProfile profile,
       Scopes scopes,
       ResponseType responseType,
-      ClientId clientId,
+      RequestedClientId requestedClientId,
+      Client client,
       RedirectUri redirectUri,
       State state,
       ResponseMode responseMode,
@@ -78,7 +81,8 @@ public class AuthorizationRequest {
     this.profile = profile;
     this.scopes = scopes;
     this.responseType = responseType;
-    this.clientId = clientId;
+    this.requestedClientId = requestedClientId;
+    this.client = client;
     this.redirectUri = redirectUri;
     this.state = state;
     this.responseMode = responseMode;
@@ -134,12 +138,20 @@ public class AuthorizationRequest {
     return !responseType.isUndefined();
   }
 
-  public ClientId clientId() {
-    return clientId;
+  public RequestedClientId clientId() {
+    return requestedClientId;
   }
 
   public boolean hasClientId() {
-    return clientId.exists();
+    return requestedClientId.exists();
+  }
+
+  public Client client() {
+    return client;
+  }
+
+  public String clientNameValue() {
+    return client.name().value();
   }
 
   public RedirectUri redirectUri() {
@@ -355,6 +367,6 @@ public class AuthorizationRequest {
   }
 
   public OAuthSessionKey sessionKey() {
-    return new OAuthSessionKey(tenantIdentifier.value(), clientId.value());
+    return new OAuthSessionKey(tenantIdentifier.value(), requestedClientId.value());
   }
 }

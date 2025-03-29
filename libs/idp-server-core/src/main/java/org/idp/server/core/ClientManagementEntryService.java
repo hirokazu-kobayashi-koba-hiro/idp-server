@@ -9,7 +9,7 @@ import org.idp.server.core.handler.configuration.io.ClientConfigurationManagemen
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 @Transactional
 public class ClientManagementEntryService implements ClientManagementApi {
@@ -52,11 +52,11 @@ public class ClientManagementEntryService implements ClientManagementApi {
   }
 
   public ClientConfigurationManagementResponse get(
-      TenantIdentifier tenantIdentifier, ClientId clientId) {
+      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId) {
     try {
       Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-      return clientConfigurationHandler.handleGetting(tenant, clientId);
+      return clientConfigurationHandler.handleGetting(tenant, requestedClientId);
     } catch (Exception e) {
 
       return errorHandler.handle(e);
@@ -64,11 +64,11 @@ public class ClientManagementEntryService implements ClientManagementApi {
   }
 
   public ClientConfigurationManagementResponse delete(
-      TenantIdentifier tenantIdentifier, ClientId clientId) {
+      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId) {
     try {
       Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-      return clientConfigurationHandler.handleDeletion(tenant, clientId);
+      return clientConfigurationHandler.handleDeletion(tenant, requestedClientId);
     } catch (Exception e) {
 
       return errorHandler.handle(e);

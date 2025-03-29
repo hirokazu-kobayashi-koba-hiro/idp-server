@@ -53,7 +53,8 @@ public class CibaAuthorizeHandler {
     // TODO verify
 
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, cibaGrant.authorizationGrant().clientId());
+        clientConfigurationRepository.get(
+            tenant, cibaGrant.authorizationGrant().clientIdentifier());
     CibaGrant updated = cibaGrant.update(CibaGrantStatus.authorized);
     cibaGrantRepository.update(updated);
 

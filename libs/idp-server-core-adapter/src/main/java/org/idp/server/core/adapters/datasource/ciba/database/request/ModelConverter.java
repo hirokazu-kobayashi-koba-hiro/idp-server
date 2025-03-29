@@ -11,7 +11,7 @@ import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.*;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.Scopes;
 import org.idp.server.core.type.oidc.AcrValues;
 import org.idp.server.core.type.oidc.IdTokenHint;
@@ -27,7 +27,7 @@ class ModelConverter {
     builder.add(CibaProfile.valueOf(stringMap.get("profile")));
     builder.add(BackchannelTokenDeliveryMode.valueOf(stringMap.get("delivery_mode")));
     builder.add(new Scopes(stringMap.get("scopes")));
-    builder.add(new ClientId(stringMap.get("client_id")));
+    builder.add(new RequestedClientId(stringMap.get("client_id")));
     builder.add(new IdTokenHint(stringMap.get("id_token_hint")));
     builder.add(new LoginHint(stringMap.get("login_hint")));
     builder.add(new LoginHintToken(stringMap.get("login_hint_token")));

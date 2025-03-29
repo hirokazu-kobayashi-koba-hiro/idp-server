@@ -7,6 +7,7 @@ import org.idp.server.core.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.Interval;
 import org.idp.server.core.type.ciba.UserCode;
@@ -131,8 +132,12 @@ public class CibaRequestContext implements BackchannelRequestContext {
     return backchannelAuthenticationRequest.userCode();
   }
 
-  public ClientId clientId() {
+  public RequestedClientId requestedClientId() {
     return backchannelAuthenticationRequest.clientId();
+  }
+
+  public Client client() {
+    return clientConfiguration.client();
   }
 
   public Scopes scopes() {

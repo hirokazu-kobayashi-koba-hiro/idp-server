@@ -50,8 +50,7 @@ public class OAuthRequestHandler {
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tenant, parameters.clientId());
 
-    OAuthRequestAnalyzer analyzer = new OAuthRequestAnalyzer(parameters);
-    OAuthRequestPattern oAuthRequestPattern = analyzer.analyzePattern();
+    OAuthRequestPattern oAuthRequestPattern = parameters.analyzePattern();
     OAuthRequestContextService oAuthRequestContextService =
         oAuthRequestContextServices.get(oAuthRequestPattern);
 

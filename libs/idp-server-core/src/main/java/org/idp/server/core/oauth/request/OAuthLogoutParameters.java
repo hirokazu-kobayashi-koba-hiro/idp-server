@@ -47,8 +47,8 @@ public class OAuthLogoutParameters {
     return contains(logout_hint);
   }
 
-  public ClientId clientId() {
-    return new ClientId(getValueOrEmpty(client_id));
+  public RequestedClientId clientId() {
+    return new RequestedClientId(getValueOrEmpty(client_id));
   }
 
   public boolean hasClientId() {

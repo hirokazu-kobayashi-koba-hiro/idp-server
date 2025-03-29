@@ -1,7 +1,7 @@
 package org.idp.server.core.sharedsignal;
 
 import java.util.Map;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class SecurityEventTokenEntityConvertor {
@@ -14,10 +14,10 @@ public class SecurityEventTokenEntityConvertor {
 
   public SecurityEventTokenEntity convert() {
     TokenIssuer tokenIssuer = event.tokenIssuer();
-    ClientId clientId = event.clientId();
+    RequestedClientId requestedClientId = event.clientId();
     SecurityEvent securityEvent = convertToSecurityEvent();
 
-    return new SecurityEventTokenEntity(tokenIssuer, clientId, securityEvent);
+    return new SecurityEventTokenEntity(tokenIssuer, requestedClientId, securityEvent);
   }
 
   private SecurityEvent convertToSecurityEvent() {

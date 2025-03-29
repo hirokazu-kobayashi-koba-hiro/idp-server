@@ -3,8 +3,11 @@ package org.idp.server.core.oauth.grant;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.client.Client;
+import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.ExpiredAt;
 import org.idp.server.core.type.oauth.*;
 
@@ -46,8 +49,8 @@ public class AuthorizationCodeGrant {
     return authorizationCode;
   }
 
-  public boolean isGrantedClient(ClientId clientId) {
-    return authorizationGrant.isGranted(clientId);
+  public boolean isGrantedClient(ClientIdentifier clientIdentifier) {
+    return authorizationGrant.isGranted(clientIdentifier);
   }
 
   public boolean isExpire(LocalDateTime other) {
@@ -66,11 +69,19 @@ public class AuthorizationCodeGrant {
     return authorizationGrant.authentication();
   }
 
-  public ClientId clientId() {
-    return authorizationGrant.clientId();
+  public RequestedClientId clientId() {
+    return authorizationGrant.requestedClientId();
   }
 
   public ExpiredAt expiredAt() {
     return expiredAt;
+  }
+
+  public Client client() {
+    return authorizationGrant.client();
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return authorizationGrant.tenantIdentifier();
   }
 }

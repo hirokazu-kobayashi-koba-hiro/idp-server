@@ -1,21 +1,29 @@
 package org.idp.server.core.oauth.grant;
 
+import java.util.HashSet;
+import java.util.Set;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.client.Client;
+import org.idp.server.core.oauth.client.ClientIdentifier;
+import org.idp.server.core.oauth.client.ClientName;
 import org.idp.server.core.oauth.identity.ClaimsPayload;
 import org.idp.server.core.oauth.identity.IdTokenClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.vp.request.PresentationDefinition;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.Scopes;
 import org.idp.server.core.type.oauth.Subject;
 
 public class AuthorizationGrant {
 
+  TenantIdentifier tenantIdentifier;
   User user;
   Authentication authentication;
-  ClientId clientId;
+  RequestedClientId requestedClientId;
+  Client client;
   Scopes scopes;
   ClaimsPayload claimsPayload;
   CustomProperties customProperties;
@@ -25,22 +33,30 @@ public class AuthorizationGrant {
   public AuthorizationGrant() {}
 
   public AuthorizationGrant(
+      TenantIdentifier tenantIdentifier,
       User user,
       Authentication authentication,
-      ClientId clientId,
+      RequestedClientId requestedClientId,
+      Client client,
       Scopes scopes,
       ClaimsPayload claimsPayload,
       CustomProperties customProperties,
       AuthorizationDetails authorizationDetails,
       PresentationDefinition presentationDefinition) {
+    this.tenantIdentifier = tenantIdentifier;
     this.user = user;
     this.authentication = authentication;
-    this.clientId = clientId;
+    this.requestedClientId = requestedClientId;
+    this.client = client;
     this.scopes = scopes;
     this.claimsPayload = claimsPayload;
     this.customProperties = customProperties;
     this.authorizationDetails = authorizationDetails;
     this.presentationDefinition = presentationDefinition;
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return tenantIdentifier;
   }
 
   public User user() {
@@ -59,12 +75,24 @@ public class AuthorizationGrant {
     return new Subject(user.sub());
   }
 
-  public ClientId clientId() {
-    return clientId;
+  public RequestedClientId requestedClientId() {
+    return requestedClientId;
   }
 
-  public String clientIdValue() {
-    return clientId.value();
+  public Client client() {
+    return client;
+  }
+
+  public ClientIdentifier clientIdentifier() {
+    return client.identifier();
+  }
+
+  public ClientName clientName() {
+    return client.name();
+  }
+
+  public String clientIdentifierValue() {
+    return client.identifier().value();
   }
 
   public Scopes scopes() {
@@ -87,8 +115,8 @@ public class AuthorizationGrant {
     return customProperties.exists();
   }
 
-  public boolean isGranted(ClientId clientId) {
-    return this.clientId.equals(clientId);
+  public boolean isGranted(ClientIdentifier clientIdentifier) {
+    return this.clientIdentifier().equals(clientIdentifier);
   }
 
   public boolean hasUser() {
@@ -121,5 +149,32 @@ public class AuthorizationGrant {
 
   public boolean hasPresentationDefinition() {
     return presentationDefinition.exists();
+  }
+
+  public AuthorizationGrant merge(AuthorizationGrant newAuthorizationGrant) {
+    User newUser = newAuthorizationGrant.user();
+    Authentication newAuthentication = newAuthorizationGrant.authentication();
+    RequestedClientId newRequestClientId = newAuthorizationGrant.requestedClientId();
+    Client newClient = newAuthorizationGrant.client();
+    Set<String> newScopeValues = new HashSet<>(this.scopes.toStringSet());
+    scopes.forEach(newScopeValues::add);
+    Scopes newScopes = new Scopes(newScopeValues);
+    ClaimsPayload newClaimsPayload = newAuthorizationGrant.claimsPayload();
+    CustomProperties newCustomProperties = newAuthorizationGrant.customProperties();
+    AuthorizationDetails newAuthorizationDetails = newAuthorizationGrant.authorizationDetails();
+    PresentationDefinition newPresentationDefinition =
+        newAuthorizationGrant.presentationDefinition();
+
+    return new AuthorizationGrant(
+        tenantIdentifier,
+        newUser,
+        newAuthentication,
+        newRequestClientId,
+        newClient,
+        newScopes,
+        newClaimsPayload,
+        newCustomProperties,
+        newAuthorizationDetails,
+        newPresentationDefinition);
   }
 }

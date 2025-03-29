@@ -39,7 +39,7 @@ public interface AccessTokenCreatable {
       AccessTokenPayloadBuilder payloadBuilder = new AccessTokenPayloadBuilder();
       payloadBuilder.add(serverConfiguration.tokenIssuer());
       payloadBuilder.add(authorizationGrant.subject());
-      payloadBuilder.add(authorizationGrant.clientId());
+      payloadBuilder.add(authorizationGrant.requestedClientId());
       payloadBuilder.add(authorizationGrant.scopes());
       payloadBuilder.add(authorizationGrant.customProperties());
       payloadBuilder.add(authorizationGrant.authorizationDetails());

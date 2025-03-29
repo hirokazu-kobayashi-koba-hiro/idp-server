@@ -2,7 +2,7 @@ package org.idp.server.core.verifiablecredential;
 
 import java.util.Objects;
 import org.idp.server.core.basic.vc.Credential;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.Subject;
 import org.idp.server.core.type.verifiablecredential.CredentialIssuer;
 import org.idp.server.core.type.verifiablecredential.TransactionId;
@@ -10,7 +10,7 @@ import org.idp.server.core.type.verifiablecredential.TransactionId;
 public class VerifiableCredentialTransaction {
   TransactionId transactionId;
   CredentialIssuer credentialIssuer;
-  ClientId clientId;
+  RequestedClientId requestedClientId;
   Subject subject;
   Credential credential;
   VerifiableCredentialTransactionStatus status;
@@ -20,13 +20,13 @@ public class VerifiableCredentialTransaction {
   public VerifiableCredentialTransaction(
       TransactionId transactionId,
       CredentialIssuer credentialIssuer,
-      ClientId clientId,
+      RequestedClientId requestedClientId,
       Subject subject,
       Credential credential,
       VerifiableCredentialTransactionStatus status) {
     this.transactionId = transactionId;
     this.credentialIssuer = credentialIssuer;
-    this.clientId = clientId;
+    this.requestedClientId = requestedClientId;
     this.subject = subject;
     this.credential = credential;
     this.status = status;
@@ -40,8 +40,8 @@ public class VerifiableCredentialTransaction {
     return credentialIssuer;
   }
 
-  public ClientId clientId() {
-    return clientId;
+  public RequestedClientId clientId() {
+    return requestedClientId;
   }
 
   public Subject subject() {

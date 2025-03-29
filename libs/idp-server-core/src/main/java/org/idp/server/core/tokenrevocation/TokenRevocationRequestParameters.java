@@ -52,8 +52,8 @@ public class TokenRevocationRequestParameters implements BackchannelRequestParam
   }
 
   @Override
-  public ClientId clientId() {
-    return new ClientId(getValueOrEmpty(OAuthRequestKey.client_id));
+  public RequestedClientId clientId() {
+    return new RequestedClientId(getValueOrEmpty(OAuthRequestKey.client_id));
   }
 
   @Override

@@ -3,11 +3,11 @@ package org.idp.server.core.oauth.clientcredentials;
 import java.util.Objects;
 import org.idp.server.core.oauth.mtls.ClientCertification;
 import org.idp.server.core.type.oauth.ClientAuthenticationType;
-import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecret;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 public class ClientCredentials {
-  ClientId clientId;
+  RequestedClientId requestedClientId;
   ClientAuthenticationType clientAuthenticationType;
   ClientSecret clientSecret;
   ClientAuthenticationPublicKey clientAuthenticationPublicKey;
@@ -17,13 +17,13 @@ public class ClientCredentials {
   public ClientCredentials() {}
 
   public ClientCredentials(
-      ClientId clientId,
+      RequestedClientId requestedClientId,
       ClientAuthenticationType clientAuthenticationType,
       ClientSecret clientSecret,
       ClientAuthenticationPublicKey clientAuthenticationPublicKey,
       ClientAssertionJwt clientAssertionJwt,
       ClientCertification clientCertification) {
-    this.clientId = clientId;
+    this.requestedClientId = requestedClientId;
     this.clientAuthenticationType = clientAuthenticationType;
     this.clientSecret = clientSecret;
     this.clientAuthenticationPublicKey = clientAuthenticationPublicKey;
@@ -31,8 +31,8 @@ public class ClientCredentials {
     this.clientCertification = clientCertification;
   }
 
-  public ClientId clientId() {
-    return clientId;
+  public RequestedClientId clientId() {
+    return requestedClientId;
   }
 
   public ClientAuthenticationType clientAuthenticationType() {

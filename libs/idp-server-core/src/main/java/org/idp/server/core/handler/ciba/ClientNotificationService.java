@@ -28,7 +28,7 @@ import org.idp.server.core.type.oauth.ExpiresIn;
 import org.idp.server.core.type.oauth.TokenType;
 import org.idp.server.core.type.oidc.IdToken;
 
-// FIXME consider
+// FIXME consider. this is bad code.
 public class ClientNotificationService
     implements AccessTokenCreatable, IdTokenCreatable, RefreshTokenCreatable {
 
@@ -104,15 +104,29 @@ public class ClientNotificationService
 
       OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
 
-      AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
-          new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
-      AuthorizationGranted authorizationGranted =
-          new AuthorizationGranted(authorizationGrantedIdentifier, cibaGrant.authorizationGrant());
-      authorizationGrantedRepository.register(authorizationGranted);
+      registerOrUpdate(cibaGrant);
 
       OAuthToken oAuthToken =
           new OAuthTokenBuilder(identifier).add(accessToken).add(refreshToken).add(idToken).build();
       oAuthTokenRepository.register(oAuthToken);
     }
+  }
+
+  private void registerOrUpdate(CibaGrant cibaGrant) {
+    AuthorizationGranted latest =
+        authorizationGrantedRepository.find(
+            cibaGrant.tenantIdentifier(), cibaGrant.requestedClientId(), cibaGrant.user());
+
+    if (latest.exists()) {
+      AuthorizationGranted merge = latest.merge(cibaGrant.authorizationGrant());
+
+      authorizationGrantedRepository.update(merge);
+      return;
+    }
+    AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
+        new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
+    AuthorizationGranted authorizationGranted =
+        new AuthorizationGranted(authorizationGrantedIdentifier, cibaGrant.authorizationGrant());
+    authorizationGrantedRepository.register(authorizationGranted);
   }
 }

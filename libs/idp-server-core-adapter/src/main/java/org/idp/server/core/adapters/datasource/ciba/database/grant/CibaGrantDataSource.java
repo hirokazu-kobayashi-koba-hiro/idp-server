@@ -22,12 +22,13 @@ public class CibaGrantDataSource implements CibaGrantRepository {
     String sqlTemplate =
         """
                     INSERT INTO public.ciba_grant
-                    (backchannel_authentication_request_id, auth_req_id, expired_at, interval, status, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details)
-                    VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb);
+                    (backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, claims, custom_properties, authorization_details)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?::jsonb, ?::jsonb, ?::jsonb);
                     """;
     List<Object> params = new ArrayList<>();
     AuthorizationGrant authorizationGrant = cibaGrant.authorizationGrant();
     params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().value());
+    params.add(cibaGrant.tenantIdentifier().value());
     params.add(cibaGrant.authReqId().value());
     params.add(cibaGrant.expiredAt().toStringValue());
     params.add(cibaGrant.interval().toStringValue());
@@ -35,7 +36,8 @@ public class CibaGrantDataSource implements CibaGrantRepository {
     params.add(authorizationGrant.user().sub());
     params.add(toJson(authorizationGrant.user()));
     params.add(toJson(authorizationGrant.authentication()));
-    params.add(authorizationGrant.clientId().value());
+    params.add(authorizationGrant.requestedClientId().value());
+    params.add(toJson(authorizationGrant.client()));
     params.add(authorizationGrant.scopes().toStringValues());
     if (authorizationGrant.hasClaim()) {
       params.add(toJson(authorizationGrant.claimsPayload()));
@@ -82,7 +84,7 @@ public class CibaGrantDataSource implements CibaGrantRepository {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-            SELECT backchannel_authentication_request_id, auth_req_id, expired_at, interval, status, user_id, user_payload, authentication, client_id, scopes, claims, custom_properties, authorization_details
+            SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, claims, custom_properties, authorization_details
             FROM ciba_grant
             WHERE auth_req_id = ?;
             """;

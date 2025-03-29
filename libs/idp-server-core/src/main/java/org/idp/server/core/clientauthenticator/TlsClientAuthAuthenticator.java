@@ -10,8 +10,8 @@ import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.mtls.ClientCertification;
 import org.idp.server.core.type.mtls.ClientCert;
 import org.idp.server.core.type.oauth.ClientAuthenticationType;
-import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecret;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 class TlsClientAuthAuthenticator implements ClientAuthenticator {
 
@@ -19,11 +19,11 @@ class TlsClientAuthAuthenticator implements ClientAuthenticator {
   public ClientCredentials authenticate(BackchannelRequestContext context) {
     throwExceptionIfNotContainsClientCert(context);
     X509Certification x509Certification = parseOrThrowExceptionIfNoneMatch(context);
-    ClientId clientId = context.clientConfiguration().clientId();
+    RequestedClientId requestedClientId = context.requestedClientId();
     ClientSecret clientSecret = new ClientSecret();
     ClientCertification clientCertification = new ClientCertification(x509Certification);
     return new ClientCredentials(
-        clientId,
+        requestedClientId,
         ClientAuthenticationType.tls_client_auth,
         clientSecret,
         new ClientAuthenticationPublicKey(),

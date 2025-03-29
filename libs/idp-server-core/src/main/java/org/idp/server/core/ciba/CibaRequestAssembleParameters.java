@@ -76,8 +76,8 @@ public class CibaRequestAssembleParameters implements BackchannelRequestParamete
     return contains(requested_expiry);
   }
 
-  public ClientId clientId() {
-    return new ClientId(getValueOrEmpty(client_id));
+  public RequestedClientId clientId() {
+    return new RequestedClientId(getValueOrEmpty(client_id));
   }
 
   public boolean hasClientId() {

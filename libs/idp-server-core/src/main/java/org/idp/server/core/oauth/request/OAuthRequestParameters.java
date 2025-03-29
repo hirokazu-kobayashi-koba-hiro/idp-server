@@ -5,6 +5,7 @@ import static org.idp.server.core.type.OAuthRequestKey.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.oauth.OAuthRequestPattern;
 import org.idp.server.core.type.ArrayValueMap;
 import org.idp.server.core.type.OAuthRequestKey;
 import org.idp.server.core.type.oauth.*;
@@ -51,8 +52,8 @@ public class OAuthRequestParameters {
     return contains(response_type);
   }
 
-  public ClientId clientId() {
-    return new ClientId(getValueOrEmpty(client_id));
+  public RequestedClientId clientId() {
+    return new RequestedClientId(getValueOrEmpty(client_id));
   }
 
   public boolean hasClientId() {
@@ -230,5 +231,15 @@ public class OAuthRequestParameters {
               }
             });
     return new CustomParams(params);
+  }
+
+  public OAuthRequestPattern analyzePattern() {
+    if (hasRequest()) {
+      return OAuthRequestPattern.REQUEST_OBJECT;
+    }
+    if (hasRequestUri()) {
+      return OAuthRequestPattern.REQUEST_URI;
+    }
+    return OAuthRequestPattern.NORMAL;
   }
 }

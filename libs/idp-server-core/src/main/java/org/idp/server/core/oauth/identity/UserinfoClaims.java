@@ -4,6 +4,7 @@ import java.util.Objects;
 import org.idp.server.core.basic.json.JsonReadable;
 
 public class UserinfoClaims implements JsonReadable {
+  // basic
   ClaimsObject sub;
   ClaimsObject name;
   ClaimsObject givenName;
@@ -23,6 +24,11 @@ public class UserinfoClaims implements JsonReadable {
   ClaimsObject phoneNumberVerified;
   ClaimsObject address;
   ClaimsObject updatedAt;
+
+  // extension
+  ClaimsObject termsAccepted;
+  ClaimsObject termsVersion;
+  ClaimsObject termsAcceptedAt;
 
   public UserinfoClaims() {}
 
@@ -102,6 +108,18 @@ public class UserinfoClaims implements JsonReadable {
     return updatedAt;
   }
 
+  public ClaimsObject termsAccepted() {
+    return termsAccepted;
+  }
+
+  public ClaimsObject termsVersion() {
+    return termsVersion;
+  }
+
+  public ClaimsObject termsAcceptedAt() {
+    return termsAcceptedAt;
+  }
+
   public boolean hasSub() {
     return Objects.nonNull(sub);
   }
@@ -176,5 +194,17 @@ public class UserinfoClaims implements JsonReadable {
 
   public boolean hasUpdatedAt() {
     return Objects.nonNull(updatedAt);
+  }
+
+  public boolean hasTermsAccepted() {
+    return Objects.nonNull(termsAccepted);
+  }
+
+  public boolean hasTermsVersion() {
+    return Objects.nonNull(termsVersion);
+  }
+
+  public boolean hasTermsAcceptedAt() {
+    return Objects.nonNull(termsAcceptedAt);
   }
 }

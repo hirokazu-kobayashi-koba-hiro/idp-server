@@ -10,6 +10,14 @@ public class ResponseModeValue {
     this.value = value;
   }
 
+  public static ResponseModeValue query() {
+    return new ResponseModeValue("?");
+  }
+
+  public static ResponseModeValue fragment() {
+    return new ResponseModeValue("#");
+  }
+
   public String value() {
     return value;
   }

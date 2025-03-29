@@ -5,7 +5,7 @@ import org.idp.server.core.api.ClientManagementApi;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementListResponse;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.type.oauth.ClientId;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.springframework.http.HttpHeaders;
@@ -61,7 +61,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
       @PathVariable("client-id") String clientId) {
 
     ClientConfigurationManagementResponse response =
-        clientManagementApi.get(tenantIdentifier, new ClientId(clientId));
+        clientManagementApi.get(tenantIdentifier, new RequestedClientId(clientId));
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
@@ -88,7 +88,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
           @PathVariable("client-id") String clientId) {
 
     ClientConfigurationManagementResponse response =
-            clientManagementApi.delete(tenantIdentifier, new ClientId(clientId));
+            clientManagementApi.delete(tenantIdentifier, new RequestedClientId(clientId));
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");

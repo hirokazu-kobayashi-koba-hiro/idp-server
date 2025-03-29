@@ -30,6 +30,7 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
     builder.add(new Scopes(filteredScopes));
     builder.add(parameters.responseType());
     builder.add(parameters.clientId());
+    builder.add(clientConfiguration.client());
     builder.add(parameters.redirectUri());
     builder.add(parameters.state());
     builder.add(parameters.responseMode());

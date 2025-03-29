@@ -10,8 +10,8 @@ import org.idp.server.core.oauth.clientcredentials.ClientAuthenticationPublicKey
 import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.mtls.ClientCertification;
 import org.idp.server.core.type.oauth.ClientAuthenticationType;
-import org.idp.server.core.type.oauth.ClientId;
 import org.idp.server.core.type.oauth.ClientSecret;
+import org.idp.server.core.type.oauth.RequestedClientId;
 
 class PrivateKeyJwtAuthenticator
     implements ClientAuthenticator, ClientAuthenticationJwtValidatable {
@@ -22,14 +22,14 @@ class PrivateKeyJwtAuthenticator
   public ClientCredentials authenticate(BackchannelRequestContext context) {
     throwExceptionIfNotContainsClientAssertion(context);
     JoseContext joseContext = parseOrThrowExceptionIfUnMatchClientAssertion(context);
-    ClientId clientId = context.clientConfiguration().clientId();
+    RequestedClientId requestedClientId = context.requestedClientId();
     ClientSecret clientSecret = new ClientSecret();
     ClientAuthenticationPublicKey clientAuthenticationPublicKey =
         new ClientAuthenticationPublicKey(joseContext.jsonWebKey());
     ClientAssertionJwt clientAssertionJwt = new ClientAssertionJwt(joseContext.jsonWebSignature());
 
     return new ClientCredentials(
-        clientId,
+        requestedClientId,
         ClientAuthenticationType.private_key_jwt,
         clientSecret,
         clientAuthenticationPublicKey,
