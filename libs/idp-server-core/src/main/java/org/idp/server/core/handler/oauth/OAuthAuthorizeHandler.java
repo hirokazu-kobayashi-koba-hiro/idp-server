@@ -98,14 +98,11 @@ public class OAuthAuthorizeHandler {
       oAuthTokenRepository.register(oAuthToken);
     }
 
-    if (Objects.nonNull(delegate)) {
-      OAuthSessionKey oAuthSessionKey =
-          new OAuthSessionKey(tenant.identifierValue(), requestedClientId.value());
-      OAuthSession session =
-          new OAuthSession(
-              oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
-      delegate.registerSession(session);
-    }
+    OAuthSessionKey oAuthSessionKey =
+            new OAuthSessionKey(tenant.identifierValue(), requestedClientId.value());
+    OAuthSession session = OAuthSession.create(
+            oAuthSessionKey, user, authentication, authorizationRequest.maxAge());
+    delegate.registerSession(session);
 
     return authorizationResponse;
   }

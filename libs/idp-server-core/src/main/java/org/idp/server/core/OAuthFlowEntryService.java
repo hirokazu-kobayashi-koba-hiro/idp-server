@@ -138,11 +138,11 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     Tenant tenant = tenantRepository.get(authorizationRequest.tenantIdentifier());
 
     OAuthSession oAuthSession =
-        new OAuthSession(
+        OAuthSession.create(
             authorizationRequest.sessionKey(),
             callbackResponse.user(),
             new Authentication().setTime(SystemDateTime.now()),
-            SystemDateTime.now().plusSeconds(3600));
+           authorizationRequest.maxAge());
 
     oAuthRequestDelegate.updateSession(oAuthSession);
 

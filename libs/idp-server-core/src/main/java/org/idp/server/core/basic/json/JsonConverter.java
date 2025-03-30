@@ -3,6 +3,7 @@ package org.idp.server.core.basic.json;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -46,6 +47,15 @@ public class JsonConverter {
   public <TYPE> TYPE read(String value, Class<TYPE> typeClass) {
     try {
       return objectMapper.readValue(value, typeClass);
+    } catch (JsonProcessingException exception) {
+      throw new JsonRuntimeException(exception);
+    }
+  }
+
+  public JsonNodeWrapper readTree(String jsonString) {
+    try {
+
+      return new JsonNodeWrapper(objectMapper.readTree(jsonString));
     } catch (JsonProcessingException exception) {
       throw new JsonRuntimeException(exception);
     }

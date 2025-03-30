@@ -1,8 +1,11 @@
 package org.idp.server.core.adapters.datasource.ciba.database.grant;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.ciba.grant.CibaGrant;
 import org.idp.server.core.ciba.grant.CibaGrantStatus;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
@@ -11,6 +14,7 @@ import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
 import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
+import org.idp.server.core.oauth.grant.consent.ConsentClaim;
 import org.idp.server.core.oauth.grant.consent.ConsentClaims;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
@@ -87,8 +91,20 @@ class ModelConverter {
       return new ConsentClaims();
     }
     try {
-      Map read = jsonConverter.read(value, Map.class);
-      return new ConsentClaims(read);
+      JsonNodeWrapper jsonNode = jsonConverter.readTree(value);
+      Map<String, List<ConsentClaim>> claimMap = new HashMap<>();
+
+      jsonNode.fieldNames().forEachRemaining(fileName -> {
+        List<JsonNodeWrapper> jsonNodeWrappers = jsonNode.getValueAsJsonNodeList(fileName);
+        List<ConsentClaim> consentClaimList = new ArrayList<>();
+        jsonNodeWrappers.forEach(jsonNodeWrapper -> {
+          ConsentClaim consentClaim = jsonConverter.read(jsonNodeWrapper.node(), ConsentClaim.class);
+          consentClaimList.add(consentClaim);
+        });
+        claimMap.put(fileName, consentClaimList);
+      });
+
+      return new ConsentClaims(claimMap);
     } catch (Exception exception) {
       return new ConsentClaims();
     }

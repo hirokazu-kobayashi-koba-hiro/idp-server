@@ -7,13 +7,24 @@ import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
+import org.idp.server.core.type.oidc.MaxAge;
 
 public class OAuthSession implements Serializable {
   OAuthSessionKey oAuthSessionKey;
   User user;
   Authentication authentication;
+  long maxAge;
+  LocalDateTime createdAt;
   LocalDateTime expiredAt;
   HashMap<String, Object> attributes = new HashMap<>();
+
+  public static OAuthSession create(OAuthSessionKey oAuthSessionKey,
+                                    User user,
+                                    Authentication authentication, MaxAge maxAge) {
+    LocalDateTime createdAt = SystemDateTime.now();
+    LocalDateTime expiredAt = createdAt.plusSeconds(maxAge.toLongValue());
+    return new OAuthSession(oAuthSessionKey, user, authentication, maxAge.toLongValue(), createdAt, expiredAt);
+  }
 
   public OAuthSession() {}
 
@@ -21,10 +32,14 @@ public class OAuthSession implements Serializable {
       OAuthSessionKey oAuthSessionKey,
       User user,
       Authentication authentication,
+      long maxAge,
+      LocalDateTime createdAt,
       LocalDateTime expiredAt) {
     this.oAuthSessionKey = oAuthSessionKey;
     this.user = user;
     this.authentication = authentication;
+    this.maxAge = maxAge;
+    this.createdAt = createdAt;
     this.expiredAt = expiredAt;
   }
 
@@ -32,11 +47,15 @@ public class OAuthSession implements Serializable {
       OAuthSessionKey oAuthSessionKey,
       User user,
       Authentication authentication,
+      long maxAge,
+      LocalDateTime createdAt,
       LocalDateTime expiredAt,
       HashMap<String, Object> attributes) {
     this.oAuthSessionKey = oAuthSessionKey;
     this.user = user;
     this.authentication = authentication;
+    this.maxAge = maxAge;
+    this.createdAt = createdAt;
     this.expiredAt = expiredAt;
     this.attributes = attributes;
   }
@@ -99,13 +118,13 @@ public class OAuthSession implements Serializable {
       OAuthSessionKey oAuthSessionKey, User user, Authentication authentication) {
 
     return new OAuthSession(
-        oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
+        oAuthSessionKey, user, authentication, maxAge, createdAt, expiredAt);
   }
 
   public OAuthSession addAttribute(HashMap<String, Object> attributes) {
     this.attributes.putAll(attributes);
     return new OAuthSession(
-        oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600), attributes);
+        oAuthSessionKey, user, authentication, maxAge, createdAt, expiredAt, attributes);
   }
 
   public boolean exists() {
