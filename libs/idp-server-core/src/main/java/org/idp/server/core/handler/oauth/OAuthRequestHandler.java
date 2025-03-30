@@ -56,7 +56,8 @@ public class OAuthRequestHandler {
         oAuthRequestContextServices.get(oAuthRequestPattern);
 
     OAuthRequestContext context =
-        oAuthRequestContextService.create(parameters, serverConfiguration, clientConfiguration);
+        oAuthRequestContextService.create(
+            tenant, parameters, serverConfiguration, clientConfiguration);
     verifier.verify(context);
 
     authorizationRequestRepository.register(context.authorizationRequest());

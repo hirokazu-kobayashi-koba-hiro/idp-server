@@ -15,6 +15,7 @@ import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
 import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
 import org.idp.server.core.oauth.grant.consent.ConsentClaim;
 import org.idp.server.core.oauth.grant.consent.ConsentClaims;
+import org.idp.server.core.oauth.io.OAuthAuthorizeRequest;
 import org.idp.server.core.oauth.io.OAuthRequestResponse;
 import org.idp.server.core.oauth.io.OAuthRequestStatus;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
@@ -22,6 +23,7 @@ import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.oauth.response.ResponseModeDecidable;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.OAuthRequestKey;
 import org.idp.server.core.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.type.extension.ResponseModeValue;
@@ -30,7 +32,7 @@ import org.idp.server.core.type.oidc.ResponseMode;
 
 /** OAuthRequestContext */
 public class OAuthRequestContext implements ResponseModeDecidable {
-
+  Tenant tenant;
   OAuthRequestPattern pattern;
   OAuthRequestParameters parameters;
   JoseContext joseContext;
@@ -43,12 +45,14 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   public OAuthRequestContext() {}
 
   public OAuthRequestContext(
+      Tenant tenant,
       OAuthRequestPattern pattern,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
       AuthorizationRequest authorizationRequest,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
+    this.tenant = tenant;
     this.pattern = pattern;
     this.parameters = parameters;
     this.joseContext = joseContext;
@@ -161,6 +165,16 @@ public class OAuthRequestContext implements ResponseModeDecidable {
         authorizationRequest.requestedUserinfoClaims());
   }
 
+  public OAuthAuthorizeRequest createOAuthAuthorizeRequest() {
+
+    return new OAuthAuthorizeRequest(
+            tenant,
+            authorizationRequestIdentifier().value(),
+            session.user(),
+            session.authentication())
+        .setCustomProperties(session.customProperties());
+  }
+
   public OAuthRequestResponse createResponse() {
     if (isPromptCreate()) {
       return new OAuthRequestResponse(OAuthRequestStatus.OK_ACCOUNT_CREATION, this, session);
@@ -172,6 +186,10 @@ public class OAuthRequestContext implements ResponseModeDecidable {
       return new OAuthRequestResponse(OAuthRequestStatus.OK, this, session);
     }
     return new OAuthRequestResponse(OAuthRequestStatus.OK_SESSION_ENABLE, this, session);
+  }
+
+  public Tenant tenant() {
+    return tenant;
   }
 
   public OAuthSession session() {

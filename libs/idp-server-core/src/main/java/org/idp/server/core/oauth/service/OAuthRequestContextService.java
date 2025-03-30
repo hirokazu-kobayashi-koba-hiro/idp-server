@@ -12,12 +12,14 @@ import org.idp.server.core.oauth.factory.AuthorizationRequestFactory;
 import org.idp.server.core.oauth.factory.FapiAdvanceRequestObjectPatternFactory;
 import org.idp.server.core.oauth.factory.RequestObjectPatternFactory;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.OAuthRequestKey;
 
 /** OAuthRequestContextService */
 public interface OAuthRequestContextService {
 
   OAuthRequestContext create(
+      Tenant tenant,
       OAuthRequestParameters parameters,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration);

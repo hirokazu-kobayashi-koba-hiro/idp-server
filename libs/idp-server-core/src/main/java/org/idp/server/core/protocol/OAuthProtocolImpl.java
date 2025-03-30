@@ -3,12 +3,10 @@ package org.idp.server.core.protocol;
 import org.idp.server.core.handler.oauth.*;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
-import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.AuthorizationResponse;
-import org.idp.server.core.tenant.Tenant;
 
 /** OAuthApi */
 public class OAuthProtocolImpl implements OAuthProtocol {
@@ -53,15 +51,7 @@ public class OAuthProtocolImpl implements OAuthProtocol {
 
       if (context.canAutomaticallyAuthorize()) {
 
-        Tenant tenant = oAuthRequest.tenant();
-        OAuthSession session = context.session();
-        OAuthAuthorizeRequest oAuthAuthorizeRequest =
-            new OAuthAuthorizeRequest(
-                    tenant,
-                    context.authorizationRequestIdentifier().value(),
-                    session.user(),
-                    session.authentication())
-                .setCustomProperties(session.customProperties());
+        OAuthAuthorizeRequest oAuthAuthorizeRequest = context.createOAuthAuthorizeRequest();
         AuthorizationResponse response =
             authAuthorizeHandler.handle(oAuthAuthorizeRequest, oAuthRequestDelegate);
         return new OAuthRequestResponse(OAuthRequestStatus.NO_INTERACTION_OK, response);

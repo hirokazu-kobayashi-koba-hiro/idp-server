@@ -10,6 +10,7 @@ import org.idp.server.core.oauth.OAuthRequestPattern;
 import org.idp.server.core.oauth.factory.NormalRequestFactory;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
+import org.idp.server.core.tenant.Tenant;
 
 /** NormalPatternContextService */
 public class NormalPatternContextService implements OAuthRequestContextService {
@@ -18,14 +19,17 @@ public class NormalPatternContextService implements OAuthRequestContextService {
 
   @Override
   public OAuthRequestContext create(
+      Tenant tenant,
       OAuthRequestParameters parameters,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
+
     JoseContext joseContext = new JoseContext();
     OAuthRequestPattern pattern = OAuthRequestPattern.NORMAL;
     Set<String> filteredScopes =
         filterScopes(pattern, parameters, joseContext, clientConfiguration);
     AuthorizationProfile profile = analyze(filteredScopes, serverConfiguration);
+
     AuthorizationRequest authorizationRequest =
         normalRequestFactory.create(
             profile,
@@ -34,7 +38,9 @@ public class NormalPatternContextService implements OAuthRequestContextService {
             filteredScopes,
             serverConfiguration,
             clientConfiguration);
+
     return new OAuthRequestContext(
+        tenant,
         pattern,
         parameters,
         joseContext,
