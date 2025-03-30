@@ -10,16 +10,19 @@ import {
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
-import { backendUrl, useAppContext } from "@/pages/_app";
+import { backendUrl } from "@/pages/_app";
 import { Loading } from "@/components/Loading";
 import { Email, Lock } from "@mui/icons-material";
 import { useMediaQuery, useTheme } from "@mui/material";
 import { BaseLayout } from "@/components/layout/BaseLayout";
 import { getUserAgentData, parseUserAgent } from "@/functions/device";
 import { SsoComponent } from "@/components/sso/SsoComponent";
+import { useAtom } from "jotai/index";
+import { authSessionIdAtom, authSessionTenantIdAtom } from "@/state/AuthState";
 
 export default function SignIn() {
-  const { setId, setTenantId } = useAppContext();
+  const [, setAuthSessionId] = useAtom(authSessionIdAtom);
+  const [, setAuthSessionTenantId] = useAtom(authSessionTenantIdAtom);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
@@ -33,10 +36,10 @@ export default function SignIn() {
       if (!router.isReady || Object.keys(router.query).length === 0) return; // Ensure query params exist
       const { id, tenant_id: tenantId } = router.query;
       if (typeof id === "string") {
-        setId(id);
+        setAuthSessionId(id);
       }
       if (typeof tenantId === "string") {
-        setTenantId(tenantId);
+        setAuthSessionTenantId(tenantId);
       }
 
       const ua = await getUserAgentData(navigator);
