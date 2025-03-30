@@ -1,47 +1,86 @@
+"use client";
+
 import {
   Box,
   Button,
   Container,
+  Divider,
+  IconButton,
   InputAdornment,
+  Link,
   Paper,
+  Stack,
   TextField,
   Typography,
+  useTheme,
+  alpha,
 } from "@mui/material";
 import { useState } from "react";
 import { backendUrl, useAppContext } from "@/pages/_app";
 import { useRouter } from "next/router";
-import { Email, Lock } from "@mui/icons-material";
+import { Email, Lock, Visibility, VisibilityOff } from "@mui/icons-material";
 import { SignupStepper } from "@/components/SignupStepper";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { useQuery } from "@tanstack/react-query";
+import { Loading } from "@/components/Loading";
 
-export default function SignUp() {
+export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
+  const [message, setMessage] = useState("");
   const router = useRouter();
   const { setUserId } = useAppContext();
   const { id, tenant_id: tenantId } = router.query;
+  const theme = useTheme();
+
+  const { data, isPending } = useQuery({
+    queryKey: ["fetchViewData", router.query],
+    queryFn: async () => {
+      if (!router.isReady || Object.keys(router.query).length === 0) return;
+      const response = await fetch(
+        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/view-data`,
+        { credentials: "include" },
+      );
+      if (!response.ok) throw new Error(response.status.toString());
+      return await response.json();
+    },
+  });
+
+  const validate = () => {
+    const newErrors: typeof errors = {};
+    if (!email || !email.includes("@")) {
+      newErrors.email = "Please enter a valid email address.";
+    }
+    if (!password || password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters.";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleClick = async () => {
+    if (!validate()) return;
+
     const response = await fetch(
       `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/signup`,
       {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: email,
-          password: password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: email, password }),
       },
     );
+
     if (!response.ok) {
       console.error(response.status);
+      setMessage("failed signup request");
       return;
     }
+
     const body = await response.json();
-    console.log(body);
     setUserId(body.id);
 
     const sendingEmailResponse = await fetch(
@@ -54,67 +93,124 @@ export default function SignUp() {
 
     if (!sendingEmailResponse.ok) {
       console.error("sending email verification code is failed");
+      setMessage("sending email verification code is failed");
     }
 
     router.push(`/signup/email?id=${id}&tenant_id=${tenantId}`);
   };
 
+  if (isPending || !data) return <Loading />;
+
   return (
-    <>
-      <Container maxWidth="sm">
-        <Paper sx={{ p: 3, boxShadow: 3 }}>
-          <Typography variant="h5">Sign Up</Typography>
+    <Container maxWidth="xs">
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 4,
+          px: 5,
+          py: 6,
+          mt: 8,
+          backgroundColor:
+            theme.palette.mode === "light"
+              ? "#fcfcfd"
+              : alpha(theme.palette.common.white, 0.035),
+          border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+          boxShadow:
+            theme.palette.mode === "light"
+              ? "0 6px 24px rgba(0,0,0,0.025)"
+              : "0 0 0 1px rgba(255,255,255,0.06)",
+        }}
+      >
+        <Typography variant="h5" fontWeight={600} gutterBottom>
+          IdP Server Sign Up
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mb={4}>
+          {
+            "Create your account to continue. You'll verify your email in the next step."
+          }
+        </Typography>
 
-          <Box mt={2} display="flex" flexDirection="column" sx={{ gap: 3 }}>
-            <SignupStepper activeStep={0} />
+        <Stack spacing={3}>
+          <SignupStepper activeStep={0} />
 
-            <Box display="flex" gap={2} alignItems="center">
-              <PersonAddIcon sx={{ fontSize: 40, color: "primary.main" }} />
-              <Typography variant="h6">Account Registration</Typography>
-            </Box>
+          <TextField
+            name="email"
+            label="Email"
+            placeholder="you@example.com"
+            inputMode="email"
+            value={email}
+            required
+            error={Boolean(errors.email)}
+            helperText={errors.email}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Email />
+                </InputAdornment>
+              ),
+            }}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-            <TextField
-              name="email"
-              label="Email"
-              placeholder="test@gmail.com"
-              inputMode="email"
-              value={email}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email />
-                  </InputAdornment>
-                ),
-              }}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <TextField
-              name="password"
-              label="Password"
-              type="password"
-              value={password}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock />
-                  </InputAdornment>
-                ),
-              }}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+          <TextField
+            name="password"
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            required
+            error={Boolean(errors.password)}
+            helperText={errors.password}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Lock />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {message && (
+            <Typography mt={2} color="error" align="center">
+              {message}
+            </Typography>
+          )}
+
+          <Box display="flex" justifyContent="flex-end">
             <Button
               variant="contained"
               disabled={!email || !password}
               onClick={handleClick}
-              sx={{ textTransform: "none", alignSelf: "flex-end" }}
+              sx={{ textTransform: "none" }}
             >
               Next
             </Button>
           </Box>
-        </Paper>
-      </Container>
-    </>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography variant="caption" color="text.secondary" align="center">
+            By continuing, you agree to our
+            <Link href={data.tos_uri} sx={{ fontWeight: 600, mx: 0.5 }}>
+              Terms of Use
+            </Link>
+            and
+            <Link href={data.policy_uri} sx={{ fontWeight: 600, mx: 0.5 }}>
+              Privacy Policy
+            </Link>
+            .
+          </Typography>
+        </Stack>
+      </Paper>
+    </Container>
   );
 }

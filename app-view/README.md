@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## build
 
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```shell
+npm run build-and-copy
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## debug
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+prompt=login
+```shell
+curl -v "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations?prompt=login&scope=openid+profile+phone+emailaccount+transfers&response_type=code&client_id=clientSecretPost&redirect_uri=https%3A%2F%2Fwww.certification.openid.net%2Ftest%2Fa%2Fidp_oidc_basic%2Fcallback&state=aiueo&organization_id=123&organization_name=test"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+prompt=none
+```url
+    http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations?prompt=none&scope=openid+profile+phone+emailaccount+transfers&response_type=code&client_id=clientSecretPost&redirect_uri=https%3A%2F%2Fwww.certification.openid.net%2Ftest%2Fa%2Fidp_oidc_basic%2Fcallback&state=aiueo&organization_id=123&organization_name=test
+```
 
-## Learn More
+```shell
+https://www.certification.openid.net/test/a/idp_oidc_basic/callback?
+error_description=authorization+request+contains+unauthorized+userinfo+claims+%28website+zoneinfo+birthdate+gender+profile+phone_number_verified+preferred_username+given_name+middle_name+locale+picture+updated_at+name+nickname+phone_number+family_name%29
+&iss=http%3A%2F%2Flocalhost%3A8080%2F67e7eae6-62b0-4500-9eff-87459f63fc66&state=aiueo&error=interaction_required
+```
 
-To learn more about Next.js, take a look at the following resources:
+```shell
+export AUTH_CODE=0RqhvitecA3C4vifE4dB8RDD2KM
+curl -v -X POST "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens" \
+-d "client_id=clientSecretPost" \
+-d "client_secret=clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890" \
+-d "grant_type=authorization_code" \
+-d "redirect_uri=https%3A%2F%2Fwww.certification.openid.net%2Ftest%2Fa%2Fidp_oidc_basic%2Fcallback" \
+-d "code=${AUTH_CODE}"
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```

@@ -238,7 +238,7 @@ public class AuthorizationGrant {
 
   public boolean isGrantedUserinfoClaims(GrantUserinfoClaims requestedUserinfoClaims) {
     for (String claims : requestedUserinfoClaims) {
-      if (!this.idTokenClaims.contains(claims)) {
+      if (!this.userinfoClaims.contains(claims)) {
         return false;
       }
     }
@@ -250,7 +250,7 @@ public class AuthorizationGrant {
     Set<String> unauthorizedClaims = new HashSet<>();
 
     for (String claims : requestedUserinfoClaims) {
-      if (!this.idTokenClaims.contains(claims)) {
+      if (!this.userinfoClaims.contains(claims)) {
         unauthorizedClaims.add(claims);
       }
     }

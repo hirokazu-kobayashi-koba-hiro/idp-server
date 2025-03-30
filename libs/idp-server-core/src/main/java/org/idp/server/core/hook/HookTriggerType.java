@@ -5,7 +5,7 @@ import org.idp.server.core.sharedsignal.DefaultEventType;
 
 public enum HookTriggerType {
   POST_LOGIN(Set.of(DefaultEventType.login.name(), DefaultEventType.login_with_session.name())),
-  UNDEFINED(null);
+  UNDEFINED(Set.of());
 
   Set<String> eventTypes;
 

@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Box,
   Button,
@@ -8,6 +10,9 @@ import {
   Stack,
   TextField,
   Typography,
+  useTheme,
+  alpha,
+  InputAdornment,
 } from "@mui/material";
 import { useRouter } from "next/router";
 import { backendUrl } from "@/pages/_app";
@@ -15,10 +20,12 @@ import { useState } from "react";
 import { SignupStepper } from "@/components/SignupStepper";
 import { Email } from "@mui/icons-material";
 
-const EmailVerification = () => {
+export default function EmailVerificationPage() {
   const router = useRouter();
   const [verificationCode, setVerificationCode] = useState("");
+  const [message, setMessage] = useState("");
   const { id, tenant_id: tenantId } = router.query;
+  const theme = useTheme();
 
   const handleReSend = async () => {
     const response = await fetch(
@@ -48,51 +55,83 @@ const EmailVerification = () => {
       },
     );
 
-    if (response.ok) {
-      router.push(`/signup/authorize?id=${id}&tenant_id=${tenantId}`);
+    if (!response.ok) {
+      setMessage("failed email verification");
     }
+    router.push(`/signup/authorize?id=${id}&tenant_id=${tenantId}`);
   };
 
   return (
-    <>
-      <Container maxWidth={"sm"}>
-        <Paper sx={{ p: 3, boxShadow: 3 }}>
-          <Stack spacing={4}>
-            <Typography variant={"h5"}>Sign Up</Typography>
+    <Container maxWidth="xs">
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 4,
+          px: 5,
+          py: 6,
+          mt: 8,
+          backgroundColor:
+            theme.palette.mode === "light"
+              ? "#fcfcfd"
+              : alpha(theme.palette.common.white, 0.035),
+          border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+          boxShadow:
+            theme.palette.mode === "light"
+              ? "0 6px 24px rgba(0,0,0,0.025)"
+              : "0 0 0 1px rgba(255,255,255,0.06)",
+        }}
+      >
+        <Typography variant="h5" fontWeight={600} gutterBottom>
+          Email Verification
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mb={4}>
+          Enter the 6-digit code we sent to your email.
+        </Typography>
 
-            <SignupStepper activeStep={1} />
+        <Stack spacing={3}>
+          <SignupStepper activeStep={1} />
 
-            <Box display={"flex"} gap={4} alignItems={"center"}>
-              <Email sx={{ fontSize: 50, color: "primary.secondary" }} />
-              <Typography variant="h5">Email Verification</Typography>
-            </Box>
+          <TextField
+            label="Verification Code"
+            inputMode="numeric"
+            placeholder="000000"
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Email />
+                </InputAdornment>
+              ),
+            }}
+          />
 
-            <TextField
-              label={"verification code"}
-              inputMode={"numeric"}
-              placeholder={"000000"}
-              onChange={(e) => {
-                setVerificationCode(e.target.value);
-              }}
-            />
+          {message && (
+            <Typography mt={2} color="error" align="center">
+              {message}
+            </Typography>
+          )}
+
+          <Box display="flex" justifyContent="flex-end">
             <Button
-              variant={"contained"}
-              sx={{ textTransform: "none" }}
+              variant="contained"
               onClick={handleNext}
+              disabled={!verificationCode}
+              sx={{ textTransform: "none" }}
             >
               Next
             </Button>
-            <Box sx={{ mt: 2 }}>
-              <Divider />
-            </Box>
-            <Box sx={{ mt: 2, gap: 2 }} display="flex">
-              <Link onClick={handleReSend}>ReSend verification code</Link>
-            </Box>
-          </Stack>
-        </Paper>
-      </Container>
-    </>
-  );
-};
+          </Box>
 
-export default EmailVerification;
+          <Divider sx={{ my: 2 }} />
+
+          <Box display="flex" justifyContent="center">
+            <Link onClick={handleReSend} sx={{ cursor: "pointer" }}>
+              Didn’t get the code? Resend
+            </Link>
+          </Box>
+        </Stack>
+      </Paper>
+    </Container>
+  );
+}

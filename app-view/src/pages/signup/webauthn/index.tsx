@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import {
   Container,
@@ -7,6 +9,8 @@ import {
   CircularProgress,
   Paper,
   Stack,
+  useTheme,
+  alpha,
 } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
 import KeyIcon from "@mui/icons-material/Key";
@@ -14,12 +18,13 @@ import { useRouter } from "next/router";
 import { backendUrl, useAppContext } from "@/pages/_app";
 import { SignupStepper } from "@/components/SignupStepper";
 
-export default function Register() {
+export default function WebAuthnRegistrationPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const { userId } = useAppContext();
   const { id, tenant_id: tenantId } = router.query;
+  const theme = useTheme();
 
   const handleRegister = async () => {
     setLoading(true);
@@ -47,7 +52,7 @@ export default function Register() {
           rp: { name: "Passkey Demo" },
           user: {
             id: userIdBytes,
-            name: uuidv4(),
+            name: userId || uuidv4(),
             displayName: "test",
           },
           pubKeyCredParams: [{ type: "public-key", alg: -7 }],
@@ -79,35 +84,54 @@ export default function Register() {
   };
 
   return (
-    <Container maxWidth={"sm"}>
-      <Paper sx={{ m: 4, p: 4, boxShadow: 3 }}>
-        <Stack spacing={4}>
-          <Typography variant={"h5"}>Sign Up</Typography>
+    <Container maxWidth="xs">
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 4,
+          px: 5,
+          py: 6,
+          mt: 8,
+          backgroundColor:
+            theme.palette.mode === "light"
+              ? "#fcfcfd"
+              : alpha(theme.palette.common.white, 0.035),
+          border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+          boxShadow:
+            theme.palette.mode === "light"
+              ? "0 6px 24px rgba(0,0,0,0.025)"
+              : "0 0 0 1px rgba(255,255,255,0.06)",
+        }}
+      >
+        <Typography variant="h5" fontWeight={600} gutterBottom>
+          Passkey Registration
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mb={4}>
+          Secure your account with a passkey for fast and passwordless sign-in.
+        </Typography>
 
+        <Stack spacing={3}>
           <SignupStepper activeStep={2} />
 
-          <Box display={"flex"} gap={4} alignItems={"center"}>
-            <KeyIcon sx={{ fontSize: 50, color: "primary.secondary" }} />
-            <Typography variant="h5">Passkey Registration</Typography>
+          <Box display="flex" justifyContent="center">
+            <KeyIcon sx={{ fontSize: 40, color: "primary.main" }} />
           </Box>
 
-          <Typography variant="body2" color="text.secondary">
-            Secure your account with a passkey for fast authentication.
-          </Typography>
-
-          <Box mt={3}>
+          <Box>
             <Button
               variant="contained"
               color="primary"
               onClick={handleRegister}
               disabled={loading}
-              sx={{ width: "100%", textTransform: "none" }}
+              fullWidth
+              sx={{ textTransform: "none" }}
             >
-              {loading ? <CircularProgress size={24} /> : "Next"}
+              {loading ? <CircularProgress size={24} /> : "Register Passkey"}
             </Button>
           </Box>
+
           {message && (
-            <Typography mt={2} color="primary">
+            <Typography mt={2} color="error" align="center">
               {message}
             </Typography>
           )}

@@ -7,17 +7,32 @@ import { useQuery } from "@tanstack/react-query";
 import { Loading } from "@/components/Loading";
 import KeyIcon from "@mui/icons-material/Key";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
+import { SsoComponent } from "@/components/sso/SsoComponent";
+import { useAtom } from "jotai";
+import { authSessionIdAtom, authSessionTenantIdAtom } from "@/state/AuthState";
 
 export default function Login() {
+  const [, setAuthSessionId] = useAtom(authSessionIdAtom);
+  const [, setAuthSessionTenantId] = useAtom(authSessionTenantIdAtom);
+
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const { id, tenant_id: tenantId } = router.query;
 
   const { data, isPending } = useQuery({
-    queryKey: ["fetchViewData"],
+    queryKey: ["fetchViewData", router.query],
     queryFn: async () => {
+      if (!router.isReady || Object.keys(router.query).length === 0) return; // Ensure query params exist
+
       const { id, tenant_id: tenantId } = router.query;
+      if (typeof id === "string") {
+        setAuthSessionId(id);
+      }
+      if (typeof tenantId === "string") {
+        setAuthSessionTenantId(tenantId);
+      }
+
       const response = await fetch(
         `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/view-data`,
         {
@@ -202,18 +217,6 @@ export default function Login() {
             )}
           </Stack>
           {message && <Typography>{message}</Typography>}
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 2 }}>
-            By signing in, you agree to our
-            <Link href={data.tos_uri} sx={{ fontWeight: "bold", mx: 0.5 }}>
-              Terms of Use
-            </Link>
-            and
-            <Link href={data.policy_uri} sx={{ fontWeight: "bold", mx: 0.5 }}>
-              Privacy Policy
-            </Link>
-          </Typography>
-
-          <Divider />
           <Stack
             spacing={1}
             direction="row"
@@ -236,6 +239,22 @@ export default function Login() {
             </Link>
           </Stack>
         </Stack>
+
+        <Stack spacing={2} sx={{ width: "100%" }}>
+          <Divider variant={"fullWidth"} />
+          <SsoComponent />
+        </Stack>
+
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 2 }}>
+          By signing in, you agree to our
+          <Link href={data.tos_uri} sx={{ fontWeight: "bold", mx: 0.5 }}>
+            Terms of Use
+          </Link>
+          and
+          <Link href={data.policy_uri} sx={{ fontWeight: "bold", mx: 0.5 }}>
+            Privacy Policy
+          </Link>
+        </Typography>
       </Stack>
     </BaseLayout>
   );
