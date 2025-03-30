@@ -115,15 +115,20 @@ class ModelConverter {
       JsonNodeWrapper jsonNode = jsonConverter.readTree(value);
       Map<String, List<ConsentClaim>> claimMap = new HashMap<>();
 
-      jsonNode.fieldNames().forEachRemaining(fileName -> {
-        List<JsonNodeWrapper> jsonNodeWrappers = jsonNode.getValueAsJsonNodeList(fileName);
-        List<ConsentClaim> consentClaimList = new ArrayList<>();
-        jsonNodeWrappers.forEach(jsonNodeWrapper -> {
-          ConsentClaim consentClaim = jsonConverter.read(jsonNodeWrapper.node(), ConsentClaim.class);
-          consentClaimList.add(consentClaim);
-        });
-        claimMap.put(fileName, consentClaimList);
-      });
+      jsonNode
+          .fieldNames()
+          .forEachRemaining(
+              fileName -> {
+                List<JsonNodeWrapper> jsonNodeWrappers = jsonNode.getValueAsJsonNodeList(fileName);
+                List<ConsentClaim> consentClaimList = new ArrayList<>();
+                jsonNodeWrappers.forEach(
+                    jsonNodeWrapper -> {
+                      ConsentClaim consentClaim =
+                          jsonConverter.read(jsonNodeWrapper.node(), ConsentClaim.class);
+                      consentClaimList.add(consentClaim);
+                    });
+                claimMap.put(fileName, consentClaimList);
+              });
 
       return new ConsentClaims(claimMap);
     } catch (Exception exception) {

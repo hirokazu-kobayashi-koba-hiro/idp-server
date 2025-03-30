@@ -142,7 +142,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
             authorizationRequest.sessionKey(),
             callbackResponse.user(),
             new Authentication().setTime(SystemDateTime.now()),
-           authorizationRequest.maxAge());
+            authorizationRequest.maxAge());
 
     oAuthRequestDelegate.updateSession(oAuthSession);
 

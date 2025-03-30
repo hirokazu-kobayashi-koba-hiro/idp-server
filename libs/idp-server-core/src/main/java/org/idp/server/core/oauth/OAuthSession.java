@@ -18,12 +18,12 @@ public class OAuthSession implements Serializable {
   LocalDateTime expiredAt;
   HashMap<String, Object> attributes = new HashMap<>();
 
-  public static OAuthSession create(OAuthSessionKey oAuthSessionKey,
-                                    User user,
-                                    Authentication authentication, MaxAge maxAge) {
+  public static OAuthSession create(
+      OAuthSessionKey oAuthSessionKey, User user, Authentication authentication, MaxAge maxAge) {
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt = createdAt.plusSeconds(maxAge.toLongValue());
-    return new OAuthSession(oAuthSessionKey, user, authentication, maxAge.toLongValue(), createdAt, expiredAt);
+    return new OAuthSession(
+        oAuthSessionKey, user, authentication, maxAge.toLongValue(), createdAt, expiredAt);
   }
 
   public OAuthSession() {}
@@ -117,8 +117,7 @@ public class OAuthSession implements Serializable {
   public OAuthSession didAuthentication(
       OAuthSessionKey oAuthSessionKey, User user, Authentication authentication) {
 
-    return new OAuthSession(
-        oAuthSessionKey, user, authentication, maxAge, createdAt, expiredAt);
+    return new OAuthSession(oAuthSessionKey, user, authentication, maxAge, createdAt, expiredAt);
   }
 
   public OAuthSession addAttribute(HashMap<String, Object> attributes) {

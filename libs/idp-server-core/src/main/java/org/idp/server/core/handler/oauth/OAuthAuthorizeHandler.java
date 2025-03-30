@@ -1,7 +1,5 @@
 package org.idp.server.core.handler.oauth;
 
-import java.util.Objects;
-import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfiguration;
@@ -99,9 +97,9 @@ public class OAuthAuthorizeHandler {
     }
 
     OAuthSessionKey oAuthSessionKey =
-            new OAuthSessionKey(tenant.identifierValue(), requestedClientId.value());
-    OAuthSession session = OAuthSession.create(
-            oAuthSessionKey, user, authentication, authorizationRequest.maxAge());
+        new OAuthSessionKey(tenant.identifierValue(), requestedClientId.value());
+    OAuthSession session =
+        OAuthSession.create(oAuthSessionKey, user, authentication, authorizationRequest.maxAge());
     delegate.registerSession(session);
 
     return authorizationResponse;
