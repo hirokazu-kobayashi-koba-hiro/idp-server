@@ -4,14 +4,14 @@ import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.OAuthSessionKey;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedIdTokenClaims;
+import org.idp.server.core.oauth.identity.RequestedUserinfoClaims;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
-import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.*;
 import org.idp.server.core.type.pkce.CodeChallenge;
 import org.idp.server.core.type.pkce.CodeChallengeMethod;
-import org.idp.server.core.type.verifiablepresentation.PresentationDefinitionUri;
 
 /** AuthorizationRequest */
 public class AuthorizationRequest {
@@ -41,8 +41,6 @@ public class AuthorizationRequest {
   CodeChallenge codeChallenge;
   CodeChallengeMethod codeChallengeMethod;
   AuthorizationDetails authorizationDetails;
-  PresentationDefinition presentationDefinition;
-  PresentationDefinitionUri presentationDefinitionUri;
   CustomParams customParams;
 
   public AuthorizationRequest() {}
@@ -73,8 +71,6 @@ public class AuthorizationRequest {
       CodeChallenge codeChallenge,
       CodeChallengeMethod codeChallengeMethod,
       AuthorizationDetails authorizationDetails,
-      PresentationDefinition presentationDefinition,
-      PresentationDefinitionUri presentationDefinitionUri,
       CustomParams customParams) {
     this.identifier = identifier;
     this.tenantIdentifier = tenantIdentifier;
@@ -101,8 +97,6 @@ public class AuthorizationRequest {
     this.codeChallenge = codeChallenge;
     this.codeChallengeMethod = codeChallengeMethod;
     this.authorizationDetails = authorizationDetails;
-    this.presentationDefinition = presentationDefinition;
-    this.presentationDefinitionUri = presentationDefinitionUri;
     this.customParams = customParams;
   }
 
@@ -270,6 +264,14 @@ public class AuthorizationRequest {
     return requestedClaimsPayload;
   }
 
+  public RequestedIdTokenClaims requestedIdTokenClaims() {
+    return requestedClaimsPayload.idToken();
+  }
+
+  public RequestedUserinfoClaims requestedUserinfoClaims() {
+    return requestedClaimsPayload.userinfo();
+  }
+
   public boolean hasClaimsPayload() {
     return requestedClaimsPayload.exists();
   }
@@ -300,22 +302,6 @@ public class AuthorizationRequest {
 
   public boolean hasAuthorizationDetails() {
     return authorizationDetails.exists();
-  }
-
-  public PresentationDefinition presentationDefinition() {
-    return presentationDefinition;
-  }
-
-  public boolean hasPresentationDefinition() {
-    return presentationDefinition.exists();
-  }
-
-  public PresentationDefinitionUri presentationDefinitionUri() {
-    return presentationDefinitionUri;
-  }
-
-  public boolean hasPresentationDefinitionUri() {
-    return presentationDefinitionUri.exists();
   }
 
   public boolean isInvalidDisplay() {

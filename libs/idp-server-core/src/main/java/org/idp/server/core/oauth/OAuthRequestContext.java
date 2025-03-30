@@ -1,8 +1,22 @@
 package org.idp.server.core.oauth;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.jose.JoseContext;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.grantmangment.AuthorizationGranted;
+import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
+import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
+import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
+import org.idp.server.core.oauth.grant.consent.ConsentClaim;
+import org.idp.server.core.oauth.grant.consent.ConsentClaims;
+import org.idp.server.core.oauth.io.OAuthRequestResponse;
+import org.idp.server.core.oauth.io.OAuthRequestStatus;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
@@ -23,7 +37,8 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   AuthorizationRequest authorizationRequest;
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
-  OAuthSessionKey oAuthSessionKey;
+  OAuthSession session;
+  AuthorizationGranted authorizationGranted;
 
   public OAuthRequestContext() {}
 
@@ -40,7 +55,127 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     this.authorizationRequest = authorizationRequest;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
-    this.oAuthSessionKey = authorizationRequest.sessionKey();
+  }
+
+  public void setSession(OAuthSession session) {
+    this.session = session;
+  }
+
+  public void setAuthorizationGranted(AuthorizationGranted authorizationGranted) {
+    this.authorizationGranted = authorizationGranted;
+  }
+
+  public boolean canAutomaticallyAuthorize() {
+    if (!isPromptNone()) {
+      return false;
+    }
+
+    if (session == null || !session.exists()) {
+      throw new OAuthRedirectableBadRequestException(
+          "login_required", "invalid session, session is not registered", this);
+    }
+    if (!session.isValid(authorizationRequest())) {
+      throw new OAuthRedirectableBadRequestException(
+          "login_required", "invalid session, session is invalid", this);
+    }
+
+    if (authorizationGranted == null || !authorizationGranted.exists()) {
+      throw new OAuthRedirectableBadRequestException(
+          "interaction_required", "authorization granted is nothing", this);
+    }
+    if (!authorizationGranted.isGrantedScopes(authorizationRequest.scopes())) {
+      Scopes unauthorizedScopes =
+          authorizationGranted.unauthorizedScopes(authorizationRequest.scopes());
+      throw new OAuthRedirectableBadRequestException(
+          "interaction_required",
+          String.format(
+              "authorization request contains unauthorized scopes (%s)",
+              unauthorizedScopes.toStringValues()),
+          this);
+    }
+
+    GrantIdTokenClaims grantIdTokenClaims = createGrantIdTokenClaims();
+    if (!authorizationGranted.isGrantedClaims(grantIdTokenClaims)) {
+      GrantIdTokenClaims unauthorizedIdTokenClaims =
+          authorizationGranted.unauthorizedIdTokenClaims(grantIdTokenClaims);
+      throw new OAuthRedirectableBadRequestException(
+          "interaction_required",
+          String.format(
+              "authorization request contains unauthorized id_token claims (%s)",
+              unauthorizedIdTokenClaims.toStringValues()),
+          this);
+    }
+
+    GrantUserinfoClaims grantUserinfoClaims = createGrantUserinfoClaims();
+    if (!authorizationGranted.isGrantedClaims(grantUserinfoClaims)) {
+      GrantUserinfoClaims unauthorizedIdTokenClaims =
+          authorizationGranted.unauthorizedIdTokenClaims(grantUserinfoClaims);
+      throw new OAuthRedirectableBadRequestException(
+          "interaction_required",
+          String.format(
+              "authorization request contains unauthorized userinfo claims (%s)",
+              unauthorizedIdTokenClaims.toStringValues()),
+          this);
+    }
+
+    ConsentClaims consentClaims = createConsentClaims();
+
+    if (!authorizationGranted.isConsentedClaims(consentClaims)) {
+      throw new OAuthRedirectableBadRequestException(
+          "interaction_required", "authorization request contains unauthorized consent", this);
+    }
+
+    return true;
+  }
+
+  private ConsentClaims createConsentClaims() {
+    Map<String, List<ConsentClaim>> contents = new HashMap<>();
+    LocalDateTime now = SystemDateTime.now();
+
+    if (clientConfiguration.hasTosUri()) {
+      contents.put(
+          "terms", List.of(new ConsentClaim("tos_uri", clientConfiguration.tosUri(), now)));
+    }
+
+    if (clientConfiguration.hasPolicyUri()) {
+      contents.put(
+          "privacy", List.of(new ConsentClaim("policy_uri", clientConfiguration.policyUri(), now)));
+    }
+
+    return new ConsentClaims(contents);
+  }
+
+  private GrantIdTokenClaims createGrantIdTokenClaims() {
+    return GrantIdTokenClaims.create(
+        authorizationRequest.scopes(),
+        authorizationRequest.responseType(),
+        serverConfiguration.claimsSupported(),
+        authorizationRequest.requestedIdTokenClaims(),
+        serverConfiguration.isIdTokenStrictMode());
+  }
+
+  private GrantUserinfoClaims createGrantUserinfoClaims() {
+    return GrantUserinfoClaims.create(
+        authorizationRequest.scopes(),
+        serverConfiguration.claimsSupported(),
+        authorizationRequest.requestedUserinfoClaims());
+  }
+
+  public OAuthRequestResponse createResponse() {
+    if (isPromptCreate()) {
+      return new OAuthRequestResponse(OAuthRequestStatus.OK_ACCOUNT_CREATION, this, session);
+    }
+    if (Objects.isNull(session) || !session.exists()) {
+      return new OAuthRequestResponse(OAuthRequestStatus.OK, this, session);
+    }
+    if (!session.isValid(authorizationRequest())) {
+      return new OAuthRequestResponse(OAuthRequestStatus.OK, this, session);
+    }
+    return new OAuthRequestResponse(OAuthRequestStatus.OK_SESSION_ENABLE, this, session);
+  }
+
+  public OAuthSession session() {
+    return session;
   }
 
   public AuthorizationRequestIdentifier identifier() {
@@ -202,11 +337,11 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   }
 
   public OAuthSessionKey sessionKey() {
-    return oAuthSessionKey;
+    return authorizationRequest.sessionKey();
   }
 
   public String sessionKeyValue() {
-    return oAuthSessionKey.key();
+    return sessionKey().key();
   }
 
   public boolean isOidcRequest() {

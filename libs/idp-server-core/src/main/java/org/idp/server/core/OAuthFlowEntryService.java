@@ -10,8 +10,6 @@ import org.idp.server.core.handler.federation.io.FederationCallbackRequest;
 import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
 import org.idp.server.core.handler.federation.io.FederationRequest;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
-import org.idp.server.core.handler.oauth.io.*;
-import org.idp.server.core.hook.*;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
@@ -20,6 +18,7 @@ import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRegistrationService;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.oauth.interaction.*;
+import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.protocol.OAuthProtocol;
@@ -52,7 +51,6 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       FederationService federationService,
       OAuthFlowEventPublisher eventPublisher) {
     this.oAuthProtocol = oAuthProtocol;
-    oAuthProtocol.setOAuthRequestDelegate(oAuthSessionService);
     this.oAuthRequestDelegate = oAuthSessionService;
     this.oAuthUserInteractors = oAuthUserInteractors;
     this.userRepository = userRepository;

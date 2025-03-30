@@ -48,6 +48,7 @@ public class RequestUriPatternContextService implements OAuthRequestContextServi
       OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_URI;
       Set<String> filteredScopes =
           filterScopes(pattern, parameters, joseContext, clientConfiguration);
+
       AuthorizationProfile profile = analyze(filteredScopes, serverConfiguration);
       AuthorizationRequestFactory requestFactory =
           selectAuthorizationRequestFactory(profile, serverConfiguration, clientConfiguration);
@@ -59,6 +60,7 @@ public class RequestUriPatternContextService implements OAuthRequestContextServi
               filteredScopes,
               serverConfiguration,
               clientConfiguration);
+
       return new OAuthRequestContext(
           pattern,
           parameters,

@@ -1,9 +1,7 @@
-package org.idp.server.core.handler.oauth.io;
+package org.idp.server.core.oauth.io;
 
-/** OAuthLogoutStatus */
-public enum OAuthLogoutStatus {
+public enum OAuthDenyStatus {
   OK,
-  REDIRECABLE_FOUND,
   BAD_REQUEST,
   REDIRECABLE_BAD_REQUEST,
   SERVER_ERROR;

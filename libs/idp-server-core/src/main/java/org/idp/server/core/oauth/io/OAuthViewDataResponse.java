@@ -1,4 +1,4 @@
-package org.idp.server.core.handler.oauth.io;
+package org.idp.server.core.oauth.io;
 
 import java.util.Map;
 import org.idp.server.core.oauth.view.OAuthViewData;

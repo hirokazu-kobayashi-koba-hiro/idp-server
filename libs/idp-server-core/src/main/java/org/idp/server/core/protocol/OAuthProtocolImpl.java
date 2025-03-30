@@ -1,10 +1,10 @@
 package org.idp.server.core.protocol;
 
 import org.idp.server.core.handler.oauth.*;
-import org.idp.server.core.handler.oauth.io.*;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.OAuthSession;
+import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.AuthorizationResponse;
@@ -25,7 +25,8 @@ public class OAuthProtocolImpl implements OAuthProtocol {
       OAuthRequestHandler requestHandler,
       OAuthAuthorizeHandler authAuthorizeHandler,
       OAuthDenyHandler oAuthDenyHandler,
-      OAuthHandler oauthHandler) {
+      OAuthHandler oauthHandler,
+      OAuthRequestDelegate oAuthRequestDelegate) {
     this.requestHandler = requestHandler;
     this.oAuthRequestErrorHandler = new OAuthRequestErrorHandler();
     this.authAuthorizeHandler = authAuthorizeHandler;
@@ -33,6 +34,7 @@ public class OAuthProtocolImpl implements OAuthProtocol {
     this.oAuthDenyHandler = oAuthDenyHandler;
     this.oauthHandler = oauthHandler;
     this.denyErrorHandler = new OAuthDenyErrorHandler();
+    this.oAuthRequestDelegate = oAuthRequestDelegate;
   }
 
   /**
@@ -47,11 +49,12 @@ public class OAuthProtocolImpl implements OAuthProtocol {
 
     try {
 
-      OAuthRequestContext context = requestHandler.handle(oAuthRequest);
-      OAuthSession session = oAuthRequestDelegate.findSession(context.sessionKey());
+      OAuthRequestContext context = requestHandler.handle(oAuthRequest, oAuthRequestDelegate);
 
-      if (requestHandler.canAuthorize(context, session, oAuthRequestDelegate)) {
+      if (context.canAutomaticallyAuthorize()) {
+
         Tenant tenant = oAuthRequest.tenant();
+        OAuthSession session = context.session();
         OAuthAuthorizeRequest oAuthAuthorizeRequest =
             new OAuthAuthorizeRequest(
                     tenant,
@@ -64,7 +67,7 @@ public class OAuthProtocolImpl implements OAuthProtocol {
         return new OAuthRequestResponse(OAuthRequestStatus.NO_INTERACTION_OK, response);
       }
 
-      return requestHandler.handleResponse(context, session);
+      return context.createResponse();
     } catch (Exception exception) {
 
       return oAuthRequestErrorHandler.handle(exception);
@@ -106,9 +109,5 @@ public class OAuthProtocolImpl implements OAuthProtocol {
   public OAuthLogoutResponse logout(OAuthLogoutRequest request) {
 
     return oauthHandler.handleLogout(request, oAuthRequestDelegate);
-  }
-
-  public void setOAuthRequestDelegate(OAuthRequestDelegate oAuthRequestDelegate) {
-    this.oAuthRequestDelegate = oAuthRequestDelegate;
   }
 }

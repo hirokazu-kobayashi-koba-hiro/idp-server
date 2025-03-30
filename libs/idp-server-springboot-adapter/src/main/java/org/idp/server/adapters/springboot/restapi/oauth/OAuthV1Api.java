@@ -1,6 +1,6 @@
 package org.idp.server.adapters.springboot.restapi.oauth;
 
-import static org.idp.server.core.handler.oauth.io.OAuthRequestStatus.OK_ACCOUNT_CREATION;
+import static org.idp.server.core.oauth.io.OAuthRequestStatus.OK_ACCOUNT_CREATION;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -9,9 +9,12 @@ import java.util.Map;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
-import org.idp.server.core.handler.oauth.io.*;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
 import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
+import org.idp.server.core.oauth.io.OAuthAuthorizeResponse;
+import org.idp.server.core.oauth.io.OAuthDenyResponse;
+import org.idp.server.core.oauth.io.OAuthRequestResponse;
+import org.idp.server.core.oauth.io.OAuthViewDataResponse;
 import org.idp.server.core.type.extension.Pairs;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;

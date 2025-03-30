@@ -4,13 +4,11 @@ import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
-import org.idp.server.core.oauth.vp.request.PresentationDefinition;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.*;
 import org.idp.server.core.type.oidc.*;
 import org.idp.server.core.type.pkce.CodeChallenge;
 import org.idp.server.core.type.pkce.CodeChallengeMethod;
-import org.idp.server.core.type.verifiablepresentation.PresentationDefinitionUri;
 
 /** AuthorizationRequestBuilder */
 public class AuthorizationRequestBuilder {
@@ -40,8 +38,6 @@ public class AuthorizationRequestBuilder {
   CodeChallenge codeChallenge = new CodeChallenge();
   CodeChallengeMethod codeChallengeMethod = CodeChallengeMethod.undefined;
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
-  PresentationDefinition presentationDefinition = new PresentationDefinition();
-  PresentationDefinitionUri presentationDefinitionUri = new PresentationDefinitionUri();
   CustomParams customParams = new CustomParams();
 
   public AuthorizationRequestBuilder() {}
@@ -171,16 +167,6 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
-  public AuthorizationRequestBuilder add(PresentationDefinition presentationDefinition) {
-    this.presentationDefinition = presentationDefinition;
-    return this;
-  }
-
-  public AuthorizationRequestBuilder add(PresentationDefinitionUri presentationDefinitionUri) {
-    this.presentationDefinitionUri = presentationDefinitionUri;
-    return this;
-  }
-
   public AuthorizationRequestBuilder add(CustomParams customParams) {
     this.customParams = customParams;
     return this;
@@ -213,8 +199,6 @@ public class AuthorizationRequestBuilder {
         codeChallenge,
         codeChallengeMethod,
         authorizationDetails,
-        presentationDefinition,
-        presentationDefinitionUri,
         customParams);
   }
 }

@@ -1,15 +1,18 @@
-package org.idp.server.core.handler.oauth.io;
+package org.idp.server.core.oauth.io;
 
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.type.extension.OAuthDenyReason;
 
-public class OAuthViewDataRequest {
+public class OAuthDenyRequest {
   Tenant tenant;
   String id;
+  OAuthDenyReason denyReason;
 
-  public OAuthViewDataRequest(Tenant tenant, String id) {
+  public OAuthDenyRequest(Tenant tenant, String id, OAuthDenyReason denyReason) {
     this.tenant = tenant;
     this.id = id;
+    this.denyReason = denyReason;
   }
 
   public Tenant tenant() {
@@ -18,5 +21,9 @@ public class OAuthViewDataRequest {
 
   public AuthorizationRequestIdentifier toIdentifier() {
     return new AuthorizationRequestIdentifier(id);
+  }
+
+  public OAuthDenyReason denyReason() {
+    return denyReason;
   }
 }

@@ -1,16 +1,14 @@
 package org.idp.server.core.handler.oauth;
 
-import java.util.Objects;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
-import org.idp.server.core.handler.oauth.io.OAuthRequest;
-import org.idp.server.core.handler.oauth.io.OAuthRequestResponse;
-import org.idp.server.core.handler.oauth.io.OAuthRequestStatus;
+import org.idp.server.core.grantmangment.AuthorizationGranted;
+import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.core.oauth.*;
-import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oauth.gateway.RequestObjectGateway;
+import org.idp.server.core.oauth.io.OAuthRequest;
 import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.oauth.service.*;
@@ -26,20 +24,23 @@ public class OAuthRequestHandler {
   AuthorizationRequestRepository authorizationRequestRepository;
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
+  AuthorizationGrantedRepository grantedRepository;
 
   public OAuthRequestHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository,
-      RequestObjectGateway requestObjectGateway) {
+      RequestObjectGateway requestObjectGateway,
+      AuthorizationGrantedRepository grantedRepository) {
     this.oAuthRequestContextServices = new OAuthRequestContextServices(requestObjectGateway);
     this.verifier = new OAuthRequestVerifier();
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
+    this.grantedRepository = grantedRepository;
   }
 
-  public OAuthRequestContext handle(OAuthRequest oAuthRequest) {
+  public OAuthRequestContext handle(OAuthRequest oAuthRequest, OAuthRequestDelegate delegate) {
     OAuthRequestParameters parameters = oAuthRequest.toParameters();
     Tenant tenant = oAuthRequest.tenant();
     OAuthRequestValidator validator = new OAuthRequestValidator(parameters);
@@ -57,43 +58,19 @@ public class OAuthRequestHandler {
     OAuthRequestContext context =
         oAuthRequestContextService.create(parameters, serverConfiguration, clientConfiguration);
     verifier.verify(context);
+
     authorizationRequestRepository.register(context.authorizationRequest());
 
+    OAuthSession session = delegate.findSession(context.sessionKey());
+
+    if (session.exists()) {
+      context.setSession(session);
+
+      AuthorizationGranted authorizationGranted =
+          grantedRepository.find(tenant.identifier(), parameters.clientId(), session.user());
+      context.setAuthorizationGranted(authorizationGranted);
+    }
+
     return context;
-  }
-
-  public boolean canAuthorize(
-      OAuthRequestContext context,
-      OAuthSession session,
-      OAuthRequestDelegate oAuthRequestDelegate) {
-    if (!context.isPromptNone()) {
-      return false;
-    }
-    if (Objects.isNull(oAuthRequestDelegate)) {
-      throw new OAuthRedirectableBadRequestException(
-          "login_required", "invalid session, session registration function is disable", context);
-    }
-    if (Objects.isNull(session) || !session.exists()) {
-      throw new OAuthRedirectableBadRequestException(
-          "login_required", "invalid session, session is not registered", context);
-    }
-    if (!session.isValid(context.authorizationRequest())) {
-      throw new OAuthRedirectableBadRequestException(
-          "login_required", "invalid session, session is invalid", context);
-    }
-    return true;
-  }
-
-  public OAuthRequestResponse handleResponse(OAuthRequestContext context, OAuthSession session) {
-    if (context.isPromptCreate()) {
-      return new OAuthRequestResponse(OAuthRequestStatus.OK_ACCOUNT_CREATION, context, session);
-    }
-    if (Objects.isNull(session) || !session.exists()) {
-      return new OAuthRequestResponse(OAuthRequestStatus.OK, context, session);
-    }
-    if (!session.isValid(context.authorizationRequest())) {
-      return new OAuthRequestResponse(OAuthRequestStatus.OK, context, session);
-    }
-    return new OAuthRequestResponse(OAuthRequestStatus.OK_SESSION_ENABLE, context, session);
   }
 }
