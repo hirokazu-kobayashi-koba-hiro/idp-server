@@ -128,7 +128,8 @@ public class IdpServerApplication {
             authorizationRequestDataSource,
             serverConfigurationDataSource,
             clientConfigurationDataSource,
-            new RequestObjectHttpClient());
+            new RequestObjectHttpClient(),
+            authorizationGrantedDataSource);
     OAuthAuthorizeHandler oAuthAuthorizeHandler =
         new OAuthAuthorizeHandler(
             authorizationRequestDataSource,
@@ -149,7 +150,11 @@ public class IdpServerApplication {
 
     OAuthProtocol oAuthProtocol =
         new OAuthProtocolImpl(
-            oAuthRequestHandler, oAuthAuthorizeHandler, oAuthDenyHandler, oAuthHandler);
+            oAuthRequestHandler,
+            oAuthAuthorizeHandler,
+            oAuthDenyHandler,
+            oAuthHandler,
+            oAuthRequestDelegate);
     UserRegistrationService userRegistrationService =
         new UserRegistrationService(userDataSource, passwordEncodeDelegation);
     UserAuthenticationService userAuthenticationService =

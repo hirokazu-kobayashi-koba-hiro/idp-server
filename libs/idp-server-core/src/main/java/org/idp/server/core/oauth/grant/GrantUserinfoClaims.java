@@ -305,4 +305,8 @@ public class GrantUserinfoClaims implements Iterable<String> {
     }
     return scopes.contains("profile") || userinfoClaims.hasUpdatedAt();
   }
+
+  public boolean contains(String claims) {
+    return values.contains(claims);
+  }
 }

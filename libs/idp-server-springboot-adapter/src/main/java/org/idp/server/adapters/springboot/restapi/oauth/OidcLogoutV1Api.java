@@ -4,7 +4,7 @@ import java.util.Map;
 
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OAuthFlowApi;
-import org.idp.server.core.handler.oauth.io.OAuthLogoutResponse;
+import org.idp.server.core.oauth.io.OAuthLogoutResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.springframework.http.HttpHeaders;

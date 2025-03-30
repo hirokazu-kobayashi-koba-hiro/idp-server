@@ -37,25 +37,30 @@ public class EventHandler {
 
     Tenant tenant = tenantRepository.get(event.tenantIdentifier());
 
-    HookConfigurations hookConfigurations =
-        hookConfigurationQueryRepository.find(tenant, HookTriggerType.POST_LOGIN);
-    if (hookConfigurations.exists()) {
-      HookRequest hookRequest = new HookRequest(event.toMap());
+    HookTriggerType hookTriggerType = HookTriggerType.of(event.type().value());
+    if (hookTriggerType.isDefined()) {
 
-      hookConfigurations.forEach(
-          hookConfiguration -> {
-            log.info(
-                String.format(
-                    "hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
-                    hookConfiguration.triggerType().name(),
-                    hookConfiguration.hookType().name(),
-                    event.tenantIdentifierValue(),
-                    event.clientId().value(),
-                    event.user().id()));
-            HookExecutor hookExecutor = authenticationHooks.get(hookConfiguration.hookType());
-            hookExecutor.execute(
-                tenant, HookTriggerType.POST_LOGIN, hookRequest, hookConfiguration);
-          });
+      HookConfigurations hookConfigurations =
+          hookConfigurationQueryRepository.find(tenant, hookTriggerType);
+
+      if (hookConfigurations.exists()) {
+        HookRequest hookRequest = new HookRequest(event.toMap());
+
+        hookConfigurations.forEach(
+            hookConfiguration -> {
+              log.info(
+                  String.format(
+                      "hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
+                      hookConfiguration.triggerType().name(),
+                      hookConfiguration.hookType().name(),
+                      event.tenantIdentifierValue(),
+                      event.clientId().value(),
+                      event.user().id()));
+              HookExecutor hookExecutor = authenticationHooks.get(hookConfiguration.hookType());
+              hookExecutor.execute(
+                  tenant, HookTriggerType.POST_LOGIN, hookRequest, hookConfiguration);
+            });
+      }
     }
 
     SecurityEventTokenEntityConvertor convertor = new SecurityEventTokenEntityConvertor(event);

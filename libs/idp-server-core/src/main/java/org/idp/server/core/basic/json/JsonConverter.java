@@ -51,6 +51,15 @@ public class JsonConverter {
     }
   }
 
+  public JsonNodeWrapper readTree(String jsonString) {
+    try {
+
+      return new JsonNodeWrapper(objectMapper.readTree(jsonString));
+    } catch (JsonProcessingException exception) {
+      throw new JsonRuntimeException(exception);
+    }
+  }
+
   public String write(Object value) {
     try {
       return objectMapper.writeValueAsString(value);

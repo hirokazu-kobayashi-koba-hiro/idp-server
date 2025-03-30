@@ -14,6 +14,7 @@ import org.idp.server.core.oauth.factory.AuthorizationRequestFactory;
 import org.idp.server.core.oauth.gateway.RequestObjectGateway;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.oidc.RequestObject;
 
 /** RequestUriPatternContextService */
@@ -27,15 +28,18 @@ public class RequestUriPatternContextService implements OAuthRequestContextServi
 
   @Override
   public OAuthRequestContext create(
+      Tenant tenant,
       OAuthRequestParameters parameters,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
+
       if (!clientConfiguration.isRegisteredRequestUri(parameters.requestUri().value())) {
         throw new OAuthBadRequestException(
             "invalid_request",
             String.format("request uri does not registered (%s)", parameters.requestUri().value()));
       }
+
       RequestObject requestObject = requestObjectGateway.get(parameters.requestUri());
       JoseHandler joseHandler = new JoseHandler();
       JoseContext joseContext =
@@ -45,9 +49,11 @@ public class RequestUriPatternContextService implements OAuthRequestContextServi
               serverConfiguration.jwks(),
               clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
+
       OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_URI;
       Set<String> filteredScopes =
           filterScopes(pattern, parameters, joseContext, clientConfiguration);
+
       AuthorizationProfile profile = analyze(filteredScopes, serverConfiguration);
       AuthorizationRequestFactory requestFactory =
           selectAuthorizationRequestFactory(profile, serverConfiguration, clientConfiguration);
@@ -59,7 +65,9 @@ public class RequestUriPatternContextService implements OAuthRequestContextServi
               filteredScopes,
               serverConfiguration,
               clientConfiguration);
+
       return new OAuthRequestContext(
+          tenant,
           pattern,
           parameters,
           joseContext,

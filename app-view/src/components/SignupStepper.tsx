@@ -1,6 +1,6 @@
 import { Step, StepLabel, Stepper } from "@mui/material";
 
-const steps = ["Account Info", "Email Verification", "Confirm"];
+const steps = ["Account Info", "Email Verification", "Passkey", "Confirm"];
 
 export const SignupStepper = ({ activeStep }: { activeStep: number }) => {
   return (

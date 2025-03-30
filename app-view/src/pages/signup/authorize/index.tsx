@@ -1,42 +1,37 @@
+"use client";
+
 import {
-  Avatar,
   Box,
   Button,
-  Chip,
   Container,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Paper,
   Stack,
   Typography,
+  useTheme,
+  alpha,
+  Link,
+  Divider,
 } from "@mui/material";
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
 import { backendUrl } from "@/pages/_app";
-import PolicyIcon from "@mui/icons-material/Policy";
-import InfoIcon from "@mui/icons-material/Info";
 import { Loading } from "@/components/Loading";
 import { SignupStepper } from "@/components/SignupStepper";
 
-export default function Authorize() {
+export default function AuthorizePage() {
   const router = useRouter();
   const { id, tenant_id: tenantId } = router.query;
+  const theme = useTheme();
+
   const { data, isPending } = useQuery({
-    queryKey: ["fetchViewData"],
+    queryKey: ["fetchViewData", router.query],
     queryFn: async () => {
-      const { id, tenant_id: tenantId } = router.query;
+      if (!router.isReady || Object.keys(router.query).length === 0) return;
       const response = await fetch(
         `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/view-data`,
-        {
-          credentials: "include",
-        },
+        { credentials: "include" },
       );
-      if (!response.ok) {
-        console.error(response);
-        throw new Error(response.status.toString());
-      }
+      if (!response.ok) throw new Error(response.status.toString());
       return await response.json();
     },
   });
@@ -47,16 +42,11 @@ export default function Authorize() {
       {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       },
     );
     const body = await response.json();
-    console.log(response.status, body);
-    if (body.redirect_uri) {
-      window.location.href = body.redirect_uri;
-    }
+    if (body.redirect_uri) window.location.href = body.redirect_uri;
   };
 
   const handleApprove = async () => {
@@ -65,113 +55,115 @@ export default function Authorize() {
       {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "signup",
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "signup" }),
       },
     );
     const body = await response.json();
-    console.log(response.status, body);
-    if (body.redirect_uri) {
-      window.location.href = body.redirect_uri;
-    }
+    if (body.redirect_uri) window.location.href = body.redirect_uri;
   };
 
-  if (isPending) return <Loading />;
-  if (!data) return <Loading />;
+  if (isPending || !data) return <Loading />;
 
   return (
-    <>
-      <Container maxWidth={"sm"}>
-        <Paper sx={{ p: 3, boxShadow: 3 }}>
-          <Stack spacing={4}>
-            <Typography variant={"h5"}>Sign Up</Typography>
+    <Container maxWidth="xs">
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 4,
+          px: 5,
+          py: 6,
+          mt: 8,
+          backgroundColor:
+            theme.palette.mode === "light"
+              ? "#fcfcfd"
+              : alpha(theme.palette.common.white, 0.035),
+          border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+          boxShadow:
+            theme.palette.mode === "light"
+              ? "0 6px 24px rgba(0,0,0,0.025)"
+              : "0 0 0 1px rgba(255,255,255,0.06)",
+        }}
+      >
+        <Typography variant="h5" fontWeight={600} gutterBottom>
+          Authorize Access
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mb={4}>
+          Review the access requested by this application.
+        </Typography>
 
-            <SignupStepper activeStep={2} />
+        <Stack spacing={3}>
+          <SignupStepper activeStep={3} />
 
-            <Box display={"flex"} gap={4} alignItems={"center"}>
-              <Avatar src={data.logo_uri} sx={{ width: 80, height: 80 }} />
-              <Typography variant="h5">{data.client_name}</Typography>
-            </Box>
-
-            <Typography variant="h6">request scope</Typography>
-
-            <Stack
-              direction="row"
-              spacing={1}
-              justifyContent="center"
-              sx={{ mt: 2 }}
+          <Box>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              gutterBottom
+              sx={{ fontWeight: 500 }}
             >
+              This app is requesting access to:
+            </Typography>
+
+            <Stack spacing={1}>
               {data.scopes.map((scope: string) => (
-                <Chip
+                <Typography
                   key={scope}
-                  label={scope}
-                  color="primary"
-                  variant="outlined"
-                />
+                  variant="body2"
+                  sx={{
+                    backgroundColor:
+                      theme.palette.mode === "light"
+                        ? "grey.100"
+                        : "rgba(255,255,255,0.05)",
+                    px: 2,
+                    py: 1,
+                    borderRadius: 2,
+                    fontSize: "0.85rem",
+                    fontWeight: 500,
+                  }}
+                >
+                  {scope}
+                </Typography>
               ))}
             </Stack>
+          </Box>
 
-            <List sx={{ p: 0 }}>
-              <ListItem>
-                <ListItemIcon>
-                  <PolicyIcon color="action" />
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <a
-                      href={data.tos_uri}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      term of use
-                    </a>
-                  }
-                />
-              </ListItem>
-
-              <ListItem>
-                <ListItemIcon>
-                  <InfoIcon color="action" />
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <a
-                      href={data.policy_uri}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      privacy policy
-                    </a>
-                  }
-                />
-              </ListItem>
-            </List>
-
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleCancel}
-                sx={{ textTransform: "none" }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleApprove}
-                sx={{ textTransform: "none" }}
-              >
-                Approve
-              </Button>
-            </Box>
+          <Stack direction="row" spacing={2} justifyContent="space-between">
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={handleCancel}
+              sx={{ textTransform: "none" }}
+              fullWidth
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleApprove}
+              sx={{ textTransform: "none" }}
+              fullWidth
+            >
+              Approve
+            </Button>
           </Stack>
-        </Paper>
-      </Container>
-    </>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="caption" color="text.secondary" align="center">
+            By continuing, you agree to our
+            <Link href={data.tos_uri} sx={{ fontWeight: 600, mx: 0.5 }}>
+              Terms of Use
+            </Link>
+            and
+            <Link href={data.policy_uri} sx={{ fontWeight: 600, mx: 0.5 }}>
+              Privacy Policy
+            </Link>
+            .
+          </Typography>
+        </Stack>
+      </Paper>
+    </Container>
   );
 }

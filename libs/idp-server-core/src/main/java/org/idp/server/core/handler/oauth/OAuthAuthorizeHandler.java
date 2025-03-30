@@ -1,12 +1,9 @@
 package org.idp.server.core.handler.oauth;
 
-import java.util.Objects;
-import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
-import org.idp.server.core.handler.oauth.io.OAuthAuthorizeRequest;
 import org.idp.server.core.oauth.OAuthAuthorizeContext;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.OAuthSession;
@@ -16,6 +13,7 @@ import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oauth.grant.AuthorizationCodeGrantCreator;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.oauth.io.OAuthAuthorizeRequest;
 import org.idp.server.core.oauth.repository.*;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
@@ -98,14 +96,11 @@ public class OAuthAuthorizeHandler {
       oAuthTokenRepository.register(oAuthToken);
     }
 
-    if (Objects.nonNull(delegate)) {
-      OAuthSessionKey oAuthSessionKey =
-          new OAuthSessionKey(tenant.identifierValue(), requestedClientId.value());
-      OAuthSession session =
-          new OAuthSession(
-              oAuthSessionKey, user, authentication, SystemDateTime.now().plusSeconds(3600));
-      delegate.registerSession(session);
-    }
+    OAuthSessionKey oAuthSessionKey =
+        new OAuthSessionKey(tenant.identifierValue(), requestedClientId.value());
+    OAuthSession session =
+        OAuthSession.create(oAuthSessionKey, user, authentication, authorizationRequest.maxAge());
+    delegate.registerSession(session);
 
     return authorizationResponse;
   }

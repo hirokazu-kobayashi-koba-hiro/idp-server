@@ -193,4 +193,73 @@ public class AuthorizationGrant {
         newAuthorizationDetails,
         newConsentClaims);
   }
+
+  public boolean isGrantedScopes(Scopes requestedScopes) {
+    for (String scope : requestedScopes) {
+      if (!this.scopes.contains(scope)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public Scopes unauthorizedScopes(Scopes requestedScopes) {
+    Set<String> unauthorizedScopes = new HashSet<>();
+
+    for (String scope : requestedScopes) {
+      if (!this.scopes.contains(scope)) {
+        unauthorizedScopes.add(scope);
+      }
+    }
+
+    return new Scopes(unauthorizedScopes);
+  }
+
+  public boolean isGrantedIdTokenClaims(GrantIdTokenClaims requestedIdTokenClaims) {
+    for (String claims : requestedIdTokenClaims) {
+      if (!this.idTokenClaims.contains(claims)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public GrantIdTokenClaims unauthorizedIdTokenClaims(GrantIdTokenClaims requestedIdTokenClaims) {
+    Set<String> unauthorizedClaims = new HashSet<>();
+
+    for (String claims : requestedIdTokenClaims) {
+      if (!this.idTokenClaims.contains(claims)) {
+        unauthorizedClaims.add(claims);
+      }
+    }
+
+    return new GrantIdTokenClaims(unauthorizedClaims);
+  }
+
+  public boolean isGrantedUserinfoClaims(GrantUserinfoClaims requestedUserinfoClaims) {
+    for (String claims : requestedUserinfoClaims) {
+      if (!this.userinfoClaims.contains(claims)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public GrantUserinfoClaims unauthorizedUserinfoClaims(
+      GrantUserinfoClaims requestedUserinfoClaims) {
+    Set<String> unauthorizedClaims = new HashSet<>();
+
+    for (String claims : requestedUserinfoClaims) {
+      if (!this.userinfoClaims.contains(claims)) {
+        unauthorizedClaims.add(claims);
+      }
+    }
+
+    return new GrantUserinfoClaims(unauthorizedClaims);
+  }
+
+  public boolean isConsentedClaims(ConsentClaims requestedConsentClaims) {
+
+    return consentClaims.isAllConsented(requestedConsentClaims);
+  }
 }

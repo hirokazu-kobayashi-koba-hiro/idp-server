@@ -1,6 +1,10 @@
 package org.idp.server.core.grantmangment;
 
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
+import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
+import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
+import org.idp.server.core.oauth.grant.consent.ConsentClaims;
+import org.idp.server.core.type.oauth.Scopes;
 
 public class AuthorizationGranted {
   AuthorizationGrantedIdentifier identifier;
@@ -35,5 +39,33 @@ public class AuthorizationGranted {
 
   public boolean exists() {
     return identifier != null && identifier.exists();
+  }
+
+  public boolean isGrantedScopes(Scopes requestedScopes) {
+    return authorizationGrant.isGrantedScopes(requestedScopes);
+  }
+
+  public Scopes unauthorizedScopes(Scopes requestedScopes) {
+    return authorizationGrant.unauthorizedScopes(requestedScopes);
+  }
+
+  public boolean isGrantedClaims(GrantIdTokenClaims requestedIdTokenClaims) {
+    return authorizationGrant.isGrantedIdTokenClaims(requestedIdTokenClaims);
+  }
+
+  public boolean isGrantedClaims(GrantUserinfoClaims requestedUserinfoClaims) {
+    return authorizationGrant.isGrantedUserinfoClaims(requestedUserinfoClaims);
+  }
+
+  public GrantIdTokenClaims unauthorizedIdTokenClaims(GrantIdTokenClaims grantIdTokenClaims) {
+    return authorizationGrant.unauthorizedIdTokenClaims(grantIdTokenClaims);
+  }
+
+  public GrantUserinfoClaims unauthorizedIdTokenClaims(GrantUserinfoClaims grantUserinfoClaims) {
+    return authorizationGrant.unauthorizedUserinfoClaims(grantUserinfoClaims);
+  }
+
+  public boolean isConsentedClaims(ConsentClaims requestedConsentClaims) {
+    return authorizationGrant.isConsentedClaims(requestedConsentClaims);
   }
 }

@@ -14,12 +14,14 @@ import org.idp.server.core.oauth.factory.AuthorizationRequestFactory;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.oauth.validator.RequestObjectValidator;
+import org.idp.server.core.tenant.Tenant;
 
 /** RequestObjectPatternContextService */
 public class RequestObjectPatternContextService implements OAuthRequestContextService {
 
   @Override
   public OAuthRequestContext create(
+      Tenant tenant,
       OAuthRequestParameters parameters,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
@@ -27,6 +29,7 @@ public class RequestObjectPatternContextService implements OAuthRequestContextSe
       RequestObjectValidator validator =
           new RequestObjectValidator(parameters, serverConfiguration, clientConfiguration);
       validator.validate();
+
       JoseHandler joseHandler = new JoseHandler();
       JoseContext joseContext =
           joseHandler.handle(
@@ -35,6 +38,7 @@ public class RequestObjectPatternContextService implements OAuthRequestContextSe
               serverConfiguration.jwks(),
               clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
+
       OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_OBJECT;
       Set<String> filteredScopes =
           filterScopes(pattern, parameters, joseContext, clientConfiguration);
@@ -49,7 +53,9 @@ public class RequestObjectPatternContextService implements OAuthRequestContextSe
               filteredScopes,
               serverConfiguration,
               clientConfiguration);
+
       return new OAuthRequestContext(
+          tenant,
           pattern,
           parameters,
           joseContext,

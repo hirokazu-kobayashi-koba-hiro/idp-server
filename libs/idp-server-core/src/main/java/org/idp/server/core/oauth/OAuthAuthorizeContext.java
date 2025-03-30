@@ -12,6 +12,7 @@ import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
 import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
+import org.idp.server.core.oauth.grant.consent.ConsentClaim;
 import org.idp.server.core.oauth.grant.consent.ConsentClaims;
 import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.identity.RequestedIdTokenClaims;
@@ -67,7 +68,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     return authorizationRequest.scopes();
   }
 
-  public RequestedClaimsPayload claimsPayload() {
+  public RequestedClaimsPayload requestedClaimsPayload() {
     return authorizationRequest.requestedClaimsPayload();
   }
 
@@ -93,7 +94,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     GrantUserinfoClaims grantUserinfoClaims =
         GrantUserinfoClaims.create(scopes, supportedClaims, requestedClaimsPayload.userinfo());
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
-    ConsentClaims consentClaims = new ConsentClaims(consent());
+    ConsentClaims consentClaims = createConsentClaims();
 
     return new AuthorizationGrant(
         tenantIdentifier,
@@ -109,16 +110,21 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
         consentClaims);
   }
 
-  private Map<String, Object> consent() {
-    Map<String, Object> contents = new HashMap<>();
+  private ConsentClaims createConsentClaims() {
+    Map<String, List<ConsentClaim>> contents = new HashMap<>();
     LocalDateTime now = SystemDateTime.now();
-    if (clientConfiguration.hasTosUri())
-      contents.put("terms", Map.of("tos_uri", clientConfiguration.tosUri(), "consented_at", now));
 
-    if (clientConfiguration.hasPolicyUri())
+    if (clientConfiguration.hasTosUri()) {
       contents.put(
-          "privacy", Map.of("policy_uri", clientConfiguration.policyUri(), "consented_at", now));
-    return contents;
+          "terms", List.of(new ConsentClaim("tos_uri", clientConfiguration.tosUri(), now)));
+    }
+
+    if (clientConfiguration.hasPolicyUri()) {
+      contents.put(
+          "privacy", List.of(new ConsentClaim("policy_uri", clientConfiguration.policyUri(), now)));
+    }
+
+    return new ConsentClaims(contents);
   }
 
   public CustomProperties customProperties() {

@@ -6,7 +6,83 @@
 
 ## Overview
 
-This library provides java api supported OAuth2.0 and OIDC spec.
+This project is a flexible and extensible Identity Provider (IdP) implementation that fully supports the OAuth 2.0 and OpenID Connect specifications.
+
+It can be used as:
+
+- A **standalone server** for managing authentication and authorization flows out of the box
+- A **Java library** that can be embedded into your own applications to add OAuth2/OIDC functionality programmatically
+
+Built with modularity and customization in mind, it provides robust APIs for handling users, clients, grants, MFA, and hooks, while remaining lightweight and easy to integrate into any Java-based ecosystem.
+
+
+## 🗂 System Architecture (Container Level)
+
+```mermaid
+graph TD
+subgraph UserSide
+browser[🧑‍💻 Web Browser]
+end
+
+subgraph Frontend
+frontend[🌐 React / Next.js]
+end
+
+subgraph RpBackend
+rp-backend[🎯 RP Backend]
+end
+
+subgraph Backend
+backend[🔧 Spring Boot API]
+hook[📡 Hook Executors]
+mfa[🛡️ MFA Interactors]
+ssf[📬 SSF Notifier]
+db[(PostgreSQL)]
+end
+
+subgraph External
+slack[🔔 Slack Webhook]
+webhook[🔄 Generic Webhook Endpoint]
+oidc[🌍 External OIDC Provider]
+end
+
+browser --> frontend
+frontend --> backend
+rp-backend --> backend
+backend --> db
+
+backend --> hook
+backend --> mfa
+backend --> ssf
+backend --> oidc
+
+hook --> slack
+hook --> webhook
+ssf --> rp-backend
+
+subgraph MFA
+passkey[🔐 Passkey Authenticator]
+email[📧 Email Authenticator]
+end
+
+mfa --> passkey
+mfa --> email
+
+```
+
+### 🗂 System Architecture (Container Level)
+
+This diagram illustrates the core container-level architecture of the IdP service.  
+The system consists of a frontend built with React / Next.js and a backend powered by Spring Boot, accessed via a web browser by end users.
+
+- The **Backend API** is responsible for core logic such as authentication, authorization, and client management.
+- **MFA Interactors** handle multi-factor authentication mechanisms, supporting both Passkey-based authentication and Email verification flows.
+- **Hook Executors** are triggered during authentication or administrative events and send notifications to external systems such as Slack or generic Webhook endpoints.
+- The service integrates with external **OIDC Providers** to support federation and identity brokering use cases.
+- **PostgreSQL** is used as the primary data store to persist user, client, and configuration data.
+
+This architecture balances **security**, **extensibility**, and **integration flexibility**, enabling a robust foundation for modern identity management.
+
 
 ## Features
 
@@ -30,7 +106,7 @@ This library provides java api supported OAuth2.0 and OIDC spec.
 |                     | Secure Session Management             | ✅         | ✅    | ✅     | ✅            | Supports token expiration, refresh tokens, and logout mechanisms.                                                                                                                         |
 | **Security**        | Authentication Flows with Hooks       | ✅         | ✅    | ✅     | ✅            | Supports executing multiple custom hooks in a specific order for each authentication event, based on tenant-configurable settings.                                                        |
 |                     | Extensible Identity Workflows         | ❌         | ❌    | ❌     | ✅            | Supports custom rules and hooks for advanced identity management.                                                                                                                         |
-|                     | User Consent & Privacy Compliance     | ⚠️        | ✅    | ✅     | ✅            | Ensures GDPR, CCPA, and other regulatory compliance based on fapi grant management.                                                                                                       |
+|                     | User Consent & Privacy Compliance     | ✅         | ✅    | ✅     | ✅            | Ensures GDPR, CCPA, and other regulatory compliance based on fapi grant management.                                                                                                       |
 |                     | Secure Token Storage                  | ✅         | ✅    | ✅     | ✅            | Manages access tokens securely to prevent leaks.                                                                                                                                          |
 |                     | Financial-Grade API (FAPI) Compliance | ✅         | ✅    | ✅     | ✅            | Meets security standards for financial institutions.                                                                                                                                      |
 |                     | Shared signal framework(SSF)          | ✅         | ✅    | ✅     | ✅            | Share Security Events to Relaying Party.                                                                                                                                                  |
@@ -108,10 +184,6 @@ cd e2e
 npm install
 npm test
 ```
-
-## Architecture
-
-TODO
 
 ## supported spec
 

@@ -522,4 +522,8 @@ public class GrantIdTokenClaims implements Iterable<String> {
     }
     return scopes.contains("profile");
   }
+
+  public boolean contains(String claims) {
+    return values.contains(claims);
+  }
 }

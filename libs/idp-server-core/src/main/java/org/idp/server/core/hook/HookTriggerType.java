@@ -1,6 +1,29 @@
 package org.idp.server.core.hook;
 
+import java.util.Set;
+import org.idp.server.core.sharedsignal.DefaultEventType;
+
 public enum HookTriggerType {
-  PRE_LOGIN,
-  POST_LOGIN,
+  POST_LOGIN(Set.of(DefaultEventType.login.name(), DefaultEventType.login_with_session.name())),
+  UNDEFINED(Set.of());
+
+  Set<String> eventTypes;
+
+  HookTriggerType(Set<String> eventTypes) {
+    this.eventTypes = eventTypes;
+  }
+
+  public static HookTriggerType of(String type) {
+
+    for (HookTriggerType hookTriggerType : HookTriggerType.values()) {
+      if (hookTriggerType.eventTypes.contains(type)) {
+        return hookTriggerType;
+      }
+    }
+    return UNDEFINED;
+  }
+
+  public boolean isDefined() {
+    return this != UNDEFINED;
+  }
 }
