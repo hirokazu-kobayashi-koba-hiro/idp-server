@@ -11,10 +11,15 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/router";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
+import { Loading } from "@/components/Loading";
 
 export default function AuthorizationError() {
   const router = useRouter();
   const theme = useTheme();
+
+  if (!router.isReady) {
+    return <Loading />
+  }
 
   const { error, error_description: errorDescription } = router.query;
 
