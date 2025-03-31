@@ -67,9 +67,13 @@ public class OAuthController implements ParameterTransformable {
         return "redirect:" + response.redirectUri();
       }
       default -> {
-        model.addAttribute("error", response.error());
-        model.addAttribute("errorDescription", response.errorDescription());
-        return "error";
+
+        log.warn(String.format("error: %s, description: %s", response.error(), response.errorDescription()));
+
+        return new RedirectView(
+                String.format(
+                        "/error/index.html?error=%s&error_description=%s",
+                        response.error(), response.errorDescription()));
       }
     }
   }
