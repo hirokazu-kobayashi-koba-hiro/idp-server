@@ -1,6 +1,8 @@
 package org.idp.server.adapters.springboot;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.idp.server.adapters.springboot.operation.IdPScope;
@@ -28,16 +30,19 @@ public class SecurityConfig {
   String adminAuthViewUrl;
   String authViewUrl;
   String serverUrl;
+  List<String> additionalAuthViewUrls;
 
   public SecurityConfig(
       ManagementApiFilter managementApiFilter,
       @Value("${idp.configurations.adminAuthViewUrl}") String adminAuthViewUrl,
       @Value("${idp.configurations.authViewUrl}") String authViewUrl,
-      @Value("${idp.configurations.serverUrl}") String serverUrl) {
+      @Value("${idp.configurations.serverUrl}") String serverUrl,
+      @Value("${idp.configurations.additionalAuthViewUrls}") String additionalAuthViewUrls) {
     this.managementApiFilter = managementApiFilter;
     this.adminAuthViewUrl = adminAuthViewUrl;
     this.authViewUrl = authViewUrl;
     this.serverUrl = serverUrl;
+    this.additionalAuthViewUrls = transformAdditionalAuthViewUrls(additionalAuthViewUrls);
   }
 
   @Bean
@@ -76,7 +81,12 @@ public class SecurityConfig {
   public UrlBasedCorsConfigurationSource corsConfigurationSource() {
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     CorsConfiguration config = new CorsConfiguration();
-    config.setAllowedOrigins(List.of(adminAuthViewUrl, authViewUrl, "http://localhost:3100"));
+
+    List<String> allowedOrigins = new ArrayList<>(additionalAuthViewUrls);
+    allowedOrigins.add(adminAuthViewUrl);
+    allowedOrigins.add(authViewUrl);
+    config.setAllowedOrigins(allowedOrigins);
+
     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     config.setAllowedHeaders(List.of("*"));
     config.setAllowCredentials(true);
@@ -99,5 +109,13 @@ public class SecurityConfig {
   private String serverDomain() {
     URI uri = URI.create(serverUrl);
     return uri.getHost();
+  }
+
+  private List<String> transformAdditionalAuthViewUrls(String additionalAuthViewUrls) {
+    if (additionalAuthViewUrls == null || additionalAuthViewUrls.isEmpty()) {
+      return List.of();
+    }
+    return Arrays.stream(additionalAuthViewUrls.split(",")).toList();
+
   }
 }
