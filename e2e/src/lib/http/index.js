@@ -1,7 +1,14 @@
 import axios from "axios";
+import { wrapper } from "axios-cookiejar-support";
+import { CookieJar } from "tough-cookie";
+
+const jar = new CookieJar();
+const client = wrapper(axios.create({ jar, withCredentials: true }));
+
+
 export const get = async ({ url, headers }) => {
   try {
-    return await axios.get(url, {
+    return await client.get(url, {
       maxRedirects: 0,
       headers,
       withCredentials: true,
@@ -13,7 +20,7 @@ export const get = async ({ url, headers }) => {
 
 export const post = async ({ url, headers, body }) => {
   try {
-    return await axios.post(url, body, {
+    return await client.post(url, body, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         ...headers,
@@ -28,7 +35,7 @@ export const post = async ({ url, headers, body }) => {
 
 export const postWithJson = async ({ url, headers, body }) => {
   try {
-    return await axios.post(url, body, {
+    return await client.post(url, body, {
       headers,
       withCredentials: true
     });
