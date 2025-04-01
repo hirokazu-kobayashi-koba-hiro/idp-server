@@ -6,7 +6,6 @@ public enum StandardHookType {
   WEBHOOK,
   SLACK;
 
-
   public HookType toHookType() {
     return new HookType(name());
   }
