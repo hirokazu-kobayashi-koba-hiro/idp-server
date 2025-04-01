@@ -23,6 +23,7 @@ import org.idp.server.core.adapters.datasource.sharedsignal.SharedSignalFramewor
 import org.idp.server.core.adapters.datasource.tenant.TenantDataSource;
 import org.idp.server.core.adapters.datasource.token.database.OAuthTokenDataSource;
 import org.idp.server.core.adapters.hook.SlacklNotificationHookExecutor;
+import org.idp.server.core.adapters.hook.StandardHookType;
 import org.idp.server.core.adapters.hook.WebHookExecutor;
 import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialBlockCertClient;
@@ -47,7 +48,7 @@ import org.idp.server.core.handler.oauth.OAuthAuthorizeHandler;
 import org.idp.server.core.handler.oauth.OAuthDenyHandler;
 import org.idp.server.core.handler.oauth.OAuthHandler;
 import org.idp.server.core.handler.oauth.OAuthRequestHandler;
-import org.idp.server.core.handler.sharedsignal.EventHandler;
+import org.idp.server.core.handler.sharedsignal.SecurityEventHandler;
 import org.idp.server.core.handler.token.TokenRequestHandler;
 import org.idp.server.core.handler.tokenintrospection.TokenIntrospectionHandler;
 import org.idp.server.core.handler.tokenrevocation.TokenRevocationHandler;
@@ -237,12 +238,12 @@ public class IdpServerApplication {
     SharedSignalEventClient sharedSignalEventClient = new SharedSignalEventClient();
 
     HashMap<HookType, HookExecutor> hooks = new HashMap<>();
-    hooks.put(HookType.SLACK, new SlacklNotificationHookExecutor());
-    hooks.put(HookType.WEBHOOK, new WebHookExecutor());
+    hooks.put(StandardHookType.SLACK.toHookType(), new SlacklNotificationHookExecutor());
+    hooks.put(StandardHookType.WEBHOOK.toHookType(), new WebHookExecutor());
     AuthenticationHooks authenticationHooks = new AuthenticationHooks(hooks);
 
-    EventHandler eventHandler =
-        new EventHandler(
+    SecurityEventHandler securityEventHandler =
+        new SecurityEventHandler(
             tenantDataSource,
             eventDataSource,
             authenticationHooks,
@@ -315,7 +316,7 @@ public class IdpServerApplication {
 
     this.securityEventApi =
         TransactionInterceptor.createProxy(
-            new SecurityEventEntryService(eventHandler), SecurityEventApi.class);
+            new SecurityEventEntryService(securityEventHandler), SecurityEventApi.class);
 
     this.onboardingApi =
         TransactionInterceptor.createProxy(

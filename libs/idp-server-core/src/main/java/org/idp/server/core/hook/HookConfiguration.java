@@ -35,7 +35,7 @@ public class HookConfiguration implements JsonReadable {
   }
 
   public HookType hookType() {
-    return HookType.valueOf(type);
+    return new HookType(type);
   }
 
   public WebhookUrl webhookUrl() {

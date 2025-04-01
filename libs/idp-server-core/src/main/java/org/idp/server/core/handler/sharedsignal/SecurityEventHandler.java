@@ -6,7 +6,7 @@ import org.idp.server.core.sharedsignal.*;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantRepository;
 
-public class EventHandler {
+public class SecurityEventHandler {
 
   TenantRepository tenantRepository;
   EventRepository eventRepository;
@@ -14,9 +14,9 @@ public class EventHandler {
   HookConfigurationQueryRepository hookConfigurationQueryRepository;
   SharedSignalFrameworkConfigurationRepository sharedSignalFrameworkConfigurationRepository;
   SharedSignalEventGateway eventGateway;
-  Logger log = Logger.getLogger(EventHandler.class.getName());
+  Logger log = Logger.getLogger(SecurityEventHandler.class.getName());
 
-  public EventHandler(
+  public SecurityEventHandler(
       TenantRepository tenantRepository,
       EventRepository eventRepository,
       AuthenticationHooks authenticationHooks,
