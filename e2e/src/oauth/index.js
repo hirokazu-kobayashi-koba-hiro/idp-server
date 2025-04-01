@@ -208,6 +208,7 @@ export const requestAuthorizations = async ({
         }
       });
 
+      console.log(authorizeResponse.headers);
       console.log(authorizeResponse.data);
       const authorizationResponse = convertToAuthorizationResponse(
         authorizeResponse.data.redirect_uri

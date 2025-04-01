@@ -54,6 +54,7 @@ import org.idp.server.core.handler.tokenintrospection.TokenIntrospectionHandler;
 import org.idp.server.core.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.core.handler.userinfo.UserinfoHandler;
 import org.idp.server.core.hook.AuthenticationHooks;
+import org.idp.server.core.hook.AuthenticationHooksFactory;
 import org.idp.server.core.hook.HookExecutor;
 import org.idp.server.core.hook.HookType;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
@@ -237,10 +238,7 @@ public class IdpServerApplication {
 
     SharedSignalEventClient sharedSignalEventClient = new SharedSignalEventClient();
 
-    HashMap<HookType, HookExecutor> hooks = new HashMap<>();
-    hooks.put(StandardHookType.SLACK.toHookType(), new SlacklNotificationHookExecutor());
-    hooks.put(StandardHookType.WEBHOOK.toHookType(), new WebHookExecutor());
-    AuthenticationHooks authenticationHooks = new AuthenticationHooks(hooks);
+    AuthenticationHooks authenticationHooks = AuthenticationHooksFactory.create();
 
     SecurityEventHandler securityEventHandler =
         new SecurityEventHandler(

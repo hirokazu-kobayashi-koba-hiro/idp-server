@@ -24,6 +24,11 @@ public class SlacklNotificationHookExecutor implements HookExecutor {
   }
 
   @Override
+  public HookType type() {
+    return StandardHookType.SLACK.toHookType();
+  }
+
+  @Override
   public HookResult execute(
       Tenant tenant, HookTriggerType type, HookRequest request, HookConfiguration configuration) {
     String url = configuration.slackUrl();

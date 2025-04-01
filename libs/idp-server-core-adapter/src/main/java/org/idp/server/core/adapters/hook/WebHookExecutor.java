@@ -27,6 +27,11 @@ public class WebHookExecutor implements HookExecutor {
   }
 
   @Override
+  public HookType type() {
+    return StandardHookType.WEBHOOK.toHookType();
+  }
+
+  @Override
   public HookResult execute(
       Tenant tenant,
       HookTriggerType type,
