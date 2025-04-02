@@ -1,4 +1,4 @@
-package org.idp.server.core.authentication;
+package org.idp.server.core.authentication.email;
 
 import java.util.Random;
 

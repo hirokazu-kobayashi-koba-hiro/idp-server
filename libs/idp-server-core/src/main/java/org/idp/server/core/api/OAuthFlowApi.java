@@ -1,10 +1,10 @@
 package org.idp.server.core.api;
 
 import java.util.Map;
+import org.idp.server.core.authentication.MfaInteractionResult;
+import org.idp.server.core.authentication.MfaInteractionType;
 import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
 import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -17,10 +17,10 @@ public interface OAuthFlowApi {
   OAuthViewDataResponse getViewData(
       TenantIdentifier tenantIdentifier, String oauthRequestIdentifier);
 
-  OAuthUserInteractionResult interact(
+  MfaInteractionResult interact(
       TenantIdentifier tenantIdentifier,
       String oauthRequestIdentifier,
-      OAuthUserInteractionType type,
+      MfaInteractionType type,
       Map<String, Object> params);
 
   FederationRequestResponse requestFederation(

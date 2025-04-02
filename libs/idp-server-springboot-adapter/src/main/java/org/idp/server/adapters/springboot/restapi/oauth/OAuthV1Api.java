@@ -9,8 +9,8 @@ import java.util.Map;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
+import org.idp.server.core.authentication.MfaInteractionResult;
+import org.idp.server.core.authentication.StandardMfaInteractionType;
 import org.idp.server.core.oauth.io.OAuthAuthorizeResponse;
 import org.idp.server.core.oauth.io.OAuthDenyResponse;
 import org.idp.server.core.oauth.io.OAuthRequestResponse;
@@ -154,7 +154,7 @@ public class OAuthV1Api implements ParameterTransformable {
       @PathVariable("id") String id,
       @RequestBody Map<String, Object> params) {
 
-    OAuthUserInteractionResult result = oAuthFlowApi.interact(tenantId, id, OAuthUserInteractionType.SIGNUP_REQUEST, params);
+    MfaInteractionResult result = oAuthFlowApi.interact(tenantId, id, StandardMfaInteractionType.SIGNUP_REQUEST.toType(), params);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -194,10 +194,10 @@ public class OAuthV1Api implements ParameterTransformable {
       @RequestBody Map<String, Object> params) {
 
 
-    OAuthUserInteractionResult result = oAuthFlowApi.interact(
+    MfaInteractionResult result = oAuthFlowApi.interact(
             tenantId,
             id,
-            OAuthUserInteractionType.PASSWORD_AUTHENTICATION,
+            StandardMfaInteractionType.PASSWORD_AUTHENTICATION.toType(),
             params);
 
     HttpHeaders httpHeaders = new HttpHeaders();

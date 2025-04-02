@@ -29,6 +29,10 @@ import org.idp.server.core.adapters.httpclient.federation.FederationClient;
 import org.idp.server.core.adapters.httpclient.oauth.RequestObjectHttpClient;
 import org.idp.server.core.adapters.httpclient.sharedsignal.SharedSignalEventClient;
 import org.idp.server.core.api.*;
+import org.idp.server.core.authentication.MfaInteractionType;
+import org.idp.server.core.authentication.MfaInteractor;
+import org.idp.server.core.authentication.MfaInteractors;
+import org.idp.server.core.authentication.StandardMfaInteractionType;
 import org.idp.server.core.basic.sql.TransactionInterceptor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.federation.FederationService;
@@ -57,9 +61,6 @@ import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
 import org.idp.server.core.oauth.identity.UserAuthenticationService;
 import org.idp.server.core.oauth.identity.UserRegistrationService;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractors;
 import org.idp.server.core.protocol.*;
 import org.idp.server.core.sharedsignal.EventPublisher;
 import org.idp.server.core.sharedsignal.OAuthFlowEventPublisher;
@@ -87,7 +88,7 @@ public class IdpServerApplication {
       DatabaseConfig databaseConfig,
       String encryptionKey,
       OAuthRequestDelegate oAuthRequestDelegate,
-      Map<OAuthUserInteractionType, OAuthUserInteractor> additionalUserInteractions,
+      Map<MfaInteractionType, MfaInteractor> additionalUserInteractions,
       PasswordEncodeDelegation passwordEncodeDelegation,
       PasswordVerificationDelegation passwordVerificationDelegation,
       EventPublisher eventPublisher) {
@@ -248,11 +249,12 @@ public class IdpServerApplication {
         new ServerConfigurationHandler(serverConfigurationDataSource);
 
     // create instance
-    HashMap<OAuthUserInteractionType, OAuthUserInteractor> interactors =
+    HashMap<MfaInteractionType, MfaInteractor> interactors =
         new HashMap<>(additionalUserInteractions);
-    interactors.put(OAuthUserInteractionType.SIGNUP_REQUEST, userRegistrationService);
-    interactors.put(OAuthUserInteractionType.PASSWORD_AUTHENTICATION, userAuthenticationService);
-    OAuthUserInteractors oAuthUserInteractors = new OAuthUserInteractors(interactors);
+    interactors.put(StandardMfaInteractionType.SIGNUP_REQUEST.toType(), userRegistrationService);
+    interactors.put(
+        StandardMfaInteractionType.PASSWORD_AUTHENTICATION.toType(), userAuthenticationService);
+    MfaInteractors mfaInteractors = new MfaInteractors(interactors);
 
     this.idpServerStarterApi =
         TransactionInterceptor.createProxy(
@@ -273,7 +275,7 @@ public class IdpServerApplication {
             new OAuthFlowEntryService(
                 oAuthProtocol,
                 oAuthRequestDelegate,
-                oAuthUserInteractors,
+                mfaInteractors,
                 userDataSource,
                 userRegistrationService,
                 tenantDataSource,

@@ -5,15 +5,12 @@ import java.util.*;
 import org.idp.server.adapters.springboot.authorization.OAuthSessionService;
 import org.idp.server.adapters.springboot.notification.NotificationService;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.email.*;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.notification.EmailSendingRequest;
-import org.idp.server.core.oauth.interaction.OAuthInteractorUnSupportedException;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.oauth.identity.UserRepository;
@@ -21,7 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-public class EmailAuthenticationService implements OAuthUserInteractor {
+public class EmailAuthenticationService implements MfaInteractor {
 
   NotificationService notificationService;
   OAuthSessionService oAuthSessionService;
@@ -38,9 +35,9 @@ public class EmailAuthenticationService implements OAuthUserInteractor {
   }
 
   @Override
-  public OAuthUserInteractionResult interact(Tenant tenant, OAuthSession oAuthSession, OAuthUserInteractionType type, Map<String, Object> params, UserRepository userRepository) {
-    switch (type) {
-      case EMAIL_VERIFICATION_CHALLENGE -> {
+  public MfaInteractionResult interact(Tenant tenant, OAuthSession oAuthSession, MfaInteractionType type, Map<String, Object> params, UserRepository userRepository) {
+    switch (type.name()) {
+      case "EMAIL_VERIFICATION_CHALLENGE" -> {
 
         EmailVerificationChallenge emailVerificationChallenge =
                 challenge(oAuthSession.user());
@@ -51,10 +48,10 @@ public class EmailAuthenticationService implements OAuthUserInteractor {
 
         oAuthSessionService.updateSession(updatedSession);
 
-        return new OAuthUserInteractionResult(type, Map.of(), DefaultEventType.email_verification_request);
+        return new MfaInteractionResult(type, Map.of(), DefaultEventType.email_verification_request);
       }
 
-      case EMAIL_VERIFICATION -> {
+      case "EMAIL_VERIFICATION" -> {
         String verificationCode = (String) params.getOrDefault("verification_code", "");
 
         if (!oAuthSession.hasAttribute("emailVerificationChallenge")) {
@@ -78,11 +75,11 @@ public class EmailAuthenticationService implements OAuthUserInteractor {
         response.put("user", user.toMap());
         response.put("authentication", authentication.toMap());
 
-        return new OAuthUserInteractionResult(type, user, authentication, response, DefaultEventType.email_verification_success);
+        return new MfaInteractionResult(type, user, authentication, response, DefaultEventType.email_verification_success);
       }
     }
 
-    throw new OAuthInteractorUnSupportedException(String.format("Email verification not supported: %s", type));
+    throw new MfaInteractorUnSupportedException(String.format("Email verification not supported: %s", type));
   }
 
   private EmailVerificationChallenge challenge(User user) {

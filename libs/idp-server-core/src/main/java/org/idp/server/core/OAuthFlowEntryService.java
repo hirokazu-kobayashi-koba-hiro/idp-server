@@ -3,6 +3,7 @@ package org.idp.server.core;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.api.OAuthFlowApi;
+import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.federation.FederationService;
@@ -17,7 +18,6 @@ import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRegistrationService;
 import org.idp.server.core.oauth.identity.UserRepository;
-import org.idp.server.core.oauth.interaction.*;
 import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
@@ -35,7 +35,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   OAuthProtocol oAuthProtocol;
   OAuthRequestDelegate oAuthRequestDelegate;
   UserRepository userRepository;
-  OAuthUserInteractors oAuthUserInteractors;
+  MfaInteractors mfaInteractors;
   UserRegistrationService userRegistrationService;
   TenantRepository tenantRepository;
   FederationService federationService;
@@ -44,7 +44,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   public OAuthFlowEntryService(
       OAuthProtocol oAuthProtocol,
       OAuthRequestDelegate oAuthSessionService,
-      OAuthUserInteractors oAuthUserInteractors,
+      MfaInteractors mfaInteractors,
       UserRepository userRepository,
       UserRegistrationService userRegistrationService,
       TenantRepository tenantRepository,
@@ -52,7 +52,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       OAuthFlowEventPublisher eventPublisher) {
     this.oAuthProtocol = oAuthProtocol;
     this.oAuthRequestDelegate = oAuthSessionService;
-    this.oAuthUserInteractors = oAuthUserInteractors;
+    this.mfaInteractors = mfaInteractors;
     this.userRepository = userRepository;
     this.userRegistrationService = userRegistrationService;
     this.tenantRepository = tenantRepository;
@@ -81,10 +81,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   }
 
   @Override
-  public OAuthUserInteractionResult interact(
+  public MfaInteractionResult interact(
       TenantIdentifier tenantIdentifier,
       String oauthRequestIdentifier,
-      OAuthUserInteractionType type,
+      MfaInteractionType type,
       Map<String, Object> params) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
@@ -92,10 +92,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         oAuthProtocol.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
     OAuthSession oAuthSession = oAuthRequestDelegate.findSession(authorizationRequest.sessionKey());
 
-    OAuthUserInteractor oAuthUserInteractor = oAuthUserInteractors.get(type);
+    MfaInteractor mfaInteractor = mfaInteractors.get(type);
 
-    OAuthUserInteractionResult result =
-        oAuthUserInteractor.interact(tenant, oAuthSession, type, params, userRepository);
+    MfaInteractionResult result =
+        mfaInteractor.interact(tenant, oAuthSession, type, params, userRepository);
 
     if (result.hasUser()) {
       OAuthSession session = oAuthRequestDelegate.findSession(authorizationRequest.sessionKey());

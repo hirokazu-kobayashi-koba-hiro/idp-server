@@ -4,8 +4,8 @@ import java.util.Map;
 
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OAuthFlowApi;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
+import org.idp.server.core.authentication.MfaInteractionResult;
+import org.idp.server.core.authentication.StandardMfaInteractionType;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -26,7 +26,7 @@ public class EmailVerificationV1Api {
   public ResponseEntity<?> challenge(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @PathVariable("id") String id) {
 
-    OAuthUserInteractionResult result = oAuthFlowApi.interact(tenantIdentifier, id, OAuthUserInteractionType.EMAIL_VERIFICATION_CHALLENGE, Map.of());
+    MfaInteractionResult result = oAuthFlowApi.interact(tenantIdentifier, id, StandardMfaInteractionType.EMAIL_VERIFICATION_CHALLENGE.toType(), Map.of());
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -41,7 +41,7 @@ public class EmailVerificationV1Api {
       @RequestBody Map<String, Object> params) {
 
 
-    OAuthUserInteractionResult result = oAuthFlowApi.interact(tenantIdentifier, id, OAuthUserInteractionType.EMAIL_VERIFICATION, params);
+    MfaInteractionResult result = oAuthFlowApi.interact(tenantIdentifier, id, StandardMfaInteractionType.EMAIL_VERIFICATION.toType(), params);
 
     return new ResponseEntity<>(result.response(), HttpStatus.OK);
   }

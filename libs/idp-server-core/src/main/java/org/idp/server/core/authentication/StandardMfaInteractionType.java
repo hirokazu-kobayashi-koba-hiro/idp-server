@@ -1,6 +1,6 @@
-package org.idp.server.core.oauth.interaction;
+package org.idp.server.core.authentication;
 
-public enum OAuthUserInteractionType {
+public enum StandardMfaInteractionType {
   SIGNUP_REQUEST,
   SIGNUP,
   PASSWORD_AUTHENTICATION,
@@ -11,5 +11,9 @@ public enum OAuthUserInteractionType {
   WEBAUTHN_AUTHENTICATION_CHALLENGE,
   WEBAUTHN_AUTHENTICATION,
   FEDERATION_REQUEST,
-  FEDERATION_CALLBACK,
+  FEDERATION_CALLBACK;
+
+  public MfaInteractionType toType() {
+    return new MfaInteractionType(name());
+  }
 }

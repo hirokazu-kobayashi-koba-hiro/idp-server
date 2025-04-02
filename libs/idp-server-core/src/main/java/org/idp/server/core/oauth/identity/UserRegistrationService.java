@@ -2,15 +2,15 @@ package org.idp.server.core.oauth.identity;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.authentication.MfaInteractionResult;
+import org.idp.server.core.authentication.MfaInteractionType;
+import org.idp.server.core.authentication.MfaInteractor;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
 
-public class UserRegistrationService implements OAuthUserInteractor {
+public class UserRegistrationService implements MfaInteractor {
 
   UserRepository userRepository;
   PasswordEncodeDelegation passwordEncodeDelegation;
@@ -22,10 +22,10 @@ public class UserRegistrationService implements OAuthUserInteractor {
   }
 
   @Override
-  public OAuthUserInteractionResult interact(
+  public MfaInteractionResult interact(
       Tenant tenant,
       OAuthSession oAuthSession,
-      OAuthUserInteractionType type,
+      MfaInteractionType type,
       Map<String, Object> request,
       UserRepository userRepository) {
     String username = (String) request.get("username");
@@ -39,7 +39,7 @@ public class UserRegistrationService implements OAuthUserInteractor {
     response.put("user", user.toMap());
     response.put("authentication", authentication.toMap());
 
-    return new OAuthUserInteractionResult(
+    return new MfaInteractionResult(
         type, user, authentication, response, DefaultEventType.user_signup);
   }
 

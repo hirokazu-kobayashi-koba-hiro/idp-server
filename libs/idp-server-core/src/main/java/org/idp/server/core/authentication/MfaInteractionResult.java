@@ -1,4 +1,4 @@
-package org.idp.server.core.oauth.interaction;
+package org.idp.server.core.authentication;
 
 import java.util.Map;
 import java.util.Objects;
@@ -6,23 +6,23 @@ import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 
-public class OAuthUserInteractionResult {
+public class MfaInteractionResult {
 
-  OAuthUserInteractionType type;
+  MfaInteractionType type;
   User user;
   Authentication authentication;
   Map<String, Object> response;
   DefaultEventType eventType;
 
-  public OAuthUserInteractionResult(
-      OAuthUserInteractionType type, Map<String, Object> response, DefaultEventType eventType) {
+  public MfaInteractionResult(
+      MfaInteractionType type, Map<String, Object> response, DefaultEventType eventType) {
     this.type = type;
     this.response = response;
     this.eventType = eventType;
   }
 
-  public OAuthUserInteractionResult(
-      OAuthUserInteractionType type,
+  public MfaInteractionResult(
+      MfaInteractionType type,
       User user,
       Authentication authentication,
       Map<String, Object> response,
@@ -34,7 +34,7 @@ public class OAuthUserInteractionResult {
     this.eventType = eventType;
   }
 
-  public OAuthUserInteractionType type() {
+  public MfaInteractionType type() {
     return type;
   }
 

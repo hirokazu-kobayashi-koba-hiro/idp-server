@@ -8,19 +8,16 @@ import org.idp.server.authenticators.webauthn.*;
 import org.idp.server.authenticators.webauthn.service.internal.WebAuthnConfigurationService;
 import org.idp.server.authenticators.webauthn.service.internal.WebAuthnCredentialService;
 import org.idp.server.authenticators.webauthn.service.internal.WebAuthnSessionService;
+import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
-import org.idp.server.core.oauth.interaction.OAuthInteractorUnSupportedException;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionResult;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractionType;
-import org.idp.server.core.oauth.interaction.OAuthUserInteractor;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
 
-public class WebAuthnService implements OAuthUserInteractor {
+public class WebAuthnService implements MfaInteractor {
 
   WebAuthnConfigurationService webAuthnConfigurationService;
   WebAuthnSessionService webAuthnSessionService;
@@ -36,24 +33,24 @@ public class WebAuthnService implements OAuthUserInteractor {
   }
 
   @Override
-  public OAuthUserInteractionResult interact(
+  public MfaInteractionResult interact(
       Tenant tenant,
       OAuthSession oAuthSession,
-      OAuthUserInteractionType type,
+      MfaInteractionType type,
       Map<String, Object> params,
       UserRepository userRepository) {
 
-    switch (type) {
-      case WEBAUTHN_REGISTRATION_CHALLENGE -> {
+    switch (type.name()) {
+      case "WEBAUTHN_REGISTRATION_CHALLENGE" -> {
         WebAuthnSession webAuthnSession = challengeRegistration(tenant);
 
         Map<String, Object> response = new HashMap<>();
         response.put("challenge", webAuthnSession.challengeAsString());
 
-        return new OAuthUserInteractionResult(
+        return new MfaInteractionResult(
             type, response, DefaultEventType.webauthn_registration_challenge);
       }
-      case WEBAUTHN_REGISTRATION -> {
+      case "WEBAUTHN_REGISTRATION" -> {
         String request = (String) params.get("request");
         String userId = oAuthSession.user().sub();
 
@@ -61,19 +58,19 @@ public class WebAuthnService implements OAuthUserInteractor {
         Map<String, Object> response = new HashMap<>();
         response.put("registration", webAuthnCredential.toMap());
 
-        return new OAuthUserInteractionResult(
+        return new MfaInteractionResult(
             type, response, DefaultEventType.webauthn_registration_success);
       }
-      case WEBAUTHN_AUTHENTICATION_CHALLENGE -> {
+      case "WEBAUTHN_AUTHENTICATION_CHALLENGE" -> {
         WebAuthnSession webAuthnSession = challengeAuthentication(tenant);
 
         Map<String, Object> response = new HashMap<>();
         response.put("challenge", webAuthnSession.challengeAsString());
 
-        return new OAuthUserInteractionResult(
+        return new MfaInteractionResult(
             type, response, DefaultEventType.webauthn_authentication_challenge);
       }
-      case WEBAUTHN_AUTHENTICATION -> {
+      case "WEBAUTHN_AUTHENTICATION" -> {
         String request = (String) params.get("request");
 
         User user = verifyAuthentication(tenant, userRepository, request);
@@ -87,11 +84,11 @@ public class WebAuthnService implements OAuthUserInteractor {
         response.put("user", user.toMap());
         response.put("authentication", authentication.toMap());
 
-        return new OAuthUserInteractionResult(
+        return new MfaInteractionResult(
             type, user, authentication, response, DefaultEventType.webauthn_authentication_success);
       }
     }
-    throw new OAuthInteractorUnSupportedException(
+    throw new MfaInteractorUnSupportedException(
         "WebAuthnInteractor is not supported  type " + type);
   }
 
