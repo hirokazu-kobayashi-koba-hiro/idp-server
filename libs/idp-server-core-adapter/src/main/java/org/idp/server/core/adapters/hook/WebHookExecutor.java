@@ -42,10 +42,11 @@ public class WebHookExecutor implements HookExecutor {
       WebhookUrl webhookUrl = configuration.webhookUrl();
       WebhookMethod webhookMethod = configuration.webhookMethod();
       WebhookHeaders webhookHeaders = configuration.webhookHeaders();
-      WebhookParameters webhookParameters = configuration.webhookParameters();
+      WebhookDynamicBodyKeys webhookDynamicBodyKeys = configuration.webhookDynamicBodyKeys();
+      WebhookStaticBody webhookStaticBody = configuration.webhookStaticBody();
 
       WebhookRequestBodyCreator requestBodyCreator =
-          new WebhookRequestBodyCreator(hookRequest, webhookParameters);
+          new WebhookRequestBodyCreator(hookRequest, webhookDynamicBodyKeys, webhookStaticBody);
       Map<String, Object> requestBody = requestBodyCreator.create();
 
       HttpRequest.Builder httpRequestBuilder =

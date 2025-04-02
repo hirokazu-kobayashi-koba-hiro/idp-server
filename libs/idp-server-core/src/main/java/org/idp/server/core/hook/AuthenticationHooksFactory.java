@@ -7,17 +7,17 @@ import java.util.logging.Logger;
 
 public class AuthenticationHooksFactory {
 
-    private static Logger log = Logger.getLogger(AuthenticationHooksFactory.class.getName());
+  private static Logger log = Logger.getLogger(AuthenticationHooksFactory.class.getName());
 
-    public static AuthenticationHooks create() {
-        Map<HookType, HookExecutor> hookExecutors = new HashMap<>();
-        ServiceLoader<HookExecutor> loader = ServiceLoader.load(HookExecutor.class);
+  public static AuthenticationHooks create() {
+    Map<HookType, HookExecutor> hookExecutors = new HashMap<>();
+    ServiceLoader<HookExecutor> loader = ServiceLoader.load(HookExecutor.class);
 
-        for (HookExecutor executor : loader) {
-            hookExecutors.put(executor.type(), executor);
-            log.info("Dynamic Registered hook executor: " + executor.type().name());
-        }
-
-        return new AuthenticationHooks(hookExecutors);
+    for (HookExecutor executor : loader) {
+      hookExecutors.put(executor.type(), executor);
+      log.info("Dynamic Registered hook executor: " + executor.type().name());
     }
+
+    return new AuthenticationHooks(hookExecutors);
+  }
 }

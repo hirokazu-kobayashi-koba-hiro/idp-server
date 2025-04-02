@@ -4,7 +4,8 @@ import org.idp.server.core.hook.HookType;
 
 public enum StandardHookType {
   WEBHOOK,
-  SLACK;
+  SLACK,
+  DATADOG_LOG;
 
   public HookType toHookType() {
     return new HookType(name());

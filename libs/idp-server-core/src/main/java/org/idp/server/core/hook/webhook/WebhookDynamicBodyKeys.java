@@ -3,13 +3,13 @@ package org.idp.server.core.hook.webhook;
 import java.util.Iterator;
 import java.util.List;
 
-public class WebhookParameters implements Iterable<String> {
+public class WebhookDynamicBodyKeys implements Iterable<String> {
 
   List<String> values;
 
-  public WebhookParameters() {}
+  public WebhookDynamicBodyKeys() {}
 
-  public WebhookParameters(List<String> values) {
+  public WebhookDynamicBodyKeys(List<String> values) {
     this.values = values;
   }
 

@@ -3,10 +3,7 @@ package org.idp.server.core.hook;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.basic.json.JsonReadable;
-import org.idp.server.core.hook.webhook.WebhookHeaders;
-import org.idp.server.core.hook.webhook.WebhookMethod;
-import org.idp.server.core.hook.webhook.WebhookParameters;
-import org.idp.server.core.hook.webhook.WebhookUrl;
+import org.idp.server.core.hook.webhook.*;
 
 public class HookConfiguration implements JsonReadable {
 
@@ -18,7 +15,8 @@ public class HookConfiguration implements JsonReadable {
   String webhookUrl;
   String webhookMethod;
   Map<String, String> webhookHeaders;
-  List<String> webhookParameters;
+  List<String> webhookDynamicBodyKeys;
+  Map<String, String> webhookStaticBody;
 
   // slack notification
   String slackUrl;
@@ -50,8 +48,12 @@ public class HookConfiguration implements JsonReadable {
     return new WebhookHeaders(webhookHeaders);
   }
 
-  public WebhookParameters webhookParameters() {
-    return new WebhookParameters(webhookParameters);
+  public WebhookDynamicBodyKeys webhookDynamicBodyKeys() {
+    return new WebhookDynamicBodyKeys(webhookDynamicBodyKeys);
+  }
+
+  public WebhookStaticBody webhookStaticBody() {
+    return new WebhookStaticBody(webhookStaticBody);
   }
 
   public String slackUrl() {

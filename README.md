@@ -6,15 +6,16 @@
 
 ## Overview
 
-This project is a flexible and extensible Identity Provider (IdP) implementation that fully supports the OAuth 2.0 and OpenID Connect specifications.
+This project is a flexible and extensible Identity Provider (IdP) implementation that fully supports the OAuth 2.0 and
+OpenID Connect specifications.
 
 It can be used as:
 
 - A **standalone server** for managing authentication and authorization flows out of the box
 - A **Java library** that can be embedded into your own applications to add OAuth2/OIDC functionality programmatically
 
-Built with modularity and customization in mind, it provides robust APIs for handling users, clients, grants, MFA, and hooks, while remaining lightweight and easy to integrate into any Java-based ecosystem.
-
+Built with modularity and customization in mind, it provides robust APIs for handling users, clients, grants, MFA, and
+hooks, while remaining lightweight and easy to integrate into any Java-based ecosystem.
 
 ## 🗂 System Architecture (Container Level)
 
@@ -73,16 +74,19 @@ mfa --> email
 ### 🗂 System Architecture (Container Level)
 
 This diagram illustrates the core container-level architecture of the IdP service.  
-The system consists of a frontend built with React / Next.js and a backend powered by Spring Boot, accessed via a web browser by end users.
+The system consists of a frontend built with React / Next.js and a backend powered by Spring Boot, accessed via a web
+browser by end users.
 
 - The **Backend API** is responsible for core logic such as authentication, authorization, and client management.
-- **MFA Interactors** handle multi-factor authentication mechanisms, supporting both Passkey-based authentication and Email verification flows.
-- **Hook Executors** are triggered during authentication or administrative events and send notifications to external systems such as Slack or generic Webhook endpoints.
+- **MFA Interactors** handle multi-factor authentication mechanisms, supporting both Passkey-based authentication and
+  Email verification flows.
+- **Hook Executors** are triggered during authentication or administrative events and send notifications to external
+  systems such as Slack or generic Webhook endpoints.
 - The service integrates with external **OIDC Providers** to support federation and identity brokering use cases.
 - **PostgreSQL** is used as the primary data store to persist user, client, and configuration data.
 
-This architecture balances **security**, **extensibility**, and **integration flexibility**, enabling a robust foundation for modern identity management.
-
+This architecture balances **security**, **extensibility**, and **integration flexibility**, enabling a robust
+foundation for modern identity management.
 
 ## Features
 
@@ -119,7 +123,7 @@ This architecture balances **security**, **extensibility**, and **integration fl
 |                     | Applications                          | ⚠️        | ✅    | ✅     | ✅            | Allows application creation, modification, and deletion.                                                                                                                                  |
 |                     | Users                                 | ⚠️        | ✅    | ✅     | ✅            | Allows user creation, modification, and deletion.                                                                                                                                         |
 | **Monitoring**      | Audit Logging                         | ✅         | ❌    | ✅     | ✅            | Tracks authentication events and logs security activities.                                                                                                                                |
-|                     | Monitoring                            | ❌         | ❌    | ✅     | ✅            | Integrate to logging service.                                                                                                                                                             |
+|                     | Monitoring                            | ✅         | ❌    | ✅     | ✅            | Integrate to logging service.                                                                                                                                                             |
 |                     | Security Alerts                       | ❌         | ❌    | ❌     | ✅            | Notifies administrators of suspicious login attempts or breaches.                                                                                                                         |
 |                     | Integration with SIEM                 | ❌         | ❌    | ❌     | ✅            | Supports integration with security monitoring tools.                                                                                                                                      |
 | **Developer Tools** | SDKs & Libraries                      | ❌         | ✅    | ✅     | ✅            | Provides SDKs for React, Angular, Vue, Node.js, .NET, Java, and more.                                                                                                                     |

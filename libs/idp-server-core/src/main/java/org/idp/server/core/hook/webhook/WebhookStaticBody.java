@@ -3,11 +3,11 @@ package org.idp.server.core.hook.webhook;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class WebhookHeaders {
+public class WebhookStaticBody {
 
   Map<String, String> values;
 
-  public WebhookHeaders(Map<String, String> values) {
+  public WebhookStaticBody(Map<String, String> values) {
     this.values = values;
   }
 
@@ -30,7 +30,7 @@ public class WebhookHeaders {
     values.forEach(action);
   }
 
-  public String getValueAsString(String key) {
-    return values.get(key);
+  public boolean exists() {
+    return values != null && !values.isEmpty();
   }
 }

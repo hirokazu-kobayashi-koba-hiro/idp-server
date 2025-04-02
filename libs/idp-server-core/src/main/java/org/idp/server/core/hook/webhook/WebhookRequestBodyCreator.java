@@ -7,17 +7,26 @@ import org.idp.server.core.hook.HookRequest;
 public class WebhookRequestBodyCreator {
 
   HookRequest hookRequest;
-  WebhookParameters webhookParameters;
+  WebhookDynamicBodyKeys webhookDynamicBodyKeys;
+  WebhookStaticBody webhookStaticBody;
 
-  public WebhookRequestBodyCreator(HookRequest hookRequest, WebhookParameters webhookParameters) {
+  public WebhookRequestBodyCreator(
+      HookRequest hookRequest,
+      WebhookDynamicBodyKeys webhookDynamicBodyKeys,
+      WebhookStaticBody webhookStaticBody) {
     this.hookRequest = hookRequest;
-    this.webhookParameters = webhookParameters;
+    this.webhookDynamicBodyKeys = webhookDynamicBodyKeys;
+    this.webhookStaticBody = webhookStaticBody;
   }
 
   public Map<String, Object> create() {
     Map<String, Object> body = new HashMap<>();
 
-    for (String key : webhookParameters) {
+    if (webhookStaticBody.exists()) {
+      body.putAll(webhookStaticBody.toMap());
+    }
+
+    for (String key : webhookDynamicBodyKeys) {
       Object value = hookRequest.getValue(key);
       body.put(key, value);
     }
