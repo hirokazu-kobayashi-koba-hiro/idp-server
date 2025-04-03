@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.sharedsignal.DefaultEventType;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
 
 public class MfaInteractionResult {
 
@@ -12,10 +12,10 @@ public class MfaInteractionResult {
   User user;
   Authentication authentication;
   Map<String, Object> response;
-  DefaultEventType eventType;
+  DefaultSecurityEventType eventType;
 
   public MfaInteractionResult(
-      MfaInteractionType type, Map<String, Object> response, DefaultEventType eventType) {
+      MfaInteractionType type, Map<String, Object> response, DefaultSecurityEventType eventType) {
     this.type = type;
     this.response = response;
     this.eventType = eventType;
@@ -26,7 +26,7 @@ public class MfaInteractionResult {
       User user,
       Authentication authentication,
       Map<String, Object> response,
-      DefaultEventType eventType) {
+      DefaultSecurityEventType eventType) {
     this.type = type;
     this.user = user;
     this.authentication = authentication;
@@ -50,7 +50,7 @@ public class MfaInteractionResult {
     return response;
   }
 
-  public DefaultEventType eventType() {
+  public DefaultSecurityEventType eventType() {
     return eventType;
   }
 

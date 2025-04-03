@@ -4,7 +4,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.SecurityEventApi;
-import org.idp.server.core.sharedsignal.Event;
+import org.idp.server.core.security.SecurityEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,7 +15,7 @@ public class EventRetryScheduler {
 
   Logger log = LoggerFactory.getLogger(EventRetryScheduler.class);
 
-  Queue<Event> retryQueue = new ConcurrentLinkedQueue<>();
+  Queue<SecurityEvent> retryQueue = new ConcurrentLinkedQueue<>();
 
   SecurityEventApi securityEventApi;
 
@@ -23,20 +23,20 @@ public class EventRetryScheduler {
     this.securityEventApi = idpServerApplication.eventFunction();
   }
 
-  public void enqueue(Event event) {
-    retryQueue.add(event);
+  public void enqueue(SecurityEvent securityEvent) {
+    retryQueue.add(securityEvent);
   }
 
   @Scheduled(fixedDelay = 60_000)
   public void resendFailedEvents() {
     while (!retryQueue.isEmpty()) {
-      Event event = retryQueue.poll();
+      SecurityEvent securityEvent = retryQueue.poll();
       try {
-        log.info("retry event: {}", event.toMap());
-        securityEventApi.handle(event);
+        log.info("retry event: {}", securityEvent.toMap());
+        securityEventApi.handle(securityEvent);
       } catch (Exception e) {
-        log.error("retry event error: {}", event.toMap());
-        retryQueue.add(event);
+        log.error("retry event error: {}", securityEvent.toMap());
+        retryQueue.add(securityEvent);
       }
     }
   }

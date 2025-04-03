@@ -12,7 +12,7 @@ import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserNotFoundException;
 import org.idp.server.core.oauth.identity.UserRepository;
-import org.idp.server.core.sharedsignal.DefaultEventType;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 
 public class PasswordAuthenticationInteractor implements MfaInteractor {
@@ -46,7 +46,7 @@ public class PasswordAuthenticationInteractor implements MfaInteractor {
     response.put("authentication", authentication.toMap());
 
     return new MfaInteractionResult(
-        type, user, authentication, response, DefaultEventType.password_success);
+        type, user, authentication, response, DefaultSecurityEventType.password_success);
   }
 
   private User authenticateWithPassword(

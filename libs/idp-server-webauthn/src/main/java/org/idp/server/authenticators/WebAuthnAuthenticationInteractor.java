@@ -11,7 +11,7 @@ import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
-import org.idp.server.core.sharedsignal.DefaultEventType;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 
 public class WebAuthnAuthenticationInteractor implements MfaInteractor {
@@ -62,6 +62,6 @@ public class WebAuthnAuthenticationInteractor implements MfaInteractor {
     response.put("authentication", authentication.toMap());
 
     return new MfaInteractionResult(
-        type, user, authentication, response, DefaultEventType.webauthn_authentication_success);
+        type, user, authentication, response, DefaultSecurityEventType.webauthn_authentication_success);
   }
 }

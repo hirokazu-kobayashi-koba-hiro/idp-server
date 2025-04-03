@@ -2,7 +2,7 @@ package org.idp.server.adapters.springboot;
 
 import org.idp.server.adapters.springboot.event.EventRetryScheduler;
 import org.idp.server.adapters.springboot.event.EventRunnable;
-import org.idp.server.core.sharedsignal.Event;
+import org.idp.server.core.security.SecurityEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -33,8 +33,8 @@ public class AsyncConfig {
           logger.warn("Rejected Execution Handler");
 
           if (r instanceof EventRunnable) {
-            Event event = ((EventRunnable) r).getEvent();
-            retryScheduler.enqueue(event);
+            SecurityEvent securityEvent = ((EventRunnable) r).getEvent();
+            retryScheduler.enqueue(securityEvent);
           } else {
 
             logger.error("unknown EventRunnable" + r.getClass().getName());

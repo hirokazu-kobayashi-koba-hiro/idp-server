@@ -18,7 +18,7 @@ import org.idp.server.core.adapters.datasource.identity.UserDataSource;
 import org.idp.server.core.adapters.datasource.oauth.database.code.AuthorizationCodeGrantDataSource;
 import org.idp.server.core.adapters.datasource.oauth.database.request.AuthorizationRequestDataSource;
 import org.idp.server.core.adapters.datasource.organization.OrganizationDataSource;
-import org.idp.server.core.adapters.datasource.sharedsignal.EventDataSource;
+import org.idp.server.core.adapters.datasource.sharedsignal.SecurityEventDataSource;
 import org.idp.server.core.adapters.datasource.sharedsignal.SharedSignalFrameworkConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.tenant.TenantDataSource;
 import org.idp.server.core.adapters.datasource.token.database.OAuthTokenDataSource;
@@ -45,7 +45,7 @@ import org.idp.server.core.handler.oauth.OAuthAuthorizeHandler;
 import org.idp.server.core.handler.oauth.OAuthDenyHandler;
 import org.idp.server.core.handler.oauth.OAuthHandler;
 import org.idp.server.core.handler.oauth.OAuthRequestHandler;
-import org.idp.server.core.handler.sharedsignal.SecurityEventHandler;
+import org.idp.server.core.handler.security.SecurityEventHandler;
 import org.idp.server.core.handler.token.TokenRequestHandler;
 import org.idp.server.core.handler.tokenintrospection.TokenIntrospectionHandler;
 import org.idp.server.core.handler.tokenrevocation.TokenRevocationHandler;
@@ -58,8 +58,8 @@ import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
 import org.idp.server.core.oauth.identity.UserRegistrationService;
 import org.idp.server.core.protocol.*;
-import org.idp.server.core.sharedsignal.EventPublisher;
-import org.idp.server.core.sharedsignal.OAuthFlowEventPublisher;
+import org.idp.server.core.security.SecurityEventPublisher;
+import org.idp.server.core.security.OAuthFlowEventPublisher;
 import org.idp.server.core.type.verifiablecredential.Format;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreator;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreators;
@@ -86,7 +86,7 @@ public class IdpServerApplication {
       OAuthRequestDelegate oAuthRequestDelegate,
       PasswordEncodeDelegation passwordEncodeDelegation,
       PasswordVerificationDelegation passwordVerificationDelegation,
-      EventPublisher eventPublisher) {
+      SecurityEventPublisher securityEventPublisher) {
 
     TransactionManager.setConnectionConfig(
         databaseConfig.url(), databaseConfig.username(), databaseConfig.password());
@@ -104,7 +104,7 @@ public class IdpServerApplication {
         new ClientConfigurationDataSource();
     VerifiableCredentialTransactionDataSource verifiableCredentialTransactionDataSource =
         new VerifiableCredentialTransactionDataSource();
-    EventDataSource eventDataSource = new EventDataSource();
+    SecurityEventDataSource eventDataSource = new SecurityEventDataSource();
     FederatableIdProviderConfigurationDataSource federatableIdProviderConfigurationDataSource =
         new FederatableIdProviderConfigurationDataSource();
     FederationSessionDataSource federationSessionDataSource = new FederationSessionDataSource();
@@ -266,7 +266,7 @@ public class IdpServerApplication {
                 passwordEncodeDelegation),
             IdpServerStarterApi.class);
 
-    OAuthFlowEventPublisher oAuthFLowEventPublisher = new OAuthFlowEventPublisher(eventPublisher);
+    OAuthFlowEventPublisher oAuthFLowEventPublisher = new OAuthFlowEventPublisher(securityEventPublisher);
 
     this.oAuthFlowApi =
         TransactionInterceptor.createProxy(

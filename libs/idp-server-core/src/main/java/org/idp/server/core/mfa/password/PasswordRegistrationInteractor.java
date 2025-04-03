@@ -8,7 +8,7 @@ import org.idp.server.core.mfa.MfaInteractor;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.*;
-import org.idp.server.core.sharedsignal.DefaultEventType;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 
 public class PasswordRegistrationInteractor implements MfaInteractor {
@@ -46,6 +46,6 @@ public class PasswordRegistrationInteractor implements MfaInteractor {
     response.put("authentication", authentication.toMap());
 
     return new MfaInteractionResult(
-        type, user, authentication, response, DefaultEventType.user_signup);
+        type, user, authentication, response, DefaultSecurityEventType.user_signup);
   }
 }

@@ -22,7 +22,8 @@ import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.protocol.OAuthProtocol;
-import org.idp.server.core.sharedsignal.*;
+import org.idp.server.core.security.*;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
@@ -165,7 +166,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 
-    eventPublisher.publish(tenant, authorizationRequest, updatedUser, DefaultEventType.login);
+    eventPublisher.publish(tenant, authorizationRequest, updatedUser, DefaultSecurityEventType.login);
 
     return authorize;
   }
@@ -191,7 +192,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(authAuthorizeRequest);
 
     eventPublisher.publish(
-        tenant, authorizationRequest, session.user(), DefaultEventType.login_with_session);
+        tenant, authorizationRequest, session.user(), DefaultSecurityEventType.login_with_session);
 
     return authorize;
   }

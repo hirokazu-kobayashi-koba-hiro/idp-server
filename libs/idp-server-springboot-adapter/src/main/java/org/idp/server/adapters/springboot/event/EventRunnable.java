@@ -1,24 +1,24 @@
 package org.idp.server.adapters.springboot.event;
 
 import java.util.function.Consumer;
-import org.idp.server.core.sharedsignal.Event;
+import org.idp.server.core.security.SecurityEvent;
 
 public class EventRunnable implements Runnable {
 
-  Event event;
-  Consumer<Event> handler;
+  SecurityEvent securityEvent;
+  Consumer<SecurityEvent> handler;
 
-  public EventRunnable(Event event, Consumer<Event> handler) {
-    this.event = event;
+  public EventRunnable(SecurityEvent securityEvent, Consumer<SecurityEvent> handler) {
+    this.securityEvent = securityEvent;
     this.handler = handler;
   }
 
-  public Event getEvent() {
-    return event;
+  public SecurityEvent getEvent() {
+    return securityEvent;
   }
 
   @Override
   public void run() {
-    handler.accept(event);
+    handler.accept(securityEvent);
   }
 }

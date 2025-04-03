@@ -8,7 +8,7 @@ import org.idp.server.core.mfa.MfaInteractionType;
 import org.idp.server.core.mfa.MfaInteractor;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.identity.UserRepository;
-import org.idp.server.core.sharedsignal.DefaultEventType;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 
 public class WebAuthnRegistrationChallengeInteractor implements MfaInteractor {
@@ -45,6 +45,6 @@ public class WebAuthnRegistrationChallengeInteractor implements MfaInteractor {
     response.put("challenge", webAuthnSession.challengeAsString());
 
     return new MfaInteractionResult(
-        type, response, DefaultEventType.webauthn_registration_challenge);
+        type, response, DefaultSecurityEventType.webauthn_registration_challenge);
   }
 }

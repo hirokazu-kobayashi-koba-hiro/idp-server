@@ -2,8 +2,8 @@ package org.idp.server.core;
 
 import org.idp.server.core.api.SecurityEventApi;
 import org.idp.server.core.basic.sql.Transactional;
-import org.idp.server.core.handler.sharedsignal.SecurityEventHandler;
-import org.idp.server.core.sharedsignal.*;
+import org.idp.server.core.handler.security.SecurityEventHandler;
+import org.idp.server.core.security.*;
 
 @Transactional
 public class SecurityEventEntryService implements SecurityEventApi {
@@ -15,10 +15,10 @@ public class SecurityEventEntryService implements SecurityEventApi {
   }
 
   @Override
-  public void handle(Event event) {
+  public void handle(SecurityEvent securityEvent) {
     try {
 
-      securityEventHandler.handle(event);
+      securityEventHandler.handle(securityEvent);
     } catch (Exception e) {
 
       e.printStackTrace();

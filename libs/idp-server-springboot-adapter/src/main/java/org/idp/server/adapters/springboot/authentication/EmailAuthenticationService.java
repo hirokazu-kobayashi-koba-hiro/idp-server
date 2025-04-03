@@ -11,7 +11,7 @@ import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
-import org.idp.server.core.sharedsignal.DefaultEventType;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -50,7 +50,7 @@ public class EmailAuthenticationService implements MfaInteractor {
         oAuthSessionService.updateSession(updatedSession);
 
         return new MfaInteractionResult(
-            type, Map.of(), DefaultEventType.email_verification_request);
+            type, Map.of(), DefaultSecurityEventType.email_verification_request);
       }
 
       case "EMAIL_VERIFICATION" -> {
@@ -78,7 +78,7 @@ public class EmailAuthenticationService implements MfaInteractor {
         response.put("authentication", authentication.toMap());
 
         return new MfaInteractionResult(
-            type, user, authentication, response, DefaultEventType.email_verification_success);
+            type, user, authentication, response, DefaultSecurityEventType.email_verification_success);
       }
     }
 

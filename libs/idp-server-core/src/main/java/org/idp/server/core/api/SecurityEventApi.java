@@ -1,7 +1,7 @@
 package org.idp.server.core.api;
 
-import org.idp.server.core.sharedsignal.Event;
+import org.idp.server.core.security.SecurityEvent;
 
 public interface SecurityEventApi {
-  void handle(Event event);
+  void handle(SecurityEvent securityEvent);
 }

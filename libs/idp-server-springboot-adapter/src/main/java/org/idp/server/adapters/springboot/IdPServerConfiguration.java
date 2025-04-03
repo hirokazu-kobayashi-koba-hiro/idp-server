@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot;
 
 import org.idp.server.adapters.springboot.authorization.OAuthSessionService;
-import org.idp.server.adapters.springboot.event.EventPublisherService;
+import org.idp.server.adapters.springboot.event.SecurityEventPublisherService;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.handler.config.DatabaseConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +30,7 @@ public class IdPServerConfiguration {
 
   @Bean
   public IdpServerApplication idpServerApplication(
-      OAuthSessionService oAuthSessionService, EventPublisherService eventPublisherService) {
+      OAuthSessionService oAuthSessionService, SecurityEventPublisherService eventPublisherService) {
 
     DatabaseConfig databaseConfig =
         new DatabaseConfig(databaseUrl, databaseUsername, databasePassword);

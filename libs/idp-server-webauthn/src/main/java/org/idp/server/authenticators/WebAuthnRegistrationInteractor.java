@@ -8,7 +8,7 @@ import org.idp.server.core.mfa.MfaInteractionType;
 import org.idp.server.core.mfa.MfaInteractor;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.identity.UserRepository;
-import org.idp.server.core.sharedsignal.DefaultEventType;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 
 public class WebAuthnRegistrationInteractor implements MfaInteractor {
@@ -50,6 +50,6 @@ public class WebAuthnRegistrationInteractor implements MfaInteractor {
     Map<String, Object> response = new HashMap<>();
     response.put("registration", webAuthnCredential.toMap());
 
-    return new MfaInteractionResult(type, response, DefaultEventType.webauthn_registration_success);
+    return new MfaInteractionResult(type, response, DefaultSecurityEventType.webauthn_registration_success);
   }
 }
