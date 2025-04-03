@@ -29,10 +29,6 @@ import org.idp.server.core.adapters.httpclient.federation.FederationClient;
 import org.idp.server.core.adapters.httpclient.oauth.RequestObjectHttpClient;
 import org.idp.server.core.adapters.httpclient.sharedsignal.SharedSignalEventClient;
 import org.idp.server.core.api.*;
-import org.idp.server.core.authentication.MfaInteractionType;
-import org.idp.server.core.authentication.MfaInteractor;
-import org.idp.server.core.authentication.MfaInteractors;
-import org.idp.server.core.authentication.StandardMfaInteractionType;
 import org.idp.server.core.basic.sql.TransactionInterceptor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.federation.FederationService;
@@ -55,11 +51,11 @@ import org.idp.server.core.handler.tokenintrospection.TokenIntrospectionHandler;
 import org.idp.server.core.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.core.handler.userinfo.UserinfoHandler;
 import org.idp.server.core.hook.AuthenticationHooks;
-import org.idp.server.core.hook.AuthenticationHooksFactory;
+import org.idp.server.core.hook.AuthenticationHooksLoader;
+import org.idp.server.core.mfa.*;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
-import org.idp.server.core.oauth.identity.UserAuthenticationService;
 import org.idp.server.core.oauth.identity.UserRegistrationService;
 import org.idp.server.core.protocol.*;
 import org.idp.server.core.sharedsignal.EventPublisher;
@@ -88,10 +84,10 @@ public class IdpServerApplication {
       DatabaseConfig databaseConfig,
       String encryptionKey,
       OAuthRequestDelegate oAuthRequestDelegate,
-      Map<MfaInteractionType, MfaInteractor> additionalUserInteractions,
       PasswordEncodeDelegation passwordEncodeDelegation,
       PasswordVerificationDelegation passwordVerificationDelegation,
       EventPublisher eventPublisher) {
+
     TransactionManager.setConnectionConfig(
         databaseConfig.url(), databaseConfig.username(), databaseConfig.password());
 
@@ -154,9 +150,8 @@ public class IdpServerApplication {
             oAuthHandler,
             oAuthRequestDelegate);
     UserRegistrationService userRegistrationService =
-        new UserRegistrationService(userDataSource, passwordEncodeDelegation);
-    UserAuthenticationService userAuthenticationService =
-        new UserAuthenticationService(passwordVerificationDelegation);
+        new UserRegistrationService(userDataSource);
+
     FederationHandler federationHandler =
         new FederationHandler(
             federatableIdProviderConfigurationDataSource,
@@ -234,7 +229,7 @@ public class IdpServerApplication {
 
     SharedSignalEventClient sharedSignalEventClient = new SharedSignalEventClient();
 
-    AuthenticationHooks authenticationHooks = AuthenticationHooksFactory.create();
+    AuthenticationHooks authenticationHooks = AuthenticationHooksLoader.load();
 
     SecurityEventHandler securityEventHandler =
         new SecurityEventHandler(
@@ -248,12 +243,16 @@ public class IdpServerApplication {
     ServerConfigurationHandler serverConfigurationHandler =
         new ServerConfigurationHandler(serverConfigurationDataSource);
 
-    // create instance
+    // create mfa instance
+    MfaDependencyContainer mfaDependencyContainer = MfaDependencyContainerLoader.load();
+    mfaDependencyContainer.register(PasswordEncodeDelegation.class, passwordEncodeDelegation);
+    mfaDependencyContainer.register(PasswordVerificationDelegation.class, passwordVerificationDelegation);
+
+    Map<MfaInteractionType, MfaInteractor> loadedInteractors =
+        MfaInteractorLoader.load(mfaDependencyContainer);
     HashMap<MfaInteractionType, MfaInteractor> interactors =
-        new HashMap<>(additionalUserInteractions);
-    interactors.put(StandardMfaInteractionType.SIGNUP_REQUEST.toType(), userRegistrationService);
-    interactors.put(
-        StandardMfaInteractionType.PASSWORD_AUTHENTICATION.toType(), userAuthenticationService);
+        new HashMap<>(loadedInteractors);
+
     MfaInteractors mfaInteractors = new MfaInteractors(interactors);
 
     this.idpServerStarterApi =

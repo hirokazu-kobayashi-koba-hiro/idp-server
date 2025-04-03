@@ -1,0 +1,3 @@
+org.idp.server.authenticators.WebAuthnConfigurationDataSourceProvider
+org.idp.server.authenticators.WebAuthnCredentialDataSourceProvider
+org.idp.server.authenticators.WebAuthnSessionDataSourceProvider

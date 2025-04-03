@@ -1,0 +1,2 @@
+org.idp.server.core.mfa.password.PasswordAuthenticationInteractorFactory
+org.idp.server.core.mfa.password.PasswordRegistrationFactory

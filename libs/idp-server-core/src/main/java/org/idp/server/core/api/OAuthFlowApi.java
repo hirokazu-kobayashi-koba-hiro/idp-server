@@ -1,10 +1,10 @@
 package org.idp.server.core.api;
 
 import java.util.Map;
-import org.idp.server.core.authentication.MfaInteractionResult;
-import org.idp.server.core.authentication.MfaInteractionType;
 import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
+import org.idp.server.core.mfa.MfaInteractionResult;
+import org.idp.server.core.mfa.MfaInteractionType;
 import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;

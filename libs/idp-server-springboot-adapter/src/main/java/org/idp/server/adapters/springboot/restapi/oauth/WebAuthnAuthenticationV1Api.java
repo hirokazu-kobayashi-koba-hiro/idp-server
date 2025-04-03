@@ -4,8 +4,8 @@ import java.util.Map;
 
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OAuthFlowApi;
-import org.idp.server.core.authentication.MfaInteractionResult;
-import org.idp.server.core.authentication.StandardMfaInteractionType;
+import org.idp.server.core.mfa.MfaInteractionResult;
+import org.idp.server.core.mfa.StandardMfaInteractionType;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
