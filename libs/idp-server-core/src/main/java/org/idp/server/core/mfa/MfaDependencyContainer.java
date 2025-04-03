@@ -21,6 +21,4 @@ public class MfaDependencyContainer {
     }
     return type.cast(dependencies.get(type));
   }
-
-
 }

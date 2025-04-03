@@ -1,5 +1,6 @@
 package org.idp.server.adapters.springboot.restapi;
 
+import java.util.Map;
 import org.idp.server.core.type.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,8 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
-import java.util.Map;
 
 @ControllerAdvice
 public class ApiExceptionHandler {
@@ -48,6 +47,8 @@ public class ApiExceptionHandler {
   @ExceptionHandler
   public ResponseEntity<?> handleException(Exception exception) {
     log.error(exception.getMessage(), exception);
-    return new ResponseEntity<>(Map.of("error", "server_error", "error_description", "unexpected error is occurred"), HttpStatus.INTERNAL_SERVER_ERROR);
+    return new ResponseEntity<>(
+        Map.of("error", "server_error", "error_description", "unexpected error is occurred"),
+        HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }

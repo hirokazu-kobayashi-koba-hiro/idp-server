@@ -10,41 +10,38 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.util.concurrent.Executor;
-
-
 @Configuration
 public class AsyncConfig {
 
-    Logger logger = LoggerFactory.getLogger(AsyncConfig.class);
-    EventRetryScheduler retryScheduler;
+  Logger logger = LoggerFactory.getLogger(AsyncConfig.class);
+  EventRetryScheduler retryScheduler;
 
-    public AsyncConfig(EventRetryScheduler retryScheduler) {
-        this.retryScheduler = retryScheduler;
-    }
+  public AsyncConfig(EventRetryScheduler retryScheduler) {
+    this.retryScheduler = retryScheduler;
+  }
 
-    @Bean("securityEventTaskExecutor")
-    public TaskExecutor securityEventTaskExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(50);
-        executor.setThreadNamePrefix("SecurityEvent-Async-");
+  @Bean("securityEventTaskExecutor")
+  public TaskExecutor securityEventTaskExecutor() {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setCorePoolSize(5);
+    executor.setMaxPoolSize(10);
+    executor.setQueueCapacity(50);
+    executor.setThreadNamePrefix("SecurityEvent-Async-");
 
-        executor.setRejectedExecutionHandler((r, executor1) -> {
-            logger.warn("Rejected Execution Handler");
+    executor.setRejectedExecutionHandler(
+        (r, executor1) -> {
+          logger.warn("Rejected Execution Handler");
 
-            if (r instanceof EventRunnable) {
-                Event event = ((EventRunnable) r).getEvent();
-                retryScheduler.enqueue(event);
-            } else {
+          if (r instanceof EventRunnable) {
+            Event event = ((EventRunnable) r).getEvent();
+            retryScheduler.enqueue(event);
+          } else {
 
-                logger.error("unknown EventRunnable" + r.getClass().getName());
-            }
+            logger.error("unknown EventRunnable" + r.getClass().getName());
+          }
         });
 
-        executor.initialize();
-        return executor;
-    }
+    executor.initialize();
+    return executor;
+  }
 }
-

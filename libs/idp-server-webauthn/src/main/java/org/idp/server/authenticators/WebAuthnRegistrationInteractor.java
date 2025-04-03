@@ -1,5 +1,7 @@
 package org.idp.server.authenticators;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.authenticators.webauthn.*;
 import org.idp.server.core.mfa.MfaInteractionResult;
 import org.idp.server.core.mfa.MfaInteractionType;
@@ -9,9 +11,6 @@ import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class WebAuthnRegistrationInteractor implements MfaInteractor {
 
   WebAuthnConfigurationRepository configurationRepository;
@@ -19,9 +18,9 @@ public class WebAuthnRegistrationInteractor implements MfaInteractor {
   WebAuthnCredentialRepository credentialRepository;
 
   public WebAuthnRegistrationInteractor(
-          WebAuthnConfigurationRepository configurationRepository,
-          WebAuthnSessionRepository sessionRepository,
-          WebAuthnCredentialRepository credentialRepository) {
+      WebAuthnConfigurationRepository configurationRepository,
+      WebAuthnSessionRepository sessionRepository,
+      WebAuthnCredentialRepository credentialRepository) {
     this.configurationRepository = configurationRepository;
     this.sessionRepository = sessionRepository;
     this.credentialRepository = credentialRepository;
@@ -42,7 +41,7 @@ public class WebAuthnRegistrationInteractor implements MfaInteractor {
     WebAuthnSession session = sessionRepository.get();
 
     WebAuthnRegistrationManager manager =
-            new WebAuthnRegistrationManager(configuration, session, request, userId);
+        new WebAuthnRegistrationManager(configuration, session, request, userId);
 
     WebAuthnCredential webAuthnCredential = manager.verifyAndCreateCredential();
 
@@ -51,8 +50,6 @@ public class WebAuthnRegistrationInteractor implements MfaInteractor {
     Map<String, Object> response = new HashMap<>();
     response.put("registration", webAuthnCredential.toMap());
 
-    return new MfaInteractionResult(
-            type, response, DefaultEventType.webauthn_registration_success);
+    return new MfaInteractionResult(type, response, DefaultEventType.webauthn_registration_success);
   }
-
 }

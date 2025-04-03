@@ -4,15 +4,16 @@ import org.idp.server.authenticators.datasource.configuration.WebAuthnConfigurat
 import org.idp.server.authenticators.webauthn.WebAuthnConfigurationRepository;
 import org.idp.server.core.mfa.MfaDependencyProvider;
 
-public class WebAuthnConfigurationDataSourceProvider implements MfaDependencyProvider<WebAuthnConfigurationRepository> {
+public class WebAuthnConfigurationDataSourceProvider
+    implements MfaDependencyProvider<WebAuthnConfigurationRepository> {
 
-    @Override
-    public Class<WebAuthnConfigurationRepository> type() {
-        return WebAuthnConfigurationRepository.class;
-    }
+  @Override
+  public Class<WebAuthnConfigurationRepository> type() {
+    return WebAuthnConfigurationRepository.class;
+  }
 
-    @Override
-    public WebAuthnConfigurationRepository provide() {
-        return new WebAuthnConfigurationDataSource();
-    }
+  @Override
+  public WebAuthnConfigurationRepository provide() {
+    return new WebAuthnConfigurationDataSource();
+  }
 }

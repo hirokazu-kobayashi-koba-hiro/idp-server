@@ -1,7 +1,6 @@
 package org.idp.server.adapters.springboot.restapi.management;
 
 import java.util.List;
-
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.UserManagementApi;
 import org.idp.server.core.oauth.identity.User;
@@ -27,7 +26,8 @@ public class UserManagementV1Api {
       @RequestParam(value = "offset", defaultValue = "0") String offsetValue) {
 
     List<User> userList =
-            userManagementApi.find(tenantIdentifier, Integer.parseInt(limitValue), Integer.parseInt(offsetValue));
+        userManagementApi.find(
+            tenantIdentifier, Integer.parseInt(limitValue), Integer.parseInt(offsetValue));
 
     return new ResponseEntity<>(new UserListResponse(userList), HttpStatus.OK);
   }

@@ -1,7 +1,6 @@
 package org.idp.server.adapters.springboot.restapi.oauth;
 
 import java.util.Map;
-
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.mfa.MfaInteractionResult;
@@ -26,7 +25,12 @@ public class EmailVerificationV1Api {
   public ResponseEntity<?> challenge(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @PathVariable("id") String id) {
 
-    MfaInteractionResult result = oAuthFlowApi.interact(tenantIdentifier, id, StandardMfaInteractionType.EMAIL_VERIFICATION_CHALLENGE.toType(), Map.of());
+    MfaInteractionResult result =
+        oAuthFlowApi.interact(
+            tenantIdentifier,
+            id,
+            StandardMfaInteractionType.EMAIL_VERIFICATION_CHALLENGE.toType(),
+            Map.of());
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -40,8 +44,9 @@ public class EmailVerificationV1Api {
       @PathVariable("id") String id,
       @RequestBody Map<String, Object> params) {
 
-
-    MfaInteractionResult result = oAuthFlowApi.interact(tenantIdentifier, id, StandardMfaInteractionType.EMAIL_VERIFICATION.toType(), params);
+    MfaInteractionResult result =
+        oAuthFlowApi.interact(
+            tenantIdentifier, id, StandardMfaInteractionType.EMAIL_VERIFICATION.toType(), params);
 
     return new ResponseEntity<>(result.response(), HttpStatus.OK);
   }

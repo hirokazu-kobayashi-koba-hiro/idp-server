@@ -1,7 +1,6 @@
 package org.idp.server.adapters.springboot.restapi;
 
 import java.util.Map;
-
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.CibaFlowApi;
 import org.idp.server.core.handler.ciba.io.*;

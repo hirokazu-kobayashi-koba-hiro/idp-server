@@ -4,7 +4,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import org.idp.server.adapters.springboot.operation.IdPScope;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -116,6 +115,5 @@ public class SecurityConfig {
       return List.of();
     }
     return Arrays.stream(additionalAuthViewUrls.split(",")).toList();
-
   }
 }

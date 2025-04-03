@@ -35,6 +35,4 @@ public class OpenIdDiscoveryV1Api {
     JwksRequestResponse response = oidcMetaDataApi.getJwks(tenantId);
     return new ResponseEntity<>(response.content(), HttpStatus.valueOf(response.statusCode()));
   }
-
-
 }

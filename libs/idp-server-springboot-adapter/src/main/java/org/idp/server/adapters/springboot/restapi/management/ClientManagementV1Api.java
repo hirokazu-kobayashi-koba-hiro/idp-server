@@ -1,13 +1,13 @@
 package org.idp.server.adapters.springboot.restapi.management;
 
+import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.ClientManagementApi;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementListResponse;
 import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
+import org.idp.server.core.type.oauth.RequestedClientId;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +20,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
   ClientManagementApi clientManagementApi;
 
-  public ClientManagementV1Api(
-      IdpServerApplication idpServerApplication) {
+  public ClientManagementV1Api(IdpServerApplication idpServerApplication) {
     this.clientManagementApi = idpServerApplication.clientManagementFunction();
   }
 
@@ -71,9 +70,9 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
   @PutMapping("/{client-id}")
   public ResponseEntity<?> put(
-          @AuthenticationPrincipal User operator,
-          @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-          @RequestBody(required = false) String body) {
+      @AuthenticationPrincipal User operator,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestBody(required = false) String body) {
 
     String client = clientManagementApi.update(tenantIdentifier, body);
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -83,16 +82,16 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
   @DeleteMapping("/{client-id}")
   public ResponseEntity<?> delete(
-          @AuthenticationPrincipal User operator,
-          @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-          @PathVariable("client-id") String clientId) {
+      @AuthenticationPrincipal User operator,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("client-id") String clientId) {
 
     ClientConfigurationManagementResponse response =
-            clientManagementApi.delete(tenantIdentifier, new RequestedClientId(clientId));
+        clientManagementApi.delete(tenantIdentifier, new RequestedClientId(clientId));
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
     return new ResponseEntity<>(
-            response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+        response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }

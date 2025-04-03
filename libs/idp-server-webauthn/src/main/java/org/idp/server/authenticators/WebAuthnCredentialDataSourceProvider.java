@@ -4,15 +4,16 @@ import org.idp.server.authenticators.datasource.credential.WebAuthnCredentialDat
 import org.idp.server.authenticators.webauthn.WebAuthnCredentialRepository;
 import org.idp.server.core.mfa.MfaDependencyProvider;
 
-public class WebAuthnCredentialDataSourceProvider implements MfaDependencyProvider<WebAuthnCredentialRepository> {
+public class WebAuthnCredentialDataSourceProvider
+    implements MfaDependencyProvider<WebAuthnCredentialRepository> {
 
-    @Override
-    public Class<WebAuthnCredentialRepository> type() {
-        return WebAuthnCredentialRepository.class;
-    }
+  @Override
+  public Class<WebAuthnCredentialRepository> type() {
+    return WebAuthnCredentialRepository.class;
+  }
 
-    @Override
-    public WebAuthnCredentialRepository provide() {
-        return new WebAuthnCredentialDataSource();
-    }
+  @Override
+  public WebAuthnCredentialRepository provide() {
+    return new WebAuthnCredentialDataSource();
+  }
 }

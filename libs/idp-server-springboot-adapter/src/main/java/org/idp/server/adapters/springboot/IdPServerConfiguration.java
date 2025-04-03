@@ -1,13 +1,9 @@
 package org.idp.server.adapters.springboot;
 
-import org.idp.server.adapters.springboot.authentication.EmailAuthenticationService;
 import org.idp.server.adapters.springboot.authorization.OAuthSessionService;
 import org.idp.server.adapters.springboot.event.EventPublisherService;
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.mfa.MfaInteractionType;
 import org.idp.server.core.handler.config.DatabaseConfig;
-import org.idp.server.core.mfa.StandardMfaInteractionType;
-import org.idp.server.core.mfa.MfaInteractor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,11 +11,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @EnableAsync
-  @EnableScheduling
+@EnableScheduling
 @Configuration
 public class IdPServerConfiguration {
 
@@ -36,7 +29,8 @@ public class IdPServerConfiguration {
   String encryptionKey;
 
   @Bean
-  public IdpServerApplication idpServerApplication(OAuthSessionService oAuthSessionService, EmailAuthenticationService emailAuthenticationService, EventPublisherService eventPublisherService) {
+  public IdpServerApplication idpServerApplication(
+      OAuthSessionService oAuthSessionService, EventPublisherService eventPublisherService) {
 
     DatabaseConfig databaseConfig =
         new DatabaseConfig(databaseUrl, databaseUsername, databasePassword);
@@ -45,8 +39,12 @@ public class IdPServerConfiguration {
     PasswordEncoder passwordEncoder = new PasswordEncoder(bCryptPasswordEncoder);
     PasswordVerification passwordVerification = new PasswordVerification(bCryptPasswordEncoder);
 
-    return new IdpServerApplication(databaseConfig, encryptionKey, oAuthSessionService, passwordEncoder, passwordVerification, eventPublisherService);
+    return new IdpServerApplication(
+        databaseConfig,
+        encryptionKey,
+        oAuthSessionService,
+        passwordEncoder,
+        passwordVerification,
+        eventPublisherService);
   }
-
-
 }

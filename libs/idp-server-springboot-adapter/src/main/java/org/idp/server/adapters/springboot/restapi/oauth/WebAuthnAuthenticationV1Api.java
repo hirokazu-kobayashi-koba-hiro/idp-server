@@ -1,7 +1,6 @@
 package org.idp.server.adapters.springboot.restapi.oauth;
 
 import java.util.Map;
-
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.mfa.MfaInteractionResult;
@@ -27,7 +26,11 @@ public class WebAuthnAuthenticationV1Api {
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @PathVariable("id") String id) {
 
     MfaInteractionResult result =
-        oAuthFlowApi.interact(tenantIdentifier, id, StandardMfaInteractionType.WEBAUTHN_AUTHENTICATION_CHALLENGE.toType(), Map.of());
+        oAuthFlowApi.interact(
+            tenantIdentifier,
+            id,
+            StandardMfaInteractionType.WEBAUTHN_AUTHENTICATION_CHALLENGE.toType(),
+            Map.of());
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -41,7 +44,12 @@ public class WebAuthnAuthenticationV1Api {
       @PathVariable("id") String id,
       @RequestBody String request) {
 
-    MfaInteractionResult result = oAuthFlowApi.interact(tenantIdentifier, id, StandardMfaInteractionType.WEBAUTHN_AUTHENTICATION.toType(), Map.of("request", request));
+    MfaInteractionResult result =
+        oAuthFlowApi.interact(
+            tenantIdentifier,
+            id,
+            StandardMfaInteractionType.WEBAUTHN_AUTHENTICATION.toType(),
+            Map.of("request", request));
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

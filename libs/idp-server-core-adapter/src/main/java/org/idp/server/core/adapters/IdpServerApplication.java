@@ -149,8 +149,7 @@ public class IdpServerApplication {
             oAuthDenyHandler,
             oAuthHandler,
             oAuthRequestDelegate);
-    UserRegistrationService userRegistrationService =
-        new UserRegistrationService(userDataSource);
+    UserRegistrationService userRegistrationService = new UserRegistrationService(userDataSource);
 
     FederationHandler federationHandler =
         new FederationHandler(
@@ -246,12 +245,12 @@ public class IdpServerApplication {
     // create mfa instance
     MfaDependencyContainer mfaDependencyContainer = MfaDependencyContainerLoader.load();
     mfaDependencyContainer.register(PasswordEncodeDelegation.class, passwordEncodeDelegation);
-    mfaDependencyContainer.register(PasswordVerificationDelegation.class, passwordVerificationDelegation);
+    mfaDependencyContainer.register(
+        PasswordVerificationDelegation.class, passwordVerificationDelegation);
 
     Map<MfaInteractionType, MfaInteractor> loadedInteractors =
         MfaInteractorLoader.load(mfaDependencyContainer);
-    HashMap<MfaInteractionType, MfaInteractor> interactors =
-        new HashMap<>(loadedInteractors);
+    HashMap<MfaInteractionType, MfaInteractor> interactors = new HashMap<>(loadedInteractors);
 
     MfaInteractors mfaInteractors = new MfaInteractors(interactors);
 

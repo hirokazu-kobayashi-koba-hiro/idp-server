@@ -21,9 +21,9 @@ public class WebAuthnAuthenticationInteractor implements MfaInteractor {
   WebAuthnCredentialRepository credentialRepository;
 
   public WebAuthnAuthenticationInteractor(
-          WebAuthnConfigurationRepository configurationRepository,
-          WebAuthnSessionRepository sessionRepository,
-          WebAuthnCredentialRepository credentialRepository) {
+      WebAuthnConfigurationRepository configurationRepository,
+      WebAuthnSessionRepository sessionRepository,
+      WebAuthnCredentialRepository credentialRepository) {
     this.configurationRepository = configurationRepository;
     this.sessionRepository = sessionRepository;
     this.credentialRepository = credentialRepository;
@@ -43,7 +43,7 @@ public class WebAuthnAuthenticationInteractor implements MfaInteractor {
     WebAuthnSession session = sessionRepository.get();
 
     WebAuthnAuthenticationManager manager =
-            new WebAuthnAuthenticationManager(configuration, session, request);
+        new WebAuthnAuthenticationManager(configuration, session, request);
 
     String extractUserId = manager.extractUserId();
     WebAuthnCredentials webAuthnCredentials = credentialRepository.findAll(extractUserId);
@@ -52,17 +52,16 @@ public class WebAuthnAuthenticationInteractor implements MfaInteractor {
     User user = userRepository.get(extractUserId);
 
     Authentication authentication =
-            new Authentication()
-                    .setTime(SystemDateTime.now())
-                    .addMethods(new ArrayList<>(List.of("hwk")))
-                    .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
+        new Authentication()
+            .setTime(SystemDateTime.now())
+            .addMethods(new ArrayList<>(List.of("hwk")))
+            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     Map<String, Object> response = new HashMap<>();
     response.put("user", user.toMap());
     response.put("authentication", authentication.toMap());
 
     return new MfaInteractionResult(
-            type, user, authentication, response, DefaultEventType.webauthn_authentication_success);
+        type, user, authentication, response, DefaultEventType.webauthn_authentication_success);
   }
-
 }

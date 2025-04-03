@@ -18,8 +18,9 @@ public class EventListerService {
   TaskExecutor taskExecutor;
   SecurityEventApi securityEventApi;
 
-  public EventListerService(@Qualifier("securityEventTaskExecutor") TaskExecutor taskExecutor,
-                            IdpServerApplication idpServerApplication) {
+  public EventListerService(
+      @Qualifier("securityEventTaskExecutor") TaskExecutor taskExecutor,
+      IdpServerApplication idpServerApplication) {
     this.taskExecutor = taskExecutor;
     this.securityEventApi = idpServerApplication.eventFunction();
   }
@@ -29,8 +30,11 @@ public class EventListerService {
   public void onEvent(Event event) {
     log.info("onEvent: {}", event.toMap());
     securityEventApi.handle(event);
-    taskExecutor.execute(new EventRunnable(event, e -> {
-      securityEventApi.handle(e);
-    }));
+    taskExecutor.execute(
+        new EventRunnable(
+            event,
+            e -> {
+              securityEventApi.handle(e);
+            }));
   }
 }

@@ -1,5 +1,7 @@
 package org.idp.server.authenticators;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.authenticators.webauthn.*;
 import org.idp.server.core.mfa.MfaInteractionResult;
 import org.idp.server.core.mfa.MfaInteractionType;
@@ -9,9 +11,6 @@ import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class WebAuthnAuthenticationChallengeInteractor implements MfaInteractor {
 
   WebAuthnConfigurationRepository configurationRepository;
@@ -19,9 +18,9 @@ public class WebAuthnAuthenticationChallengeInteractor implements MfaInteractor 
   WebAuthnCredentialRepository credentialRepository;
 
   public WebAuthnAuthenticationChallengeInteractor(
-          WebAuthnConfigurationRepository configurationRepository,
-          WebAuthnSessionRepository sessionRepository,
-          WebAuthnCredentialRepository credentialRepository) {
+      WebAuthnConfigurationRepository configurationRepository,
+      WebAuthnSessionRepository sessionRepository,
+      WebAuthnCredentialRepository credentialRepository) {
     this.configurationRepository = configurationRepository;
     this.sessionRepository = sessionRepository;
     this.credentialRepository = credentialRepository;
@@ -46,7 +45,6 @@ public class WebAuthnAuthenticationChallengeInteractor implements MfaInteractor 
     response.put("challenge", webAuthnSession.challengeAsString());
 
     return new MfaInteractionResult(
-            type, response, DefaultEventType.webauthn_authentication_challenge);
+        type, response, DefaultEventType.webauthn_authentication_challenge);
   }
-
 }

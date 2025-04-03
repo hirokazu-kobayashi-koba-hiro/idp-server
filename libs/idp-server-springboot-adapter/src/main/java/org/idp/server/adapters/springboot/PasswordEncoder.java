@@ -5,14 +5,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 public class PasswordEncoder implements PasswordEncodeDelegation {
 
-    BCryptPasswordEncoder bCryptPasswordEncoder;
+  BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    public PasswordEncoder(BCryptPasswordEncoder bCryptPasswordEncoder) {
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-    }
+  public PasswordEncoder(BCryptPasswordEncoder bCryptPasswordEncoder) {
+    this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+  }
 
-    @Override
-    public String encode(String rawPassword) {
-        return bCryptPasswordEncoder.encode(rawPassword);
-    }
+  @Override
+  public String encode(String rawPassword) {
+    return bCryptPasswordEncoder.encode(rawPassword);
+  }
 }

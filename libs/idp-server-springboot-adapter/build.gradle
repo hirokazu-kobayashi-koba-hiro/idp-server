@@ -1,46 +1,60 @@
 plugins {
-    id 'java'
-    id 'org.springframework.boot' version '3.4.2'
-    id 'io.spring.dependency-management' version '1.1.4'
-    id "com.diffplug.spotless" version "6.24.0"
+	id 'java'
+	id 'org.springframework.boot' version '3.4.2'
+	id 'io.spring.dependency-management' version '1.1.4'
+	id "com.diffplug.spotless" version "6.24.0"
 }
 
 group = 'org.idp.server'
 version = '1.0.0'
 
 repositories {
-    mavenCentral()
+	mavenCentral()
 }
 
 dependencies {
-    implementation project(':libs:idp-server-core')
-    implementation project(':libs:idp-server-core-adapter')
-    implementation project(':libs:idp-server-webauthn')
-    implementation 'com.webauthn4j:webauthn4j-core:0.28.5.RELEASE'
+	implementation project(':libs:idp-server-core')
+	implementation project(':libs:idp-server-core-adapter')
+	implementation project(':libs:idp-server-webauthn')
+	implementation 'com.webauthn4j:webauthn4j-core:0.28.5.RELEASE'
 
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.session:spring-session-core'
-    implementation "org.springframework.boot:spring-boot-starter-security"
-    implementation 'org.springframework.boot:spring-boot-starter-mail'
-    runtimeOnly 'org.postgresql:postgresql:42.7.2'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.session:spring-session-core'
+	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	runtimeOnly 'org.postgresql:postgresql:42.7.2'
 
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation platform('org.junit:junit-bom:5.10.0')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
 test {
-    useJUnitPlatform()
+	useJUnitPlatform()
 }
 
 sourceSets {
-    main {
-        // mybatis SQL map XML to java
-        resources.srcDirs = [
-                "src/main/java",
-                "src/main/resources"
-        ]
-    }
+	main {
+		// mybatis SQL map XML to java
+		resources.srcDirs = [
+			"src/main/java",
+			"src/main/resources"
+		]
+	}
+}
+
+spotless {
+	java {
+		target 'src/*/java/**/*.java'
+		importOrder()
+		removeUnusedImports()
+		googleJavaFormat()
+		toggleOffOn()
+	}
+	groovyGradle {
+		target '*.gradle'
+		greclipse()
+	}
 }

@@ -1,5 +1,7 @@
 package org.idp.server.core.mfa.password;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.mfa.MfaInteractionResult;
 import org.idp.server.core.mfa.MfaInteractionType;
 import org.idp.server.core.mfa.MfaInteractor;
@@ -9,15 +11,11 @@ import org.idp.server.core.oauth.identity.*;
 import org.idp.server.core.sharedsignal.DefaultEventType;
 import org.idp.server.core.tenant.Tenant;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class PasswordRegistrationInteractor implements MfaInteractor {
 
   PasswordEncodeDelegation passwordEncodeDelegation;
 
-  public PasswordRegistrationInteractor(
-      PasswordEncodeDelegation passwordEncodeDelegation) {
+  public PasswordRegistrationInteractor(PasswordEncodeDelegation passwordEncodeDelegation) {
     this.passwordEncodeDelegation = passwordEncodeDelegation;
   }
 
@@ -50,6 +48,4 @@ public class PasswordRegistrationInteractor implements MfaInteractor {
     return new MfaInteractionResult(
         type, user, authentication, response, DefaultEventType.user_signup);
   }
-
-
 }

@@ -6,11 +6,9 @@ public class UserRegistrationService {
 
   UserRepository userRepository;
 
-  public UserRegistrationService(
-      UserRepository userRepository) {
+  public UserRegistrationService(UserRepository userRepository) {
     this.userRepository = userRepository;
   }
-
 
   public User registerOrUpdate(Tenant tenant, User user) {
 

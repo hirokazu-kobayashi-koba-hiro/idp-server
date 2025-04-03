@@ -3,9 +3,8 @@ package org.idp.server.adapters.springboot.restapi.oauth;
 import static org.idp.server.core.oauth.io.OAuthRequestStatus.OK_ACCOUNT_CREATION;
 
 import jakarta.servlet.http.HttpServletRequest;
-
 import java.util.Map;
-
+import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
@@ -15,10 +14,9 @@ import org.idp.server.core.oauth.io.OAuthAuthorizeResponse;
 import org.idp.server.core.oauth.io.OAuthDenyResponse;
 import org.idp.server.core.oauth.io.OAuthRequestResponse;
 import org.idp.server.core.oauth.io.OAuthViewDataResponse;
-import org.idp.server.core.type.extension.Pairs;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
+import org.idp.server.core.type.extension.Pairs;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -82,7 +80,7 @@ public class OAuthV1Api implements ParameterTransformable {
     }
   }
 
-  //TODO move to core logic
+  // TODO move to core logic
   private String createUrl(Tenant tenant, OAuthRequestResponse response) {
     String url = tenant.isAdmin() ? adminAuthViewUrl : authViewUrl;
 
@@ -99,7 +97,7 @@ public class OAuthV1Api implements ParameterTransformable {
         tenant.identifier().value());
   }
 
-  //TODO move to core logic
+  // TODO move to core logic
   private String createErrorUrl(Tenant tenant, OAuthRequestResponse response) {
     String url = tenant.isAdmin() ? adminAuthViewUrl : authViewUrl;
 
@@ -138,12 +136,14 @@ public class OAuthV1Api implements ParameterTransformable {
 
     switch (requestResponse.status()) {
       case REDIRECABLE_OK, REDIRECABLE_BAD_REQUEST -> {
-
         return new ResponseEntity<>(
-                Map.of("redirect_uri", requestResponse.authorizationRequestUrl()), headers, HttpStatus.OK);
+            Map.of("redirect_uri", requestResponse.authorizationRequestUrl()),
+            headers,
+            HttpStatus.OK);
       }
       default -> {
-        return new ResponseEntity<>(Map.of("error", "unexpected error is occurred"), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(
+            Map.of("error", "unexpected error is occurred"), HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }
@@ -154,7 +154,9 @@ public class OAuthV1Api implements ParameterTransformable {
       @PathVariable("id") String id,
       @RequestBody Map<String, Object> params) {
 
-    MfaInteractionResult result = oAuthFlowApi.interact(tenantId, id, StandardMfaInteractionType.PASSWORD_REGISTRATION.toType(), params);
+    MfaInteractionResult result =
+        oAuthFlowApi.interact(
+            tenantId, id, StandardMfaInteractionType.PASSWORD_REGISTRATION.toType(), params);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -166,8 +168,7 @@ public class OAuthV1Api implements ParameterTransformable {
   public ResponseEntity<?> authorizeWithSession(
       @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
 
-    OAuthAuthorizeResponse authAuthorizeResponse =
-        oAuthFlowApi.authorizeWithSession(tenantId, id);
+    OAuthAuthorizeResponse authAuthorizeResponse = oAuthFlowApi.authorizeWithSession(tenantId, id);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -193,12 +194,9 @@ public class OAuthV1Api implements ParameterTransformable {
       @PathVariable("id") String id,
       @RequestBody Map<String, Object> params) {
 
-
-    MfaInteractionResult result = oAuthFlowApi.interact(
-            tenantId,
-            id,
-            StandardMfaInteractionType.PASSWORD_AUTHENTICATION.toType(),
-            params);
+    MfaInteractionResult result =
+        oAuthFlowApi.interact(
+            tenantId, id, StandardMfaInteractionType.PASSWORD_AUTHENTICATION.toType(), params);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

@@ -1,14 +1,13 @@
 package org.idp.server.adapters.springboot.restapi.admin;
 
+import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.ServerManagementApi;
-import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.tenant.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,7 +16,6 @@ public class ServerRegistrationV1Api implements ParameterTransformable {
 
   ServerDomain serverDomain;
   ServerManagementApi serverManagementApi;
-
 
   public ServerRegistrationV1Api(
       IdpServerApplication idpServerApplication,
@@ -28,8 +26,7 @@ public class ServerRegistrationV1Api implements ParameterTransformable {
   }
 
   @PostMapping
-  public ResponseEntity<?> post(
-      @RequestBody(required = false) String body) {
+  public ResponseEntity<?> post(@RequestBody(required = false) String body) {
 
     String response = serverManagementApi.register(TenantType.PUBLIC, serverDomain, body);
 
