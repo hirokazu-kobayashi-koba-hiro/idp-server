@@ -17,7 +17,9 @@ public class SecurityEventTokenEntity {
   public SecurityEventTokenEntity() {}
 
   public SecurityEventTokenEntity(
-      TokenIssuer issuer, RequestedClientId requestedClientId, SharedSecurityEvent sharedSecurityEvent) {
+      TokenIssuer issuer,
+      RequestedClientId requestedClientId,
+      SharedSecurityEvent sharedSecurityEvent) {
     this.issuer = issuer;
     this.requestedClientId = requestedClientId;
     this.sharedSecurityEvent = sharedSecurityEvent;

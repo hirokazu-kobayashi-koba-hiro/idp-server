@@ -1,6 +1,8 @@
 package org.idp.server.adapters.springboot.restapi;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
+import org.idp.server.core.type.security.RequestAttributes;
 import org.springframework.util.MultiValueMap;
 
 public interface ParameterTransformable {
@@ -13,5 +15,21 @@ public interface ParameterTransformable {
     Set<Map.Entry<String, List<String>>> entries = request.entrySet();
     entries.forEach(entry -> map.put(entry.getKey(), entry.getValue().toArray(new String[0])));
     return map;
+  }
+
+  default RequestAttributes transform(HttpServletRequest request) {
+
+    String ip =
+        Optional.ofNullable(request.getHeader("X-Forwarded-For"))
+            .map(s -> s.split(",")[0].trim())
+            .orElse(request.getRemoteAddr());
+
+    String userAgent = Optional.ofNullable(request.getHeader("User-Agent")).orElse("unknown");
+
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("ip_address", ip);
+    contents.put("user_agent", userAgent);
+
+    return new RequestAttributes(contents);
   }
 }

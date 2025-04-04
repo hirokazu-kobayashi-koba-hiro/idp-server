@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.sharedsignal;
+package org.idp.server.core.adapters.datasource.security;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,8 +7,8 @@ import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventRepository;
-import org.idp.server.core.security.event.SecurityEventSearchCriteria;
 import org.idp.server.core.security.SecurityEvents;
+import org.idp.server.core.security.event.SecurityEventSearchCriteria;
 
 public class SecurityEventDataSource implements SecurityEventRepository {
 
@@ -19,8 +19,8 @@ public class SecurityEventDataSource implements SecurityEventRepository {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
-                INSERT INTO public.events (id, type, description, tenant_id, tenant_name, client_id, client_name, user_id, user_name, detail)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb) ON CONFLICT DO NOTHING;
+                INSERT INTO public.security_event (id, type, description, tenant_id, tenant_name, client_id, client_name, user_id, user_name, login_hint, ip_address, user_agent, detail)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::INET, ?, ?::jsonb) ON CONFLICT DO NOTHING;
                 """;
     List<Object> params = new ArrayList<>();
     params.add(securityEvent.identifier().value());
@@ -34,10 +34,17 @@ public class SecurityEventDataSource implements SecurityEventRepository {
     if (securityEvent.hasUser()) {
       params.add(securityEvent.user().id());
       params.add(securityEvent.user().name());
+      // TODO login hint
+      params.add(securityEvent.user().name());
     } else {
       params.add(null);
       params.add(null);
+      params.add(null);
     }
+
+    params.add(securityEvent.ipAddressValue());
+    params.add(securityEvent.userAgentValue());
+
     params.add(converter.write(securityEvent.detail().toMap()));
 
     sqlExecutor.execute(sqlTemplate, params);

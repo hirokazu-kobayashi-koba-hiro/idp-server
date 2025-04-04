@@ -1,11 +1,14 @@
 package org.idp.server.adapters.springboot.restapi.oauth;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.mfa.MfaInteractionResult;
 import org.idp.server.core.mfa.StandardMfaInteractionType;
 import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.type.security.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/{tenant-id}/api/v1/authorizations/{id}/webauthn/registration")
-public class WebAuthnRegistrationV1Api {
+public class WebAuthnRegistrationV1Api implements ParameterTransformable {
 
   OAuthFlowApi oAuthFlowApi;
 
@@ -23,14 +26,19 @@ public class WebAuthnRegistrationV1Api {
 
   @GetMapping("/challenge")
   public ResponseEntity<?> getChallenge(
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @PathVariable("id") String id) {
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") String id,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
 
     MfaInteractionResult result =
         oAuthFlowApi.interact(
             tenantIdentifier,
             id,
             StandardMfaInteractionType.WEBAUTHN_REGISTRATION_CHALLENGE.toType(),
-            Map.of());
+            Map.of(),
+            requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -42,14 +50,18 @@ public class WebAuthnRegistrationV1Api {
   public ResponseEntity<?> register(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") String id,
-      @RequestBody String request) {
+      @RequestBody String request,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
 
     MfaInteractionResult result =
         oAuthFlowApi.interact(
             tenantIdentifier,
             id,
             StandardMfaInteractionType.WEBAUTHN_REGISTRATION.toType(),
-            Map.of("request", request));
+            Map.of("request", request),
+            requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

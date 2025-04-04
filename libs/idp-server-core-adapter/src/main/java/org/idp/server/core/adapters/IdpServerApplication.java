@@ -18,8 +18,8 @@ import org.idp.server.core.adapters.datasource.identity.UserDataSource;
 import org.idp.server.core.adapters.datasource.oauth.database.code.AuthorizationCodeGrantDataSource;
 import org.idp.server.core.adapters.datasource.oauth.database.request.AuthorizationRequestDataSource;
 import org.idp.server.core.adapters.datasource.organization.OrganizationDataSource;
-import org.idp.server.core.adapters.datasource.sharedsignal.SecurityEventDataSource;
-import org.idp.server.core.adapters.datasource.sharedsignal.SharedSignalFrameworkConfigurationDataSource;
+import org.idp.server.core.adapters.datasource.security.SecurityEventDataSource;
+import org.idp.server.core.adapters.datasource.security.SharedSignalFrameworkConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.tenant.TenantDataSource;
 import org.idp.server.core.adapters.datasource.token.database.OAuthTokenDataSource;
 import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
@@ -58,8 +58,8 @@ import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
 import org.idp.server.core.oauth.identity.UserRegistrationService;
 import org.idp.server.core.protocol.*;
-import org.idp.server.core.security.SecurityEventPublisher;
 import org.idp.server.core.security.OAuthFlowEventPublisher;
+import org.idp.server.core.security.SecurityEventPublisher;
 import org.idp.server.core.type.verifiablecredential.Format;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreator;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreators;
@@ -266,7 +266,8 @@ public class IdpServerApplication {
                 passwordEncodeDelegation),
             IdpServerStarterApi.class);
 
-    OAuthFlowEventPublisher oAuthFLowEventPublisher = new OAuthFlowEventPublisher(securityEventPublisher);
+    OAuthFlowEventPublisher oAuthFLowEventPublisher =
+        new OAuthFlowEventPublisher(securityEventPublisher);
 
     this.oAuthFlowApi =
         TransactionInterceptor.createProxy(

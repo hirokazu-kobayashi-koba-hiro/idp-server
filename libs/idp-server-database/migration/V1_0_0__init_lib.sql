@@ -388,7 +388,7 @@ CREATE TABLE shared_signal_framework_configuration
     updated_at TIMESTAMP DEFAULT now() NOT NULL
 );
 
-CREATE TABLE events
+CREATE TABLE security_event
 (
     id          CHAR(36) PRIMARY KEY,
     type        VARCHAR(255) NOT NULL,
@@ -399,16 +399,32 @@ CREATE TABLE events
     client_name VARCHAR(255) NOT NULL,
     user_id     CHAR(36),
     user_name   VARCHAR(255),
+    login_hint  VARCHAR(255),
+    ip_address  INET,
+    user_agent  TEXT,
     detail      JSONB        NOT NULL,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_events_type ON events (type);
-CREATE INDEX idx_events_tenant ON events (tenant_id);
-CREATE INDEX idx_events_client ON events (client_id);
-CREATE INDEX idx_events_user ON events (user_id);
-CREATE INDEX idx_events_created_at ON events (created_at);
-CREATE INDEX idx_events_detail_jsonb ON events USING GIN (detail);
+CREATE INDEX idx_events_type ON security_event (type);
+CREATE INDEX idx_events_tenant ON security_event (tenant_id);
+CREATE INDEX idx_events_client ON security_event (client_id);
+CREATE INDEX idx_events_user ON security_event (user_id);
+CREATE INDEX idx_events_created_at ON security_event (created_at);
+CREATE INDEX idx_events_detail_jsonb ON security_event USING GIN (detail);
+
+CREATE TABLE security_event_notifications
+(
+    id          CHAR(36) PRIMARY KEY,
+    event_id    CHAR(36)     NOT NULL REFERENCES security_event (id) ON DELETE CASCADE,
+    alert_type  VARCHAR(100) NOT NULL,
+    channel     VARCHAR(50)  NOT NULL,
+    status      VARCHAR(50)  NOT NULL,
+    notified_at TIMESTAMP    NOT NULL
+);
+
+CREATE INDEX idx_security_event_notifications_event_id ON security_event_notifications (event_id);
+CREATE INDEX idx_security_event_notifications_alert_type ON security_event_notifications (alert_type);
 
 CREATE TABLE federatable_idp_configuration
 (

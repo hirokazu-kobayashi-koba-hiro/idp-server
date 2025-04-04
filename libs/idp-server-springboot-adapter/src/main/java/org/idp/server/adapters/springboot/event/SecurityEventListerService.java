@@ -32,7 +32,7 @@ public class SecurityEventListerService {
     securityEventApi.handle(securityEvent);
     taskExecutor.execute(
         new EventRunnable(
-                securityEvent,
+            securityEvent,
             e -> {
               securityEventApi.handle(e);
             }));

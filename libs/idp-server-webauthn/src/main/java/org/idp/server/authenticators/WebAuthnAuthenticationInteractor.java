@@ -62,6 +62,10 @@ public class WebAuthnAuthenticationInteractor implements MfaInteractor {
     response.put("authentication", authentication.toMap());
 
     return new MfaInteractionResult(
-        type, user, authentication, response, DefaultSecurityEventType.webauthn_authentication_success);
+        type,
+        user,
+        authentication,
+        response,
+        DefaultSecurityEventType.webauthn_authentication_success);
   }
 }

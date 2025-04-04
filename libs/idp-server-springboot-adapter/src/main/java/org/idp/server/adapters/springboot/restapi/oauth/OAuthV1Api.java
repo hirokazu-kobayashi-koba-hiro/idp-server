@@ -17,6 +17,7 @@ import org.idp.server.core.oauth.io.OAuthViewDataResponse;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.Pairs;
+import org.idp.server.core.type.security.RequestAttributes;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -47,12 +48,11 @@ public class OAuthV1Api implements ParameterTransformable {
       @RequestParam(required = false) MultiValueMap<String, String> request,
       @PathVariable("tenant-id") TenantIdentifier tenantId) {
 
-    System.out.println(httpServletRequest.getHeader("X-Forwarded-For"));
-    System.out.println(httpServletRequest.getHeader("X-Real-IP"));
-    System.out.println(httpServletRequest.getRemoteAddr());
-
     Map<String, String[]> params = transform(request);
-    Pairs<Tenant, OAuthRequestResponse> result = oAuthFlowApi.request(tenantId, params);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    Pairs<Tenant, OAuthRequestResponse> result =
+        oAuthFlowApi.request(tenantId, params, requestAttributes);
 
     Tenant tenant = result.getLeft();
     OAuthRequestResponse response = result.getRight();
@@ -109,9 +109,13 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @GetMapping("/{id}/view-data")
   public ResponseEntity<?> getViewData(
-      @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("id") String id,
+      HttpServletRequest httpServletRequest) {
 
-    OAuthViewDataResponse viewDataResponse = oAuthFlowApi.getViewData(tenantId, id);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+    OAuthViewDataResponse viewDataResponse =
+        oAuthFlowApi.getViewData(tenantId, id, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -152,11 +156,18 @@ public class OAuthV1Api implements ParameterTransformable {
   public ResponseEntity<?> signup(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") String id,
-      @RequestBody Map<String, Object> params) {
+      @RequestBody Map<String, Object> params,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
 
     MfaInteractionResult result =
         oAuthFlowApi.interact(
-            tenantId, id, StandardMfaInteractionType.PASSWORD_REGISTRATION.toType(), params);
+            tenantId,
+            id,
+            StandardMfaInteractionType.PASSWORD_REGISTRATION.toType(),
+            params,
+            requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -166,9 +177,14 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/authorize-with-session")
   public ResponseEntity<?> authorizeWithSession(
-      @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("id") String id,
+      HttpServletRequest httpServletRequest) {
 
-    OAuthAuthorizeResponse authAuthorizeResponse = oAuthFlowApi.authorizeWithSession(tenantId, id);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    OAuthAuthorizeResponse authAuthorizeResponse =
+        oAuthFlowApi.authorizeWithSession(tenantId, id, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -192,11 +208,18 @@ public class OAuthV1Api implements ParameterTransformable {
   public ResponseEntity<?> authenticateWithPassword(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") String id,
-      @RequestBody Map<String, Object> params) {
+      @RequestBody Map<String, Object> params,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
 
     MfaInteractionResult result =
         oAuthFlowApi.interact(
-            tenantId, id, StandardMfaInteractionType.PASSWORD_AUTHENTICATION.toType(), params);
+            tenantId,
+            id,
+            StandardMfaInteractionType.PASSWORD_AUTHENTICATION.toType(),
+            params,
+            requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -206,9 +229,13 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/authorize")
   public ResponseEntity<?> authorize(
-      @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("id") String id,
+      HttpServletRequest httpServletRequest) {
 
-    OAuthAuthorizeResponse authAuthorizeResponse = oAuthFlowApi.authorize(tenantId, id);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+    OAuthAuthorizeResponse authAuthorizeResponse =
+        oAuthFlowApi.authorize(tenantId, id, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -230,9 +257,12 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/deny")
   public ResponseEntity<?> deny(
-      @PathVariable("tenant-id") TenantIdentifier tenantId, @PathVariable("id") String id) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("id") String id,
+      HttpServletRequest httpServletRequest) {
 
-    OAuthDenyResponse oAuthDenyResponse = oAuthFlowApi.deny(tenantId, id);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+    OAuthDenyResponse oAuthDenyResponse = oAuthFlowApi.deny(tenantId, id, requestAttributes);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
 

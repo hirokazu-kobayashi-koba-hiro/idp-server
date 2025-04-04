@@ -9,19 +9,25 @@ import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.Pairs;
+import org.idp.server.core.type.security.RequestAttributes;
 
 public interface OAuthFlowApi {
   Pairs<Tenant, OAuthRequestResponse> request(
-      TenantIdentifier tenantIdentifier, Map<String, String[]> params);
+      TenantIdentifier tenantIdentifier,
+      Map<String, String[]> params,
+      RequestAttributes requestAttributes);
 
   OAuthViewDataResponse getViewData(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier);
+      TenantIdentifier tenantIdentifier,
+      String oauthRequestIdentifier,
+      RequestAttributes requestAttributes);
 
   MfaInteractionResult interact(
       TenantIdentifier tenantIdentifier,
       String oauthRequestIdentifier,
       MfaInteractionType type,
-      Map<String, Object> params);
+      Map<String, Object> params,
+      RequestAttributes requestAttributes);
 
   FederationRequestResponse requestFederation(
       TenantIdentifier tenantIdentifier,
@@ -31,12 +37,22 @@ public interface OAuthFlowApi {
   Pairs<Tenant, FederationCallbackResponse> callbackFederation(Map<String, String[]> params);
 
   OAuthAuthorizeResponse authorize(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier);
+      TenantIdentifier tenantIdentifier,
+      String oauthRequestIdentifier,
+      RequestAttributes requestAttributes);
 
   OAuthAuthorizeResponse authorizeWithSession(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier);
+      TenantIdentifier tenantIdentifier,
+      String oauthRequestIdentifier,
+      RequestAttributes requestAttributes);
 
-  OAuthDenyResponse deny(TenantIdentifier tenantIdentifier, String oauthRequestIdentifier);
+  OAuthDenyResponse deny(
+      TenantIdentifier tenantIdentifier,
+      String oauthRequestIdentifier,
+      RequestAttributes requestAttributes);
 
-  OAuthLogoutResponse logout(TenantIdentifier tenantIdentifier, Map<String, String[]> params);
+  OAuthLogoutResponse logout(
+      TenantIdentifier tenantIdentifier,
+      Map<String, String[]> params,
+      RequestAttributes requestAttributes);
 }

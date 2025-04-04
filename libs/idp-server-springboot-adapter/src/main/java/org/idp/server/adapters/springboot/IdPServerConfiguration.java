@@ -30,7 +30,8 @@ public class IdPServerConfiguration {
 
   @Bean
   public IdpServerApplication idpServerApplication(
-      OAuthSessionService oAuthSessionService, SecurityEventPublisherService eventPublisherService) {
+      OAuthSessionService oAuthSessionService,
+      SecurityEventPublisherService eventPublisherService) {
 
     DatabaseConfig databaseConfig =
         new DatabaseConfig(databaseUrl, databaseUsername, databasePassword);

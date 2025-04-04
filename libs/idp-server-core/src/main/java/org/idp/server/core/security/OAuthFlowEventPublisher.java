@@ -4,6 +4,7 @@ import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.type.security.RequestAttributes;
 
 public class OAuthFlowEventPublisher {
 
@@ -14,9 +15,13 @@ public class OAuthFlowEventPublisher {
   }
 
   public void publish(
-      Tenant tenant, AuthorizationRequest authorizationRequest, User user, DefaultSecurityEventType type) {
+      Tenant tenant,
+      AuthorizationRequest authorizationRequest,
+      User user,
+      DefaultSecurityEventType type,
+      RequestAttributes requestAttributes) {
     OAuthFlowEventCreator eventCreator =
-        new OAuthFlowEventCreator(tenant, authorizationRequest, user, type);
+        new OAuthFlowEventCreator(tenant, authorizationRequest, user, type, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }

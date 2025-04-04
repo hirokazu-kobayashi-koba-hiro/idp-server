@@ -1,5 +1,6 @@
 package org.idp.server.adapters.springboot.view;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.adapters.IdpServerApplication;
@@ -8,6 +9,7 @@ import org.idp.server.core.oauth.io.OAuthRequestResponse;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.Pairs;
+import org.idp.server.core.type.security.RequestAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -31,10 +33,14 @@ public class OAuthController implements ParameterTransformable {
   public Object get(
       @RequestParam(required = false) MultiValueMap<String, String> request,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      HttpServletRequest httpServletRequest,
       Model model) {
-    Map<String, String[]> params = transform(request);
 
-    Pairs<Tenant, OAuthRequestResponse> result = oAuthFlowApi.request(tenantIdentifier, params);
+    Map<String, String[]> params = transform(request);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    Pairs<Tenant, OAuthRequestResponse> result =
+        oAuthFlowApi.request(tenantIdentifier, params, requestAttributes);
     Tenant tenant = result.getLeft();
     OAuthRequestResponse response = result.getRight();
 
@@ -81,10 +87,14 @@ public class OAuthController implements ParameterTransformable {
   public Object post(
       @RequestParam(required = false) MultiValueMap<String, String> request,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      HttpServletRequest httpServletRequest,
       Model model) {
-    Map<String, String[]> params = transform(request);
 
-    Pairs<Tenant, OAuthRequestResponse> result = oAuthFlowApi.request(tenantIdentifier, params);
+    Map<String, String[]> params = transform(request);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    Pairs<Tenant, OAuthRequestResponse> result =
+        oAuthFlowApi.request(tenantIdentifier, params, requestAttributes);
     Tenant tenant = result.getLeft();
     OAuthRequestResponse response = result.getRight();
 

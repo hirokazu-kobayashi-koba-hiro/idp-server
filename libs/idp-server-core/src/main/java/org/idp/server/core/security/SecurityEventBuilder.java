@@ -3,6 +3,8 @@ package org.idp.server.core.security;
 import java.util.UUID;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.security.event.*;
+import org.idp.server.core.type.security.IpAddress;
+import org.idp.server.core.type.security.UserAgent;
 
 public class SecurityEventBuilder {
   SecurityEventIdentifier identifier;

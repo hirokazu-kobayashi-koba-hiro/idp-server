@@ -10,7 +10,6 @@ import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
 import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserNotFoundException;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
@@ -34,7 +33,15 @@ public class PasswordAuthenticationInteractor implements MfaInteractor {
     String username = (String) request.get("username");
     String password = (String) request.get("password");
 
-    User user = authenticateWithPassword(tenant, userRepository, username, password);
+    User user = userRepository.findBy(tenant, username, "idp-server");
+    if (!passwordVerificationDelegation.verify(password, user.hashedPassword())) {
+
+      Map<String, Object> response = new HashMap<>();
+
+      return new MfaInteractionResult(
+          type, user, new Authentication(), response, DefaultSecurityEventType.password_failure);
+    }
+
     Authentication authentication =
         new Authentication()
             .setTime(SystemDateTime.now())
@@ -47,14 +54,5 @@ public class PasswordAuthenticationInteractor implements MfaInteractor {
 
     return new MfaInteractionResult(
         type, user, authentication, response, DefaultSecurityEventType.password_success);
-  }
-
-  private User authenticateWithPassword(
-      Tenant tenant, UserRepository userRepository, String username, String password) {
-    User user = userRepository.findBy(tenant, username, "idp-server");
-    if (!passwordVerificationDelegation.verify(password, user.hashedPassword())) {
-      throw new UserNotFoundException("User " + username + " not found");
-    }
-    return user;
   }
 }

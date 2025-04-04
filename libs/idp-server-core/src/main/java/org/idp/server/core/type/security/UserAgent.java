@@ -1,4 +1,4 @@
-package org.idp.server.core.security.event;
+package org.idp.server.core.type.security;
 
 public class UserAgent {
   String value;

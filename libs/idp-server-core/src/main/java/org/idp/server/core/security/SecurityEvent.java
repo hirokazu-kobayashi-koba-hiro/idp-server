@@ -3,11 +3,12 @@ package org.idp.server.core.security;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
 import org.idp.server.core.security.event.*;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.core.type.security.IpAddress;
+import org.idp.server.core.type.security.UserAgent;
 
 public class SecurityEvent {
 
@@ -79,8 +80,22 @@ public class SecurityEvent {
     return ipAddress;
   }
 
+  public String ipAddressValue() {
+    if (ipAddress == null) {
+      return null;
+    }
+    return ipAddress.value();
+  }
+
   public UserAgent userAgent() {
     return userAgent;
+  }
+
+  public String userAgentValue() {
+    if (userAgent == null) {
+      return null;
+    }
+    return userAgent.value();
   }
 
   public SecurityEventDetail detail() {

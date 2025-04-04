@@ -78,7 +78,11 @@ public class EmailAuthenticationService implements MfaInteractor {
         response.put("authentication", authentication.toMap());
 
         return new MfaInteractionResult(
-            type, user, authentication, response, DefaultSecurityEventType.email_verification_success);
+            type,
+            user,
+            authentication,
+            response,
+            DefaultSecurityEventType.email_verification_success);
       }
     }
 

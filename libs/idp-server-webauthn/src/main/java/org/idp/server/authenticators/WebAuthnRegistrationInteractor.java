@@ -50,6 +50,7 @@ public class WebAuthnRegistrationInteractor implements MfaInteractor {
     Map<String, Object> response = new HashMap<>();
     response.put("registration", webAuthnCredential.toMap());
 
-    return new MfaInteractionResult(type, response, DefaultSecurityEventType.webauthn_registration_success);
+    return new MfaInteractionResult(
+        type, response, DefaultSecurityEventType.webauthn_registration_success);
   }
 }

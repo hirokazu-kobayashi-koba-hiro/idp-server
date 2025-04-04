@@ -1,7 +1,6 @@
 package org.idp.server.core.security.ssf;
 
 import java.util.Map;
-
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.type.oauth.RequestedClientId;
 import org.idp.server.core.type.oauth.TokenIssuer;

@@ -64,7 +64,8 @@ public class SecurityEventHandler {
       }
     }
 
-    SecurityEventTokenEntityConvertor convertor = new SecurityEventTokenEntityConvertor(securityEvent);
+    SecurityEventTokenEntityConvertor convertor =
+        new SecurityEventTokenEntityConvertor(securityEvent);
     SecurityEventTokenEntity securityEventTokenEntity = convertor.convert();
 
     SharedSignalFrameworkConfiguration configuration =

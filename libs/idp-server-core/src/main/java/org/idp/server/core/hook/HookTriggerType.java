@@ -4,7 +4,10 @@ import java.util.Set;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 
 public enum HookTriggerType {
-  POST_LOGIN(Set.of(DefaultSecurityEventType.login.name(), DefaultSecurityEventType.login_with_session.name())),
+  POST_LOGIN(
+      Set.of(
+          DefaultSecurityEventType.login.name(),
+          DefaultSecurityEventType.login_with_session.name())),
   UNDEFINED(Set.of());
 
   Set<String> eventTypes;

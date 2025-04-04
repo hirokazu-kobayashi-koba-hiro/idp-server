@@ -1,11 +1,13 @@
 package org.idp.server.adapters.springboot.restapi.oauth;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.oauth.io.OAuthLogoutResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.type.security.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +27,13 @@ public class OidcLogoutV1Api implements ParameterTransformable {
   @GetMapping
   public ResponseEntity<?> logout(
       @RequestParam(required = false) MultiValueMap<String, String> request,
-      @PathVariable("tenant-id") TenantIdentifier tenantId) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      HttpServletRequest httpServletRequest) {
 
     Map<String, String[]> params = transform(request);
-    OAuthLogoutResponse response = oAuthFlowApi.logout(tenantId, params);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    OAuthLogoutResponse response = oAuthFlowApi.logout(tenantId, params, requestAttributes);
 
     switch (response.status()) {
       case OK -> {

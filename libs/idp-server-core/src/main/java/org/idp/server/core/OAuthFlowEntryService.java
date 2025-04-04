@@ -29,6 +29,7 @@ import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.extension.OAuthDenyReason;
 import org.idp.server.core.type.extension.Pairs;
+import org.idp.server.core.type.security.RequestAttributes;
 
 @Transactional
 public class OAuthFlowEntryService implements OAuthFlowApi {
@@ -62,7 +63,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   }
 
   public Pairs<Tenant, OAuthRequestResponse> request(
-      TenantIdentifier tenantIdentifier, Map<String, String[]> params) {
+      TenantIdentifier tenantIdentifier,
+      Map<String, String[]> params,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthRequest oAuthRequest = new OAuthRequest(tenant, params);
@@ -72,7 +75,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   }
 
   public OAuthViewDataResponse getViewData(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
+      TenantIdentifier tenantIdentifier,
+      String oauthRequestIdentifier,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthViewDataRequest oAuthViewDataRequest =
@@ -86,7 +91,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       TenantIdentifier tenantIdentifier,
       String oauthRequestIdentifier,
       MfaInteractionType type,
-      Map<String, Object> params) {
+      Map<String, Object> params,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     AuthorizationRequest authorizationRequest =
@@ -105,7 +111,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
               authorizationRequest.sessionKey(), result.user(), result.authentication());
       oAuthRequestDelegate.updateSession(updatedSession);
 
-      eventPublisher.publish(tenant, authorizationRequest, result.user(), result.eventType());
+      eventPublisher.publish(
+          tenant, authorizationRequest, result.user(), result.eventType(), requestAttributes);
     }
 
     return result;
@@ -151,7 +158,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   }
 
   public OAuthAuthorizeResponse authorize(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
+      TenantIdentifier tenantIdentifier,
+      String oauthRequestIdentifier,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     AuthorizationRequest authorizationRequest =
@@ -166,13 +175,20 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 
-    eventPublisher.publish(tenant, authorizationRequest, updatedUser, DefaultSecurityEventType.login);
+    eventPublisher.publish(
+        tenant,
+        authorizationRequest,
+        updatedUser,
+        DefaultSecurityEventType.login,
+        requestAttributes);
 
     return authorize;
   }
 
   public OAuthAuthorizeResponse authorizeWithSession(
-      TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
+      TenantIdentifier tenantIdentifier,
+      String oauthRequestIdentifier,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     AuthorizationRequest authorizationRequest =
@@ -192,12 +208,19 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(authAuthorizeRequest);
 
     eventPublisher.publish(
-        tenant, authorizationRequest, session.user(), DefaultSecurityEventType.login_with_session);
+        tenant,
+        authorizationRequest,
+        session.user(),
+        DefaultSecurityEventType.login_with_session,
+        requestAttributes);
 
     return authorize;
   }
 
-  public OAuthDenyResponse deny(TenantIdentifier tenantIdentifier, String oauthRequestIdentifier) {
+  public OAuthDenyResponse deny(
+      TenantIdentifier tenantIdentifier,
+      String oauthRequestIdentifier,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthDenyRequest denyRequest =
@@ -207,7 +230,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   }
 
   public OAuthLogoutResponse logout(
-      TenantIdentifier tenantIdentifier, Map<String, String[]> params) {
+      TenantIdentifier tenantIdentifier,
+      Map<String, String[]> params,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthLogoutRequest oAuthLogoutRequest = new OAuthLogoutRequest(tenant, params);
