@@ -2,9 +2,7 @@ package org.idp.server.core.mfa.password;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.mfa.MfaInteractionResult;
-import org.idp.server.core.mfa.MfaInteractionType;
-import org.idp.server.core.mfa.MfaInteractor;
+import org.idp.server.core.mfa.*;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.*;
@@ -22,18 +20,30 @@ public class PasswordRegistrationInteractor implements MfaInteractor {
   @Override
   public MfaInteractionResult interact(
       Tenant tenant,
-      OAuthSession oAuthSession,
+      MfaTransactionIdentifier mfaTransactionIdentifier,
       MfaInteractionType type,
-      Map<String, Object> request,
+      MfaInteractionRequest request,
+      OAuthSession oAuthSession,
       UserRepository userRepository) {
-    String username = (String) request.get("username");
-    String password = (String) request.get("password");
+    String username = request.optValueAsString("username", "");
+    String password = request.optValueAsString("password", "");
     UserRegistration userRegistration = new UserRegistration(username, password);
 
     User existingUser = userRepository.findBy(tenant, userRegistration.username(), "idp-server");
 
     if (existingUser.exists()) {
-      throw new UserRegistrationConflictException("User already exists");
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "invalid_request");
+      response.put("error_description", "user is conflict with username and password");
+
+      return new MfaInteractionResult(
+          MfaInteractionStatus.CLIENT_ERROR,
+          type,
+          existingUser,
+          new Authentication(),
+          response,
+          DefaultSecurityEventType.user_signup_conflict);
     }
 
     IdPUserCreator idPUserCreator = new IdPUserCreator(userRegistration, passwordEncodeDelegation);
@@ -46,6 +56,11 @@ public class PasswordRegistrationInteractor implements MfaInteractor {
     response.put("authentication", authentication.toMap());
 
     return new MfaInteractionResult(
-        type, user, authentication, response, DefaultSecurityEventType.user_signup);
+        MfaInteractionStatus.SUCCESS,
+        type,
+        user,
+        authentication,
+        response,
+        DefaultSecurityEventType.user_signup);
   }
 }

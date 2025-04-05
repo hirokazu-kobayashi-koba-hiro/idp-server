@@ -4,6 +4,7 @@ import org.idp.server.adapters.springboot.authorization.OAuthSessionService;
 import org.idp.server.adapters.springboot.event.SecurityEventPublisherService;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.handler.config.DatabaseConfig;
+import org.idp.server.core.notification.EmailSender;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,6 +32,7 @@ public class IdPServerConfiguration {
   @Bean
   public IdpServerApplication idpServerApplication(
       OAuthSessionService oAuthSessionService,
+      EmailSender emailSender,
       SecurityEventPublisherService eventPublisherService) {
 
     DatabaseConfig databaseConfig =
@@ -46,6 +48,7 @@ public class IdPServerConfiguration {
         oAuthSessionService,
         passwordEncoder,
         passwordVerification,
+        emailSender,
         eventPublisherService);
   }
 }

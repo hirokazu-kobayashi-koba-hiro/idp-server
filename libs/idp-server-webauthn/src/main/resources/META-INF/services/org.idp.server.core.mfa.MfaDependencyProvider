@@ -1,3 +1,2 @@
-org.idp.server.authenticators.WebAuthnConfigurationDataSourceProvider
+org.idp.server.core.adapters.datasource.mfa.MfaConfigurationDataSourceProvider
 org.idp.server.authenticators.WebAuthnCredentialDataSourceProvider
-org.idp.server.authenticators.WebAuthnSessionDataSourceProvider

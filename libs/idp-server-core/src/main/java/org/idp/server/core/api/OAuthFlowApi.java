@@ -3,9 +3,11 @@ package org.idp.server.core.api;
 import java.util.Map;
 import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
+import org.idp.server.core.mfa.MfaInteractionRequest;
 import org.idp.server.core.mfa.MfaInteractionResult;
 import org.idp.server.core.mfa.MfaInteractionType;
 import org.idp.server.core.oauth.io.*;
+import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.Pairs;
@@ -19,36 +21,36 @@ public interface OAuthFlowApi {
 
   OAuthViewDataResponse getViewData(
       TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes);
 
   MfaInteractionResult interact(
       TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       MfaInteractionType type,
-      Map<String, Object> params,
+      MfaInteractionRequest params,
       RequestAttributes requestAttributes);
 
   FederationRequestResponse requestFederation(
       TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       String federationIdentifier);
 
   Pairs<Tenant, FederationCallbackResponse> callbackFederation(Map<String, String[]> params);
 
   OAuthAuthorizeResponse authorize(
       TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes);
 
   OAuthAuthorizeResponse authorizeWithSession(
       TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes);
 
   OAuthDenyResponse deny(
       TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes);
 
   OAuthLogoutResponse logout(

@@ -1,27 +1,21 @@
 package org.idp.server.core.mfa.email;
 
+import java.io.Serializable;
 import java.util.Objects;
+import org.idp.server.core.basic.json.JsonReadable;
 
-public class EmailVerificationChallenge {
+public class EmailVerificationChallenge implements Serializable, JsonReadable {
 
-  EmailVerificationIdentifier identifier;
-  OneTimePassword oneTimePassword;
+  String verificationCode;
 
-  public EmailVerificationChallenge(
-      EmailVerificationIdentifier identifier, OneTimePassword oneTimePassword) {
-    this.identifier = identifier;
-    this.oneTimePassword = oneTimePassword;
+  public EmailVerificationChallenge() {}
+
+  public EmailVerificationChallenge(String verificationCode) {
+    this.verificationCode = verificationCode;
   }
 
-  public EmailVerificationIdentifier identifier() {
-    return identifier;
-  }
+  public boolean match(String input) {
 
-  public String verificationCode() {
-    return oneTimePassword.value();
-  }
-
-  public boolean exists() {
-    return Objects.nonNull(identifier) && identifier.exists();
+    return Objects.equals(verificationCode, input);
   }
 }

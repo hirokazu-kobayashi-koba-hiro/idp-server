@@ -76,12 +76,12 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
   public OAuthViewDataResponse getViewData(
       TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthViewDataRequest oAuthViewDataRequest =
-        new OAuthViewDataRequest(tenant, oauthRequestIdentifier);
+        new OAuthViewDataRequest(tenant, authorizationRequestIdentifier.value());
 
     return oAuthProtocol.getViewData(oAuthViewDataRequest);
   }
@@ -89,45 +89,45 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   @Override
   public MfaInteractionResult interact(
       TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       MfaInteractionType type,
-      Map<String, Object> params,
+      MfaInteractionRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    AuthorizationRequest authorizationRequest =
-        oAuthProtocol.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
-    OAuthSession oAuthSession = oAuthRequestDelegate.findSession(authorizationRequest.sessionKey());
+    AuthorizationRequest authorizationRequest = oAuthProtocol.get(authorizationRequestIdentifier);
+    OAuthSession oAuthSession =
+        oAuthRequestDelegate.findOrInitialize(authorizationRequest.sessionKey());
 
     MfaInteractor mfaInteractor = mfaInteractors.get(type);
-
+    MfaTransactionIdentifier mfaTransactionIdentifier =
+        new MfaTransactionIdentifier(authorizationRequestIdentifier.value());
     MfaInteractionResult result =
-        mfaInteractor.interact(tenant, oAuthSession, type, params, userRepository);
+        mfaInteractor.interact(
+            tenant, mfaTransactionIdentifier, type, request, oAuthSession, userRepository);
 
-    if (result.hasUser()) {
-      OAuthSession session = oAuthRequestDelegate.findSession(authorizationRequest.sessionKey());
-      OAuthSession updatedSession =
-          session.didAuthentication(
-              authorizationRequest.sessionKey(), result.user(), result.authentication());
-      oAuthRequestDelegate.updateSession(updatedSession);
-
-      eventPublisher.publish(
-          tenant, authorizationRequest, result.user(), result.eventType(), requestAttributes);
+    if (result.isSuccess()) {
+      OAuthSession updated = oAuthSession.didAuthentication(result.user(), result.authentication());
+      oAuthRequestDelegate.updateSession(updated);
     }
+
+    eventPublisher.publish(
+        tenant, authorizationRequest, result.user(), result.eventType(), requestAttributes);
 
     return result;
   }
 
   public FederationRequestResponse requestFederation(
       TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       String federationIdentifier) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    oAuthProtocol.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
+    oAuthProtocol.get(authorizationRequestIdentifier);
 
     return federationService.request(
-        new FederationRequest(tenant, oauthRequestIdentifier, federationIdentifier));
+        new FederationRequest(
+            tenant, authorizationRequestIdentifier.value(), federationIdentifier));
   }
 
   public Pairs<Tenant, FederationCallbackResponse> callbackFederation(
@@ -159,19 +159,18 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
   public OAuthAuthorizeResponse authorize(
       TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    AuthorizationRequest authorizationRequest =
-        oAuthProtocol.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
-    OAuthSession session = oAuthRequestDelegate.findSession(authorizationRequest.sessionKey());
+    AuthorizationRequest authorizationRequest = oAuthProtocol.get(authorizationRequestIdentifier);
+    OAuthSession session = oAuthRequestDelegate.find(authorizationRequest.sessionKey());
 
     User updatedUser = userRegistrationService.registerOrUpdate(tenant, session.user());
 
     OAuthAuthorizeRequest oAuthAuthorizeRequest =
         new OAuthAuthorizeRequest(
-            tenant, oauthRequestIdentifier, updatedUser, session.authentication());
+            tenant, authorizationRequestIdentifier.value(), updatedUser, session.authentication());
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 
@@ -187,13 +186,12 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
   public OAuthAuthorizeResponse authorizeWithSession(
       TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    AuthorizationRequest authorizationRequest =
-        oAuthProtocol.get(new AuthorizationRequestIdentifier(oauthRequestIdentifier));
-    OAuthSession session = oAuthRequestDelegate.findSession(authorizationRequest.sessionKey());
+    AuthorizationRequest authorizationRequest = oAuthProtocol.get(authorizationRequestIdentifier);
+    OAuthSession session = oAuthRequestDelegate.find(authorizationRequest.sessionKey());
 
     if (Objects.isNull(session)
         || session.isExpire(SystemDateTime.now())
@@ -203,7 +201,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     OAuthAuthorizeRequest authAuthorizeRequest =
         new OAuthAuthorizeRequest(
-            tenant, oauthRequestIdentifier, session.user(), session.authentication());
+            tenant,
+            authorizationRequestIdentifier.value(),
+            session.user(),
+            session.authentication());
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(authAuthorizeRequest);
 
@@ -219,12 +220,13 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
   public OAuthDenyResponse deny(
       TenantIdentifier tenantIdentifier,
-      String oauthRequestIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthDenyRequest denyRequest =
-        new OAuthDenyRequest(tenant, oauthRequestIdentifier, OAuthDenyReason.access_denied);
+        new OAuthDenyRequest(
+            tenant, authorizationRequestIdentifier.value(), OAuthDenyReason.access_denied);
 
     return oAuthProtocol.deny(denyRequest);
   }

@@ -21,7 +21,17 @@ public class OAuthSessionService implements OAuthRequestDelegate {
   }
 
   @Override
-  public OAuthSession findSession(OAuthSessionKey oAuthSessionKey) {
+  public OAuthSession findOrInitialize(OAuthSessionKey oAuthSessionKey) {
+    OAuthSession oAuthSession = httpSessionRepository.find(oAuthSessionKey);
+    if (oAuthSession.exists()) {
+      return oAuthSession;
+    }
+
+    return OAuthSession.init(oAuthSessionKey);
+  }
+
+  @Override
+  public OAuthSession find(OAuthSessionKey oAuthSessionKey) {
     return httpSessionRepository.find(oAuthSessionKey);
   }
 

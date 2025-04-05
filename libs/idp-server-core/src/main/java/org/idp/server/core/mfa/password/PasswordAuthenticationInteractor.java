@@ -26,20 +26,29 @@ public class PasswordAuthenticationInteractor implements MfaInteractor {
   @Override
   public MfaInteractionResult interact(
       Tenant tenant,
-      OAuthSession oAuthSession,
+      MfaTransactionIdentifier mfaTransactionIdentifier,
       MfaInteractionType type,
-      Map<String, Object> request,
+      MfaInteractionRequest request,
+      OAuthSession oAuthSession,
       UserRepository userRepository) {
-    String username = (String) request.get("username");
-    String password = (String) request.get("password");
+
+    String username = request.optValueAsString("username", "");
+    String password = request.optValueAsString("password", "");
 
     User user = userRepository.findBy(tenant, username, "idp-server");
     if (!passwordVerificationDelegation.verify(password, user.hashedPassword())) {
 
       Map<String, Object> response = new HashMap<>();
+      response.put("error", "invalid_request");
+      response.put("error_description", "user is not found or invalid password");
 
       return new MfaInteractionResult(
-          type, user, new Authentication(), response, DefaultSecurityEventType.password_failure);
+          MfaInteractionStatus.CLIENT_ERROR,
+          type,
+          user,
+          new Authentication(),
+          response,
+          DefaultSecurityEventType.password_failure);
     }
 
     Authentication authentication =
@@ -53,6 +62,11 @@ public class PasswordAuthenticationInteractor implements MfaInteractor {
     response.put("authentication", authentication.toMap());
 
     return new MfaInteractionResult(
-        type, user, authentication, response, DefaultSecurityEventType.password_success);
+        MfaInteractionStatus.SUCCESS,
+        type,
+        user,
+        authentication,
+        response,
+        DefaultSecurityEventType.password_success);
   }
 }

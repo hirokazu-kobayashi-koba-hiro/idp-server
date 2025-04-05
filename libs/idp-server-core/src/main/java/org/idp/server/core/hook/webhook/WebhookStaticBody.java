@@ -5,19 +5,19 @@ import java.util.function.BiConsumer;
 
 public class WebhookStaticBody {
 
-  Map<String, String> values;
+  Map<String, Object> values;
 
-  public WebhookStaticBody(Map<String, String> values) {
+  public WebhookStaticBody(Map<String, Object> values) {
     this.values = values;
   }
 
-  public Map<String, String> toMap() {
+  public Map<String, Object> toMap() {
     return values;
   }
 
   public String optValueAsString(String key, String defaultValue) {
     if (containsKey(key)) {
-      return values.get(key);
+      return (String) values.get(key);
     }
     return defaultValue;
   }
@@ -26,7 +26,7 @@ public class WebhookStaticBody {
     return values.containsKey(key);
   }
 
-  public void forEach(BiConsumer<String, String> action) {
+  public void forEach(BiConsumer<String, Object> action) {
     values.forEach(action);
   }
 

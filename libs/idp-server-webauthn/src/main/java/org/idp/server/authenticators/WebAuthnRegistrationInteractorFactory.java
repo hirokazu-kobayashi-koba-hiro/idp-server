@@ -1,27 +1,26 @@
 package org.idp.server.authenticators;
 
-import org.idp.server.authenticators.webauthn.WebAuthnConfigurationRepository;
 import org.idp.server.authenticators.webauthn.WebAuthnCredentialRepository;
-import org.idp.server.authenticators.webauthn.WebAuthnSessionRepository;
 import org.idp.server.core.mfa.*;
+import org.idp.server.core.mfa.MfaConfigurationQueryRepository;
 
 public class WebAuthnRegistrationInteractorFactory implements MfaInteractorFactory {
 
   @Override
   public MfaInteractionType type() {
-    return StandardMfaInteractionType.WEBAUTHN_REGISTRATION.toType();
+    return StandardMfaInteraction.WEBAUTHN_REGISTRATION.toType();
   }
 
   @Override
   public MfaInteractor create(MfaDependencyContainer container) {
-    WebAuthnConfigurationRepository configurationRepository =
-        container.resolve(WebAuthnConfigurationRepository.class);
-    WebAuthnSessionRepository sessionRepository =
-        container.resolve(WebAuthnSessionRepository.class);
+    MfaConfigurationQueryRepository configurationRepository =
+        container.resolve(MfaConfigurationQueryRepository.class);
+    MfaTransactionQueryRepository transactionQueryRepository =
+        container.resolve(MfaTransactionQueryRepository.class);
     WebAuthnCredentialRepository credentialRepository =
         container.resolve(WebAuthnCredentialRepository.class);
 
     return new WebAuthnRegistrationInteractor(
-        configurationRepository, sessionRepository, credentialRepository);
+        configurationRepository, transactionQueryRepository, credentialRepository);
   }
 }

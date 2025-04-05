@@ -2,6 +2,7 @@ package org.idp.server.core.mfa;
 
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.mfa.exception.MfaInteractorUnSupportedException;
 
 public class MfaInteractors {
 

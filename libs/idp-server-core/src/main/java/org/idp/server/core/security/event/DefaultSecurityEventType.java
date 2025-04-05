@@ -2,6 +2,7 @@ package org.idp.server.core.security.event;
 
 public enum DefaultSecurityEventType {
   user_signup("User signed up"),
+  user_signup_conflict("User signed up conflict"),
   user_disabled("User disabled"),
   user_enabled("User enabled"),
   user_deletion("User deleted"),

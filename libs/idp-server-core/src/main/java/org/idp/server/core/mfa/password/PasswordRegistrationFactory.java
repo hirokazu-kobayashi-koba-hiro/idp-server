@@ -7,7 +7,7 @@ public class PasswordRegistrationFactory implements MfaInteractorFactory {
 
   @Override
   public MfaInteractionType type() {
-    return StandardMfaInteractionType.PASSWORD_REGISTRATION.toType();
+    return StandardMfaInteraction.PASSWORD_REGISTRATION.toType();
   }
 
   @Override

@@ -7,7 +7,7 @@ public class PasswordAuthenticationInteractorFactory implements MfaInteractorFac
 
   @Override
   public MfaInteractionType type() {
-    return StandardMfaInteractionType.PASSWORD_AUTHENTICATION.toType();
+    return StandardMfaInteraction.PASSWORD_AUTHENTICATION.toType();
   }
 
   @Override

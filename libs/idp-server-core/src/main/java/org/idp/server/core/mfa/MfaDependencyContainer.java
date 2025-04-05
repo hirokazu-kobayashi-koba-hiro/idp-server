@@ -2,6 +2,7 @@ package org.idp.server.core.mfa;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.mfa.exception.MfaDependencyMissionException;
 
 public class MfaDependencyContainer {
 

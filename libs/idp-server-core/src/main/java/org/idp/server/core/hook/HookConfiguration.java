@@ -16,7 +16,7 @@ public class HookConfiguration implements JsonReadable {
   String webhookMethod;
   Map<String, String> webhookHeaders;
   List<String> webhookDynamicBodyKeys;
-  Map<String, String> webhookStaticBody;
+  Map<String, Object> webhookStaticBody;
 
   // slack notification
   String slackUrl;

@@ -45,7 +45,7 @@ public class OAuthHandler {
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tenant, requestedClientId);
 
-    OAuthSession session = oAuthRequestDelegate.findSession(authorizationRequest.sessionKey());
+    OAuthSession session = oAuthRequestDelegate.find(authorizationRequest.sessionKey());
 
     OAuthViewDataCreator creator =
         new OAuthViewDataCreator(
@@ -68,7 +68,7 @@ public class OAuthHandler {
 
     OAuthSessionKey oAuthSessionKey =
         new OAuthSessionKey(tenant.identifierValue(), parameters.clientId().value());
-    OAuthSession session = delegate.findSession(oAuthSessionKey);
+    OAuthSession session = delegate.find(oAuthSessionKey);
     delegate.deleteSession(oAuthSessionKey);
 
     String redirectUri =

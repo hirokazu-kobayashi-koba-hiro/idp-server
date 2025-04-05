@@ -62,7 +62,7 @@ public class OAuthRequestHandler {
 
     authorizationRequestRepository.register(context.authorizationRequest());
 
-    OAuthSession session = delegate.findSession(context.sessionKey());
+    OAuthSession session = delegate.find(context.sessionKey());
 
     if (session.exists()) {
       context.setSession(session);

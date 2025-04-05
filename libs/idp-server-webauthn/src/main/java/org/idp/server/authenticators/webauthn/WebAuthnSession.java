@@ -25,4 +25,9 @@ public class WebAuthnSession {
 
     return Base64.getUrlEncoder().encodeToString(challenge.getValue());
   }
+
+  public SerializableWebAuthnSession toSerializableWebAuthnSession() {
+
+    return new SerializableWebAuthnSession(challengeAsString());
+  }
 }

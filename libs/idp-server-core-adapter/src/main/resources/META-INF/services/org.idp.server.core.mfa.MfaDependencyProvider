@@ -1,0 +1,3 @@
+org.idp.server.core.adapters.datasource.mfa.MfaConfigurationDataSourceProvider
+org.idp.server.core.adapters.datasource.mfa.MfaTransactionCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.mfa.MfaTransactionQueryDataSourceProvider

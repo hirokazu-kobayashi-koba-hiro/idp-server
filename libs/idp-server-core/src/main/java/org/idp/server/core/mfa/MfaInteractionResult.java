@@ -8,6 +8,7 @@ import org.idp.server.core.security.event.DefaultSecurityEventType;
 
 public class MfaInteractionResult {
 
+  MfaInteractionStatus status;
   MfaInteractionType type;
   User user;
   Authentication authentication;
@@ -15,23 +16,41 @@ public class MfaInteractionResult {
   DefaultSecurityEventType eventType;
 
   public MfaInteractionResult(
-      MfaInteractionType type, Map<String, Object> response, DefaultSecurityEventType eventType) {
+      MfaInteractionStatus status,
+      MfaInteractionType type,
+      Map<String, Object> response,
+      DefaultSecurityEventType eventType) {
+    this.status = status;
     this.type = type;
     this.response = response;
     this.eventType = eventType;
   }
 
   public MfaInteractionResult(
+      MfaInteractionStatus status,
       MfaInteractionType type,
       User user,
       Authentication authentication,
       Map<String, Object> response,
       DefaultSecurityEventType eventType) {
+    this.status = status;
     this.type = type;
     this.user = user;
     this.authentication = authentication;
     this.response = response;
     this.eventType = eventType;
+  }
+
+  public MfaInteractionStatus status() {
+    return status;
+  }
+
+  public boolean isSuccess() {
+    return status.isSuccess();
+  }
+
+  public boolean isError() {
+    return status.isError();
   }
 
   public MfaInteractionType type() {

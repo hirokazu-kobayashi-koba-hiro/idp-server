@@ -8,12 +8,14 @@ import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
+import org.idp.server.core.mfa.MfaInteractionRequest;
 import org.idp.server.core.mfa.MfaInteractionResult;
-import org.idp.server.core.mfa.StandardMfaInteractionType;
+import org.idp.server.core.mfa.MfaInteractionType;
 import org.idp.server.core.oauth.io.OAuthAuthorizeResponse;
 import org.idp.server.core.oauth.io.OAuthDenyResponse;
 import org.idp.server.core.oauth.io.OAuthRequestResponse;
 import org.idp.server.core.oauth.io.OAuthViewDataResponse;
+import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.Pairs;
@@ -110,12 +112,12 @@ public class OAuthV1Api implements ParameterTransformable {
   @GetMapping("/{id}/view-data")
   public ResponseEntity<?> getViewData(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
-      @PathVariable("id") String id,
+      @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
     OAuthViewDataResponse viewDataResponse =
-        oAuthFlowApi.getViewData(tenantId, id, requestAttributes);
+        oAuthFlowApi.getViewData(tenantId, authorizationRequestIdentifier, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -125,7 +127,7 @@ public class OAuthV1Api implements ParameterTransformable {
   @PostMapping("/{id}/federations")
   public ResponseEntity<?> createFederation(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("id") String id,
+      @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
       @RequestBody Map<String, String> body) {
 
     if (!body.containsKey("federatable_idp_id")) {
@@ -133,7 +135,8 @@ public class OAuthV1Api implements ParameterTransformable {
     }
 
     FederationRequestResponse requestResponse =
-        oAuthFlowApi.requestFederation(tenantIdentifier, id, body.get("federatable_idp_id"));
+        oAuthFlowApi.requestFederation(
+            tenantIdentifier, authorizationRequestIdentifier, body.get("federatable_idp_id"));
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
@@ -152,11 +155,12 @@ public class OAuthV1Api implements ParameterTransformable {
     }
   }
 
-  @PostMapping("/{id}/signup")
-  public ResponseEntity<?> signup(
+  @PostMapping("/{id}/{mfa-interaction-type}")
+  public ResponseEntity<?> interact(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
-      @PathVariable("id") String id,
-      @RequestBody Map<String, Object> params,
+      @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      @PathVariable("mfa-interaction-type") MfaInteractionType mfaInteractionType,
+      @RequestBody(required = false) Map<String, Object> params,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -164,27 +168,39 @@ public class OAuthV1Api implements ParameterTransformable {
     MfaInteractionResult result =
         oAuthFlowApi.interact(
             tenantId,
-            id,
-            StandardMfaInteractionType.PASSWORD_REGISTRATION.toType(),
-            params,
+            authorizationRequestIdentifier,
+            mfaInteractionType,
+            new MfaInteractionRequest(params),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
 
-    return new ResponseEntity<>(result.response(), httpHeaders, HttpStatus.OK);
+    switch (result.status()) {
+      case SUCCESS -> {
+        return new ResponseEntity<>(result.response(), httpHeaders, HttpStatus.OK);
+      }
+      case CLIENT_ERROR -> {
+        return new ResponseEntity<>(result.response(), httpHeaders, HttpStatus.BAD_REQUEST);
+      }
+      default -> {
+        return new ResponseEntity<>(
+            result.response(), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    }
   }
 
   @PostMapping("/{id}/authorize-with-session")
   public ResponseEntity<?> authorizeWithSession(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
-      @PathVariable("id") String id,
+      @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     OAuthAuthorizeResponse authAuthorizeResponse =
-        oAuthFlowApi.authorizeWithSession(tenantId, id, requestAttributes);
+        oAuthFlowApi.authorizeWithSession(
+            tenantId, authorizationRequestIdentifier, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -204,38 +220,15 @@ public class OAuthV1Api implements ParameterTransformable {
     }
   }
 
-  @PostMapping("/{id}/password-authentication")
-  public ResponseEntity<?> authenticateWithPassword(
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
-      @PathVariable("id") String id,
-      @RequestBody Map<String, Object> params,
-      HttpServletRequest httpServletRequest) {
-
-    RequestAttributes requestAttributes = transform(httpServletRequest);
-
-    MfaInteractionResult result =
-        oAuthFlowApi.interact(
-            tenantId,
-            id,
-            StandardMfaInteractionType.PASSWORD_AUTHENTICATION.toType(),
-            params,
-            requestAttributes);
-
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", "application/json");
-
-    return new ResponseEntity<>(result.response(), httpHeaders, HttpStatus.OK);
-  }
-
   @PostMapping("/{id}/authorize")
   public ResponseEntity<?> authorize(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
-      @PathVariable("id") String id,
+      @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
     OAuthAuthorizeResponse authAuthorizeResponse =
-        oAuthFlowApi.authorize(tenantId, id, requestAttributes);
+        oAuthFlowApi.authorize(tenantId, authorizationRequestIdentifier, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -258,11 +251,12 @@ public class OAuthV1Api implements ParameterTransformable {
   @PostMapping("/{id}/deny")
   public ResponseEntity<?> deny(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
-      @PathVariable("id") String id,
+      @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
-    OAuthDenyResponse oAuthDenyResponse = oAuthFlowApi.deny(tenantId, id, requestAttributes);
+    OAuthDenyResponse oAuthDenyResponse =
+        oAuthFlowApi.deny(tenantId, authorizationRequestIdentifier, requestAttributes);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
 

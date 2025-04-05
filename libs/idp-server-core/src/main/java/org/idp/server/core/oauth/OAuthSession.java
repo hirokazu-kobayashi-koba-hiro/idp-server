@@ -60,6 +60,14 @@ public class OAuthSession implements Serializable {
     this.attributes = attributes;
   }
 
+  public static OAuthSession init(OAuthSessionKey oAuthSessionKey) {
+    return new OAuthSession(oAuthSessionKey);
+  }
+
+  public OAuthSession(OAuthSessionKey oAuthSessionKey) {
+    this.oAuthSessionKey = oAuthSessionKey;
+  }
+
   public OAuthSessionKey oAuthSessionKey() {
     return oAuthSessionKey;
   }
@@ -114,8 +122,7 @@ public class OAuthSession implements Serializable {
     return user.customPropertiesValue();
   }
 
-  public OAuthSession didAuthentication(
-      OAuthSessionKey oAuthSessionKey, User user, Authentication authentication) {
+  public OAuthSession didAuthentication(User user, Authentication authentication) {
 
     return new OAuthSession(oAuthSessionKey, user, authentication, maxAge, createdAt, expiredAt);
   }
@@ -136,5 +143,9 @@ public class OAuthSession implements Serializable {
 
   public Object getAttribute(String key) {
     return attributes.get(key);
+  }
+
+  public boolean hasUser() {
+    return user != null && user.exists();
   }
 }

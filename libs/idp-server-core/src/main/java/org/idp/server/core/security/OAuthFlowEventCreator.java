@@ -57,8 +57,10 @@ public class OAuthFlowEventCreator {
             authorizationRequest.clientId(), authorizationRequest.clientNameValue());
     builder.add(securityEventClient);
 
-    SecurityEventUser securityEventUser = new SecurityEventUser(user.sub(), user.name());
-    builder.add(securityEventUser);
+    if (user != null) {
+      SecurityEventUser securityEventUser = new SecurityEventUser(user.sub(), user.name());
+      builder.add(securityEventUser);
+    }
 
     builder.add(requestAttributes.getIpAddress());
     builder.add(requestAttributes.getUserAgent());
