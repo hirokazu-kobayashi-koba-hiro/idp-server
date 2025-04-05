@@ -34,7 +34,8 @@ public class MfaConfigurationQueryDataSource implements MfaConfigurationQueryRep
 
     if (Objects.isNull(result) || result.isEmpty()) {
       throw new MfaConfigurationNotFoundException(
-          String.format("Mfa Configuration is Not Found (%s) (%s)", tenant.identifierValue(), type));
+          String.format(
+              "Mfa Configuration is Not Found (%s) (%s)", tenant.identifierValue(), type));
     }
 
     return jsonConverter.read(result.get("payload"), clazz);

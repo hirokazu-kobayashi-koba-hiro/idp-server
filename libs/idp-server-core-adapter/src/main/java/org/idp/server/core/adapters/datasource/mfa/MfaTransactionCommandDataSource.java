@@ -51,7 +51,6 @@ public class MfaTransactionCommandDataSource implements MfaTransactionCommandRep
     params.add(identifier.value());
     params.add(type);
 
-
     sqlExecutor.execute(sqlTemplate, params);
   }
 }
