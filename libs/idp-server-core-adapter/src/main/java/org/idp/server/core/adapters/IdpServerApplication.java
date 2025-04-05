@@ -53,7 +53,8 @@ import org.idp.server.core.handler.userinfo.UserinfoHandler;
 import org.idp.server.core.hook.AuthenticationHooks;
 import org.idp.server.core.hook.AuthenticationHooksLoader;
 import org.idp.server.core.mfa.*;
-import org.idp.server.core.notification.EmailSender;
+import org.idp.server.core.notification.EmailSenderLoader;
+import org.idp.server.core.notification.EmailSenders;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
@@ -87,7 +88,6 @@ public class IdpServerApplication {
       OAuthRequestDelegate oAuthRequestDelegate,
       PasswordEncodeDelegation passwordEncodeDelegation,
       PasswordVerificationDelegation passwordVerificationDelegation,
-      EmailSender emailSender,
       SecurityEventPublisher securityEventPublisher) {
 
     TransactionManager.setConnectionConfig(
@@ -249,7 +249,8 @@ public class IdpServerApplication {
     mfaDependencyContainer.register(PasswordEncodeDelegation.class, passwordEncodeDelegation);
     mfaDependencyContainer.register(
         PasswordVerificationDelegation.class, passwordVerificationDelegation);
-    mfaDependencyContainer.register(EmailSender.class, emailSender);
+    EmailSenders emailSenders = EmailSenderLoader.load();
+    mfaDependencyContainer.register(EmailSenders.class, emailSenders);
 
     Map<MfaInteractionType, MfaInteractor> loadedInteractors =
         MfaInteractorLoader.load(mfaDependencyContainer);

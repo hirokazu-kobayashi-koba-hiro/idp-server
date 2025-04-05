@@ -1,14 +1,13 @@
-package org.idp.server.core.mfa;
+package org.idp.server.core.mfa.email;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class MfaConfiguration {
+public class EmailSenderSetting {
+
   Map<String, Object> values;
 
-  public MfaConfiguration() {}
-
-  public MfaConfiguration(Map<String, Object> values) {
+  public EmailSenderSetting(Map<String, Object> values) {
     this.values = values;
   }
 
@@ -16,9 +15,24 @@ public class MfaConfiguration {
     return values;
   }
 
+  public String getValueAsString(String key) {
+    return (String) values.get(key);
+  }
+
   public String optValueAsString(String key, String defaultValue) {
     if (containsKey(key)) {
       return (String) values.get(key);
+    }
+    return defaultValue;
+  }
+
+  public int getValueAsInt(String key) {
+    return (int) values.get(key);
+  }
+
+  public int optValueAsInt(String key, int defaultValue) {
+    if (containsKey(key)) {
+      return (int) values.get(key);
     }
     return defaultValue;
   }

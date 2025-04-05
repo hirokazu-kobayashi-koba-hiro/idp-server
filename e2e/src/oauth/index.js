@@ -205,7 +205,9 @@ export const requestAuthorizations = async ({
         const challengeResponse = await postEmailVerificationChallenge({
           endpoint: serverConfig.emailAuthenticationChallengeEndpoint,
           id,
-          body: {},
+          body: {
+            email_template: "authentication"
+          },
         });
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);

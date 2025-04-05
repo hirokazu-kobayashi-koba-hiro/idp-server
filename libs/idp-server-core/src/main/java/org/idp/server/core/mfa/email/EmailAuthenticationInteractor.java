@@ -1,9 +1,8 @@
-package org.idp.server.adapters.springboot.mfa.email;
+package org.idp.server.core.mfa.email;
 
 import java.util.*;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.mfa.*;
-import org.idp.server.core.mfa.email.*;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;

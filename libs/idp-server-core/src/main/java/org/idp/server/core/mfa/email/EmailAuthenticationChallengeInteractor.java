@@ -1,10 +1,10 @@
-package org.idp.server.adapters.springboot.mfa.email;
+package org.idp.server.core.mfa.email;
 
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.mfa.*;
-import org.idp.server.core.mfa.email.*;
 import org.idp.server.core.notification.EmailSender;
+import org.idp.server.core.notification.EmailSenders;
 import org.idp.server.core.notification.EmailSendingRequest;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
@@ -16,15 +16,15 @@ public class EmailAuthenticationChallengeInteractor implements MfaInteractor {
 
   MfaConfigurationQueryRepository configurationQueryRepository;
   MfaTransactionCommandRepository transactionCommandRepository;
-  EmailSender emailSender;
+  EmailSenders emailSenders;
 
   public EmailAuthenticationChallengeInteractor(
       MfaConfigurationQueryRepository configurationQueryRepository,
       MfaTransactionCommandRepository transactionCommandRepository,
-      EmailSender emailSender) {
+      EmailSenders emailSenders) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.transactionCommandRepository = transactionCommandRepository;
-    this.emailSender = emailSender;
+    this.emailSenders = emailSenders;
   }
 
   @Override
@@ -75,7 +75,9 @@ public class EmailAuthenticationChallengeInteractor implements MfaInteractor {
     String body = emailTemplate.interpolateBody(oneTimePassword.value(), expireSeconds);
 
     EmailSendingRequest emailSendingRequest = new EmailSendingRequest(sender, to, subject, body);
-    emailSender.send(emailSendingRequest);
+
+    EmailSender emailSender = emailSenders.get(emailMfaConfiguration.senderType());
+    emailSender.send(emailSendingRequest, emailMfaConfiguration.setting());
 
     EmailVerificationChallenge emailVerificationChallenge =
         EmailVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);

@@ -1,7 +1,7 @@
-package org.idp.server.adapters.springboot.mfa.email;
+package org.idp.server.core.mfa.email;
 
 import org.idp.server.core.mfa.*;
-import org.idp.server.core.notification.EmailSender;
+import org.idp.server.core.notification.EmailSenders;
 
 public class EmailAuthenticationChallengeInteractorFactory implements MfaInteractorFactory {
 
@@ -17,8 +17,8 @@ public class EmailAuthenticationChallengeInteractorFactory implements MfaInterac
         container.resolve(MfaConfigurationQueryRepository.class);
     MfaTransactionCommandRepository transactionCommandRepository =
         container.resolve(MfaTransactionCommandRepository.class);
-    EmailSender emailSender = container.resolve(EmailSender.class);
+    EmailSenders emailSenders = container.resolve(EmailSenders.class);
     return new EmailAuthenticationChallengeInteractor(
-        configurationQueryRepository, transactionCommandRepository, emailSender);
+        configurationQueryRepository, transactionCommandRepository, emailSenders);
   }
 }

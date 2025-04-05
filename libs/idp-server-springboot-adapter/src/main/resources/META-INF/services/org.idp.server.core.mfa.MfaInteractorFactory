@@ -1,2 +1,0 @@
-org.idp.server.adapters.springboot.mfa.email.EmailAuthenticationInteractorFactory
-org.idp.server.adapters.springboot.mfa.email.EmailAuthenticationChallengeInteractorFactory

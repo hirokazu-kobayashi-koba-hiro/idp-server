@@ -1,4 +1,4 @@
-package org.idp.server.adapters.springboot.mfa.email;
+package org.idp.server.core.mfa.email;
 
 import org.idp.server.core.mfa.*;
 
