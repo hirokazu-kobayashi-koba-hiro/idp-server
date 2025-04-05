@@ -13,18 +13,44 @@ public class MfaTransactionCommandDataSource implements MfaTransactionCommandRep
   JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   @Override
-  public <T> void register(MfaTransactionIdentifier identifier, String key, T payload) {
+  public <T> void register(MfaTransactionIdentifier identifier, String type, T payload) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
     String sqlTemplate =
         """
-            INSERt INTO mfa_transactions (id, key, payload) VALUES (?, ?, ?)
+            INSERT INTO mfa_transactions (id, type, payload) VALUES (?, ?, ?::jsonb)
+            ON CONFLICT (id, type) DO UPDATE SET payload = ?::jsonb, updated_at = now()
             """;
+
+    String json = jsonConverter.write(payload);
 
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
-    params.add(key);
+    params.add(type);
+    params.add(json);
+    params.add(json);
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public <T> void update(MfaTransactionIdentifier identifier, String type, T payload) {
+    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+
+    String sqlTemplate =
+        """
+                UPDATE mfa_transactions
+                SET payload = ?::jsonb,
+                updated_at = now()
+                WHERE id = ?
+                AND type = ?
+                """;
+
+    List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(payload));
+    params.add(identifier.value());
+    params.add(type);
+
 
     sqlExecutor.execute(sqlTemplate, params);
   }

@@ -1,5 +1,6 @@
 package org.idp.server.adapters.springboot.mfa.email;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.mfa.*;
 import org.idp.server.core.mfa.email.*;
@@ -39,25 +40,45 @@ public class EmailAuthenticationChallengeInteractor implements MfaInteractor {
         configurationQueryRepository.get(tenant, "email", EmailMfaConfiguration.class);
 
     if (!oAuthSession.hasUser()) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "invalid_request");
+      response.put("error_description", "session is invalid. email is not specified");
+
       return new MfaInteractionResult(
           MfaInteractionStatus.CLIENT_ERROR,
           type,
-          Map.of(),
+          response,
+          DefaultSecurityEventType.email_verification_failure);
+    }
+
+    if (!request.containsKey("email_template")) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "invalid_request");
+      response.put("error_description", "session is invalid. email is not specified");
+
+      return new MfaInteractionResult(
+          MfaInteractionStatus.CLIENT_ERROR,
+          type,
+          response,
           DefaultSecurityEventType.email_verification_failure);
     }
 
     OneTimePassword oneTimePassword = OneTimePasswordGenerator.generate();
     String sender = emailMfaConfiguration.sender();
     String to = oAuthSession.user().email();
-    String subject = emailMfaConfiguration.subject();
+    EmailTemplate emailTemplate =
+        emailMfaConfiguration.findTemplate(request.getValueAsString("email_template"));
+    String subject = emailTemplate.subject();
+    int retryCountLimitation = emailMfaConfiguration.retryCountLimitation();
+    int expireSeconds = emailMfaConfiguration.expireSeconds();
 
-    String body = emailMfaConfiguration.interpolateBody(oneTimePassword.value());
+    String body = emailTemplate.interpolateBody(oneTimePassword.value(), expireSeconds);
 
     EmailSendingRequest emailSendingRequest = new EmailSendingRequest(sender, to, subject, body);
     emailSender.send(emailSendingRequest);
 
     EmailVerificationChallenge emailVerificationChallenge =
-        new EmailVerificationChallenge(oneTimePassword.value());
+        EmailVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
 
     transactionCommandRepository.register(
         mfaTransactionIdentifier, "email", emailVerificationChallenge);

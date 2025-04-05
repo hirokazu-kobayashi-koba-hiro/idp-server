@@ -22,6 +22,10 @@ public class MfaInteractionRequest {
     return defaultValue;
   }
 
+  public String getValueAsString(String key) {
+    return (String) values.get(key);
+  }
+
   public boolean containsKey(String key) {
     return values.containsKey(key);
   }

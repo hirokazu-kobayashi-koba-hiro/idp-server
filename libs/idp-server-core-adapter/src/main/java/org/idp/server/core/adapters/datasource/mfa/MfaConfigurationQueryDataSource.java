@@ -1,5 +1,6 @@
 package org.idp.server.core.adapters.datasource.mfa;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -15,22 +16,25 @@ public class MfaConfigurationQueryDataSource implements MfaConfigurationQueryRep
   JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   @Override
-  public <T> T get(Tenant tenant, String key, Class<T> clazz) {
+  public <T> T get(Tenant tenant, String type, Class<T> clazz) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
             SELECT id, payload
             FROM mfa_configuration
             WHERE tenant_id = ?
-            AND key = ?
+            AND type = ?
             """;
 
-    List<Object> params = List.of(tenant.identifierValue());
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+    params.add(type);
+
     Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
 
     if (Objects.isNull(result) || result.isEmpty()) {
       throw new MfaConfigurationNotFoundException(
-          String.format("Mfa Configuration is Not Found (%s) (%s)", tenant.identifierValue(), key));
+          String.format("Mfa Configuration is Not Found (%s) (%s)", tenant.identifierValue(), type));
     }
 
     return jsonConverter.read(result.get("payload"), clazz);

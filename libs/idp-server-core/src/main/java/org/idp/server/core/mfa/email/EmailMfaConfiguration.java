@@ -1,34 +1,41 @@
 package org.idp.server.core.mfa.email;
 
+import java.util.Map;
 import org.idp.server.core.basic.json.JsonReadable;
 
 public class EmailMfaConfiguration implements JsonReadable {
   String sender;
-  String subject;
-  String bodyTemplate;
+  Map<String, EmailTemplate> templates;
+  int retryCountLimitation;
+  int expireSeconds;
 
   public EmailMfaConfiguration() {}
 
-  public EmailMfaConfiguration(String sender, String subject, String bodyTemplate) {
+  public EmailMfaConfiguration(
+      String sender,
+      Map<String, EmailTemplate> templates,
+      int retryCountLimitation,
+      int expireSeconds) {
     this.sender = sender;
-    this.subject = subject;
-    this.bodyTemplate = bodyTemplate;
+    this.templates = templates;
+    this.retryCountLimitation = retryCountLimitation;
+    this.expireSeconds = expireSeconds;
   }
 
   public String sender() {
     return sender;
   }
 
-  public String subject() {
-    return subject;
+  public EmailTemplate findTemplate(String templateKey) {
+    return templates.getOrDefault(templateKey, new EmailTemplate());
   }
 
-  public String bodyTemplate() {
-    return bodyTemplate;
+  public int retryCountLimitation() {
+    return retryCountLimitation;
   }
 
-  public String interpolateBody(String verificationCode) {
-    return bodyTemplate.replace("{VERIFICATION_CODE}", verificationCode);
+  public int expireSeconds() {
+    return expireSeconds;
   }
 
   public boolean exists() {

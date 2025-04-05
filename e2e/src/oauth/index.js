@@ -1,9 +1,9 @@
 import {
   authenticateWithPassword,
-  authorize,
+  authorize, postEmailVerificationChallenge,
   createAuthorizationRequest,
   deny,
-  getAuthorizations
+  getAuthorizations, postEmailVerification, postWebAuthnAuthenticationChallenge, postWebAuthnAuthentication
 } from "../api/oauthClient";
 import { serverConfig } from "../testConfig";
 import { convertNextAction, convertToAuthorizationResponse, convertToSnake } from "../lib/util";
@@ -42,6 +42,7 @@ export const requestAuthorizations = async ({
     "username": "ito.ichiro@gmail.com",
     "password": "successUserCode",
   },
+  mfa,
 }) => {
   if (serverConfig.enabledSsr) {
     const requestUrl = createAuthorizationRequest({
@@ -198,6 +199,50 @@ export const requestAuthorizations = async ({
 
       if (passwordResponse.status >= 400) {
         console.error(passwordResponse.data);
+      }
+
+      if (mfa === "email") {
+        const challengeResponse = await postEmailVerificationChallenge({
+          endpoint: serverConfig.emailAuthenticationChallengeEndpoint,
+          id,
+          body: {},
+        });
+        console.log(challengeResponse.status);
+        console.log(challengeResponse.data);
+
+        const verificationResponse = await postEmailVerification({
+          endpoint: serverConfig.emailAuthenticationEndpoint,
+          id,
+          body: {
+            verification_code: "123",
+          }
+        });
+
+        console.log(verificationResponse.status);
+        console.log(verificationResponse.data);
+      }
+
+      if (mfa === "webauthn") {
+        const challengeResponse = await postWebAuthnAuthenticationChallenge({
+          endpoint: serverConfig.webAuthnAuthenticationChallengeEndpoint,
+          id,
+          body: {
+            email_template: "authentication"
+          }
+        });
+        console.log(challengeResponse.status);
+        console.log(challengeResponse.data);
+
+        const verificationResponse = await postWebAuthnAuthentication({
+          endpoint: serverConfig.webAuthnAuthenticationEndpoint,
+          id,
+          body: {
+            verification_code: "123",
+          }
+        });
+
+        console.log(verificationResponse.status);
+        console.log(verificationResponse.data);
       }
 
       const authorizeResponse = await authorize({

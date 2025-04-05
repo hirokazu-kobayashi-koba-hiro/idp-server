@@ -12,8 +12,10 @@ public class EmailAuthenticationInteractorFactory implements MfaInteractorFactor
   @Override
   public MfaInteractor create(MfaDependencyContainer container) {
 
-    MfaTransactionQueryRepository mfaTransactionQueryRepository =
+    MfaTransactionCommandRepository commandRepository =
+        container.resolve(MfaTransactionCommandRepository.class);
+    MfaTransactionQueryRepository queryRepository =
         container.resolve(MfaTransactionQueryRepository.class);
-    return new EmailAuthenticationInteractor(mfaTransactionQueryRepository);
+    return new EmailAuthenticationInteractor(commandRepository, queryRepository);
   }
 }

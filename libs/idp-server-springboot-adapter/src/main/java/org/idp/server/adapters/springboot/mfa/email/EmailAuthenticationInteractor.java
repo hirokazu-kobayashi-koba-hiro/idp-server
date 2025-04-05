@@ -13,10 +13,14 @@ import org.idp.server.core.tenant.Tenant;
 
 public class EmailAuthenticationInteractor implements MfaInteractor {
 
-  MfaTransactionQueryRepository transactionQueryRepository;
+  MfaTransactionCommandRepository commandRepository;
+  MfaTransactionQueryRepository queryRepository;
 
-  public EmailAuthenticationInteractor(MfaTransactionQueryRepository transactionQueryRepository) {
-    this.transactionQueryRepository = transactionQueryRepository;
+  public EmailAuthenticationInteractor(
+      MfaTransactionCommandRepository commandRepository,
+      MfaTransactionQueryRepository queryRepository) {
+    this.commandRepository = commandRepository;
+    this.queryRepository = queryRepository;
   }
 
   @Override
@@ -29,21 +33,25 @@ public class EmailAuthenticationInteractor implements MfaInteractor {
       UserRepository userRepository) {
 
     EmailVerificationChallenge emailVerificationChallenge =
-        transactionQueryRepository.get(
-            mfaTransactionIdentifier, "email", EmailVerificationChallenge.class);
+        queryRepository.get(mfaTransactionIdentifier, "email", EmailVerificationChallenge.class);
     String verificationCode = request.optValueAsString("verification_code", "");
 
-    if (!emailVerificationChallenge.match(verificationCode)) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_request");
-      response.put("error_description", "email verification code is not matched");
+    EmailVerificationResult verificationResult =
+        emailVerificationChallenge.verify(verificationCode);
+
+    if (verificationResult.isFailure()) {
+
+      EmailVerificationChallenge countUpEmailVerificationChallenge =
+          emailVerificationChallenge.countUp();
+      commandRepository.update(
+          mfaTransactionIdentifier, "email", countUpEmailVerificationChallenge);
 
       return new MfaInteractionResult(
           MfaInteractionStatus.CLIENT_ERROR,
           type,
           oAuthSession.user(),
           oAuthSession.authentication(),
-          response,
+          verificationResult.response(),
           DefaultSecurityEventType.email_verification_failure);
     }
 

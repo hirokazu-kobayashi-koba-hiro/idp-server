@@ -449,3 +449,27 @@ CREATE TABLE hook_configuration
 CREATE INDEX idx_hook_configuration_trigger ON hook_configuration (tenant_id, trigger);
 CREATE INDEX idx_hook_configuration_order ON hook_configuration (tenant_id, trigger, execution_order);
 
+CREATE TABLE mfa_configuration
+(
+    id         CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id  CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    type       VARCHAR(255)            NOT NULL,
+    payload    JSONB                   NOT NULL,
+    enabled    BOOLEAN                 NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP DEFAULT now() NOT NULL
+);
+
+CREATE INDEX idx_mfa_configuration_type ON mfa_configuration (tenant_id, type);
+
+CREATE TABLE mfa_transactions
+(
+    id         CHAR(36)                NOT NULL,
+    type       VARCHAR(255)            NOT NULL,
+    payload    JSONB                   NOT NULL,
+    created_at TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id, type)
+);
+
+

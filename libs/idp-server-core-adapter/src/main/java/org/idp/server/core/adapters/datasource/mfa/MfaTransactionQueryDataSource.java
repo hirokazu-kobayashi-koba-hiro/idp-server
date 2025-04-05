@@ -16,24 +16,25 @@ public class MfaTransactionQueryDataSource implements MfaTransactionQueryReposit
   JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   @Override
-  public <T> T get(MfaTransactionIdentifier identifier, String key, Class<T> clazz) {
+  public <T> T get(MfaTransactionIdentifier identifier, String type, Class<T> clazz) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
     String sqlTemplate =
         """
             SELECT id, payload
             FROM mfa_transactions
             WHERE id = ?
-            AND key = ?
+            AND type = ?
             """;
 
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
+    params.add(type);
 
     Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
 
     if (Objects.isNull(result) || result.isEmpty()) {
       throw new MfaTransactionNotFoundException(
-          String.format("Mfa transaction is Not Found (%s) (%s)", identifier.value(), key));
+          String.format("Mfa transaction is Not Found (%s) (%s)", identifier.value(), type));
     }
 
     return jsonConverter.read(result.get("payload"), clazz);
