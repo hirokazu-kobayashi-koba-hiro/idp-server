@@ -35,30 +35,38 @@ end
 
 subgraph Backend
 backend[🔧 Spring Boot API]
+idp-engine[🔥🚀 IdP Engine]
 hook[📡 Hook Executors]
 mfa[🛡️ MFA Interactors]
+credential-issuers[🏷️ Credential Issuers]
+federatable-oidc-providers[🌐 Federatable OIDC Providers]
 ssf[📬 SSF Notifier]
-db[(PostgreSQL)]
+db[(🗄️ PostgreSQL)]
 end
 
 subgraph External
 slack[🔔 Slack Webhook]
 webhook[🔄 Generic Webhook Endpoint]
 oidc[🌍 External OIDC Provider]
+credential-issuer[🌟 Public Credential Issuer]
 end
 
 browser --> frontend
 frontend --> backend
 rp-backend --> backend
-backend --> db
+backend --> idp-engine
 
-backend --> hook
-backend --> mfa
-backend --> ssf
-backend --> oidc
+idp-engine --> db
+idp-engine --> hook
+idp-engine --> mfa
+idp-engine --> credential-issuers
+idp-engine --> federatable-oidc-providers
+idp-engine --> ssf
 
 hook --> slack
 hook --> webhook
+credential-issuers --> credential-issuer
+federatable-oidc-providers --> oidc
 ssf --> rp-backend
 
 subgraph MFA
@@ -68,6 +76,7 @@ end
 
 mfa --> passkey
 mfa --> email
+
 
 ```
 
