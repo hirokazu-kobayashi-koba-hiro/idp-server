@@ -1,0 +1,8 @@
+org.idp.server.core.authentication.password.PasswordAuthenticationInteractorFactory
+org.idp.server.core.authentication.password.PasswordRegistrationFactory
+org.idp.server.core.authentication.email.EmailAuthenticationInteractorFactory
+org.idp.server.core.authentication.email.EmailAuthenticationChallengeInteractorFactory
+org.idp.server.core.authentication.webauthn.WebAuthnRegistrationIChallengeInteractorFactory
+org.idp.server.core.authentication.webauthn.WebAuthnRegistrationInteractorFactory
+org.idp.server.core.authentication.webauthn.WebAuthnAuthenticationChallengeInteractorFactory
+org.idp.server.core.authentication.webauthn.WebAuthnAuthenticationInteractorFactory

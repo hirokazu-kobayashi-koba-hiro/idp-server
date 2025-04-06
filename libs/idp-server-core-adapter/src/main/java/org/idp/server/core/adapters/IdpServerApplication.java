@@ -29,6 +29,9 @@ import org.idp.server.core.adapters.httpclient.federation.FederationClient;
 import org.idp.server.core.adapters.httpclient.oauth.RequestObjectHttpClient;
 import org.idp.server.core.adapters.httpclient.sharedsignal.SharedSignalEventClient;
 import org.idp.server.core.api.*;
+import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
+import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
 import org.idp.server.core.basic.sql.TransactionInterceptor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.federation.FederationService;
@@ -52,7 +55,6 @@ import org.idp.server.core.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.core.handler.userinfo.UserinfoHandler;
 import org.idp.server.core.hook.AuthenticationHooks;
 import org.idp.server.core.hook.AuthenticationHooksLoader;
-import org.idp.server.core.mfa.*;
 import org.idp.server.core.notification.EmailSenderLoader;
 import org.idp.server.core.notification.EmailSenders;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
@@ -245,18 +247,25 @@ public class IdpServerApplication {
         new ServerConfigurationHandler(serverConfigurationDataSource);
 
     // create mfa instance
-    MfaDependencyContainer mfaDependencyContainer = MfaDependencyContainerLoader.load();
-    mfaDependencyContainer.register(PasswordEncodeDelegation.class, passwordEncodeDelegation);
-    mfaDependencyContainer.register(
+    AuthenticationDependencyContainer authenticationDependencyContainer =
+        AuthenticationDependencyContainerLoader.load();
+    authenticationDependencyContainer.register(
+        PasswordEncodeDelegation.class, passwordEncodeDelegation);
+    authenticationDependencyContainer.register(
         PasswordVerificationDelegation.class, passwordVerificationDelegation);
     EmailSenders emailSenders = EmailSenderLoader.load();
-    mfaDependencyContainer.register(EmailSenders.class, emailSenders);
+    authenticationDependencyContainer.register(EmailSenders.class, emailSenders);
+    WebAuthnExecutors webAuthnExecutors =
+        WebAuthnExecutorLoader.load(authenticationDependencyContainer);
+    authenticationDependencyContainer.register(WebAuthnExecutors.class, webAuthnExecutors);
 
-    Map<MfaInteractionType, MfaInteractor> loadedInteractors =
-        MfaInteractorLoader.load(mfaDependencyContainer);
-    HashMap<MfaInteractionType, MfaInteractor> interactors = new HashMap<>(loadedInteractors);
+    Map<AuthenticationInteractionType, AuthenticationInteractor> loadedInteractors =
+        AuthenticationInteractorLoader.load(authenticationDependencyContainer);
+    HashMap<AuthenticationInteractionType, AuthenticationInteractor> interactors =
+        new HashMap<>(loadedInteractors);
 
-    MfaInteractors mfaInteractors = new MfaInteractors(interactors);
+    AuthenticationInteractors authenticationInteractors =
+        new AuthenticationInteractors(interactors);
 
     this.idpServerStarterApi =
         TransactionInterceptor.createProxy(
@@ -278,7 +287,7 @@ public class IdpServerApplication {
             new OAuthFlowEntryService(
                 oAuthProtocol,
                 oAuthRequestDelegate,
-                mfaInteractors,
+                authenticationInteractors,
                 userDataSource,
                 userRegistrationService,
                 tenantDataSource,

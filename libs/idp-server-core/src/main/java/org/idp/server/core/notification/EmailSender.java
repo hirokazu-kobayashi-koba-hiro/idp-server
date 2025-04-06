@@ -1,6 +1,6 @@
 package org.idp.server.core.notification;
 
-import org.idp.server.core.mfa.email.EmailSenderSetting;
+import org.idp.server.core.authentication.email.EmailSenderSetting;
 
 public interface EmailSender {
 

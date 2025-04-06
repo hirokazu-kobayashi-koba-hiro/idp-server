@@ -7,10 +7,10 @@ import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.adapters.IdpServerApplication;
 import org.idp.server.core.api.OAuthFlowApi;
+import org.idp.server.core.authentication.AuthenticationInteractionRequest;
+import org.idp.server.core.authentication.AuthenticationInteractionResult;
+import org.idp.server.core.authentication.AuthenticationInteractionType;
 import org.idp.server.core.handler.federation.io.FederationRequestResponse;
-import org.idp.server.core.mfa.MfaInteractionRequest;
-import org.idp.server.core.mfa.MfaInteractionResult;
-import org.idp.server.core.mfa.MfaInteractionType;
 import org.idp.server.core.oauth.io.OAuthAuthorizeResponse;
 import org.idp.server.core.oauth.io.OAuthDenyResponse;
 import org.idp.server.core.oauth.io.OAuthRequestResponse;
@@ -159,18 +159,19 @@ public class OAuthV1Api implements ParameterTransformable {
   public ResponseEntity<?> interact(
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      @PathVariable("mfa-interaction-type") MfaInteractionType mfaInteractionType,
+      @PathVariable("mfa-interaction-type")
+          AuthenticationInteractionType authenticationInteractionType,
       @RequestBody(required = false) Map<String, Object> params,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    MfaInteractionResult result =
+    AuthenticationInteractionResult result =
         oAuthFlowApi.interact(
             tenantId,
             authorizationRequestIdentifier,
-            mfaInteractionType,
-            new MfaInteractionRequest(params),
+            authenticationInteractionType,
+            new AuthenticationInteractionRequest(params),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 public class AuthenticationHooksLoader {
 
-  private static Logger log = Logger.getLogger(AuthenticationHooksLoader.class.getName());
+  private static final Logger log = Logger.getLogger(AuthenticationHooksLoader.class.getName());
 
   public static AuthenticationHooks load() {
     Map<HookType, HookExecutor> hookExecutors = new HashMap<>();

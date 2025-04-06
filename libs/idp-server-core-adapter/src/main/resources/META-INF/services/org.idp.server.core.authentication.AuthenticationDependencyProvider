@@ -1,0 +1,3 @@
+org.idp.server.core.adapters.datasource.authentication.AuthenticationConfigurationDataSourceProvider
+org.idp.server.core.adapters.datasource.authentication.AuthenticationTransactionCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.authentication.AuthenticationTransactionQueryDataSourceProvider

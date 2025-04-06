@@ -1,0 +1,113 @@
+package org.idp.server.authenticators.webauthn4j;
+
+import java.util.Map;
+import org.idp.server.core.authentication.AuthenticationInteractionRequest;
+import org.idp.server.core.authentication.AuthenticationTransactionCommandRepository;
+import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.authentication.AuthenticationTransactionQueryRepository;
+import org.idp.server.core.authentication.webauthn.*;
+import org.idp.server.core.basic.json.JsonConverter;
+
+public class WebAuthn4jExecutor implements WebAuthnExecutor {
+
+  AuthenticationTransactionCommandRepository transactionCommandRepository;
+  AuthenticationTransactionQueryRepository transactionQueryRepository;
+  WebAuthn4jCredentialRepository credentialRepository;
+  JsonConverter jsonConverter;
+
+  public WebAuthn4jExecutor(
+      AuthenticationTransactionCommandRepository transactionCommandRepository,
+      AuthenticationTransactionQueryRepository transactionQueryRepository,
+      WebAuthn4jCredentialRepository credentialRepository) {
+    this.transactionCommandRepository = transactionCommandRepository;
+    this.transactionQueryRepository = transactionQueryRepository;
+    this.credentialRepository = credentialRepository;
+    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  }
+
+  @Override
+  public WebAuthnExecutorType type() {
+    return new WebAuthnExecutorType("webauthn4j");
+  }
+
+  @Override
+  public WebAuthnChallenge challengeRegistration(
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionRequest request,
+      WebAuthnConfiguration configuration) {
+
+    WebAuthn4jChallenge webAuthn4jChallenge = WebAuthn4jChallenge.generate();
+    WebAuthnChallenge webAuthnChallenge = webAuthn4jChallenge.toWebAuthnChallenge();
+    transactionCommandRepository.register(
+        authenticationTransactionIdentifier, "webauthn4j", webAuthnChallenge);
+
+    return webAuthnChallenge;
+  }
+
+  @Override
+  public WebAuthnVerificationResult verifyRegistration(
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      String userId,
+      AuthenticationInteractionRequest request,
+      WebAuthnConfiguration configuration) {
+
+    WebAuthnChallenge webAuthnChallenge =
+        transactionQueryRepository.get(
+            authenticationTransactionIdentifier, "webauthn4j", WebAuthnChallenge.class);
+
+    WebAuthn4jChallenge webAuthn4jChallenge =
+        new WebAuthn4jChallenge(webAuthnChallenge.challenge());
+    String requestString = jsonConverter.write(request.toMap());
+    WebAuthn4jConfiguration webAuthn4jConfiguration =
+        jsonConverter.read(configuration.getDetail("webauthn4j"), WebAuthn4jConfiguration.class);
+    WebAuthn4jRegistrationManager manager =
+        new WebAuthn4jRegistrationManager(
+            webAuthn4jConfiguration, webAuthn4jChallenge, requestString, userId);
+
+    WebAuthn4jCredential webAuthn4jCredential = manager.verifyAndCreateCredential();
+    credentialRepository.register(webAuthn4jCredential);
+
+    return new WebAuthnVerificationResult(Map.of("registration", webAuthn4jCredential.toMap()));
+  }
+
+  @Override
+  public WebAuthnChallenge challengeAuthentication(
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionRequest request,
+      WebAuthnConfiguration configuration) {
+
+    WebAuthn4jChallenge webAuthn4jChallenge = WebAuthn4jChallenge.generate();
+    WebAuthnChallenge webAuthnChallenge = webAuthn4jChallenge.toWebAuthnChallenge();
+    transactionCommandRepository.register(
+        authenticationTransactionIdentifier, "webauthn4j", webAuthnChallenge);
+
+    return webAuthnChallenge;
+  }
+
+  @Override
+  public WebAuthnVerificationResult verifyAuthentication(
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionRequest request,
+      WebAuthnConfiguration configuration) {
+
+    WebAuthnChallenge webAuthnChallenge =
+        transactionQueryRepository.get(
+            authenticationTransactionIdentifier, "webauthn4j", WebAuthnChallenge.class);
+
+    WebAuthn4jChallenge webAuthn4jChallenge =
+        new WebAuthn4jChallenge(webAuthnChallenge.challenge());
+    String requestString = jsonConverter.write(request.toMap());
+    WebAuthn4jConfiguration webAuthn4jConfiguration =
+        jsonConverter.read(configuration.getDetail("webauthn4j"), WebAuthn4jConfiguration.class);
+    WebAuthn4jAuthenticationManager manager =
+        new WebAuthn4jAuthenticationManager(
+            webAuthn4jConfiguration, webAuthn4jChallenge, requestString);
+
+    String extractUserId = manager.extractUserId();
+    WebAuthn4jCredentials webAuthn4jCredentials = credentialRepository.findAll(extractUserId);
+
+    manager.verify(webAuthn4jCredentials);
+
+    return new WebAuthnVerificationResult(Map.of("user_id", extractUserId));
+  }
+}

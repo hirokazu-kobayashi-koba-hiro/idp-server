@@ -4,7 +4,7 @@ import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import java.util.Properties;
-import org.idp.server.core.mfa.email.EmailSenderSetting;
+import org.idp.server.core.authentication.email.EmailSenderSetting;
 import org.idp.server.core.notification.EmailSender;
 import org.idp.server.core.notification.EmailSenderType;
 import org.idp.server.core.notification.EmailSendingRequest;

@@ -449,7 +449,7 @@ CREATE TABLE hook_configuration
 CREATE INDEX idx_hook_configuration_trigger ON hook_configuration (tenant_id, trigger);
 CREATE INDEX idx_hook_configuration_order ON hook_configuration (tenant_id, trigger, execution_order);
 
-CREATE TABLE mfa_configuration
+CREATE TABLE authentication_configuration
 (
     id         CHAR(36)                NOT NULL PRIMARY KEY,
     tenant_id  CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
@@ -460,9 +460,9 @@ CREATE TABLE mfa_configuration
     updated_at TIMESTAMP DEFAULT now() NOT NULL
 );
 
-CREATE INDEX idx_mfa_configuration_type ON mfa_configuration (tenant_id, type);
+CREATE INDEX idx_authentication_configuration_type ON authentication_configuration (tenant_id, type);
 
-CREATE TABLE mfa_transactions
+CREATE TABLE authentication_transactions
 (
     id         CHAR(36)                NOT NULL,
     type       VARCHAR(255)            NOT NULL,

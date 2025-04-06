@@ -1,4 +1,0 @@
-org.idp.server.core.mfa.password.PasswordAuthenticationInteractorFactory
-org.idp.server.core.mfa.password.PasswordRegistrationFactory
-org.idp.server.core.mfa.email.EmailAuthenticationInteractorFactory
-org.idp.server.core.mfa.email.EmailAuthenticationChallengeInteractorFactory

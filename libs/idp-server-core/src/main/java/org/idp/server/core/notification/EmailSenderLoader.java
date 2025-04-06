@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 public class EmailSenderLoader {
 
-  private static Logger log = Logger.getLogger(EmailSenderLoader.class.getName());
+  private static final Logger log = Logger.getLogger(EmailSenderLoader.class.getName());
 
   public static EmailSenders load() {
 

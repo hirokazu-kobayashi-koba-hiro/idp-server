@@ -1,4 +1,0 @@
-org.idp.server.authenticators.WebAuthnRegistrationIChallengeInteractorFactory
-org.idp.server.authenticators.WebAuthnRegistrationInteractorFactory
-org.idp.server.authenticators.WebAuthnAuthenticationChallengeInteractorFactory
-org.idp.server.authenticators.WebAuthnAuthenticationInteractorFactory
