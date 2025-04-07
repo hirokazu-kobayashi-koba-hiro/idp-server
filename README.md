@@ -36,7 +36,8 @@ end
 subgraph Backend
 backend[🔧 Spring Boot API]
 idp-engine[🔥🚀 IdP Engine]
-hook[📡 Hook Executors]iauthentication[🛡️ Authentication Interactors]
+hook[📡 Hook Executors]
+authentication[🛡️ Authentication Interactors]
 credential-issuers[🏷️ Credential Issuers]
 federatable-oidc-providers[🌐 Federatable OIDC Providers]
 ssf[📬 SSF Notifier]
