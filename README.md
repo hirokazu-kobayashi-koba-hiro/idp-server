@@ -36,8 +36,7 @@ end
 subgraph Backend
 backend[🔧 Spring Boot API]
 idp-engine[🔥🚀 IdP Engine]
-hook[📡 Hook Executors]
-mfa[🛡️ MFA Interactors]
+hook[📡 Hook Executors]iauthentication[🛡️ Authentication Interactors]
 credential-issuers[🏷️ Credential Issuers]
 federatable-oidc-providers[🌐 Federatable OIDC Providers]
 ssf[📬 SSF Notifier]
@@ -58,7 +57,7 @@ backend --> idp-engine
 
 idp-engine --> db
 idp-engine --> hook
-idp-engine --> mfa
+idp-engine --> authentication
 idp-engine --> credential-issuers
 idp-engine --> federatable-oidc-providers
 idp-engine --> ssf
@@ -69,14 +68,17 @@ credential-issuers --> credential-issuer
 federatable-oidc-providers --> oidc
 ssf --> rp-backend
 
-subgraph MFA
-passkey[🔐 Passkey Authenticator]
-email[📧 Email Authenticator]
+subgraph Authentication
+password[ Password Interactor]    
+webauthn[🔐 Webauthn Interactor]
+email[📧 Email Interactor]
+legacy[ LegacyID Interactor]
 end
 
-mfa --> passkey
-mfa --> email
-
+authentication --> password
+authentication --> webauthn
+authentication --> email
+authentication --> legacy
 
 ```
 

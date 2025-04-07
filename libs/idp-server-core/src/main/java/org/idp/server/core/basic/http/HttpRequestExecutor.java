@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.hook;
+package org.idp.server.core.basic.http;
 
 import java.io.IOException;
 import java.net.URI;
@@ -6,49 +6,33 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.http.*;
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.hook.*;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.type.exception.InvalidConfigurationException;
 
-public class WebHookExecutor implements HookExecutor {
+public class HttpRequestExecutor {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;
 
-  public WebHookExecutor() {
-    this.httpClient = HttpClientFactory.defaultClient();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  public HttpRequestExecutor(HttpClient httpClient) {
+    this.httpClient = httpClient;
   }
 
-  @Override
-  public HookType type() {
-    return StandardHookType.WEBHOOK.toHookType();
-  }
-
-  @Override
-  public HookResult execute(
-      Tenant tenant,
-      HookTriggerType type,
-      HookRequest hookRequest,
-      HookConfiguration configuration) {
+  public HttpRequestResult execute(
+      HttpRequestUrl httpRequestUrl,
+      HttpMethod httpMethod,
+      HttpRequestHeaders httpRequestHeaders,
+      HttpRequestBaseParams httpRequestBaseParams,
+      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys,
+      HttpRequestStaticBody httpRequestStaticBody) {
 
     try {
-      HttpRequestUrl httpRequestUrl = configuration.webhookUrl();
-      HttpMethod httpMethod = configuration.webhookMethod();
-      HttpRequestHeaders httpRequestHeaders = configuration.webhookHeaders();
-      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys =
-          configuration.webhookDynamicBodyKeys();
-      HttpRequestStaticBody httpRequestStaticBody = configuration.webhookStaticBody();
 
       HttpRequestBodyCreator requestBodyCreator =
           new HttpRequestBodyCreator(
-              new HttpRequestBaseParams(hookRequest.toMap()),
-              httpRequestDynamicBodyKeys,
-              httpRequestStaticBody);
+              httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
       Map<String, Object> requestBody = requestBodyCreator.create();
 
       HttpRequest.Builder httpRequestBuilder =
@@ -64,17 +48,16 @@ public class WebHookExecutor implements HookExecutor {
       HttpResponse<String> httpResponse =
           httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-      Map<String, Object> result = new HashMap<>();
-      result.put("status", httpResponse.statusCode());
-      result.put("body", httpResponse.body());
+      JsonNodeWrapper jsonResponse = jsonConverter.readTree(httpResponse.body());
 
-      return new HookResult(result);
+      return new HttpRequestResult(
+          httpResponse.statusCode(), httpResponse.headers().map(), jsonResponse);
     } catch (URISyntaxException e) {
 
-      throw new InvalidConfigurationException("WebhookUrl is invalid.", e);
+      throw new InvalidConfigurationException("HttpRequestUrl is invalid.", e);
 
     } catch (IOException | InterruptedException e) {
-      throw new HttpNetworkErrorException("Webhook request is failed.", e);
+      throw new HttpNetworkErrorException("Http request is failed.", e);
     }
   }
 

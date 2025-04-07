@@ -8,11 +8,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.http.HttpClientFactory;
-import org.idp.server.core.basic.http.HttpNetworkErrorException;
+import org.idp.server.core.basic.http.*;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.hook.*;
-import org.idp.server.core.hook.webhook.*;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.exception.InvalidConfigurationException;
 
@@ -39,25 +37,27 @@ public class DatadogLogStreamExecutor implements HookExecutor {
       HookConfiguration configuration) {
 
     try {
-      WebhookUrl webhookUrl = configuration.webhookUrl();
-      WebhookHeaders webhookHeaders = configuration.webhookHeaders();
-      WebhookDynamicBodyKeys webhookDynamicBodyKeys = configuration.webhookDynamicBodyKeys();
-      WebhookStaticBody webhookStaticBody = configuration.webhookStaticBody();
+      HttpRequestUrl httpRequestUrl = configuration.webhookUrl();
+      HttpRequestHeaders httpRequestHeaders = configuration.webhookHeaders();
+      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys =
+          configuration.webhookDynamicBodyKeys();
+      HttpRequestStaticBody httpRequestStaticBody = configuration.webhookStaticBody();
 
-      validate(webhookHeaders);
-      validate(webhookStaticBody);
+      validate(httpRequestHeaders);
+      validate(httpRequestStaticBody);
 
-      WebhookRequestBodyCreator requestBodyCreator =
-          new WebhookRequestBodyCreator(hookRequest, webhookDynamicBodyKeys, webhookStaticBody);
+      HttpRequestBodyCreator requestBodyCreator =
+          new HttpRequestBodyCreator(
+              new HttpRequestBaseParams(hookRequest.toMap()), httpRequestDynamicBodyKeys, httpRequestStaticBody);
       Map<String, Object> requestBodyMap = requestBodyCreator.create();
 
       String body = jsonConverter.write(requestBodyMap);
 
       HttpRequest request =
           HttpRequest.newBuilder()
-              .uri(new URI(webhookUrl.value()))
+              .uri(new URI(httpRequestUrl.value()))
               .header("Content-Type", "application/json")
-              .header("DD-API-KEY", webhookHeaders.getValueAsString("DD-API-KEY"))
+              .header("DD-API-KEY", httpRequestHeaders.getValueAsString("DD-API-KEY"))
               .POST(HttpRequest.BodyPublishers.ofString(body))
               .build();
 
@@ -79,24 +79,24 @@ public class DatadogLogStreamExecutor implements HookExecutor {
     }
   }
 
-  private void validate(WebhookHeaders webhookHeaders) {
-    if (!webhookHeaders.containsKey("DD-API-KEY")) {
+  private void validate(HttpRequestHeaders httpRequestHeaders) {
+    if (!httpRequestHeaders.containsKey("DD-API-KEY")) {
       throw new DatadogConfigurationInvalidException("DD-API-KEY header is required.");
     }
   }
 
-  private void validate(WebhookStaticBody webhookStaticBody) {
+  private void validate(HttpRequestStaticBody httpRequestStaticBody) {
 
-    if (!webhookStaticBody.containsKey("ddsource")) {
+    if (!httpRequestStaticBody.containsKey("ddsource")) {
       throw new DatadogConfigurationInvalidException("static body ddsource is required.");
     }
-    if (!webhookStaticBody.containsKey("ddtags")) {
+    if (!httpRequestStaticBody.containsKey("ddtags")) {
       throw new DatadogConfigurationInvalidException("static body ddtags is required.");
     }
-    if (!webhookStaticBody.containsKey("ddsource")) {
+    if (!httpRequestStaticBody.containsKey("ddsource")) {
       throw new DatadogConfigurationInvalidException("static body ddsource is required.");
     }
-    if (!webhookStaticBody.containsKey("service")) {
+    if (!httpRequestStaticBody.containsKey("service")) {
       throw new DatadogConfigurationInvalidException("static body service is required.");
     }
   }

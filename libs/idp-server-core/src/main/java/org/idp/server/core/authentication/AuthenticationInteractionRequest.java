@@ -37,4 +37,8 @@ public class AuthenticationInteractionRequest {
   public boolean exists() {
     return values != null && !values.isEmpty();
   }
+
+  public Object getValue(String key) {
+    return values.get(key);
+  }
 }

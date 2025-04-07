@@ -1,13 +1,13 @@
-package org.idp.server.core.hook.webhook;
+package org.idp.server.core.basic.http;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class WebhookStaticBody {
+public class HttpRequestStaticBody {
 
   Map<String, Object> values;
 
-  public WebhookStaticBody(Map<String, Object> values) {
+  public HttpRequestStaticBody(Map<String, Object> values) {
     this.values = values;
   }
 

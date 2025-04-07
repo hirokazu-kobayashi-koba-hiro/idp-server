@@ -1,15 +1,15 @@
-package org.idp.server.core.hook.webhook;
+package org.idp.server.core.basic.http;
 
 import java.util.Iterator;
 import java.util.List;
 
-public class WebhookDynamicBodyKeys implements Iterable<String> {
+public class HttpRequestDynamicBodyKeys implements Iterable<String> {
 
   List<String> values;
 
-  public WebhookDynamicBodyKeys() {}
+  public HttpRequestDynamicBodyKeys() {}
 
-  public WebhookDynamicBodyKeys(List<String> values) {
+  public HttpRequestDynamicBodyKeys(List<String> values) {
     this.values = values;
   }
 

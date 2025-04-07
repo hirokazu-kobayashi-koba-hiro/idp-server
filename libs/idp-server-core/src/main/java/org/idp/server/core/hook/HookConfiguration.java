@@ -2,8 +2,8 @@ package org.idp.server.core.hook;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.basic.http.*;
 import org.idp.server.core.basic.json.JsonReadable;
-import org.idp.server.core.hook.webhook.*;
 
 public class HookConfiguration implements JsonReadable {
 
@@ -36,24 +36,24 @@ public class HookConfiguration implements JsonReadable {
     return new HookType(type);
   }
 
-  public WebhookUrl webhookUrl() {
-    return new WebhookUrl(webhookUrl);
+  public HttpRequestUrl webhookUrl() {
+    return new HttpRequestUrl(webhookUrl);
   }
 
-  public WebhookMethod webhookMethod() {
-    return WebhookMethod.valueOf(webhookMethod);
+  public HttpMethod webhookMethod() {
+    return HttpMethod.valueOf(webhookMethod);
   }
 
-  public WebhookHeaders webhookHeaders() {
-    return new WebhookHeaders(webhookHeaders);
+  public HttpRequestHeaders webhookHeaders() {
+    return new HttpRequestHeaders(webhookHeaders);
   }
 
-  public WebhookDynamicBodyKeys webhookDynamicBodyKeys() {
-    return new WebhookDynamicBodyKeys(webhookDynamicBodyKeys);
+  public HttpRequestDynamicBodyKeys webhookDynamicBodyKeys() {
+    return new HttpRequestDynamicBodyKeys(webhookDynamicBodyKeys);
   }
 
-  public WebhookStaticBody webhookStaticBody() {
-    return new WebhookStaticBody(webhookStaticBody);
+  public HttpRequestStaticBody webhookStaticBody() {
+    return new HttpRequestStaticBody(webhookStaticBody);
   }
 
   public String slackUrl() {

@@ -14,5 +14,5 @@ public interface UserRepository {
 
   void update(User user);
 
-  User findByProvider(String tokenIssuer, String providerId, String providerUserId);
+  User findByProvider(String tenantId, String providerId, String providerUserId);
 }
