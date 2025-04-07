@@ -48,7 +48,9 @@ public class DatadogLogStreamExecutor implements HookExecutor {
 
       HttpRequestBodyCreator requestBodyCreator =
           new HttpRequestBodyCreator(
-              new HttpRequestBaseParams(hookRequest.toMap()), httpRequestDynamicBodyKeys, httpRequestStaticBody);
+              new HttpRequestBaseParams(hookRequest.toMap()),
+              httpRequestDynamicBodyKeys,
+              httpRequestStaticBody);
       Map<String, Object> requestBodyMap = requestBodyCreator.create();
 
       String body = jsonConverter.write(requestBodyMap);

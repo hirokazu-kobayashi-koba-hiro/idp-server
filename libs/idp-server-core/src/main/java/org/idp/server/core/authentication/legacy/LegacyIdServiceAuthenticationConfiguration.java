@@ -1,7 +1,6 @@
 package org.idp.server.core.authentication.legacy;
 
 import java.util.Map;
-import org.idp.server.core.basic.http.*;
 import org.idp.server.core.basic.json.JsonReadable;
 
 public class LegacyIdServiceAuthenticationConfiguration implements JsonReadable {
@@ -11,11 +10,15 @@ public class LegacyIdServiceAuthenticationConfiguration implements JsonReadable 
 
   public LegacyIdServiceAuthenticationConfiguration() {}
 
-  public LegacyIdServiceAuthenticationDetailConfiguration getAuthenticationDetailConfig() {
+  public String getType() {
+    return type;
+  }
+
+  public LegacyIdServiceAuthenticationDetailConfiguration authenticationDetailConfig() {
     return details.get("authentication");
   }
 
-  public LegacyIdServiceAuthenticationDetailConfiguration getUserinfoDetailConfig() {
+  public LegacyIdServiceAuthenticationDetailConfiguration userinfoDetailConfig() {
     return details.get("userinfo");
   }
 

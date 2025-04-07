@@ -17,6 +17,8 @@ public enum DefaultSecurityEventType {
   email_verification_request("User request verified their email"),
   email_verification_success("User successfully verified their email"),
   email_verification_failure("User failed email verification"),
+  legacy_authentication_success("User legacy ID authentication verified"),
+  legacy_authentication_failure("User failed legacy ID authentication verified"),
   login("User logged in"),
   login_with_session("User logged in with a session"),
   logout("User logged out"),

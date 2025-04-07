@@ -230,6 +230,14 @@ export const authenticateWithPassword = async ({ endpoint, id, body }) => {
   });
 };
 
+export const postAuthentication = async ({ endpoint, id, body }) => {
+  const url = endpoint.replace("{id}", id);
+  return await postWithJson({
+    url,
+    body,
+  });
+};
+
 export const postEmailVerificationChallenge = async ({ endpoint, id, body }) => {
   const url = endpoint.replace("{id}", id);
   return await postWithJson({

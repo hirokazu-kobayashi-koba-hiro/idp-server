@@ -1,10 +1,9 @@
 package org.idp.server.core.basic.http;
 
-import org.idp.server.core.basic.json.JsonNodeWrapper;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.basic.json.JsonNodeWrapper;
 
 public class HttpRequestResult {
   int statusCode;
@@ -13,7 +12,8 @@ public class HttpRequestResult {
 
   public HttpRequestResult() {}
 
-  public HttpRequestResult(int statusCode, Map<String, List<String>> headers, JsonNodeWrapper body) {
+  public HttpRequestResult(
+      int statusCode, Map<String, List<String>> headers, JsonNodeWrapper body) {
     this.statusCode = statusCode;
     this.headers = headers;
     this.body = body;

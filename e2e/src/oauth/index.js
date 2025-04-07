@@ -247,6 +247,19 @@ export const requestAuthorizations = async ({
         console.log(verificationResponse.data);
       }
 
+      if (mfa === "legacy-authentication") {
+        const challengeResponse = await postWebAuthnAuthenticationChallenge({
+          endpoint: serverConfig.authenticationEndpoint + "legacy-authentication",
+          id,
+          body: {
+            username: "dummy",
+            password: "password",
+          }
+        });
+        console.log(challengeResponse.status);
+        console.log(challengeResponse.data);
+      }
+
       const authorizeResponse = await authorize({
         endpoint: serverConfig.authorizeEndpoint,
         id,

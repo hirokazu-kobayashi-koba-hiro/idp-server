@@ -1,9 +1,6 @@
 package org.idp.server.core.authentication.legacy;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.http.*;
@@ -42,7 +39,7 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
             tenant, "legacy-id-service", LegacyIdServiceAuthenticationConfiguration.class);
 
     LegacyIdServiceAuthenticationDetailConfiguration authenticationConfig =
-        configuration.getAuthenticationDetailConfig();
+        configuration.authenticationDetailConfig();
 
     HttpRequestResult authenticationResult =
         httpRequestExecutor.execute(
@@ -68,30 +65,37 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
             .addMethods(new ArrayList<>(List.of("pwd")))
             .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
-      LegacyIdServiceAuthenticationDetailConfiguration userinfoConfig =
-              configuration.getUserinfoDetailConfig();
+    LegacyIdServiceAuthenticationDetailConfiguration userinfoConfig =
+        configuration.userinfoDetailConfig();
 
-      HttpRequestResult userinfoResult =
-              httpRequestExecutor.execute(
-                      authenticationConfig.httpRequestUrl(),
-                      authenticationConfig.httpMethod(),
-                      authenticationConfig.httpRequestHeaders(),
-                      new HttpRequestBaseParams(request.toMap()),
-                      authenticationConfig.httpRequestDynamicBodyKeys(),
-                      authenticationConfig.httpRequestStaticBody());
+    HttpRequestResult userinfoResult =
+        httpRequestExecutor.execute(
+            userinfoConfig.httpRequestUrl(),
+            userinfoConfig.httpMethod(),
+            userinfoConfig.httpRequestHeaders(),
+            new HttpRequestBaseParams(request.toMap()),
+            userinfoConfig.httpRequestDynamicBodyKeys(),
+            userinfoConfig.httpRequestStaticBody());
 
-
-    UserInfoMapper userInfoMapper = new UserInfoMapper(userinfoResult.body(), userinfoConfig.userInfoMappingRules());
+    UserInfoMapper userInfoMapper =
+        new UserInfoMapper(
+            configuration.providerName(),
+            userinfoResult.body(),
+            userinfoConfig.userinfoMappingRules());
     User user = userInfoMapper.toUser();
 
-    User exsitingUser = userRepository.findByProvider(tenant.identifierValue(), configuration.providerName(), user.providerUserId());
+    User exsitingUser =
+        userRepository.findByProvider(
+            tenant.identifierValue(), configuration.providerName(), user.providerUserId());
     if (exsitingUser.exists()) {
       user.setSub(exsitingUser.sub());
+    } else {
+      user.setSub(UUID.randomUUID().toString());
     }
 
     Map<String, Object> result = new HashMap<>();
-    result.put("user", user);
-    result.put("authentication", authentication);
+    result.put("user", user.toMap());
+    result.put("authentication", authentication.toMap());
 
     return new AuthenticationInteractionResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -99,6 +103,6 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
         user,
         authentication,
         result,
-        DefaultSecurityEventType.email_verification_success);
+        DefaultSecurityEventType.legacy_authentication_success);
   }
 }

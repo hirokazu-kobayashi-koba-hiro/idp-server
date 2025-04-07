@@ -11,7 +11,7 @@ public class LegacyIdServiceAuthenticationDetailConfiguration implements JsonRea
   Map<String, String> headers;
   List<String> dynamicBodyKeys;
   Map<String, Object> staticBody;
-  List<UserInfoMappingRule> userInfoMappingRules;
+  List<UserInfoMappingRule> userinfoMappingRules;
 
   public LegacyIdServiceAuthenticationDetailConfiguration() {}
 
@@ -35,7 +35,7 @@ public class LegacyIdServiceAuthenticationDetailConfiguration implements JsonRea
     return new HttpRequestStaticBody(staticBody);
   }
 
-  public List<UserInfoMappingRule> userInfoMappingRules() {
-    return userInfoMappingRules;
+  public List<UserInfoMappingRule> userinfoMappingRules() {
+    return userinfoMappingRules;
   }
 }

@@ -1,61 +1,58 @@
 package org.idp.server.authentication;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import org.idp.server.core.authentication.legacy.UserInfoMapper;
 import org.idp.server.core.authentication.legacy.UserInfoMappingRule;
-import org.idp.server.core.basic.http.HttpRequestResult;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.oauth.identity.Address;
 import org.idp.server.core.oauth.identity.User;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 public class UserInfoMapperTest {
 
-    @Test
-    public void testBasicUserMapping() throws Exception {
-        String json = "{\"email\": \"test@example.com\", \"name\": \"Test User\", \"email_verified\": true}";
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNodeWrapper body = new JsonNodeWrapper(mapper.readTree(json));
+  @Test
+  public void testBasicUserMapping() throws Exception {
+    String json =
+        "{\"email\": \"test@example.com\", \"name\": \"Test User\", \"email_verified\": true}";
+    ObjectMapper mapper = new ObjectMapper();
+    JsonNodeWrapper body = new JsonNodeWrapper(mapper.readTree(json));
 
+    List<UserInfoMappingRule> rules =
+        List.of(
+            new UserInfoMappingRule("email", "email", "string"),
+            new UserInfoMappingRule("name", "name", "string"),
+            new UserInfoMappingRule("email_verified", "email_verified", "boolean"));
 
-        List<UserInfoMappingRule> rules = List.of(
-                new UserInfoMappingRule("email", "email", "string"),
-                new UserInfoMappingRule("name", "name", "string"),
-                new UserInfoMappingRule("email_verified", "email_verified", "boolean")
-        );
+    UserInfoMapper userInfoMapper = new UserInfoMapper("test", body, rules);
+    User user = userInfoMapper.toUser();
 
-        UserInfoMapper userInfoMapper = new UserInfoMapper(body, rules);
-        User user = userInfoMapper.toUser();
+    assertEquals("test@example.com", user.email());
+    assertEquals("Test User", user.name());
+    assertTrue(user.emailVerified());
+  }
 
-        assertEquals("test@example.com", user.email());
-        assertEquals("Test User", user.name());
-        assertTrue(user.emailVerified());
-    }
+  @Test
+  public void testAddressMapping() throws Exception {
+    String json =
+        "{\"address\": {\"formatted\": \"123 Main St\", \"street_address\": \"123 Main St\", \"locality\": \"Springfield\", \"region\": \"IL\", \"postal_code\": \"62704\", \"country\": \"USA\"}}";
+    ObjectMapper mapper = new ObjectMapper();
+    JsonNodeWrapper body = new JsonNodeWrapper(mapper.readTree(json));
 
-    @Test
-    public void testAddressMapping() throws Exception {
-        String json = "{\"address\": {\"formatted\": \"123 Main St\", \"street_address\": \"123 Main St\", \"locality\": \"Springfield\", \"region\": \"IL\", \"postal_code\": \"62704\", \"country\": \"USA\"}}";
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNodeWrapper body = new JsonNodeWrapper(mapper.readTree(json));
+    List<UserInfoMappingRule> rules =
+        List.of(new UserInfoMappingRule("address", "address", "address"));
 
-        List<UserInfoMappingRule> rules = List.of(
-                new UserInfoMappingRule("address", "address", "address")
-        );
+    UserInfoMapper userInfoMapper = new UserInfoMapper("test", body, rules);
+    User user = userInfoMapper.toUser();
+    Address address = user.address();
 
-        UserInfoMapper userInfoMapper = new UserInfoMapper(body, rules);
-        User user = userInfoMapper.toUser();
-        Address address = user.address();
-
-        assertNotNull(address);
-        assertEquals("123 Main St", address.formatted());
-        assertEquals("Springfield", address.locality());
-        assertEquals("IL", address.region());
-        assertEquals("62704", address.postalCode());
-        assertEquals("USA", address.country());
-    }
+    assertNotNull(address);
+    assertEquals("123 Main St", address.formatted());
+    assertEquals("Springfield", address.locality());
+    assertEquals("IL", address.region());
+    assertEquals("62704", address.postalCode());
+    assertEquals("USA", address.country());
+  }
 }
-
