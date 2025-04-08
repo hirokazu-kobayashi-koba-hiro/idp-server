@@ -7,12 +7,12 @@ import org.idp.server.core.type.oauth.RequestedClientId;
 
 public class SecurityEventClient {
 
-  RequestedClientId id;
+  String id;
   String name;
 
   public SecurityEventClient() {}
 
-  public SecurityEventClient(RequestedClientId id, String name) {
+  public SecurityEventClient(String id, String name) {
     this.id = id;
     this.name = name;
   }
@@ -29,7 +29,7 @@ public class SecurityEventClient {
   }
 
   public String id() {
-    return id.value();
+    return id;
   }
 
   public String name() {
@@ -37,10 +37,10 @@ public class SecurityEventClient {
   }
 
   public boolean exists() {
-    return Objects.nonNull(id) && !id.exists();
+    return Objects.nonNull(id) && !id.isEmpty();
   }
 
   public RequestedClientId clientId() {
-    return id;
+    return new RequestedClientId(id);
   }
 }

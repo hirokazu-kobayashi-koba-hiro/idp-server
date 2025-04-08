@@ -32,18 +32,22 @@ public class DatadogLogStreamExecutorSecurityEvent implements SecurityEventHookE
     return new SecurityEventHookType("DATADOG_LOG");
   }
 
-
   @Override
   public SecurityEventHookResult execute(
-      Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration hookConfiguration) {
+      Tenant tenant,
+      SecurityEvent securityEvent,
+      SecurityEventHookConfiguration hookConfiguration) {
 
     try {
-      WebHookConfiguration configuration = jsonConverter.read(hookConfiguration, WebHookConfiguration.class);
+      WebHookConfiguration configuration =
+          jsonConverter.read(hookConfiguration, WebHookConfiguration.class);
       HttpRequestUrl httpRequestUrl = configuration.httpRequestUrl(securityEvent.type());
-      HttpRequestHeaders httpRequestHeaders = configuration.httpRequestHeaders(securityEvent.type());
+      HttpRequestHeaders httpRequestHeaders =
+          configuration.httpRequestHeaders(securityEvent.type());
       HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys =
           configuration.httpRequestDynamicBodyKeys(securityEvent.type());
-      HttpRequestStaticBody httpRequestStaticBody = configuration.httpRequestStaticBody(securityEvent.type());
+      HttpRequestStaticBody httpRequestStaticBody =
+          configuration.httpRequestStaticBody(securityEvent.type());
 
       validate(httpRequestHeaders);
       validate(httpRequestStaticBody);

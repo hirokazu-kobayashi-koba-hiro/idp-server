@@ -1,4 +1,4 @@
-package org.idp.server.core.security.hook.notification;
+package org.idp.server.core.basic.notification;
 
 import java.util.HashSet;
 import java.util.Map;

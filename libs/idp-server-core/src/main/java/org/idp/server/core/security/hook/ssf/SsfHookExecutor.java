@@ -50,12 +50,15 @@ public class SsfHookExecutor implements SecurityEventHookExecutor {
             "notify shared signal (%s) to (%s)",
             securityEventTokenEntity.securityEventAsString(), ssfConfiguration.issuer()));
     SecurityEventTokenCreator securityEventTokenCreator =
-        new SecurityEventTokenCreator(securityEventTokenEntity, ssfConfiguration.privateKey(securityEvent.type()));
+        new SecurityEventTokenCreator(
+            securityEventTokenEntity, ssfConfiguration.privateKey(securityEvent.type()));
     SecurityEventToken securityEventToken = securityEventTokenCreator.create();
 
     send(
         new SharedSignalEventRequest(
-            ssfConfiguration.endpoint(securityEvent.type()), ssfConfiguration.headers(securityEvent.type()), securityEventToken));
+            ssfConfiguration.endpoint(securityEvent.type()),
+            ssfConfiguration.headers(securityEvent.type()),
+            securityEventToken));
 
     return new SecurityEventHookResult();
   }

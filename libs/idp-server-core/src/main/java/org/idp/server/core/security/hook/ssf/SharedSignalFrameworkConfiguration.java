@@ -1,21 +1,21 @@
 package org.idp.server.core.security.hook.ssf;
 
 import java.util.Map;
-
 import org.idp.server.core.basic.json.JsonReadable;
 import org.idp.server.core.security.event.SecurityEventType;
 
 public class SharedSignalFrameworkConfiguration implements JsonReadable {
 
- String issuer;
- SharedSignalFrameworkConfig base;
- Map<String, SharedSignalFrameworkConfig> overlays;
+  String issuer;
+  SharedSignalFrameworkConfig base;
+  Map<String, SharedSignalFrameworkConfig> overlays;
 
   public SharedSignalFrameworkConfiguration() {}
 
   public SharedSignalFrameworkConfiguration(
-          String issuer,
-      SharedSignalFrameworkConfig base, Map<String, SharedSignalFrameworkConfig> overlays) {
+      String issuer,
+      SharedSignalFrameworkConfig base,
+      Map<String, SharedSignalFrameworkConfig> overlays) {
     this.issuer = issuer;
     this.base = base;
     this.overlays = overlays;
@@ -45,5 +45,4 @@ public class SharedSignalFrameworkConfiguration implements JsonReadable {
     }
     return base.headers();
   }
-
 }

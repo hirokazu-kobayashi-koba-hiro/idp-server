@@ -40,22 +40,22 @@ public class SecurityEventHandler {
 
     securityEventHookConfigurations.forEach(
         hookConfiguration -> {
-
           SecurityEventHookExecutor securityEventHookExecutor =
               securityEventHooks.get(hookConfiguration.hookType());
 
-          if (securityEventHookExecutor.shouldNotExecute(tenant, securityEvent, hookConfiguration)) {
+          if (securityEventHookExecutor.shouldNotExecute(
+              tenant, securityEvent, hookConfiguration)) {
             return;
           }
 
           log.info(
-                  String.format(
-                          "security event hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
-                          securityEvent.type().value(),
-                          hookConfiguration.hookType().name(),
-                          securityEvent.tenantIdentifierValue(),
-                          securityEvent.clientId().value(),
-                          securityEvent.user().id()));
+              String.format(
+                  "security event hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
+                  securityEvent.type().value(),
+                  hookConfiguration.hookType().name(),
+                  securityEvent.tenantIdentifierValue(),
+                  securityEvent.clientId().value(),
+                  securityEvent.user().id()));
 
           securityEventHookExecutor.execute(tenant, securityEvent, hookConfiguration);
         });

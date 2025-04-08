@@ -6,7 +6,6 @@ import java.util.Map;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
-import org.idp.server.core.security.event.SecurityEventType;
 import org.idp.server.core.security.hook.SecurityEventHookConfiguration;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurations;

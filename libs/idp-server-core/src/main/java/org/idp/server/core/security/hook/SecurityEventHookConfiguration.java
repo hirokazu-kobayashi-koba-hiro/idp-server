@@ -12,7 +12,6 @@ public class SecurityEventHookConfiguration implements JsonReadable {
 
   public SecurityEventHookConfiguration() {}
 
-
   public SecurityEventHookType hookType() {
     return new SecurityEventHookType(type);
   }

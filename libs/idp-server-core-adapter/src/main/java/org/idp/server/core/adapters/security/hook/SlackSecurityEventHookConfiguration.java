@@ -1,9 +1,8 @@
 package org.idp.server.core.adapters.security.hook;
 
+import java.util.Map;
 import org.idp.server.core.basic.json.JsonReadable;
 import org.idp.server.core.security.event.SecurityEventType;
-
-import java.util.Map;
 
 public class SlackSecurityEventHookConfiguration implements JsonReadable {
 
@@ -12,7 +11,8 @@ public class SlackSecurityEventHookConfiguration implements JsonReadable {
 
   public SlackSecurityEventHookConfiguration() {}
 
-  public SlackSecurityEventHookConfiguration(SlackHookConfig base, Map<String, SlackHookConfig> overlays) {
+  public SlackSecurityEventHookConfiguration(
+      SlackHookConfig base, Map<String, SlackHookConfig> overlays) {
     this.base = base;
     this.overlays = overlays;
   }
