@@ -56,7 +56,7 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
           AuthenticationInteractionStatus.CLIENT_ERROR,
           type,
           authenticationResult.toMap(),
-          DefaultSecurityEventType.email_verification_success);
+          DefaultSecurityEventType.legacy_authentication_failure);
     }
 
     Authentication authentication =
