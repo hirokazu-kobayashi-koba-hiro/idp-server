@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.hook;
+package org.idp.server.core.adapters.datasource.security;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,25 +18,23 @@ public class SecurityEventHookConfigurationQueryDataSource
   JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   String selectSql =
       """
-            SELECT id, trigger, payload FROM hook_configuration \n
+            SELECT id, payload FROM security_event_hook_configuration
             """;
 
   @Override
-  public SecurityEventHookConfigurations find(Tenant tenant, SecurityEventType triggerType) {
+  public SecurityEventHookConfigurations find(Tenant tenant) {
     SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
     String sqlTemplate =
         selectSql
             + """
                 WHERE tenant_id = ?
-                AND trigger = ?
                 AND enabled = true
                 ORDER BY execution_order;
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-    params.add(triggerType.value());
 
     List<Map<String, String>> results = sqlExecutor.selectList(sqlTemplate, params);
 

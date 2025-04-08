@@ -1,58 +1,49 @@
 package org.idp.server.core.security.hook.ssf;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+
 import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.core.security.event.SecurityEventType;
 
 public class SharedSignalFrameworkConfiguration implements JsonReadable {
 
-  String issuer;
-  List<String> targetEvents;
-  String privateKey;
-  String endpoint;
-  Map<String, String> headers;
+ String issuer;
+ SharedSignalFrameworkConfig base;
+ Map<String, SharedSignalFrameworkConfig> overlays;
 
   public SharedSignalFrameworkConfiguration() {}
 
   public SharedSignalFrameworkConfiguration(
-      String issuer,
-      List<String> targetEvents,
-      String privateKey,
-      String endpoint,
-      Map<String, String> headers) {
+          String issuer,
+      SharedSignalFrameworkConfig base, Map<String, SharedSignalFrameworkConfig> overlays) {
     this.issuer = issuer;
-    this.targetEvents = targetEvents;
-    this.privateKey = privateKey;
-    this.endpoint = endpoint;
-    this.headers = headers;
+    this.base = base;
+    this.overlays = overlays;
   }
 
   public String issuer() {
     return issuer;
   }
 
-  public List<String> targetEvents() {
-    return targetEvents;
+  public String privateKey(SecurityEventType type) {
+    if (overlays.containsKey(type.value())) {
+      return overlays.get(type.value()).privateKey();
+    }
+    return base.privateKey();
   }
 
-  public String privateKey() {
-    return privateKey;
+  public String endpoint(SecurityEventType type) {
+    if (overlays.containsKey(type.value())) {
+      return overlays.get(type.value()).endpoint();
+    }
+    return base.endpoint();
   }
 
-  public String endpoint() {
-    return endpoint;
+  public Map<String, String> headers(SecurityEventType type) {
+    if (overlays.containsKey(type.value())) {
+      return overlays.get(type.value()).headers();
+    }
+    return base.headers();
   }
 
-  public Map<String, String> headers() {
-    return headers;
-  }
-
-  public boolean containsEvent(String event) {
-    return targetEvents.contains(event);
-  }
-
-  public boolean exists() {
-    return Objects.nonNull(issuer) && !issuer.isEmpty();
-  }
 }

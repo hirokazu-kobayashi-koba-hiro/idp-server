@@ -36,21 +36,26 @@ public class SecurityEventHandler {
     Tenant tenant = tenantRepository.get(securityEvent.tenantIdentifier());
 
     SecurityEventHookConfigurations securityEventHookConfigurations =
-        securityEventHookConfigurationQueryRepository.find(tenant, securityEvent.type());
+        securityEventHookConfigurationQueryRepository.find(tenant);
 
     securityEventHookConfigurations.forEach(
         hookConfiguration -> {
-          log.info(
-              String.format(
-                  "security event hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
-                  hookConfiguration.triggerType().name(),
-                  hookConfiguration.hookType().name(),
-                  securityEvent.tenantIdentifierValue(),
-                  securityEvent.clientId().value(),
-                  securityEvent.user().id()));
 
           SecurityEventHookExecutor securityEventHookExecutor =
               securityEventHooks.get(hookConfiguration.hookType());
+
+          if (securityEventHookExecutor.shouldNotExecute(tenant, securityEvent, hookConfiguration)) {
+            return;
+          }
+
+          log.info(
+                  String.format(
+                          "security event hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
+                          securityEvent.type().value(),
+                          hookConfiguration.hookType().name(),
+                          securityEvent.tenantIdentifierValue(),
+                          securityEvent.clientId().value(),
+                          securityEvent.user().id()));
 
           securityEventHookExecutor.execute(tenant, securityEvent, hookConfiguration);
         });

@@ -1,5 +1,6 @@
 package org.idp.server.core.security.event;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
@@ -44,6 +45,7 @@ public class OAuthFlowEventCreator {
   }
 
   public SecurityEvent create() {
+    HashMap<String, Object> detailsMap = new HashMap<>();
     SecurityEventBuilder builder = new SecurityEventBuilder();
     builder.add(securityEventType);
     builder.add(securityEventDescription);
@@ -60,14 +62,15 @@ public class OAuthFlowEventCreator {
     if (user != null) {
       SecurityEventUser securityEventUser = new SecurityEventUser(user.sub(), user.name());
       builder.add(securityEventUser);
+      detailsMap.put("user", user.toMap());
     }
 
     builder.add(requestAttributes.getIpAddress());
     builder.add(requestAttributes.getUserAgent());
+    detailsMap.putAll(requestAttributes.toMap());
 
     SecurityEventDetail securityEventDetail =
-        new SecurityEventDetail(
-            Map.of("user", user.toMap(), "request_attributes", requestAttributes.toMap()));
+        new SecurityEventDetail(detailsMap);
 
     builder.add(securityEventDetail);
 

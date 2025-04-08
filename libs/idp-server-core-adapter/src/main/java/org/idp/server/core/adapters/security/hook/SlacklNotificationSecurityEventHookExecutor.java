@@ -37,15 +37,15 @@ public class SlacklNotificationSecurityEventHookExecutor implements SecurityEven
   public SecurityEventHookResult execute(
       Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration hookConfiguration) {
 
-    SlackSecurityEventHookConfiguration configuration = jsonConverter.read(hookConfiguration.detail(), SlackSecurityEventHookConfiguration.class);
-    String url = configuration.url();
-    if (url == null) {
+    SlackSecurityEventHookConfiguration configuration = jsonConverter.read(hookConfiguration.details(), SlackSecurityEventHookConfiguration.class);
+    String incomingWebhookUrl = configuration.incomingWebhookUrl(securityEvent.type());
+    if (incomingWebhookUrl == null) {
       return new SecurityEventHookResult(Map.of("status", 500, "error", "invalid_configuration"));
     }
 
-    String template = configuration.messageTemplate();
+    String template = configuration.messageTemplate(securityEvent.type());
 
-    Map<String, Object> context = new java.util.HashMap<>(securityEvent.toMap());
+    Map<String, Object> context = new HashMap<>(securityEvent.toMap());
     context.put("trigger", securityEvent.type().value());
 
     NotificationTemplateInterpolator notificationTemplateInterpolator =
@@ -57,7 +57,7 @@ public class SlacklNotificationSecurityEventHookExecutor implements SecurityEven
     try {
       HttpRequest httpRequest =
           HttpRequest.newBuilder()
-              .uri(new URI(url))
+              .uri(new URI(incomingWebhookUrl))
               .header("Content-Type", "application/json")
               .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
               .build();

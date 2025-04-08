@@ -16,12 +16,16 @@ import org.idp.server.core.security.hook.*;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.exception.InvalidConfigurationException;
 
-public class WebSecurityEventHookExecutor implements SecurityEventHookExecutor {
+/**
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc8935">Push-Based Security Event Token
+ *     (SET) Delivery Using HTTP</a>
+ */
+public class WebHookExecutor implements SecurityEventHookExecutor {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;
 
-  public WebSecurityEventHookExecutor() {
+  public WebHookExecutor() {
     this.httpClient = HttpClientFactory.defaultClient();
     this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   }
@@ -33,15 +37,17 @@ public class WebSecurityEventHookExecutor implements SecurityEventHookExecutor {
 
   @Override
   public SecurityEventHookResult execute(
-      Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration configuration) {
+      Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration hookConfiguration) {
 
     try {
-      HttpRequestUrl httpRequestUrl = configuration.webhookUrl();
-      HttpMethod httpMethod = configuration.webhookMethod();
-      HttpRequestHeaders httpRequestHeaders = configuration.webhookHeaders();
+
+      WebHookConfiguration configuration = jsonConverter.read(hookConfiguration, WebHookConfiguration.class);
+      HttpRequestUrl httpRequestUrl = configuration.httpRequestUrl(securityEvent.type());
+      HttpMethod httpMethod = configuration.httpMethod(securityEvent.type());
+      HttpRequestHeaders httpRequestHeaders = configuration.httpRequestHeaders(securityEvent.type());
       HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys =
-          configuration.webhookDynamicBodyKeys();
-      HttpRequestStaticBody httpRequestStaticBody = configuration.webhookStaticBody();
+          configuration.httpRequestDynamicBodyKeys(securityEvent.type());
+      HttpRequestStaticBody httpRequestStaticBody = configuration.httpRequestStaticBody(securityEvent.type());
 
       HttpRequestBodyCreator requestBodyCreator =
           new HttpRequestBodyCreator(
