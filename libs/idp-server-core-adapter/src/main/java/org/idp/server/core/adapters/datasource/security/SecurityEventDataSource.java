@@ -6,8 +6,8 @@ import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.security.SecurityEvent;
-import org.idp.server.core.security.SecurityEventRepository;
 import org.idp.server.core.security.SecurityEvents;
+import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.event.SecurityEventSearchCriteria;
 
 public class SecurityEventDataSource implements SecurityEventRepository {

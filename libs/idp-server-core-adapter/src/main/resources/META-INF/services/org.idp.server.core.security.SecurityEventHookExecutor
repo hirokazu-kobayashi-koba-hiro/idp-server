@@ -1,0 +1,2 @@
+org.idp.server.core.adapters.security.hook.SlacklNotificationSecurityEventHookExecutor
+org.idp.server.core.adapters.security.hook.DatadogLogStreamExecutorSecurityEvent

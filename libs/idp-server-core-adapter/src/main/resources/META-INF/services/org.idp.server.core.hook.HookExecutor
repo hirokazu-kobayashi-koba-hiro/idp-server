@@ -1,3 +1,0 @@
-org.idp.server.core.adapters.hook.SlacklNotificationHookExecutor
-org.idp.server.core.adapters.hook.WebHookExecutor
-org.idp.server.core.adapters.hook.DatadogLogStreamExecutor

@@ -1,0 +1,85 @@
+package org.idp.server.core.adapters.security.hook;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.core.basic.http.HttpClientFactory;
+import org.idp.server.core.basic.http.HttpNetworkErrorException;
+import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.security.SecurityEvent;
+import org.idp.server.core.security.SecurityEventHookExecutor;
+import org.idp.server.core.security.hook.*;
+import org.idp.server.core.security.hook.notification.NotificationTemplateInterpolator;
+import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.type.exception.InvalidConfigurationException;
+
+public class SlacklNotificationSecurityEventHookExecutor implements SecurityEventHookExecutor {
+
+  HttpClient httpClient;
+  JsonConverter jsonConverter;
+
+  public SlacklNotificationSecurityEventHookExecutor() {
+    this.httpClient = HttpClientFactory.defaultClient();
+    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  }
+
+  @Override
+  public SecurityEventHookType type() {
+    return new SecurityEventHookType("SLACK");
+  }
+
+  @Override
+  public SecurityEventHookResult execute(
+      Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration hookConfiguration) {
+
+    SlackSecurityEventHookConfiguration configuration = jsonConverter.read(hookConfiguration.detail(), SlackSecurityEventHookConfiguration.class);
+    String url = configuration.url();
+    if (url == null) {
+      return new SecurityEventHookResult(Map.of("status", 500, "error", "invalid_configuration"));
+    }
+
+    String template = configuration.messageTemplate();
+
+    Map<String, Object> context = new java.util.HashMap<>(securityEvent.toMap());
+    context.put("trigger", securityEvent.type().value());
+
+    NotificationTemplateInterpolator notificationTemplateInterpolator =
+        new NotificationTemplateInterpolator(template, context);
+    String message = notificationTemplateInterpolator.interpolate();
+
+    String jsonBody = "{\"text\": \"" + escapeJson(message) + "\"}";
+
+    try {
+      HttpRequest httpRequest =
+          HttpRequest.newBuilder()
+              .uri(new URI(url))
+              .header("Content-Type", "application/json")
+              .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+              .build();
+
+      HttpResponse<Void> httpResponse =
+          httpClient.send(httpRequest, HttpResponse.BodyHandlers.discarding());
+
+      Map<String, Object> result = new HashMap<>();
+      result.put("status", httpResponse.statusCode());
+      result.put("body", httpResponse.body());
+
+      return new SecurityEventHookResult(result);
+    } catch (URISyntaxException e) {
+
+      throw new InvalidConfigurationException("SlackUrl is invalid.", e);
+
+    } catch (IOException | InterruptedException e) {
+      throw new HttpNetworkErrorException("Slack request is failed.", e);
+    }
+  }
+
+  private String escapeJson(String value) {
+    return value.replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "");
+  }
+}

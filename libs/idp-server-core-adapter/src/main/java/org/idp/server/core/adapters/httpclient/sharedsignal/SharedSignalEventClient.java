@@ -10,8 +10,8 @@ import java.util.logging.Logger;
 import org.idp.server.core.basic.http.HttpClientErrorException;
 import org.idp.server.core.basic.http.HttpClientFactory;
 import org.idp.server.core.basic.http.HttpNetworkErrorException;
-import org.idp.server.core.security.ssf.SharedSignalEventGateway;
-import org.idp.server.core.security.ssf.SharedSignalEventRequest;
+import org.idp.server.core.security.hook.ssf.SharedSignalEventGateway;
+import org.idp.server.core.security.hook.ssf.SharedSignalEventRequest;
 
 /**
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8935">Push-Based Security Event Token

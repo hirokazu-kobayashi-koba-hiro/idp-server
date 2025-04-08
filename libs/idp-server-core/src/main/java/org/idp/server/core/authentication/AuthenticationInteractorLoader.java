@@ -20,7 +20,7 @@ public class AuthenticationInteractorLoader {
     for (AuthenticationInteractorFactory factory : loader) {
       AuthenticationInteractor interactor = factory.create(container);
       interactors.put(factory.type(), interactor);
-      log.info("Dynamic Registered MFA interactor: " + factory.type().name());
+      log.info("Dynamic Registered Authentication interactor: " + factory.type().name());
     }
 
     return interactors;

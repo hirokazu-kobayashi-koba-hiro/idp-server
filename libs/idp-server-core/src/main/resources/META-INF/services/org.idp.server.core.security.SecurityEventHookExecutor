@@ -1,0 +1,2 @@
+org.idp.server.core.security.hook.webhook.WebSecurityEventHookExecutor
+org.idp.server.core.security.hook.ssf.SsfHookExecutor

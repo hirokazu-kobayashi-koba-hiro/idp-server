@@ -5,8 +5,8 @@ import java.util.Map;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
-import org.idp.server.core.security.ssf.SharedSignalFrameworkConfiguration;
-import org.idp.server.core.security.ssf.SharedSignalFrameworkConfigurationRepository;
+import org.idp.server.core.security.hook.ssf.SharedSignalFrameworkConfiguration;
+import org.idp.server.core.security.hook.ssf.SharedSignalFrameworkConfigurationRepository;
 
 public class SharedSignalFrameworkConfigurationDataSource
     implements SharedSignalFrameworkConfigurationRepository {
