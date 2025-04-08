@@ -26,7 +26,7 @@ public class SecurityEventDataSource implements SecurityEventRepository {
     params.add(securityEvent.identifier().value());
     params.add(securityEvent.type().value());
     params.add(securityEvent.description().value());
-    params.add(securityEvent.tenant().idAsString());
+    params.add(securityEvent.tenant().id());
     params.add(securityEvent.tenant().name());
     params.add(securityEvent.client().id());
     params.add(securityEvent.client().name());

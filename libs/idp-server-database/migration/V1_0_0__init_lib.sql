@@ -380,14 +380,6 @@ CREATE TABLE verifiable_credential_transaction
     updated_at            TIMESTAMP DEFAULT now() NOT NULL
 );
 
-CREATE TABLE shared_signal_framework_configuration
-(
-    id         CHAR(36)                NOT NULL PRIMARY KEY,
-    payload    JSONB                   NOT NULL,
-    created_at TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at TIMESTAMP DEFAULT now() NOT NULL
-);
-
 CREATE TABLE security_event
 (
     id          CHAR(36) PRIMARY KEY,

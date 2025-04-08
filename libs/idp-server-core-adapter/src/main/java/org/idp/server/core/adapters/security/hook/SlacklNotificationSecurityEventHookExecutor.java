@@ -11,10 +11,10 @@ import java.util.Map;
 import org.idp.server.core.basic.http.HttpClientFactory;
 import org.idp.server.core.basic.http.HttpNetworkErrorException;
 import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.basic.notification.NotificationTemplateInterpolator;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventHookExecutor;
 import org.idp.server.core.security.hook.*;
-import org.idp.server.core.security.hook.notification.NotificationTemplateInterpolator;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.exception.InvalidConfigurationException;
 
@@ -35,9 +35,12 @@ public class SlacklNotificationSecurityEventHookExecutor implements SecurityEven
 
   @Override
   public SecurityEventHookResult execute(
-      Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration hookConfiguration) {
+      Tenant tenant,
+      SecurityEvent securityEvent,
+      SecurityEventHookConfiguration hookConfiguration) {
 
-    SlackSecurityEventHookConfiguration configuration = jsonConverter.read(hookConfiguration.details(), SlackSecurityEventHookConfiguration.class);
+    SlackSecurityEventHookConfiguration configuration =
+        jsonConverter.read(hookConfiguration.details(), SlackSecurityEventHookConfiguration.class);
     String incomingWebhookUrl = configuration.incomingWebhookUrl(securityEvent.type());
     if (incomingWebhookUrl == null) {
       return new SecurityEventHookResult(Map.of("status", 500, "error", "invalid_configuration"));

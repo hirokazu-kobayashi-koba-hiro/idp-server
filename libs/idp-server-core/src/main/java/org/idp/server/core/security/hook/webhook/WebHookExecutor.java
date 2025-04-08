@@ -37,17 +37,22 @@ public class WebHookExecutor implements SecurityEventHookExecutor {
 
   @Override
   public SecurityEventHookResult execute(
-      Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration hookConfiguration) {
+      Tenant tenant,
+      SecurityEvent securityEvent,
+      SecurityEventHookConfiguration hookConfiguration) {
 
     try {
 
-      WebHookConfiguration configuration = jsonConverter.read(hookConfiguration, WebHookConfiguration.class);
+      WebHookConfiguration configuration =
+          jsonConverter.read(hookConfiguration, WebHookConfiguration.class);
       HttpRequestUrl httpRequestUrl = configuration.httpRequestUrl(securityEvent.type());
       HttpMethod httpMethod = configuration.httpMethod(securityEvent.type());
-      HttpRequestHeaders httpRequestHeaders = configuration.httpRequestHeaders(securityEvent.type());
+      HttpRequestHeaders httpRequestHeaders =
+          configuration.httpRequestHeaders(securityEvent.type());
       HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys =
           configuration.httpRequestDynamicBodyKeys(securityEvent.type());
-      HttpRequestStaticBody httpRequestStaticBody = configuration.httpRequestStaticBody(securityEvent.type());
+      HttpRequestStaticBody httpRequestStaticBody =
+          configuration.httpRequestStaticBody(securityEvent.type());
 
       HttpRequestBodyCreator requestBodyCreator =
           new HttpRequestBodyCreator(

@@ -125,11 +125,11 @@ public class SecurityEvent {
   }
 
   public TenantIdentifier tenantIdentifier() {
-    return tenant.id();
+    return new TenantIdentifier(tenant.id());
   }
 
   public String tenantIdentifierValue() {
-    return tenant.idAsString();
+    return tenant.id();
   }
 
   public String tokenIssuerValue() {

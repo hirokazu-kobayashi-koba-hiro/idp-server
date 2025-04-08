@@ -11,7 +11,6 @@ import org.idp.server.core.adapters.datasource.credential.database.VerifiableCre
 import org.idp.server.core.adapters.datasource.federation.FederatableIdProviderConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.federation.FederationSessionDataSource;
 import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedDataSource;
-import org.idp.server.core.adapters.datasource.security.SecurityEventHookConfigurationQueryDataSource;
 import org.idp.server.core.adapters.datasource.identity.PermissionCommandDataSource;
 import org.idp.server.core.adapters.datasource.identity.RoleCommandDataSource;
 import org.idp.server.core.adapters.datasource.identity.UserDataSource;
@@ -19,6 +18,7 @@ import org.idp.server.core.adapters.datasource.oauth.database.code.Authorization
 import org.idp.server.core.adapters.datasource.oauth.database.request.AuthorizationRequestDataSource;
 import org.idp.server.core.adapters.datasource.organization.OrganizationDataSource;
 import org.idp.server.core.adapters.datasource.security.SecurityEventDataSource;
+import org.idp.server.core.adapters.datasource.security.SecurityEventHookConfigurationQueryDataSource;
 import org.idp.server.core.adapters.datasource.tenant.TenantDataSource;
 import org.idp.server.core.adapters.datasource.token.database.OAuthTokenDataSource;
 import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
