@@ -11,7 +11,7 @@ import org.idp.server.core.adapters.datasource.credential.database.VerifiableCre
 import org.idp.server.core.adapters.datasource.federation.FederatableIdProviderConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.federation.FederationSessionDataSource;
 import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedDataSource;
-import org.idp.server.core.adapters.datasource.hook.HookConfigurationQueryDataSource;
+import org.idp.server.core.adapters.datasource.security.SecurityEventHookConfigurationQueryDataSource;
 import org.idp.server.core.adapters.datasource.identity.PermissionCommandDataSource;
 import org.idp.server.core.adapters.datasource.identity.RoleCommandDataSource;
 import org.idp.server.core.adapters.datasource.identity.UserDataSource;
@@ -19,7 +19,6 @@ import org.idp.server.core.adapters.datasource.oauth.database.code.Authorization
 import org.idp.server.core.adapters.datasource.oauth.database.request.AuthorizationRequestDataSource;
 import org.idp.server.core.adapters.datasource.organization.OrganizationDataSource;
 import org.idp.server.core.adapters.datasource.security.SecurityEventDataSource;
-import org.idp.server.core.adapters.datasource.security.SharedSignalFrameworkConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.tenant.TenantDataSource;
 import org.idp.server.core.adapters.datasource.token.database.OAuthTokenDataSource;
 import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
@@ -27,7 +26,6 @@ import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialBl
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialJwtClient;
 import org.idp.server.core.adapters.httpclient.federation.FederationClient;
 import org.idp.server.core.adapters.httpclient.oauth.RequestObjectHttpClient;
-import org.idp.server.core.adapters.httpclient.sharedsignal.SharedSignalEventClient;
 import org.idp.server.core.api.*;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
@@ -53,8 +51,6 @@ import org.idp.server.core.handler.token.TokenRequestHandler;
 import org.idp.server.core.handler.tokenintrospection.TokenIntrospectionHandler;
 import org.idp.server.core.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.core.handler.userinfo.UserinfoHandler;
-import org.idp.server.core.hook.AuthenticationHooks;
-import org.idp.server.core.hook.AuthenticationHooksLoader;
 import org.idp.server.core.notification.EmailSenderLoader;
 import org.idp.server.core.notification.EmailSenders;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
@@ -62,8 +58,10 @@ import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
 import org.idp.server.core.oauth.identity.UserRegistrationService;
 import org.idp.server.core.protocol.*;
-import org.idp.server.core.security.OAuthFlowEventPublisher;
+import org.idp.server.core.security.SecurityEventHooks;
 import org.idp.server.core.security.SecurityEventPublisher;
+import org.idp.server.core.security.event.OAuthFlowEventPublisher;
+import org.idp.server.core.security.hook.SecurityEventHooksLoader;
 import org.idp.server.core.type.verifiablecredential.Format;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreator;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreators;
@@ -112,14 +110,13 @@ public class IdpServerApplication {
     FederatableIdProviderConfigurationDataSource federatableIdProviderConfigurationDataSource =
         new FederatableIdProviderConfigurationDataSource();
     FederationSessionDataSource federationSessionDataSource = new FederationSessionDataSource();
-    SharedSignalFrameworkConfigurationDataSource sharedSignalFrameworkConfigurationDataSource =
-        new SharedSignalFrameworkConfigurationDataSource();
     UserDataSource userDataSource = new UserDataSource();
     OrganizationDataSource organizationDataSource = new OrganizationDataSource();
     TenantDataSource tenantDataSource = new TenantDataSource();
     RoleCommandDataSource roleCommandDataSource = new RoleCommandDataSource();
     PermissionCommandDataSource permissionCommandDataSource = new PermissionCommandDataSource();
-    HookConfigurationQueryDataSource hookQueryDataSource = new HookConfigurationQueryDataSource();
+    SecurityEventHookConfigurationQueryDataSource hookQueryDataSource =
+        new SecurityEventHookConfigurationQueryDataSource();
 
     OAuthRequestHandler oAuthRequestHandler =
         new OAuthRequestHandler(
@@ -230,18 +227,11 @@ public class IdpServerApplication {
             clientConfigurationDataSource,
             creators);
 
-    SharedSignalEventClient sharedSignalEventClient = new SharedSignalEventClient();
-
-    AuthenticationHooks authenticationHooks = AuthenticationHooksLoader.load();
+    SecurityEventHooks securityEventHooks = SecurityEventHooksLoader.load();
 
     SecurityEventHandler securityEventHandler =
         new SecurityEventHandler(
-            tenantDataSource,
-            eventDataSource,
-            authenticationHooks,
-            hookQueryDataSource,
-            sharedSignalFrameworkConfigurationDataSource,
-            sharedSignalEventClient);
+            tenantDataSource, eventDataSource, securityEventHooks, hookQueryDataSource);
 
     ServerConfigurationHandler serverConfigurationHandler =
         new ServerConfigurationHandler(serverConfigurationDataSource);

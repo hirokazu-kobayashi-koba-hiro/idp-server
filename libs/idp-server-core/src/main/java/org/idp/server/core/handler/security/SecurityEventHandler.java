@@ -1,9 +1,10 @@
 package org.idp.server.core.handler.security;
 
 import java.util.logging.Logger;
-import org.idp.server.core.hook.*;
 import org.idp.server.core.security.*;
-import org.idp.server.core.security.ssf.*;
+import org.idp.server.core.security.event.SecurityEventRepository;
+import org.idp.server.core.security.hook.*;
+import org.idp.server.core.security.hook.ssf.*;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantRepository;
 
@@ -11,80 +12,52 @@ public class SecurityEventHandler {
 
   TenantRepository tenantRepository;
   SecurityEventRepository securityEventRepository;
-  AuthenticationHooks authenticationHooks;
-  HookConfigurationQueryRepository hookConfigurationQueryRepository;
-  SharedSignalFrameworkConfigurationRepository sharedSignalFrameworkConfigurationRepository;
-  SharedSignalEventGateway eventGateway;
+  SecurityEventHooks securityEventHooks;
+  SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
+
   Logger log = Logger.getLogger(SecurityEventHandler.class.getName());
 
   public SecurityEventHandler(
       TenantRepository tenantRepository,
       SecurityEventRepository securityEventRepository,
-      AuthenticationHooks authenticationHooks,
-      HookConfigurationQueryRepository hookConfigurationQueryRepository,
-      SharedSignalFrameworkConfigurationRepository sharedSignalFrameworkConfigurationRepository,
-      SharedSignalEventGateway eventGateway) {
+      SecurityEventHooks securityEventHooks,
+      SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository) {
     this.tenantRepository = tenantRepository;
     this.securityEventRepository = securityEventRepository;
-    this.authenticationHooks = authenticationHooks;
-    this.hookConfigurationQueryRepository = hookConfigurationQueryRepository;
-    this.sharedSignalFrameworkConfigurationRepository =
-        sharedSignalFrameworkConfigurationRepository;
-    this.eventGateway = eventGateway;
+    this.securityEventHooks = securityEventHooks;
+    this.securityEventHookConfigurationQueryRepository =
+        securityEventHookConfigurationQueryRepository;
   }
 
   public void handle(SecurityEvent securityEvent) {
+
     securityEventRepository.register(securityEvent);
 
     Tenant tenant = tenantRepository.get(securityEvent.tenantIdentifier());
 
-    HookTriggerType hookTriggerType = HookTriggerType.of(securityEvent.type().value());
-    if (hookTriggerType.isDefined()) {
+    SecurityEventHookConfigurations securityEventHookConfigurations =
+        securityEventHookConfigurationQueryRepository.find(tenant);
 
-      HookConfigurations hookConfigurations =
-          hookConfigurationQueryRepository.find(tenant, hookTriggerType);
+    securityEventHookConfigurations.forEach(
+        hookConfiguration -> {
 
-      if (hookConfigurations.exists()) {
-        HookRequest hookRequest = new HookRequest(securityEvent.toMap());
+          SecurityEventHookExecutor securityEventHookExecutor =
+              securityEventHooks.get(hookConfiguration.hookType());
 
-        hookConfigurations.forEach(
-            hookConfiguration -> {
-              log.info(
+          if (securityEventHookExecutor.shouldNotExecute(tenant, securityEvent, hookConfiguration)) {
+            return;
+          }
+
+          log.info(
                   String.format(
-                      "hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
-                      hookConfiguration.triggerType().name(),
-                      hookConfiguration.hookType().name(),
-                      securityEvent.tenantIdentifierValue(),
-                      securityEvent.clientId().value(),
-                      securityEvent.user().id()));
-              HookExecutor hookExecutor = authenticationHooks.get(hookConfiguration.hookType());
-              hookExecutor.execute(
-                  tenant, HookTriggerType.POST_LOGIN, hookRequest, hookConfiguration);
-            });
-      }
-    }
+                          "security event hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
+                          securityEvent.type().value(),
+                          hookConfiguration.hookType().name(),
+                          securityEvent.tenantIdentifierValue(),
+                          securityEvent.clientId().value(),
+                          securityEvent.user().id()));
 
-    SecurityEventTokenEntityConvertor convertor =
-        new SecurityEventTokenEntityConvertor(securityEvent);
-    SecurityEventTokenEntity securityEventTokenEntity = convertor.convert();
-
-    SharedSignalFrameworkConfiguration configuration =
-        sharedSignalFrameworkConfigurationRepository.find(securityEvent.tokenIssuer().value());
-
-    SharedSignalDecider decider = new SharedSignalDecider(configuration, securityEventTokenEntity);
-
-    if (decider.decide()) {
-      log.info(
-          String.format(
-              "notify shared signal (%s) to (%s)",
-              securityEventTokenEntity.securityEventAsString(), configuration.issuer()));
-      SecurityEventTokenCreator securityEventTokenCreator =
-          new SecurityEventTokenCreator(securityEventTokenEntity, configuration.privateKey());
-      SecurityEventToken securityEventToken = securityEventTokenCreator.create();
-
-      eventGateway.send(
-          new SharedSignalEventRequest(
-              configuration.endpoint(), configuration.headers(), securityEventToken));
-    }
+          securityEventHookExecutor.execute(tenant, securityEvent, hookConfiguration);
+        });
   }
 }

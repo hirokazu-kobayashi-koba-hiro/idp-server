@@ -426,19 +426,10 @@ CREATE TABLE security_event_notifications
 CREATE INDEX idx_security_event_notifications_event_id ON security_event_notifications (event_id);
 CREATE INDEX idx_security_event_notifications_alert_type ON security_event_notifications (alert_type);
 
-CREATE TABLE federatable_idp_configuration
-(
-    id         CHAR(36)                NOT NULL PRIMARY KEY,
-    payload    JSONB                   NOT NULL,
-    created_at TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at TIMESTAMP DEFAULT now() NOT NULL
-);
-
-CREATE TABLE hook_configuration
+CREATE TABLE security_event_hook_configuration
 (
     id              CHAR(36)     NOT NULL PRIMARY KEY,
     tenant_id       CHAR(36)     NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
-    trigger         VARCHAR(255) NOT NULL,
     payload         JSONB        NOT NULL,
     execution_order INTEGER      NOT NULL DEFAULT 0,
     enabled         BOOLEAN      NOT NULL DEFAULT TRUE,
@@ -446,8 +437,16 @@ CREATE TABLE hook_configuration
     updated_at      TIMESTAMP             DEFAULT now() NOT NULL
 );
 
-CREATE INDEX idx_hook_configuration_trigger ON hook_configuration (tenant_id, trigger);
-CREATE INDEX idx_hook_configuration_order ON hook_configuration (tenant_id, trigger, execution_order);
+CREATE INDEX idx_security_event_hook_configuration ON security_event_hook_configuration (tenant_id);
+CREATE INDEX idx_security_event_hook_configuration_order ON security_event_hook_configuration (tenant_id, execution_order);
+
+CREATE TABLE federatable_idp_configuration
+(
+    id         CHAR(36)                NOT NULL PRIMARY KEY,
+    payload    JSONB                   NOT NULL,
+    created_at TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP DEFAULT now() NOT NULL
+);
 
 CREATE TABLE authentication_configuration
 (
