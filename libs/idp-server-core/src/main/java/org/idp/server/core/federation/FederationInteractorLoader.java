@@ -18,7 +18,7 @@ public class FederationInteractorLoader {
       FederationType type = federationInteractorFactory.type();
       FederationInteractor federationInteractor = federationInteractorFactory.create(container);
       executors.put(type, federationInteractor);
-      log.info("Dynamic Registration SSO executor " + type.name());
+      log.info("Dynamic Registered SSO executor " + type.name());
     }
 
     return new FederationInteractors(executors);

@@ -34,6 +34,8 @@ public class FederationConfigurationQueryDataSource
                 """;
     List<Object> params = new ArrayList<>();
     params.add(tenantIdentifier.value());
+    params.add(federationType.name());
+    params.add(ssoProvider.name());
 
     Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
 

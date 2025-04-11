@@ -450,7 +450,6 @@ CREATE INDEX idx_federation_configurations_type_sso_provider_name ON federation_
 CREATE TABLE federation_sso_session
 (
     id         CHAR(36)                NOT NULL PRIMARY KEY,
-    type       VARCHAR(255)            NOT NULL,
     payload    JSONB                   NOT NULL,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL

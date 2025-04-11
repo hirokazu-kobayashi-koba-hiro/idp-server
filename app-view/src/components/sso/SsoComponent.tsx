@@ -6,8 +6,9 @@ import { useAtom } from "jotai";
 import { authSessionIdAtom, authSessionTenantIdAtom } from "@/state/AuthState";
 
 type IdpConfig = {
-  id: string;
+  type: string;
   name: string;
+  label: string;
   logo: string;
 };
 
@@ -16,18 +17,21 @@ type IdpConfigs = IdpConfig[];
 //TODO getting backend
 const idpConfigs = [
   {
-    id: "1e68932e-ed4a-43e7-b412-460665e42df3",
-    name: "Google",
+    type: "oidc",
+    name: "google",
+    label: "Google",
     logo: "/logos/google.svg",
   },
   {
-    id: "3be20da2-eea5-4420-9e1e-90215803b4a8",
-    name: "Facebook",
+    type: "oidc",
+    name: "facebook",
+    label: "Facebook",
     logo: "https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg",
   },
   {
-    id: "4cc97cad-34ad-41e7-af53-c4ddee3f786b",
-    name: "Yahoo! JAPAN ID",
+    type: "oidc",
+    name: "yahoo",
+    label: "Yahoo! JAPAN ID",
     logo: "/logos/yahoo_japan_icon_64.png",
   },
 ] as IdpConfigs;
@@ -37,14 +41,13 @@ export const SsoComponent = () => {
   const [authSessionTenantId] = useAtom(authSessionTenantIdAtom);
   const [message, setMessage] = useState("");
 
-  const handleClick = async (idpId: string) => {
+  const handleClick = async (type: string, name: string) => {
     const response = await fetch(
-      `${backendUrl}/${authSessionTenantId}/api/v1/authorizations/${authSessionId}/federations`,
+      `${backendUrl}/${authSessionTenantId}/api/v1/authorizations/${authSessionId}/federations/${type}/${name}`,
       {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ federatable_idp_id: idpId }),
       },
     );
 
@@ -60,9 +63,9 @@ export const SsoComponent = () => {
 
   return (
     <Stack spacing={1}>
-      {idpConfigs.map(({ id, name, logo }) => (
+      {idpConfigs.map(({ type, name, label, logo }, index) => (
         <Button
-          key={id}
+          key={index}
           variant="outlined"
           color={"inherit"}
           sx={{
@@ -74,7 +77,7 @@ export const SsoComponent = () => {
             borderColor: "#9e9e9e", // Gray border
           }}
           fullWidth
-          onClick={() => handleClick(id)}
+          onClick={() => handleClick(type, name)}
         >
           <Image
             src={logo}
@@ -83,7 +86,7 @@ export const SsoComponent = () => {
             height={24}
             style={{ marginRight: 8 }}
           />
-          Sign in with {name}
+          Sign in with {label}
         </Button>
       ))}
       {message && (

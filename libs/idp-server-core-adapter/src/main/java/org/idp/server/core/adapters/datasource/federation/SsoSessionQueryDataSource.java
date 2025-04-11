@@ -3,7 +3,6 @@ package org.idp.server.core.adapters.datasource.federation;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.basic.sql.TransactionManager;
-import org.idp.server.core.federation.FederationConfigurationNotFoundException;
 import org.idp.server.core.federation.SsoSessionNotFoundException;
 import org.idp.server.core.federation.SsoSessionQueryRepository;
 import org.idp.server.core.type.oauth.State;
@@ -22,9 +21,9 @@ public class SsoSessionQueryDataSource implements SsoSessionQueryRepository {
         SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
 
         String sqlTemplate = """
-                SELECT id, type, payload
+                SELECT id, payload
                 FROM federation_sso_session
-                WHERE state = ?
+                WHERE id = ?
                 """;
 
         List<Object> params = new ArrayList<>();

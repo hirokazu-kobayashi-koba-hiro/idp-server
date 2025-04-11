@@ -20,14 +20,14 @@ public class SsoSessionCommandDataSource implements SsoSessionCommandRepository 
         String sqlTemplate = """
                 INSERT INTO federation_sso_session (id, payload) 
                 VALUES (?, ?::jsonb)
-                ON CONFLICT DO 
-                UPDATE SET payload = ?::jsonb
-                ;
+                ON CONFLICT (id) DO 
+                UPDATE SET payload = ?::jsonb, updated_at = now();
                 """;
 
         String json = jsonConverter.write(payload);
         List<Object> params = new ArrayList<>();
         params.add(identifier.value());
+        params.add(json);
         params.add(json);
 
         sqlExecutor.execute(sqlTemplate, params);

@@ -10,6 +10,7 @@ import org.idp.server.core.security.event.DefaultSecurityEventType;
 
 public class FederationInteractionResult {
 
+  AuthorizationRequestIdentifier authorizationRequestIdentifier;
   FederationInteractionStatus status;
   User user;
   Authentication authentication;
@@ -17,11 +18,13 @@ public class FederationInteractionResult {
   DefaultSecurityEventType eventType;
 
   private FederationInteractionResult(
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
       FederationInteractionStatus status,
       User user,
       Authentication authentication,
       Map<String, Object> response,
       DefaultSecurityEventType eventType) {
+    this.authorizationRequestIdentifier = authorizationRequestIdentifier;
     this.status = status;
     this.user = user;
     this.authentication = authentication;
@@ -30,13 +33,15 @@ public class FederationInteractionResult {
   }
 
   public static FederationInteractionResult success(OidcSsoSession session, User user) {
+    AuthorizationRequestIdentifier authorizationRequestIdentifier = new AuthorizationRequestIdentifier(session.authorizationRequestId());
     FederationInteractionStatus status = FederationInteractionStatus.SUCCESS;
     Authentication authentication = new Authentication();
     Map<String, Object> response =
         Map.of("id", session.authorizationRequestId(), "tenant_id", session.tenantId());
 
+    String s = session.authorizationRequestId();
     DefaultSecurityEventType eventType = DefaultSecurityEventType.federation_success;
-    return new FederationInteractionResult(status, user, authentication, response, eventType);
+    return new FederationInteractionResult(authorizationRequestIdentifier, status, user, authentication, response, eventType);
   }
 
   public FederationInteractionStatus status() {
@@ -76,6 +81,6 @@ public class FederationInteractionResult {
   }
 
   public AuthorizationRequestIdentifier authorizationRequestIdentifier() {
-    return null;
+    return authorizationRequestIdentifier;
   }
 }
