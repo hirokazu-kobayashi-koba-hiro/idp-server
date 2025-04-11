@@ -25,7 +25,7 @@ public class ManagementApiFilter extends OncePerRequestFilter {
   Logger logger = LoggerFactory.getLogger(ManagementApiFilter.class);
 
   public ManagementApiFilter(IdpServerApplication idpServerApplication) {
-    this.operatorAuthenticationApi = idpServerApplication.operatorAuthenticationFunction();
+    this.operatorAuthenticationApi = idpServerApplication.operatorAuthenticationApi();
   }
 
   @Override

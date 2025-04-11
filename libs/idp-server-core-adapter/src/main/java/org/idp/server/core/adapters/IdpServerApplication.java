@@ -8,8 +8,6 @@ import org.idp.server.core.adapters.datasource.ciba.database.request.Backchannel
 import org.idp.server.core.adapters.datasource.configuration.database.client.ClientConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.configuration.database.server.ServerConfigurationDataSource;
 import org.idp.server.core.adapters.datasource.credential.database.VerifiableCredentialTransactionDataSource;
-import org.idp.server.core.adapters.datasource.federation.FederatableIdProviderConfigurationDataSource;
-import org.idp.server.core.adapters.datasource.federation.FederationSessionDataSource;
 import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedDataSource;
 import org.idp.server.core.adapters.datasource.identity.PermissionCommandDataSource;
 import org.idp.server.core.adapters.datasource.identity.RoleCommandDataSource;
@@ -24,7 +22,6 @@ import org.idp.server.core.adapters.datasource.token.database.OAuthTokenDataSour
 import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialBlockCertClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialJwtClient;
-import org.idp.server.core.adapters.httpclient.federation.FederationClient;
 import org.idp.server.core.adapters.httpclient.oauth.RequestObjectHttpClient;
 import org.idp.server.core.api.*;
 import org.idp.server.core.authentication.*;
@@ -32,7 +29,12 @@ import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
 import org.idp.server.core.basic.sql.TransactionInterceptor;
 import org.idp.server.core.basic.sql.TransactionManager;
-import org.idp.server.core.federation.FederationService;
+import org.idp.server.core.federation.FederationDependencyContainer;
+import org.idp.server.core.federation.FederationDependencyContainerLoader;
+import org.idp.server.core.federation.FederationInteractorLoader;
+import org.idp.server.core.federation.FederationInteractors;
+import org.idp.server.core.federation.oidc.OidcSsoExecutorLoader;
+import org.idp.server.core.federation.oidc.OidcSsoExecutors;
 import org.idp.server.core.handler.ciba.CibaAuthorizeHandler;
 import org.idp.server.core.handler.ciba.CibaDenyHandler;
 import org.idp.server.core.handler.ciba.CibaRequestHandler;
@@ -41,7 +43,6 @@ import org.idp.server.core.handler.configuration.ClientConfigurationHandler;
 import org.idp.server.core.handler.configuration.ServerConfigurationHandler;
 import org.idp.server.core.handler.credential.CredentialHandler;
 import org.idp.server.core.handler.discovery.DiscoveryHandler;
-import org.idp.server.core.handler.federation.FederationHandler;
 import org.idp.server.core.handler.oauth.OAuthAuthorizeHandler;
 import org.idp.server.core.handler.oauth.OAuthDenyHandler;
 import org.idp.server.core.handler.oauth.OAuthHandler;
@@ -107,9 +108,6 @@ public class IdpServerApplication {
     VerifiableCredentialTransactionDataSource verifiableCredentialTransactionDataSource =
         new VerifiableCredentialTransactionDataSource();
     SecurityEventDataSource eventDataSource = new SecurityEventDataSource();
-    FederatableIdProviderConfigurationDataSource federatableIdProviderConfigurationDataSource =
-        new FederatableIdProviderConfigurationDataSource();
-    FederationSessionDataSource federationSessionDataSource = new FederationSessionDataSource();
     UserDataSource userDataSource = new UserDataSource();
     OrganizationDataSource organizationDataSource = new OrganizationDataSource();
     TenantDataSource tenantDataSource = new TenantDataSource();
@@ -151,15 +149,6 @@ public class IdpServerApplication {
             oAuthHandler,
             oAuthRequestDelegate);
     UserRegistrationService userRegistrationService = new UserRegistrationService(userDataSource);
-
-    FederationHandler federationHandler =
-        new FederationHandler(
-            federatableIdProviderConfigurationDataSource,
-            federationSessionDataSource,
-            new FederationClient());
-    FederationProtocol federationProtocol = new FederationProtocolImpl(federationHandler);
-
-    FederationService federationService = new FederationService(federationProtocol, userDataSource);
 
     TokenIntrospectionHandler tokenIntrospectionHandler =
         new TokenIntrospectionHandler(oAuthTokenDataSource);
@@ -272,16 +261,21 @@ public class IdpServerApplication {
     OAuthFlowEventPublisher oAuthFLowEventPublisher =
         new OAuthFlowEventPublisher(securityEventPublisher);
 
+    OidcSsoExecutors oidcSsoExecutors = OidcSsoExecutorLoader.load();
+    FederationDependencyContainer federationDependencyContainer = FederationDependencyContainerLoader.load();
+    federationDependencyContainer.register(OidcSsoExecutors.class, oidcSsoExecutors);
+    FederationInteractors federationInteractors = FederationInteractorLoader.load(federationDependencyContainer);
+
     this.oAuthFlowApi =
         TransactionInterceptor.createProxy(
             new OAuthFlowEntryService(
                 oAuthProtocol,
                 oAuthRequestDelegate,
                 authenticationInteractors,
+                federationInteractors,
                 userDataSource,
                 userRegistrationService,
                 tenantDataSource,
-                federationService,
                 oAuthFLowEventPublisher),
             OAuthFlowApi.class);
 
@@ -347,51 +341,51 @@ public class IdpServerApplication {
             OperatorAuthenticationApi.class);
   }
 
-  public OAuthFlowApi oAuthFlowFunction() {
+  public OAuthFlowApi oAuthFlowApi() {
     return oAuthFlowApi;
   }
 
-  public TokenApi tokenFunction() {
+  public TokenApi tokenAPi() {
     return tokenApi;
   }
 
-  public OidcMetaDataApi oidcMetaDataFunction() {
+  public OidcMetaDataApi oidcMetaDataApi() {
     return oidcMetaDataApi;
   }
 
-  public UserinfoApi userinfoFunction() {
+  public UserinfoApi userinfoApi() {
     return userinfoApi;
   }
 
-  public CibaFlowApi cibaFlowFunction() {
+  public CibaFlowApi cibaFlowApi() {
     return cibaFlowApi;
   }
 
-  public SecurityEventApi eventFunction() {
+  public SecurityEventApi securityEventApi() {
     return securityEventApi;
   }
 
-  public OnboardingApi onboardingFunction() {
+  public OnboardingApi onboardingApi() {
     return onboardingApi;
   }
 
-  public ServerManagementApi serverManagementFunction() {
+  public ServerManagementApi serverManagementApi() {
     return serverManagementApi;
   }
 
-  public ClientManagementApi clientManagementFunction() {
+  public ClientManagementApi clientManagementApi() {
     return clientManagementApi;
   }
 
-  public UserManagementApi userManagementFunction() {
+  public UserManagementApi userManagementAPi() {
     return userManagementApi;
   }
 
-  public OperatorAuthenticationApi operatorAuthenticationFunction() {
+  public OperatorAuthenticationApi operatorAuthenticationApi() {
     return operatorAuthenticationApi;
   }
 
-  public IdpServerStarterApi idpServerStarterFunction() {
+  public IdpServerStarterApi idpServerStarterApi() {
     return idpServerStarterApi;
   }
 }

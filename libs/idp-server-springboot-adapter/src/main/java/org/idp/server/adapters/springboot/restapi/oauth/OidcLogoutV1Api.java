@@ -21,7 +21,7 @@ public class OidcLogoutV1Api implements ParameterTransformable {
   OAuthFlowApi oAuthFlowApi;
 
   public OidcLogoutV1Api(IdpServerApplication idpServerApplication) {
-    this.oAuthFlowApi = idpServerApplication.oAuthFlowFunction();
+    this.oAuthFlowApi = idpServerApplication.oAuthFlowApi();
   }
 
   @GetMapping

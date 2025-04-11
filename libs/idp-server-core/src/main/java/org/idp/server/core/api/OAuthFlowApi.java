@@ -4,8 +4,11 @@ import java.util.Map;
 import org.idp.server.core.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.authentication.AuthenticationInteractionResult;
 import org.idp.server.core.authentication.AuthenticationInteractionType;
-import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
-import org.idp.server.core.handler.federation.io.FederationRequestResponse;
+import org.idp.server.core.federation.FederationInteractionResult;
+import org.idp.server.core.federation.FederationType;
+import org.idp.server.core.federation.SsoProvider;
+import org.idp.server.core.federation.io.FederationCallbackRequest;
+import org.idp.server.core.federation.io.FederationRequestResponse;
 import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
@@ -34,9 +37,15 @@ public interface OAuthFlowApi {
   FederationRequestResponse requestFederation(
       TenantIdentifier tenantIdentifier,
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      String federationIdentifier);
+      FederationType federationType,
+      SsoProvider ssoProvider,
+      RequestAttributes requestAttributes);
 
-  Pairs<Tenant, FederationCallbackResponse> callbackFederation(Map<String, String[]> params);
+  FederationInteractionResult callbackFederation(
+      FederationType federationType,
+      SsoProvider ssoProvider,
+      FederationCallbackRequest callbackRequest,
+      RequestAttributes requestAttributes);
 
   OAuthAuthorizeResponse authorize(
       TenantIdentifier tenantIdentifier,

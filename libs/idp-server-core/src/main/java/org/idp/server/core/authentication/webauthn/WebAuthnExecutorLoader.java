@@ -20,7 +20,7 @@ public class WebAuthnExecutorLoader {
       executors.put(webAuthnExecutor.type(), webAuthnExecutor);
       log.info(
           String.format(
-              "Dynamic Registration WebAuthnExecutor %s", webAuthnExecutor.type().value()));
+              "Dynamic Registered WebAuthnExecutor %s", webAuthnExecutor.type().value()));
     }
 
     return new WebAuthnExecutors(executors);

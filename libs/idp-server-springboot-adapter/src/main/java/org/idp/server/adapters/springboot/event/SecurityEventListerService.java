@@ -22,7 +22,7 @@ public class SecurityEventListerService {
       @Qualifier("securityEventTaskExecutor") TaskExecutor taskExecutor,
       IdpServerApplication idpServerApplication) {
     this.taskExecutor = taskExecutor;
-    this.securityEventApi = idpServerApplication.eventFunction();
+    this.securityEventApi = idpServerApplication.securityEventApi();
   }
 
   @Async

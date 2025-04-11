@@ -20,7 +20,7 @@ public class EventRetryScheduler {
   SecurityEventApi securityEventApi;
 
   public EventRetryScheduler(IdpServerApplication idpServerApplication) {
-    this.securityEventApi = idpServerApplication.eventFunction();
+    this.securityEventApi = idpServerApplication.securityEventApi();
   }
 
   public void enqueue(SecurityEvent securityEvent) {

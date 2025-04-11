@@ -19,7 +19,7 @@ public class AdminRegistrationV1Api implements ParameterTransformable {
   IdpServerStarterApi idpServerStarterApi;
 
   public AdminRegistrationV1Api(IdpServerApplication idpServerApplication) {
-    this.idpServerStarterApi = idpServerApplication.idpServerStarterFunction();
+    this.idpServerStarterApi = idpServerApplication.idpServerStarterApi();
   }
 
   @PostMapping

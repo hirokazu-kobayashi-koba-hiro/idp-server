@@ -15,7 +15,7 @@ public class UserinfoV1Api implements ParameterTransformable {
   UserinfoApi userinfoApi;
 
   public UserinfoV1Api(IdpServerApplication idpServerApplication) {
-    this.userinfoApi = idpServerApplication.userinfoFunction();
+    this.userinfoApi = idpServerApplication.userinfoApi();
   }
 
   @GetMapping

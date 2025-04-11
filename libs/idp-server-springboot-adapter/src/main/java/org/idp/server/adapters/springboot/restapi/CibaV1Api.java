@@ -18,7 +18,7 @@ public class CibaV1Api implements ParameterTransformable {
   CibaFlowApi cibaFlowApi;
 
   public CibaV1Api(IdpServerApplication idpServerApplication) {
-    this.cibaFlowApi = idpServerApplication.cibaFlowFunction();
+    this.cibaFlowApi = idpServerApplication.cibaFlowApi();
   }
 
   @PostMapping

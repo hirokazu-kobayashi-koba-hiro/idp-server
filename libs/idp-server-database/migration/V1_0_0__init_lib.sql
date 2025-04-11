@@ -420,21 +420,37 @@ CREATE INDEX idx_security_event_notifications_alert_type ON security_event_notif
 
 CREATE TABLE security_event_hook_configuration
 (
-    id              CHAR(36)     NOT NULL PRIMARY KEY,
-    tenant_id       CHAR(36)     NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
-    payload         JSONB        NOT NULL,
-    execution_order INTEGER      NOT NULL DEFAULT 0,
-    enabled         BOOLEAN      NOT NULL DEFAULT TRUE,
-    created_at      TIMESTAMP             DEFAULT now() NOT NULL,
-    updated_at      TIMESTAMP             DEFAULT now() NOT NULL
+    id              CHAR(36) NOT NULL PRIMARY KEY,
+    tenant_id       CHAR(36) NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    payload         JSONB    NOT NULL,
+    execution_order INTEGER  NOT NULL DEFAULT 0,
+    enabled         BOOLEAN  NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMP         DEFAULT now() NOT NULL,
+    updated_at      TIMESTAMP         DEFAULT now() NOT NULL
 );
 
 CREATE INDEX idx_security_event_hook_configuration ON security_event_hook_configuration (tenant_id);
 CREATE INDEX idx_security_event_hook_configuration_order ON security_event_hook_configuration (tenant_id, execution_order);
 
-CREATE TABLE federatable_idp_configuration
+CREATE TABLE federation_configurations
+(
+    id                 CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id          CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    type               VARCHAR(255)            NOT NULL,
+    sso_provider_name VARCHAR(255)            NOt NULL,
+    payload            JSONB                   NOT NULL,
+    created_at         TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at         TIMESTAMP DEFAULT now() NOT NULL,
+    CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider_name)
+);
+
+CREATE INDEX idx_federation_configurations_tenant ON federation_configurations (tenant_id);
+CREATE INDEX idx_federation_configurations_type_sso_provider_name ON federation_configurations (tenant_id, type, sso_provider_name);
+
+CREATE TABLE federation_sso_session
 (
     id         CHAR(36)                NOT NULL PRIMARY KEY,
+    type       VARCHAR(255)            NOT NULL,
     payload    JSONB                   NOT NULL,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL

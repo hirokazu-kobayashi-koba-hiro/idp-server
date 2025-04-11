@@ -19,7 +19,7 @@ public class OpenIdDiscoveryV1Api {
   OidcMetaDataApi oidcMetaDataApi;
 
   public OpenIdDiscoveryV1Api(IdpServerApplication idpServerApplication) {
-    this.oidcMetaDataApi = idpServerApplication.oidcMetaDataFunction();
+    this.oidcMetaDataApi = idpServerApplication.oidcMetaDataApi();
   }
 
   @GetMapping("{tenant-id}/.well-known/openid-configuration")

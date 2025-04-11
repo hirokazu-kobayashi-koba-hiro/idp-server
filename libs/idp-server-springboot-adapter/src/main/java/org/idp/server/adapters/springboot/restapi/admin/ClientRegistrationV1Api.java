@@ -14,7 +14,7 @@ public class ClientRegistrationV1Api implements ParameterTransformable {
   ClientManagementApi clientManagementApi;
 
   public ClientRegistrationV1Api(IdpServerApplication idpServerApplication) {
-    this.clientManagementApi = idpServerApplication.clientManagementFunction();
+    this.clientManagementApi = idpServerApplication.clientManagementApi();
   }
 
   @PostMapping

@@ -1,0 +1,3 @@
+org.idp.server.core.adapters.datasource.federation.FederationConfigurationQueryRepositoryProvider
+org.idp.server.core.adapters.datasource.federation.SsoSessionCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.federation.SsoSessionQueryDataSourceProvider

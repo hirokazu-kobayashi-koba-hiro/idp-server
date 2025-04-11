@@ -26,7 +26,7 @@ public class OAuthController implements ParameterTransformable {
   OAuthFlowApi oAuthFlowApi;
 
   public OAuthController(IdpServerApplication idpServerApplication) {
-    this.oAuthFlowApi = idpServerApplication.oAuthFlowFunction();
+    this.oAuthFlowApi = idpServerApplication.oAuthFlowApi();
   }
 
   @GetMapping

@@ -6,14 +6,11 @@ import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.sql.Transactional;
-import org.idp.server.core.federation.FederationService;
-import org.idp.server.core.handler.federation.io.FederationCallbackRequest;
-import org.idp.server.core.handler.federation.io.FederationCallbackResponse;
-import org.idp.server.core.handler.federation.io.FederationRequest;
-import org.idp.server.core.handler.federation.io.FederationRequestResponse;
+import org.idp.server.core.federation.*;
+import org.idp.server.core.federation.io.FederationCallbackRequest;
+import org.idp.server.core.federation.io.FederationRequestResponse;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.OAuthSession;
-import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRegistrationService;
@@ -38,27 +35,27 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   OAuthRequestDelegate oAuthRequestDelegate;
   UserRepository userRepository;
   AuthenticationInteractors authenticationInteractors;
+  FederationInteractors federationInteractors;
   UserRegistrationService userRegistrationService;
   TenantRepository tenantRepository;
-  FederationService federationService;
   OAuthFlowEventPublisher eventPublisher;
 
   public OAuthFlowEntryService(
       OAuthProtocol oAuthProtocol,
       OAuthRequestDelegate oAuthSessionService,
       AuthenticationInteractors authenticationInteractors,
+      FederationInteractors federationInteractors,
       UserRepository userRepository,
       UserRegistrationService userRegistrationService,
       TenantRepository tenantRepository,
-      FederationService federationService,
       OAuthFlowEventPublisher eventPublisher) {
     this.oAuthProtocol = oAuthProtocol;
     this.oAuthRequestDelegate = oAuthSessionService;
     this.authenticationInteractors = authenticationInteractors;
+    this.federationInteractors = federationInteractors;
     this.userRepository = userRepository;
     this.userRegistrationService = userRegistrationService;
     this.tenantRepository = tenantRepository;
-    this.federationService = federationService;
     this.eventPublisher = eventPublisher;
   }
 
@@ -125,41 +122,65 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   public FederationRequestResponse requestFederation(
       TenantIdentifier tenantIdentifier,
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      String federationIdentifier) {
+      FederationType federationType,
+      SsoProvider ssoProvider,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    oAuthProtocol.get(authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest = oAuthProtocol.get(authorizationRequestIdentifier);
 
-    return federationService.request(
-        new FederationRequest(
-            tenant, authorizationRequestIdentifier.value(), federationIdentifier));
+    FederationInteractor federationInteractor = federationInteractors.get(federationType);
+
+    FederationRequestResponse response =
+        federationInteractor.request(
+            tenant, authorizationRequestIdentifier, federationType, ssoProvider);
+
+    OAuthSession oAuthSession =
+        oAuthRequestDelegate.findOrInitialize(authorizationRequest.sessionKey());
+
+    eventPublisher.publish(
+        tenant,
+        authorizationRequest,
+        oAuthSession.user(),
+        DefaultSecurityEventType.federation_request,
+        requestAttributes);
+
+    return response;
   }
 
-  public Pairs<Tenant, FederationCallbackResponse> callbackFederation(
-      Map<String, String[]> params) {
+  public FederationInteractionResult callbackFederation(
+      FederationType federationType,
+      SsoProvider ssoProvider,
+      FederationCallbackRequest callbackRequest,
+      RequestAttributes requestAttributes) {
 
-    FederationCallbackResponse callbackResponse =
-        federationService.callback(new FederationCallbackRequest(params));
+    FederationInteractor federationInteractor = federationInteractors.get(federationType);
 
-    if (callbackResponse.isError()) {
-      return Pairs.of(new Tenant(), callbackResponse);
+    FederationInteractionResult result =
+        federationInteractor.callback(federationType, ssoProvider, callbackRequest, userRepository);
+
+    if (result.isError()) {
+      return result;
     }
 
     AuthorizationRequest authorizationRequest =
-        oAuthProtocol.get(callbackResponse.authorizationRequestIdentifier());
+        oAuthProtocol.get(result.authorizationRequestIdentifier());
 
     Tenant tenant = tenantRepository.get(authorizationRequest.tenantIdentifier());
 
     OAuthSession oAuthSession =
         OAuthSession.create(
             authorizationRequest.sessionKey(),
-            callbackResponse.user(),
-            new Authentication().setTime(SystemDateTime.now()),
+            result.user(),
+            result.authentication(),
             authorizationRequest.maxAge());
 
     oAuthRequestDelegate.updateSession(oAuthSession);
 
-    return Pairs.of(tenant, callbackResponse);
+    eventPublisher.publish(
+        tenant, authorizationRequest, result.user(), result.eventType(), requestAttributes);
+
+    return result;
   }
 
   public OAuthAuthorizeResponse authorize(

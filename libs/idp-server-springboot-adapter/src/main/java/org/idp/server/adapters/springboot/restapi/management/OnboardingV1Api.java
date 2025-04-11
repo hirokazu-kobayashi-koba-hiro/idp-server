@@ -23,7 +23,7 @@ public class OnboardingV1Api implements ParameterTransformable {
   public OnboardingV1Api(
       IdpServerApplication idpServerApplication,
       @Value("${idp.configurations.serverUrl}") String idpServerDomainDomain) {
-    this.onboardingApi = idpServerApplication.onboardingFunction();
+    this.onboardingApi = idpServerApplication.onboardingApi();
     this.serverDomain = new ServerDomain(idpServerDomainDomain);
   }
 

@@ -10,7 +10,9 @@ import org.idp.server.core.api.OAuthFlowApi;
 import org.idp.server.core.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.authentication.AuthenticationInteractionResult;
 import org.idp.server.core.authentication.AuthenticationInteractionType;
-import org.idp.server.core.handler.federation.io.FederationRequestResponse;
+import org.idp.server.core.federation.FederationType;
+import org.idp.server.core.federation.SsoProvider;
+import org.idp.server.core.federation.io.FederationRequestResponse;
 import org.idp.server.core.oauth.io.OAuthAuthorizeResponse;
 import org.idp.server.core.oauth.io.OAuthDenyResponse;
 import org.idp.server.core.oauth.io.OAuthRequestResponse;
@@ -39,7 +41,7 @@ public class OAuthV1Api implements ParameterTransformable {
       IdpServerApplication idpServerApplication,
       @Value("${idp.configurations.adminAuthViewUrl}") String adminAuthViewUrl,
       @Value("${idp.configurations.authViewUrl}") String authViewUrl) {
-    this.oAuthFlowApi = idpServerApplication.oAuthFlowFunction();
+    this.oAuthFlowApi = idpServerApplication.oAuthFlowApi();
     this.adminAuthViewUrl = adminAuthViewUrl;
     this.authViewUrl = authViewUrl;
   }
@@ -124,19 +126,23 @@ public class OAuthV1Api implements ParameterTransformable {
     return new ResponseEntity<>(viewDataResponse.contents(), httpHeaders, HttpStatus.OK);
   }
 
-  @PostMapping("/{id}/federations")
+  @PostMapping("/{id}/federations/{federation-type}/{sso-provider-name}")
   public ResponseEntity<?> createFederation(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      @RequestBody Map<String, String> body) {
+      @PathVariable("federation-type") FederationType federationType,
+      @PathVariable("sso-provider-name") SsoProvider ssoProvider,
+      HttpServletRequest httpServletRequest) {
 
-    if (!body.containsKey("federatable_idp_id")) {
-      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-    }
+    RequestAttributes requestAttributes = transform(httpServletRequest);
 
     FederationRequestResponse requestResponse =
         oAuthFlowApi.requestFederation(
-            tenantIdentifier, authorizationRequestIdentifier, body.get("federatable_idp_id"));
+            tenantIdentifier,
+            authorizationRequestIdentifier,
+            federationType,
+            ssoProvider,
+            requestAttributes);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

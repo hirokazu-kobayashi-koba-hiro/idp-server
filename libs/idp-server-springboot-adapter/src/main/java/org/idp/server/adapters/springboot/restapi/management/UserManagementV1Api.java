@@ -16,7 +16,7 @@ public class UserManagementV1Api {
   UserManagementApi userManagementApi;
 
   public UserManagementV1Api(IdpServerApplication idpServerApplication) {
-    this.userManagementApi = idpServerApplication.userManagementFunction();
+    this.userManagementApi = idpServerApplication.userManagementAPi();
   }
 
   @GetMapping

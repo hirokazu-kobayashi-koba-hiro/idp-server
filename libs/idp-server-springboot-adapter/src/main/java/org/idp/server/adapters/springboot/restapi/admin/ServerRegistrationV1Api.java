@@ -20,7 +20,7 @@ public class ServerRegistrationV1Api implements ParameterTransformable {
   public ServerRegistrationV1Api(
       IdpServerApplication idpServerApplication,
       @Value("${idp.configurations.serverUrl}") String publicTenantDomainValue) {
-    this.serverManagementApi = idpServerApplication.serverManagementFunction();
+    this.serverManagementApi = idpServerApplication.serverManagementApi();
 
     this.serverDomain = new ServerDomain(publicTenantDomainValue);
   }

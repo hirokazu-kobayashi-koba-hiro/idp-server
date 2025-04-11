@@ -20,7 +20,7 @@ public class TokenV1Api implements ParameterTransformable {
   TokenApi tokenApi;
 
   public TokenV1Api(IdpServerApplication idpServerApplication) {
-    this.tokenApi = idpServerApplication.tokenFunction();
+    this.tokenApi = idpServerApplication.tokenAPi();
   }
 
   @PostMapping
