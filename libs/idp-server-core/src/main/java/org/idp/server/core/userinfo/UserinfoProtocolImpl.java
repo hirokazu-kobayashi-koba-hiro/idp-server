@@ -2,6 +2,9 @@ package org.idp.server.core.userinfo;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.idp.server.core.configuration.ClientConfigurationRepository;
+import org.idp.server.core.configuration.ServerConfigurationRepository;
+import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.type.oauth.Error;
 import org.idp.server.core.type.oauth.ErrorDescription;
 import org.idp.server.core.userinfo.handler.UserinfoDelegate;
@@ -15,8 +18,14 @@ public class UserinfoProtocolImpl implements UserinfoProtocol {
   UserinfoHandler userinfoHandler;
   Logger log = Logger.getLogger(UserinfoProtocol.class.getName());
 
-  public UserinfoProtocolImpl(UserinfoHandler userinfoHandler) {
-    this.userinfoHandler = userinfoHandler;
+  public UserinfoProtocolImpl(
+      OAuthTokenRepository oAuthTokenRepository,
+      ServerConfigurationRepository serverConfigurationRepository,
+      ClientConfigurationRepository clientConfigurationRepository) {
+    this.userinfoHandler =
+        new UserinfoHandler(
+            oAuthTokenRepository, serverConfigurationRepository, clientConfigurationRepository);
+    ;
   }
 
   public UserinfoRequestResponse request(UserinfoRequest request, UserinfoDelegate delegate) {

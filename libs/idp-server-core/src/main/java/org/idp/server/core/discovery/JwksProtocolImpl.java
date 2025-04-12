@@ -1,6 +1,7 @@
 package org.idp.server.core.discovery;
 
 import java.util.Map;
+import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.discovery.handler.DiscoveryHandler;
 import org.idp.server.core.discovery.handler.io.JwksRequestResponse;
 import org.idp.server.core.discovery.handler.io.JwksRequestStatus;
@@ -10,8 +11,8 @@ public class JwksProtocolImpl implements JwksProtocol {
 
   DiscoveryHandler discoveryHandler;
 
-  public JwksProtocolImpl(DiscoveryHandler discoveryHandler) {
-    this.discoveryHandler = discoveryHandler;
+  public JwksProtocolImpl(ServerConfigurationRepository serverConfigurationRepository) {
+    this.discoveryHandler = new DiscoveryHandler(serverConfigurationRepository);
   }
 
   public JwksRequestResponse getJwks(TenantIdentifier tenantIdentifier) {

@@ -1,34 +1,64 @@
 package org.idp.server.core.oauth;
 
+import org.idp.server.core.configuration.ClientConfigurationRepository;
+import org.idp.server.core.configuration.ServerConfigurationRepository;
+import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
+import org.idp.server.core.oauth.gateway.RequestObjectGateway;
 import org.idp.server.core.oauth.handler.*;
 import org.idp.server.core.oauth.io.*;
+import org.idp.server.core.oauth.repository.AuthorizationCodeGrantRepository;
+import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.AuthorizationResponse;
+import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 /** OAuthApi */
 public class OAuthProtocolImpl implements OAuthProtocol {
   OAuthRequestHandler requestHandler;
   OAuthRequestErrorHandler oAuthRequestErrorHandler;
-  OAuthAuthorizeHandler authAuthorizeHandler;
+  OAuthAuthorizeHandler authorizeHandler;
   OAuthAuthorizeErrorHandler authAuthorizeErrorHandler;
   OAuthDenyHandler oAuthDenyHandler;
   OAuthDenyErrorHandler denyErrorHandler;
-  OAuthHandler oauthHandler;
+  OAuthHandler oAuthHandler;
   OAuthRequestDelegate oAuthRequestDelegate;
 
   public OAuthProtocolImpl(
-      OAuthRequestHandler requestHandler,
-      OAuthAuthorizeHandler authAuthorizeHandler,
-      OAuthDenyHandler oAuthDenyHandler,
-      OAuthHandler oauthHandler,
+      AuthorizationRequestRepository authorizationRequestRepository,
+      ServerConfigurationRepository serverConfigurationRepository,
+      ClientConfigurationRepository clientConfigurationRepository,
+      RequestObjectGateway requestObjectGateway,
+      AuthorizationGrantedRepository authorizationGrantedRepository,
+      AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
+      OAuthTokenRepository oAuthTokenRepository,
       OAuthRequestDelegate oAuthRequestDelegate) {
-    this.requestHandler = requestHandler;
+    this.requestHandler =
+        new OAuthRequestHandler(
+            authorizationRequestRepository,
+            serverConfigurationRepository,
+            clientConfigurationRepository,
+            requestObjectGateway,
+            authorizationGrantedRepository);
+    this.authorizeHandler =
+        new OAuthAuthorizeHandler(
+            authorizationRequestRepository,
+            authorizationCodeGrantRepository,
+            oAuthTokenRepository,
+            serverConfigurationRepository,
+            clientConfigurationRepository);
+    this.oAuthDenyHandler =
+        new OAuthDenyHandler(
+            authorizationRequestRepository,
+            serverConfigurationRepository,
+            clientConfigurationRepository);
+    this.oAuthHandler =
+        new OAuthHandler(
+            authorizationRequestRepository,
+            serverConfigurationRepository,
+            clientConfigurationRepository);
     this.oAuthRequestErrorHandler = new OAuthRequestErrorHandler();
-    this.authAuthorizeHandler = authAuthorizeHandler;
     this.authAuthorizeErrorHandler = new OAuthAuthorizeErrorHandler();
-    this.oAuthDenyHandler = oAuthDenyHandler;
-    this.oauthHandler = oauthHandler;
     this.denyErrorHandler = new OAuthDenyErrorHandler();
     this.oAuthRequestDelegate = oAuthRequestDelegate;
   }
@@ -51,7 +81,7 @@ public class OAuthProtocolImpl implements OAuthProtocol {
 
         OAuthAuthorizeRequest oAuthAuthorizeRequest = context.createOAuthAuthorizeRequest();
         AuthorizationResponse response =
-            authAuthorizeHandler.handle(oAuthAuthorizeRequest, oAuthRequestDelegate);
+            authorizeHandler.handle(oAuthAuthorizeRequest, oAuthRequestDelegate);
         return new OAuthRequestResponse(OAuthRequestStatus.NO_INTERACTION_OK, response);
       }
 
@@ -64,18 +94,18 @@ public class OAuthProtocolImpl implements OAuthProtocol {
 
   public OAuthViewDataResponse getViewData(OAuthViewDataRequest request) {
 
-    return oauthHandler.handleViewData(request, oAuthRequestDelegate);
+    return oAuthHandler.handleViewData(request, oAuthRequestDelegate);
   }
 
   public AuthorizationRequest get(AuthorizationRequestIdentifier identifier) {
 
-    return oauthHandler.handleGettingData(identifier);
+    return oAuthHandler.handleGettingData(identifier);
   }
 
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
     try {
 
-      AuthorizationResponse response = authAuthorizeHandler.handle(request, oAuthRequestDelegate);
+      AuthorizationResponse response = authorizeHandler.handle(request, oAuthRequestDelegate);
 
       return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, response);
     } catch (Exception exception) {
@@ -96,6 +126,6 @@ public class OAuthProtocolImpl implements OAuthProtocol {
 
   public OAuthLogoutResponse logout(OAuthLogoutRequest request) {
 
-    return oauthHandler.handleLogout(request, oAuthRequestDelegate);
+    return oAuthHandler.handleLogout(request, oAuthRequestDelegate);
   }
 }

@@ -1,6 +1,7 @@
 package org.idp.server.core.discovery;
 
 import java.util.Map;
+import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.discovery.handler.DiscoveryHandler;
 import org.idp.server.core.discovery.handler.io.ServerConfigurationRequestResponse;
 import org.idp.server.core.discovery.handler.io.ServerConfigurationRequestStatus;
@@ -10,8 +11,8 @@ public class DiscoveryProtocolImpl implements DiscoveryProtocol {
 
   DiscoveryHandler discoveryHandler;
 
-  public DiscoveryProtocolImpl(DiscoveryHandler discoveryHandler) {
-    this.discoveryHandler = discoveryHandler;
+  public DiscoveryProtocolImpl(ServerConfigurationRepository serverConfigurationRepository) {
+    this.discoveryHandler = new DiscoveryHandler(serverConfigurationRepository);
   }
 
   public ServerConfigurationRequestResponse getConfiguration(TenantIdentifier tenantIdentifier) {

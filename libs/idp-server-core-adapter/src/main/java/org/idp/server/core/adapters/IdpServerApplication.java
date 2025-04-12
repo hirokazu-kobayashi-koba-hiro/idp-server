@@ -3,80 +3,64 @@ package org.idp.server.core.adapters;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.*;
-import org.idp.server.core.adapters.datasource.ciba.database.grant.CibaGrantDataSource;
-import org.idp.server.core.adapters.datasource.ciba.database.request.BackchannelAuthenticationDataSource;
-import org.idp.server.core.adapters.datasource.configuration.database.client.ClientConfigurationDataSource;
-import org.idp.server.core.adapters.datasource.configuration.database.server.ServerConfigurationDataSource;
-import org.idp.server.core.adapters.datasource.credential.database.VerifiableCredentialTransactionDataSource;
-import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedDataSource;
-import org.idp.server.core.adapters.datasource.identity.PermissionCommandDataSource;
-import org.idp.server.core.adapters.datasource.identity.RoleCommandDataSource;
-import org.idp.server.core.adapters.datasource.identity.UserDataSource;
-import org.idp.server.core.adapters.datasource.oauth.database.code.AuthorizationCodeGrantDataSource;
-import org.idp.server.core.adapters.datasource.oauth.database.request.AuthorizationRequestDataSource;
-import org.idp.server.core.adapters.datasource.organization.OrganizationDataSource;
-import org.idp.server.core.adapters.datasource.security.SecurityEventDataSource;
-import org.idp.server.core.adapters.datasource.security.SecurityEventHookConfigurationQueryDataSource;
-import org.idp.server.core.adapters.datasource.tenant.TenantDataSource;
-import org.idp.server.core.adapters.datasource.token.database.OAuthTokenDataSource;
+import org.idp.server.core.adapters.datasource.token.OAuthTokenDataSource;
 import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
-import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialBlockCertClient;
-import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialJwtClient;
 import org.idp.server.core.adapters.httpclient.oauth.RequestObjectHttpClient;
 import org.idp.server.core.admin.*;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
+import org.idp.server.core.basic.datasource.DataSourceDependencyContainer;
+import org.idp.server.core.basic.datasource.DataSourceDependencyContainerLoader;
 import org.idp.server.core.basic.sql.DatabaseConfig;
 import org.idp.server.core.basic.sql.TransactionInterceptor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.ciba.CibaFlowApi;
 import org.idp.server.core.ciba.CibaProtocol;
 import org.idp.server.core.ciba.CibaProtocolImpl;
-import org.idp.server.core.ciba.handler.CibaAuthorizeHandler;
-import org.idp.server.core.ciba.handler.CibaDenyHandler;
-import org.idp.server.core.ciba.handler.CibaRequestHandler;
+import org.idp.server.core.ciba.gateway.ClientNotificationGateway;
+import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
+import org.idp.server.core.ciba.repository.CibaGrantRepository;
+import org.idp.server.core.configuration.ClientConfigurationRepository;
+import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.configuration.handler.ClientConfigurationHandler;
-import org.idp.server.core.configuration.handler.ServerConfigurationHandler;
 import org.idp.server.core.discovery.*;
-import org.idp.server.core.discovery.handler.DiscoveryHandler;
 import org.idp.server.core.federation.FederationDependencyContainer;
 import org.idp.server.core.federation.FederationDependencyContainerLoader;
 import org.idp.server.core.federation.FederationInteractorLoader;
 import org.idp.server.core.federation.FederationInteractors;
 import org.idp.server.core.federation.oidc.OidcSsoExecutorLoader;
 import org.idp.server.core.federation.oidc.OidcSsoExecutors;
+import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.core.notification.EmailSenderLoader;
 import org.idp.server.core.notification.EmailSenders;
 import org.idp.server.core.oauth.OAuthFlowApi;
 import org.idp.server.core.oauth.OAuthProtocol;
 import org.idp.server.core.oauth.OAuthProtocolImpl;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
-import org.idp.server.core.oauth.handler.OAuthAuthorizeHandler;
-import org.idp.server.core.oauth.handler.OAuthDenyHandler;
-import org.idp.server.core.oauth.handler.OAuthHandler;
-import org.idp.server.core.oauth.handler.OAuthRequestHandler;
+import org.idp.server.core.oauth.gateway.RequestObjectGateway;
 import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
 import org.idp.server.core.oauth.identity.UserRegistrationService;
+import org.idp.server.core.oauth.identity.UserRepository;
+import org.idp.server.core.oauth.identity.permission.PermissionCommandRepository;
+import org.idp.server.core.oauth.identity.role.RoleCommandRepository;
+import org.idp.server.core.oauth.repository.AuthorizationCodeGrantRepository;
+import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
+import org.idp.server.core.organization.OrganizationRepository;
 import org.idp.server.core.security.SecurityEventApi;
 import org.idp.server.core.security.SecurityEventHooks;
 import org.idp.server.core.security.SecurityEventPublisher;
 import org.idp.server.core.security.event.OAuthFlowEventPublisher;
-import org.idp.server.core.security.handler.SecurityEventHandler;
+import org.idp.server.core.security.event.SecurityEventRepository;
+import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.hook.SecurityEventHooksLoader;
+import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.token.*;
-import org.idp.server.core.token.handler.token.TokenRequestHandler;
-import org.idp.server.core.token.handler.tokenintrospection.TokenIntrospectionHandler;
-import org.idp.server.core.token.handler.tokenrevocation.TokenRevocationHandler;
-import org.idp.server.core.type.verifiablecredential.Format;
+import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.userinfo.UserinfoApi;
 import org.idp.server.core.userinfo.UserinfoProtocol;
 import org.idp.server.core.userinfo.UserinfoProtocolImpl;
-import org.idp.server.core.userinfo.handler.UserinfoHandler;
-import org.idp.server.core.verifiablecredential.VerifiableCredentialCreator;
-import org.idp.server.core.verifiablecredential.VerifiableCredentialCreators;
-import org.idp.server.core.verifiablecredential.handler.CredentialHandler;
 
 /** IdpServerApplication */
 public class IdpServerApplication {
@@ -105,136 +89,93 @@ public class IdpServerApplication {
     TransactionManager.setConnectionConfig(
         databaseConfig.url(), databaseConfig.username(), databaseConfig.password());
 
-    AuthorizationRequestDataSource authorizationRequestDataSource =
-        new AuthorizationRequestDataSource();
-    AuthorizationCodeGrantDataSource authorizationCodeGrantDataSource =
-        new AuthorizationCodeGrantDataSource();
-    AuthorizationGrantedDataSource authorizationGrantedDataSource =
-        new AuthorizationGrantedDataSource();
-    OAuthTokenDataSource oAuthTokenDataSource = new OAuthTokenDataSource(encryptionKey);
-    ServerConfigurationDataSource serverConfigurationDataSource =
-        new ServerConfigurationDataSource();
-    ClientConfigurationDataSource clientConfigurationDataSource =
-        new ClientConfigurationDataSource();
-    VerifiableCredentialTransactionDataSource verifiableCredentialTransactionDataSource =
-        new VerifiableCredentialTransactionDataSource();
-    SecurityEventDataSource eventDataSource = new SecurityEventDataSource();
-    UserDataSource userDataSource = new UserDataSource();
-    OrganizationDataSource organizationDataSource = new OrganizationDataSource();
-    TenantDataSource tenantDataSource = new TenantDataSource();
-    RoleCommandDataSource roleCommandDataSource = new RoleCommandDataSource();
-    PermissionCommandDataSource permissionCommandDataSource = new PermissionCommandDataSource();
-    SecurityEventHookConfigurationQueryDataSource hookQueryDataSource =
-        new SecurityEventHookConfigurationQueryDataSource();
+    DataSourceDependencyContainer dataSourceDependencyContainer =
+        DataSourceDependencyContainerLoader.load();
 
-    OAuthRequestHandler oAuthRequestHandler =
-        new OAuthRequestHandler(
-            authorizationRequestDataSource,
-            serverConfigurationDataSource,
-            clientConfigurationDataSource,
-            new RequestObjectHttpClient(),
-            authorizationGrantedDataSource);
-    OAuthAuthorizeHandler oAuthAuthorizeHandler =
-        new OAuthAuthorizeHandler(
-            authorizationRequestDataSource,
-            authorizationCodeGrantDataSource,
-            oAuthTokenDataSource,
-            serverConfigurationDataSource,
-            clientConfigurationDataSource);
-    OAuthDenyHandler oAuthDenyHandler =
-        new OAuthDenyHandler(
-            authorizationRequestDataSource,
-            serverConfigurationDataSource,
-            clientConfigurationDataSource);
-    OAuthHandler oAuthHandler =
-        new OAuthHandler(
-            authorizationRequestDataSource,
-            serverConfigurationDataSource,
-            clientConfigurationDataSource);
+    AuthorizationRequestRepository authorizationRequestRepository =
+        dataSourceDependencyContainer.resolve(AuthorizationRequestRepository.class);
+    AuthorizationCodeGrantRepository authorizationCodeGrantRepository =
+        dataSourceDependencyContainer.resolve(AuthorizationCodeGrantRepository.class);
+    AuthorizationGrantedRepository authorizationGrantedRepository =
+        dataSourceDependencyContainer.resolve(AuthorizationGrantedRepository.class);
+
+    // TODO fix dependencies
+    OAuthTokenRepository oAuthTokenRepository = new OAuthTokenDataSource(encryptionKey);
+
+    ServerConfigurationRepository serverConfigurationRepository =
+        dataSourceDependencyContainer.resolve(ServerConfigurationRepository.class);
+    ClientConfigurationRepository clientConfigurationRepository =
+        dataSourceDependencyContainer.resolve(ClientConfigurationRepository.class);
+    SecurityEventRepository securityEventRepository =
+        dataSourceDependencyContainer.resolve(SecurityEventRepository.class);
+    UserRepository userRepository = dataSourceDependencyContainer.resolve(UserRepository.class);
+    OrganizationRepository organizationRepository =
+        dataSourceDependencyContainer.resolve(OrganizationRepository.class);
+    TenantRepository tenantRepository =
+        dataSourceDependencyContainer.resolve(TenantRepository.class);
+    RoleCommandRepository roleCommandRepository =
+        dataSourceDependencyContainer.resolve(RoleCommandRepository.class);
+    PermissionCommandRepository permissionCommandRepository =
+        dataSourceDependencyContainer.resolve(PermissionCommandRepository.class);
+    SecurityEventHookConfigurationQueryRepository hookQueryRepository =
+        dataSourceDependencyContainer.resolve(SecurityEventHookConfigurationQueryRepository.class);
+    BackchannelAuthenticationRequestRepository backchannelAuthenticationRepository =
+        dataSourceDependencyContainer.resolve(BackchannelAuthenticationRequestRepository.class);
+    CibaGrantRepository cibaGrantRepository =
+        dataSourceDependencyContainer.resolve(CibaGrantRepository.class);
+
+    RequestObjectGateway requestObjectGateway = new RequestObjectHttpClient();
 
     OAuthProtocol oAuthProtocol =
         new OAuthProtocolImpl(
-            oAuthRequestHandler,
-            oAuthAuthorizeHandler,
-            oAuthDenyHandler,
-            oAuthHandler,
+            authorizationRequestRepository,
+            serverConfigurationRepository,
+            clientConfigurationRepository,
+            requestObjectGateway,
+            authorizationGrantedRepository,
+            authorizationCodeGrantRepository,
+            oAuthTokenRepository,
             oAuthRequestDelegate);
-    UserRegistrationService userRegistrationService = new UserRegistrationService(userDataSource);
 
-    TokenIntrospectionHandler tokenIntrospectionHandler =
-        new TokenIntrospectionHandler(oAuthTokenDataSource);
+    UserRegistrationService userRegistrationService = new UserRegistrationService(userRepository);
+
     TokenIntrospectionProtocol tokenIntrospectionProtocol =
-        new TokenIntrospectionProtocolImpl(tokenIntrospectionHandler);
-    TokenRevocationHandler tokenRevocationHandler =
-        new TokenRevocationHandler(
-            oAuthTokenDataSource, serverConfigurationDataSource, clientConfigurationDataSource);
+        new TokenIntrospectionProtocolImpl(oAuthTokenRepository);
 
     TokenRevocationProtocol tokenRevocationProtocol =
-        new TokenRevocationProtocolImpl(tokenRevocationHandler);
-    UserinfoHandler userinfoHandler =
-        new UserinfoHandler(
-            oAuthTokenDataSource, serverConfigurationDataSource, clientConfigurationDataSource);
-    UserinfoProtocol userinfoProtocol = new UserinfoProtocolImpl(userinfoHandler);
+        new TokenRevocationProtocolImpl(
+            oAuthTokenRepository, serverConfigurationRepository, clientConfigurationRepository);
 
-    DiscoveryHandler discoveryHandler = new DiscoveryHandler(serverConfigurationDataSource);
-    DiscoveryProtocol discoveryProtocol = new DiscoveryProtocolImpl(discoveryHandler);
-    JwksProtocol jwksProtocol = new JwksProtocolImpl(discoveryHandler);
+    UserinfoProtocol userinfoProtocol =
+        new UserinfoProtocolImpl(
+            oAuthTokenRepository, serverConfigurationRepository, clientConfigurationRepository);
 
-    BackchannelAuthenticationDataSource backchannelAuthenticationDataSource =
-        new BackchannelAuthenticationDataSource();
-    CibaGrantDataSource cibaGrantDataSource = new CibaGrantDataSource();
-    NotificationClient notificationClient = new NotificationClient();
+    DiscoveryProtocol discoveryProtocol = new DiscoveryProtocolImpl(serverConfigurationRepository);
+    JwksProtocol jwksProtocol = new JwksProtocolImpl(serverConfigurationRepository);
+
+    ClientNotificationGateway notificationGateway = new NotificationClient();
     CibaProtocol cibaProtocol =
         new CibaProtocolImpl(
-            new CibaRequestHandler(
-                backchannelAuthenticationDataSource,
-                cibaGrantDataSource,
-                serverConfigurationDataSource,
-                clientConfigurationDataSource),
-            new CibaAuthorizeHandler(
-                backchannelAuthenticationDataSource,
-                cibaGrantDataSource,
-                authorizationGrantedDataSource,
-                oAuthTokenDataSource,
-                notificationClient,
-                serverConfigurationDataSource,
-                clientConfigurationDataSource),
-            new CibaDenyHandler(
-                cibaGrantDataSource, serverConfigurationDataSource, clientConfigurationDataSource));
+            backchannelAuthenticationRepository,
+            cibaGrantRepository,
+            authorizationGrantedRepository,
+            oAuthTokenRepository,
+            serverConfigurationRepository,
+            clientConfigurationRepository,
+            notificationGateway);
 
-    TokenRequestHandler tokenRequestHandler =
-        new TokenRequestHandler(
-            authorizationRequestDataSource,
-            authorizationCodeGrantDataSource,
-            authorizationGrantedDataSource,
-            backchannelAuthenticationDataSource,
-            cibaGrantDataSource,
-            oAuthTokenDataSource,
-            serverConfigurationDataSource,
-            clientConfigurationDataSource);
-    TokenProtocol tokenProtocol = new TokenProtocolImpl(tokenRequestHandler);
-
-    Map<Format, VerifiableCredentialCreator> vcCreators = new HashMap<>();
-    vcCreators.put(Format.jwt_vc_json, new VerifiableCredentialJwtClient());
-    vcCreators.put(Format.ldp_vc, new VerifiableCredentialBlockCertClient());
-
-    VerifiableCredentialCreators creators = new VerifiableCredentialCreators(vcCreators);
-    CredentialHandler credentialHandler =
-        new CredentialHandler(
-            oAuthTokenDataSource,
-            verifiableCredentialTransactionDataSource,
-            serverConfigurationDataSource,
-            clientConfigurationDataSource,
-            creators);
+    TokenProtocol tokenProtocol =
+        new TokenProtocolImpl(
+            authorizationRequestRepository,
+            authorizationCodeGrantRepository,
+            authorizationGrantedRepository,
+            backchannelAuthenticationRepository,
+            cibaGrantRepository,
+            oAuthTokenRepository,
+            serverConfigurationRepository,
+            clientConfigurationRepository);
 
     SecurityEventHooks securityEventHooks = SecurityEventHooksLoader.load();
-
-    SecurityEventHandler securityEventHandler =
-        new SecurityEventHandler(
-            tenantDataSource, eventDataSource, securityEventHooks, hookQueryDataSource);
-
-    ServerConfigurationHandler serverConfigurationHandler =
-        new ServerConfigurationHandler(serverConfigurationDataSource);
 
     // create mfa instance
     AuthenticationDependencyContainer authenticationDependencyContainer =
@@ -260,12 +201,12 @@ public class IdpServerApplication {
     this.idpServerStarterApi =
         TransactionInterceptor.createProxy(
             new IdpServerStarterEntryService(
-                organizationDataSource,
-                tenantDataSource,
-                userDataSource,
-                permissionCommandDataSource,
-                roleCommandDataSource,
-                serverConfigurationDataSource,
+                organizationRepository,
+                tenantRepository,
+                userRepository,
+                permissionCommandRepository,
+                roleCommandRepository,
+                serverConfigurationRepository,
                 passwordEncodeDelegation),
             IdpServerStarterApi.class);
 
@@ -286,9 +227,9 @@ public class IdpServerApplication {
                 oAuthRequestDelegate,
                 authenticationInteractors,
                 federationInteractors,
-                userDataSource,
+                userRepository,
                 userRegistrationService,
-                tenantDataSource,
+                tenantRepository,
                 oAuthFLowEventPublisher),
             OAuthFlowApi.class);
 
@@ -298,59 +239,61 @@ public class IdpServerApplication {
                 tokenProtocol,
                 tokenIntrospectionProtocol,
                 tokenRevocationProtocol,
-                userDataSource,
-                tenantDataSource,
+                userRepository,
+                tenantRepository,
                 passwordVerificationDelegation),
             TokenApi.class);
 
     this.oidcMetaDataApi =
         TransactionInterceptor.createProxy(
-            new OidcMetaDataEntryService(tenantDataSource, discoveryProtocol, jwksProtocol),
+            new OidcMetaDataEntryService(tenantRepository, discoveryProtocol, jwksProtocol),
             OidcMetaDataApi.class);
 
     this.userinfoApi =
         TransactionInterceptor.createProxy(
-            new UserinfoEntryService(userinfoProtocol, userDataSource, tenantDataSource),
+            new UserinfoEntryService(userinfoProtocol, userRepository, tenantRepository),
             UserinfoApi.class);
 
     this.cibaFlowApi =
         TransactionInterceptor.createProxy(
-            new CibaFlowEntryService(cibaProtocol, userDataSource, tenantDataSource),
+            new CibaFlowEntryService(cibaProtocol, userRepository, tenantRepository),
             CibaFlowApi.class);
 
     this.securityEventApi =
         TransactionInterceptor.createProxy(
-            new SecurityEventEntryService(securityEventHandler), SecurityEventApi.class);
+            new SecurityEventEntryService(
+                tenantRepository, securityEventRepository, securityEventHooks, hookQueryRepository),
+            SecurityEventApi.class);
 
     this.onboardingApi =
         TransactionInterceptor.createProxy(
             new OnboardingEntryService(
-                tenantDataSource,
-                organizationDataSource,
+                tenantRepository,
+                organizationRepository,
                 userRegistrationService,
-                serverConfigurationDataSource),
+                serverConfigurationRepository),
             OnboardingApi.class);
 
     this.serverManagementApi =
         TransactionInterceptor.createProxy(
-            new ServerManagementEntryService(tenantDataSource, serverConfigurationHandler),
+            new ServerManagementEntryService(tenantRepository, serverConfigurationRepository),
             ServerManagementApi.class);
 
     this.clientManagementApi =
         TransactionInterceptor.createProxy(
             new ClientManagementEntryService(
-                tenantDataSource, new ClientConfigurationHandler(clientConfigurationDataSource)),
+                tenantRepository, new ClientConfigurationHandler(clientConfigurationRepository)),
             ClientManagementApi.class);
 
     this.userManagementApi =
         TransactionInterceptor.createProxy(
-            new UserManagementEntryService(tenantDataSource, userDataSource),
+            new UserManagementEntryService(tenantRepository, userRepository),
             UserManagementApi.class);
 
     this.operatorAuthenticationApi =
         TransactionInterceptor.createProxy(
             new OperatorAuthenticationEntryService(
-                tokenIntrospectionProtocol, tenantDataSource, userDataSource),
+                tokenIntrospectionProtocol, tenantRepository, userRepository),
             OperatorAuthenticationApi.class);
   }
 

@@ -1,0 +1,15 @@
+org.idp.server.core.adapters.datasource.ciba.grant.CibaGrantDataSourceDependencyProvider
+org.idp.server.core.adapters.datasource.ciba.request.BackchannelAuthenticationDataSourceDependencyProvider
+org.idp.server.core.adapters.datasource.configuration.client.ClientConfigurationDataSourceDependencyProvider
+org.idp.server.core.adapters.datasource.configuration.server.ServerConfigurationDataSourceDependencyProvider
+org.idp.server.core.adapters.datasource.credential.VerifiableCredentialTransactionDataSourceDependencyProvider
+org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.PermissionCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.RoleCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.UserDataSourceProvider
+org.idp.server.core.adapters.datasource.oauth.code.AuthorizationCodeGrantDataSourceProvider
+org.idp.server.core.adapters.datasource.oauth.request.AuthorizationRequestDataSourceProvider
+org.idp.server.core.adapters.datasource.organization.OrganizationDataSourceProvider
+org.idp.server.core.adapters.datasource.security.SecurityEventDataSourceProvider
+org.idp.server.core.adapters.datasource.security.SecurityEventHookConfigurationDataSourceProvider
+org.idp.server.core.adapters.datasource.tenant.TenantDataSourceProvider

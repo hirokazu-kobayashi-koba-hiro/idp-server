@@ -7,6 +7,7 @@ import org.idp.server.core.token.handler.tokenintrospection.TokenIntrospectionHa
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequestStatus;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
+import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.tokenintrospection.TokenIntrospectionContentsCreator;
 import org.idp.server.core.token.tokenintrospection.exception.TokenInvalidException;
 
@@ -15,8 +16,8 @@ public class TokenIntrospectionProtocolImpl implements TokenIntrospectionProtoco
   TokenIntrospectionHandler handler;
   Logger log = Logger.getLogger(TokenIntrospectionProtocolImpl.class.getName());
 
-  public TokenIntrospectionProtocolImpl(TokenIntrospectionHandler handler) {
-    this.handler = handler;
+  public TokenIntrospectionProtocolImpl(OAuthTokenRepository oAuthTokenRepository) {
+    this.handler = new TokenIntrospectionHandler(oAuthTokenRepository);
   }
 
   public TokenIntrospectionResponse inspect(TokenIntrospectionRequest request) {
