@@ -1,6 +1,6 @@
 package org.idp.server.adapters.springboot.restapi;
 
-import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.userinfo.UserinfoApi;
 import org.idp.server.core.userinfo.handler.io.UserinfoRequestResponse;

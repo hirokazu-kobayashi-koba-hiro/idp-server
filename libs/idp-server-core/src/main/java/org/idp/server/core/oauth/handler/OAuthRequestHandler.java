@@ -40,7 +40,7 @@ public class OAuthRequestHandler {
     this.grantedRepository = grantedRepository;
   }
 
-  public OAuthRequestContext handle(OAuthRequest oAuthRequest, OAuthRequestDelegate delegate) {
+  public OAuthRequestContext handle(OAuthRequest oAuthRequest, OAuthSessionDelegate delegate) {
     OAuthRequestParameters parameters = oAuthRequest.toParameters();
     Tenant tenant = oAuthRequest.tenant();
     OAuthRequestValidator validator = new OAuthRequestValidator(parameters);

@@ -1,10 +1,11 @@
 package org.idp.server.core.adapters.datasource.grantmanagment;
 
-import org.idp.server.core.basic.datasource.DataSourceDependencyProvider;
+import org.idp.server.core.basic.datasource.DataSourceDependencyContainer;
+import org.idp.server.core.basic.datasource.DataSourceProvider;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
 
 public class AuthorizationGrantedDataSourceProvider
-    implements DataSourceDependencyProvider<AuthorizationGrantedRepository> {
+    implements DataSourceProvider<AuthorizationGrantedRepository> {
 
   @Override
   public Class<AuthorizationGrantedRepository> type() {
@@ -12,7 +13,7 @@ public class AuthorizationGrantedDataSourceProvider
   }
 
   @Override
-  public AuthorizationGrantedRepository provide() {
+  public AuthorizationGrantedRepository provide(DataSourceDependencyContainer container) {
     return new AuthorizationGrantedDataSource();
   }
 }

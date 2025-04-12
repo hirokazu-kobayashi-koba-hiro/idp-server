@@ -9,7 +9,8 @@ import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserRegistrationService;
+import org.idp.server.core.oauth.identity.UserRegistrator;
+import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.organization.*;
 import org.idp.server.core.tenant.*;
 
@@ -18,18 +19,18 @@ public class OnboardingEntryService implements OnboardingApi {
 
   TenantRepository tenantRepository;
   OrganizationRepository organizationRepository;
-  UserRegistrationService userRegistrationService;
+  UserRegistrator userRegistrator;
   ServerConfigurationRepository serverConfigurationRepository;
   JsonConverter jsonConverter;
 
   public OnboardingEntryService(
       TenantRepository tenantRepository,
       OrganizationRepository organizationRepository,
-      UserRegistrationService userRegistrationService,
+      UserRepository userRepository,
       ServerConfigurationRepository serverConfigurationRepository) {
     this.tenantRepository = tenantRepository;
     this.organizationRepository = organizationRepository;
-    this.userRegistrationService = userRegistrationService;
+    this.userRegistrator = new UserRegistrator(userRepository);
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   }
@@ -68,7 +69,7 @@ public class OnboardingEntryService implements OnboardingApi {
     HashMap<String, Object> newCustomProperties = new HashMap<>(operator.customPropertiesValue());
     newCustomProperties.put("organization", organization.toMap());
     operator.setCustomProperties(newCustomProperties);
-    userRegistrationService.registerOrUpdate(tenantRepository.getAdmin(), operator);
+    userRegistrator.registerOrUpdate(tenantRepository.getAdmin(), operator);
 
     return organization.toMap();
   }

@@ -4,8 +4,8 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
-import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.OAuthSession;
+import org.idp.server.core.oauth.OAuthSessionDelegate;
 import org.idp.server.core.oauth.OAuthSessionKey;
 import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
@@ -33,7 +33,7 @@ public class OAuthHandler {
   }
 
   public OAuthViewDataResponse handleViewData(
-      OAuthViewDataRequest request, OAuthRequestDelegate oAuthRequestDelegate) {
+      OAuthViewDataRequest request, OAuthSessionDelegate oAuthSessionDelegate) {
     Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
 
@@ -45,7 +45,7 @@ public class OAuthHandler {
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tenant, requestedClientId);
 
-    OAuthSession session = oAuthRequestDelegate.find(authorizationRequest.sessionKey());
+    OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
 
     OAuthViewDataCreator creator =
         new OAuthViewDataCreator(
@@ -61,7 +61,7 @@ public class OAuthHandler {
   }
 
   public OAuthLogoutResponse handleLogout(
-      OAuthLogoutRequest request, OAuthRequestDelegate delegate) {
+      OAuthLogoutRequest request, OAuthSessionDelegate delegate) {
 
     OAuthLogoutParameters parameters = request.toParameters();
     Tenant tenant = request.tenant();

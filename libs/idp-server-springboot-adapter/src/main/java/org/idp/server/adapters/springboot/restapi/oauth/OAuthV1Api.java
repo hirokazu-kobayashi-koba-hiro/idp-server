@@ -5,7 +5,7 @@ import static org.idp.server.core.oauth.io.OAuthRequestStatus.OK_ACCOUNT_CREATIO
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.authentication.AuthenticationInteractionResult;
 import org.idp.server.core.authentication.AuthenticationInteractionType;

@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.restapi;
 
 import java.util.Map;
-import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.token.TokenApi;
 import org.idp.server.core.token.handler.token.io.TokenRequestResponse;

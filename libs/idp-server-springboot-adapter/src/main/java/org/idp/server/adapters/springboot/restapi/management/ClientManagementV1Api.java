@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.restapi.management;
 
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.admin.ClientManagementApi;
 import org.idp.server.core.configuration.handler.io.ClientConfigurationManagementListResponse;
 import org.idp.server.core.configuration.handler.io.ClientConfigurationManagementResponse;

@@ -2,7 +2,7 @@ package org.idp.server.adapters.springboot.event;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventApi;
 import org.slf4j.Logger;

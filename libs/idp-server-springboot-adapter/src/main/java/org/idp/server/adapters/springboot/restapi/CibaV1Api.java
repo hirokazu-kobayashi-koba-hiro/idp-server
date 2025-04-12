@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.restapi;
 
 import java.util.Map;
-import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.ciba.CibaFlowApi;
 import org.idp.server.core.ciba.handler.io.CibaAuthorizeResponse;
 import org.idp.server.core.ciba.handler.io.CibaDenyResponse;

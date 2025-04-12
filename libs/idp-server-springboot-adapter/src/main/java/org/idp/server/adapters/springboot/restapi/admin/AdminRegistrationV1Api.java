@@ -2,7 +2,7 @@ package org.idp.server.adapters.springboot.restapi.admin;
 
 import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.core.adapters.IdpServerApplication;
+import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.admin.IdpServerStarterApi;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

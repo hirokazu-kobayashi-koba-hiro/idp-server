@@ -1,10 +1,11 @@
 package org.idp.server.core.adapters.datasource.identity;
 
-import org.idp.server.core.basic.datasource.DataSourceDependencyProvider;
+import org.idp.server.core.basic.datasource.DataSourceDependencyContainer;
+import org.idp.server.core.basic.datasource.DataSourceProvider;
 import org.idp.server.core.oauth.identity.permission.PermissionCommandRepository;
 
 public class PermissionCommandDataSourceProvider
-    implements DataSourceDependencyProvider<PermissionCommandRepository> {
+    implements DataSourceProvider<PermissionCommandRepository> {
 
   @Override
   public Class<PermissionCommandRepository> type() {
@@ -12,7 +13,7 @@ public class PermissionCommandDataSourceProvider
   }
 
   @Override
-  public PermissionCommandRepository provide() {
+  public PermissionCommandRepository provide(DataSourceDependencyContainer container) {
     return new PermissionCommandDataSource();
   }
 }

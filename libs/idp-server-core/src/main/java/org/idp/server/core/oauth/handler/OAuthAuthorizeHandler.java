@@ -5,8 +5,8 @@ import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.oauth.OAuthAuthorizeContext;
-import org.idp.server.core.oauth.OAuthRequestDelegate;
 import org.idp.server.core.oauth.OAuthSession;
+import org.idp.server.core.oauth.OAuthSessionDelegate;
 import org.idp.server.core.oauth.OAuthSessionKey;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
@@ -50,7 +50,7 @@ public class OAuthAuthorizeHandler {
   }
 
   public AuthorizationResponse handle(
-      OAuthAuthorizeRequest request, OAuthRequestDelegate delegate) {
+      OAuthAuthorizeRequest request, OAuthSessionDelegate delegate) {
 
     Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
