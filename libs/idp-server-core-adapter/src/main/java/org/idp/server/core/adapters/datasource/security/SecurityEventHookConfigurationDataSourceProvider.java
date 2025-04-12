@@ -1,7 +1,7 @@
 package org.idp.server.core.adapters.datasource.security;
 
-import org.idp.server.core.basic.dependencies.ApplicationComponentDependencyContainer;
-import org.idp.server.core.basic.dependencies.ApplicationComponentProvider;
+import org.idp.server.core.basic.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.core.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
 
 public class SecurityEventHookConfigurationDataSourceProvider

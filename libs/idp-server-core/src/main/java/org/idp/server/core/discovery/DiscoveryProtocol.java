@@ -1,6 +1,6 @@
 package org.idp.server.core.discovery;
 
-import org.idp.server.core.basic.protcol.AuthorizationProtocolProvider;
+import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvider;
 import org.idp.server.core.discovery.handler.io.JwksRequestResponse;
 import org.idp.server.core.discovery.handler.io.ServerConfigurationRequestResponse;
 import org.idp.server.core.tenant.TenantIdentifier;

@@ -1,13 +1,13 @@
-package org.idp.server.core.basic.dependencies;
+package org.idp.server.core.basic.dependency;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class ApplicationComponentDependencyContainer {
+public class ApplicationComponentContainer {
 
   Map<Class<?>, Object> dependencies;
 
-  public ApplicationComponentDependencyContainer() {
+  public ApplicationComponentContainer() {
     this.dependencies = new HashMap<>();
   }
 
@@ -17,8 +17,8 @@ public class ApplicationComponentDependencyContainer {
 
   public <T> T resolve(Class<T> type) {
     if (!dependencies.containsKey(type)) {
-      throw new ApplicationComponentDependencyMissionException(
-          "Missing dependency for type: " + type.getName());
+      throw new ApplicationComponentMissionException(
+          "Missing datasource for type: " + type.getName());
     }
     return type.cast(dependencies.get(type));
   }

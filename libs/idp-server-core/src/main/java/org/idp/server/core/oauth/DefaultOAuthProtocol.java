@@ -1,7 +1,7 @@
 package org.idp.server.core.oauth;
 
-import org.idp.server.core.basic.protcol.AuthorizationProtocolProvider;
-import org.idp.server.core.basic.protcol.DefaultAuthorizationProvider;
+import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvider;
+import org.idp.server.core.basic.dependency.protcol.DefaultAuthorizationProvider;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;

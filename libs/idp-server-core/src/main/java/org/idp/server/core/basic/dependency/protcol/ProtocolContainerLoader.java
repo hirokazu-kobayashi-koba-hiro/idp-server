@@ -1,8 +1,8 @@
-package org.idp.server.core.basic.protcol;
+package org.idp.server.core.basic.dependency.protcol;
 
 import java.util.ServiceLoader;
 import java.util.logging.Logger;
-import org.idp.server.core.basic.dependencies.ApplicationComponentContainer;
+import org.idp.server.core.basic.dependency.ApplicationComponentContainer;
 
 public class ProtocolContainerLoader {
 

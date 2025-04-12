@@ -1,7 +1,7 @@
 package org.idp.server.core.ciba;
 
-import org.idp.server.core.basic.dependencies.ApplicationComponentContainer;
-import org.idp.server.core.basic.protcol.ProtocolProvider;
+import org.idp.server.core.basic.dependency.ApplicationComponentContainer;
+import org.idp.server.core.basic.dependency.protcol.ProtocolProvider;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.configuration.ClientConfigurationRepository;

@@ -1,4 +1,4 @@
-package org.idp.server.core.basic.protcol;
+package org.idp.server.core.basic.dependency.protcol;
 
 import java.util.HashMap;
 import java.util.HashSet;

@@ -2,8 +2,8 @@ package org.idp.server.core.userinfo;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.idp.server.core.basic.protcol.AuthorizationProtocolProvider;
-import org.idp.server.core.basic.protcol.DefaultAuthorizationProvider;
+import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvider;
+import org.idp.server.core.basic.dependency.protcol.DefaultAuthorizationProvider;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;

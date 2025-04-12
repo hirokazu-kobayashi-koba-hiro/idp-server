@@ -1,4 +1,4 @@
-package org.idp.server.core.basic.dependencies;
+package org.idp.server.core.basic.dependency;
 
 import java.util.ServiceLoader;
 import java.util.logging.Logger;

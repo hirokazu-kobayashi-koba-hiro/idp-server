@@ -3,7 +3,7 @@ package org.idp.server.core.oauth;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.core.basic.protcol.AuthorizationProtocolProvider;
+import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvider;
 import org.idp.server.core.type.exception.UnSupportedException;
 
 public class OAuthProtocols {

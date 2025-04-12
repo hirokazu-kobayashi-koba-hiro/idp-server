@@ -1,6 +1,6 @@
 package org.idp.server.core.token;
 
-import org.idp.server.core.basic.protcol.AuthorizationProtocolProvider;
+import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvider;
 import org.idp.server.core.token.handler.token.io.TokenRequest;
 import org.idp.server.core.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequest;

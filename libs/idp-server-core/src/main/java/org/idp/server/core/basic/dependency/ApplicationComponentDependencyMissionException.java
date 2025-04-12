@@ -1,4 +1,4 @@
-package org.idp.server.core.basic.dependencies;
+package org.idp.server.core.basic.dependency;
 
 public class ApplicationComponentDependencyMissionException extends RuntimeException {
 
