@@ -117,7 +117,7 @@ public class OidcSsoConfiguration implements JsonReadable {
     return jwksUri;
   }
 
-    public SsoProvider ssoProvider() {
+  public SsoProvider ssoProvider() {
     return new SsoProvider(provider);
-    }
+  }
 }

@@ -33,7 +33,8 @@ public class FederationInteractionResult {
   }
 
   public static FederationInteractionResult success(OidcSsoSession session, User user) {
-    AuthorizationRequestIdentifier authorizationRequestIdentifier = new AuthorizationRequestIdentifier(session.authorizationRequestId());
+    AuthorizationRequestIdentifier authorizationRequestIdentifier =
+        new AuthorizationRequestIdentifier(session.authorizationRequestId());
     FederationInteractionStatus status = FederationInteractionStatus.SUCCESS;
     Authentication authentication = new Authentication();
     Map<String, Object> response =
@@ -41,7 +42,8 @@ public class FederationInteractionResult {
 
     String s = session.authorizationRequestId();
     DefaultSecurityEventType eventType = DefaultSecurityEventType.federation_success;
-    return new FederationInteractionResult(authorizationRequestIdentifier, status, user, authentication, response, eventType);
+    return new FederationInteractionResult(
+        authorizationRequestIdentifier, status, user, authentication, response, eventType);
   }
 
   public FederationInteractionStatus status() {

@@ -19,8 +19,7 @@ public class WebAuthnExecutorLoader {
       WebAuthnExecutor webAuthnExecutor = factory.create(container);
       executors.put(webAuthnExecutor.type(), webAuthnExecutor);
       log.info(
-          String.format(
-              "Dynamic Registered WebAuthnExecutor %s", webAuthnExecutor.type().value()));
+          String.format("Dynamic Registered WebAuthnExecutor %s", webAuthnExecutor.type().value()));
     }
 
     return new WebAuthnExecutors(executors);

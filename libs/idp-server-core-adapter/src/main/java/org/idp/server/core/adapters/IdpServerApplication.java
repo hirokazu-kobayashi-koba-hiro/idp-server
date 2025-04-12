@@ -23,49 +23,60 @@ import org.idp.server.core.adapters.httpclient.ciba.NotificationClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialBlockCertClient;
 import org.idp.server.core.adapters.httpclient.credential.VerifiableCredentialJwtClient;
 import org.idp.server.core.adapters.httpclient.oauth.RequestObjectHttpClient;
-import org.idp.server.core.api.*;
+import org.idp.server.core.admin.*;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
+import org.idp.server.core.basic.sql.DatabaseConfig;
 import org.idp.server.core.basic.sql.TransactionInterceptor;
 import org.idp.server.core.basic.sql.TransactionManager;
+import org.idp.server.core.ciba.CibaFlowApi;
+import org.idp.server.core.ciba.CibaProtocol;
+import org.idp.server.core.ciba.CibaProtocolImpl;
+import org.idp.server.core.ciba.handler.CibaAuthorizeHandler;
+import org.idp.server.core.ciba.handler.CibaDenyHandler;
+import org.idp.server.core.ciba.handler.CibaRequestHandler;
+import org.idp.server.core.configuration.handler.ClientConfigurationHandler;
+import org.idp.server.core.configuration.handler.ServerConfigurationHandler;
+import org.idp.server.core.discovery.*;
+import org.idp.server.core.discovery.handler.DiscoveryHandler;
 import org.idp.server.core.federation.FederationDependencyContainer;
 import org.idp.server.core.federation.FederationDependencyContainerLoader;
 import org.idp.server.core.federation.FederationInteractorLoader;
 import org.idp.server.core.federation.FederationInteractors;
 import org.idp.server.core.federation.oidc.OidcSsoExecutorLoader;
 import org.idp.server.core.federation.oidc.OidcSsoExecutors;
-import org.idp.server.core.handler.ciba.CibaAuthorizeHandler;
-import org.idp.server.core.handler.ciba.CibaDenyHandler;
-import org.idp.server.core.handler.ciba.CibaRequestHandler;
-import org.idp.server.core.handler.config.DatabaseConfig;
-import org.idp.server.core.handler.configuration.ClientConfigurationHandler;
-import org.idp.server.core.handler.configuration.ServerConfigurationHandler;
-import org.idp.server.core.handler.credential.CredentialHandler;
-import org.idp.server.core.handler.discovery.DiscoveryHandler;
-import org.idp.server.core.handler.oauth.OAuthAuthorizeHandler;
-import org.idp.server.core.handler.oauth.OAuthDenyHandler;
-import org.idp.server.core.handler.oauth.OAuthHandler;
-import org.idp.server.core.handler.oauth.OAuthRequestHandler;
-import org.idp.server.core.handler.security.SecurityEventHandler;
-import org.idp.server.core.handler.token.TokenRequestHandler;
-import org.idp.server.core.handler.tokenintrospection.TokenIntrospectionHandler;
-import org.idp.server.core.handler.tokenrevocation.TokenRevocationHandler;
-import org.idp.server.core.handler.userinfo.UserinfoHandler;
 import org.idp.server.core.notification.EmailSenderLoader;
 import org.idp.server.core.notification.EmailSenders;
+import org.idp.server.core.oauth.OAuthFlowApi;
+import org.idp.server.core.oauth.OAuthProtocol;
+import org.idp.server.core.oauth.OAuthProtocolImpl;
 import org.idp.server.core.oauth.OAuthRequestDelegate;
+import org.idp.server.core.oauth.handler.OAuthAuthorizeHandler;
+import org.idp.server.core.oauth.handler.OAuthDenyHandler;
+import org.idp.server.core.oauth.handler.OAuthHandler;
+import org.idp.server.core.oauth.handler.OAuthRequestHandler;
 import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
 import org.idp.server.core.oauth.identity.UserRegistrationService;
-import org.idp.server.core.protocol.*;
+import org.idp.server.core.security.SecurityEventApi;
 import org.idp.server.core.security.SecurityEventHooks;
 import org.idp.server.core.security.SecurityEventPublisher;
 import org.idp.server.core.security.event.OAuthFlowEventPublisher;
+import org.idp.server.core.security.handler.SecurityEventHandler;
 import org.idp.server.core.security.hook.SecurityEventHooksLoader;
+import org.idp.server.core.token.*;
+import org.idp.server.core.token.handler.token.TokenRequestHandler;
+import org.idp.server.core.token.handler.tokenintrospection.TokenIntrospectionHandler;
+import org.idp.server.core.token.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.core.type.verifiablecredential.Format;
+import org.idp.server.core.userinfo.UserinfoApi;
+import org.idp.server.core.userinfo.UserinfoProtocol;
+import org.idp.server.core.userinfo.UserinfoProtocolImpl;
+import org.idp.server.core.userinfo.handler.UserinfoHandler;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreator;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialCreators;
+import org.idp.server.core.verifiablecredential.handler.CredentialHandler;
 
 /** IdpServerApplication */
 public class IdpServerApplication {
@@ -262,9 +273,11 @@ public class IdpServerApplication {
         new OAuthFlowEventPublisher(securityEventPublisher);
 
     OidcSsoExecutors oidcSsoExecutors = OidcSsoExecutorLoader.load();
-    FederationDependencyContainer federationDependencyContainer = FederationDependencyContainerLoader.load();
+    FederationDependencyContainer federationDependencyContainer =
+        FederationDependencyContainerLoader.load();
     federationDependencyContainer.register(OidcSsoExecutors.class, oidcSsoExecutors);
-    FederationInteractors federationInteractors = FederationInteractorLoader.load(federationDependencyContainer);
+    FederationInteractors federationInteractors =
+        FederationInteractorLoader.load(federationDependencyContainer);
 
     this.oAuthFlowApi =
         TransactionInterceptor.createProxy(

@@ -1,24 +1,24 @@
 package org.idp.server.core;
 
 import java.util.Map;
-import org.idp.server.core.api.TokenApi;
 import org.idp.server.core.basic.sql.Transactional;
-import org.idp.server.core.handler.token.io.TokenRequest;
-import org.idp.server.core.handler.token.io.TokenRequestResponse;
-import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionRequest;
-import org.idp.server.core.handler.tokenintrospection.io.TokenIntrospectionResponse;
-import org.idp.server.core.handler.tokenrevocation.io.TokenRevocationRequest;
-import org.idp.server.core.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
-import org.idp.server.core.protocol.TokenIntrospectionProtocol;
-import org.idp.server.core.protocol.TokenProtocol;
-import org.idp.server.core.protocol.TokenRevocationProtocol;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.token.PasswordCredentialsGrantDelegate;
+import org.idp.server.core.token.TokenApi;
+import org.idp.server.core.token.TokenIntrospectionProtocol;
+import org.idp.server.core.token.TokenProtocol;
+import org.idp.server.core.token.TokenRevocationProtocol;
+import org.idp.server.core.token.handler.token.io.TokenRequest;
+import org.idp.server.core.token.handler.token.io.TokenRequestResponse;
+import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
+import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
+import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationRequest;
+import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.idp.server.core.type.oauth.Password;
 import org.idp.server.core.type.oauth.Username;
 

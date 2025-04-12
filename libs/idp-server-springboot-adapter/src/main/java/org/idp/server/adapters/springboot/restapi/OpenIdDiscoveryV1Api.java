@@ -1,9 +1,9 @@
 package org.idp.server.adapters.springboot.restapi;
 
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.api.OidcMetaDataApi;
-import org.idp.server.core.handler.discovery.io.JwksRequestResponse;
-import org.idp.server.core.handler.discovery.io.ServerConfigurationRequestResponse;
+import org.idp.server.core.discovery.OidcMetaDataApi;
+import org.idp.server.core.discovery.handler.io.JwksRequestResponse;
+import org.idp.server.core.discovery.handler.io.ServerConfigurationRequestResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

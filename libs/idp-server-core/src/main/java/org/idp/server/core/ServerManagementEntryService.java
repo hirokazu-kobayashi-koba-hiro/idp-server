@@ -1,9 +1,9 @@
 package org.idp.server.core;
 
-import org.idp.server.core.api.ServerManagementApi;
+import org.idp.server.core.admin.ServerManagementApi;
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.handler.configuration.ServerConfigurationHandler;
+import org.idp.server.core.configuration.handler.ServerConfigurationHandler;
 import org.idp.server.core.organization.initial.TenantCreator;
 import org.idp.server.core.tenant.*;
 

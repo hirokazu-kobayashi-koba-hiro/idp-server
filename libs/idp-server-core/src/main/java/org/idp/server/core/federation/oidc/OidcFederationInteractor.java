@@ -4,7 +4,6 @@ import org.idp.server.core.basic.jose.JoseContext;
 import org.idp.server.core.basic.jose.JoseHandler;
 import org.idp.server.core.basic.jose.JoseInvalidException;
 import org.idp.server.core.federation.*;
-import org.idp.server.core.federation.SsoSessionNotFoundException;
 import org.idp.server.core.federation.io.*;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
@@ -74,7 +73,8 @@ public class OidcFederationInteractor implements FederationInteractor {
     OidcTokenRequest tokenRequest = tokenRequestCreator.create();
     OidcTokenResponse tokenResponse = oidcSsoExecutor.requestToken(tokenRequest);
 
-    JoseContext joseContext = verifyAndParseIdToken(oidcSsoExecutor, oidcSsoConfiguration, tokenResponse);
+    JoseContext joseContext =
+        verifyAndParseIdToken(oidcSsoExecutor, oidcSsoConfiguration, tokenResponse);
 
     OidcUserinfoRequest userinfoRequest =
         new OidcUserinfoRequest(
@@ -95,7 +95,9 @@ public class OidcFederationInteractor implements FederationInteractor {
   }
 
   private JoseContext verifyAndParseIdToken(
-      OidcSsoExecutor oidcSsoExecutor, OidcSsoConfiguration configuration, OidcTokenResponse tokenResponse) {
+      OidcSsoExecutor oidcSsoExecutor,
+      OidcSsoConfiguration configuration,
+      OidcTokenResponse tokenResponse) {
     try {
       OidcJwksResponse jwksResponse =
           oidcSsoExecutor.getJwks(new OidcJwksRequest(configuration.jwksUri()));

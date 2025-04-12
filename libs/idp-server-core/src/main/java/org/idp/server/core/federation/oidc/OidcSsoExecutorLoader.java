@@ -1,11 +1,10 @@
 package org.idp.server.core.federation.oidc;
 
-import org.idp.server.core.federation.SsoProvider;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.logging.Logger;
+import org.idp.server.core.federation.SsoProvider;
 
 public class OidcSsoExecutorLoader {
 

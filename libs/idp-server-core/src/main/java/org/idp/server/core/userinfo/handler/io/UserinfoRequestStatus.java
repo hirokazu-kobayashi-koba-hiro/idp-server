@@ -1,0 +1,22 @@
+package org.idp.server.core.userinfo.handler.io;
+
+public enum UserinfoRequestStatus {
+  OK(200),
+  BAD_REQUEST(400),
+  UNAUTHORIZE(401),
+  SERVER_ERROR(500);
+
+  int statusCode;
+
+  UserinfoRequestStatus(int statusCode) {
+    this.statusCode = statusCode;
+  }
+
+  public int statusCode() {
+    return statusCode;
+  }
+
+  public boolean isOK() {
+    return this == OK;
+  }
+}

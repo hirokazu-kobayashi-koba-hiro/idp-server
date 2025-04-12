@@ -1,11 +1,11 @@
 package org.idp.server.core;
 
-import org.idp.server.core.api.ClientManagementApi;
+import org.idp.server.core.admin.ClientManagementApi;
 import org.idp.server.core.basic.sql.Transactional;
-import org.idp.server.core.handler.configuration.ClientConfigurationErrorHandler;
-import org.idp.server.core.handler.configuration.ClientConfigurationHandler;
-import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementListResponse;
-import org.idp.server.core.handler.configuration.io.ClientConfigurationManagementResponse;
+import org.idp.server.core.configuration.handler.ClientConfigurationErrorHandler;
+import org.idp.server.core.configuration.handler.ClientConfigurationHandler;
+import org.idp.server.core.configuration.handler.io.ClientConfigurationManagementListResponse;
+import org.idp.server.core.configuration.handler.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;

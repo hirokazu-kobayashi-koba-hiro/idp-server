@@ -9,7 +9,7 @@ import org.idp.server.core.oauth.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oauth.mtls.ClientCertificationThumbprintCalculator;
 import org.idp.server.core.oauth.token.AccessToken;
 import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.tokenintrospection.exception.TokenInvalidException;
+import org.idp.server.core.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.core.type.mtls.ClientCert;
 import org.idp.server.core.verifiablecredential.exception.VerifiableCredentialTokenInvalidException;
 

@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot;
 import org.idp.server.adapters.springboot.authorization.OAuthSessionService;
 import org.idp.server.adapters.springboot.event.SecurityEventPublisherService;
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.handler.config.DatabaseConfig;
+import org.idp.server.core.basic.sql.DatabaseConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

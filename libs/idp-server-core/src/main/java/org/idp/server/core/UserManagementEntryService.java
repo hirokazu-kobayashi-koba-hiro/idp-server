@@ -1,7 +1,7 @@
 package org.idp.server.core;
 
 import java.util.List;
-import org.idp.server.core.api.UserManagementApi;
+import org.idp.server.core.admin.UserManagementApi;
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;

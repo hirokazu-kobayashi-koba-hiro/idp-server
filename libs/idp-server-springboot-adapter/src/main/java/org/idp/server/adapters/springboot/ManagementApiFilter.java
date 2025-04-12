@@ -7,7 +7,7 @@ import java.util.List;
 import org.idp.server.adapters.springboot.operation.IdPScope;
 import org.idp.server.adapters.springboot.operation.Operator;
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.api.OperatorAuthenticationApi;
+import org.idp.server.core.admin.OperatorAuthenticationApi;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.type.exception.UnauthorizedException;
 import org.idp.server.core.type.extension.Pairs;

@@ -2,7 +2,7 @@ package org.idp.server.adapters.springboot.restapi.management;
 
 import java.util.List;
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.api.UserManagementApi;
+import org.idp.server.core.admin.UserManagementApi;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpStatus;

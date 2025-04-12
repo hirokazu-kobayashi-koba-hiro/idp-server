@@ -2,8 +2,10 @@ package org.idp.server.adapters.springboot.restapi;
 
 import java.util.Map;
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.api.CibaFlowApi;
-import org.idp.server.core.handler.ciba.io.*;
+import org.idp.server.core.ciba.CibaFlowApi;
+import org.idp.server.core.ciba.handler.io.CibaAuthorizeResponse;
+import org.idp.server.core.ciba.handler.io.CibaDenyResponse;
+import org.idp.server.core.ciba.handler.io.CibaRequestResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

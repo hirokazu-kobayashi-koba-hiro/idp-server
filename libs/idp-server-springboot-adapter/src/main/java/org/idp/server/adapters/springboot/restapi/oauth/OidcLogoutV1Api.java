@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.api.OAuthFlowApi;
+import org.idp.server.core.oauth.OAuthFlowApi;
 import org.idp.server.core.oauth.io.OAuthLogoutResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.security.RequestAttributes;

@@ -1,8 +1,5 @@
 package org.idp.server.core.federation;
 
-import org.idp.server.core.authentication.AuthenticationDependencyContainer;
-import org.idp.server.core.authentication.AuthenticationDependencyProvider;
-
 import java.util.ServiceLoader;
 import java.util.logging.Logger;
 

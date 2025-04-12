@@ -2,7 +2,7 @@ package org.idp.server.adapters.springboot.restapi.admin;
 
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.adapters.IdpServerApplication;
-import org.idp.server.core.api.ClientManagementApi;
+import org.idp.server.core.admin.ClientManagementApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
