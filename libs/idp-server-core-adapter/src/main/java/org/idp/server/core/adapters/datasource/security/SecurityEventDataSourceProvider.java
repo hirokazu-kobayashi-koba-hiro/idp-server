@@ -1,11 +1,11 @@
 package org.idp.server.core.adapters.datasource.security;
 
-import org.idp.server.core.basic.datasource.DataSourceDependencyContainer;
-import org.idp.server.core.basic.datasource.DataSourceProvider;
+import org.idp.server.core.basic.dependencies.ApplicationComponentDependencyContainer;
+import org.idp.server.core.basic.dependencies.ApplicationComponentProvider;
 import org.idp.server.core.security.event.SecurityEventRepository;
 
 public class SecurityEventDataSourceProvider
-    implements DataSourceProvider<SecurityEventRepository> {
+    implements ApplicationComponentProvider<SecurityEventRepository> {
 
   @Override
   public Class<SecurityEventRepository> type() {
@@ -13,7 +13,7 @@ public class SecurityEventDataSourceProvider
   }
 
   @Override
-  public SecurityEventRepository provide(DataSourceDependencyContainer container) {
+  public SecurityEventRepository provide(ApplicationComponentDependencyContainer container) {
     return new SecurityEventDataSource();
   }
 }

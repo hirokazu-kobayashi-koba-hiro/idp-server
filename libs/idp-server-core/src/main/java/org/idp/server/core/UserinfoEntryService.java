@@ -9,6 +9,7 @@ import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.oauth.Subject;
 import org.idp.server.core.userinfo.UserinfoApi;
 import org.idp.server.core.userinfo.UserinfoProtocol;
+import org.idp.server.core.userinfo.UserinfoProtocols;
 import org.idp.server.core.userinfo.handler.UserinfoDelegate;
 import org.idp.server.core.userinfo.handler.io.UserinfoRequest;
 import org.idp.server.core.userinfo.handler.io.UserinfoRequestResponse;
@@ -16,15 +17,15 @@ import org.idp.server.core.userinfo.handler.io.UserinfoRequestResponse;
 @Transactional
 public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
 
-  UserinfoProtocol userinfoProtocol;
+  UserinfoProtocols userinfoProtocols;
   UserRepository userRepository;
   TenantRepository tenantRepository;
 
   public UserinfoEntryService(
-      UserinfoProtocol userinfoProtocol,
+      UserinfoProtocols userinfoProtocols,
       UserRepository userRepository,
       TenantRepository tenantRepository) {
-    this.userinfoProtocol = userinfoProtocol;
+    this.userinfoProtocols = userinfoProtocols;
     this.userRepository = userRepository;
     this.tenantRepository = tenantRepository;
   }
@@ -40,6 +41,9 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
     Tenant tenant = tenantRepository.get(tenantId);
     UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
     userinfoRequest.setClientCert(clientCert);
+
+    UserinfoProtocol userinfoProtocol =
+        userinfoProtocols.get(tenant.authorizationProtocolProvider());
 
     return userinfoProtocol.request(userinfoRequest, this);
   }

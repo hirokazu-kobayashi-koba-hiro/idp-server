@@ -1,11 +1,11 @@
 package org.idp.server.core.adapters.datasource.ciba.request;
 
-import org.idp.server.core.basic.datasource.DataSourceDependencyContainer;
-import org.idp.server.core.basic.datasource.DataSourceProvider;
+import org.idp.server.core.basic.dependencies.ApplicationComponentDependencyContainer;
+import org.idp.server.core.basic.dependencies.ApplicationComponentProvider;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 
 public class BackchannelAuthenticationDataSourceProvider
-    implements DataSourceProvider<BackchannelAuthenticationRequestRepository> {
+    implements ApplicationComponentProvider<BackchannelAuthenticationRequestRepository> {
 
   @Override
   public Class<BackchannelAuthenticationRequestRepository> type() {
@@ -14,7 +14,7 @@ public class BackchannelAuthenticationDataSourceProvider
 
   @Override
   public BackchannelAuthenticationRequestRepository provide(
-      DataSourceDependencyContainer container) {
+      ApplicationComponentDependencyContainer container) {
     return new BackchannelAuthenticationDataSource();
   }
 }

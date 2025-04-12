@@ -1,10 +1,10 @@
 package org.idp.server.core.adapters.datasource.tenant;
 
-import org.idp.server.core.basic.datasource.DataSourceDependencyContainer;
-import org.idp.server.core.basic.datasource.DataSourceProvider;
+import org.idp.server.core.basic.dependencies.ApplicationComponentDependencyContainer;
+import org.idp.server.core.basic.dependencies.ApplicationComponentProvider;
 import org.idp.server.core.tenant.TenantRepository;
 
-public class TenantDataSourceProvider implements DataSourceProvider<TenantRepository> {
+public class TenantDataSourceProvider implements ApplicationComponentProvider<TenantRepository> {
 
   @Override
   public Class<TenantRepository> type() {
@@ -12,7 +12,7 @@ public class TenantDataSourceProvider implements DataSourceProvider<TenantReposi
   }
 
   @Override
-  public TenantRepository provide(DataSourceDependencyContainer container) {
+  public TenantRepository provide(ApplicationComponentDependencyContainer container) {
     return new TenantDataSource();
   }
 }

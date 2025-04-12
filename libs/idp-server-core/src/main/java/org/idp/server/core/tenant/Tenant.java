@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.core.basic.protcol.AuthorizationProtocolProvider;
+import org.idp.server.core.basic.protcol.DefaultAuthorizationProvider;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class Tenant implements JsonReadable {
@@ -11,6 +13,8 @@ public class Tenant implements JsonReadable {
   TenantName name;
   TenantType type;
   TenantDomain domain;
+  // TODO
+  AuthorizationProtocolProvider authorizationProtocolProvider;
 
   public Tenant() {}
 
@@ -20,6 +24,8 @@ public class Tenant implements JsonReadable {
     this.name = name;
     this.type = type;
     this.domain = domain;
+    this.authorizationProtocolProvider =
+        DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
   }
 
   public TenantIdentifier identifier() {
@@ -68,5 +74,12 @@ public class Tenant implements JsonReadable {
 
   public TenantDomain domain() {
     return domain;
+  }
+
+  public AuthorizationProtocolProvider authorizationProtocolProvider() {
+    if (authorizationProtocolProvider == null) {
+      return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
+    }
+    return authorizationProtocolProvider;
   }
 }

@@ -10,8 +10,7 @@ public class AuthenticationInteractorLoader {
   private static final Logger log =
       Logger.getLogger(AuthenticationInteractorLoader.class.getName());
 
-  public static AuthenticationInteractors load(
-      AuthenticationDependencyContainer container) {
+  public static AuthenticationInteractors load(AuthenticationDependencyContainer container) {
 
     Map<AuthenticationInteractionType, AuthenticationInteractor> interactors = new HashMap<>();
     ServiceLoader<AuthenticationInteractorFactory> loader =

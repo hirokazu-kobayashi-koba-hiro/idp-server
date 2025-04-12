@@ -1,10 +1,10 @@
 package org.idp.server.core.adapters.datasource.identity;
 
-import org.idp.server.core.basic.datasource.DataSourceDependencyContainer;
-import org.idp.server.core.basic.datasource.DataSourceProvider;
+import org.idp.server.core.basic.dependencies.ApplicationComponentDependencyContainer;
+import org.idp.server.core.basic.dependencies.ApplicationComponentProvider;
 import org.idp.server.core.oauth.identity.UserRepository;
 
-public class UserDataSourceProvider implements DataSourceProvider<UserRepository> {
+public class UserDataSourceProvider implements ApplicationComponentProvider<UserRepository> {
 
   @Override
   public Class<UserRepository> type() {
@@ -12,7 +12,7 @@ public class UserDataSourceProvider implements DataSourceProvider<UserRepository
   }
 
   @Override
-  public UserRepository provide(DataSourceDependencyContainer container) {
+  public UserRepository provide(ApplicationComponentDependencyContainer container) {
     return new UserDataSource();
   }
 }

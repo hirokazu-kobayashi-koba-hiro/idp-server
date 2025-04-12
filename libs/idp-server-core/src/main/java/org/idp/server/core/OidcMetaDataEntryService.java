@@ -2,10 +2,11 @@ package org.idp.server.core;
 
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.discovery.DiscoveryProtocol;
-import org.idp.server.core.discovery.JwksProtocol;
+import org.idp.server.core.discovery.DiscoveryProtocols;
 import org.idp.server.core.discovery.OidcMetaDataApi;
 import org.idp.server.core.discovery.handler.io.JwksRequestResponse;
 import org.idp.server.core.discovery.handler.io.ServerConfigurationRequestResponse;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 
@@ -13,25 +14,29 @@ import org.idp.server.core.tenant.TenantRepository;
 public class OidcMetaDataEntryService implements OidcMetaDataApi {
 
   TenantRepository tenantRepository;
-  DiscoveryProtocol discoveryProtocol;
-  JwksProtocol jwksProtocol;
+  DiscoveryProtocols discoveryProtocols;
 
   public OidcMetaDataEntryService(
-      TenantRepository tenantRepository,
-      DiscoveryProtocol discoveryProtocol,
-      JwksProtocol jwksProtocol) {
+      TenantRepository tenantRepository, DiscoveryProtocols discoveryProtocols) {
     this.tenantRepository = tenantRepository;
-    this.discoveryProtocol = discoveryProtocol;
-    this.jwksProtocol = jwksProtocol;
+    this.discoveryProtocols = discoveryProtocols;
   }
 
   public ServerConfigurationRequestResponse getConfiguration(TenantIdentifier tenantIdentifier) {
+
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    DiscoveryProtocol discoveryProtocol =
+        discoveryProtocols.get(tenant.authorizationProtocolProvider());
 
     return discoveryProtocol.getConfiguration(tenantIdentifier);
   }
 
   public JwksRequestResponse getJwks(TenantIdentifier tenantIdentifier) {
 
-    return jwksProtocol.getJwks(tenantIdentifier);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    DiscoveryProtocol discoveryProtocol =
+        discoveryProtocols.get(tenant.authorizationProtocolProvider());
+
+    return discoveryProtocol.getJwks(tenantIdentifier);
   }
 }

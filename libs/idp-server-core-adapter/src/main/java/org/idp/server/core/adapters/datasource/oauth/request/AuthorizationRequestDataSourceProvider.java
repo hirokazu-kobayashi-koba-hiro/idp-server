@@ -1,11 +1,11 @@
 package org.idp.server.core.adapters.datasource.oauth.request;
 
-import org.idp.server.core.basic.datasource.DataSourceDependencyContainer;
-import org.idp.server.core.basic.datasource.DataSourceProvider;
+import org.idp.server.core.basic.dependencies.ApplicationComponentDependencyContainer;
+import org.idp.server.core.basic.dependencies.ApplicationComponentProvider;
 import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
 
 public class AuthorizationRequestDataSourceProvider
-    implements DataSourceProvider<AuthorizationRequestRepository> {
+    implements ApplicationComponentProvider<AuthorizationRequestRepository> {
 
   @Override
   public Class<AuthorizationRequestRepository> type() {
@@ -13,7 +13,7 @@ public class AuthorizationRequestDataSourceProvider
   }
 
   @Override
-  public AuthorizationRequestRepository provide(DataSourceDependencyContainer container) {
+  public AuthorizationRequestRepository provide(ApplicationComponentDependencyContainer container) {
     return new AuthorizationRequestDataSource();
   }
 }

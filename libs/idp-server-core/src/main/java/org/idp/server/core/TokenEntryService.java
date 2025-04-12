@@ -2,50 +2,34 @@ package org.idp.server.core;
 
 import java.util.Map;
 import org.idp.server.core.basic.sql.Transactional;
-import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
-import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
-import org.idp.server.core.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.core.token.TokenApi;
-import org.idp.server.core.token.TokenIntrospectionProtocol;
 import org.idp.server.core.token.TokenProtocol;
-import org.idp.server.core.token.TokenRevocationProtocol;
+import org.idp.server.core.token.TokenProtocols;
 import org.idp.server.core.token.handler.token.io.TokenRequest;
 import org.idp.server.core.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationResponse;
-import org.idp.server.core.type.oauth.Password;
-import org.idp.server.core.type.oauth.Username;
 
 @Transactional
-public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDelegate {
+public class TokenEntryService implements TokenApi {
 
-  TokenProtocol tokenProtocol;
-  TokenIntrospectionProtocol tokenIntrospectionProtocol;
-  TokenRevocationProtocol tokenRevocationProtocol;
+  TokenProtocols tokenProtocols;
   TenantRepository tenantRepository;
   UserRepository userRepository;
-  PasswordVerificationDelegation passwordVerificationDelegation;
 
   public TokenEntryService(
-      TokenProtocol tokenProtocol,
-      TokenIntrospectionProtocol tokenIntrospectionProtocol,
-      TokenRevocationProtocol tokenRevocationProtocol,
+      TokenProtocols tokenProtocols,
       UserRepository userRepository,
-      TenantRepository tenantRepository,
-      PasswordVerificationDelegation passwordVerificationDelegation) {
-    this.tokenProtocol = tokenProtocol;
-    tokenProtocol.setPasswordCredentialsGrantDelegate(this);
-    this.tokenIntrospectionProtocol = tokenIntrospectionProtocol;
-    this.tokenRevocationProtocol = tokenRevocationProtocol;
+      TenantRepository tenantRepository) {
+    this.tokenProtocols = tokenProtocols;
     this.tenantRepository = tenantRepository;
     this.userRepository = userRepository;
-    this.passwordVerificationDelegation = passwordVerificationDelegation;
   }
 
   public TokenRequestResponse request(
@@ -58,6 +42,8 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
     TokenRequest tokenRequest = new TokenRequest(tenant, authorizationHeader, params);
     tokenRequest.setClientCert(clientCert);
 
+    TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProtocolProvider());
+
     return tokenProtocol.request(tokenRequest);
   }
 
@@ -68,7 +54,9 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
     TokenIntrospectionRequest tokenIntrospectionRequest =
         new TokenIntrospectionRequest(tenant, params);
 
-    return tokenIntrospectionProtocol.inspect(tokenIntrospectionRequest);
+    TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProtocolProvider());
+
+    return tokenProtocol.inspect(tokenIntrospectionRequest);
   }
 
   public TokenRevocationResponse revoke(
@@ -82,20 +70,8 @@ public class TokenEntryService implements TokenApi, PasswordCredentialsGrantDele
         new TokenRevocationRequest(tenant, authorizationHeader, request);
     revocationRequest.setClientCert(clientCert);
 
-    return tokenRevocationProtocol.revoke(revocationRequest);
-  }
+    TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProtocolProvider());
 
-  @Override
-  public User findAndAuthenticate(Tenant tenant, Username username, Password password) {
-    User user = userRepository.findBy(tenant, username.value(), "idp-server");
-    if (!user.exists()) {
-      return User.notFound();
-    }
-
-    if (!passwordVerificationDelegation.verify(password.value(), user.hashedPassword())) {
-      return User.notFound();
-    }
-
-    return user;
+    return tokenProtocol.revoke(revocationRequest);
   }
 }

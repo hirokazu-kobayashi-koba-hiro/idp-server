@@ -8,10 +8,7 @@ import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.federation.io.FederationRequestResponse;
-import org.idp.server.core.oauth.OAuthFlowApi;
-import org.idp.server.core.oauth.OAuthProtocol;
-import org.idp.server.core.oauth.OAuthSession;
-import org.idp.server.core.oauth.OAuthSessionDelegate;
+import org.idp.server.core.oauth.*;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRegistrator;
@@ -31,7 +28,7 @@ import org.idp.server.core.type.security.RequestAttributes;
 @Transactional
 public class OAuthFlowEntryService implements OAuthFlowApi {
 
-  OAuthProtocol oAuthProtocol;
+  OAuthProtocols oAuthProtocols;
   OAuthSessionDelegate oAuthSessionDelegate;
   UserRepository userRepository;
   AuthenticationInteractors authenticationInteractors;
@@ -41,14 +38,14 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   OAuthFlowEventPublisher eventPublisher;
 
   public OAuthFlowEntryService(
-      OAuthProtocol oAuthProtocol,
+      OAuthProtocols oAuthProtocols,
       OAuthSessionDelegate oAuthSessionService,
       AuthenticationInteractors authenticationInteractors,
       FederationInteractors federationInteractors,
       UserRepository userRepository,
       TenantRepository tenantRepository,
       OAuthFlowEventPublisher eventPublisher) {
-    this.oAuthProtocol = oAuthProtocol;
+    this.oAuthProtocols = oAuthProtocols;
     this.oAuthSessionDelegate = oAuthSessionService;
     this.authenticationInteractors = authenticationInteractors;
     this.federationInteractors = federationInteractors;
@@ -66,7 +63,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthRequest oAuthRequest = new OAuthRequest(tenant, params);
 
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
     OAuthRequestResponse request = oAuthProtocol.request(oAuthRequest);
+
     return new Pairs<>(tenant, request);
   }
 
@@ -78,6 +77,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthViewDataRequest oAuthViewDataRequest =
         new OAuthViewDataRequest(tenant, authorizationRequestIdentifier.value());
+
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
 
     return oAuthProtocol.getViewData(oAuthViewDataRequest);
   }
@@ -91,7 +92,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
+
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
     AuthorizationRequest authorizationRequest = oAuthProtocol.get(authorizationRequestIdentifier);
+
     OAuthSession oAuthSession =
         oAuthSessionDelegate.findOrInitialize(authorizationRequest.sessionKey());
 
@@ -126,6 +130,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
+
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
     AuthorizationRequest authorizationRequest = oAuthProtocol.get(authorizationRequestIdentifier);
 
     FederationInteractor federationInteractor = federationInteractors.get(federationType);
@@ -162,10 +168,11 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       return result;
     }
 
+    Tenant tenant = tenantRepository.get(result.tenantIdentifier());
+
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(result.authorizationRequestIdentifier());
-
-    Tenant tenant = tenantRepository.get(authorizationRequest.tenantIdentifier());
 
     OAuthSession oAuthSession =
         OAuthSession.create(
@@ -188,6 +195,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
     AuthorizationRequest authorizationRequest = oAuthProtocol.get(authorizationRequestIdentifier);
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
 
@@ -215,6 +223,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
     AuthorizationRequest authorizationRequest = oAuthProtocol.get(authorizationRequestIdentifier);
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
 
@@ -253,6 +262,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         new OAuthDenyRequest(
             tenant, authorizationRequestIdentifier.value(), OAuthDenyReason.access_denied);
 
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
+
     return oAuthProtocol.deny(denyRequest);
   }
 
@@ -263,6 +274,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthLogoutRequest oAuthLogoutRequest = new OAuthLogoutRequest(tenant, params);
+
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
 
     return oAuthProtocol.logout(oAuthLogoutRequest);
   }

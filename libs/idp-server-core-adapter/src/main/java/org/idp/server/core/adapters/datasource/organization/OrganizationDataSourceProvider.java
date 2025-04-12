@@ -1,10 +1,11 @@
 package org.idp.server.core.adapters.datasource.organization;
 
-import org.idp.server.core.basic.datasource.DataSourceDependencyContainer;
-import org.idp.server.core.basic.datasource.DataSourceProvider;
+import org.idp.server.core.basic.dependencies.ApplicationComponentDependencyContainer;
+import org.idp.server.core.basic.dependencies.ApplicationComponentProvider;
 import org.idp.server.core.organization.OrganizationRepository;
 
-public class OrganizationDataSourceProvider implements DataSourceProvider<OrganizationRepository> {
+public class OrganizationDataSourceProvider
+    implements ApplicationComponentProvider<OrganizationRepository> {
 
   @Override
   public Class<OrganizationRepository> type() {
@@ -12,7 +13,7 @@ public class OrganizationDataSourceProvider implements DataSourceProvider<Organi
   }
 
   @Override
-  public OrganizationRepository provide(DataSourceDependencyContainer container) {
+  public OrganizationRepository provide(ApplicationComponentDependencyContainer container) {
     return new OrganizationDataSource();
   }
 }

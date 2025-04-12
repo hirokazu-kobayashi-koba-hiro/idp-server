@@ -6,9 +6,9 @@ import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
 import org.idp.server.core.basic.crypto.AesCipher;
 import org.idp.server.core.basic.crypto.HmacHasher;
-import org.idp.server.core.basic.datasource.DataSourceContainer;
-import org.idp.server.core.basic.datasource.DataSourceContainerLoader;
-import org.idp.server.core.basic.datasource.DataSourceDependencyContainer;
+import org.idp.server.core.basic.dependencies.ApplicationComponentContainer;
+import org.idp.server.core.basic.dependencies.ApplicationComponentContainerLoader;
+import org.idp.server.core.basic.dependencies.ApplicationComponentDependencyContainer;
 import org.idp.server.core.basic.protcol.ProtocolContainer;
 import org.idp.server.core.basic.protcol.ProtocolContainerLoader;
 import org.idp.server.core.basic.sql.DatabaseConfig;
@@ -16,6 +16,7 @@ import org.idp.server.core.basic.sql.TransactionInterceptor;
 import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.ciba.CibaFlowApi;
 import org.idp.server.core.ciba.CibaProtocol;
+import org.idp.server.core.ciba.CibaProtocols;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.configuration.handler.ClientConfigurationHandler;
@@ -30,9 +31,11 @@ import org.idp.server.core.notification.EmailSenderLoader;
 import org.idp.server.core.notification.EmailSenders;
 import org.idp.server.core.oauth.OAuthFlowApi;
 import org.idp.server.core.oauth.OAuthProtocol;
+import org.idp.server.core.oauth.OAuthProtocols;
 import org.idp.server.core.oauth.OAuthSessionDelegate;
 import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
+import org.idp.server.core.oauth.identity.UserAuthenticator;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.oauth.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.oauth.identity.role.RoleCommandRepository;
@@ -48,6 +51,7 @@ import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.token.*;
 import org.idp.server.core.userinfo.UserinfoApi;
 import org.idp.server.core.userinfo.UserinfoProtocol;
+import org.idp.server.core.userinfo.UserinfoProtocols;
 
 /** IdpServerApplication */
 public class IdpServerApplication {
@@ -76,32 +80,40 @@ public class IdpServerApplication {
     TransactionManager.setConnectionConfig(
         databaseConfig.url(), databaseConfig.username(), databaseConfig.password());
 
-    DataSourceDependencyContainer dependencyContainer = new DataSourceDependencyContainer();
+    ApplicationComponentDependencyContainer dependencyContainer =
+        new ApplicationComponentDependencyContainer();
     AesCipher aesCipher = new AesCipher(encryptionKey);
     HmacHasher hmacHasher = new HmacHasher(encryptionKey);
     dependencyContainer.register(AesCipher.class, aesCipher);
     dependencyContainer.register(HmacHasher.class, hmacHasher);
-    DataSourceContainer dataSourceContainer = DataSourceContainerLoader.load(dependencyContainer);
-    dataSourceContainer.register(OAuthSessionDelegate.class, oAuthSessionDelegate);
+    ApplicationComponentContainer applicationComponentContainer =
+        ApplicationComponentContainerLoader.load(dependencyContainer);
+    applicationComponentContainer.register(OAuthSessionDelegate.class, oAuthSessionDelegate);
 
     ServerConfigurationRepository serverConfigurationRepository =
-        dataSourceContainer.resolve(ServerConfigurationRepository.class);
+        applicationComponentContainer.resolve(ServerConfigurationRepository.class);
     ClientConfigurationRepository clientConfigurationRepository =
-        dataSourceContainer.resolve(ClientConfigurationRepository.class);
+        applicationComponentContainer.resolve(ClientConfigurationRepository.class);
     SecurityEventRepository securityEventRepository =
-        dataSourceContainer.resolve(SecurityEventRepository.class);
-    UserRepository userRepository = dataSourceContainer.resolve(UserRepository.class);
+        applicationComponentContainer.resolve(SecurityEventRepository.class);
+    UserRepository userRepository = applicationComponentContainer.resolve(UserRepository.class);
     OrganizationRepository organizationRepository =
-        dataSourceContainer.resolve(OrganizationRepository.class);
-    TenantRepository tenantRepository = dataSourceContainer.resolve(TenantRepository.class);
+        applicationComponentContainer.resolve(OrganizationRepository.class);
+    TenantRepository tenantRepository =
+        applicationComponentContainer.resolve(TenantRepository.class);
     RoleCommandRepository roleCommandRepository =
-        dataSourceContainer.resolve(RoleCommandRepository.class);
+        applicationComponentContainer.resolve(RoleCommandRepository.class);
     PermissionCommandRepository permissionCommandRepository =
-        dataSourceContainer.resolve(PermissionCommandRepository.class);
+        applicationComponentContainer.resolve(PermissionCommandRepository.class);
     SecurityEventHookConfigurationQueryRepository hookQueryRepository =
-        dataSourceContainer.resolve(SecurityEventHookConfigurationQueryRepository.class);
+        applicationComponentContainer.resolve(SecurityEventHookConfigurationQueryRepository.class);
 
-    ProtocolContainer protocolContainer = ProtocolContainerLoader.load(dataSourceContainer);
+    applicationComponentContainer.register(
+        PasswordCredentialsGrantDelegate.class,
+        new UserAuthenticator(userRepository, passwordVerificationDelegation));
+
+    ProtocolContainer protocolContainer =
+        ProtocolContainerLoader.load(applicationComponentContainer);
 
     SecurityEventHooks securityEventHooks = SecurityEventHooksLoader.load();
 
@@ -146,7 +158,7 @@ public class IdpServerApplication {
     this.oAuthFlowApi =
         TransactionInterceptor.createProxy(
             new OAuthFlowEntryService(
-                protocolContainer.resolve(OAuthProtocol.class),
+                new OAuthProtocols(protocolContainer.resolveAll(OAuthProtocol.class)),
                 oAuthSessionDelegate,
                 authenticationInteractors,
                 federationInteractors,
@@ -158,26 +170,22 @@ public class IdpServerApplication {
     this.tokenApi =
         TransactionInterceptor.createProxy(
             new TokenEntryService(
-                protocolContainer.resolve(TokenProtocol.class),
-                protocolContainer.resolve(TokenIntrospectionProtocol.class),
-                protocolContainer.resolve(TokenRevocationProtocol.class),
+                new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 userRepository,
-                tenantRepository,
-                passwordVerificationDelegation),
+                tenantRepository),
             TokenApi.class);
 
     this.oidcMetaDataApi =
         TransactionInterceptor.createProxy(
             new OidcMetaDataEntryService(
                 tenantRepository,
-                protocolContainer.resolve(DiscoveryProtocol.class),
-                protocolContainer.resolve(JwksProtocol.class)),
+                new DiscoveryProtocols(protocolContainer.resolveAll(DiscoveryProtocol.class))),
             OidcMetaDataApi.class);
 
     this.userinfoApi =
         TransactionInterceptor.createProxy(
             new UserinfoEntryService(
-                protocolContainer.resolve(UserinfoProtocol.class),
+                new UserinfoProtocols(protocolContainer.resolveAll(UserinfoProtocol.class)),
                 userRepository,
                 tenantRepository),
             UserinfoApi.class);
@@ -185,7 +193,9 @@ public class IdpServerApplication {
     this.cibaFlowApi =
         TransactionInterceptor.createProxy(
             new CibaFlowEntryService(
-                protocolContainer.resolve(CibaProtocol.class), userRepository, tenantRepository),
+                new CibaProtocols(protocolContainer.resolveAll(CibaProtocol.class)),
+                userRepository,
+                tenantRepository),
             CibaFlowApi.class);
 
     this.securityEventApi =
@@ -222,7 +232,7 @@ public class IdpServerApplication {
     this.operatorAuthenticationApi =
         TransactionInterceptor.createProxy(
             new OperatorAuthenticationEntryService(
-                protocolContainer.resolve(TokenIntrospectionProtocol.class),
+                new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 tenantRepository,
                 userRepository),
             OperatorAuthenticationApi.class);

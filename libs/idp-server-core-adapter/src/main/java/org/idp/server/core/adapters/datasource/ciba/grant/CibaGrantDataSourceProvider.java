@@ -1,10 +1,11 @@
 package org.idp.server.core.adapters.datasource.ciba.grant;
 
-import org.idp.server.core.basic.datasource.DataSourceDependencyContainer;
-import org.idp.server.core.basic.datasource.DataSourceProvider;
+import org.idp.server.core.basic.dependencies.ApplicationComponentDependencyContainer;
+import org.idp.server.core.basic.dependencies.ApplicationComponentProvider;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 
-public class CibaGrantDataSourceProvider implements DataSourceProvider<CibaGrantRepository> {
+public class CibaGrantDataSourceProvider
+    implements ApplicationComponentProvider<CibaGrantRepository> {
 
   @Override
   public Class<CibaGrantRepository> type() {
@@ -12,7 +13,7 @@ public class CibaGrantDataSourceProvider implements DataSourceProvider<CibaGrant
   }
 
   @Override
-  public CibaGrantRepository provide(DataSourceDependencyContainer container) {
+  public CibaGrantRepository provide(ApplicationComponentDependencyContainer container) {
     return new CibaGrantDataSource();
   }
 }

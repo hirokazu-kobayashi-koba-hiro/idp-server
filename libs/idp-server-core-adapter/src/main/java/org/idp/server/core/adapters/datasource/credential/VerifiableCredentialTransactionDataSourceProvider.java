@@ -1,11 +1,11 @@
 package org.idp.server.core.adapters.datasource.credential;
 
-import org.idp.server.core.basic.datasource.DataSourceDependencyContainer;
-import org.idp.server.core.basic.datasource.DataSourceProvider;
+import org.idp.server.core.basic.dependencies.ApplicationComponentDependencyContainer;
+import org.idp.server.core.basic.dependencies.ApplicationComponentProvider;
 import org.idp.server.core.verifiablecredential.repository.VerifiableCredentialTransactionRepository;
 
 public class VerifiableCredentialTransactionDataSourceProvider
-    implements DataSourceProvider<VerifiableCredentialTransactionRepository> {
+    implements ApplicationComponentProvider<VerifiableCredentialTransactionRepository> {
 
   @Override
   public Class<VerifiableCredentialTransactionRepository> type() {
@@ -14,7 +14,7 @@ public class VerifiableCredentialTransactionDataSourceProvider
 
   @Override
   public VerifiableCredentialTransactionRepository provide(
-      DataSourceDependencyContainer container) {
+      ApplicationComponentDependencyContainer container) {
     return new VerifiableCredentialTransactionDataSource();
   }
 }

@@ -1,8 +1,5 @@
 org.idp.server.core.discovery.DefaultDiscoveryProtocolProvider
-org.idp.server.core.discovery.DefaultJwksProtocolProvider
 org.idp.server.core.oauth.DefaultOAuthProtocolProvider
 org.idp.server.core.token.DefaultTokenProtocolProvider
-org.idp.server.core.token.DefaultTokenIntrospectionProtocolProvider
-org.idp.server.core.token.DefaultTokenRevocationProtocolProvider
 org.idp.server.core.userinfo.DefaultUserinfoProtocolProvider
 org.idp.server.core.ciba.DefaultCibaProvider

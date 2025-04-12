@@ -1,6 +1,6 @@
 package org.idp.server.core.ciba;
 
-import org.idp.server.core.basic.datasource.DataSourceContainer;
+import org.idp.server.core.basic.dependencies.ApplicationComponentContainer;
 import org.idp.server.core.basic.protcol.ProtocolProvider;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
@@ -10,13 +10,14 @@ import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 public class DefaultCibaProvider implements ProtocolProvider<CibaProtocol> {
+
   @Override
   public Class<CibaProtocol> type() {
     return CibaProtocol.class;
   }
 
   @Override
-  public CibaProtocol provide(DataSourceContainer container) {
+  public CibaProtocol provide(ApplicationComponentContainer container) {
 
     BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository =
         container.resolve(BackchannelAuthenticationRequestRepository.class);

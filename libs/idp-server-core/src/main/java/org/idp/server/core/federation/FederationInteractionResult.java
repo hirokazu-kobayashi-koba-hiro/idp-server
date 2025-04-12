@@ -7,10 +7,12 @@ import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
+import org.idp.server.core.tenant.TenantIdentifier;
 
 public class FederationInteractionResult {
 
   AuthorizationRequestIdentifier authorizationRequestIdentifier;
+  TenantIdentifier tenantIdentifier;
   FederationInteractionStatus status;
   User user;
   Authentication authentication;
@@ -19,12 +21,14 @@ public class FederationInteractionResult {
 
   private FederationInteractionResult(
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      TenantIdentifier tenantIdentifier,
       FederationInteractionStatus status,
       User user,
       Authentication authentication,
       Map<String, Object> response,
       DefaultSecurityEventType eventType) {
     this.authorizationRequestIdentifier = authorizationRequestIdentifier;
+    this.tenantIdentifier = tenantIdentifier;
     this.status = status;
     this.user = user;
     this.authentication = authentication;
@@ -40,10 +44,16 @@ public class FederationInteractionResult {
     Map<String, Object> response =
         Map.of("id", session.authorizationRequestId(), "tenant_id", session.tenantId());
 
-    String s = session.authorizationRequestId();
+    TenantIdentifier tenantIdentifier = new TenantIdentifier(session.tenantId());
     DefaultSecurityEventType eventType = DefaultSecurityEventType.federation_success;
     return new FederationInteractionResult(
-        authorizationRequestIdentifier, status, user, authentication, response, eventType);
+        authorizationRequestIdentifier,
+        tenantIdentifier,
+        status,
+        user,
+        authentication,
+        response,
+        eventType);
   }
 
   public FederationInteractionStatus status() {
@@ -84,5 +94,9 @@ public class FederationInteractionResult {
 
   public AuthorizationRequestIdentifier authorizationRequestIdentifier() {
     return authorizationRequestIdentifier;
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return tenantIdentifier;
   }
 }

@@ -2,6 +2,8 @@ package org.idp.server.core.ciba;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.idp.server.core.basic.protcol.AuthorizationProtocolProvider;
+import org.idp.server.core.basic.protcol.DefaultAuthorizationProvider;
 import org.idp.server.core.ciba.clientnotification.NotificationClient;
 import org.idp.server.core.ciba.handler.CibaAuthorizeHandler;
 import org.idp.server.core.ciba.handler.CibaDenyHandler;
@@ -50,6 +52,11 @@ public class DefaultCibaProtocol implements CibaProtocol {
             cibaGrantRepository, serverConfigurationRepository, clientConfigurationRepository);
     ;
     this.errorHandler = new CibaRequestErrorHandler();
+  }
+
+  @Override
+  public AuthorizationProtocolProvider authorizationProtocolProvider() {
+    return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
   }
 
   public CibaRequestResponse request(CibaRequest request, CibaRequestDelegate delegate) {

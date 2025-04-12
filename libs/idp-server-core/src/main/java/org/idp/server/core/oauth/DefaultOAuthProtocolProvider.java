@@ -1,6 +1,6 @@
 package org.idp.server.core.oauth;
 
-import org.idp.server.core.basic.datasource.DataSourceContainer;
+import org.idp.server.core.basic.dependencies.ApplicationComponentContainer;
 import org.idp.server.core.basic.protcol.ProtocolProvider;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
@@ -10,13 +10,14 @@ import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 public class DefaultOAuthProtocolProvider implements ProtocolProvider<OAuthProtocol> {
+
   @Override
   public Class<OAuthProtocol> type() {
     return OAuthProtocol.class;
   }
 
   @Override
-  public OAuthProtocol provide(DataSourceContainer container) {
+  public OAuthProtocol provide(ApplicationComponentContainer container) {
     AuthorizationRequestRepository authorizationRequestRepository =
         container.resolve(AuthorizationRequestRepository.class);
     ServerConfigurationRepository serverConfigurationRepository =

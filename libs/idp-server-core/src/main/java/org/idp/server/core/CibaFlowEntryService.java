@@ -2,10 +2,7 @@ package org.idp.server.core;
 
 import java.util.Map;
 import org.idp.server.core.basic.sql.Transactional;
-import org.idp.server.core.ciba.CibaFlowApi;
-import org.idp.server.core.ciba.CibaProtocol;
-import org.idp.server.core.ciba.CibaRequestDelegate;
-import org.idp.server.core.ciba.UserCriteria;
+import org.idp.server.core.ciba.*;
 import org.idp.server.core.ciba.handler.io.*;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.oauth.identity.User;
@@ -18,13 +15,15 @@ import org.idp.server.core.type.ciba.UserCode;
 @Transactional
 public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
 
-  CibaProtocol cibaProtocol;
+  CibaProtocols cibaProtocols;
   UserRepository userRepository;
   TenantRepository tenantRepository;
 
   public CibaFlowEntryService(
-      CibaProtocol cibaProtocol, UserRepository userRepository, TenantRepository tenantRepository) {
-    this.cibaProtocol = cibaProtocol;
+      CibaProtocols cibaProtocols,
+      UserRepository userRepository,
+      TenantRepository tenantRepository) {
+    this.cibaProtocols = cibaProtocols;
     this.userRepository = userRepository;
     this.tenantRepository = tenantRepository;
   }
@@ -39,6 +38,8 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
     CibaRequest cibaRequest = new CibaRequest(tenant, authorizationHeader, params);
     cibaRequest.setClientCert(clientCert);
 
+    CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProtocolProvider());
+
     return cibaProtocol.request(cibaRequest, this);
   }
 
@@ -47,6 +48,8 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     CibaAuthorizeRequest cibaAuthorizeRequest = new CibaAuthorizeRequest(tenant, authReqId);
 
+    CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProtocolProvider());
+
     return cibaProtocol.authorize(cibaAuthorizeRequest);
   }
 
@@ -54,6 +57,8 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     CibaDenyRequest cibaDenyRequest = new CibaDenyRequest(tenant, authReqId);
+
+    CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProtocolProvider());
 
     return cibaProtocol.deny(cibaDenyRequest);
   }
