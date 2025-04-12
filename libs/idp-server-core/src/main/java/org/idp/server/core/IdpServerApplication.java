@@ -1,7 +1,5 @@
 package org.idp.server.core;
 
-import java.util.HashMap;
-import java.util.Map;
 import org.idp.server.core.admin.*;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
@@ -120,13 +118,8 @@ public class IdpServerApplication {
         WebAuthnExecutorLoader.load(authenticationDependencyContainer);
     authenticationDependencyContainer.register(WebAuthnExecutors.class, webAuthnExecutors);
 
-    Map<AuthenticationInteractionType, AuthenticationInteractor> loadedInteractors =
-        AuthenticationInteractorLoader.load(authenticationDependencyContainer);
-    HashMap<AuthenticationInteractionType, AuthenticationInteractor> interactors =
-        new HashMap<>(loadedInteractors);
-
     AuthenticationInteractors authenticationInteractors =
-        new AuthenticationInteractors(interactors);
+        AuthenticationInteractorLoader.load(authenticationDependencyContainer);
 
     this.idpServerStarterApi =
         TransactionInterceptor.createProxy(

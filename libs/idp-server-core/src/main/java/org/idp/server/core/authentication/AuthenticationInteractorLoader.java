@@ -10,7 +10,7 @@ public class AuthenticationInteractorLoader {
   private static final Logger log =
       Logger.getLogger(AuthenticationInteractorLoader.class.getName());
 
-  public static Map<AuthenticationInteractionType, AuthenticationInteractor> load(
+  public static AuthenticationInteractors load(
       AuthenticationDependencyContainer container) {
 
     Map<AuthenticationInteractionType, AuthenticationInteractor> interactors = new HashMap<>();
@@ -23,6 +23,6 @@ public class AuthenticationInteractorLoader {
       log.info("Dynamic Registered Authentication interactor: " + factory.type().name());
     }
 
-    return interactors;
+    return new AuthenticationInteractors(interactors);
   }
 }
