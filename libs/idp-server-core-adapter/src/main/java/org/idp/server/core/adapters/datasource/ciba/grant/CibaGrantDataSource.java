@@ -18,7 +18,7 @@ public class CibaGrantDataSource implements CibaGrantRepository {
 
   @Override
   public void register(CibaGrant cibaGrant) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                     INSERT INTO public.ciba_grant
@@ -75,7 +75,7 @@ public class CibaGrantDataSource implements CibaGrantRepository {
 
   @Override
   public void update(CibaGrant cibaGrant) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -94,7 +94,7 @@ public class CibaGrantDataSource implements CibaGrantRepository {
 
   @Override
   public CibaGrant find(AuthReqId authReqId) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
             SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
@@ -116,7 +116,7 @@ public class CibaGrantDataSource implements CibaGrantRepository {
 
   @Override
   public void delete(CibaGrant cibaGrant) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
             DELETE FROM ciba_grant WHERE backchannel_authentication_request_id = ?;

@@ -14,7 +14,7 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
 
   @Override
   public void register(AuthorizationRequest authorizationRequest) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -29,7 +29,7 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
 
   @Override
   public AuthorizationRequest get(AuthorizationRequestIdentifier authorizationRequestIdentifier) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
             SELECT id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, custom_params FROM authorization_request
@@ -49,7 +49,7 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
 
   @Override
   public AuthorizationRequest find(AuthorizationRequestIdentifier authorizationRequestIdentifier) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """

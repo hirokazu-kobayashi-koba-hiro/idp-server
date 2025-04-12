@@ -15,7 +15,7 @@ public class VerifiableCredentialTransactionDataSource
 
   @Override
   public void register(VerifiableCredentialTransaction verifiableCredentialTransaction) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                     INSERT INTO public.verifiable_credential_transaction
@@ -29,7 +29,7 @@ public class VerifiableCredentialTransactionDataSource
 
   @Override
   public VerifiableCredentialTransaction find(TransactionId transactionId) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """

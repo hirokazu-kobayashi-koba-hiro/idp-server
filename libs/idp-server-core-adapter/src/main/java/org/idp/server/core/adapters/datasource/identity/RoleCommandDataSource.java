@@ -13,7 +13,7 @@ public class RoleCommandDataSource implements RoleCommandRepository {
 
   @Override
   public void register(Tenant tenant, Role role) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -36,7 +36,7 @@ public class RoleCommandDataSource implements RoleCommandRepository {
 
   @Override
   public void bulkRegister(Tenant tenant, Roles roles) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     bulkRegisterRole(tenant, roles, sqlExecutor);
     bulkRegisterPermission(roles, sqlExecutor);

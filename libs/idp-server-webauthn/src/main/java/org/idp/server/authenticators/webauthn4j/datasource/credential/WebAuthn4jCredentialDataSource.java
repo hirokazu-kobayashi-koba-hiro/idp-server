@@ -15,7 +15,7 @@ public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepos
 
   @Override
   public void register(WebAuthn4jCredential credential) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
             INSERT INTO public.webauthn_credentials (id, idp_user_id, rp_id, attestation_object, sign_count)
@@ -33,7 +33,7 @@ public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepos
 
   @Override
   public WebAuthn4jCredentials findAll(String userId) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """

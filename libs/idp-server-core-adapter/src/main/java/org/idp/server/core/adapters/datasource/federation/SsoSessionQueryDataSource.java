@@ -17,7 +17,7 @@ public class SsoSessionQueryDataSource implements SsoSessionQueryRepository {
 
   @Override
   public <T> T get(State state, Class<T> clazz) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """

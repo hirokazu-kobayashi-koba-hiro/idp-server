@@ -12,7 +12,7 @@ public class TenantDataSource implements TenantRepository {
 
   @Override
   public void register(Tenant tenant) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -30,7 +30,7 @@ public class TenantDataSource implements TenantRepository {
 
   @Override
   public Tenant get(TenantIdentifier tenantIdentifier) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -55,7 +55,7 @@ public class TenantDataSource implements TenantRepository {
 
   @Override
   public Tenant getAdmin() {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """

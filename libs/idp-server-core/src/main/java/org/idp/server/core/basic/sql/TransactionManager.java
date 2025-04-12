@@ -1,88 +1,77 @@
 package org.idp.server.core.basic.sql;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class TransactionManager {
   private static final ThreadLocal<Connection> connectionHolder = new ThreadLocal<>();
-  private static String dbUrl;
-  private static String dbUsername;
-  private static String dbPassword;
+  private static ConnectionProvider connectionProvider;
 
-  public static void setConnectionConfig(String url, String username, String password) {
-    dbUrl = url;
-    dbUsername = username;
-    dbPassword = password;
+  public static void configure(ConnectionProvider provider) {
+    connectionProvider = provider;
   }
 
-  private static Connection createConnection() {
-    if (dbUrl == null || dbUsername == null || dbPassword == null) {
-      throw new SqlRuntimeException(
-          "Database connection is not configured. Call setConnectionConfig() first.");
-    }
-    try {
-      Connection connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
-      connection.setAutoCommit(false);
-      return connection;
-    } catch (SQLException exception) {
-      throw new SqlRuntimeException("Failed to create connection", exception);
-    }
-  }
-
-  public static void beginTransaction() {
+  public static void createConnection(Dialect dialect) {
     if (connectionHolder.get() != null) {
-      throw new SqlRuntimeException("Transaction already started in this thread.");
+      throw new SqlRuntimeException("Transaction already started");
     }
-    connectionHolder.set(createConnection());
+    OperationContext.set(OperationType.READ);
+    Connection conn = connectionProvider.getConnection(dialect);
+    connectionHolder.set(conn);
+  }
+
+  public static void beginTransaction(Dialect dialect) {
+    if (connectionHolder.get() != null) {
+      throw new SqlRuntimeException("Transaction already started");
+    }
+    OperationContext.set(OperationType.WRITE);
+    Connection conn = connectionProvider.getConnection(dialect);
+    connectionHolder.set(conn);
+  }
+
+  public static Connection getConnection() {
+    Connection conn = connectionHolder.get();
+    if (conn == null) {
+      throw new SqlRuntimeException("No active transaction");
+    }
+    return conn;
   }
 
   public static void commitTransaction() {
-    Connection connection = connectionHolder.get();
-    if (connection == null) {
-      throw new SqlRuntimeException("No active transaction to commit.");
-    }
+    Connection conn = connectionHolder.get();
+    if (conn == null) return;
     try {
-      connection.commit();
-    } catch (SQLException exception) {
-      throw new SqlRuntimeException("Failed to commit transaction", exception);
+      conn.commit();
+    } catch (SQLException e) {
+      throw new SqlRuntimeException("Failed to commit transaction", e);
     } finally {
       closeConnection();
     }
   }
 
   public static void rollbackTransaction() {
-    Connection connection = connectionHolder.get();
-    if (connection == null) {
-      throw new SqlRuntimeException("No active transaction to rollback.");
-    }
+    Connection conn = connectionHolder.get();
+    if (conn == null) return;
     try {
-      connection.rollback();
-    } catch (SQLException exception) {
-      throw new SqlRuntimeException("Failed to rollback transaction", exception);
+      conn.rollback();
+    } catch (SQLException e) {
+      throw new SqlRuntimeException("Failed to rollback transaction", e);
     } finally {
       closeConnection();
     }
   }
 
-  private static void closeConnection() {
-    Connection connection = connectionHolder.get();
-    if (connection != null) {
+  public static void closeConnection() {
+    Connection conn = connectionHolder.get();
+    if (conn != null) {
       try {
-        connection.close();
-      } catch (SQLException exception) {
-        throw new SqlRuntimeException("Failed to close connection", exception);
+        conn.close();
+      } catch (SQLException e) {
+        throw new SqlRuntimeException("Failed to close connection", e);
       } finally {
         connectionHolder.remove();
+        OperationContext.clear();
       }
     }
-  }
-
-  public static Connection getConnection() {
-    Connection connection = connectionHolder.get();
-    if (connection == null) {
-      throw new SqlRuntimeException("No active transaction. Call beginTransaction() first.");
-    }
-    return connection;
   }
 }

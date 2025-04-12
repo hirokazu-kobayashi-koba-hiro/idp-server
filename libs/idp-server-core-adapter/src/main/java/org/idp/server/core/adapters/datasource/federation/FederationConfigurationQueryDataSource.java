@@ -24,7 +24,7 @@ public class FederationConfigurationQueryDataSource
       FederationType federationType,
       SsoProvider ssoProvider,
       Class<T> clazz) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                 SELECT id, payload FROM federation_configurations

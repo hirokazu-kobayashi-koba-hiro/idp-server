@@ -3,9 +3,10 @@ package org.idp.server.core.tenant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.basic.json.JsonReadable;
 import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvider;
 import org.idp.server.core.basic.dependency.protcol.DefaultAuthorizationProvider;
+import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.core.basic.sql.Dialect;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class Tenant implements JsonReadable {
@@ -15,6 +16,7 @@ public class Tenant implements JsonReadable {
   TenantDomain domain;
   // TODO
   AuthorizationProtocolProvider authorizationProtocolProvider;
+  Dialect dialect;
 
   public Tenant() {}
 
@@ -24,8 +26,6 @@ public class Tenant implements JsonReadable {
     this.name = name;
     this.type = type;
     this.domain = domain;
-    this.authorizationProtocolProvider =
-        DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
   }
 
   public TenantIdentifier identifier() {
@@ -77,9 +77,18 @@ public class Tenant implements JsonReadable {
   }
 
   public AuthorizationProtocolProvider authorizationProtocolProvider() {
+
     if (authorizationProtocolProvider == null) {
       return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
     }
     return authorizationProtocolProvider;
+  }
+
+  public Dialect dialet() {
+
+    if (dialect == null) {
+      return Dialect.POSTGRESQL;
+    }
+    return dialect;
   }
 }

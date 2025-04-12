@@ -22,7 +22,7 @@ public class SecurityEventHookConfigurationQueryDataSource
 
   @Override
   public SecurityEventHookConfigurations find(Tenant tenant) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         selectSql

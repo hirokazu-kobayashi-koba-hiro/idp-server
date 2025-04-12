@@ -14,7 +14,7 @@ public class SsoSessionCommandDataSource implements SsoSessionCommandRepository 
 
   @Override
   public <T> void register(SsoSessionIdentifier identifier, T payload) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -35,7 +35,7 @@ public class SsoSessionCommandDataSource implements SsoSessionCommandRepository 
 
   @Override
   public void delete(SsoSessionIdentifier identifier) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """

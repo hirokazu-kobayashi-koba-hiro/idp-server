@@ -17,7 +17,7 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
 
   @Override
   public void register(AuthorizationCodeGrant authorizationCodeGrant) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                     INSERT INTO public.authorization_code_grant
@@ -74,7 +74,7 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
 
   @Override
   public AuthorizationCodeGrant find(AuthorizationCode authorizationCode) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                 SELECT authorization_request_id, tenant_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, expired_at, consent_claims
@@ -93,7 +93,7 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
 
   @Override
   public void delete(AuthorizationCodeGrant authorizationCodeGrant) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                 DELETE FROM authorization_code_grant

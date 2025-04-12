@@ -11,7 +11,7 @@ public class OrganizationDataSource implements OrganizationRepository {
 
   @Override
   public void register(Organization organization) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlOrganizationTemplate =
         """
@@ -50,7 +50,7 @@ public class OrganizationDataSource implements OrganizationRepository {
 
   @Override
   public void update(Organization organization) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -71,7 +71,7 @@ public class OrganizationDataSource implements OrganizationRepository {
 
   @Override
   public Organization get(OrganizationIdentifier identifier) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """

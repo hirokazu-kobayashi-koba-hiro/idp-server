@@ -19,7 +19,7 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public void register(Tenant tenant, User user) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                 INSERT INTO public.idp_user
@@ -65,7 +65,7 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public User get(String userId) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate = String.format(selectSql, "WHERE idp_user.id = ?");
     List<Object> params = new ArrayList<>();
@@ -82,7 +82,7 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public User findBy(Tenant tenant, String email, String providerId) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         String.format(
@@ -108,7 +108,7 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public List<User> findList(Tenant tenant, int limit, int offset) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         String.format(selectSql, """
@@ -135,7 +135,7 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public void update(User user) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
               UPDATE public.idp_user
@@ -171,7 +171,7 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public User findByProvider(String tenantId, String providerId, String providerUserId) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         String.format(

@@ -16,7 +16,7 @@ public class SecurityEventDataSource implements SecurityEventRepository {
 
   @Override
   public void register(SecurityEvent securityEvent) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                 INSERT INTO public.security_event (id, type, description, tenant_id, tenant_name, client_id, client_name, user_id, user_name, login_hint, ip_address, user_agent, detail)

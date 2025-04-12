@@ -11,9 +11,7 @@ import org.idp.server.core.basic.dependency.ApplicationComponentContainerLoader;
 import org.idp.server.core.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.core.basic.dependency.protcol.ProtocolContainer;
 import org.idp.server.core.basic.dependency.protcol.ProtocolContainerLoader;
-import org.idp.server.core.basic.sql.DatabaseConfig;
-import org.idp.server.core.basic.sql.TransactionInterceptor;
-import org.idp.server.core.basic.sql.TransactionManager;
+import org.idp.server.core.basic.sql.*;
 import org.idp.server.core.ciba.CibaFlowApi;
 import org.idp.server.core.ciba.CibaProtocol;
 import org.idp.server.core.ciba.CibaProtocols;
@@ -47,6 +45,7 @@ import org.idp.server.core.security.event.OAuthFlowEventPublisher;
 import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.hook.SecurityEventHooksLoader;
+import org.idp.server.core.tenant.TenantDialectProvider;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.token.*;
 import org.idp.server.core.userinfo.UserinfoApi;
@@ -77,8 +76,8 @@ public class IdpServerApplication {
       PasswordVerificationDelegation passwordVerificationDelegation,
       SecurityEventPublisher securityEventPublisher) {
 
-    TransactionManager.setConnectionConfig(
-        databaseConfig.url(), databaseConfig.username(), databaseConfig.password());
+    ContextAwareConnectionProvider provider = new ContextAwareConnectionProvider(databaseConfig);
+    TransactionManager.configure(provider);
 
     ApplicationComponentDependencyContainer dependencyContainer =
         new ApplicationComponentDependencyContainer();
@@ -133,6 +132,8 @@ public class IdpServerApplication {
     AuthenticationInteractors authenticationInteractors =
         AuthenticationInteractorLoader.load(authenticationDependencyContainer);
 
+    TenantDialectProvider tenantDialectProvider = new TenantDialectProvider(tenantRepository);
+
     this.idpServerStarterApi =
         TransactionInterceptor.createProxy(
             new IdpServerStarterEntryService(
@@ -143,7 +144,9 @@ public class IdpServerApplication {
                 roleCommandRepository,
                 serverConfigurationRepository,
                 passwordEncodeDelegation),
-            IdpServerStarterApi.class);
+            IdpServerStarterApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
 
     OAuthFlowEventPublisher oAuthFLowEventPublisher =
         new OAuthFlowEventPublisher(securityEventPublisher);
@@ -165,7 +168,9 @@ public class IdpServerApplication {
                 userRepository,
                 tenantRepository,
                 oAuthFLowEventPublisher),
-            OAuthFlowApi.class);
+            OAuthFlowApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
 
     this.tokenApi =
         TransactionInterceptor.createProxy(
@@ -173,14 +178,18 @@ public class IdpServerApplication {
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 userRepository,
                 tenantRepository),
-            TokenApi.class);
+            TokenApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
 
     this.oidcMetaDataApi =
         TransactionInterceptor.createProxy(
             new OidcMetaDataEntryService(
                 tenantRepository,
                 new DiscoveryProtocols(protocolContainer.resolveAll(DiscoveryProtocol.class))),
-            OidcMetaDataApi.class);
+            OidcMetaDataApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
 
     this.userinfoApi =
         TransactionInterceptor.createProxy(
@@ -188,7 +197,9 @@ public class IdpServerApplication {
                 new UserinfoProtocols(protocolContainer.resolveAll(UserinfoProtocol.class)),
                 userRepository,
                 tenantRepository),
-            UserinfoApi.class);
+            UserinfoApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
 
     this.cibaFlowApi =
         TransactionInterceptor.createProxy(
@@ -196,13 +207,17 @@ public class IdpServerApplication {
                 new CibaProtocols(protocolContainer.resolveAll(CibaProtocol.class)),
                 userRepository,
                 tenantRepository),
-            CibaFlowApi.class);
+            CibaFlowApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
 
     this.securityEventApi =
         TransactionInterceptor.createProxy(
             new SecurityEventEntryService(
                 tenantRepository, securityEventRepository, securityEventHooks, hookQueryRepository),
-            SecurityEventApi.class);
+            SecurityEventApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
 
     this.onboardingApi =
         TransactionInterceptor.createProxy(
@@ -211,23 +226,31 @@ public class IdpServerApplication {
                 organizationRepository,
                 userRepository,
                 serverConfigurationRepository),
-            OnboardingApi.class);
+            OnboardingApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
 
     this.serverManagementApi =
         TransactionInterceptor.createProxy(
             new ServerManagementEntryService(tenantRepository, serverConfigurationRepository),
-            ServerManagementApi.class);
+            ServerManagementApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
 
     this.clientManagementApi =
         TransactionInterceptor.createProxy(
             new ClientManagementEntryService(
                 tenantRepository, new ClientConfigurationHandler(clientConfigurationRepository)),
-            ClientManagementApi.class);
+            ClientManagementApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
 
     this.userManagementApi =
         TransactionInterceptor.createProxy(
             new UserManagementEntryService(tenantRepository, userRepository),
-            UserManagementApi.class);
+            UserManagementApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
 
     this.operatorAuthenticationApi =
         TransactionInterceptor.createProxy(
@@ -235,7 +258,9 @@ public class IdpServerApplication {
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 tenantRepository,
                 userRepository),
-            OperatorAuthenticationApi.class);
+            OperatorAuthenticationApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
   }
 
   public OAuthFlowApi oAuthFlowApi() {

@@ -15,7 +15,7 @@ public class AuthenticationTransactionCommandDataSource
 
   @Override
   public <T> void register(AuthenticationTransactionIdentifier identifier, String type, T payload) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -36,7 +36,7 @@ public class AuthenticationTransactionCommandDataSource
 
   @Override
   public <T> void update(AuthenticationTransactionIdentifier identifier, String type, T payload) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """

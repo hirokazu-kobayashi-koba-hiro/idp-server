@@ -13,7 +13,7 @@ public class PermissionCommandDataSource implements PermissionCommandRepository 
 
   @Override
   public void register(Tenant tenant, Permission permission) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -36,7 +36,7 @@ public class PermissionCommandDataSource implements PermissionCommandRepository 
 
   @Override
   public void bulkRegister(Tenant tenant, Permissions permissions) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(

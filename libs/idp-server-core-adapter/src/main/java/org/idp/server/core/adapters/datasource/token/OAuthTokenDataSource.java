@@ -29,7 +29,7 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
 
   @Override
   public void register(OAuthToken oAuthToken) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                     INSERT INTO public.oauth_token (id, tenant_id, token_issuer, token_type, encrypted_access_token, hashed_access_token, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, expires_in, access_token_expired_at, access_token_created_at, encrypted_refresh_token, hashed_refresh_token, refresh_token_expired_at, refresh_token_created_at, id_token, client_certification_thumbprint, c_nonce, c_nonce_expires_in)
@@ -41,7 +41,7 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
 
   @Override
   public OAuthToken find(Tenant tenant, AccessTokenEntity accessTokenEntity) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         selectSql
             + """
@@ -62,7 +62,7 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
 
   @Override
   public OAuthToken find(Tenant tenant, RefreshTokenEntity refreshTokenEntity) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         selectSql
             + """
@@ -83,7 +83,7 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
 
   @Override
   public void delete(OAuthToken oAuthToken) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate = """
             DELETE FROM oauth_token WHERE id = ?;
             """;

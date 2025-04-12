@@ -22,7 +22,7 @@ public class ServerConfigurationDataSource implements ServerConfigurationReposit
 
   @Override
   public void register(ServerConfiguration serverConfiguration) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -40,7 +40,7 @@ public class ServerConfigurationDataSource implements ServerConfigurationReposit
 
   @Override
   public ServerConfiguration get(TenantIdentifier tenantIdentifier) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                     SELECT tenant_id, token_issuer, payload

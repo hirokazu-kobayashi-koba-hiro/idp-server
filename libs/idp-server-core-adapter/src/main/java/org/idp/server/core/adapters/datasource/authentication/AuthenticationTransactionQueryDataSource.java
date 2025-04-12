@@ -18,7 +18,7 @@ public class AuthenticationTransactionQueryDataSource
 
   @Override
   public <T> T get(AuthenticationTransactionIdentifier identifier, String type, Class<T> clazz) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
             SELECT id, payload

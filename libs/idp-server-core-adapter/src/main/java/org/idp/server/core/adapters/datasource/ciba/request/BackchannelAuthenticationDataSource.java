@@ -19,7 +19,7 @@ public class BackchannelAuthenticationDataSource
 
   @Override
   public void register(BackchannelAuthenticationRequest request) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                 INSERT INTO public.backchannel_authentication_request
@@ -92,7 +92,7 @@ public class BackchannelAuthenticationDataSource
   @Override
   public BackchannelAuthenticationRequest find(
       BackchannelAuthenticationRequestIdentifier identifier) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                         SELECT id, tenant_id, profile, delivery_mode, scopes, client_id, id_token_hint, login_hint, login_hint_token, acr_values, user_code, client_notification_token, binding_message, requested_expiry, request_object, authorization_details
@@ -114,7 +114,7 @@ public class BackchannelAuthenticationDataSource
 
   @Override
   public void delete(BackchannelAuthenticationRequestIdentifier identifier) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
             DELETE FROM backchannel_authentication_request WHERE id = ?;

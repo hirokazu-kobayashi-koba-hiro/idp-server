@@ -18,7 +18,7 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
 
   @Override
   public void register(AuthorizationGranted authorizationGranted) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -91,7 +91,7 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
   @Override
   public AuthorizationGranted find(
       TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, User user) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -118,7 +118,7 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
 
   @Override
   public void update(AuthorizationGranted authorizationGranted) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """

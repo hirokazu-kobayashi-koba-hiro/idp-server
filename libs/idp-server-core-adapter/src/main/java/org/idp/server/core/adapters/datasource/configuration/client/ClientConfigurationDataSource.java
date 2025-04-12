@@ -24,7 +24,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   @Override
   public void register(Tenant tenant, ClientConfiguration clientConfiguration) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -44,7 +44,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   @Override
   public ClientConfiguration get(Tenant tenant, RequestedClientId requestedClientId) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                     SELECT id, id_alias, tenant_id, payload
@@ -77,7 +77,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   @Override
   public ClientConfiguration get(Tenant tenant, ClientIdentifier clientIdentifier) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                         SELECT id, id_alias, tenant_id, payload
@@ -96,7 +96,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   @Override
   public List<ClientConfiguration> find(Tenant tenant, int limit, int offset) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                         SELECT id, id_alias, tenant_id, payload
@@ -113,7 +113,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   @Override
   public void update(Tenant tenant, ClientConfiguration clientConfiguration) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
@@ -136,7 +136,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   @Override
   public void delete(Tenant tenant, RequestedClientId requestedClientId) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """

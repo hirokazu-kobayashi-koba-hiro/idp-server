@@ -1,25 +1,24 @@
 package org.idp.server.core.basic.sql;
 
+import java.util.Map;
+
 public class DatabaseConfig {
-  String url;
-  String username;
-  String password;
+  Map<Dialect, DbCredentials> writerConfigs;
+  Map<Dialect, DbCredentials> readerConfigs;
 
-  public DatabaseConfig(String url, String username, String password) {
-    this.url = url;
-    this.username = username;
-    this.password = password;
+  public DatabaseConfig() {}
+
+  public DatabaseConfig(
+      Map<Dialect, DbCredentials> writerConfigs, Map<Dialect, DbCredentials> readerConfigs) {
+    this.writerConfigs = writerConfigs;
+    this.readerConfigs = readerConfigs;
   }
 
-  public String url() {
-    return url;
+  public Map<Dialect, DbCredentials> writerConfigs() {
+    return writerConfigs;
   }
 
-  public String username() {
-    return username;
-  }
-
-  public String password() {
-    return password;
+  public Map<Dialect, DbCredentials> readerConfigs() {
+    return readerConfigs;
   }
 }
