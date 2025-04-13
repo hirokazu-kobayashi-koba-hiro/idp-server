@@ -1,4 +1,3 @@
-
 CREATE TABLE webauthn_credentials
 (
     id                 BYTEA PRIMARY KEY,
@@ -14,4 +13,3 @@ CREATE TABLE webauthn_credentials
 CREATE INDEX idx_webauthn_user_id ON webauthn_credentials (idp_user_id);
 CREATE INDEX idx_webauthn_rp_id ON webauthn_credentials (rp_id);
 CREATE INDEX idx_webauthn_user_rp ON webauthn_credentials (idp_user_id, rp_id);
-

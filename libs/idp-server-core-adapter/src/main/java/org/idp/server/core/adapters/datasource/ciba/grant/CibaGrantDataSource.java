@@ -21,7 +21,7 @@ public class CibaGrantDataSource implements CibaGrantRepository {
     String sqlTemplate =
         """
                     INSERT INTO public.ciba_grant
-                    (backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims)
+                    (backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb);
                     """;
     List<Object> params = new ArrayList<>();
@@ -96,7 +96,7 @@ public class CibaGrantDataSource implements CibaGrantRepository {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
+            SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
             FROM ciba_grant
             WHERE auth_req_id = ?;
             """;

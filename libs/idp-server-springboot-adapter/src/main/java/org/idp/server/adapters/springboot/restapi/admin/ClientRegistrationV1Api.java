@@ -3,6 +3,8 @@ package org.idp.server.adapters.springboot.restapi.admin;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.admin.ClientManagementApi;
+import org.idp.server.core.tenant.AdminTenantContext;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +22,8 @@ public class ClientRegistrationV1Api implements ParameterTransformable {
   @PostMapping
   public ResponseEntity<?> request(@RequestBody(required = false) String body) {
 
-    clientManagementApi.register(body);
+    TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
+    clientManagementApi.register(adminTenantIdentifier, body);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 }

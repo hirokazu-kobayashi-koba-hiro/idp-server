@@ -38,7 +38,7 @@ class ModelConverter {
     TenantIdentifier tenantIdentifier = new TenantIdentifier(stringMap.get("tenant_id"));
     AuthReqId authReqId = new AuthReqId(stringMap.get("auth_req_id"));
     ExpiredAt expiredAt = new ExpiredAt(stringMap.get("expired_at"));
-    Interval interval = new Interval(stringMap.get("interval"));
+    Interval interval = new Interval(stringMap.get("polling_interval"));
     CibaGrantStatus status = CibaGrantStatus.valueOf(stringMap.get("status"));
     User user = jsonConverter.read(stringMap.get("user_payload"), User.class);
     Authentication authentication =

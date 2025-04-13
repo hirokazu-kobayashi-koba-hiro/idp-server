@@ -322,7 +322,7 @@ CREATE TABLE ciba_grant
     tenant_id                             CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
     auth_req_id                           VARCHAR(255)            NOT NULL,
     expired_at                            TEXT                    NOT NULL,
-    interval                              TEXT                    NOT NULL,
+    polling_interval                      TEXT                    NOT NULL,
     status                                VARCHAR(100)            NOT NULL,
     user_id                               CHAR(36)                NOT NULL,
     user_payload                          JSONB                   NOT NULL,
@@ -434,13 +434,13 @@ CREATE INDEX idx_security_event_hook_configuration_order ON security_event_hook_
 
 CREATE TABLE federation_configurations
 (
-    id                 CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id          CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
-    type               VARCHAR(255)            NOT NULL,
+    id                CHAR(36)                NOT NULL PRIMARY KEY,
+    tenant_id         CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    type              VARCHAR(255)            NOT NULL,
     sso_provider_name VARCHAR(255)            NOt NULL,
-    payload            JSONB                   NOT NULL,
-    created_at         TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at         TIMESTAMP DEFAULT now() NOT NULL,
+    payload           JSONB                   NOT NULL,
+    created_at        TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at        TIMESTAMP DEFAULT now() NOT NULL,
     CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider_name)
 );
 
