@@ -70,10 +70,10 @@ federatable-oidc-providers --> oidc
 ssf --> rp-backend
 
 subgraph Authentication
-password[ Password Interactor]    
+password[Password Interactor]
 webauthn[🔐 Webauthn Interactor]
 email[📧 Email Interactor]
-legacy[ LegacyID Interactor]
+legacy[LegacyID Interactor]
 end
 
 authentication --> password
@@ -120,7 +120,7 @@ foundation for modern identity management.
 |                     | API Authorization                     | ✅         | ✅    | ✅     | ✅            | Secures APIs and issues JWT-based access tokens using OAuth 2.0.                                                                                                                          |
 |                     | Machine-to-Machine Authentication     | ✅         | ✅    | ✅     | ✅            | Enables authentication for services using client credentials.                                                                                                                             |
 |                     | Secure Session Management             | ✅         | ✅    | ✅     | ✅            | Supports token expiration, refresh tokens, and logout mechanisms.                                                                                                                         |
-| **Security**        | Authentication Flows with Hooks       | ✅         | ✅    | ✅     | ✅            | Supports executing multiple custom hooks in a specific order for each authentication securityEvent, based on tenant-configurable settings.                                                        |
+| **Security**        | Authentication Flows with Hooks       | ✅         | ✅    | ✅     | ✅            | Supports executing multiple custom hooks in a specific order for each authentication securityEvent, based on tenant-configurable settings.                                                |
 |                     | Extensible Identity Workflows         | ⚠️        | ❌    | ❌     | ✅            | Supports custom rules and hooks for advanced identity management.                                                                                                                         |
 |                     | User Consent & Privacy Compliance     | ✅         | ✅    | ✅     | ✅            | Ensures GDPR, CCPA, and other regulatory compliance based on fapi grant management.                                                                                                       |
 |                     | Secure Token Storage                  | ✅         | ✅    | ✅     | ✅            | Manages access tokens securely to prevent leaks.                                                                                                                                          |
@@ -141,6 +141,7 @@ foundation for modern identity management.
 | **Developer Tools** | SDKs & Libraries                      | ⚠️        | ✅    | ✅     | ✅            | Provides SDKs for React, Angular, Vue, Node.js, .NET, Java, and more.                                                                                                                     |
 |                     | Custom Hooks & Rules                  | ⚠️        | ❌    | ❌     | ✅            | Allows developers to implement custom business logic.                                                                                                                                     |
 |                     | Custom Branding                       | ⚠️        | ❌    | ❌     | ✅            | Enables UI customization for authentication pages, emails, and error messages.                                                                                                            |
+| **Infra**           | Database                              | ⚠️        | ❌    | ❌     | ✅            | Supports database routing per tenant. now is supported postgresql                                                                                                                         |
 
 ## Getting Started
 
