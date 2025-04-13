@@ -35,11 +35,11 @@ public class SecurityEventListerService {
 
       securityEventApi.handle(securityEvent);
       taskExecutor.execute(
-              new TenantContextAwareEventRunnable(
-                      securityEvent,
-                      e -> {
-                        securityEventApi.handle(e);
-                      }));
+          new TenantContextAwareEventRunnable(
+              securityEvent,
+              e -> {
+                securityEventApi.handle(e);
+              }));
     } finally {
 
       TenantContext.clear();

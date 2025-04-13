@@ -9,7 +9,8 @@ public class TenantContextAwareEventRunnable implements Runnable {
   SecurityEvent securityEvent;
   Consumer<SecurityEvent> handler;
 
-  public TenantContextAwareEventRunnable(SecurityEvent securityEvent, Consumer<SecurityEvent> handler) {
+  public TenantContextAwareEventRunnable(
+      SecurityEvent securityEvent, Consumer<SecurityEvent> handler) {
     this.securityEvent = securityEvent;
     this.handler = handler;
   }

@@ -1,19 +1,20 @@
-package org.idp.server.core.basic.sql;
+package org.idp.server.core;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.logging.Logger;
+import org.idp.server.core.basic.sql.*;
 import org.idp.server.core.tenant.TenantContext;
 import org.idp.server.core.tenant.TenantIdentifier;
 
-public class TransactionInterceptor implements InvocationHandler {
+public class EntryServiceInterceptor implements InvocationHandler {
   private final Object target;
   private final OperationType operationType;
   private final DialectProvider dialectProvider;
-  Logger log = Logger.getLogger(TransactionInterceptor.class.getName());
+  Logger log = Logger.getLogger(EntryServiceInterceptor.class.getName());
 
-  public TransactionInterceptor(
+  public EntryServiceInterceptor(
       Object target, OperationType operationType, DialectProvider dialectProvider) {
     this.target = target;
     this.operationType = operationType;
@@ -74,6 +75,6 @@ public class TransactionInterceptor implements InvocationHandler {
         Proxy.newProxyInstance(
             interfaceType.getClassLoader(),
             new Class<?>[] {interfaceType},
-            new TransactionInterceptor(target, opType, provider));
+            new EntryServiceInterceptor(target, opType, provider));
   }
 }
