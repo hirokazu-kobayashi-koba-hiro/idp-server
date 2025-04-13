@@ -8,7 +8,7 @@ public class AdminTenantContext {
     tenantIdentifier = new TenantIdentifier(tenantId);
   }
 
-  public static TenantIdentifier get() {
+  public static TenantIdentifier getTenantIdentifier() {
     if (tenantIdentifier == null) {
       throw new RuntimeException("AdminTenantContext is not initialized");
     }

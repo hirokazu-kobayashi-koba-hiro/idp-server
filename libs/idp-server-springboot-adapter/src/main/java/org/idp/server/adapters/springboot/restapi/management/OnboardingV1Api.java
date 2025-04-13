@@ -5,7 +5,9 @@ import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.admin.OnboardingApi;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.tenant.AdminTenantContext;
 import org.idp.server.core.tenant.ServerDomain;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -31,7 +33,9 @@ public class OnboardingV1Api implements ParameterTransformable {
   public ResponseEntity<?> post(
       @AuthenticationPrincipal User operator, @RequestBody Map<String, Object> request) {
 
-    Map<String, Object> response = onboardingApi.initialize(operator, request);
+    TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
+    Map<String, Object> response =
+        onboardingApi.initialize(adminTenantIdentifier, operator, request);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

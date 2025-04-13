@@ -6,6 +6,7 @@ import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.token.TokenProtocol;
 import org.idp.server.core.token.TokenProtocols;
@@ -30,7 +31,8 @@ public class OperatorAuthenticationEntryService implements OperatorAuthenticatio
     this.userRepository = userRepository;
   }
 
-  public Pairs<User, String> authenticate(String authorizationHeader) {
+  public Pairs<User, String> authenticate(
+      TenantIdentifier adminTenantIdentifier, String authorizationHeader) {
     Tenant adminTenant = tenantRepository.getAdmin();
 
     TokenIntrospectionCreator tokenIntrospectionCreator =

@@ -4,6 +4,8 @@ import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.admin.IdpServerStarterApi;
+import org.idp.server.core.tenant.AdminTenantContext;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +27,8 @@ public class AdminRegistrationV1Api implements ParameterTransformable {
   @PostMapping
   public ResponseEntity<?> post(@RequestBody(required = false) Map<String, Object> body) {
 
-    Map<String, Object> response = idpServerStarterApi.initialize(body);
+    TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
+    Map<String, Object> response = idpServerStarterApi.initialize(adminTenantIdentifier, body);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

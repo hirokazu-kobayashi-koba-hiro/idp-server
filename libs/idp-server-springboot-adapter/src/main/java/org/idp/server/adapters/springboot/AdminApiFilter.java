@@ -7,8 +7,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.idp.server.core.admin.AdminCredentialConvertor;
 import org.idp.server.core.basic.http.BasicAuth;
-import org.idp.server.core.tenant.AdminTenantContext;
-import org.idp.server.core.tenant.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,8 +48,6 @@ public class AdminApiFilter extends OncePerRequestFilter {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       return;
     }
-
-    TenantContext.set(AdminTenantContext.get());
 
     filterChain.doFilter(request, response);
   }

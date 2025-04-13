@@ -20,10 +20,7 @@ import org.idp.server.core.oauth.identity.role.RoleCommandRepository;
 import org.idp.server.core.oauth.identity.role.Roles;
 import org.idp.server.core.organization.Organization;
 import org.idp.server.core.organization.OrganizationRepository;
-import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantDomain;
-import org.idp.server.core.tenant.TenantRepository;
-import org.idp.server.core.tenant.TenantType;
+import org.idp.server.core.tenant.*;
 
 @Transactional
 public class IdpServerStarterEntryService implements IdpServerStarterApi {
@@ -56,7 +53,8 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
   }
 
   @Override
-  public Map<String, Object> initialize(Map<String, Object> request) {
+  public Map<String, Object> initialize(
+      TenantIdentifier adminTenantIdentifier, Map<String, Object> request) {
 
     OrganizationRegistrationRequest organizationRequest =
         jsonConverter.read(request.get("organization"), OrganizationRegistrationRequest.class);

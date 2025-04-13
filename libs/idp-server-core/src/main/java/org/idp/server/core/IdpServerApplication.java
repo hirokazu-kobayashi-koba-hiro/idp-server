@@ -138,7 +138,7 @@ public class IdpServerApplication {
     TenantDialectProvider tenantDialectProvider = new TenantDialectProvider(tenantRepository);
 
     this.idpServerStarterApi =
-        EntryServiceInterceptor.createProxy(
+        TenantAwareEntryServiceProxy.createProxy(
             new IdpServerStarterEntryService(
                 organizationRepository,
                 tenantRepository,
@@ -162,7 +162,7 @@ public class IdpServerApplication {
         FederationInteractorLoader.load(federationDependencyContainer);
 
     this.oAuthFlowApi =
-        EntryServiceInterceptor.createProxy(
+        TenantAwareEntryServiceProxy.createProxy(
             new OAuthFlowEntryService(
                 new OAuthProtocols(protocolContainer.resolveAll(OAuthProtocol.class)),
                 oAuthSessionDelegate,
@@ -176,7 +176,7 @@ public class IdpServerApplication {
             tenantDialectProvider);
 
     this.tokenApi =
-        EntryServiceInterceptor.createProxy(
+        TenantAwareEntryServiceProxy.createProxy(
             new TokenEntryService(
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 userRepository,
@@ -186,7 +186,7 @@ public class IdpServerApplication {
             tenantDialectProvider);
 
     this.oidcMetaDataApi =
-        EntryServiceInterceptor.createProxy(
+        TenantAwareEntryServiceProxy.createProxy(
             new OidcMetaDataEntryService(
                 tenantRepository,
                 new DiscoveryProtocols(protocolContainer.resolveAll(DiscoveryProtocol.class))),
@@ -195,7 +195,7 @@ public class IdpServerApplication {
             tenantDialectProvider);
 
     this.userinfoApi =
-        EntryServiceInterceptor.createProxy(
+        TenantAwareEntryServiceProxy.createProxy(
             new UserinfoEntryService(
                 new UserinfoProtocols(protocolContainer.resolveAll(UserinfoProtocol.class)),
                 userRepository,
@@ -205,7 +205,7 @@ public class IdpServerApplication {
             tenantDialectProvider);
 
     this.cibaFlowApi =
-        EntryServiceInterceptor.createProxy(
+        TenantAwareEntryServiceProxy.createProxy(
             new CibaFlowEntryService(
                 new CibaProtocols(protocolContainer.resolveAll(CibaProtocol.class)),
                 userRepository,
@@ -215,7 +215,7 @@ public class IdpServerApplication {
             tenantDialectProvider);
 
     this.securityEventApi =
-        EntryServiceInterceptor.createProxy(
+        TenantAwareEntryServiceProxy.createProxy(
             new SecurityEventEntryService(
                 tenantRepository, securityEventRepository, securityEventHooks, hookQueryRepository),
             SecurityEventApi.class,
@@ -223,7 +223,7 @@ public class IdpServerApplication {
             tenantDialectProvider);
 
     this.onboardingApi =
-        EntryServiceInterceptor.createProxy(
+        TenantAwareEntryServiceProxy.createProxy(
             new OnboardingEntryService(
                 tenantRepository,
                 organizationRepository,
@@ -234,14 +234,14 @@ public class IdpServerApplication {
             tenantDialectProvider);
 
     this.serverManagementApi =
-        EntryServiceInterceptor.createProxy(
+        TenantAwareEntryServiceProxy.createProxy(
             new ServerManagementEntryService(tenantRepository, serverConfigurationRepository),
             ServerManagementApi.class,
             OperationType.WRITE,
             tenantDialectProvider);
 
     this.clientManagementApi =
-        EntryServiceInterceptor.createProxy(
+        TenantAwareEntryServiceProxy.createProxy(
             new ClientManagementEntryService(
                 tenantRepository, new ClientConfigurationHandler(clientConfigurationRepository)),
             ClientManagementApi.class,
@@ -249,14 +249,14 @@ public class IdpServerApplication {
             tenantDialectProvider);
 
     this.userManagementApi =
-        EntryServiceInterceptor.createProxy(
+        TenantAwareEntryServiceProxy.createProxy(
             new UserManagementEntryService(tenantRepository, userRepository),
             UserManagementApi.class,
             OperationType.WRITE,
             tenantDialectProvider);
 
     this.operatorAuthenticationApi =
-        EntryServiceInterceptor.createProxy(
+        TenantAwareEntryServiceProxy.createProxy(
             new OperatorAuthenticationEntryService(
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 tenantRepository,

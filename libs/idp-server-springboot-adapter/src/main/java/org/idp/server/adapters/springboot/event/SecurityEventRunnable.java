@@ -2,15 +2,13 @@ package org.idp.server.adapters.springboot.event;
 
 import java.util.function.Consumer;
 import org.idp.server.core.security.SecurityEvent;
-import org.idp.server.core.tenant.TenantContext;
 
-public class TenantContextAwareEventRunnable implements Runnable {
+public class SecurityEventRunnable implements Runnable {
 
   SecurityEvent securityEvent;
   Consumer<SecurityEvent> handler;
 
-  public TenantContextAwareEventRunnable(
-      SecurityEvent securityEvent, Consumer<SecurityEvent> handler) {
+  public SecurityEventRunnable(SecurityEvent securityEvent, Consumer<SecurityEvent> handler) {
     this.securityEvent = securityEvent;
     this.handler = handler;
   }
@@ -21,13 +19,6 @@ public class TenantContextAwareEventRunnable implements Runnable {
 
   @Override
   public void run() {
-    try {
-
-      TenantContext.set(securityEvent.tenantIdentifier());
-      handler.accept(securityEvent);
-
-    } finally {
-      TenantContext.clear();
-    }
+    handler.accept(securityEvent);
   }
 }

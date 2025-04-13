@@ -36,7 +36,8 @@ public class OnboardingEntryService implements OnboardingApi {
   }
 
   // TODO improve logic
-  public Map<String, Object> initialize(User operator, Map<String, Object> request) {
+  public Map<String, Object> initialize(
+      TenantIdentifier adminTenantIdentifier, User operator, Map<String, Object> request) {
 
     String organizationName = (String) request.getOrDefault("organization_name", "");
     String tenantName = (String) request.getOrDefault("tenant_name", "");

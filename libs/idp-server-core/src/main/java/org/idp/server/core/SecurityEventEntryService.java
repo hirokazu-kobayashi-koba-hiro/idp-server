@@ -6,6 +6,7 @@ import org.idp.server.core.security.SecurityEventApi;
 import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.handler.SecurityEventHandler;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 
 @Transactional
@@ -24,7 +25,7 @@ public class SecurityEventEntryService implements SecurityEventApi {
   }
 
   @Override
-  public void handle(SecurityEvent securityEvent) {
+  public void handle(TenantIdentifier tenantIdentifier, SecurityEvent securityEvent) {
     try {
 
       securityEventHandler.handle(securityEvent);

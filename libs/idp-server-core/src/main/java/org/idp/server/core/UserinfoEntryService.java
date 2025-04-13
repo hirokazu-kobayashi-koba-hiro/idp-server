@@ -36,9 +36,9 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
   }
 
   public UserinfoRequestResponse request(
-      TenantIdentifier tenantId, String authorizationHeader, String clientCert) {
+      TenantIdentifier tenantIdentifier, String authorizationHeader, String clientCert) {
 
-    Tenant tenant = tenantRepository.get(tenantId);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
     UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
     userinfoRequest.setClientCert(clientCert);
 

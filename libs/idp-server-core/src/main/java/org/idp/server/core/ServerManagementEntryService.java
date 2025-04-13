@@ -22,7 +22,11 @@ public class ServerManagementEntryService implements ServerManagementApi {
   }
 
   // TODO
-  public String register(TenantType tenantType, ServerDomain serverDomain, String serverConfig) {
+  public String register(
+      TenantIdentifier adminTenantIdentifier,
+      TenantType tenantType,
+      ServerDomain serverDomain,
+      String serverConfig) {
 
     TenantCreator tenantCreator = new TenantCreator(tenantType, serverDomain);
     Tenant newTenant = tenantCreator.create();

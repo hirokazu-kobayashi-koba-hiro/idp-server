@@ -5,16 +5,15 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.logging.Logger;
 import org.idp.server.core.basic.sql.*;
-import org.idp.server.core.tenant.TenantContext;
 import org.idp.server.core.tenant.TenantIdentifier;
 
-public class EntryServiceInterceptor implements InvocationHandler {
+public class TenantAwareEntryServiceProxy implements InvocationHandler {
   private final Object target;
   private final OperationType operationType;
   private final DialectProvider dialectProvider;
-  Logger log = Logger.getLogger(EntryServiceInterceptor.class.getName());
+  Logger log = Logger.getLogger(TenantAwareEntryServiceProxy.class.getName());
 
-  public EntryServiceInterceptor(
+  public TenantAwareEntryServiceProxy(
       Object target, OperationType operationType, DialectProvider dialectProvider) {
     this.target = target;
     this.operationType = operationType;
@@ -29,10 +28,10 @@ public class EntryServiceInterceptor implements InvocationHandler {
 
     if (isTransactional) {
       OperationContext.set(operationType);
-      TenantIdentifier tenantId = TenantContext.get();
+      TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
 
       TransactionManager.createConnection(Dialect.POSTGRESQL);
-      Dialect dialect = dialectProvider.provide(tenantId);
+      Dialect dialect = dialectProvider.provide(tenantIdentifier);
       TransactionManager.closeConnection();
 
       TransactionManager.beginTransaction(dialect);
@@ -68,6 +67,15 @@ public class EntryServiceInterceptor implements InvocationHandler {
     }
   }
 
+  private TenantIdentifier resolveTenantIdentifier(Object[] args) {
+    for (Object arg : args) {
+      if (arg instanceof TenantIdentifier tenantId) {
+        return tenantId;
+      }
+    }
+    throw new SqlRuntimeException("No TenantIdentifier found in method arguments.");
+  }
+
   @SuppressWarnings("unchecked")
   public static <T> T createProxy(
       T target, Class<T> interfaceType, OperationType opType, DialectProvider provider) {
@@ -75,6 +83,6 @@ public class EntryServiceInterceptor implements InvocationHandler {
         Proxy.newProxyInstance(
             interfaceType.getClassLoader(),
             new Class<?>[] {interfaceType},
-            new EntryServiceInterceptor(target, opType, provider));
+            new TenantAwareEntryServiceProxy(target, opType, provider));
   }
 }

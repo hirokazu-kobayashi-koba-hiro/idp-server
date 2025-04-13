@@ -3,7 +3,6 @@ package org.idp.server.adapters.springboot.event;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventApi;
-import org.idp.server.core.tenant.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -29,20 +28,14 @@ public class SecurityEventListerService {
   @Async
   @EventListener
   public void onEvent(SecurityEvent securityEvent) {
-    try {
-      TenantContext.set(securityEvent.tenantIdentifier());
-      log.info("onEvent: {}", securityEvent.toMap());
+    log.info("onEvent: {}", securityEvent.toMap());
 
-      securityEventApi.handle(securityEvent);
-      taskExecutor.execute(
-          new TenantContextAwareEventRunnable(
-              securityEvent,
-              e -> {
-                securityEventApi.handle(e);
-              }));
-    } finally {
-
-      TenantContext.clear();
-    }
+    securityEventApi.handle(securityEvent.tenantIdentifier(), securityEvent);
+    taskExecutor.execute(
+        new SecurityEventRunnable(
+            securityEvent,
+            event -> {
+              securityEventApi.handle(event.tenantIdentifier(), event);
+            }));
   }
 }
