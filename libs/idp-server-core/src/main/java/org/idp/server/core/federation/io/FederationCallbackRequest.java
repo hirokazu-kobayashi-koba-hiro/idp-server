@@ -2,6 +2,9 @@ package org.idp.server.core.federation.io;
 
 import java.util.Map;
 import org.idp.server.core.federation.FederationCallbackParameters;
+import org.idp.server.core.federation.SsoState;
+import org.idp.server.core.federation.SsoStateCoder;
+import org.idp.server.core.tenant.TenantIdentifier;
 
 public class FederationCallbackRequest {
 
@@ -15,5 +18,23 @@ public class FederationCallbackRequest {
 
   public FederationCallbackParameters parameters() {
     return new FederationCallbackParameters(params);
+  }
+
+  public String state() {
+    if (parameters().hasState()) {
+      return parameters().state().value();
+    }
+    return "";
+  }
+
+  public SsoState ssoState() {
+    if (parameters().hasState()) {
+      return SsoStateCoder.decode(state());
+    }
+    return new SsoState();
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return ssoState().tenantIdentifier();
   }
 }

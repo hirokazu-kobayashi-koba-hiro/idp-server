@@ -8,6 +8,7 @@ import org.idp.server.core.tenant.TenantIdentifier;
 
 public class OidcSsoSession implements Serializable, JsonReadable {
 
+  String ssoSessionId;
   String authorizationRequestId;
   String tenantId;
   String tokenIssuer;
@@ -21,6 +22,7 @@ public class OidcSsoSession implements Serializable, JsonReadable {
   public OidcSsoSession() {}
 
   public OidcSsoSession(
+      String ssoSessionId,
       String authorizationRequestId,
       String tenantId,
       String tokenIssuer,
@@ -30,6 +32,7 @@ public class OidcSsoSession implements Serializable, JsonReadable {
       String clientId,
       String redirectUri,
       String authorizationRequestUri) {
+    this.ssoSessionId = ssoSessionId;
     this.authorizationRequestId = authorizationRequestId;
     this.tenantId = tenantId;
     this.tokenIssuer = tokenIssuer;
@@ -86,6 +89,6 @@ public class OidcSsoSession implements Serializable, JsonReadable {
   }
 
   public SsoSessionIdentifier ssoSessionIdentifier() {
-    return new SsoSessionIdentifier(state);
+    return new SsoSessionIdentifier(ssoSessionId);
   }
 }

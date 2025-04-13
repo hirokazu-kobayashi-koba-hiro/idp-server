@@ -59,8 +59,9 @@ public class OidcFederationInteractor implements FederationInteractor {
       FederationCallbackRequest federationCallbackRequest,
       UserRepository userRepository) {
 
+    SsoState ssoState = federationCallbackRequest.ssoState();
     FederationCallbackParameters parameters = federationCallbackRequest.parameters();
-    OidcSsoSession session = sessionQueryRepository.get(parameters.state(), OidcSsoSession.class);
+    OidcSsoSession session = sessionQueryRepository.get(ssoState.ssoSessionIdentifier(), OidcSsoSession.class);
 
     OidcSsoConfiguration oidcSsoConfiguration =
         configurationQueryRepository.get(

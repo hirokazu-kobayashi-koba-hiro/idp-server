@@ -154,6 +154,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   }
 
   public FederationInteractionResult callbackFederation(
+      TenantIdentifier tenantIdentifier,
       FederationType federationType,
       SsoProvider ssoProvider,
       FederationCallbackRequest callbackRequest,
