@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.logging.Logger;
 import org.idp.server.core.basic.sql.*;
+import org.idp.server.core.tenant.MissingRequiredTenantIdentifierException;
 import org.idp.server.core.tenant.TenantIdentifier;
 
 public class TenantAwareEntryServiceProxy implements InvocationHandler {
@@ -73,7 +74,8 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         return tenantId;
       }
     }
-    throw new SqlRuntimeException("No TenantIdentifier found in method arguments.");
+    throw new MissingRequiredTenantIdentifierException(
+        "Missing required TenantIdentifier. Please ensure it is explicitly passed to the service.");
   }
 
   @SuppressWarnings("unchecked")
