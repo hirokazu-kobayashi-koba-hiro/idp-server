@@ -3,7 +3,6 @@ package org.idp.server.core.adapters.datasource.grantmanagment;
 import java.util.*;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
-import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.grantmangment.AuthorizationGranted;
 import org.idp.server.core.grantmangment.AuthorizationGrantedIdentifier;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;

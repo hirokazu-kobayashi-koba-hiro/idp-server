@@ -3,7 +3,6 @@ package org.idp.server.core.adapters.datasource.identity;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.core.basic.sql.SqlExecutor;
-import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.oauth.identity.role.Role;
 import org.idp.server.core.oauth.identity.role.RoleCommandRepository;
 import org.idp.server.core.oauth.identity.role.Roles;

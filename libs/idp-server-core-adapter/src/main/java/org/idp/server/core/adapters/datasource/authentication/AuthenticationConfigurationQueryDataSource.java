@@ -8,7 +8,6 @@ import org.idp.server.core.authentication.AuthenticationConfigurationQueryReposi
 import org.idp.server.core.authentication.exception.MfaConfigurationNotFoundException;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
-import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.tenant.Tenant;
 
 public class AuthenticationConfigurationQueryDataSource

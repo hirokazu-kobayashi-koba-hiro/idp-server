@@ -37,7 +37,11 @@ public class OAuthFederationCallbackV1Api implements ParameterTransformable {
 
     FederationInteractionResult result =
         oAuthFlowApi.callbackFederation(
-            federationCallbackRequest.tenantIdentifier(), federationType, ssoProvider, federationCallbackRequest, requestAttributes);
+            federationCallbackRequest.tenantIdentifier(),
+            federationType,
+            ssoProvider,
+            federationCallbackRequest,
+            requestAttributes);
 
     switch (result.status()) {
       case SUCCESS -> {

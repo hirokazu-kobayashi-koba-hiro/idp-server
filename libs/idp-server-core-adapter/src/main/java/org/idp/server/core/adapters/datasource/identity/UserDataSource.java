@@ -7,7 +7,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
-import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserNotFoundException;
 import org.idp.server.core.oauth.identity.UserRepository;

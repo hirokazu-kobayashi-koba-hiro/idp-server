@@ -6,7 +6,6 @@ import java.util.Objects;
 import org.idp.server.core.basic.crypto.AesCipher;
 import org.idp.server.core.basic.crypto.HmacHasher;
 import org.idp.server.core.basic.sql.SqlExecutor;
-import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.repository.OAuthTokenRepository;

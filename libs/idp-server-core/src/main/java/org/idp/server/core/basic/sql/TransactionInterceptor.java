@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.logging.Logger;
+import org.idp.server.core.tenant.TenantContext;
 import org.idp.server.core.tenant.TenantIdentifier;
 
 public class TransactionInterceptor implements InvocationHandler {
@@ -26,37 +27,44 @@ public class TransactionInterceptor implements InvocationHandler {
             || target.getClass().isAnnotationPresent(Transactional.class);
 
     if (isTransactional) {
+      OperationContext.set(operationType);
+      TenantIdentifier tenantId = TenantContext.get();
+
       TransactionManager.createConnection(Dialect.POSTGRESQL);
-      TenantIdentifier tenantId = resolveTenantId(args);
       Dialect dialect = dialectProvider.provide(tenantId);
       TransactionManager.closeConnection();
 
-      OperationContext.set(operationType);
       TransactionManager.beginTransaction(dialect);
 
-      log.info("begin transaction: " + target.getClass().getName() + ": " + method.getName());
+      log.info(
+          dialect.name()
+              + ": begin transaction: "
+              + target.getClass().getName()
+              + ": "
+              + method.getName());
       try {
         Object result = method.invoke(target, args);
         TransactionManager.commitTransaction();
-        log.info("commit transaction: " + target.getClass().getName() + ": " + method.getName());
+        log.info(
+            dialect.name()
+                + ": commit transaction: "
+                + target.getClass().getName()
+                + ": "
+                + method.getName());
         return result;
       } catch (Exception e) {
         TransactionManager.rollbackTransaction();
-        log.info("rollback transaction: " + target.getClass().getName() + ": " + method.getName());
+        log.info(
+            dialect.name()
+                + ": rollback transaction: "
+                + target.getClass().getName()
+                + ": "
+                + method.getName());
         throw e;
       }
     } else {
       return method.invoke(target, args);
     }
-  }
-
-  private TenantIdentifier resolveTenantId(Object[] args) {
-    for (Object arg : args) {
-      if (arg instanceof TenantIdentifier tenantId) {
-        return tenantId;
-      }
-    }
-    throw new SqlRuntimeException("No TenantIdentifier found in method arguments.");
   }
 
   @SuppressWarnings("unchecked")

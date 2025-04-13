@@ -13,6 +13,12 @@ public class TenantDialectProvider implements DialectProvider {
 
   @Override
   public Dialect provide(TenantIdentifier tenantIdentifier) {
+    TenantIdentifier adminTenantIdentifier = AdminTenantContext.get();
+
+    if (adminTenantIdentifier.equals(tenantIdentifier)) {
+      return Dialect.POSTGRESQL;
+    }
+
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
     return tenant.dialet();

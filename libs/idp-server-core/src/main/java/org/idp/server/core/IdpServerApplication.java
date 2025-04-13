@@ -45,6 +45,7 @@ import org.idp.server.core.security.event.OAuthFlowEventPublisher;
 import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.hook.SecurityEventHooksLoader;
+import org.idp.server.core.tenant.AdminTenantContext;
 import org.idp.server.core.tenant.TenantDialectProvider;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.token.*;
@@ -69,6 +70,7 @@ public class IdpServerApplication {
   OperatorAuthenticationApi operatorAuthenticationApi;
 
   public IdpServerApplication(
+      String adminTenantId,
       DatabaseConfig databaseConfig,
       String encryptionKey,
       OAuthSessionDelegate oAuthSessionDelegate,
@@ -76,6 +78,7 @@ public class IdpServerApplication {
       PasswordVerificationDelegation passwordVerificationDelegation,
       SecurityEventPublisher securityEventPublisher) {
 
+    AdminTenantContext.configure(adminTenantId);
     ContextAwareConnectionProvider provider = new ContextAwareConnectionProvider(databaseConfig);
     TransactionManager.configure(provider);
 

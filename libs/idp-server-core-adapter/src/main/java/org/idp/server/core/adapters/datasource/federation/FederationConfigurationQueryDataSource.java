@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
-import org.idp.server.core.basic.sql.TransactionManager;
 import org.idp.server.core.federation.FederationConfigurationNotFoundException;
 import org.idp.server.core.federation.FederationConfigurationQueryRepository;
 import org.idp.server.core.federation.FederationType;

@@ -19,6 +19,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @Configuration
 public class IdPServerConfiguration {
 
+  @Value("${idp.configurations.adminTenantId}")
+  String adminTenantId;
+
   @Value("${spring.datasource.url}")
   String databaseUrl;
 
@@ -51,6 +54,7 @@ public class IdPServerConfiguration {
     PasswordVerification passwordVerification = new PasswordVerification(bCryptPasswordEncoder);
 
     return new IdpServerApplication(
+        adminTenantId,
         databaseConfig,
         encryptionKey,
         oAuthSessionService,

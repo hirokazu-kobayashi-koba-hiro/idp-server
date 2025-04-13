@@ -9,7 +9,6 @@ import org.idp.server.core.authentication.AuthenticationTransactionQueryReposito
 import org.idp.server.core.authentication.exception.MfaTransactionNotFoundException;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
-import org.idp.server.core.basic.sql.TransactionManager;
 
 public class AuthenticationTransactionQueryDataSource
     implements AuthenticationTransactionQueryRepository {

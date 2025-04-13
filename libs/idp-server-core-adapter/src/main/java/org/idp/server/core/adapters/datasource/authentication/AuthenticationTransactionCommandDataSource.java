@@ -6,7 +6,6 @@ import org.idp.server.core.authentication.AuthenticationTransactionCommandReposi
 import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
-import org.idp.server.core.basic.sql.TransactionManager;
 
 public class AuthenticationTransactionCommandDataSource
     implements AuthenticationTransactionCommandRepository {
