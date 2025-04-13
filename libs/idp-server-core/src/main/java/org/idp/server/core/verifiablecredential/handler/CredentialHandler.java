@@ -48,8 +48,7 @@ public class CredentialHandler {
       CredentialRequest request, VerifiableCredentialDelegate delegate) {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
     Tenant tenant = request.tenant();
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(tenant.identifier());
+    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
     OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     CredentialRequestParameters parameters = request.toParameters();
 
@@ -74,7 +73,7 @@ public class CredentialHandler {
             credentialDelegateResponse, oAuthToken, serverConfiguration.credentialIssuerMetadata());
     VerifiableCredentialTransaction verifiableCredentialTransaction =
         verifiableCredentialTransactionCreator.create();
-    verifiableCredentialTransactionRepository.register(verifiableCredentialTransaction);
+    verifiableCredentialTransactionRepository.register(tenant, verifiableCredentialTransaction);
 
     if (credentialDelegateResponse.isIssued()) {
       VerifiableCredentialCreator verifiableCredentialCreator = creators.get(parameters.format());
@@ -95,8 +94,7 @@ public class CredentialHandler {
       BatchCredentialRequest request, VerifiableCredentialDelegate delegate) {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
     Tenant tenant = request.tenant();
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(tenant.identifier());
+    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
     OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     BatchCredentialRequestParameters parameters = request.toParameters();
 
@@ -127,7 +125,7 @@ public class CredentialHandler {
               serverConfiguration.credentialIssuerMetadata());
       VerifiableCredentialTransaction verifiableCredentialTransaction =
           verifiableCredentialTransactionCreator.create();
-      verifiableCredentialTransactionRepository.register(verifiableCredentialTransaction);
+      verifiableCredentialTransactionRepository.register(tenant, verifiableCredentialTransaction);
 
       if (credentialDelegateResponse.isIssued()) {
         VerifiableCredentialCreator verifiableCredentialCreator =
@@ -157,13 +155,12 @@ public class CredentialHandler {
       DeferredCredentialRequest request, VerifiableCredentialDelegate delegate) {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
     Tenant tenant = request.tenant();
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(tenant.identifier());
+    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
     OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     DeferredCredentialRequestParameters parameters = request.toParameters();
 
     VerifiableCredentialTransaction verifiableCredentialTransaction =
-        verifiableCredentialTransactionRepository.find(request.transactionId());
+        verifiableCredentialTransactionRepository.find(tenant, request.transactionId());
     DeferredVerifiableCredentialRequestVerifier verifier =
         new DeferredVerifiableCredentialRequestVerifier(
             oAuthToken,

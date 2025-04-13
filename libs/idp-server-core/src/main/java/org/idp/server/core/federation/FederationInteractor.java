@@ -15,6 +15,7 @@ public interface FederationInteractor {
       SsoProvider ssoProvider);
 
   FederationInteractionResult callback(
+      Tenant tenant,
       FederationType federationType,
       SsoProvider ssoProvider,
       FederationCallbackRequest callbackRequest,

@@ -38,10 +38,9 @@ public class OAuthHandler {
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
 
     AuthorizationRequest authorizationRequest =
-        authorizationRequestRepository.get(authorizationRequestIdentifier);
+        authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
     RequestedClientId requestedClientId = authorizationRequest.clientId();
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(tenant.identifier());
+    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tenant, requestedClientId);
 
@@ -56,8 +55,8 @@ public class OAuthHandler {
   }
 
   public AuthorizationRequest handleGettingData(
-      AuthorizationRequestIdentifier authorizationRequestIdentifier) {
-    return authorizationRequestRepository.get(authorizationRequestIdentifier);
+      Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+    return authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
   }
 
   public OAuthLogoutResponse handleLogout(

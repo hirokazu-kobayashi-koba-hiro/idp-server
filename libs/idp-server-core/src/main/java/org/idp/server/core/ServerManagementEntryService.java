@@ -35,7 +35,7 @@ public class ServerManagementEntryService implements ServerManagementApi {
     String replacedBody = serverConfig.replaceAll("IDP_ISSUER", newTenant.tokenIssuerValue());
 
     ServerConfiguration serverConfiguration =
-        serverConfigurationHandler.handleRegistration(replacedBody);
+        serverConfigurationHandler.handleRegistration(newTenant, replacedBody);
 
     return serverConfig;
   }

@@ -6,6 +6,7 @@ import org.idp.server.core.security.SecurityEventApi;
 import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.handler.SecurityEventHandler;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 
@@ -13,25 +14,22 @@ import org.idp.server.core.tenant.TenantRepository;
 public class SecurityEventEntryService implements SecurityEventApi {
 
   SecurityEventHandler securityEventHandler;
+  TenantRepository tenantRepository;
 
   public SecurityEventEntryService(
-      TenantRepository tenantRepository,
       SecurityEventRepository securityEventRepository,
       SecurityEventHooks securityEventHooks,
-      SecurityEventHookConfigurationQueryRepository hookQueryRepository) {
+      SecurityEventHookConfigurationQueryRepository hookQueryRepository,
+      TenantRepository tenantRepository) {
     this.securityEventHandler =
-        new SecurityEventHandler(
-            tenantRepository, securityEventRepository, securityEventHooks, hookQueryRepository);
+        new SecurityEventHandler(securityEventRepository, securityEventHooks, hookQueryRepository);
+    this.tenantRepository = tenantRepository;
   }
 
   @Override
   public void handle(TenantIdentifier tenantIdentifier, SecurityEvent securityEvent) {
-    try {
 
-      securityEventHandler.handle(securityEvent);
-    } catch (Exception e) {
-
-      e.printStackTrace();
-    }
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    securityEventHandler.handle(tenant, securityEvent);
   }
 }

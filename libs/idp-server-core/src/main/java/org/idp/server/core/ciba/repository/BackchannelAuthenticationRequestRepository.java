@@ -2,12 +2,14 @@ package org.idp.server.core.ciba.repository;
 
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.tenant.Tenant;
 
 public interface BackchannelAuthenticationRequestRepository {
 
-  void register(BackchannelAuthenticationRequest request);
+  void register(Tenant tenant, BackchannelAuthenticationRequest request);
 
-  BackchannelAuthenticationRequest find(BackchannelAuthenticationRequestIdentifier identifier);
+  BackchannelAuthenticationRequest find(
+      Tenant tenant, BackchannelAuthenticationRequestIdentifier identifier);
 
-  void delete(BackchannelAuthenticationRequestIdentifier identifier);
+  void delete(Tenant tenant, BackchannelAuthenticationRequestIdentifier identifier);
 }

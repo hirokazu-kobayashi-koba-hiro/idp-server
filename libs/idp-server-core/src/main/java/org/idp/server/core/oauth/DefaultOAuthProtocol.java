@@ -13,6 +13,7 @@ import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.AuthorizationResponse;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 /** OAuthApi */
@@ -103,9 +104,9 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
     return oAuthHandler.handleViewData(request, oAuthSessionDelegate);
   }
 
-  public AuthorizationRequest get(AuthorizationRequestIdentifier identifier) {
+  public AuthorizationRequest get(Tenant tenant, AuthorizationRequestIdentifier identifier) {
 
-    return oAuthHandler.handleGettingData(identifier);
+    return oAuthHandler.handleGettingData(tenant, identifier);
   }
 
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {

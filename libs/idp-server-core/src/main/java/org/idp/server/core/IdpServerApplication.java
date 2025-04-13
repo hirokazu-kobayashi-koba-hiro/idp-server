@@ -216,8 +216,7 @@ public class IdpServerApplication {
 
     this.securityEventApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new SecurityEventEntryService(
-                tenantRepository, securityEventRepository, securityEventHooks, hookQueryRepository),
+            new SecurityEventEntryService(securityEventRepository, securityEventHooks, hookQueryRepository, tenantRepository),
             SecurityEventApi.class,
             OperationType.WRITE,
             tenantDialectProvider);

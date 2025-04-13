@@ -21,6 +21,6 @@ public class TenantDialectProvider implements DialectProvider {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    return tenant.dialet();
+    return tenant.dialect();
   }
 }

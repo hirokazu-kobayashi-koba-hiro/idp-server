@@ -6,6 +6,7 @@ import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
 
 /** OAuthAuthorizeRequest */
@@ -30,6 +31,10 @@ public class OAuthAuthorizeRequest {
 
   public Tenant tenant() {
     return tenant;
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return tenant.identifier();
   }
 
   public AuthorizationRequestIdentifier toIdentifier() {

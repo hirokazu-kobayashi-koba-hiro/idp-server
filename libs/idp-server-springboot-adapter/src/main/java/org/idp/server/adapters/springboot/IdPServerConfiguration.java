@@ -22,14 +22,23 @@ public class IdPServerConfiguration {
   @Value("${idp.configurations.adminTenantId}")
   String adminTenantId;
 
-  @Value("${spring.datasource.url}")
-  String databaseUrl;
+  @Value("${idp.datasource.postgresql.url}")
+  String postgresqlUrl;
 
-  @Value("${spring.datasource.username}")
-  String databaseUsername;
+  @Value("${idp.datasource.postgresql.username}")
+  String postgresqlUsername;
 
-  @Value("${spring.datasource.password}")
-  String databasePassword;
+  @Value("${idp.datasource.postgresql.password}")
+  String postgresqlPassword;
+
+  @Value("${idp.datasource.mysql.url}")
+  String mysqlUrl;
+
+  @Value("${idp.datasource.mysql.username}")
+  String mysqlUsername;
+
+  @Value("${idp.datasource.mysql.password}")
+  String mysqlPassword;
 
   @Value("${idp.configurations.encryptionKey}")
   String encryptionKey;
@@ -41,11 +50,17 @@ public class IdPServerConfiguration {
 
     Map<Dialect, DbCredentials> writerConfigs =
         Map.of(
-            Dialect.POSTGRESQL, new DbCredentials(databaseUrl, databaseUsername, databasePassword));
+            Dialect.POSTGRESQL,
+            new DbCredentials(postgresqlUrl, postgresqlUsername, postgresqlPassword),
+            Dialect.MYSQL,
+            new DbCredentials(mysqlUrl, mysqlUsername, mysqlPassword));
 
     Map<Dialect, DbCredentials> readerConfigs =
         Map.of(
-            Dialect.POSTGRESQL, new DbCredentials(databaseUrl, databaseUsername, databasePassword));
+            Dialect.POSTGRESQL,
+            new DbCredentials(postgresqlUrl, postgresqlUsername, postgresqlPassword),
+            Dialect.MYSQL,
+            new DbCredentials(mysqlUrl, mysqlUsername, mysqlPassword));
 
     DatabaseConfig databaseConfig = new DatabaseConfig(writerConfigs, readerConfigs);
 

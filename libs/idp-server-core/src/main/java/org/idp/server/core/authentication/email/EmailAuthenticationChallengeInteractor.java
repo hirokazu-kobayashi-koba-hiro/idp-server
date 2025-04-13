@@ -83,7 +83,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
         EmailVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
 
     transactionCommandRepository.register(
-        authenticationTransactionIdentifier, "email", emailVerificationChallenge);
+        tenant, authenticationTransactionIdentifier, "email", emailVerificationChallenge);
 
     return new AuthenticationInteractionResult(
         AuthenticationInteractionStatus.SUCCESS,

@@ -85,8 +85,7 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
     User user = userInfoMapper.toUser();
 
     User exsitingUser =
-        userRepository.findByProvider(
-            tenant.identifierValue(), configuration.providerName(), user.providerUserId());
+        userRepository.findByProvider(tenant, configuration.providerName(), user.providerUserId());
     if (exsitingUser.exists()) {
       user.setSub(exsitingUser.sub());
     } else {

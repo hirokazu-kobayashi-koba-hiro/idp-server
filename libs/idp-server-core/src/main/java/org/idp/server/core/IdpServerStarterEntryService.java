@@ -84,8 +84,8 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     organization.assign(tenant);
 
     tenantRepository.register(tenant);
-    serverConfigurationRepository.register(serverConfiguration);
-    organizationRepository.register(organization);
+    serverConfigurationRepository.register(tenant, serverConfiguration);
+    organizationRepository.register(tenant, organization);
     permissionCommandRepository.bulkRegister(tenant, permissions);
     roleCommandRepository.bulkRegister(tenant, roles);
     userRepository.register(tenant, user);

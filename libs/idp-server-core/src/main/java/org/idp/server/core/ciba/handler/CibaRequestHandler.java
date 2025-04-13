@@ -94,8 +94,7 @@ public class CibaRequestHandler {
     CibaRequestParameters parameters = request.toParameters();
     Tenant tenant = request.tenant();
 
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(tenant.identifier());
+    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tenant, request.clientId());
     CibaRequestAnalyzer analyzer = new CibaRequestAnalyzer(parameters);
@@ -121,12 +120,13 @@ public class CibaRequestHandler {
             .add(context.interval())
             .build();
 
-    backchannelAuthenticationRequestRepository.register(context.backchannelAuthenticationRequest());
+    backchannelAuthenticationRequestRepository.register(
+        tenant, context.backchannelAuthenticationRequest());
     // FIXME consider param
     CibaGrantFactory cibaGrantFactory =
         new CibaGrantFactory(context, response, user, new Authentication());
     CibaGrant cibaGrant = cibaGrantFactory.create();
-    cibaGrantRepository.register(cibaGrant);
+    cibaGrantRepository.register(tenant, cibaGrant);
 
     return new CibaRequestResponse(CibaRequestStatus.OK, response);
   }

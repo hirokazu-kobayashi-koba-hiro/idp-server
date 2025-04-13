@@ -17,6 +17,7 @@ import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.token.*;
 import org.idp.server.core.oauth.vc.CNonceCreatable;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.TokenRequestCodeGrantValidator;
@@ -105,11 +106,13 @@ public class AuthorizationCodeGrantService
         new TokenRequestCodeGrantValidator(tokenRequestContext.parameters());
     validator.validate();
 
+    Tenant tenant = tokenRequestContext.tenant();
     AuthorizationCode code = tokenRequestContext.code();
-    AuthorizationCodeGrant authorizationCodeGrant = authorizationCodeGrantRepository.find(code);
+    AuthorizationCodeGrant authorizationCodeGrant =
+        authorizationCodeGrantRepository.find(tenant, code);
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.find(
-            authorizationCodeGrant.authorizationRequestIdentifier());
+            tenant, authorizationCodeGrant.authorizationRequestIdentifier());
 
     AuthorizationCodeGrantVerifier verifier =
         new AuthorizationCodeGrantVerifier(
@@ -154,33 +157,31 @@ public class AuthorizationCodeGrantService
       oAuthTokenBuilder.add(cNonceExpiresIn);
     }
 
-    registerOrUpdate(authorizationGrant);
+    registerOrUpdate(tenant, authorizationGrant);
 
     OAuthToken oAuthToken = oAuthTokenBuilder.build();
 
-    oAuthTokenRepository.register(oAuthToken);
-    authorizationCodeGrantRepository.delete(authorizationCodeGrant);
+    oAuthTokenRepository.register(tenant, oAuthToken);
+    authorizationCodeGrantRepository.delete(tokenRequestContext.tenant(), authorizationCodeGrant);
 
     return oAuthToken;
   }
 
-  private void registerOrUpdate(AuthorizationGrant authorizationGrant) {
+  private void registerOrUpdate(Tenant tenant, AuthorizationGrant authorizationGrant) {
     AuthorizationGranted latest =
         authorizationGrantedRepository.find(
-            authorizationGrant.tenantIdentifier(),
-            authorizationGrant.requestedClientId(),
-            authorizationGrant.user());
+            tenant, authorizationGrant.requestedClientId(), authorizationGrant.user());
 
     if (latest.exists()) {
       AuthorizationGranted merge = latest.merge(authorizationGrant);
 
-      authorizationGrantedRepository.update(merge);
+      authorizationGrantedRepository.update(tenant, merge);
       return;
     }
     AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
         new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
     AuthorizationGranted authorizationGranted =
         new AuthorizationGranted(authorizationGrantedIdentifier, authorizationGrant);
-    authorizationGrantedRepository.register(authorizationGranted);
+    authorizationGrantedRepository.register(tenant, authorizationGranted);
   }
 }

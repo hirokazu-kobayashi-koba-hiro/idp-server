@@ -40,9 +40,9 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
     WebAuthnVerificationResult webAuthnVerificationResult =
         webAuthnExecutor.verifyAuthentication(
-            authenticationTransactionIdentifier, request, configuration);
+            tenant, authenticationTransactionIdentifier, request, configuration);
 
-    User user = userRepository.get(webAuthnVerificationResult.getUserId());
+    User user = userRepository.get(tenant, webAuthnVerificationResult.getUserId());
 
     Authentication authentication =
         new Authentication()

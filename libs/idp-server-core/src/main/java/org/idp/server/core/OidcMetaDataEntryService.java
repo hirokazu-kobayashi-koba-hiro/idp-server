@@ -28,7 +28,7 @@ public class OidcMetaDataEntryService implements OidcMetaDataApi {
     DiscoveryProtocol discoveryProtocol =
         discoveryProtocols.get(tenant.authorizationProtocolProvider());
 
-    return discoveryProtocol.getConfiguration(tenantIdentifier);
+    return discoveryProtocol.getConfiguration(tenant);
   }
 
   public JwksRequestResponse getJwks(TenantIdentifier tenantIdentifier) {
@@ -37,6 +37,6 @@ public class OidcMetaDataEntryService implements OidcMetaDataApi {
     DiscoveryProtocol discoveryProtocol =
         discoveryProtocols.get(tenant.authorizationProtocolProvider());
 
-    return discoveryProtocol.getJwks(tenantIdentifier);
+    return discoveryProtocol.getJwks(tenant);
   }
 }

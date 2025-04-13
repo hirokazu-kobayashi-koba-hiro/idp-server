@@ -4,42 +4,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import org.idp.server.core.basic.sql.Dialect;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.tenant.*;
 
 public class TenantDataSource implements TenantRepository {
 
+  TenantSqlExecutors executors;
+
+  public TenantDataSource() {
+    this.executors = new TenantSqlExecutors();
+  }
+
   @Override
   public void register(Tenant tenant) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sqlTemplate =
-        """
-            INSERT INTO tenant(id, name, type, domain)
-            VALUES (?, ?, ?, ?);
-            """;
-    List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
-    params.add(tenant.name().value());
-    params.add(tenant.type().name());
-    params.add(tenant.domain().value());
-
-    sqlExecutor.execute(sqlTemplate, params);
+    TenantSqlExecutor executor = executors.get(Dialect.POSTGRESQL);
+    executor.insert(tenant);
   }
 
   @Override
   public Tenant get(TenantIdentifier tenantIdentifier) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
+    TenantSqlExecutor executor = executors.get(Dialect.POSTGRESQL);
 
-    String sqlTemplate =
-        """
-            SELECT id, name, type, domain FROM tenant
-            WHERE id = ?
-            """;
-    List<Object> params = new ArrayList<>();
-    params.add(tenantIdentifier.value());
-
-    Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
+    Map<String, String> result = executor.selectOne(tenantIdentifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {
       throw new TenantNotFoundException(
@@ -54,17 +42,9 @@ public class TenantDataSource implements TenantRepository {
 
   @Override
   public Tenant getAdmin() {
-    SqlExecutor sqlExecutor = new SqlExecutor();
+    TenantSqlExecutor executor = executors.get(Dialect.POSTGRESQL);
 
-    String sqlTemplate =
-        """
-            SELECT id, name, type, domain FROM tenant
-            WHERE type = ?
-            """;
-    List<Object> params = new ArrayList<>();
-    params.add("ADMIN");
-
-    Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
+    Map<String, String> result = executor.selectAdmin();
 
     if (Objects.isNull(result) || result.isEmpty()) {
       throw new TenantNotFoundException("Admin Tenant is unregistered.");

@@ -51,7 +51,7 @@ public class OperatorAuthenticationEntryService implements OperatorAuthenticatio
     if (!introspectionResponse.isActive()) {
       throw new UnauthorizedException("error=invalid_token error_description=token is undefined");
     }
-    User user = userRepository.get(introspectionResponse.subject());
+    User user = userRepository.get(adminTenant, introspectionResponse.subject());
 
     return new Pairs<>(user, tokenIntrospectionRequest.token());
   }

@@ -12,6 +12,7 @@ import org.idp.server.core.oauth.token.AccessToken;
 import org.idp.server.core.oauth.token.AccessTokenCreatable;
 import org.idp.server.core.oauth.token.RefreshToken;
 import org.idp.server.core.oauth.token.RefreshTokenCreatable;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.ResourceOwnerPasswordGrantValidator;
@@ -53,6 +54,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
         new ResourceOwnerPasswordGrantValidator(context);
     validator.validate();
 
+    Tenant tenant = context.tenant();
     ServerConfiguration serverConfiguration = context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
 
@@ -95,8 +97,9 @@ public class ResourceOwnerPasswordCredentialsGrantService
               clientConfiguration);
       oAuthTokenBuilder.add(idToken);
     }
+
     OAuthToken oAuthToken = oAuthTokenBuilder.build();
-    oAuthTokenRepository.register(oAuthToken);
+    oAuthTokenRepository.register(tenant, oAuthToken);
     return oAuthToken;
   }
 }

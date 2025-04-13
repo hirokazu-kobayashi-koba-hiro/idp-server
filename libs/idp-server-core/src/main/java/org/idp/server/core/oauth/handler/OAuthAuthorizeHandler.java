@@ -64,10 +64,9 @@ public class OAuthAuthorizeHandler {
     validator.validate();
 
     AuthorizationRequest authorizationRequest =
-        authorizationRequestRepository.get(authorizationRequestIdentifier);
+        authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
     RequestedClientId requestedClientId = authorizationRequest.clientId();
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(tenant.identifier());
+    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tenant, requestedClientId);
 
@@ -88,12 +87,12 @@ public class OAuthAuthorizeHandler {
     if (authorizationResponse.hasAuthorizationCode()) {
       AuthorizationCodeGrant authorizationCodeGrant =
           AuthorizationCodeGrantCreator.create(context, authorizationResponse);
-      authorizationCodeGrantRepository.register(authorizationCodeGrant);
+      authorizationCodeGrantRepository.register(tenant, authorizationCodeGrant);
     }
 
     if (authorizationResponse.hasAccessToken()) {
       OAuthToken oAuthToken = OAuthTokenFactory.create(authorizationResponse, authorizationGrant);
-      oAuthTokenRepository.register(oAuthToken);
+      oAuthTokenRepository.register(tenant, oAuthToken);
     }
 
     OAuthSessionKey oAuthSessionKey =

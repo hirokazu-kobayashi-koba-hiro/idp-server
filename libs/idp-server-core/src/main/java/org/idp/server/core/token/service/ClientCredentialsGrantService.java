@@ -8,6 +8,7 @@ import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.oauth.token.AccessToken;
 import org.idp.server.core.oauth.token.AccessTokenCreatable;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.ClientCredentialsGrantValidator;
@@ -28,6 +29,7 @@ public class ClientCredentialsGrantService
     ClientCredentialsGrantValidator validator = new ClientCredentialsGrantValidator(context);
     validator.validate();
 
+    Tenant tenant = context.tenant();
     ServerConfiguration serverConfiguration = context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
 
@@ -53,7 +55,7 @@ public class ClientCredentialsGrantService
             .add(accessToken)
             .build();
 
-    oAuthTokenRepository.register(oAuthToken);
+    oAuthTokenRepository.register(tenant, oAuthToken);
     return oAuthToken;
   }
 }

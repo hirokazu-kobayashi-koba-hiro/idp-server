@@ -46,9 +46,8 @@ public class CibaAuthorizeHandler {
   public CibaAuthorizeResponse handle(CibaAuthorizeRequest request) {
     AuthReqId authReqId = request.toAuthReqId();
     Tenant tenant = request.tenant();
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(tenant.identifier());
-    CibaGrant cibaGrant = cibaGrantRepository.find(authReqId);
+    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
+    CibaGrant cibaGrant = cibaGrantRepository.find(tenant, authReqId);
 
     // TODO verify
 
@@ -56,9 +55,9 @@ public class CibaAuthorizeHandler {
         clientConfigurationRepository.get(
             tenant, cibaGrant.authorizationGrant().clientIdentifier());
     CibaGrant updated = cibaGrant.update(CibaGrantStatus.authorized);
-    cibaGrantRepository.update(updated);
+    cibaGrantRepository.update(tenant, updated);
 
-    clientNotificationService.notify(cibaGrant, serverConfiguration, clientConfiguration);
+    clientNotificationService.notify(tenant, cibaGrant, serverConfiguration, clientConfiguration);
     return new CibaAuthorizeResponse(CibaAuthorizeStatus.OK);
   }
 }

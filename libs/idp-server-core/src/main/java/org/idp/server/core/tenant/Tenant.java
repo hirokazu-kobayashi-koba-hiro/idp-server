@@ -84,7 +84,7 @@ public class Tenant implements JsonReadable {
     return authorizationProtocolProvider;
   }
 
-  public Dialect dialet() {
+  public Dialect dialect() {
 
     if (dialect == null) {
       return Dialect.POSTGRESQL;

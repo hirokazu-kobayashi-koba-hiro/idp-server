@@ -32,7 +32,7 @@ public class UserManagementEntryService implements UserManagementApi {
   public User get(TenantIdentifier tenantIdentifier, String userId) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    return userRepository.get(userId);
+    return userRepository.get(tenant, userId);
   }
 
   @Override
@@ -44,7 +44,7 @@ public class UserManagementEntryService implements UserManagementApi {
   @Override
   public void update(TenantIdentifier tenantIdentifier, User user) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    userRepository.update(user);
+    userRepository.update(tenant, user);
   }
 
   @Override

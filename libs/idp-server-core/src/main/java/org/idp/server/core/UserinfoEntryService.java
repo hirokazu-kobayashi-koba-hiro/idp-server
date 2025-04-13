@@ -32,7 +32,7 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
 
   @Override
   public User findUser(Tenant tenant, Subject subject) {
-    return userRepository.get(subject.value());
+    return userRepository.get(tenant, subject.value());
   }
 
   public UserinfoRequestResponse request(

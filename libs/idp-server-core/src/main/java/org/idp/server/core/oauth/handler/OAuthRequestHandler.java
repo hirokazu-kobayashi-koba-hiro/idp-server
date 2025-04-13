@@ -46,8 +46,7 @@ public class OAuthRequestHandler {
     OAuthRequestValidator validator = new OAuthRequestValidator(parameters);
     validator.validate();
 
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(tenant.identifier());
+    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tenant, parameters.clientId());
 
@@ -60,7 +59,7 @@ public class OAuthRequestHandler {
             tenant, parameters, serverConfiguration, clientConfiguration);
     verifier.verify(context);
 
-    authorizationRequestRepository.register(context.authorizationRequest());
+    authorizationRequestRepository.register(tenant, context.authorizationRequest());
 
     OAuthSession session = delegate.find(context.sessionKey());
 
@@ -68,7 +67,7 @@ public class OAuthRequestHandler {
       context.setSession(session);
 
       AuthorizationGranted authorizationGranted =
-          grantedRepository.find(tenant.identifier(), parameters.clientId(), session.user());
+          grantedRepository.find(tenant, parameters.clientId(), session.user());
       context.setAuthorizationGranted(authorizationGranted);
     }
 

@@ -64,8 +64,8 @@ public class OnboardingEntryService implements OnboardingApi {
     organization.assign(tenant);
 
     tenantRepository.register(tenant);
-    serverConfigurationRepository.register(serverConfiguration);
-    organizationRepository.register(organization);
+    serverConfigurationRepository.register(tenant, serverConfiguration);
+    organizationRepository.register(tenant, organization);
 
     HashMap<String, Object> newCustomProperties = new HashMap<>(operator.customPropertiesValue());
     newCustomProperties.put("organization", organization.toMap());
