@@ -4,9 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.IdpServerApplication;
-import org.idp.server.core.federation.FederationInteractionResult;
-import org.idp.server.core.federation.FederationType;
-import org.idp.server.core.federation.SsoProvider;
+import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.oauth.OAuthFlowApi;
 import org.idp.server.core.type.security.RequestAttributes;
@@ -35,9 +33,15 @@ public class OAuthFederationCallbackV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
     Map<String, String[]> params = transform(body);
+    FederationCallbackRequest federationCallbackRequest = new FederationCallbackRequest(params);
+
     FederationInteractionResult result =
         oAuthFlowApi.callbackFederation(
-            federationType, ssoProvider, new FederationCallbackRequest(params), requestAttributes);
+            federationCallbackRequest.tenantIdentifier(),
+            federationType,
+            ssoProvider,
+            federationCallbackRequest,
+            requestAttributes);
 
     switch (result.status()) {
       case SUCCESS -> {

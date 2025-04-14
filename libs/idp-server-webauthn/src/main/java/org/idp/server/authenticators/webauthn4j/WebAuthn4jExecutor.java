@@ -7,6 +7,7 @@ import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.authentication.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.authentication.webauthn.*;
 import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.tenant.Tenant;
 
 public class WebAuthn4jExecutor implements WebAuthnExecutor {
 
@@ -32,6 +33,7 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
 
   @Override
   public WebAuthnChallenge challengeRegistration(
+      Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
       WebAuthnConfiguration configuration) {
@@ -39,13 +41,14 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
     WebAuthn4jChallenge webAuthn4jChallenge = WebAuthn4jChallenge.generate();
     WebAuthnChallenge webAuthnChallenge = webAuthn4jChallenge.toWebAuthnChallenge();
     transactionCommandRepository.register(
-        authenticationTransactionIdentifier, "webauthn4j", webAuthnChallenge);
+        tenant, authenticationTransactionIdentifier, "webauthn4j", webAuthnChallenge);
 
     return webAuthnChallenge;
   }
 
   @Override
   public WebAuthnVerificationResult verifyRegistration(
+      Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       String userId,
       AuthenticationInteractionRequest request,
@@ -53,7 +56,7 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
 
     WebAuthnChallenge webAuthnChallenge =
         transactionQueryRepository.get(
-            authenticationTransactionIdentifier, "webauthn4j", WebAuthnChallenge.class);
+            tenant, authenticationTransactionIdentifier, "webauthn4j", WebAuthnChallenge.class);
 
     WebAuthn4jChallenge webAuthn4jChallenge =
         new WebAuthn4jChallenge(webAuthnChallenge.challenge());
@@ -72,6 +75,7 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
 
   @Override
   public WebAuthnChallenge challengeAuthentication(
+      Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
       WebAuthnConfiguration configuration) {
@@ -79,20 +83,21 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
     WebAuthn4jChallenge webAuthn4jChallenge = WebAuthn4jChallenge.generate();
     WebAuthnChallenge webAuthnChallenge = webAuthn4jChallenge.toWebAuthnChallenge();
     transactionCommandRepository.register(
-        authenticationTransactionIdentifier, "webauthn4j", webAuthnChallenge);
+        tenant, authenticationTransactionIdentifier, "webauthn4j", webAuthnChallenge);
 
     return webAuthnChallenge;
   }
 
   @Override
   public WebAuthnVerificationResult verifyAuthentication(
+      Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
       WebAuthnConfiguration configuration) {
 
     WebAuthnChallenge webAuthnChallenge =
         transactionQueryRepository.get(
-            authenticationTransactionIdentifier, "webauthn4j", WebAuthnChallenge.class);
+            tenant, authenticationTransactionIdentifier, "webauthn4j", WebAuthnChallenge.class);
 
     WebAuthn4jChallenge webAuthn4jChallenge =
         new WebAuthn4jChallenge(webAuthnChallenge.challenge());

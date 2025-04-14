@@ -36,7 +36,7 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
     WebAuthnVerificationResult webAuthnVerificationResult =
         webAuthnExecutor.verifyRegistration(
-            authenticationTransactionIdentifier, userId, request, configuration);
+            tenant, authenticationTransactionIdentifier, userId, request, configuration);
 
     Map<String, Object> response = new HashMap<>();
     response.put("registration", webAuthnVerificationResult.toMap());

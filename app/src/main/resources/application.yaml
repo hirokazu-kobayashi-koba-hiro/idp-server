@@ -1,5 +1,6 @@
 idp:
   configurations:
+   adminTenantId: "${ADMIN_TENANT_ID:67e7eae6-62b0-4500-9eff-87459f63fc66}"
    apiKey: ${IDP_SERVER_API_KEY}
    apiSecret: ${IDP_SERVER_API_SECRET}
    encryptionKey: ${ENCRYPTION_KEY}
@@ -7,17 +8,24 @@ idp:
    adminAuthViewUrl: "${IDP_AUTH_ADMIN_VIEW_URL:http://localhost:3100/}"
    authViewUrl: "${IDP_AUTH_VIEW_URL:http://localhost:3100/}"
    additionalAuthViewUrls: "${ADDITIONAL_AUTH_VIEW_URLS:}"
-
-
-spring:
   datasource:
-    url: "${DB_URL:jdbc:postgresql://localhost:5432/idpserver}"
-    username: "${DB_USER_NAME:idpserver}"
-    password: "${DB_PASSWORD:idpserver}"
-    hikari:
-      connection-timeout: 3000
-      maximum-pool-size: 5
-      minimum-idle: 2
+    postgresql:
+      url: "${DB_URL:jdbc:postgresql://localhost:5432/idpserver}"
+      username: "${DB_USER_NAME:idpserver}"
+      password: "${DB_PASSWORD:idpserver}"
+      hikari:
+        connection-timeout: 3000
+        maximum-pool-size: 5
+        minimum-idle: 2
+    mysql:
+      url: "${DB_URL:jdbc:mysql://localhost:3306/idpserver}"
+      username: "${DB_USER_NAME:idpserver}"
+      password: "${DB_PASSWORD:idpserver}"
+      hikari:
+        connection-timeout: 3000
+        maximum-pool-size: 5
+        minimum-idle: 2
+
 
 logging:
   level:

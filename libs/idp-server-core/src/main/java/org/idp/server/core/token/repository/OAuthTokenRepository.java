@@ -7,11 +7,11 @@ import org.idp.server.core.type.oauth.RefreshTokenEntity;
 
 public interface OAuthTokenRepository {
 
-  void register(OAuthToken oAuthToken);
+  void register(Tenant tenant, OAuthToken oAuthToken);
 
   OAuthToken find(Tenant tenant, AccessTokenEntity accessTokenEntity);
 
   OAuthToken find(Tenant tenant, RefreshTokenEntity refreshTokenEntity);
 
-  void delete(OAuthToken oAuthToken);
+  void delete(Tenant tenant, OAuthToken oAuthToken);
 }

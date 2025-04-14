@@ -6,6 +6,7 @@ import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.token.*;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.RefreshTokenGrantValidator;
@@ -26,6 +27,7 @@ public class RefreshTokenGrantService
     RefreshTokenGrantValidator validator = new RefreshTokenGrantValidator(context);
     validator.validate();
 
+    Tenant tenant = context.tenant();
     RefreshTokenEntity refreshTokenEntity = context.refreshToken();
     ServerConfiguration serverConfiguration = context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
@@ -43,10 +45,10 @@ public class RefreshTokenGrantService
             .add(accessToken)
             .add(refreshToken);
 
-    oAuthTokenRepository.delete(oAuthToken);
+    oAuthTokenRepository.delete(tenant, oAuthToken);
 
     OAuthToken refresh = oAuthTokenBuilder.build();
-    oAuthTokenRepository.register(refresh);
+    oAuthTokenRepository.register(tenant, refresh);
 
     return refresh;
   }

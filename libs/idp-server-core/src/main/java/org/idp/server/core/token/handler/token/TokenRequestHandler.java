@@ -70,8 +70,7 @@ public class TokenRequestHandler {
     ClientCert clientCert = tokenRequest.toClientCert();
     RequestedClientId requestedClientId = tokenRequest.clientId();
     CustomProperties customProperties = tokenRequest.toCustomProperties();
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(tenant.identifier());
+    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tenant, requestedClientId);
 

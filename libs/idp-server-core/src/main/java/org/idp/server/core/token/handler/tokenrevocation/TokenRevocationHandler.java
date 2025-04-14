@@ -39,8 +39,7 @@ public class TokenRevocationHandler {
     validator.validate();
 
     Tenant tenant = request.tenant();
-    ServerConfiguration serverConfiguration =
-        serverConfigurationRepository.get(tenant.identifier());
+    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tenant, request.clientId());
     TokenRevocationRequestContext tokenRevocationRequestContext =
@@ -54,7 +53,7 @@ public class TokenRevocationHandler {
 
     OAuthToken oAuthToken = find(request);
     if (oAuthToken.exists()) {
-      oAuthTokenRepository.delete(oAuthToken);
+      oAuthTokenRepository.delete(tenant, oAuthToken);
     }
     return new TokenRevocationResponse(TokenRevocationRequestStatus.OK, Map.of());
   }

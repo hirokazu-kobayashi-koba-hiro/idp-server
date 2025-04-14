@@ -33,12 +33,12 @@ public class TokenEntryService implements TokenApi {
   }
 
   public TokenRequestResponse request(
-      TenantIdentifier tenantId,
+      TenantIdentifier tenantIdentifier,
       Map<String, String[]> params,
       String authorizationHeader,
       String clientCert) {
 
-    Tenant tenant = tenantRepository.get(tenantId);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
     TokenRequest tokenRequest = new TokenRequest(tenant, authorizationHeader, params);
     tokenRequest.setClientCert(clientCert);
 
@@ -60,12 +60,12 @@ public class TokenEntryService implements TokenApi {
   }
 
   public TokenRevocationResponse revoke(
-      TenantIdentifier tenantId,
+      TenantIdentifier tenantIdentifier,
       Map<String, String[]> request,
       String authorizationHeader,
       String clientCert) {
 
-    Tenant tenant = tenantRepository.get(tenantId);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
     TokenRevocationRequest revocationRequest =
         new TokenRevocationRequest(tenant, authorizationHeader, request);
     revocationRequest.setClientCert(clientCert);

@@ -9,7 +9,7 @@ import org.idp.server.core.discovery.handler.io.JwksRequestResponse;
 import org.idp.server.core.discovery.handler.io.JwksRequestStatus;
 import org.idp.server.core.discovery.handler.io.ServerConfigurationRequestResponse;
 import org.idp.server.core.discovery.handler.io.ServerConfigurationRequestStatus;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.tenant.Tenant;
 
 public class DefaultDiscoveryProtocol implements DiscoveryProtocol {
 
@@ -24,18 +24,18 @@ public class DefaultDiscoveryProtocol implements DiscoveryProtocol {
     return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
   }
 
-  public ServerConfigurationRequestResponse getConfiguration(TenantIdentifier tenantIdentifier) {
+  public ServerConfigurationRequestResponse getConfiguration(Tenant tenant) {
     try {
-      return discoveryHandler.getConfiguration(tenantIdentifier);
+      return discoveryHandler.getConfiguration(tenant);
     } catch (Exception exception) {
       return new ServerConfigurationRequestResponse(
           ServerConfigurationRequestStatus.SERVER_ERROR, Map.of());
     }
   }
 
-  public JwksRequestResponse getJwks(TenantIdentifier tenantIdentifier) {
+  public JwksRequestResponse getJwks(Tenant tenant) {
     try {
-      return discoveryHandler.getJwks(tenantIdentifier);
+      return discoveryHandler.getJwks(tenant);
     } catch (Exception exception) {
       return new JwksRequestResponse(JwksRequestStatus.SERVER_ERROR, Map.of());
     }

@@ -4,6 +4,8 @@ import java.util.UUID;
 import org.idp.server.core.basic.http.QueryParams;
 import org.idp.server.core.federation.FederationType;
 import org.idp.server.core.federation.SsoProvider;
+import org.idp.server.core.federation.SsoState;
+import org.idp.server.core.federation.SsoStateCoder;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
 
@@ -30,7 +32,10 @@ public class OidcSsoSessionCreator {
 
   public OidcSsoSession create() {
     String authorizationEndpoint = configuration.authorizationEndpoint();
-    String state = UUID.randomUUID().toString();
+    String sessionId = UUID.randomUUID().toString();
+    String tenantId = tenant.identifierValue();
+    SsoState ssoState = new SsoState(sessionId, tenantId);
+    String state = SsoStateCoder.encode(ssoState);
     String nonce = UUID.randomUUID().toString();
 
     QueryParams queryParams = new QueryParams();
@@ -45,6 +50,7 @@ public class OidcSsoSessionCreator {
         String.format("%s?%s", authorizationEndpoint, queryParams.params());
 
     return new OidcSsoSession(
+        sessionId,
         authorizationRequestIdentifier.value(),
         tenant.identifierValue(),
         tenant.tokenIssuerValue(),

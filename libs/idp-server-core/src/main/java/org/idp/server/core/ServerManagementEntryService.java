@@ -22,7 +22,11 @@ public class ServerManagementEntryService implements ServerManagementApi {
   }
 
   // TODO
-  public String register(TenantType tenantType, ServerDomain serverDomain, String serverConfig) {
+  public String register(
+      TenantIdentifier adminTenantIdentifier,
+      TenantType tenantType,
+      ServerDomain serverDomain,
+      String serverConfig) {
 
     TenantCreator tenantCreator = new TenantCreator(tenantType, serverDomain);
     Tenant newTenant = tenantCreator.create();
@@ -31,7 +35,7 @@ public class ServerManagementEntryService implements ServerManagementApi {
     String replacedBody = serverConfig.replaceAll("IDP_ISSUER", newTenant.tokenIssuerValue());
 
     ServerConfiguration serverConfiguration =
-        serverConfigurationHandler.handleRegistration(replacedBody);
+        serverConfigurationHandler.handleRegistration(newTenant, replacedBody);
 
     return serverConfig;
   }

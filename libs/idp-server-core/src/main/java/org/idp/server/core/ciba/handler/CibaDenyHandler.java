@@ -29,11 +29,11 @@ public class CibaDenyHandler {
   public CibaDenyResponse handle(CibaDenyRequest request) {
     AuthReqId authReqId = request.toAuthReqId();
     Tenant tenant = request.tenant();
-    serverConfigurationRepository.get(tenant.identifier());
+    serverConfigurationRepository.get(tenant);
 
-    CibaGrant cibaGrant = cibaGrantRepository.find(authReqId);
+    CibaGrant cibaGrant = cibaGrantRepository.find(tenant, authReqId);
     CibaGrant updated = cibaGrant.update(CibaGrantStatus.access_denied);
-    cibaGrantRepository.update(updated);
+    cibaGrantRepository.update(tenant, updated);
 
     return new CibaDenyResponse(CibaDenyStatus.OK);
   }

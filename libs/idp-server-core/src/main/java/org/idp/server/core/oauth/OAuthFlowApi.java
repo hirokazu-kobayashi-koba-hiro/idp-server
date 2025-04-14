@@ -42,6 +42,7 @@ public interface OAuthFlowApi {
       RequestAttributes requestAttributes);
 
   FederationInteractionResult callbackFederation(
+      TenantIdentifier tenantIdentifier,
       FederationType federationType,
       SsoProvider ssoProvider,
       FederationCallbackRequest callbackRequest,

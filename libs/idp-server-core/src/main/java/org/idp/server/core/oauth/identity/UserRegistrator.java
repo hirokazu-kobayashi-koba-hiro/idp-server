@@ -17,7 +17,7 @@ public class UserRegistrator {
     if (existingUser.exists()) {
       UserUpdater userUpdater = new UserUpdater(user, existingUser);
       User updatedUser = userUpdater.update();
-      userRepository.update(updatedUser);
+      userRepository.update(tenant, updatedUser);
       return updatedUser;
     }
 

@@ -2,11 +2,12 @@ package org.idp.server.core.security.event;
 
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEvents;
+import org.idp.server.core.tenant.Tenant;
 
 public interface SecurityEventRepository {
-  void register(SecurityEvent securityEvent);
+  void register(Tenant tenant, SecurityEvent securityEvent);
 
-  SecurityEvents findBy(String eventServerId, String userId);
+  SecurityEvents findBy(Tenant tenant, String eventServerId, String userId);
 
-  SecurityEvents search(String eventServerId, SecurityEventSearchCriteria criteria);
+  SecurityEvents search(Tenant tenant, String eventServerId, SecurityEventSearchCriteria criteria);
 }

@@ -36,7 +36,7 @@ public class OidcFederationInteractor implements FederationInteractor {
 
     OidcSsoConfiguration oidcSsoConfiguration =
         configurationQueryRepository.get(
-            tenant.identifier(), federationType, ssoProvider, OidcSsoConfiguration.class);
+            tenant, federationType, ssoProvider, OidcSsoConfiguration.class);
 
     OidcSsoSessionCreator authorizationRequestCreator =
         new OidcSsoSessionCreator(
@@ -47,24 +47,28 @@ public class OidcFederationInteractor implements FederationInteractor {
             ssoProvider);
     OidcSsoSession oidcSsoSession = authorizationRequestCreator.create();
 
-    sessionCommandRepository.register(oidcSsoSession.ssoSessionIdentifier(), oidcSsoSession);
+    sessionCommandRepository.register(
+        tenant, oidcSsoSession.ssoSessionIdentifier(), oidcSsoSession);
 
     return new FederationRequestResponse(
         FederationRequestStatus.REDIRECABLE_OK, oidcSsoSession, oidcSsoConfiguration);
   }
 
   public FederationInteractionResult callback(
+      Tenant tenant,
       FederationType federationType,
       SsoProvider ssoProvider,
       FederationCallbackRequest federationCallbackRequest,
       UserRepository userRepository) {
 
+    SsoState ssoState = federationCallbackRequest.ssoState();
     FederationCallbackParameters parameters = federationCallbackRequest.parameters();
-    OidcSsoSession session = sessionQueryRepository.get(parameters.state(), OidcSsoSession.class);
+    OidcSsoSession session =
+        sessionQueryRepository.get(tenant, ssoState.ssoSessionIdentifier(), OidcSsoSession.class);
 
     OidcSsoConfiguration oidcSsoConfiguration =
         configurationQueryRepository.get(
-            session.tenantIdentifier(), federationType, ssoProvider, OidcSsoConfiguration.class);
+            tenant, federationType, ssoProvider, OidcSsoConfiguration.class);
 
     OidcSsoExecutor oidcSsoExecutor = oidcSsoExecutors.get(oidcSsoConfiguration.ssoProvider());
 
@@ -83,13 +87,13 @@ public class OidcFederationInteractor implements FederationInteractor {
 
     User existingUser =
         userRepository.findByProvider(
-            session.tenantId(), oidcSsoConfiguration.issuerName(), userinfoResponse.sub());
+            tenant, oidcSsoConfiguration.issuerName(), userinfoResponse.sub());
 
     OidcUserinfoResponseConvertor convertor =
         new OidcUserinfoResponseConvertor(existingUser, userinfoResponse, oidcSsoConfiguration);
     User user = convertor.convert();
 
-    sessionCommandRepository.delete(session.ssoSessionIdentifier());
+    sessionCommandRepository.delete(tenant, session.ssoSessionIdentifier());
 
     return FederationInteractionResult.success(session, user);
   }

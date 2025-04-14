@@ -6,6 +6,7 @@ services:
     image: fapi-nginx
     ports:
       - "443:443"
+
   postgresql:
     image: postgres:15
     container_name: postgres
@@ -15,6 +16,20 @@ services:
       - POSTGRES_DB=idpserver
     ports:
       - "5432:5432"
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: idpserver
+      MYSQL_USER: idpserver
+      MYSQL_PASSWORD: idpserver
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
+
   verifiable-credentials:
     build: ./verifiable-credentials
     container_name: verifiable-credentials

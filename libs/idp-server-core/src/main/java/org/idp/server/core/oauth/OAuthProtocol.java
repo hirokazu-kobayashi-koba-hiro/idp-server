@@ -4,6 +4,7 @@ import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvide
 import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.tenant.Tenant;
 
 public interface OAuthProtocol {
 
@@ -13,7 +14,8 @@ public interface OAuthProtocol {
 
   OAuthViewDataResponse getViewData(OAuthViewDataRequest request);
 
-  AuthorizationRequest get(AuthorizationRequestIdentifier authorizationRequestIdentifier);
+  AuthorizationRequest get(
+      Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier);
 
   OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request);
 

@@ -25,13 +25,6 @@ public class ClientManagementEntryService implements ClientManagementApi {
     this.errorHandler = new ClientConfigurationErrorHandler();
   }
 
-  // TODO
-  public String register(String json) {
-
-    Tenant tenant = tenantRepository.getAdmin();
-    return clientConfigurationHandler.handleRegistration(tenant, json);
-  }
-
   public String register(TenantIdentifier tenantIdentifier, String body) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);

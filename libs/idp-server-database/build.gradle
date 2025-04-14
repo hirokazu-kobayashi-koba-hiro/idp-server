@@ -1,6 +1,14 @@
+buildscript {
+    dependencies {
+        classpath "org.flywaydb:flyway-database-postgresql:11.7.0"
+        classpath "org.flywaydb:flyway-mysql:11.7.0"
+    }
+}
+
+
 plugins {
     id "java"
-    id "org.flywaydb.flyway"  version "9.19.3"
+    id "org.flywaydb.flyway"  version "11.7.0"
 }
 
 repositories {
@@ -8,16 +16,29 @@ repositories {
 }
 
 dependencies {
-    runtimeOnly 'org.postgresql:postgresql:42.7.2'
+    implementation 'org.postgresql:postgresql:42.7.2'
+    implementation 'com.mysql:mysql-connector-j:9.2.0'
 }
 
 flyway {
     def env = System.env
-    url = "${env.DB_URL ?: "jdbc:postgresql://localhost:5432/idpserver"}"
-    user = "${env.DB_USER_NAME ?: "idpserver"}"
-    password = "${env.DB_PASSWORD ?: "idpserver"}"
+    def dbType = env.DB_TYPE ?: "postgresql"
+
+    if (dbType == "postgresql") {
+        url = env.DB_URL ?: "jdbc:postgresql://localhost:5432/idpserver"
+        user = env.DB_USER_NAME ?: "idpserver"
+        password = env.DB_PASSWORD ?: "idpserver"
+        locations = ["filesystem:./postgresql"]
+        schemas = ["public"]
+    } else if (dbType == "mysql") {
+        url = env.DB_URL ?: "jdbc:mysql://localhost:3306/idpserver"
+        user = env.DB_USER_NAME ?: "idpserver"
+        password = env.DB_PASSWORD ?: "idpserver"
+        locations = ["filesystem:./mysql"]
+    } else {
+        throw new GradleException("Unknown DB_TYPE: ${dbType}")
+    }
+
     encoding = "UTF-8"
-    schemas = ["public"]
-    locations = ["filesystem:./migration"]
     cleanDisabled = false
 }

@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.Map;
 
 public class SqlExecutor {
-  Connection connection;
+  private final Connection connection;
 
-  public SqlExecutor(Connection connection) {
-    this.connection = connection;
+  public SqlExecutor() {
+    this.connection = TransactionManager.getConnection();
   }
 
   public Map<String, String> selectOne(String sql, List<Object> params) {

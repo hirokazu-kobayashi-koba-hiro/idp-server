@@ -9,13 +9,12 @@ import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredential;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentialRepository;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentials;
 import org.idp.server.core.basic.sql.SqlExecutor;
-import org.idp.server.core.basic.sql.TransactionManager;
 
 public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepository {
 
   @Override
   public void register(WebAuthn4jCredential credential) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
             INSERT INTO public.webauthn_credentials (id, idp_user_id, rp_id, attestation_object, sign_count)
@@ -33,7 +32,7 @@ public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepos
 
   @Override
   public WebAuthn4jCredentials findAll(String userId) {
-    SqlExecutor sqlExecutor = new SqlExecutor(TransactionManager.getConnection());
+    SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """

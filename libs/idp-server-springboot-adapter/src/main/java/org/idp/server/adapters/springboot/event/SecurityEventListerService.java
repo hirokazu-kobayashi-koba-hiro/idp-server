@@ -29,12 +29,13 @@ public class SecurityEventListerService {
   @EventListener
   public void onEvent(SecurityEvent securityEvent) {
     log.info("onEvent: {}", securityEvent.toMap());
-    securityEventApi.handle(securityEvent);
+
+    securityEventApi.handle(securityEvent.tenantIdentifier(), securityEvent);
     taskExecutor.execute(
-        new EventRunnable(
+        new SecurityEventRunnable(
             securityEvent,
-            e -> {
-              securityEventApi.handle(e);
+            event -> {
+              securityEventApi.handle(event.tenantIdentifier(), event);
             }));
   }
 }

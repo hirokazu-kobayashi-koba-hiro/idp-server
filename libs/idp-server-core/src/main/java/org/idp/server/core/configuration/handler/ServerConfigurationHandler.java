@@ -4,6 +4,7 @@ import java.util.UUID;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
+import org.idp.server.core.tenant.Tenant;
 
 public class ServerConfigurationHandler {
 
@@ -16,10 +17,10 @@ public class ServerConfigurationHandler {
   }
 
   // TODO
-  public ServerConfiguration handleRegistration(String json) {
+  public ServerConfiguration handleRegistration(Tenant tenant, String json) {
     ServerConfiguration serverConfiguration = jsonConverter.read(json, ServerConfiguration.class);
     serverConfiguration.setTenantId(UUID.randomUUID().toString());
-    serverConfigurationRepository.register(serverConfiguration);
+    serverConfigurationRepository.register(tenant, serverConfiguration);
 
     return serverConfiguration;
   }

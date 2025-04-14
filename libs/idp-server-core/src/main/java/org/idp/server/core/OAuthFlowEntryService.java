@@ -94,7 +94,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
-    AuthorizationRequest authorizationRequest = oAuthProtocol.get(authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest =
+        oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
     OAuthSession oAuthSession =
         oAuthSessionDelegate.findOrInitialize(authorizationRequest.sessionKey());
@@ -132,7 +133,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
-    AuthorizationRequest authorizationRequest = oAuthProtocol.get(authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest =
+        oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
     FederationInteractor federationInteractor = federationInteractors.get(federationType);
 
@@ -154,25 +156,26 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   }
 
   public FederationInteractionResult callbackFederation(
+      TenantIdentifier tenantIdentifier,
       FederationType federationType,
       SsoProvider ssoProvider,
       FederationCallbackRequest callbackRequest,
       RequestAttributes requestAttributes) {
 
     FederationInteractor federationInteractor = federationInteractors.get(federationType);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
 
     FederationInteractionResult result =
-        federationInteractor.callback(federationType, ssoProvider, callbackRequest, userRepository);
+        federationInteractor.callback(
+            tenant, federationType, ssoProvider, callbackRequest, userRepository);
 
     if (result.isError()) {
       return result;
     }
 
-    Tenant tenant = tenantRepository.get(result.tenantIdentifier());
-
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
     AuthorizationRequest authorizationRequest =
-        oAuthProtocol.get(result.authorizationRequestIdentifier());
+        oAuthProtocol.get(tenant, result.authorizationRequestIdentifier());
 
     OAuthSession oAuthSession =
         OAuthSession.create(
@@ -196,23 +199,29 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
-    AuthorizationRequest authorizationRequest = oAuthProtocol.get(authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest =
+        oAuthProtocol.get(tenant, authorizationRequestIdentifier);
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
 
-    User updatedUser = userRegistrator.registerOrUpdate(tenant, session.user());
-
+    User user = session.user();
     OAuthAuthorizeRequest oAuthAuthorizeRequest =
         new OAuthAuthorizeRequest(
-            tenant, authorizationRequestIdentifier.value(), updatedUser, session.authentication());
+            tenant, authorizationRequestIdentifier.value(), user, session.authentication());
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 
-    eventPublisher.publish(
-        tenant,
-        authorizationRequest,
-        updatedUser,
-        DefaultSecurityEventType.login,
-        requestAttributes);
+    if (authorize.isOk()) {
+      userRegistrator.registerOrUpdate(tenant, user);
+      eventPublisher.publish(
+          tenant, authorizationRequest, user, DefaultSecurityEventType.login, requestAttributes);
+    } else {
+      eventPublisher.publish(
+          tenant,
+          authorizationRequest,
+          user,
+          DefaultSecurityEventType.authorize_failure,
+          requestAttributes);
+    }
 
     return authorize;
   }
@@ -224,7 +233,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
-    AuthorizationRequest authorizationRequest = oAuthProtocol.get(authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest =
+        oAuthProtocol.get(tenant, authorizationRequestIdentifier);
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
 
     if (Objects.isNull(session)

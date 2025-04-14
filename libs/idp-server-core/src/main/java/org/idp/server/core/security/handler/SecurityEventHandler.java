@@ -5,11 +5,9 @@ import org.idp.server.core.security.*;
 import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.hook.*;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantRepository;
 
 public class SecurityEventHandler {
 
-  TenantRepository tenantRepository;
   SecurityEventRepository securityEventRepository;
   SecurityEventHooks securityEventHooks;
   SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
@@ -17,22 +15,18 @@ public class SecurityEventHandler {
   Logger log = Logger.getLogger(SecurityEventHandler.class.getName());
 
   public SecurityEventHandler(
-      TenantRepository tenantRepository,
       SecurityEventRepository securityEventRepository,
       SecurityEventHooks securityEventHooks,
       SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository) {
-    this.tenantRepository = tenantRepository;
     this.securityEventRepository = securityEventRepository;
     this.securityEventHooks = securityEventHooks;
     this.securityEventHookConfigurationQueryRepository =
         securityEventHookConfigurationQueryRepository;
   }
 
-  public void handle(SecurityEvent securityEvent) {
+  public void handle(Tenant tenant, SecurityEvent securityEvent) {
 
-    securityEventRepository.register(securityEvent);
-
-    Tenant tenant = tenantRepository.get(securityEvent.tenantIdentifier());
+    securityEventRepository.register(tenant, securityEvent);
 
     SecurityEventHookConfigurations securityEventHookConfigurations =
         securityEventHookConfigurationQueryRepository.find(tenant);

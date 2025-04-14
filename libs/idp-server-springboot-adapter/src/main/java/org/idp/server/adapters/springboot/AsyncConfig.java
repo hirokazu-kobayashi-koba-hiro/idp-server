@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot;
 
-import org.idp.server.adapters.springboot.event.EventRetryScheduler;
-import org.idp.server.adapters.springboot.event.EventRunnable;
+import org.idp.server.adapters.springboot.event.SecurityEventRetryScheduler;
+import org.idp.server.adapters.springboot.event.SecurityEventRunnable;
 import org.idp.server.core.security.SecurityEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +14,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 public class AsyncConfig {
 
   Logger logger = LoggerFactory.getLogger(AsyncConfig.class);
-  EventRetryScheduler retryScheduler;
+  SecurityEventRetryScheduler retryScheduler;
 
-  public AsyncConfig(EventRetryScheduler retryScheduler) {
+  public AsyncConfig(SecurityEventRetryScheduler retryScheduler) {
     this.retryScheduler = retryScheduler;
   }
 
@@ -32,8 +32,8 @@ public class AsyncConfig {
         (r, executor1) -> {
           logger.warn("Rejected Execution Handler");
 
-          if (r instanceof EventRunnable) {
-            SecurityEvent securityEvent = ((EventRunnable) r).getEvent();
+          if (r instanceof SecurityEventRunnable) {
+            SecurityEvent securityEvent = ((SecurityEventRunnable) r).getEvent();
             retryScheduler.enqueue(securityEvent);
           } else {
 

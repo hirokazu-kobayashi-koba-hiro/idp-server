@@ -28,7 +28,9 @@ public class ServerRegistrationV1Api implements ParameterTransformable {
   @PostMapping
   public ResponseEntity<?> post(@RequestBody(required = false) String body) {
 
-    String response = serverManagementApi.register(TenantType.PUBLIC, serverDomain, body);
+    TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
+    String response =
+        serverManagementApi.register(adminTenantIdentifier, TenantType.PUBLIC, serverDomain, body);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

@@ -15,6 +15,7 @@ import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.identity.*;
 import org.idp.server.core.oauth.token.*;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.CibaGrantValidator;
@@ -50,11 +51,12 @@ public class CibaGrantService
     CibaGrantValidator validator = new CibaGrantValidator(tokenRequestContext);
     validator.validate();
 
+    Tenant tenant = tokenRequestContext.tenant();
     AuthReqId authReqId = tokenRequestContext.authReqId();
-    CibaGrant cibaGrant = cibaGrantRepository.find(authReqId);
+    CibaGrant cibaGrant = cibaGrantRepository.find(tenant, authReqId);
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
         backchannelAuthenticationRequestRepository.find(
-            cibaGrant.backchannelAuthenticationRequestIdentifier());
+            tenant, cibaGrant.backchannelAuthenticationRequestIdentifier());
 
     CibaGrantVerifier verifier =
         new CibaGrantVerifier(tokenRequestContext, backchannelAuthenticationRequest, cibaGrant);
@@ -83,31 +85,31 @@ public class CibaGrantService
             clientConfiguration);
     oAuthTokenBuilder.add(idToken);
 
-    registerOrUpdate(cibaGrant);
+    registerOrUpdate(tenant, cibaGrant);
 
     OAuthToken oAuthToken = oAuthTokenBuilder.build();
 
-    oAuthTokenRepository.register(oAuthToken);
-    cibaGrantRepository.delete(cibaGrant);
+    oAuthTokenRepository.register(tenant, oAuthToken);
+    cibaGrantRepository.delete(tenant, cibaGrant);
 
     return oAuthToken;
   }
 
-  private void registerOrUpdate(CibaGrant cibaGrant) {
+  private void registerOrUpdate(Tenant tenant, CibaGrant cibaGrant) {
     AuthorizationGranted latest =
         authorizationGrantedRepository.find(
-            cibaGrant.tenantIdentifier(), cibaGrant.requestedClientId(), cibaGrant.user());
+            tenant, cibaGrant.requestedClientId(), cibaGrant.user());
 
     if (latest.exists()) {
       AuthorizationGranted merge = latest.merge(cibaGrant.authorizationGrant());
 
-      authorizationGrantedRepository.update(merge);
+      authorizationGrantedRepository.update(tenant, merge);
       return;
     }
     AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
         new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
     AuthorizationGranted authorizationGranted =
         new AuthorizationGranted(authorizationGrantedIdentifier, cibaGrant.authorizationGrant());
-    authorizationGrantedRepository.register(authorizationGranted);
+    authorizationGrantedRepository.register(tenant, authorizationGranted);
   }
 }

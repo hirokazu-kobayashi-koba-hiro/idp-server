@@ -1,9 +1,9 @@
 package org.idp.server.core.configuration;
 
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.tenant.Tenant;
 
 public interface ServerConfigurationRepository {
-  void register(ServerConfiguration serverConfiguration);
+  void register(Tenant tenant, ServerConfiguration serverConfiguration);
 
-  ServerConfiguration get(TenantIdentifier tenantIdentifier);
+  ServerConfiguration get(Tenant tenant);
 }

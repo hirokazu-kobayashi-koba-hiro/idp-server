@@ -32,13 +32,13 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
 
   @Override
   public User findUser(Tenant tenant, Subject subject) {
-    return userRepository.get(subject.value());
+    return userRepository.get(tenant, subject.value());
   }
 
   public UserinfoRequestResponse request(
-      TenantIdentifier tenantId, String authorizationHeader, String clientCert) {
+      TenantIdentifier tenantIdentifier, String authorizationHeader, String clientCert) {
 
-    Tenant tenant = tenantRepository.get(tenantId);
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
     UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
     userinfoRequest.setClientCert(clientCert);
 

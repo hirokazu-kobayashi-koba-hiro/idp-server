@@ -24,6 +24,7 @@ import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.oauth.response.ResponseModeDecidable;
 import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.OAuthRequestKey;
 import org.idp.server.core.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.type.extension.ResponseModeValue;
@@ -376,5 +377,9 @@ public class OAuthRequestContext implements ResponseModeDecidable {
 
   public boolean isJwtMode() {
     return isJwtMode(authorizationRequest.profile(), responseType(), responseMode());
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return authorizationRequest.tenantIdentifier();
   }
 }

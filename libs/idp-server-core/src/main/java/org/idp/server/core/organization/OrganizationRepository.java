@@ -1,9 +1,11 @@
 package org.idp.server.core.organization;
 
+import org.idp.server.core.tenant.Tenant;
+
 public interface OrganizationRepository {
-  void register(Organization organization);
+  void register(Tenant tenant, Organization organization);
 
-  void update(Organization organization);
+  void update(Tenant tenant, Organization organization);
 
-  Organization get(OrganizationIdentifier identifier);
+  Organization get(Tenant tenant, OrganizationIdentifier identifier);
 }

@@ -33,7 +33,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
 
     EmailVerificationChallenge emailVerificationChallenge =
         queryRepository.get(
-            authenticationTransactionIdentifier, "email", EmailVerificationChallenge.class);
+            tenant, authenticationTransactionIdentifier, "email", EmailVerificationChallenge.class);
     String verificationCode = request.optValueAsString("verification_code", "");
 
     EmailVerificationResult verificationResult =
@@ -44,7 +44,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
       EmailVerificationChallenge countUpEmailVerificationChallenge =
           emailVerificationChallenge.countUp();
       commandRepository.update(
-          authenticationTransactionIdentifier, "email", countUpEmailVerificationChallenge);
+          tenant, authenticationTransactionIdentifier, "email", countUpEmailVerificationChallenge);
 
       return new AuthenticationInteractionResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,

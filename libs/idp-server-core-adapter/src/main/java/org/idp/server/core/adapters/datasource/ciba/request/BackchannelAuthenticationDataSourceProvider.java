@@ -15,6 +15,6 @@ public class BackchannelAuthenticationDataSourceProvider
   @Override
   public BackchannelAuthenticationRequestRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new BackchannelAuthenticationDataSource();
+    return new BackchannelAuthenticationRequestDataSource();
   }
 }

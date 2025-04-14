@@ -36,7 +36,7 @@ public class WebAuthnAuthenticationChallengeInteractor implements Authentication
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
     WebAuthnChallenge webAuthnChallenge =
         webAuthnExecutor.challengeAuthentication(
-            authenticationTransactionIdentifier, request, configuration);
+            tenant, authenticationTransactionIdentifier, request, configuration);
 
     Map<String, Object> response = new HashMap<>();
     response.put("challenge", webAuthnChallenge.challenge());

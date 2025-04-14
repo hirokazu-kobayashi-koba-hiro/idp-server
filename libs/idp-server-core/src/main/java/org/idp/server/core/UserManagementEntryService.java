@@ -23,7 +23,8 @@ public class UserManagementEntryService implements UserManagementApi {
   }
 
   @Override
-  public void register(Tenant tenant, User user) {
+  public void register(TenantIdentifier tenantIdentifier, User user) {
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
     userRepository.register(tenant, user);
   }
 
@@ -31,22 +32,19 @@ public class UserManagementEntryService implements UserManagementApi {
   public User get(TenantIdentifier tenantIdentifier, String userId) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    return userRepository.get(userId);
+    return userRepository.get(tenant, userId);
   }
 
   @Override
-  public User findBy(Tenant tenant, String email, String providerId) {
+  public User findBy(TenantIdentifier tenantIdentifier, String email, String providerId) {
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
     return userRepository.findBy(tenant, email, providerId);
   }
 
   @Override
-  public void update(User user) {
-    userRepository.update(user);
-  }
-
-  @Override
-  public User findByProvider(String tokenIssuer, String providerId, String providerUserId) {
-    return userRepository.findByProvider(tokenIssuer, providerId, providerUserId);
+  public void update(TenantIdentifier tenantIdentifier, User user) {
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    userRepository.update(tenant, user);
   }
 
   @Override
