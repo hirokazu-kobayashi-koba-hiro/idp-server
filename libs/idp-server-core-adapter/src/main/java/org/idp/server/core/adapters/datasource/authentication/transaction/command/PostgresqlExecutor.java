@@ -1,15 +1,12 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.command;
 
-import org.idp.server.core.authentication.AuthenticationTransactionCommandRepository;
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class PostgresqlExecutor
-    implements AuthenticationTransactionCommandSqlExecutor {
+public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlExecutor {
 
   JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 

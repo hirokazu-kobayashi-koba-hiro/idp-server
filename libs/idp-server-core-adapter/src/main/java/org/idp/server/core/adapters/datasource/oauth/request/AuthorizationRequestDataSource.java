@@ -19,14 +19,14 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
   @Override
   public void register(Tenant tenant, AuthorizationRequest authorizationRequest) {
 
-    AuthorizationRequestSqlExecutor executor = executors.get(tenant.dialect());
+    AuthorizationRequestSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(authorizationRequest);
   }
 
   @Override
   public AuthorizationRequest get(
       Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
-    AuthorizationRequestSqlExecutor executor = executors.get(tenant.dialect());
+    AuthorizationRequestSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> stringMap = executor.selectOne(authorizationRequestIdentifier);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
@@ -41,7 +41,7 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
   @Override
   public AuthorizationRequest find(
       Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
-    AuthorizationRequestSqlExecutor executor = executors.get(tenant.dialect());
+    AuthorizationRequestSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> stringMap = executor.selectOne(authorizationRequestIdentifier);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {

@@ -23,13 +23,13 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   @Override
   public void register(Tenant tenant, ClientConfiguration clientConfiguration) {
-    ClientConfigSqlExecutor executor = executors.get(tenant.dialect());
+    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, clientConfiguration);
   }
 
   @Override
   public ClientConfiguration get(Tenant tenant, RequestedClientId requestedClientId) {
-    ClientConfigSqlExecutor executor = executors.get(tenant.dialect());
+    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> resultClientIdAlias = executor.selectByAlias(tenant, requestedClientId);
 
     if (resultClientIdAlias != null && !resultClientIdAlias.isEmpty()) {
@@ -49,7 +49,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   @Override
   public ClientConfiguration get(Tenant tenant, ClientIdentifier clientIdentifier) {
-    ClientConfigSqlExecutor executor = executors.get(tenant.dialect());
+    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectById(tenant, clientIdentifier);
 
     if (result == null || result.isEmpty()) {
@@ -62,7 +62,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   @Override
   public List<ClientConfiguration> find(Tenant tenant, int limit, int offset) {
-    ClientConfigSqlExecutor executor = executors.get(tenant.dialect());
+    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> maps = executor.selectList(tenant, limit, offset);
 
     if (Objects.isNull(maps) || maps.isEmpty()) {
@@ -74,13 +74,13 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   @Override
   public void update(Tenant tenant, ClientConfiguration clientConfiguration) {
-    ClientConfigSqlExecutor executor = executors.get(tenant.dialect());
+    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, clientConfiguration);
   }
 
   @Override
   public void delete(Tenant tenant, RequestedClientId requestedClientId) {
-    ClientConfigSqlExecutor executor = executors.get(tenant.dialect());
+    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, requestedClientId);
   }
 }

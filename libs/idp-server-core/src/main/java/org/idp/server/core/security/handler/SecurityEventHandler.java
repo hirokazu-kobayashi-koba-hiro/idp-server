@@ -5,7 +5,6 @@ import org.idp.server.core.security.*;
 import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.hook.*;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantRepository;
 
 public class SecurityEventHandler {
 
@@ -27,7 +26,7 @@ public class SecurityEventHandler {
 
   public void handle(Tenant tenant, SecurityEvent securityEvent) {
 
-      securityEventRepository.register(tenant, securityEvent);
+    securityEventRepository.register(tenant, securityEvent);
 
     SecurityEventHookConfigurations securityEventHookConfigurations =
         securityEventHookConfigurationQueryRepository.find(tenant);

@@ -80,7 +80,8 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
             tenantRequest.tenantIdentifier(),
             tenantRequest.tenantName(),
             TenantType.ADMIN,
-            new TenantDomain(serverConfiguration.tokenIssuer().value()));
+            new TenantDomain(serverConfiguration.tokenIssuer().value()),
+            TenantAttributes.createDefaultType());
     organization.assign(tenant);
 
     tenantRepository.register(tenant);

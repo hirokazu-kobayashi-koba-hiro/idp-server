@@ -4,9 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvider;
-import org.idp.server.core.basic.dependency.protcol.DefaultAuthorizationProvider;
 import org.idp.server.core.basic.json.JsonReadable;
-import org.idp.server.core.basic.sql.Dialect;
+import org.idp.server.core.basic.sql.DatabaseType;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class Tenant implements JsonReadable {
@@ -14,18 +13,26 @@ public class Tenant implements JsonReadable {
   TenantName name;
   TenantType type;
   TenantDomain domain;
-  // TODO
-  AuthorizationProtocolProvider authorizationProtocolProvider;
-  Dialect dialect;
+  TenantAttributes attributes;
 
   public Tenant() {}
 
   public Tenant(
       TenantIdentifier identifier, TenantName name, TenantType type, TenantDomain domain) {
+    this(identifier, name, type, domain, new TenantAttributes(Map.of()));
+  }
+
+  public Tenant(
+      TenantIdentifier identifier,
+      TenantName name,
+      TenantType type,
+      TenantDomain domain,
+      TenantAttributes attributes) {
     this.identifier = identifier;
     this.name = name;
     this.type = type;
     this.domain = domain;
+    this.attributes = attributes;
   }
 
   public TenantIdentifier identifier() {
@@ -61,6 +68,7 @@ public class Tenant implements JsonReadable {
     map.put("id", identifier.value());
     map.put("name", name.value());
     map.put("type", type.name());
+    map.put("attributes", attributes.toMap());
     return map;
   }
 
@@ -76,19 +84,19 @@ public class Tenant implements JsonReadable {
     return domain;
   }
 
-  public AuthorizationProtocolProvider authorizationProtocolProvider() {
-
-    if (authorizationProtocolProvider == null) {
-      return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
-    }
-    return authorizationProtocolProvider;
+  public TenantAttributes attributes() {
+    return attributes;
   }
 
-  public Dialect dialect() {
+  public AuthorizationProtocolProvider authorizationProtocolProvider() {
+    return attributes.authorizationProtocolProvider();
+  }
 
-    if (dialect == null) {
-      return Dialect.POSTGRESQL;
-    }
-    return dialect;
+  public DatabaseType databaseType() {
+    return attributes.databaseType();
+  }
+
+  public Map<String, Object> attributesAsMap() {
+    return attributes.toMap();
   }
 }

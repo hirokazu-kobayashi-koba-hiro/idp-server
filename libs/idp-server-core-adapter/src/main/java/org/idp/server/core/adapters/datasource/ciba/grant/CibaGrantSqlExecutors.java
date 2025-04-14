@@ -2,24 +2,24 @@ package org.idp.server.core.adapters.datasource.ciba.grant;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.sql.Dialect;
+import org.idp.server.core.basic.sql.DatabaseType;
 import org.idp.server.core.type.exception.UnSupportedException;
 
 public class CibaGrantSqlExecutors {
 
-  Map<Dialect, CibaGrantSqlExecutor> executors;
+  Map<DatabaseType, CibaGrantSqlExecutor> executors;
 
   public CibaGrantSqlExecutors() {
     this.executors = new HashMap<>();
-    executors.put(Dialect.POSTGRESQL, new PostgresqlExecutor());
-    executors.put(Dialect.MYSQL, new MysqlExecutor());
+    executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
+    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
-  public CibaGrantSqlExecutor get(Dialect dialect) {
-    CibaGrantSqlExecutor executor = executors.get(dialect);
+  public CibaGrantSqlExecutor get(DatabaseType databaseType) {
+    CibaGrantSqlExecutor executor = executors.get(databaseType);
 
     if (executor == null) {
-      throw new UnSupportedException("Unknown dialect " + dialect);
+      throw new UnSupportedException("Unknown dialect " + databaseType);
     }
 
     return executor;

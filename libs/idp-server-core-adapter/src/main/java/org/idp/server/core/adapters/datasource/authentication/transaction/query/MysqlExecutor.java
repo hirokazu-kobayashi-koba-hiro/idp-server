@@ -1,18 +1,16 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.query;
 
-import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.basic.sql.SqlExecutor;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.basic.sql.SqlExecutor;
 
-public class MysqlExecutor
-    implements AuthenticationTransactionQuerySqlExecutor {
-
+public class MysqlExecutor implements AuthenticationTransactionQuerySqlExecutor {
 
   @Override
-  public Map<String, String> selectOne(AuthenticationTransactionIdentifier identifier, String type) {
+  public Map<String, String> selectOne(
+      AuthenticationTransactionIdentifier identifier, String type) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """

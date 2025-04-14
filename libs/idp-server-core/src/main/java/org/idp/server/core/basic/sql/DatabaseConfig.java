@@ -3,22 +3,23 @@ package org.idp.server.core.basic.sql;
 import java.util.Map;
 
 public class DatabaseConfig {
-  Map<Dialect, DbCredentials> writerConfigs;
-  Map<Dialect, DbCredentials> readerConfigs;
+  Map<DatabaseType, DbCredentials> writerConfigs;
+  Map<DatabaseType, DbCredentials> readerConfigs;
 
   public DatabaseConfig() {}
 
   public DatabaseConfig(
-      Map<Dialect, DbCredentials> writerConfigs, Map<Dialect, DbCredentials> readerConfigs) {
+      Map<DatabaseType, DbCredentials> writerConfigs,
+      Map<DatabaseType, DbCredentials> readerConfigs) {
     this.writerConfigs = writerConfigs;
     this.readerConfigs = readerConfigs;
   }
 
-  public Map<Dialect, DbCredentials> writerConfigs() {
+  public Map<DatabaseType, DbCredentials> writerConfigs() {
     return writerConfigs;
   }
 
-  public Map<Dialect, DbCredentials> readerConfigs() {
+  public Map<DatabaseType, DbCredentials> readerConfigs() {
     return readerConfigs;
   }
 }

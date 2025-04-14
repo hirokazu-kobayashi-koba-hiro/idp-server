@@ -17,19 +17,19 @@ public class CibaGrantDataSource implements CibaGrantRepository {
 
   @Override
   public void register(Tenant tenant, CibaGrant cibaGrant) {
-    CibaGrantSqlExecutor executor = executors.get(tenant.dialect());
+    CibaGrantSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(cibaGrant);
   }
 
   @Override
   public void update(Tenant tenant, CibaGrant cibaGrant) {
-    CibaGrantSqlExecutor executor = executors.get(tenant.dialect());
+    CibaGrantSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(cibaGrant);
   }
 
   @Override
   public CibaGrant find(Tenant tenant, AuthReqId authReqId) {
-    CibaGrantSqlExecutor executor = executors.get(tenant.dialect());
+    CibaGrantSqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> stringMap = executor.selectOne(authReqId);
 
@@ -42,7 +42,7 @@ public class CibaGrantDataSource implements CibaGrantRepository {
 
   @Override
   public void delete(Tenant tenant, CibaGrant cibaGrant) {
-    CibaGrantSqlExecutor executor = executors.get(tenant.dialect());
+    CibaGrantSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(cibaGrant);
   }
 }

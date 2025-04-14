@@ -1,18 +1,11 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.query;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedSqlExecutor;
-import org.idp.server.core.adapters.datasource.grantmanagment.AuthorizationGrantedSqlExecutors;
-import org.idp.server.core.authentication.AuthenticationInteractionType;
 import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.authentication.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.authentication.exception.MfaTransactionNotFoundException;
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.tenant.Tenant;
 
 public class AuthenticationTransactionQueryDataSource
@@ -27,8 +20,9 @@ public class AuthenticationTransactionQueryDataSource
   }
 
   @Override
-  public <T> T get(Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, Class<T> clazz) {
-    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.dialect());
+  public <T> T get(
+      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, Class<T> clazz) {
+    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> result = executor.selectOne(identifier, type);
 

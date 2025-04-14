@@ -141,7 +141,7 @@ foundation for modern identity management.
 | **Developer Tools** | SDKs & Libraries                      | ⚠️        | ✅    | ✅     | ✅            | Provides SDKs for React, Angular, Vue, Node.js, .NET, Java, and more.                                                                                                                     |
 |                     | Custom Hooks & Rules                  | ⚠️        | ❌    | ❌     | ✅            | Allows developers to implement custom business logic.                                                                                                                                     |
 |                     | Custom Branding                       | ⚠️        | ❌    | ❌     | ✅            | Enables UI customization for authentication pages, emails, and error messages.                                                                                                            |
-| **Infra**           | Database                              | ⚠️        | ❌    | ❌     | ✅            | Supports database routing per tenant. now is supported postgresql                                                                                                                         |
+| **Infra**           | Database                              | ⚠️        | ❌    | ❌     | ✅            | Supports databaseType routing per tenant. now is supported postgresql                                                                                                                         |
 
 ## Getting Started
 

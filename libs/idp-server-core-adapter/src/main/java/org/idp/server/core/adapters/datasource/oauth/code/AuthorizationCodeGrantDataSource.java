@@ -21,13 +21,13 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
   @Override
   public void register(Tenant tenant, AuthorizationCodeGrant authorizationCodeGrant) {
 
-    AuthorizationCodeGrantExecutor executor = executors.get(tenant.dialect());
+    AuthorizationCodeGrantExecutor executor = executors.get(tenant.databaseType());
     executor.insert(authorizationCodeGrant);
   }
 
   @Override
   public AuthorizationCodeGrant find(Tenant tenant, AuthorizationCode authorizationCode) {
-    AuthorizationCodeGrantExecutor executor = executors.get(tenant.dialect());
+    AuthorizationCodeGrantExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> stringMap = executor.selectOne(authorizationCode);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
@@ -38,7 +38,7 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
 
   @Override
   public void delete(Tenant tenant, AuthorizationCodeGrant authorizationCodeGrant) {
-    AuthorizationCodeGrantExecutor executor = executors.get(tenant.dialect());
+    AuthorizationCodeGrantExecutor executor = executors.get(tenant.databaseType());
     executor.delete(authorizationCodeGrant);
   }
 

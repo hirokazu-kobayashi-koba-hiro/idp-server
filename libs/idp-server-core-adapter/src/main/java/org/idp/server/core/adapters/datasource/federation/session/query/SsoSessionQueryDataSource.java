@@ -20,7 +20,7 @@ public class SsoSessionQueryDataSource implements SsoSessionQueryRepository {
 
   @Override
   public <T> T get(Tenant tenant, SsoSessionIdentifier ssoSessionIdentifier, Class<T> clazz) {
-    SsoSessionQuerySqlExecutor executor = executors.get(tenant.dialect());
+    SsoSessionQuerySqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> result = executor.selectOne(ssoSessionIdentifier);
 

@@ -20,13 +20,13 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
 
   @Override
   public void register(Tenant tenant, AuthorizationGranted authorizationGranted) {
-    AuthorizationGrantedSqlExecutor executor = executors.get(tenant.dialect());
+    AuthorizationGrantedSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(authorizationGranted);
   }
 
   @Override
   public AuthorizationGranted find(Tenant tenant, RequestedClientId requestedClientId, User user) {
-    AuthorizationGrantedSqlExecutor executor = executors.get(tenant.dialect());
+    AuthorizationGrantedSqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> result = executor.selectOne(tenant.identifier(), requestedClientId, user);
 
@@ -39,7 +39,7 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
 
   @Override
   public void update(Tenant tenant, AuthorizationGranted authorizationGranted) {
-    AuthorizationGrantedSqlExecutor executor = executors.get(tenant.dialect());
+    AuthorizationGrantedSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(authorizationGranted);
   }
 

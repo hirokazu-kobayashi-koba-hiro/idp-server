@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.idp.server.core.admin.OnboardingApi;
 import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.basic.sql.DatabaseType;
 import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
@@ -42,9 +43,12 @@ public class OnboardingEntryService implements OnboardingApi {
     String organizationName = (String) request.getOrDefault("organization_name", "");
     String tenantName = (String) request.getOrDefault("tenant_name", "");
     String serverDomain = (String) request.getOrDefault("server_domain", "");
+    String databaseString = (String) request.getOrDefault("database", "");
     String serverConfig = (String) request.get("server_configuration");
     TenantIdentifier tenantIdentifier = new TenantIdentifier(UUID.randomUUID().toString());
     TenantDomain tenantDomain = new TenantDomain(serverDomain + "/" + tenantIdentifier.value());
+    Map<String, Object> tenantAttributes = Map.of("database", DatabaseType.of(databaseString));
+
     String replacedConfig =
         serverConfig
             .replace("ISSUER", tenantDomain.value())
@@ -70,7 +74,9 @@ public class OnboardingEntryService implements OnboardingApi {
     HashMap<String, Object> newCustomProperties = new HashMap<>(operator.customPropertiesValue());
     newCustomProperties.put("organization", organization.toMap());
     operator.setCustomProperties(newCustomProperties);
-    userRegistrator.registerOrUpdate(tenantRepository.getAdmin(), operator);
+
+    Tenant admin = tenantRepository.getAdmin();
+    userRegistrator.registerOrUpdate(admin, operator);
 
     return organization.toMap();
   }

@@ -1,6 +1,6 @@
 package org.idp.server.core.tenant;
 
-import org.idp.server.core.basic.sql.Dialect;
+import org.idp.server.core.basic.sql.DatabaseType;
 import org.idp.server.core.basic.sql.DialectProvider;
 
 public class TenantDialectProvider implements DialectProvider {
@@ -12,15 +12,15 @@ public class TenantDialectProvider implements DialectProvider {
   }
 
   @Override
-  public Dialect provide(TenantIdentifier tenantIdentifier) {
+  public DatabaseType provide(TenantIdentifier tenantIdentifier) {
     TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
 
     if (adminTenantIdentifier.equals(tenantIdentifier)) {
-      return Dialect.POSTGRESQL;
+      return DatabaseType.POSTGRESQL;
     }
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    return tenant.dialect();
+    return tenant.databaseType();
   }
 }

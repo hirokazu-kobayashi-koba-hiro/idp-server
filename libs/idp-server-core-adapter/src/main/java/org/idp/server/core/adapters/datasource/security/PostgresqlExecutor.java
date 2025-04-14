@@ -1,14 +1,12 @@
 package org.idp.server.core.adapters.datasource.security;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEvents;
-import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.event.SecurityEventSearchCriteria;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class PostgresqlExecutor implements SecurityEventSqlExecutor {
 

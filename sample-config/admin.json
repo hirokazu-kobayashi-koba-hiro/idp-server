@@ -6,7 +6,8 @@
   },
   "tenant": {
     "id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
-    "name": "admin-tenant"
+    "name": "admin-tenant",
+    "database": "postgresql"
   },
   "server_configuration": {
     "tenant_id": "67e7eae6-62b0-4500-9eff-87459f63fc66",

@@ -1,13 +1,10 @@
 package org.idp.server.core.adapters.datasource.authentication.config;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.authentication.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.authentication.exception.MfaConfigurationNotFoundException;
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.tenant.Tenant;
 
 public class AuthenticationConfigurationQueryDataSource
@@ -23,7 +20,7 @@ public class AuthenticationConfigurationQueryDataSource
 
   @Override
   public <T> T get(Tenant tenant, String type, Class<T> clazz) {
-    AuthenticationConfigSqlExecutor executor = executors.get(tenant.dialect());
+    AuthenticationConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, type);
 
     if (Objects.isNull(result) || result.isEmpty()) {

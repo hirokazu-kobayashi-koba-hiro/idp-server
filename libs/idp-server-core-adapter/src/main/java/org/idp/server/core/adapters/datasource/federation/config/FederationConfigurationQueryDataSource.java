@@ -23,7 +23,7 @@ public class FederationConfigurationQueryDataSource
   @Override
   public <T> T get(
       Tenant tenant, FederationType federationType, SsoProvider ssoProvider, Class<T> clazz) {
-    FederationConfigurationQuerySqlExecutor executor = executors.get(tenant.dialect());
+    FederationConfigurationQuerySqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> result = executor.selectOne(tenant, federationType, ssoProvider);
 

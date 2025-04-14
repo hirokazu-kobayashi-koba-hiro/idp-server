@@ -22,13 +22,13 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public void register(Tenant tenant, User user) {
-    UserSqlExecutor executor = executors.get(tenant.dialect());
+    UserSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, user);
   }
 
   @Override
   public User get(Tenant tenant, String userId) {
-    UserSqlExecutor executor = executors.get(tenant.dialect());
+    UserSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, userId);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -40,7 +40,7 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public User findBy(Tenant tenant, String email, String providerId) {
-    UserSqlExecutor executor = executors.get(tenant.dialect());
+    UserSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectByEmail(tenant, email, providerId);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -52,7 +52,7 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public List<User> findList(Tenant tenant, int limit, int offset) {
-    UserSqlExecutor executor = executors.get(tenant.dialect());
+    UserSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectList(tenant, limit, offset);
 
     if (Objects.isNull(results) || results.isEmpty()) {
@@ -64,13 +64,13 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public void update(Tenant tenant, User user) {
-    UserSqlExecutor executor = executors.get(tenant.dialect());
+    UserSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, user);
   }
 
   @Override
   public User findByProvider(Tenant tenant, String providerId, String providerUserId) {
-    UserSqlExecutor executor = executors.get(tenant.dialect());
+    UserSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectByProvider(tenant, providerId, providerUserId);
 
     if (Objects.isNull(result) || result.isEmpty()) {

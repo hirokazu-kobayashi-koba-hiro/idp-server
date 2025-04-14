@@ -31,14 +31,14 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
       OperationContext.set(operationType);
       TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
 
-      TransactionManager.createConnection(Dialect.POSTGRESQL);
-      Dialect dialect = dialectProvider.provide(tenantIdentifier);
+      TransactionManager.createConnection(DatabaseType.POSTGRESQL);
+      DatabaseType databaseType = dialectProvider.provide(tenantIdentifier);
       TransactionManager.closeConnection();
 
-      TransactionManager.beginTransaction(dialect);
+      TransactionManager.beginTransaction(databaseType);
 
       log.info(
-          dialect.name()
+          databaseType.name()
               + ": begin transaction: "
               + target.getClass().getName()
               + ": "
@@ -47,7 +47,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         Object result = method.invoke(target, args);
         TransactionManager.commitTransaction();
         log.info(
-            dialect.name()
+            databaseType.name()
                 + ": commit transaction: "
                 + target.getClass().getName()
                 + ": "
@@ -56,7 +56,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
       } catch (Exception e) {
         TransactionManager.rollbackTransaction();
         log.info(
-            dialect.name()
+            databaseType.name()
                 + ": rollback transaction: "
                 + target.getClass().getName()
                 + ": "

@@ -33,7 +33,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
 
     EmailVerificationChallenge emailVerificationChallenge =
         queryRepository.get(
-           tenant,  authenticationTransactionIdentifier, "email", EmailVerificationChallenge.class);
+            tenant, authenticationTransactionIdentifier, "email", EmailVerificationChallenge.class);
     String verificationCode = request.optValueAsString("verification_code", "");
 
     EmailVerificationResult verificationResult =

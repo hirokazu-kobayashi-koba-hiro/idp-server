@@ -23,7 +23,7 @@ This table summarizes key syntax and data type differences when converting DDL f
 | `BOOLEAN`                           | `TINYINT(1)`                             | MySQL does not support native boolean types; `1 = TRUE`, `0 = FALSE`            |
 | `TIMESTAMP DEFAULT now()`           | `DATETIME DEFAULT CURRENT_TIMESTAMP`     | Replace PostgreSQL's `now()` with MySQL's built-in timestamp default            |
 | `TIMESTAMP DEFAULT CURRENT_TIMESTAMP` | `DATETIME DEFAULT CURRENT_TIMESTAMP`   | Same as above                                                                   |
-| `TIMESTAMP`                         | `DATETIME`                               | Use `DATETIME` for cross-database compatibility                                 |
+| `TIMESTAMP`                         | `DATETIME`                               | Use `DATETIME` for cross-databaseType compatibility                                 |
 | `JSONB`                             | `JSON`                                   | MySQL 5.7+ supports native JSON type                                            |
 | `INET`                              | `VARCHAR(45)`                            | IPv6-compatible IP address storage                                              |
 | `SERIAL`                            | `INT AUTO_INCREMENT`                     | PostgreSQL's auto-increment shortcut                                            |

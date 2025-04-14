@@ -1,26 +1,25 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.query;
 
-import org.idp.server.core.basic.sql.Dialect;
-import org.idp.server.core.type.exception.UnSupportedException;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.basic.sql.DatabaseType;
+import org.idp.server.core.type.exception.UnSupportedException;
 
 public class AuthenticationTransactionQuerySqlExecutors {
 
-  Map<Dialect, AuthenticationTransactionQuerySqlExecutor> executors;
+  Map<DatabaseType, AuthenticationTransactionQuerySqlExecutor> executors;
 
   public AuthenticationTransactionQuerySqlExecutors() {
     this.executors = new HashMap<>();
-    executors.put(Dialect.POSTGRESQL, new PostgresqlExecutor());
-    executors.put(Dialect.MYSQL, new MysqlExecutor());
+    executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
+    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
-  public AuthenticationTransactionQuerySqlExecutor get(Dialect dialect) {
-    AuthenticationTransactionQuerySqlExecutor executor = executors.get(dialect);
+  public AuthenticationTransactionQuerySqlExecutor get(DatabaseType databaseType) {
+    AuthenticationTransactionQuerySqlExecutor executor = executors.get(databaseType);
 
     if (executor == null) {
-      throw new UnSupportedException("Unknown dialect " + dialect);
+      throw new UnSupportedException("Unknown dialect " + databaseType);
     }
 
     return executor;

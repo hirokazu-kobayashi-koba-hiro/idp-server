@@ -11,21 +11,21 @@ public class TransactionManager {
     connectionProvider = provider;
   }
 
-  public static void createConnection(Dialect dialect) {
+  public static void createConnection(DatabaseType databaseType) {
     if (connectionHolder.get() != null) {
       throw new SqlRuntimeException("Transaction already started");
     }
     OperationContext.set(OperationType.READ);
-    Connection conn = connectionProvider.getConnection(dialect);
+    Connection conn = connectionProvider.getConnection(databaseType);
     connectionHolder.set(conn);
   }
 
-  public static void beginTransaction(Dialect dialect) {
+  public static void beginTransaction(DatabaseType databaseType) {
     if (connectionHolder.get() != null) {
       throw new SqlRuntimeException("Transaction already started");
     }
     OperationContext.set(OperationType.WRITE);
-    Connection conn = connectionProvider.getConnection(dialect);
+    Connection conn = connectionProvider.getConnection(databaseType);
     connectionHolder.set(conn);
   }
 

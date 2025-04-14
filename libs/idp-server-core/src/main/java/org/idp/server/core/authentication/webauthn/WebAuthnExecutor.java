@@ -22,7 +22,7 @@ public interface WebAuthnExecutor {
       WebAuthnConfiguration configuration);
 
   WebAuthnChallenge challengeAuthentication(
-    Tenant tenant,
+      Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
       WebAuthnConfiguration configuration);

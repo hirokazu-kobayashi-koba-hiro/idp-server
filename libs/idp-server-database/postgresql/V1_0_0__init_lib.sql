@@ -13,6 +13,7 @@ CREATE TABLE tenant
     name       VARCHAR(255) NOT NULL,
     type       VARCHAR(10)  NOT NULL,
     domain     TEXT         NOT NULL,
+    attributes JSONB,
     created_at TIMESTAMP    NOT NULL DEFAULT now(),
     updated_at TIMESTAMP    NOT NULL DEFAULT now()
 );

@@ -2,24 +2,24 @@ package org.idp.server.core.adapters.datasource.ciba.request;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.sql.Dialect;
+import org.idp.server.core.basic.sql.DatabaseType;
 import org.idp.server.core.type.exception.UnSupportedException;
 
 public class BackchannelAuthenticationRequestSqlExecutors {
 
-  Map<Dialect, BackchannelAuthenticationRequestSqlExecutor> executors;
+  Map<DatabaseType, BackchannelAuthenticationRequestSqlExecutor> executors;
 
   public BackchannelAuthenticationRequestSqlExecutors() {
     this.executors = new HashMap<>();
-    executors.put(Dialect.POSTGRESQL, new PostgresqlExecutor());
-    executors.put(Dialect.MYSQL, new MysqlExecutor());
+    executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
+    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
-  public BackchannelAuthenticationRequestSqlExecutor get(Dialect dialect) {
-    BackchannelAuthenticationRequestSqlExecutor executor = executors.get(dialect);
+  public BackchannelAuthenticationRequestSqlExecutor get(DatabaseType databaseType) {
+    BackchannelAuthenticationRequestSqlExecutor executor = executors.get(databaseType);
 
     if (executor == null) {
-      throw new UnSupportedException("Unknown dialect " + dialect);
+      throw new UnSupportedException("Unknown dialect " + databaseType);
     }
 
     return executor;

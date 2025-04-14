@@ -1,9 +1,6 @@
 package org.idp.server.core.adapters.datasource.security;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.basic.sql.SqlExecutor;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEvents;
 import org.idp.server.core.security.event.SecurityEventRepository;
@@ -22,7 +19,7 @@ public class SecurityEventDataSource implements SecurityEventRepository {
 
   @Override
   public void register(Tenant tenant, SecurityEvent securityEvent) {
-    SecurityEventSqlExecutor executor = executors.get(tenant.dialect());
+    SecurityEventSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(securityEvent);
   }
 
@@ -32,7 +29,8 @@ public class SecurityEventDataSource implements SecurityEventRepository {
   }
 
   @Override
-  public SecurityEvents search(Tenant tenant, String eventServerId, SecurityEventSearchCriteria criteria) {
+  public SecurityEvents search(
+      Tenant tenant, String eventServerId, SecurityEventSearchCriteria criteria) {
     return null;
   }
 }

@@ -22,14 +22,14 @@ public class BackchannelAuthenticationRequestDataSource
 
   @Override
   public void register(Tenant tenant, BackchannelAuthenticationRequest request) {
-    BackchannelAuthenticationRequestSqlExecutor executor = executors.get(tenant.dialect());
+    BackchannelAuthenticationRequestSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(request);
   }
 
   @Override
   public BackchannelAuthenticationRequest find(
       Tenant tenant, BackchannelAuthenticationRequestIdentifier identifier) {
-    BackchannelAuthenticationRequestSqlExecutor executor = executors.get(tenant.dialect());
+    BackchannelAuthenticationRequestSqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> stringMap = executor.selectOne(identifier);
 
@@ -42,7 +42,7 @@ public class BackchannelAuthenticationRequestDataSource
 
   @Override
   public void delete(Tenant tenant, BackchannelAuthenticationRequestIdentifier identifier) {
-    BackchannelAuthenticationRequestSqlExecutor executor = executors.get(tenant.dialect());
+    BackchannelAuthenticationRequestSqlExecutor executor = executors.get(tenant.databaseType());
 
     executor.delete(identifier);
   }

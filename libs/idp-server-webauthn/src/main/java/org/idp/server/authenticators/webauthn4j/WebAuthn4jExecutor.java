@@ -33,7 +33,7 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
 
   @Override
   public WebAuthnChallenge challengeRegistration(
-       Tenant tenant,
+      Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
       WebAuthnConfiguration configuration) {
@@ -75,7 +75,7 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
 
   @Override
   public WebAuthnChallenge challengeAuthentication(
-          Tenant tenant,
+      Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
       WebAuthnConfiguration configuration) {
@@ -90,7 +90,7 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
 
   @Override
   public WebAuthnVerificationResult verifyAuthentication(
-          Tenant tenant,
+      Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
       WebAuthnConfiguration configuration) {

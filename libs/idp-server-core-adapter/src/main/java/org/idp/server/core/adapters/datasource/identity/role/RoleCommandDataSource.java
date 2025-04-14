@@ -15,13 +15,13 @@ public class RoleCommandDataSource implements RoleCommandRepository {
 
   @Override
   public void register(Tenant tenant, Role role) {
-    RoleSqlExecutor executor = executors.get(tenant.dialect());
+    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, role);
   }
 
   @Override
   public void bulkRegister(Tenant tenant, Roles roles) {
-    RoleSqlExecutor executor = executors.get(tenant.dialect());
+    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     executor.bulkInsert(tenant, roles);
   }
 }

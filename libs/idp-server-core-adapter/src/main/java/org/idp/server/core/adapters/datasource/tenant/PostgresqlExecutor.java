@@ -1,14 +1,15 @@
 package org.idp.server.core.adapters.datasource.tenant;
 
-import org.idp.server.core.basic.sql.SqlExecutor;
-import org.idp.server.core.tenant.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.basic.sql.SqlExecutor;
+import org.idp.server.core.tenant.*;
 
 public class PostgresqlExecutor implements TenantSqlExecutor {
+
+  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   @Override
   public void insert(Tenant tenant) {
@@ -16,14 +17,15 @@ public class PostgresqlExecutor implements TenantSqlExecutor {
 
     String sqlTemplate =
         """
-            INSERT INTO tenant(id, name, type, domain)
-            VALUES (?, ?, ?, ?);
+            INSERT INTO tenant(id, name, type, domain, attributes)
+            VALUES (?, ?, ?, ?, ?::jsonb)
             """;
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(tenant.name().value());
     params.add(tenant.type().name());
     params.add(tenant.domain().value());
+    params.add(jsonConverter.write(tenant.attributesAsMap()));
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -34,7 +36,8 @@ public class PostgresqlExecutor implements TenantSqlExecutor {
 
     String sqlTemplate =
         """
-            SELECT id, name, type, domain FROM tenant
+            SELECT id, name, type, domain, attributes
+            FROM tenant
             WHERE id = ?
             """;
     List<Object> params = new ArrayList<>();
@@ -44,13 +47,14 @@ public class PostgresqlExecutor implements TenantSqlExecutor {
   }
 
   @Override
-  public Map<String, String > selectAdmin() {
+  public Map<String, String> selectAdmin() {
 
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
-            SELECT id, name, type, domain FROM tenant
+            SELECT id, name, type, domain, attributes
+            FROM tenant
             WHERE type = ?
             """;
     List<Object> params = new ArrayList<>();

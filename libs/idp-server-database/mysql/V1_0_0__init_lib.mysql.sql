@@ -13,6 +13,7 @@ CREATE TABLE tenant
     name       VARCHAR(255) NOT NULL,
     type       VARCHAR(10)  NOT NULL,
     domain     TEXT         NOT NULL,
+    attributes JSON,
     created_at DATETIME     NOT NULL DEFAULT now(),
     updated_at DATETIME     NOT NULL DEFAULT now()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

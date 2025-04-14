@@ -20,13 +20,13 @@ public class ServerConfigurationDataSource implements ServerConfigurationReposit
 
   @Override
   public void register(Tenant tenant, ServerConfiguration serverConfiguration) {
-    ServerConfigSqlExecutor executor = executors.get(tenant.dialect());
+    ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(serverConfiguration);
   }
 
   @Override
   public ServerConfiguration get(Tenant tenant) {
-    ServerConfigSqlExecutor executor = executors.get(tenant.dialect());
+    ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> stringMap = executor.selectOne(tenant.identifier());
 
