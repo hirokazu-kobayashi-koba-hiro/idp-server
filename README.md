@@ -41,7 +41,7 @@ authentication[🛡️ Authentication Interactors]
 credential-issuers[🏷️ Credential Issuers]
 federatable-oidc-providers[🌐 Federatable OIDC Providers]
 ssf[📬 SSF Notifier]
-db[(🗄️ PostgreSQL)]
+datasource[🗄 DataSource]
 end
 
 subgraph External
@@ -56,7 +56,7 @@ frontend --> backend
 rp-backend --> backend
 backend --> idp-engine
 
-idp-engine --> db
+idp-engine --> datasource
 idp-engine --> hook
 idp-engine --> authentication
 idp-engine --> credential-issuers
@@ -80,6 +80,14 @@ authentication --> password
 authentication --> webauthn
 authentication --> email
 authentication --> legacy
+
+subgraph DataSource
+postgresql[(🗄️ PostgreSQL)]
+mysql[(🗄️ MySQL)]
+end
+
+datasource --> postgresql
+datasource --> mysql
 
 ```
 
