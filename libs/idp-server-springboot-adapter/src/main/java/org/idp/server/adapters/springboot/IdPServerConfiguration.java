@@ -4,9 +4,11 @@ import java.util.Map;
 import org.idp.server.adapters.springboot.authorization.OAuthSessionService;
 import org.idp.server.adapters.springboot.event.SecurityEventPublisherService;
 import org.idp.server.core.IdpServerApplication;
-import org.idp.server.core.basic.sql.DatabaseConfig;
-import org.idp.server.core.basic.sql.DatabaseType;
-import org.idp.server.core.basic.sql.DbCredentials;
+import org.idp.server.core.adapters.datasource.config.HikariConnectionProvider;
+import org.idp.server.core.basic.datasource.DatabaseConfig;
+import org.idp.server.core.basic.datasource.DatabaseType;
+import org.idp.server.core.basic.datasource.DbConfig;
+import org.idp.server.core.basic.datasource.DefaultDbDbConnectionProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,29 +50,30 @@ public class IdPServerConfiguration {
       OAuthSessionService oAuthSessionService,
       SecurityEventPublisherService eventPublisherService) {
 
-    Map<DatabaseType, DbCredentials> writerConfigs =
+    Map<DatabaseType, DbConfig> writerConfigs =
         Map.of(
             DatabaseType.POSTGRESQL,
-            new DbCredentials(postgresqlUrl, postgresqlUsername, postgresqlPassword),
+            DbConfig.defaultConfig(postgresqlUrl, postgresqlUsername, postgresqlPassword),
             DatabaseType.MYSQL,
-            new DbCredentials(mysqlUrl, mysqlUsername, mysqlPassword));
+            DbConfig.defaultConfig(mysqlUrl, mysqlUsername, mysqlPassword));
 
-    Map<DatabaseType, DbCredentials> readerConfigs =
+    Map<DatabaseType, DbConfig> readerConfigs =
         Map.of(
             DatabaseType.POSTGRESQL,
-            new DbCredentials(postgresqlUrl, postgresqlUsername, postgresqlPassword),
+            DbConfig.defaultConfig(postgresqlUrl, postgresqlUsername, postgresqlPassword),
             DatabaseType.MYSQL,
-            new DbCredentials(mysqlUrl, mysqlUsername, mysqlPassword));
+            DbConfig.defaultConfig(mysqlUrl, mysqlUsername, mysqlPassword));
 
     DatabaseConfig databaseConfig = new DatabaseConfig(writerConfigs, readerConfigs);
+    HikariConnectionProvider dbConnectionProvider = new HikariConnectionProvider(databaseConfig);
 
     BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
     PasswordEncoder passwordEncoder = new PasswordEncoder(bCryptPasswordEncoder);
     PasswordVerification passwordVerification = new PasswordVerification(bCryptPasswordEncoder);
 
     return new IdpServerApplication(
-        adminTenantId,
-        databaseConfig,
+        adminTenantId, 
+        dbConnectionProvider,
         encryptionKey,
         oAuthSessionService,
         passwordEncoder,

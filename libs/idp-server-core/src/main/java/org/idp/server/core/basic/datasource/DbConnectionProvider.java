@@ -1,7 +1,7 @@
-package org.idp.server.core.basic.sql;
+package org.idp.server.core.basic.datasource;
 
 import java.sql.Connection;
 
-public interface ConnectionProvider {
+public interface DbConnectionProvider {
   Connection getConnection(DatabaseType databaseType);
 }

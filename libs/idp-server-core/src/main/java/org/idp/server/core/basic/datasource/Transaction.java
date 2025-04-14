@@ -1,4 +1,4 @@
-package org.idp.server.core.basic.sql;
+package org.idp.server.core.basic.datasource;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,4 +7,4 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
-public @interface Transactional {}
+public @interface Transaction {}

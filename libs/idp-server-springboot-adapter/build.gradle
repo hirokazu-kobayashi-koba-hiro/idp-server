@@ -22,8 +22,6 @@ dependencies {
 	implementation 'org.springframework.session:spring-session-core'
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
-	runtimeOnly 'org.postgresql:postgresql:42.7.2'
-	runtimeOnly 'com.mysql:mysql-connector-j:9.2.0'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 

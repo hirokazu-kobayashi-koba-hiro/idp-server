@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.credential;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.basic.sql.SqlExecutor;
+import org.idp.server.core.basic.datasource.SqlExecutor;
 import org.idp.server.core.type.verifiablecredential.TransactionId;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialTransaction;
 

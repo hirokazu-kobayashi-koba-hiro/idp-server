@@ -1,14 +1,14 @@
-package org.idp.server.core.basic.sql;
+package org.idp.server.core.basic.datasource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
 public class TransactionManager {
   private static final ThreadLocal<Connection> connectionHolder = new ThreadLocal<>();
-  private static ConnectionProvider connectionProvider;
+  private static DbConnectionProvider dbConnectionProvider;
 
-  public static void configure(ConnectionProvider provider) {
-    connectionProvider = provider;
+  public static void configure(DbConnectionProvider provider) {
+    dbConnectionProvider = provider;
   }
 
   public static void createConnection(DatabaseType databaseType) {
@@ -16,7 +16,7 @@ public class TransactionManager {
       throw new SqlRuntimeException("Transaction already started");
     }
     OperationContext.set(OperationType.READ);
-    Connection conn = connectionProvider.getConnection(databaseType);
+    Connection conn = dbConnectionProvider.getConnection(databaseType);
     connectionHolder.set(conn);
   }
 
@@ -25,7 +25,7 @@ public class TransactionManager {
       throw new SqlRuntimeException("Transaction already started");
     }
     OperationContext.set(OperationType.WRITE);
-    Connection conn = connectionProvider.getConnection(databaseType);
+    Connection conn = dbConnectionProvider.getConnection(databaseType);
     connectionHolder.set(conn);
   }
 

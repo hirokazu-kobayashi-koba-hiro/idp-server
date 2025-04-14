@@ -7,8 +7,8 @@ import org.idp.server.core.admin.io.OrganizationRegistrationRequest;
 import org.idp.server.core.admin.io.PermissionRegistrationRequestConvertor;
 import org.idp.server.core.admin.io.RoleRegistrationRequestConvertor;
 import org.idp.server.core.admin.io.TenantRegistrationRequest;
+import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
@@ -22,7 +22,7 @@ import org.idp.server.core.organization.Organization;
 import org.idp.server.core.organization.OrganizationRepository;
 import org.idp.server.core.tenant.*;
 
-@Transactional
+@Transaction
 public class IdpServerStarterEntryService implements IdpServerStarterApi {
 
   OrganizationRepository organizationRepository;

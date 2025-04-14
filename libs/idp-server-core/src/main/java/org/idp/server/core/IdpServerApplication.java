@@ -6,12 +6,12 @@ import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
 import org.idp.server.core.basic.crypto.AesCipher;
 import org.idp.server.core.basic.crypto.HmacHasher;
+import org.idp.server.core.basic.datasource.*;
 import org.idp.server.core.basic.dependency.ApplicationComponentContainer;
 import org.idp.server.core.basic.dependency.ApplicationComponentContainerLoader;
 import org.idp.server.core.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.core.basic.dependency.protcol.ProtocolContainer;
 import org.idp.server.core.basic.dependency.protcol.ProtocolContainerLoader;
-import org.idp.server.core.basic.sql.*;
 import org.idp.server.core.ciba.CibaFlowApi;
 import org.idp.server.core.ciba.CibaProtocol;
 import org.idp.server.core.ciba.CibaProtocols;
@@ -71,7 +71,7 @@ public class IdpServerApplication {
 
   public IdpServerApplication(
       String adminTenantId,
-      DatabaseConfig databaseConfig,
+      DbConnectionProvider dbConnectionProvider,
       String encryptionKey,
       OAuthSessionDelegate oAuthSessionDelegate,
       PasswordEncodeDelegation passwordEncodeDelegation,
@@ -79,8 +79,7 @@ public class IdpServerApplication {
       SecurityEventPublisher securityEventPublisher) {
 
     AdminTenantContext.configure(adminTenantId);
-    ContextAwareConnectionProvider provider = new ContextAwareConnectionProvider(databaseConfig);
-    TransactionManager.configure(provider);
+    TransactionManager.configure(dbConnectionProvider);
 
     ApplicationComponentDependencyContainer dependencyContainer =
         new ApplicationComponentDependencyContainer();

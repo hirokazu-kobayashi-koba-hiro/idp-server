@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.core.admin.OnboardingApi;
+import org.idp.server.core.basic.datasource.DatabaseType;
+import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.basic.sql.DatabaseType;
-import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.oauth.identity.User;
@@ -15,7 +15,7 @@ import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.organization.*;
 import org.idp.server.core.tenant.*;
 
-@Transactional
+@Transaction
 public class OnboardingEntryService implements OnboardingApi {
 
   TenantRepository tenantRepository;

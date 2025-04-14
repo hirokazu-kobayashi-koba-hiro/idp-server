@@ -1,6 +1,6 @@
 package org.idp.server.core;
 
-import org.idp.server.core.basic.sql.Transactional;
+import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.tenant.Tenant;
@@ -14,7 +14,7 @@ import org.idp.server.core.userinfo.handler.UserinfoDelegate;
 import org.idp.server.core.userinfo.handler.io.UserinfoRequest;
 import org.idp.server.core.userinfo.handler.io.UserinfoRequestResponse;
 
-@Transactional
+@Transaction
 public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
 
   UserinfoProtocols userinfoProtocols;

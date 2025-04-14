@@ -2,7 +2,7 @@ package org.idp.server.core;
 
 import java.util.List;
 import org.idp.server.core.admin.UserManagementApi;
-import org.idp.server.core.basic.sql.Transactional;
+import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.tenant.Tenant;
@@ -10,7 +10,7 @@ import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 
 // TODO
-@Transactional
+@Transaction
 public class UserManagementEntryService implements UserManagementApi {
 
   TenantRepository tenantRepository;

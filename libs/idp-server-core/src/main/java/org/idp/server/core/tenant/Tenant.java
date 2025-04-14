@@ -3,9 +3,9 @@ package org.idp.server.core.tenant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.basic.datasource.DatabaseType;
 import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvider;
 import org.idp.server.core.basic.json.JsonReadable;
-import org.idp.server.core.basic.sql.DatabaseType;
 import org.idp.server.core.type.oauth.TokenIssuer;
 
 public class Tenant implements JsonReadable {

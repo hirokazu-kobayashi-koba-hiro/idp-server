@@ -1,4 +1,4 @@
-package org.idp.server.core.basic.sql;
+package org.idp.server.core.basic.datasource;
 
 import org.idp.server.core.tenant.TenantIdentifier;
 

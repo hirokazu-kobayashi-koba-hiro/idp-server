@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.authentication.config;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.sql.DatabaseType;
+import org.idp.server.core.basic.datasource.DatabaseType;
 import org.idp.server.core.type.exception.UnSupportedException;
 
 public class AuthenticationConfigSqlExecutors {

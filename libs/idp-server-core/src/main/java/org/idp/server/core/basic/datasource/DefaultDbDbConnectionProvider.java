@@ -1,31 +1,31 @@
-package org.idp.server.core.basic.sql;
+package org.idp.server.core.basic.datasource;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
 
-public class ContextAwareConnectionProvider implements ConnectionProvider {
-  Map<DatabaseType, DbCredentials> writerConfigs;
-  Map<DatabaseType, DbCredentials> readerConfigs;
+public class DefaultDbDbConnectionProvider implements DbConnectionProvider {
+  Map<DatabaseType, DbConfig> writerConfigs;
+  Map<DatabaseType, DbConfig> readerConfigs;
 
-  public ContextAwareConnectionProvider(DatabaseConfig databaseConfig) {
+  public DefaultDbDbConnectionProvider(DatabaseConfig databaseConfig) {
     this.writerConfigs = databaseConfig.writerConfigs();
     this.readerConfigs = databaseConfig.readerConfigs();
   }
 
   public Connection getConnection(DatabaseType databaseType) {
     OperationType type = OperationContext.get();
-    DbCredentials credentials =
+    DbConfig dbConfig =
         (type == OperationType.READ)
             ? readerConfigs.get(databaseType)
             : writerConfigs.get(databaseType);
     try {
-      Connection conn =
+      Connection connection =
           DriverManager.getConnection(
-              credentials.url(), credentials.username(), credentials.password());
-      conn.setAutoCommit(false);
-      return conn;
+                  dbConfig.url(), dbConfig.username(), dbConfig.password());
+      connection.setAutoCommit(false);
+      return connection;
     } catch (SQLException e) {
       throw new SqlRuntimeException("Failed to get DB connection", e);
     }

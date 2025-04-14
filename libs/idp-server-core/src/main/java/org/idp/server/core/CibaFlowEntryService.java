@@ -1,7 +1,7 @@
 package org.idp.server.core;
 
 import java.util.Map;
-import org.idp.server.core.basic.sql.Transactional;
+import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.ciba.*;
 import org.idp.server.core.ciba.handler.io.*;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
@@ -12,7 +12,7 @@ import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.ciba.UserCode;
 
-@Transactional
+@Transaction
 public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
 
   CibaProtocols cibaProtocols;

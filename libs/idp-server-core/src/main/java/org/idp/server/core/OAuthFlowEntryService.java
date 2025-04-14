@@ -3,8 +3,8 @@ package org.idp.server.core;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.basic.date.SystemDateTime;
-import org.idp.server.core.basic.sql.Transactional;
 import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.federation.io.FederationRequestResponse;
@@ -25,7 +25,7 @@ import org.idp.server.core.type.extension.OAuthDenyReason;
 import org.idp.server.core.type.extension.Pairs;
 import org.idp.server.core.type.security.RequestAttributes;
 
-@Transactional
+@Transaction
 public class OAuthFlowEntryService implements OAuthFlowApi {
 
   OAuthProtocols oAuthProtocols;

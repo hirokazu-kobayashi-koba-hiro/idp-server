@@ -1,6 +1,6 @@
 package org.idp.server.core;
 
-import org.idp.server.core.basic.sql.Transactional;
+import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.discovery.DiscoveryProtocol;
 import org.idp.server.core.discovery.DiscoveryProtocols;
 import org.idp.server.core.discovery.OidcMetaDataApi;
@@ -10,7 +10,7 @@ import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 
-@Transactional
+@Transaction
 public class OidcMetaDataEntryService implements OidcMetaDataApi {
 
   TenantRepository tenantRepository;

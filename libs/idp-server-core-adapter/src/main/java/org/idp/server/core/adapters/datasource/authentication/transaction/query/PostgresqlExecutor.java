@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.basic.sql.SqlExecutor;
+import org.idp.server.core.basic.datasource.SqlExecutor;
 
 public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExecutor {
 

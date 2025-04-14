@@ -1,4 +1,4 @@
-package org.idp.server.core.basic.sql;
+package org.idp.server.core.basic.datasource;
 
 import java.sql.*;
 import java.util.ArrayList;

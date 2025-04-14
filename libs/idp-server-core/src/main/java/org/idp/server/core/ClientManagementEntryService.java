@@ -1,7 +1,7 @@
 package org.idp.server.core;
 
 import org.idp.server.core.admin.ClientManagementApi;
-import org.idp.server.core.basic.sql.Transactional;
+import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.configuration.handler.ClientConfigurationErrorHandler;
 import org.idp.server.core.configuration.handler.ClientConfigurationHandler;
 import org.idp.server.core.configuration.handler.io.ClientConfigurationManagementListResponse;
@@ -11,7 +11,7 @@ import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.oauth.RequestedClientId;
 
-@Transactional
+@Transaction
 public class ClientManagementEntryService implements ClientManagementApi {
 
   TenantRepository tenantRepository;

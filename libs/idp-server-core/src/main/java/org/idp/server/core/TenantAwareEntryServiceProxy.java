@@ -4,7 +4,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.logging.Logger;
-import org.idp.server.core.basic.sql.*;
+import org.idp.server.core.basic.datasource.*;
 import org.idp.server.core.tenant.MissingRequiredTenantIdentifierException;
 import org.idp.server.core.tenant.TenantIdentifier;
 
@@ -24,8 +24,8 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     boolean isTransactional =
-        method.isAnnotationPresent(Transactional.class)
-            || target.getClass().isAnnotationPresent(Transactional.class);
+        method.isAnnotationPresent(Transaction.class)
+            || target.getClass().isAnnotationPresent(Transaction.class);
 
     if (isTransactional) {
       OperationContext.set(operationType);
