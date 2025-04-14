@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.identity.Address;
 import org.idp.server.core.oauth.identity.User;
@@ -62,12 +63,14 @@ class ModelConverter {
     }
     if (stringMap.containsKey("roles") && !stringMap.get("roles").equals("[]")) {
       List<String> roles = jsonConverter.read(stringMap.get("roles"), List.class);
-      user.setRoles(roles);
+      List<String> filtered = roles.stream().filter(Objects::nonNull).toList();
+      user.setRoles(filtered);
     }
 
     if (stringMap.containsKey("permissions") && !stringMap.get("permissions").equals("[]")) {
-      List<String> roles = jsonConverter.read(stringMap.get("permissions"), List.class);
-      user.setPermissions(roles);
+      List<String> permissions = jsonConverter.read(stringMap.get("permissions"), List.class);
+      List<String> filtered = permissions.stream().filter(Objects::nonNull).toList();
+      user.setPermissions(filtered);
     }
 
     return user;

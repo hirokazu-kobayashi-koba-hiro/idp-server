@@ -13,7 +13,7 @@ public class PostgresqlExecutor implements VerifiableCredentialTransactionSqlExe
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                    INSERT INTO public.verifiable_credential_transaction
+                    INSERT INTO verifiable_credential_transaction
                     (transaction_id, credential_issuer, client_id, user_id, verifiable_credential, status)
                     VALUES (?, ?, ?, ?, ?::jsonb, ?);
                     """;

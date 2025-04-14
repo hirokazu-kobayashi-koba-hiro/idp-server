@@ -13,11 +13,6 @@ public class TenantDialectProvider implements DialectProvider {
 
   @Override
   public DatabaseType provide(TenantIdentifier tenantIdentifier) {
-    TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
-
-    if (adminTenantIdentifier.equals(tenantIdentifier)) {
-      return DatabaseType.POSTGRESQL;
-    }
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 

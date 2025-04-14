@@ -70,4 +70,8 @@ public class OAuthAuthorizeResponse {
     }
     return Map.of("redirect_uri", redirectUriValue());
   }
+
+  public boolean isOk() {
+    return status.isOK();
+  }
 }

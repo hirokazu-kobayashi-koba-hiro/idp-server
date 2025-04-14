@@ -17,7 +17,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                INSERT INTO public.idp_user
+                INSERT INTO idp_user
                 (id, tenant_id, provider_id, provider_user_id, provider_user_original_payload, name, given_name, family_name, middle_name, nickname,
                  preferred_username, profile, picture, website, email, email_verified, gender,
                  birthdate, zoneinfo, locale, phone_number, phone_number_verified, address,
@@ -116,7 +116,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-              UPDATE public.idp_user
+              UPDATE idp_user
               SET name = ?, given_name = ?, family_name = ?, middle_name = ?, nickname = ?, preferred_username = ?,
               profile = ?, picture = ?, website = ?, email = ?, email_verified = ?, gender = ?, birthdate = ?, zoneinfo = ?,
               locale = ?, phone_number = ?, phone_number_verified = ?, custom_properties = ?::jsonb, updated_at = now()

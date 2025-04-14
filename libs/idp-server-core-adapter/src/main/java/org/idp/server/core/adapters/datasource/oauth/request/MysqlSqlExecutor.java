@@ -17,7 +17,7 @@ public class MysqlSqlExecutor implements AuthorizationRequestSqlExecutor {
 
     String sqlTemplate =
         """
-                    INSERT INTO public.authorization_request
+                    INSERT INTO authorization_request
                     (id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, custom_params)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                     """;

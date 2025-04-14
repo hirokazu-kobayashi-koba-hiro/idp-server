@@ -203,20 +203,25 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
 
-    User updatedUser = userRegistrator.registerOrUpdate(tenant, session.user());
-
+    User user = session.user();
     OAuthAuthorizeRequest oAuthAuthorizeRequest =
         new OAuthAuthorizeRequest(
-            tenant, authorizationRequestIdentifier.value(), updatedUser, session.authentication());
+            tenant, authorizationRequestIdentifier.value(), user, session.authentication());
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 
-    eventPublisher.publish(
-        tenant,
-        authorizationRequest,
-        updatedUser,
-        DefaultSecurityEventType.login,
-        requestAttributes);
+    if (authorize.isOk()) {
+      userRegistrator.registerOrUpdate(tenant, user);
+      eventPublisher.publish(
+          tenant, authorizationRequest, user, DefaultSecurityEventType.login, requestAttributes);
+    } else {
+      eventPublisher.publish(
+          tenant,
+          authorizationRequest,
+          user,
+          DefaultSecurityEventType.authorize_failure,
+          requestAttributes);
+    }
 
     return authorize;
   }

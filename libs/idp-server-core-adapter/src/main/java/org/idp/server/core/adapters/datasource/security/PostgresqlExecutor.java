@@ -17,7 +17,7 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                INSERT INTO public.security_event (id, type, description, tenant_id, tenant_name, client_id, client_name, user_id, user_name, login_hint, ip_address, user_agent, detail)
+                INSERT INTO security_event (id, type, description, tenant_id, tenant_name, client_id, client_name, user_id, user_name, login_hint, ip_address, user_agent, detail)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::INET, ?, ?::jsonb) ON CONFLICT DO NOTHING;
                 """;
     List<Object> params = new ArrayList<>();

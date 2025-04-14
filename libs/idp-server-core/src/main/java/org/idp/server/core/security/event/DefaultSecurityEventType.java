@@ -22,6 +22,7 @@ public enum DefaultSecurityEventType {
   federation_request("Federation request"),
   federation_success("Federation success"),
   federation_failure("Federation failed"),
+  authorize_failure("Authorize failure"),
   login("User logged in"),
   login_with_session("User logged in with a session"),
   logout("User logged out"),

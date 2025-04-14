@@ -17,7 +17,7 @@ public class MysqlExecutor implements UserSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                INSERT INTO public.idp_user
+                INSERT INTO idp_user
                 (id, tenant_id, provider_id, provider_user_id, provider_user_original_payload, name, given_name, family_name, middle_name, nickname,
                  preferred_username, profile, picture, website, email, email_verified, gender,
                  birthdate, zoneinfo, locale, phone_number, phone_number_verified, address,
@@ -116,7 +116,7 @@ public class MysqlExecutor implements UserSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-              UPDATE public.idp_user
+              UPDATE idp_user
               SET name = ?, given_name = ?, family_name = ?, middle_name = ?, nickname = ?, preferred_username = ?,
               profile = ?, picture = ?, website = ?, email = ?, email_verified = ?, gender = ?, birthdate = ?, zoneinfo = ?,
               locale = ?, phone_number = ?, phone_number_verified = ?, custom_properties = ?, updated_at = now()
@@ -201,16 +201,8 @@ public class MysqlExecutor implements UserSqlExecutor {
                                idp_user.enabled,
                                idp_user.created_at,
                                idp_user.updated_at,
-                               COALESCE(
-                                 JSON_AGG(DISTINCT role.name)
-                                 FILTER (WHERE role.name IS NOT NULL),
-                                 '[]'
-                               ) AS roles,
-                               COALESCE(
-                                 JSON_AGG(DISTINCT user_effective_permissions_view.permission_name)
-                                 FILTER (WHERE user_effective_permissions_view.permission_name IS NOT NULL),
-                                 '[]'
-                               ) AS permissions
+                               JSON_ARRAYAGG(role.name) roles,
+                               JSON_ARRAYAGG(user_effective_permissions_view.permission_name) AS permissions
                              FROM idp_user
                              LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
                              LEFT JOIN role ON idp_user_roles.role_id = role.id

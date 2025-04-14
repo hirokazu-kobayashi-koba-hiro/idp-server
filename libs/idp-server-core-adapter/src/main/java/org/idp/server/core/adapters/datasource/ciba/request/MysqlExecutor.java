@@ -17,7 +17,7 @@ public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecuto
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                INSERT INTO public.backchannel_authentication_request
+                INSERT INTO backchannel_authentication_request
                 (id, tenant_id, profile, delivery_mode, scopes, client_id, id_token_hint, login_hint, login_hint_token, acr_values, user_code, client_notification_token, binding_message, requested_expiry, request_object, authorization_details)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """;
