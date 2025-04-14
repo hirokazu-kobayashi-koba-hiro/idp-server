@@ -36,6 +36,7 @@ end
 subgraph Backend
 backend[🔧 Spring Boot API]
 idp-engine[🔥🚀 IdP Engine]
+authz-provider[AuthZProvider]
 hook[📡 Hook Executors]
 authentication[🛡️ Authentication Interactors]
 credential-issuers[🏷️ Credential Issuers]
@@ -57,11 +58,20 @@ rp-backend --> backend
 backend --> idp-engine
 
 idp-engine --> datasource
+idp-engine --> authz-provider
 idp-engine --> hook
 idp-engine --> authentication
 idp-engine --> credential-issuers
 idp-engine --> federatable-oidc-providers
 idp-engine --> ssf
+
+authz-provider --> idp-server
+authz-provider --> external
+
+subgraph AuthZProvider
+idp-server[Idp-Server]
+external[External Authorization Server]
+end
 
 hook --> slack
 hook --> webhook
@@ -93,20 +103,41 @@ datasource --> mysql
 
 ### 🗂 System Architecture (Container Level)
 
-This diagram illustrates the core container-level architecture of the IdP service.  
-The system consists of a frontend built with React / Next.js and a backend powered by Spring Boot, accessed via a web
-browser by end users.
+This diagram illustrates the container-level architecture of the idp-server, a modular and extensible Identity Provider built with Java and React.
 
-- The **Backend API** is responsible for core logic such as authentication, authorization, and client management.
-- **MFA Interactors** handle multi-factor authentication mechanisms, supporting both Passkey-based authentication and
-  Email verification flows.
-- **Hook Executors** are triggered during authentication or administrative events and send notifications to external
-  systems such as Slack or generic Webhook endpoints.
-- The service integrates with external **OIDC Providers** to support federation and identity brokering use cases.
-- **PostgreSQL** is used as the primary data store to persist user, client, and configuration data.
+* The Frontend is implemented with React / Next.js and handles user interactions for login, consent.
+* The Backend API is built with Spring Boot and exposes REST endpoints for OIDC/OAuth flows, client management, tenant operations, and hook configuration.
+* The IdP Engine encapsulates the core logic for authentication, authorization, grant handling, and token issuance.
+* Authentication Interactors are pluggable components that support various methods such as Password, Email OTP, WebAuthn (Passkey), and Legacy system login.
+* SecurityEventHook Executors trigger external actions such as Slack notifications and generic Webhooks based on security events and authentication lifecycle.
+* Federatable OIDC Providers enable enterprise federation with external identity providers using OIDC or SAML protocols.
+* SSF Notifier streams security events (Shared Signal Framework) to relying parties for audit or incident response.
+* PostgreSQL serves as the primary database, with support for MySQL.
+* The architecture supports multi-tenant deployments and allows per-tenant databaseType and configuration control.
+* Redis or Memory Cache is optionally used for caching ServerConfig, ClientConfig, and Grant data to improve performance and scalability.
 
-This architecture balances **security**, **extensibility**, and **integration flexibility**, enabling a robust
-foundation for modern identity management.
+This architecture is designed to deliver high security, customization flexibility, and developer-friendly extensibility, making it suitable for real-world enterprise deployments and Verifiable Credential issuance.
+
+
+## 🔥 Technical Highlights
+
+### ⚙️ Modular & Composable Architecture
+Each core capability—Authorization, Authentication, MFA, Consent, VC Issuance, Hooks—is implemented as independent, composable modules.  
+You can disable or replace modules without breaking the entire system.
+
+> 🧩 Easy to maintain, easy to embed.
+
+---
+
+### 🔌 Plug-and-Play
+Built-in extensibility via interfaces 
+
+1. `AuthenticationInteractor`
+2. `SecurityEventHookExecutor`
+3. `OAuthProtocol` etc
+
+Swap out mechanisms with minimal code.
+
 
 ## Features
 
