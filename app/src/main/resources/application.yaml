@@ -31,8 +31,6 @@ logging:
   level:
     root: info
     web: info
-    org.mybatis: debug
-    org.idp.sample: debug
 
 
 
