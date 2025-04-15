@@ -21,7 +21,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                 (id, tenant_id, provider_id, provider_user_id, provider_user_original_payload, name, given_name, family_name, middle_name, nickname,
                  preferred_username, profile, picture, website, email, email_verified, gender,
                  birthdate, zoneinfo, locale, phone_number, phone_number_verified, address,
-                 custom_properties, credentials, hashed_password, multi_factor_authentication, enabled)
+                 custom_properties, credentials, hashed_password, multi_factor_authentication, status)
                  VALUES (?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?);
                 """;
 
@@ -53,7 +53,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     params.add(jsonConverter.write(user.verifiableCredentials()));
     params.add(user.hashedPassword());
     params.add(jsonConverter.write(user.multiFactorAuthentication()));
-    params.add(user.isEnabled());
+    params.add(user.statusName());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -198,7 +198,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                                idp_user.credentials,
                                idp_user.hashed_password,
                                idp_user.multi_factor_authentication,
-                               idp_user.enabled,
+                               idp_user.status,
                                idp_user.created_at,
                                idp_user.updated_at,
                                COALESCE(
@@ -243,7 +243,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                                idp_user.credentials,
                                idp_user.hashed_password,
                                idp_user.multi_factor_authentication,
-                               idp_user.enabled,
+                               idp_user.status,
                                idp_user.created_at,
                                idp_user.updated_at
                   """;

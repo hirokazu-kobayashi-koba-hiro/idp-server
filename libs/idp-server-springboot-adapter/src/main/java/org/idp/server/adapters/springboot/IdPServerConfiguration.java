@@ -8,7 +8,6 @@ import org.idp.server.core.adapters.datasource.config.HikariConnectionProvider;
 import org.idp.server.core.basic.datasource.DatabaseConfig;
 import org.idp.server.core.basic.datasource.DatabaseType;
 import org.idp.server.core.basic.datasource.DbConfig;
-import org.idp.server.core.basic.datasource.DefaultDbDbConnectionProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -72,7 +71,7 @@ public class IdPServerConfiguration {
     PasswordVerification passwordVerification = new PasswordVerification(bCryptPasswordEncoder);
 
     return new IdpServerApplication(
-        adminTenantId, 
+        adminTenantId,
         dbConnectionProvider,
         encryptionKey,
         oAuthSessionService,

@@ -39,10 +39,20 @@ public class User implements JsonReadable, Serializable {
   HashMap<String, Object> multiFactorAuthentication = new HashMap<>();
   List<String> roles = new ArrayList<>();
   List<String> permissions = new ArrayList<>();
-  boolean enabled = true;
+  UserStatus status = UserStatus.UNREGISTERED;
+  ;
 
   public static User notFound() {
     return new User();
+  }
+
+  public boolean canTransit(UserStatus from, UserStatus to) {
+    return UserLifecycleManager.canTransit(from, to);
+  }
+
+  public User transitStatus(UserStatus newStatus) {
+    this.status = UserLifecycleManager.transit(this.status, newStatus);
+    return this;
   }
 
   public String sub() {
@@ -432,12 +442,16 @@ public class User implements JsonReadable, Serializable {
     return permissions != null && !permissions.isEmpty();
   }
 
-  public boolean isEnabled() {
-    return enabled;
+  public UserStatus status() {
+    return status;
   }
 
-  public User setEnabled(boolean enabled) {
-    this.enabled = enabled;
+  public String statusName() {
+    return status.name();
+  }
+
+  public User setStatus(UserStatus status) {
+    this.status = status;
     return this;
   }
 
@@ -473,7 +487,7 @@ public class User implements JsonReadable, Serializable {
       map.put("multi_factor_authentication", multiFactorAuthentication);
     if (hasRoles()) map.put("roles", roles);
     if (hasPermissions()) map.put("permissions", permissions);
-    map.put("enabled", enabled);
+    if (exists()) map.put("status", status.name());
 
     return map;
   }

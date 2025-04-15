@@ -9,6 +9,7 @@ import java.util.Objects;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.identity.Address;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.oauth.identity.UserStatus;
 
 class ModelConverter {
 
@@ -72,6 +73,9 @@ class ModelConverter {
       List<String> filtered = permissions.stream().filter(Objects::nonNull).toList();
       user.setPermissions(filtered);
     }
+
+    UserStatus userStatus = UserStatus.of(stringMap.getOrDefault("status", ""));
+    user.setStatus(userStatus);
 
     return user;
   }

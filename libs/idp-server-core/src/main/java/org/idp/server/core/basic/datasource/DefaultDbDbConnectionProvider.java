@@ -22,8 +22,7 @@ public class DefaultDbDbConnectionProvider implements DbConnectionProvider {
             : writerConfigs.get(databaseType);
     try {
       Connection connection =
-          DriverManager.getConnection(
-                  dbConfig.url(), dbConfig.username(), dbConfig.password());
+          DriverManager.getConnection(dbConfig.url(), dbConfig.username(), dbConfig.password());
       connection.setAutoCommit(false);
       return connection;
     } catch (SQLException e) {

@@ -14,6 +14,7 @@ import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
+import org.idp.server.core.oauth.identity.UserStatus;
 import org.idp.server.core.oauth.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.oauth.identity.permission.Permissions;
 import org.idp.server.core.oauth.identity.role.RoleCommandRepository;
@@ -73,6 +74,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     User user = jsonConverter.read(request.get("user"), User.class);
     String encode = passwordEncodeDelegation.encode(user.rawPassword());
     user.setHashedPassword(encode);
+    user.transitStatus(UserStatus.REGISTERED);
 
     Organization organization = organizationRequest.toOrganization();
     Tenant tenant =

@@ -28,22 +28,23 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
             || target.getClass().isAnnotationPresent(Transaction.class);
 
     if (isTransactional) {
-      OperationContext.set(operationType);
-      TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
-
-      TransactionManager.createConnection(DatabaseType.POSTGRESQL);
-      DatabaseType databaseType = dialectProvider.provide(tenantIdentifier);
-      TransactionManager.closeConnection();
-
-      TransactionManager.beginTransaction(databaseType);
-
-      log.info(
-          databaseType.name()
-              + ": begin transaction: "
-              + target.getClass().getName()
-              + ": "
-              + method.getName());
       try {
+        OperationContext.set(operationType);
+        TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
+
+        TransactionManager.createConnection(DatabaseType.POSTGRESQL);
+        DatabaseType databaseType = dialectProvider.provide(tenantIdentifier);
+        TransactionManager.closeConnection();
+
+        TransactionManager.beginTransaction(databaseType);
+
+        log.info(
+            databaseType.name()
+                + ": begin transaction: "
+                + target.getClass().getName()
+                + ": "
+                + method.getName());
+
         Object result = method.invoke(target, args);
         TransactionManager.commitTransaction();
         log.info(
@@ -55,12 +56,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         return result;
       } catch (Exception e) {
         TransactionManager.rollbackTransaction();
-        log.info(
-            databaseType.name()
-                + ": rollback transaction: "
-                + target.getClass().getName()
-                + ": "
-                + method.getName());
+        log.info("rollback transaction: " + target.getClass().getName() + ": " + method.getName());
         throw e;
       }
     } else {

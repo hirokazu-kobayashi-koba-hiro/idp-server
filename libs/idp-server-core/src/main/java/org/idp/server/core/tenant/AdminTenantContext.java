@@ -14,4 +14,8 @@ public class AdminTenantContext {
     }
     return tenantIdentifier;
   }
+
+  public static boolean isAdmin(TenantIdentifier tenantIdentifier) {
+    return tenantIdentifier.equals(AdminTenantContext.tenantIdentifier);
+  }
 }

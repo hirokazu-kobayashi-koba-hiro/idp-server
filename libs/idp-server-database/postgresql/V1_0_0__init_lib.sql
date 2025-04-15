@@ -113,7 +113,7 @@ CREATE TABLE idp_user
     credentials                    JSONB,
     hashed_password                TEXT,
     multi_factor_authentication    JSONB,
-    enabled                        BOOLEAN   DEFAULT TRUE  NOT NULL,
+    status                         VARCHAR(255)            NOT NULL,
     created_at                     TIMESTAMP DEFAULT now() NOT NULL,
     updated_at                     TIMESTAMP DEFAULT now() NOT NULL,
     CONSTRAINT uk_tenant_provider_user unique (tenant_id, provider_user_id)
