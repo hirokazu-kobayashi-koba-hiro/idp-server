@@ -183,6 +183,27 @@ Swap out mechanisms with minimal code.
 |                     | Custom Branding                       | ⚠️        | ❌    | ❌     | ✅            | Enables UI customization for authentication pages, emails, and error messages.                                                                                                            |
 | **Infra**           | Multi Database                        | ✅         | ❌    | ❌     | ✅            | Supports databaseType routing per tenant. now is supported PostgreSQL, MySQL                                                                                                              |
 
+
+## Account lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> UNREGISTERED
+    UNREGISTERED --> REGISTERED : Sign-up
+    REGISTERED --> VERIFIED : Email verification
+    VERIFIED --> ACTIVE : First login / account use
+    ACTIVE --> LOCKED : Login failed / MFA failed
+    LOCKED --> ACTIVE : Unlock (auto or manual)
+    ACTIVE --> DISABLED : User or admin disables
+    DISABLED --> ACTIVE : Re-enable
+    ACTIVE --> SUSPENDED : Admin suspends
+    SUSPENDED --> ACTIVE : Reinstated
+    ACTIVE --> DEACTIVATED : User requests delete
+    DEACTIVATED --> DELETED_PENDING : Time lapse (e.g. 30 days)
+    DELETED_PENDING --> DELETED : Purge
+
+```
+
 ## Getting Started
 
 ### preparation
