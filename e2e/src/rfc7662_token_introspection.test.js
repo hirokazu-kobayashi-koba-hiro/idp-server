@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 
 import { inspectToken, requestToken } from "./api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
-import { requestAuthorizations } from "./oauth";
+import { requestAuthorizations } from "./oauth/signin";
 
 describe("OAuth 2.0 Token Introspection", () => {
   it("success pattern", async () => {

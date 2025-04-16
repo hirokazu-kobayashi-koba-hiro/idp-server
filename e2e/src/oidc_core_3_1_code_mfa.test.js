@@ -5,7 +5,7 @@ import {
   clientSecretPostClient,
   serverConfig,
 } from "./testConfig";
-import { requestAuthorizations } from "./oauth";
+import { requestAuthorizations } from "./oauth/signin";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
   xit("email", async () => {

@@ -238,38 +238,6 @@ export const postAuthentication = async ({ endpoint, id, body }) => {
   });
 };
 
-export const postEmailVerificationChallenge = async ({ endpoint, id, body }) => {
-  const url = endpoint.replace("{id}", id);
-  return await postWithJson({
-    url,
-    body,
-  });
-};
-
-export const postEmailVerification = async ({ endpoint, id, body }) => {
-  const url = endpoint.replace("{id}", id);
-  return await postWithJson({
-    url,
-    body,
-  });
-};
-
-export const postWebAuthnAuthenticationChallenge = async ({ endpoint, id, body }) => {
-  const url = endpoint.replace("{id}", id);
-  return await postWithJson({
-    url,
-    body,
-  });
-};
-
-export const postWebAuthnAuthentication = async ({ endpoint, id, body }) => {
-  const url = endpoint.replace("{id}", id);
-  return await postWithJson({
-    url,
-    body,
-  });
-};
-
 export const authorize = async ({ endpoint, id, body }) => {
   const url = endpoint.replace("{id}", id);
   return await postWithJson({

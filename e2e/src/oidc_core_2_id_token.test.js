@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 
 import { getJwks } from "./api/oauthClient";
 import { clientSecretPostClient, clientSecretPostWithIdTokenEncClient, serverConfig } from "./testConfig";
-import { requestAuthorizations } from "./oauth";
+import { requestAuthorizations } from "./oauth/signin";
 import { isArray, isNumber, isString, matchWithUSASCII } from "./lib/util";
 import { decryptAndVerifyAndDecodeIdToken, verifyAndDecodeJwt } from "./lib/jose";
 

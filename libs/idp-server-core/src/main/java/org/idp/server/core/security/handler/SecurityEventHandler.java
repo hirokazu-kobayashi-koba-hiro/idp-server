@@ -47,8 +47,8 @@ public class SecurityEventHandler {
                   securityEvent.type().value(),
                   hookConfiguration.hookType().name(),
                   securityEvent.tenantIdentifierValue(),
-                  securityEvent.clientId().value(),
-                  securityEvent.user().id()));
+                  securityEvent.clientIdentifierValue(),
+                  securityEvent.userSub()));
 
           securityEventHookExecutor.execute(tenant, securityEvent, hookConfiguration);
         });

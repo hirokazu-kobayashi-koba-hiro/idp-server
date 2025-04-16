@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 
 import { getUserinfo, postUserinfo, requestToken } from "./api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
-import { requestAuthorizations } from "./oauth";
+import { requestAuthorizations } from "./oauth/signin";
 import { createBearerHeader } from "./lib/util";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 userinfo", () => {

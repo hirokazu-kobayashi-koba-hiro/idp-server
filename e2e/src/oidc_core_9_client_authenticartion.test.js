@@ -6,7 +6,7 @@ import {
   privateKeyJwtClient,
   serverConfig,
 } from "./testConfig";
-import { requestAuthorizations } from "./oauth";
+import { requestAuthorizations } from "./oauth/signin";
 import { verifyAndDecodeJwt } from "./lib/jose";
 import { createClientAssertion } from "./lib/oauth";
 

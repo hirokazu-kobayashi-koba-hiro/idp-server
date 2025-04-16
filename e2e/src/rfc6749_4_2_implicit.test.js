@@ -6,7 +6,7 @@ import {
   unsupportedClient,
   unsupportedServerConfig,
 } from "./testConfig";
-import { requestAuthorizations } from "./oauth";
+import { requestAuthorizations } from "./oauth/signin";
 import { matchWithUSASCII } from "./lib/util";
 
 describe("The OAuth 2.0 Authorization Framework implicit", () => {

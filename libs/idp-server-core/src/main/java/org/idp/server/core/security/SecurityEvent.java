@@ -73,6 +73,9 @@ public class SecurityEvent {
   }
 
   public String userSub() {
+    if (user == null) {
+      return "";
+    }
     return user.id();
   }
 
@@ -138,6 +141,10 @@ public class SecurityEvent {
 
   public RequestedClientId clientId() {
     return client.clientId();
+  }
+
+  public String clientIdentifierValue() {
+    return client.id();
   }
 
   public TokenIssuer tokenIssuer() {

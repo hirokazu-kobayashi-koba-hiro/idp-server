@@ -6,16 +6,6 @@ export const serverConfig = {
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations`,
   authenticationEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/`,
-  passwordAuthenticationEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/password-authentication`,
-  emailAuthenticationChallengeEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/email-verification-challenge`,
-  emailAuthenticationEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/email-verification`,
-  webAuthnAuthenticationChallengeEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/webauthn-authentication-challenge`,
-  webAuthnAuthenticationEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/webauthn-authentication`,
   authorizeEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/authorize`,
   denyEndpoint:

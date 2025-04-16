@@ -26,10 +26,11 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
       OAuthSession oAuthSession,
       UserRepository userRepository) {
     String username = request.optValueAsString("username", "");
+    String email = request.optValueAsString("email", "");
     String password = request.optValueAsString("password", "");
-    UserRegistration userRegistration = new UserRegistration(username, password);
+    UserRegistration userRegistration = new UserRegistration(username, email, password);
 
-    User existingUser = userRepository.findBy(tenant, userRegistration.username(), "idp-server");
+    User existingUser = userRepository.findBy(tenant, userRegistration.email(), "idp-server");
 
     if (existingUser.exists()) {
 

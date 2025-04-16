@@ -5,7 +5,7 @@ import {
   selfSignedTlsAuthClient,
   serverConfig,
 } from "./testConfig";
-import { requestAuthorizations, certThumbprint } from "./oauth";
+import { requestAuthorizations, certThumbprint } from "./oauth/signin";
 import { verifyAndDecodeJwt } from "./lib/jose";
 
 describe("Financial-grade API: JWT Secured Authorization Response Mode for OAuth 2.0 (JARM)", () => {

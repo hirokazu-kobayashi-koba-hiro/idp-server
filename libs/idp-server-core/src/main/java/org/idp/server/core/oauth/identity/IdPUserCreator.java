@@ -21,8 +21,9 @@ public class IdPUserCreator {
         .setSub(userId)
         .setProviderId("idp-server")
         .setProviderUserId(userId)
-        .setEmail(userRegistration.username())
+        .setEmail(userRegistration.email())
         .setName(userRegistration.username())
-        .setHashedPassword(hashedPassword);
+        .setHashedPassword(hashedPassword)
+        .transitStatus(UserStatus.REGISTERED);
   }
 }

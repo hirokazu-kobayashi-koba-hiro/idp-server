@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 
 import { requestToken } from "./api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
-import { requestAuthorizations } from "./oauth";
+import { requestAuthorizations } from "./oauth/signin";
 import { calculateCodeChallengeWithS256 } from "./lib/oauth";
 
 describe("The OAuth 2.0 Authorization Framework code", () => {
