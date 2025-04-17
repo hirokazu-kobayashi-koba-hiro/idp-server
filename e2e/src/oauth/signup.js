@@ -13,6 +13,7 @@ import { createHash, X509Certificate } from "node:crypto";
 import { encodeBuffer } from "../lib/bas64";
 import { getClientCert } from "../api/cert/clientCert";
 import { get } from "../lib/http";
+import { generateFakeWebAuthnCredential } from "../lib/webauthn";
 
 export const requestAuthorizationsForSignup = async ({
   endpoint,
@@ -233,12 +234,12 @@ export const requestAuthorizationsForSignup = async ({
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);
 
+        const credential = generateFakeWebAuthnCredential(challengeResponse.data.challenge);
+
         const verificationResponse = await postAuthentication({
           endpoint: serverConfig.authenticationEndpoint + "webauthn-registration",
           id,
-          body: {
-            verification_code: "123",
-          }
+          body: credential
         });
 
         console.log(verificationResponse.status);
