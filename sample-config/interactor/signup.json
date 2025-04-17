@@ -4,22 +4,22 @@
   "title": "User",
   "type": "object",
   "properties": {
-    "name": { "type": "string" },
-    "given_name": { "type": "string" },
-    "family_name": { "type": "string" },
-    "middle_name": { "type": "string" },
-    "nickname": { "type": "string" },
-    "preferred_username": { "type": "string" },
-    "profile": { "type": "string", "format": "uri" },
-    "picture": { "type": "string", "format": "uri" },
-    "website": { "type": "string", "format": "uri" },
-    "email": { "type": "string", "format": "email" },
+    "name": { "type": "string", "maxLength": 255 },
+    "given_name": { "type": "string", "maxLength": 255  },
+    "family_name": { "type": "string", "maxLength": 255  },
+    "middle_name": { "type": "string", "maxLength": 255  },
+    "nickname": { "type": "string", "maxLength": 255  },
+    "preferred_username": { "type": "string", "maxLength": 255  },
+    "profile": { "type": "string", "format": "uri", "maxLength": 255  },
+    "picture": { "type": "string", "format": "uri", "maxLength": 255  },
+    "website": { "type": "string", "format": "uri", "maxLength": 255  },
+    "email": { "type": "string", "format": "email", "maxLength": 255  },
     "email_verified": { "type": "boolean" },
-    "gender": { "type": "string" },
-    "birthdate": { "type": "string", "format": "date" },
+    "gender": { "type": "string", "maxLength": 255  },
+    "birthdate": { "type": "string", "format": "date", "maxLength": 255  },
     "zoneinfo": { "type": "string" },
-    "locale": { "type": "string" },
-    "phone_number": { "type": "string" },
+    "locale": { "type": "string", "maxLength": 255  },
+    "phone_number": { "type": "string", "maxLength": 255 },
     "phone_number_verified": { "type": "boolean" },
     "address": {
       "$ref": "#/$defs/address"
@@ -49,12 +49,12 @@
     "address": {
       "type": "object",
       "properties": {
-        "formatted": { "type": "string" },
-        "street_address": { "type": "string" },
-        "locality": { "type": "string" },
-        "region": { "type": "string" },
-        "postal_code": { "type": "string" },
-        "country": { "type": "string" }
+        "formatted": { "type": "string", "maxLength": 255  },
+        "street_address": { "type": "string", "maxLength": 255  },
+        "locality": { "type": "string", "maxLength": 255  },
+        "region": { "type": "string", "maxLength": 255  },
+        "postal_code": { "type": "string", "maxLength": 255  },
+        "country": { "type": "string" , "maxLength": 255 }
       },
       "additionalProperties": false
     }

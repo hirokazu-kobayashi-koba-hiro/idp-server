@@ -26,6 +26,10 @@ public class AuthenticationInteractionRequest {
     return (String) values.get(key);
   }
 
+  public boolean getValueAsBoolean(String key) {
+    return (boolean) values.get(key);
+  }
+
   public boolean containsKey(String key) {
     return values.containsKey(key);
   }

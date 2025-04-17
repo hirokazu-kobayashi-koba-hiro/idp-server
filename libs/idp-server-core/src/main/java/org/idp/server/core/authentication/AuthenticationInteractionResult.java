@@ -15,6 +15,14 @@ public class AuthenticationInteractionResult {
   Map<String, Object> response;
   DefaultSecurityEventType eventType;
 
+  public static AuthenticationInteractionResult clientError(
+      Map<String, Object> response,
+      AuthenticationInteractionType type,
+      DefaultSecurityEventType eventType) {
+    return new AuthenticationInteractionResult(
+        AuthenticationInteractionStatus.CLIENT_ERROR, type, response, eventType);
+  }
+
   public AuthenticationInteractionResult(
       AuthenticationInteractionStatus status,
       AuthenticationInteractionType type,

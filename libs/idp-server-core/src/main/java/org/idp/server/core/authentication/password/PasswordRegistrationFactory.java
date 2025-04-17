@@ -13,8 +13,11 @@ public class PasswordRegistrationFactory implements AuthenticationInteractorFact
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
+    AuthenticationConfigurationQueryRepository configurationQueryRepository =
+        container.resolve(AuthenticationConfigurationQueryRepository.class);
     PasswordEncodeDelegation passwordEncodeDelegation =
         container.resolve(PasswordEncodeDelegation.class);
-    return new PasswordRegistrationInteractor(passwordEncodeDelegation);
+    return new PasswordRegistrationInteractor(
+        configurationQueryRepository, passwordEncodeDelegation);
   }
 }

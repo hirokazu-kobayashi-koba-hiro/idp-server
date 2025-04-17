@@ -11,9 +11,6 @@ import { faker } from "@faker-js/faker";
 describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
 
   it("signup", async () => {
-    const email = faker.internet.email();
-    const password = faker.internet.password(12, true); // 長さ12, 記号含む
-    const username = faker.person.fullName();
 
     const { authorizationResponse } = await requestAuthorizationsForSignup({
       endpoint: serverConfig.authorizationEndpoint,
@@ -27,9 +24,25 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         organizationName: "test",
       },
       user: {
-        email: email,
-        password: password,
-        username: username
+        email: faker.internet.email(),
+        password: faker.internet.password(
+          12,
+          false,
+          "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()]).+$") + "!",
+        name: faker.person.fullName(),
+        given_name: faker.person.firstName(),
+        family_name: faker.person.lastName(),
+        middle_name: faker.person.middleName(),
+        nickname: faker.person.lastName(),
+        preferred_username: faker.person.lastName(),
+        profile: faker.internet.url(),
+        picture: faker.internet.url(),
+        website: faker.internet.url(),
+        gender: faker.person.gender(),
+        birthdate: faker.date.birthdate({ min: 1, max: 100, mode: "age" }).toISOString().split("T")[0],
+        zoneinfo: "Asia/Tokyo",
+        locale: "ja-JP",
+        phone_number: faker.phone.number("090-####-####"),
       },
       mfa: "email",
     });

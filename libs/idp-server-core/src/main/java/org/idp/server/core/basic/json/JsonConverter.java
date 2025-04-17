@@ -9,6 +9,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 public class JsonConverter {
 
@@ -55,6 +56,16 @@ public class JsonConverter {
     try {
 
       return new JsonNodeWrapper(objectMapper.readTree(jsonString));
+    } catch (JsonProcessingException exception) {
+      throw new JsonRuntimeException(exception);
+    }
+  }
+
+  public JsonNodeWrapper readTree(Map<String, Object> jsonObject) {
+    try {
+
+      String json = write(jsonObject);
+      return new JsonNodeWrapper(objectMapper.readTree(json));
     } catch (JsonProcessingException exception) {
       throw new JsonRuntimeException(exception);
     }
