@@ -103,26 +103,33 @@ datasource --> mysql
 
 ### 🗂 System Architecture (Container Level)
 
-This diagram illustrates the container-level architecture of the idp-server, a modular and extensible Identity Provider built with Java and React.
+This diagram illustrates the container-level architecture of the idp-server, a modular and extensible Identity Provider
+built with Java and React.
 
 * The Frontend is implemented with React / Next.js and handles user interactions for login, consent.
-* The Backend API is built with Spring Boot and exposes REST endpoints for OIDC/OAuth flows, client management, tenant operations, and hook configuration.
+* The Backend API is built with Spring Boot and exposes REST endpoints for OIDC/OAuth flows, client management, tenant
+  operations, and hook configuration.
 * The IdP Engine encapsulates the core logic for authentication, authorization, grant handling, and token issuance.
-* Authentication Interactors are pluggable components that support various methods such as Password, Email OTP, WebAuthn (Passkey), and Legacy system login.
-* SecurityEventHook Executors trigger external actions such as Slack notifications and generic Webhooks based on security events and authentication lifecycle.
+* Authentication Interactors are pluggable components that support various methods such as Password, Email OTP,
+  WebAuthn (Passkey), and Legacy system login.
+* SecurityEventHook Executors trigger external actions such as Slack notifications and generic Webhooks based on
+  security events and authentication lifecycle.
 * Federatable OIDC Providers enable enterprise federation with external identity providers using OIDC or SAML protocols.
 * SSF Notifier streams security events (Shared Signal Framework) to relying parties for audit or incident response.
 * PostgreSQL serves as the primary database, with support for MySQL.
 * The architecture supports multi-tenant deployments and allows per-tenant databaseType and configuration control.
-* Redis or Memory Cache is optionally used for caching ServerConfig, ClientConfig, and Grant data to improve performance and scalability.
+* Redis or Memory Cache is optionally used for caching ServerConfig, ClientConfig, and Grant data to improve performance
+  and scalability.
 
-This architecture is designed to deliver high security, customization flexibility, and developer-friendly extensibility, making it suitable for real-world enterprise deployments and Verifiable Credential issuance.
-
+This architecture is designed to deliver high security, customization flexibility, and developer-friendly extensibility,
+making it suitable for real-world enterprise deployments and Verifiable Credential issuance.
 
 ## 🔥 Technical Highlights
 
 ### ⚙️ Modular & Composable Architecture
-Each core capability—Authorization, Authentication, MFA, Consent, VC Issuance, Hooks—is implemented as independent, composable modules.  
+
+Each core capability—Authorization, Authentication, MFA, Consent, VC Issuance, Hooks—is implemented as independent,
+composable modules.  
 You can disable or replace modules without breaking the entire system.
 
 > 🧩 Easy to maintain, easy to embed.
@@ -130,7 +137,8 @@ You can disable or replace modules without breaking the entire system.
 ---
 
 ### 🔌 Plug-and-Play
-Built-in extensibility via interfaces 
+
+Built-in extensibility via interfaces
 
 1. `AuthenticationInteractor`
 2. `SecurityEventHookExecutor`
@@ -138,69 +146,71 @@ Built-in extensibility via interfaces
 
 Swap out mechanisms with minimal code.
 
-
 ## Features
 
 * ✅ - Supported
 * ❌ - Unsupported
 * ⚠️ - Implementing
 
-| Category            | SubCategory                           | Supported | Free | Basic | Professional | Description                                                                                                                                                                               |
-|---------------------|---------------------------------------|-----------|------|-------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Authentication**  | Password                              | ✅         | ✅    | ✅     | ✅            | Username/password authentication.                                                                                                                                                         |
-|                     | Multi-Factor (MFA)                    | ✅         | ❌    | ✅     | ✅            | Adds extra security layers via SMS, Email, push notifications, etc.                                                                                                                       |
-|                     | Passwordless                          | ✅         | ❌    | ❌     | ✅            | Enables login via FIDO2, or Passkey.                                                                                                                                                      |
-|                     | Social Login                          | ✅         | ✅    | ✅     | ✅            | Supports authentication via Google, Facebook and more.                                                                                                                                    |
-|                     | Enterprise Federation                 | ⚠️        | ❌    | ❌     | ✅            | Allows login via external IdPs (SAML, OIDC, LDAP, Azure AD, Google Workspace).                                                                                                            |
-|                     | Identity Provider (IdP) Integration   | ⚠️        | ✅    | ✅     | ✅            | Supports federated authentication with third-party IdPs.                                                                                                                                  |
-|                     | Customizable Login Pages              | ⚠️        | ❌    | ❌     | ✅            | Provides branding options for login UI via Universal Login or Lock.js.                                                                                                                    |
-| **Authorization**   | Role-Based Access Control (RBAC)      | ✅         | ✅    | ✅     | ✅            | Assigns roles and permissions to users based on their identity.                                                                                                                           |
-|                     | Fine-Grained Permissions              | ✅         | ✅    | ✅     | ✅            | Manages user access at a granular level.                                                                                                                                                  |
-|                     | API Authorization                     | ✅         | ✅    | ✅     | ✅            | Secures APIs and issues JWT-based access tokens using OAuth 2.0.                                                                                                                          |
-|                     | Machine-to-Machine Authentication     | ✅         | ✅    | ✅     | ✅            | Enables authentication for services using client credentials.                                                                                                                             |
-|                     | Secure Session Management             | ✅         | ✅    | ✅     | ✅            | Supports token expiration, refresh tokens, and logout mechanisms.                                                                                                                         |
-|                     | Selectable Authorization Provider     | ✅         | ✅    | ✅     | ✅            | Provide selectable custom authorization providers.                                                                                                                                        |
-| **Security**        | Authentication Flows with Hooks       | ✅         | ❌    | ❌     | ✅            | Supports executing multiple custom hooks in a specific order for each authentication securityEvent, based on tenant-configurable settings.                                                |
-|                     | Extensible Identity Workflows         | ⚠️        | ❌    | ❌     | ✅            | Supports custom rules and hooks for advanced identity management.                                                                                                                         |
-|                     | User Consent & Privacy Compliance     | ✅         | ✅    | ✅     | ✅            | Ensures GDPR, CCPA, and other regulatory compliance based on fapi grant management.                                                                                                       |
-|                     | Secure Token Storage                  | ✅         | ✅    | ✅     | ✅            | Manages access tokens securely to prevent leaks.                                                                                                                                          |
-|                     | Financial-Grade API (FAPI) Compliance | ✅         | ✅    | ✅     | ✅            | Meets security standards for financial institutions.                                                                                                                                      |
-|                     | Shared signal framework(SSF)          | ✅         | ✅    | ✅     | ✅            | Share Security Events to Relaying Party.                                                                                                                                                  |
-| **Management**      | Organization                          | ⚠️        | ✅    | ✅     | ✅            | Organizations is a centralized management platform that enables organizations to oversee multiple tenants, manage team members, enforce SSO, control tenant creation, and handle billing. |
-|                     | Organization Member Administration    | ⚠️        | ❌    | ✅     | ✅            | Controls access levels and membership within tenants.                                                                                                                                     |
-|                     | Tenant                                | ⚠️        | ✅    | ✅     | ✅            | Provides centralized visibility and control over multiple tenants.                                                                                                                        |
-|                     | SSO Enforcement for Organizations     | ⚠️        | ❌    | ✅     | ✅            | Enforces Single Sign-On (SSO) for teams using an organization's IdP.                                                                                                                      |
-|                     | Multi Tenant Creation Control         | ⚠️        | ❌    | ✅     | ✅            | Manages permissions for creating new tenants.                                                                                                                                             |
-|                     | Subscription and Billing              | ⚠️        | ❌    | ✅     | ✅            | Provides tools for managing subscription and billing.                                                                                                                                     |
-|                     | Applications                          | ⚠️        | ✅    | ✅     | ✅            | Allows application creation, modification, and deletion.                                                                                                                                  |
-|                     | Users                                 | ⚠️        | ✅    | ✅     | ✅            | Allows user creation, modification, and deletion.                                                                                                                                         |
-| **Monitoring**      | Audit Logging                         | ✅         | ❌    | ✅     | ✅            | Tracks authentication events and logs security activities.                                                                                                                                |
-|                     | Monitoring                            | ✅         | ❌    | ✅     | ✅            | Integrate to logging service.                                                                                                                                                             |
-|                     | Security Alerts                       | ⚠️        | ❌    | ❌     | ✅            | Notifies administrators of suspicious login attempts or breaches.                                                                                                                         |
-|                     | Integration with SIEM                 | ⚠️        | ❌    | ❌     | ✅            | Supports integration with security monitoring tools.                                                                                                                                      |
-| **Developer Tools** | SDKs & Libraries                      | ⚠️        | ✅    | ✅     | ✅            | Provides SDKs for React, Angular, Vue, Node.js, .NET, Java, and more.                                                                                                                     |
-|                     | Custom Hooks & Rules                  | ⚠️        | ❌    | ❌     | ✅            | Allows developers to implement custom business logic.                                                                                                                                     |
-|                     | Custom Branding                       | ⚠️        | ❌    | ❌     | ✅            | Enables UI customization for authentication pages, emails, and error messages.                                                                                                            |
-| **Infra**           | Multi Database                        | ✅         | ❌    | ❌     | ✅            | Supports databaseType routing per tenant. now is supported PostgreSQL, MySQL                                                                                                              |
-
+| Category            | SubCategory                                 | Supported | Free | Basic | Professional | Description                                                                                                                                                                                                                                                                                             |
+|---------------------|---------------------------------------------|-----------|------|-------|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Authentication**  | Password                                    | ✅         | ✅    | ✅     | ✅            | Username/password authentication.                                                                                                                                                                                                                                                                       |
+|                     | Multi-Factor (MFA)                          | ✅         | ❌    | ✅     | ✅            | Adds extra security layers via SMS, Email, push notifications, etc.                                                                                                                                                                                                                                     |
+|                     | Passwordless                                | ✅         | ❌    | ❌     | ✅            | Enables login via FIDO2, or Passkey.                                                                                                                                                                                                                                                                    |
+|                     | Social Login                                | ✅         | ✅    | ✅     | ✅            | Supports authentication via Google, Facebook and more.                                                                                                                                                                                                                                                  |
+|                     | Enterprise Federation                       | ⚠️        | ❌    | ❌     | ✅            | Allows login via external IdPs (SAML, OIDC, LDAP, Azure AD, Google Workspace).                                                                                                                                                                                                                          |
+|                     | Identity Provider (IdP) Integration         | ⚠️        | ✅    | ✅     | ✅            | Supports federated authentication with third-party IdPs.                                                                                                                                                                                                                                                |
+|                     | MFA Rules                                   | ⚠️        | ❌    | ✅     | ✅            | Define custom mfa rules.                                                                                                                                                                                                                                                                                |
+|                     | Customizable Login Pages                    | ⚠️        | ❌    | ❌     | ✅            | Provides branding options for login UI via Universal Login or Lock.js.                                                                                                                                                                                                                                  |
+| **Authorization**   | Role-Based Access Control (RBAC)            | ✅         | ✅    | ✅     | ✅            | Assigns roles and permissions to users based on their identity.                                                                                                                                                                                                                                         |
+|                     | Fine-Grained Permissions                    | ✅         | ✅    | ✅     | ✅            | Manages user access at a granular level.                                                                                                                                                                                                                                                                |
+|                     | API Authorization                           | ✅         | ✅    | ✅     | ✅            | Secures APIs and issues JWT-based access tokens using OAuth 2.0.                                                                                                                                                                                                                                        |
+|                     | Machine-to-Machine Authentication           | ✅         | ✅    | ✅     | ✅            | Enables authentication for services using client credentials.                                                                                                                                                                                                                                           |
+|                     | Secure Session Management                   | ✅         | ✅    | ✅     | ✅            | Supports token expiration, refresh tokens, and logout mechanisms.                                                                                                                                                                                                                                       |
+|                     | Selectable Authorization Provider           | ✅         | ✅    | ✅     | ✅            | Provide selectable custom authorization providers.                                                                                                                                                                                                                                                      |
+| **Trust Framework** | Credentials Application & Issuance Workflow | ⚠️        | ❌    | ❌     | ✅            | Provides a complete workflow for Verified Credentials—from user application and eligibility screening to credential issuance.　Enables trusted organizations to review, approve, or reject applications based on customizable criteria, ensuring credentials are issued with integrity and traceability. |
+|                     | Multi eKYC Integration                      | ⚠️        | ❌    | ❌     | ✅            | Seamlessly integrates with multiple eKYC providers to verify user identity based on tenant-specific policies. Enables flexible onboarding across jurisdictions, use cases, or levels of assurance by dynamically selecting the appropriate eKYC flow.                                                   |
+| **Security**        | Authentication Flows with Hooks             | ✅         | ❌    | ❌     | ✅            | Supports executing multiple custom hooks in a specific order for each authentication securityEvent, based on tenant-configurable settings.                                                                                                                                                              |
+|                     | Extensible Identity Workflows               | ⚠️        | ❌    | ❌     | ✅            | Supports custom rules and hooks for advanced identity management.                                                                                                                                                                                                                                       |
+|                     | User Consent & Privacy Compliance           | ✅         | ✅    | ✅     | ✅            | Ensures GDPR, CCPA, and other regulatory compliance based on fapi grant management.                                                                                                                                                                                                                     |
+|                     | Secure Token Storage                        | ✅         | ✅    | ✅     | ✅            | Manages access tokens securely to prevent leaks.                                                                                                                                                                                                                                                        |
+|                     | Financial-Grade API (FAPI) Compliance       | ✅         | ✅    | ✅     | ✅            | Meets security standards for financial institutions.                                                                                                                                                                                                                                                    |
+|                     | Shared signal framework(SSF)                | ✅         | ✅    | ✅     | ✅            | Share Security Events to Relaying Party.                                                                                                                                                                                                                                                                |
+| **Management**      | Organization                                | ⚠️        | ✅    | ✅     | ✅            | Organizations is a centralized management platform that enables organizations to oversee multiple tenants, manage team members, enforce SSO, control tenant creation, and handle billing.                                                                                                               |
+|                     | Organization Member Administration          | ⚠️        | ❌    | ✅     | ✅            | Controls access levels and membership within tenants.                                                                                                                                                                                                                                                   |
+|                     | Tenant                                      | ⚠️        | ✅    | ✅     | ✅            | Provides centralized visibility and control over multiple tenants.                                                                                                                                                                                                                                      |
+|                     | SSO Enforcement for Organizations           | ⚠️        | ❌    | ✅     | ✅            | Enforces Single Sign-On (SSO) for teams using an organization's IdP.                                                                                                                                                                                                                                    |
+|                     | Multi Tenant Creation Control               | ⚠️        | ❌    | ✅     | ✅            | Manages permissions for creating new tenants.                                                                                                                                                                                                                                                           |
+|                     | Subscription and Billing                    | ⚠️        | ❌    | ✅     | ✅            | Provides tools for managing subscription and billing.                                                                                                                                                                                                                                                   |
+|                     | Applications                                | ⚠️        | ✅    | ✅     | ✅            | Allows application creation, modification, and deletion.                                                                                                                                                                                                                                                |
+|                     | Users                                       | ⚠️        | ✅    | ✅     | ✅            | Allows user creation, modification, and deletion.                                                                                                                                                                                                                                                       |
+|                     | Cleanup transaction data                    | ⚠️        | ✅    | ✅     | ✅            | Automatically removes expired or unused transaction data—such as authorization requests, MFA challenges, and SAML sessions—based on a configurable schedule.Keeps the system clean and prevents unnecessary data accumulation without manual intervention.                                              |
+| **Monitoring**      | Audit Logging                               | ✅         | ❌    | ✅     | ✅            | Tracks authentication events and logs security activities.                                                                                                                                                                                                                                              |
+|                     | Monitoring                                  | ✅         | ❌    | ✅     | ✅            | Integrate to logging service.                                                                                                                                                                                                                                                                           |
+|                     | Security Alerts                             | ⚠️        | ❌    | ❌     | ✅            | Notifies administrators of suspicious login attempts or breaches.                                                                                                                                                                                                                                       |
+|                     | Integration with SIEM                       | ⚠️        | ❌    | ❌     | ✅            | Supports integration with security monitoring tools.                                                                                                                                                                                                                                                    |
+| **Developer Tools** | SDKs & Libraries                            | ⚠️        | ✅    | ✅     | ✅            | Provides SDKs for React, Angular, Vue, Node.js, .NET, Java, and more.                                                                                                                                                                                                                                   |
+|                     | Custom Hooks & Rules                        | ⚠️        | ❌    | ❌     | ✅            | Allows developers to implement custom business logic.                                                                                                                                                                                                                                                   |
+|                     | Custom Branding                             | ⚠️        | ❌    | ❌     | ✅            | Enables UI customization for authentication pages, emails, and error messages.                                                                                                                                                                                                                          |
+| **Infra**           | Multi Database                              | ✅         | ❌    | ❌     | ✅            | Supports databaseType routing per tenant. now is supported PostgreSQL, MySQL                                                                                                                                                                                                                            |
 
 ## Account lifecycle
 
 ```mermaid
 stateDiagram-v2
     [*] --> UNREGISTERED
-    UNREGISTERED --> REGISTERED : Sign-up
-    REGISTERED --> VERIFIED : Email verification
-    VERIFIED --> ACTIVE : First login / account use
-    ACTIVE --> LOCKED : Login failed / MFA failed
-    LOCKED --> ACTIVE : Unlock (auto or manual)
-    ACTIVE --> DISABLED : User or admin disables
-    DISABLED --> ACTIVE : Re-enable
-    ACTIVE --> SUSPENDED : Admin suspends
-    SUSPENDED --> ACTIVE : Reinstated
-    ACTIVE --> DEACTIVATED : User requests delete
-    DEACTIVATED --> DELETED_PENDING : Time lapse (e.g. 30 days)
-    DELETED_PENDING --> DELETED : Purge
+    UNREGISTERED --> REGISTERED: Sign-up
+    REGISTERED --> VERIFIED: Email verification
+    VERIFIED --> ACTIVE: First login / account use
+    ACTIVE --> LOCKED: Login failed / MFA failed
+    LOCKED --> ACTIVE: Unlock (auto or manual)
+    ACTIVE --> DISABLED: User or admin disables
+    DISABLED --> ACTIVE: Re-enable
+    ACTIVE --> SUSPENDED: Admin suspends
+    SUSPENDED --> ACTIVE: Reinstated
+    ACTIVE --> DEACTIVATED: User requests delete
+    DEACTIVATED --> DELETED_PENDING: Time lapse (e.g. 30 days)
+    DELETED_PENDING --> DELETED: Purge
 
 ```
 
