@@ -40,7 +40,6 @@ public class User implements JsonReadable, Serializable {
   List<String> roles = new ArrayList<>();
   List<String> permissions = new ArrayList<>();
   UserStatus status = UserStatus.UNREGISTERED;
-  ;
 
   public static User notFound() {
     return new User();

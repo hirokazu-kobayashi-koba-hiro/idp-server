@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://idp-server.example.com/schemas/user.schema.json",
+  "title": "User",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "given_name": { "type": "string" },
+    "family_name": { "type": "string" },
+    "middle_name": { "type": "string" },
+    "nickname": { "type": "string" },
+    "preferred_username": { "type": "string" },
+    "profile": { "type": "string", "format": "uri" },
+    "picture": { "type": "string", "format": "uri" },
+    "website": { "type": "string", "format": "uri" },
+    "email": { "type": "string", "format": "email" },
+    "email_verified": { "type": "boolean" },
+    "gender": { "type": "string" },
+    "birthdate": { "type": "string", "format": "date" },
+    "zoneinfo": { "type": "string" },
+    "locale": { "type": "string" },
+    "phone_number": { "type": "string" },
+    "phone_number_verified": { "type": "boolean" },
+    "address": {
+      "$ref": "#/$defs/address"
+    },
+    "password": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 64,
+      "pattern": "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()]).+$"
+    },
+    "custom_properties": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "roles": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "permissions": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["email", "password", "name"],
+  "additionalProperties": false,
+  "$defs": {
+    "address": {
+      "type": "object",
+      "properties": {
+        "formatted": { "type": "string" },
+        "street_address": { "type": "string" },
+        "locality": { "type": "string" },
+        "region": { "type": "string" },
+        "postal_code": { "type": "string" },
+        "country": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

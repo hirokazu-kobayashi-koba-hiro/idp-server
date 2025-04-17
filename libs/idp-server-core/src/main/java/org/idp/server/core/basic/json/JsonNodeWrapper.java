@@ -27,12 +27,20 @@ public class JsonNodeWrapper {
     return values;
   }
 
+  public boolean contains(String fieldName) {
+    return jsonNode.has(fieldName);
+  }
+
   public Object node() {
     return jsonNode;
   }
 
   public String getValueOrEmptyAsString(String fieldName) {
     return jsonNode.get(fieldName).asText("");
+  }
+
+  public int getValueAsInt(String fieldName) {
+    return jsonNode.get(fieldName).asInt();
   }
 
   public String asText() {
@@ -51,6 +59,59 @@ public class JsonNodeWrapper {
               results.put(fieldName, value);
             });
     return results;
+  }
+
+  public boolean exists() {
+    return jsonNode != null;
+  }
+
+  public JsonNodeType nodeType() {
+    if (jsonNode.isObject()) {
+      return JsonNodeType.OBJECT;
+    }
+    if (jsonNode.isArray()) {
+      return JsonNodeType.ARRAY;
+    }
+    if (jsonNode.isTextual()) {
+      return JsonNodeType.STRING;
+    }
+    if (jsonNode.isBoolean()) {
+      return JsonNodeType.BOOLEAN;
+    }
+    if (jsonNode.isInt()) {
+      return JsonNodeType.INT;
+    }
+    if (jsonNode.isLong()) {
+      return JsonNodeType.LONG;
+    }
+    if (jsonNode.isDouble()) {
+      return JsonNodeType.DOUBLE;
+    }
+    return JsonNodeType.NULL;
+  }
+
+  public String nodeTypeAsString() {
+    return nodeType().typeName();
+  }
+
+  public boolean isString() {
+    return jsonNode.isTextual();
+  }
+
+  public boolean isInt() {
+    return jsonNode.isInt();
+  }
+
+  public boolean isLong() {
+    return jsonNode.isLong();
+  }
+
+  public boolean isObject() {
+    return jsonNode.isObject();
+  }
+
+  public boolean isArray() {
+    return jsonNode.isArray();
   }
 
   private Object toPrimitive(JsonNode node) {
