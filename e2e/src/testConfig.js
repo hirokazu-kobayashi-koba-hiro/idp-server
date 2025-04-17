@@ -231,18 +231,40 @@ export const selfSignedTlsAuthClient = {
   idTokenAlg: "RS256",
   clientCertFile: "selfSignedTlsAuth.pem",
   requestKey: {
-    p: "8OX-b2ap00yVvPsQ46jFIGBM5NXByTuRI3QTb_Rt_41rjiHy0JNrEIqOkFW7b583rLsOsWPykVNtCwqbjUhWT81ijUneDyzcrCOGlOK9_pZjcqvIIU0fbyXPYox_tejNrv1nixjirnuGFlCDaHZ4ZrWOAN_VPsI7cJLzMyH7jos",
-    kty: "RSA",
-    q: "652Ra-SB0PSVTKwmVxxmPOqOAaN9c8N4urXMwa67auCEBk51sZzpU2QItrTpP_YxZwYyN1srDdanXOREIemb7lX8zGzcMCvhfS_jY9VqVV1tglLg8mN3EU9EMkLPfIi1rry9E2dofDr4mNhUtAd_gorOuBAau1moQfRu6vbzbjk",
-    d: "SYqNt4XMFBfjXQmfBGjeMBPi9FeZ-pHCNMb8L4RrCjnkaWErEvlIbIs1Oijt7zCyIq459GTJ9ohrVijQGm-_XsPhFwUPsYTlnKX1tZKHypsRQbdvZkc3xCm0AU-hZ2Y6XBGmEZnV11TCnH-hK5qA3uOvYAXmT681eVSXsqIuLyd_3_YdK6PzFwCUE0wrplTJxQY9m_DGYy0-kxKOMzBcx-LxTJxDtuXXWzMwc_Wxt_h3YJCTtMYQNdRq_3HUbSRnvKL7_tSE0b1MMBLDj-kJqrzm8lEqgL77Dpxribc1eUYTouBj50_IufZP6Zmu_J6GA52vIUZM-QCa-8slvM5v4Q",
-    e: "AQAB",
-    use: "sig",
-    kid: "self_request_key",
-    qi: "MtiJiYXnuv74cPEeS5dn7VIbOAQ7M3Gn1MmPjoSzm4rIw61WhFvfmt4I4xpqCuT8X2Es-JUy21y3OVnmc64FjZsaIjRjMykh2c5BENphdr3_E9mX6ePQ8aqlc-IxQcrxyFxxahjtL5i-BVeaUqW0iGK_8sdHDbbDy-sphPtntJ0",
-    dp: "MBcJ2v1Yq6jfP5GzRm9bouH2l7wgamasy7IRa0kVaG236fDXA1JajjvKx_-FYnwbZi0Ves4kD2TjINAmS2cEa_vpT6FOZiMjjm2tIS2-lgM5qRun4RX_T3Xx14-KsyrdXLCTqg32urRICU5bXVBBKufViFEmxdeKfCepyyxeho8",
-    alg: "RS256",
-    dq: "vJr0JqbTV94BiU-gnUipeofTxvIFYV6OzP7sefoSIpq4dIfn5JaTm-JOq1qkAERmBW9LUU6UZ051yIEdHPxwitegNk_J7nGh3eEwp-DVbqIMIC-Ry9XdISkPkSA0ER8qOEbzH44-cHuQNmGtZDNAWdIdae_SRjid3LX69_FYqdk",
-    n: "3bdmdRnVS_VxFwXpmetBs3n4g0THeWntkGs5wigGA38x5pTEe5B97-KgXdB4f-zL0n_auPjkIOiKGXByOWvG-9J-U5eY0fXcpCky5JxEpcEQbQMxXTsefn-E5jR2Ia1BMuYLxIzvmN4VKmYNXoPnVSbFj554VBpYnRPF9KtiBU2S1USYBdHFZ7iI3NltoKS8Qb13WgUc3nvQvfHToifWWm43R-Q8yocCXP3G7PHFlBHyNCVI0AArEbuqzJED21nRDUm8bFQ187NrmOI029L9WDTvzcnxfU5zPTnDSCt1Dr_KdcSyMClwZ2RNmd8RAGyH1kBZfMFkQU-AFSDMiDN28w"
+    "p": "8OX-b2ap00yVvPsQ46jFIGBM5NXByTuRI3QTb_Rt_41rjiHy0JNrEIqOkFW7b583rLsOsWPykVNtCwqbjUhWT81ijUneDyzcrCOGlOK9_pZjcqvIIU0fbyXPYox_tejNrv1nixjirnuGFlCDaHZ4ZrWOAN_VPsI7cJLzMyH7jos",
+    "kty": "RSA",
+    "q": "652Ra-SB0PSVTKwmVxxmPOqOAaN9c8N4urXMwa67auCEBk51sZzpU2QItrTpP_YxZwYyN1srDdanXOREIemb7lX8zGzcMCvhfS_jY9VqVV1tglLg8mN3EU9EMkLPfIi1rry9E2dofDr4mNhUtAd_gorOuBAau1moQfRu6vbzbjk",
+    "d": "SYqNt4XMFBfjXQmfBGjeMBPi9FeZ-pHCNMb8L4RrCjnkaWErEvlIbIs1Oijt7zCyIq459GTJ9ohrVijQGm-_XsPhFwUPsYTlnKX1tZKHypsRQbdvZkc3xCm0AU-hZ2Y6XBGmEZnV11TCnH-hK5qA3uOvYAXmT681eVSXsqIuLyd_3_YdK6PzFwCUE0wrplTJxQY9m_DGYy0-kxKOMzBcx-LxTJxDtuXXWzMwc_Wxt_h3YJCTtMYQNdRq_3HUbSRnvKL7_tSE0b1MMBLDj-kJqrzm8lEqgL77Dpxribc1eUYTouBj50_IufZP6Zmu_J6GA52vIUZM-QCa-8slvM5v4Q",
+    "e": "AQAB",
+    "use": "sig",
+    "kid": "self_request_key",
+    "qi": "MtiJiYXnuv74cPEeS5dn7VIbOAQ7M3Gn1MmPjoSzm4rIw61WhFvfmt4I4xpqCuT8X2Es-JUy21y3OVnmc64FjZsaIjRjMykh2c5BENphdr3_E9mX6ePQ8aqlc-IxQcrxyFxxahjtL5i-BVeaUqW0iGK_8sdHDbbDy-sphPtntJ0",
+    "dp": "MBcJ2v1Yq6jfP5GzRm9bouH2l7wgamasy7IRa0kVaG236fDXA1JajjvKx_-FYnwbZi0Ves4kD2TjINAmS2cEa_vpT6FOZiMjjm2tIS2-lgM5qRun4RX_T3Xx14-KsyrdXLCTqg32urRICU5bXVBBKufViFEmxdeKfCepyyxeho8",
+    "alg": "RS256",
+    "dq": "vJr0JqbTV94BiU-gnUipeofTxvIFYV6OzP7sefoSIpq4dIfn5JaTm-JOq1qkAERmBW9LUU6UZ051yIEdHPxwitegNk_J7nGh3eEwp-DVbqIMIC-Ry9XdISkPkSA0ER8qOEbzH44-cHuQNmGtZDNAWdIdae_SRjid3LX69_FYqdk",
+    "n": "3bdmdRnVS_VxFwXpmetBs3n4g0THeWntkGs5wigGA38x5pTEe5B97-KgXdB4f-zL0n_auPjkIOiKGXByOWvG-9J-U5eY0fXcpCky5JxEpcEQbQMxXTsefn-E5jR2Ia1BMuYLxIzvmN4VKmYNXoPnVSbFj554VBpYnRPF9KtiBU2S1USYBdHFZ7iI3NltoKS8Qb13WgUc3nvQvfHToifWWm43R-Q8yocCXP3G7PHFlBHyNCVI0AArEbuqzJED21nRDUm8bFQ187NrmOI029L9WDTvzcnxfU5zPTnDSCt1Dr_KdcSyMClwZ2RNmd8RAGyH1kBZfMFkQU-AFSDMiDN28w"
+  }
+};
+
+
+export const selfSignedTlsClientAuth2 = {
+  clientId: "selfSignedTlsClientAuth2",
+  clientSecret: "selfSignedTlsClientAuth2",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "account transfers",
+  fapiBaselineScope: "read",
+  fapiAdvanceScope: "write",
+  idTokenAlg: "RS256",
+  clientCertFile: "selfSignedTlsAuth2.pem",
+  requesstKey: {
+    "kty": "EC",
+    "d": "W4ph87WjvxxqrLZr263xD6YgW-Krd2-gI18jPjsZJ04",
+    "use": "sig",
+    "crv": "P-256",
+    "kid": "selfSignedTlsClientAuth2_request_key",
+    "x": "Yoe4KRi-_vc-F7BRkgketw0vS0XywExmRNG0nR-7hq4",
+    "y": "-BMXjB9siMwrSJdmswjWosjGnJGUFpKXe0kZ_UQvJ_E",
+    "alg": "ES256"
   }
 };
 
