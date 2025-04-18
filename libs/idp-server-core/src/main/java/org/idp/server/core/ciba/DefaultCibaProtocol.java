@@ -15,6 +15,7 @@ import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
+import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 public class DefaultCibaProtocol implements CibaProtocol {
@@ -28,6 +29,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
   public DefaultCibaProtocol(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
       CibaGrantRepository cibaGrantRepository,
+      UserRepository userRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
       OAuthTokenRepository oAuthTokenRepository,
       ServerConfigurationRepository serverConfigurationRepository,

@@ -10,6 +10,7 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.RequestObjectPatternFactory;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.type.mtls.ClientCert;
 import org.idp.server.core.type.oauth.ClientSecretBasic;
 
 /** RequestObjectPatternContextService */
@@ -22,6 +23,7 @@ public class RequestObjectPatternContextService
   @Override
   public CibaRequestContext create(
       ClientSecretBasic clientSecretBasic,
+      ClientCert clientCert,
       CibaRequestParameters parameters,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
@@ -34,6 +36,7 @@ public class RequestObjectPatternContextService
               serverConfiguration.jwks(),
               clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
+
       CibaRequestPattern pattern = CibaRequestPattern.REQUEST_OBJECT;
       Set<String> filteredScopes =
           filterScopes(pattern, parameters, joseContext, clientConfiguration);
@@ -52,6 +55,7 @@ public class RequestObjectPatternContextService
       return new CibaRequestContext(
           pattern,
           clientSecretBasic,
+          clientCert,
           parameters,
           new CibaRequestObjectParameters(joseContext.claims().payload()),
           joseContext,

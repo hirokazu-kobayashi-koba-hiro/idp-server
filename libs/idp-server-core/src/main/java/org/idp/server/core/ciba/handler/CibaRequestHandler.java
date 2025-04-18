@@ -103,7 +103,11 @@ public class CibaRequestHandler {
 
     CibaRequestContext context =
         cibaRequestContextService.create(
-            request.clientSecretBasic(), parameters, serverConfiguration, clientConfiguration);
+            request.clientSecretBasic(),
+            request.toClientCert(),
+            parameters,
+            serverConfiguration,
+            clientConfiguration);
 
     CibaRequestVerifier verifier = new CibaRequestVerifier(context);
     verifier.verify();

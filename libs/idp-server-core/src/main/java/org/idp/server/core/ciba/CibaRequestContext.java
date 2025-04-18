@@ -18,6 +18,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   CibaRequestPattern pattern;
   ClientSecretBasic clientSecretBasic;
+  ClientCert clientCert;
   CibaRequestParameters parameters;
   CibaRequestObjectParameters requestObjectParameters;
   CibaRequestAssembleParameters assembleParameters;
@@ -31,6 +32,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
   public CibaRequestContext(
       CibaRequestPattern pattern,
       ClientSecretBasic clientSecretBasic,
+      ClientCert clientCert,
       CibaRequestParameters parameters,
       CibaRequestObjectParameters requestObjectParameters,
       JoseContext joseContext,
@@ -39,6 +41,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
       ClientConfiguration clientConfiguration) {
     this.pattern = pattern;
     this.clientSecretBasic = clientSecretBasic;
+    this.clientCert = clientCert;
     this.parameters = parameters;
     this.requestObjectParameters = requestObjectParameters;
     this.assembleParameters =
@@ -85,7 +88,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   @Override
   public ClientCert clientCert() {
-    return null;
+    return clientCert;
   }
 
   @Override
@@ -113,15 +116,14 @@ public class CibaRequestContext implements BackchannelRequestContext {
   }
 
   public Interval interval() {
-    // FIXME
-    return new Interval(3);
+    return new Interval(serverConfiguration.backchannelAuthPollingInterval());
   }
 
   public ExpiresIn expiresIn() {
     if (backchannelAuthenticationRequest.hasRequestedExpiry()) {
       return new ExpiresIn(backchannelAuthenticationRequest.requestedExpiry().toIntValue());
     }
-    return new ExpiresIn(300);
+    return new ExpiresIn(serverConfiguration.backchannelAuthRequestExpiresIn());
   }
 
   public boolean hasUserCode() {

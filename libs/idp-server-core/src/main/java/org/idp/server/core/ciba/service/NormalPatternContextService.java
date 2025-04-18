@@ -7,6 +7,7 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.NormalRequestFactory;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.type.mtls.ClientCert;
 import org.idp.server.core.type.oauth.ClientSecretBasic;
 
 /** NormalPatternContextService */
@@ -18,14 +19,17 @@ public class NormalPatternContextService
   @Override
   public CibaRequestContext create(
       ClientSecretBasic clientSecretBasic,
+      ClientCert clientCert,
       CibaRequestParameters parameters,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
+
     JoseContext joseContext = new JoseContext();
     CibaRequestPattern pattern = CibaRequestPattern.NORMAL;
     Set<String> filteredScopes =
         filterScopes(pattern, parameters, joseContext, clientConfiguration);
     CibaProfile profile = analyze(filteredScopes, serverConfiguration);
+
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
         normalRequestFactory.create(
             profile,
@@ -35,9 +39,11 @@ public class NormalPatternContextService
             filteredScopes,
             serverConfiguration,
             clientConfiguration);
+
     return new CibaRequestContext(
         pattern,
         clientSecretBasic,
+        clientCert,
         parameters,
         new CibaRequestObjectParameters(),
         joseContext,

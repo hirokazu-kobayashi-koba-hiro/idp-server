@@ -73,6 +73,8 @@ public class ServerConfiguration implements JsonReadable {
   boolean idTokenStrictMode = false;
   long defaultMaxAge = 86400;
   long authorizationResponseDuration = 60;
+  int backchannelAuthRequestExpiresIn = 300;
+  int backchannelAuthPollingInterval = 5;
 
   public ServerConfiguration() {}
 
@@ -517,5 +519,13 @@ public class ServerConfiguration implements JsonReadable {
 
   public boolean hasCredentialIssuerMetadata() {
     return credentialIssuerMetadata.exists();
+  }
+
+  public int backchannelAuthRequestExpiresIn() {
+    return backchannelAuthRequestExpiresIn;
+  }
+
+  public int backchannelAuthPollingInterval() {
+    return backchannelAuthPollingInterval;
   }
 }
