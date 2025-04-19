@@ -15,7 +15,7 @@ sequenceDiagram
     SDKBackend -->> SDK: Return authorization request URL
     SDK ->> SDK: Redirect to URL
     SDK ->> IdP: Authorization screen shown
-    User ->> IdP: Authenticate (Password / WebAuthn)
+    User ->> IdP: Register (Password / WebAuthn / verify email)
     IdP ->> SDK: redirect_uri with code and state
     SDK ->> SDK: handleRedirectCallback()
     SDK ->> SDKBackend: POST /auth/callback\n(code, state, code_verifier)
