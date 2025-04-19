@@ -1,4 +1,4 @@
-package org.idp.server.core.oauth.service;
+package org.idp.server.core.oauth.context;
 
 import java.util.Set;
 import org.idp.server.core.basic.jose.JoseContext;
@@ -6,12 +6,23 @@ import org.idp.server.core.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.AuthorizationProfile;
+import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.OAuthRequestPattern;
+import org.idp.server.core.oauth.factory.AuthorizationRequestFactory;
+import org.idp.server.core.oauth.factory.FapiAdvanceRequestObjectPatternFactory;
+import org.idp.server.core.oauth.factory.RequestObjectPatternFactory;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
+import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.OAuthRequestKey;
 
-/** AuthorizationProfileAnalyzable */
-public interface AuthorizationProfileAnalyzable {
+/** OAuthRequestContextService */
+public interface OAuthRequestContextCreator {
+
+  OAuthRequestContext create(
+      Tenant tenant,
+      OAuthRequestParameters parameters,
+      ServerConfiguration serverConfiguration,
+      ClientConfiguration clientConfiguration);
 
   default AuthorizationProfile analyze(
       Set<String> filteredScopes, ServerConfiguration serverConfiguration) {
@@ -41,5 +52,15 @@ public interface AuthorizationProfileAnalyzable {
         (pattern.isRequestParameter() || clientConfiguration.isSupportedJar()) ? joseScope : scope;
 
     return clientConfiguration.filteredScope(targetScope);
+  }
+
+  default AuthorizationRequestFactory selectAuthorizationRequestFactory(
+      AuthorizationProfile profile,
+      ServerConfiguration serverConfiguration,
+      ClientConfiguration clientConfiguration) {
+    if (profile.isFapiAdvance()) {
+      return new FapiAdvanceRequestObjectPatternFactory();
+    }
+    return new RequestObjectPatternFactory();
   }
 }

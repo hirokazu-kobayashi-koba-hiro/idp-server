@@ -7,7 +7,7 @@ public interface CibaProtocol {
 
   AuthorizationProtocolProvider authorizationProtocolProvider();
 
-  CibaRequestResponse request(CibaRequest request, CibaRequestDelegate delegate);
+  CibaRequestResponse request(CibaRequest request);
 
   CibaAuthorizeResponse authorize(CibaAuthorizeRequest request);
 

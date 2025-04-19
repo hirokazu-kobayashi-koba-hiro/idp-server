@@ -1,4 +1,4 @@
-package org.idp.server.core.oauth.service;
+package org.idp.server.core.oauth.context;
 
 import java.util.Set;
 import org.idp.server.core.basic.jose.JoseContext;
@@ -11,13 +11,20 @@ import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.OAuthRequestPattern;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.factory.AuthorizationRequestFactory;
+import org.idp.server.core.oauth.gateway.RequestObjectGateway;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
-import org.idp.server.core.oauth.validator.RequestObjectValidator;
 import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.type.oidc.RequestObject;
 
-/** RequestObjectPatternContextService */
-public class RequestObjectPatternContextService implements OAuthRequestContextService {
+/** RequestUriPatternContextService */
+public class RequestUriPatternContextCreator implements OAuthRequestContextCreator {
+
+  RequestObjectGateway requestObjectGateway;
+
+  public RequestUriPatternContextCreator(RequestObjectGateway requestObjectGateway) {
+    this.requestObjectGateway = requestObjectGateway;
+  }
 
   @Override
   public OAuthRequestContext create(
@@ -26,22 +33,27 @@ public class RequestObjectPatternContextService implements OAuthRequestContextSe
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
-      RequestObjectValidator validator =
-          new RequestObjectValidator(parameters, serverConfiguration, clientConfiguration);
-      validator.validate();
 
+      if (!clientConfiguration.isRegisteredRequestUri(parameters.requestUri().value())) {
+        throw new OAuthBadRequestException(
+            "invalid_request",
+            String.format("request uri does not registered (%s)", parameters.requestUri().value()));
+      }
+
+      RequestObject requestObject = requestObjectGateway.get(parameters.requestUri());
       JoseHandler joseHandler = new JoseHandler();
       JoseContext joseContext =
           joseHandler.handle(
-              parameters.request().value(),
+              requestObject.value(),
               clientConfiguration.jwks(),
               serverConfiguration.jwks(),
               clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
 
-      OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_OBJECT;
+      OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_URI;
       Set<String> filteredScopes =
           filterScopes(pattern, parameters, joseContext, clientConfiguration);
+
       AuthorizationProfile profile = analyze(filteredScopes, serverConfiguration);
       AuthorizationRequestFactory requestFactory =
           selectAuthorizationRequestFactory(profile, serverConfiguration, clientConfiguration);

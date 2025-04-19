@@ -163,4 +163,11 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
   public Map<String, String> singleValues() {
     return values.singleValueMap();
   }
+
+  public CibaRequestPattern analyze() {
+    if (hasRequest()) {
+      return CibaRequestPattern.REQUEST_OBJECT;
+    }
+    return CibaRequestPattern.NORMAL;
+  }
 }

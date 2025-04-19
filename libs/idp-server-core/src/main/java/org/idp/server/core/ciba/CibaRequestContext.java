@@ -135,7 +135,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
   }
 
   public RequestedClientId requestedClientId() {
-    return backchannelAuthenticationRequest.clientId();
+    return backchannelAuthenticationRequest.requestedClientId();
   }
 
   public Client client() {

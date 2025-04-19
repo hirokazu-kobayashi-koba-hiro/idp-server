@@ -27,10 +27,10 @@ public class DefaultCibaProvider implements ProtocolProvider<CibaProtocol> {
         container.resolve(ServerConfigurationRepository.class);
     ClientConfigurationRepository clientConfigurationRepository =
         container.resolve(ClientConfigurationRepository.class);
-    UserRepository userRepository = container.resolve(UserRepository.class);
     AuthorizationGrantedRepository authorizationGrantedRepository =
         container.resolve(AuthorizationGrantedRepository.class);
     OAuthTokenRepository oAuthTokenRepository = container.resolve(OAuthTokenRepository.class);
+    UserRepository userRepository = container.resolve(UserRepository.class);
 
     return new DefaultCibaProtocol(
         backchannelAuthenticationRequestRepository,

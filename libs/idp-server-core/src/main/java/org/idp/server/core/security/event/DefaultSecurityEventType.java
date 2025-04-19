@@ -27,6 +27,12 @@ public enum DefaultSecurityEventType {
   login("User logged in"),
   login_with_session("User logged in with a session"),
   logout("User logged out"),
+  backchannel_authentication_request_success(
+      "User successfully authenticated with a backchannel authentication"),
+  backchannel_authentication_request_failure(
+      "User failed authentication with a backchannel authentication"),
+  backchannel_authentication_authorize("User authorized with a backchannel authentication"),
+  getBackchannel_authentication_deny("User denied with a backchannel authentication"),
   password_reset("User reset their password"),
   password_change("User changed their password"),
   application_create("Application was created"),

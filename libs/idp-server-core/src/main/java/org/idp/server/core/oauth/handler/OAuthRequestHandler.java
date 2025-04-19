@@ -7,11 +7,11 @@ import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.grantmangment.AuthorizationGranted;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.core.oauth.*;
+import org.idp.server.core.oauth.context.*;
 import org.idp.server.core.oauth.gateway.RequestObjectGateway;
 import org.idp.server.core.oauth.io.OAuthRequest;
 import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
-import org.idp.server.core.oauth.service.*;
 import org.idp.server.core.oauth.validator.OAuthRequestValidator;
 import org.idp.server.core.oauth.verifier.OAuthRequestVerifier;
 import org.idp.server.core.tenant.Tenant;
@@ -19,7 +19,7 @@ import org.idp.server.core.tenant.Tenant;
 /** OAuthRequestHandler */
 public class OAuthRequestHandler {
 
-  OAuthRequestContextServices oAuthRequestContextServices;
+  OAuthRequestContextCreators oAuthRequestContextCreators;
   OAuthRequestVerifier verifier;
   AuthorizationRequestRepository authorizationRequestRepository;
   ServerConfigurationRepository serverConfigurationRepository;
@@ -32,7 +32,7 @@ public class OAuthRequestHandler {
       ClientConfigurationRepository clientConfigurationRepository,
       RequestObjectGateway requestObjectGateway,
       AuthorizationGrantedRepository grantedRepository) {
-    this.oAuthRequestContextServices = new OAuthRequestContextServices(requestObjectGateway);
+    this.oAuthRequestContextCreators = new OAuthRequestContextCreators(requestObjectGateway);
     this.verifier = new OAuthRequestVerifier();
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
@@ -51,11 +51,11 @@ public class OAuthRequestHandler {
         clientConfigurationRepository.get(tenant, parameters.clientId());
 
     OAuthRequestPattern oAuthRequestPattern = parameters.analyzePattern();
-    OAuthRequestContextService oAuthRequestContextService =
-        oAuthRequestContextServices.get(oAuthRequestPattern);
+    OAuthRequestContextCreator oAuthRequestContextCreator =
+        oAuthRequestContextCreators.get(oAuthRequestPattern);
 
     OAuthRequestContext context =
-        oAuthRequestContextService.create(
+        oAuthRequestContextCreator.create(
             tenant, parameters, serverConfiguration, clientConfiguration);
     verifier.verify(context);
 

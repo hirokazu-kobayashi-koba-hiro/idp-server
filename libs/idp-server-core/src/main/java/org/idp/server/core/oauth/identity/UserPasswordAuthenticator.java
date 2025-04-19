@@ -5,12 +5,12 @@ import org.idp.server.core.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.core.type.oauth.Password;
 import org.idp.server.core.type.oauth.Username;
 
-public class UserAuthenticator implements PasswordCredentialsGrantDelegate {
+public class UserPasswordAuthenticator implements PasswordCredentialsGrantDelegate {
 
   UserRepository userRepository;
   PasswordVerificationDelegation passwordVerificationDelegation;
 
-  public UserAuthenticator(
+  public UserPasswordAuthenticator(
       UserRepository userRepository,
       PasswordVerificationDelegation passwordVerificationDelegation) {
     this.userRepository = userRepository;

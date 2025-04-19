@@ -1,4 +1,4 @@
-package org.idp.server.core.oauth.service;
+package org.idp.server.core.oauth.context;
 
 import java.util.Set;
 import org.idp.server.core.basic.jose.JoseContext;
@@ -13,7 +13,7 @@ import org.idp.server.core.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.tenant.Tenant;
 
 /** NormalPatternContextService */
-public class NormalPatternContextService implements OAuthRequestContextService {
+public class NormalPatternContextCreator implements OAuthRequestContextCreator {
 
   NormalRequestFactory normalRequestFactory = new NormalRequestFactory();
 

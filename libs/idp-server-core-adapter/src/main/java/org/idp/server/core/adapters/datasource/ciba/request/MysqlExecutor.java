@@ -28,7 +28,7 @@ public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecuto
     params.add(request.profile().name());
     params.add(request.deliveryMode().name());
     params.add(request.scopes().toStringValues());
-    params.add(request.clientId().value());
+    params.add(request.requestedClientId().value());
 
     if (request.hasIdTokenHint()) {
       params.add(request.idTokenHint().value());

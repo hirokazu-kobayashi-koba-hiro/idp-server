@@ -33,7 +33,7 @@ import org.idp.server.core.oauth.OAuthProtocols;
 import org.idp.server.core.oauth.OAuthSessionDelegate;
 import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
 import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
-import org.idp.server.core.oauth.identity.UserAuthenticator;
+import org.idp.server.core.oauth.identity.UserPasswordAuthenticator;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.oauth.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.oauth.identity.role.RoleCommandRepository;
@@ -41,6 +41,7 @@ import org.idp.server.core.organization.OrganizationRepository;
 import org.idp.server.core.security.SecurityEventApi;
 import org.idp.server.core.security.SecurityEventHooks;
 import org.idp.server.core.security.SecurityEventPublisher;
+import org.idp.server.core.security.event.CibaFlowEventPublisher;
 import org.idp.server.core.security.event.OAuthFlowEventPublisher;
 import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
@@ -111,7 +112,7 @@ public class IdpServerApplication {
 
     applicationComponentContainer.register(
         PasswordCredentialsGrantDelegate.class,
-        new UserAuthenticator(userRepository, passwordVerificationDelegation));
+        new UserPasswordAuthenticator(userRepository, passwordVerificationDelegation));
 
     ProtocolContainer protocolContainer =
         ProtocolContainerLoader.load(applicationComponentContainer);
@@ -152,6 +153,8 @@ public class IdpServerApplication {
 
     OAuthFlowEventPublisher oAuthFLowEventPublisher =
         new OAuthFlowEventPublisher(securityEventPublisher);
+    CibaFlowEventPublisher cibaFlowEventPublisher =
+        new CibaFlowEventPublisher(securityEventPublisher);
 
     OidcSsoExecutors oidcSsoExecutors = OidcSsoExecutorLoader.load();
     FederationDependencyContainer federationDependencyContainer =
@@ -208,7 +211,8 @@ public class IdpServerApplication {
             new CibaFlowEntryService(
                 new CibaProtocols(protocolContainer.resolveAll(CibaProtocol.class)),
                 userRepository,
-                tenantRepository),
+                tenantRepository,
+                cibaFlowEventPublisher),
             CibaFlowApi.class,
             OperationType.WRITE,
             tenantDialectProvider);

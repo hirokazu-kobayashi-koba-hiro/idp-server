@@ -1,4 +1,4 @@
-package org.idp.server.core.ciba.service;
+package org.idp.server.core.ciba.context;
 
 import java.util.Set;
 import org.idp.server.core.basic.jose.JoseContext;
@@ -11,8 +11,7 @@ import org.idp.server.core.type.mtls.ClientCert;
 import org.idp.server.core.type.oauth.ClientSecretBasic;
 
 /** NormalPatternContextService */
-public class NormalPatternContextService
-    implements CibaRequestContextService, CibaProfileAnalyzable {
+public class NormalPatternContextCreator implements CibaRequestContextCreator {
 
   NormalRequestFactory normalRequestFactory = new NormalRequestFactory();
 

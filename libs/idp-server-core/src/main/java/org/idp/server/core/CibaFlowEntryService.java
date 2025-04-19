@@ -4,35 +4,39 @@ import java.util.Map;
 import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.ciba.*;
 import org.idp.server.core.ciba.handler.io.*;
-import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
+import org.idp.server.core.security.event.CibaFlowEventPublisher;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
-import org.idp.server.core.type.ciba.UserCode;
+import org.idp.server.core.type.security.RequestAttributes;
 
 @Transaction
-public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
+public class CibaFlowEntryService implements CibaFlowApi {
 
   CibaProtocols cibaProtocols;
   UserRepository userRepository;
   TenantRepository tenantRepository;
+  CibaFlowEventPublisher eventPublisher;
 
   public CibaFlowEntryService(
       CibaProtocols cibaProtocols,
       UserRepository userRepository,
-      TenantRepository tenantRepository) {
+      TenantRepository tenantRepository,
+      CibaFlowEventPublisher eventPublisher) {
     this.cibaProtocols = cibaProtocols;
     this.userRepository = userRepository;
     this.tenantRepository = tenantRepository;
+    this.eventPublisher = eventPublisher;
   }
 
   public CibaRequestResponse request(
       TenantIdentifier tenantIdentifier,
       Map<String, String[]> params,
       String authorizationHeader,
-      String clientCert) {
+      String clientCert,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     CibaRequest cibaRequest = new CibaRequest(tenant, authorizationHeader, params);
@@ -40,10 +44,23 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
 
     CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProtocolProvider());
 
-    return cibaProtocol.request(cibaRequest, this);
+    CibaRequestResponse requestResponse = cibaProtocol.request(cibaRequest);
+
+    // TODO remove if statement
+    if (requestResponse.isOK()) {
+      eventPublisher.publish(
+          tenant,
+          requestResponse.request(),
+          requestResponse.user(),
+          DefaultSecurityEventType.backchannel_authentication_request_success,
+          requestAttributes);
+    }
+
+    return requestResponse;
   }
 
-  public CibaAuthorizeResponse authorize(TenantIdentifier tenantIdentifier, String authReqId) {
+  public CibaAuthorizeResponse authorize(
+      TenantIdentifier tenantIdentifier, String authReqId, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     CibaAuthorizeRequest cibaAuthorizeRequest = new CibaAuthorizeRequest(tenant, authReqId);
@@ -53,7 +70,8 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
     return cibaProtocol.authorize(cibaAuthorizeRequest);
   }
 
-  public CibaDenyResponse deny(TenantIdentifier tenantIdentifier, String authReqId) {
+  public CibaDenyResponse deny(
+      TenantIdentifier tenantIdentifier, String authReqId, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     CibaDenyRequest cibaDenyRequest = new CibaDenyRequest(tenant, authReqId);
@@ -62,24 +80,4 @@ public class CibaFlowEntryService implements CibaFlowApi, CibaRequestDelegate {
 
     return cibaProtocol.deny(cibaDenyRequest);
   }
-
-  @Override
-  public User find(TenantIdentifier tenantIdentifier, UserCriteria criteria) {
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
-    if (tenant.exists() && criteria.hasLoginHint()) {
-      // TODO proverId
-      return userRepository.findBy(tenant, criteria.loginHint().value(), "idp-server");
-    }
-    return User.notFound();
-  }
-
-  // TODO implement
-  @Override
-  public boolean authenticate(TenantIdentifier tenantIdentifier, User user, UserCode userCode) {
-    return true;
-  }
-
-  @Override
-  public void notify(
-      TenantIdentifier tenantIdentifier, User user, BackchannelAuthenticationRequest request) {}
 }

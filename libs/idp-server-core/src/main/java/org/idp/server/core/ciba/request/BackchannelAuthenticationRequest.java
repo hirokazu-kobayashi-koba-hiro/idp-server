@@ -88,7 +88,7 @@ public class BackchannelAuthenticationRequest {
     return scopes.exists();
   }
 
-  public RequestedClientId clientId() {
+  public RequestedClientId requestedClientId() {
     return requestedClientId;
   }
 
