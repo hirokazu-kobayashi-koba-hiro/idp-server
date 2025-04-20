@@ -30,7 +30,7 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationInteractionResult previousResult,
+      AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
     LegacyIdServiceAuthenticationConfiguration configuration =

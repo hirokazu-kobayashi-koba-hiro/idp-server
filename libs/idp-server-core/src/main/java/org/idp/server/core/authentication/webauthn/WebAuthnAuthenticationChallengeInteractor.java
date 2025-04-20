@@ -27,7 +27,7 @@ public class WebAuthnAuthenticationChallengeInteractor implements Authentication
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationInteractionResult previousResult,
+      AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
     WebAuthnConfiguration configuration =

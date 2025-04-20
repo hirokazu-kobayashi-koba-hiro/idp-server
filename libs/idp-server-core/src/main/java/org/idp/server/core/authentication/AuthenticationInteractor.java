@@ -10,6 +10,6 @@ public interface AuthenticationInteractor {
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationInteractionResult result,
+      AuthenticationTransaction transaction,
       UserRepository userRepository);
 }

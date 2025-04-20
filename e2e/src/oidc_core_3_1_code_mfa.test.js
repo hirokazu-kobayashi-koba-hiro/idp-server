@@ -8,7 +8,7 @@ import {
 import { requestAuthorizations } from "./oauth/signin";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
-  xit("email", async () => {
+  it("email", async () => {
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
       clientId: clientSecretPostClient.clientId,

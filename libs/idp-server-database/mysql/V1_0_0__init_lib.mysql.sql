@@ -523,12 +523,15 @@ CREATE TABLE authentication_configuration
 
 CREATE INDEX idx_authentication_configuration_type ON authentication_configuration (tenant_id, type);
 
-CREATE TABLE authentication_transactions
+CREATE TABLE authentication_interactions
 (
-    id         CHAR(36)                           NOT NULL,
-    type       VARCHAR(255)                       NOT NULL,
-    payload    JSON                               NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    PRIMARY KEY (id, type)
+    authorization_id CHAR(36)                NOT NULL,
+    tenant_id        CHAR(36)                NOT NULL,
+    interaction_type VARCHAR(255)            NOT NULL,
+    payload          JSON                   NOT NULL,
+    created_at       TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at       TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (authorization_id, interaction_type),
+    FOREIGN KEY (authorization_id) REFERENCES authentication_transaction (authorization_id) ON DELETE CASCADE,
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

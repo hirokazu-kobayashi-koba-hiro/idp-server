@@ -34,6 +34,7 @@ public class User implements JsonReadable, Serializable {
   LocalDateTime updatedAt;
   String hashedPassword;
   String rawPassword;
+  HashMap<String, Object> authenticationDevices = new HashMap<>();
   HashMap<String, Object> customProperties = new HashMap<>();
   List<HashMap<String, Object>> credentials = new ArrayList<>();
   HashMap<String, Object> multiFactorAuthentication = new HashMap<>();
@@ -288,6 +289,11 @@ public class User implements JsonReadable, Serializable {
     return this;
   }
 
+  public User setAuthenticationDevices(HashMap<String, Object> authenticationDevices) {
+    this.authenticationDevices = authenticationDevices;
+    return this;
+  }
+
   public boolean exists() {
     return Objects.nonNull(sub) && !sub.isEmpty();
   }
@@ -441,6 +447,10 @@ public class User implements JsonReadable, Serializable {
     return permissions != null && !permissions.isEmpty();
   }
 
+  public boolean hasAuthenticationDevices() {
+    return authenticationDevices != null && !authenticationDevices.isEmpty();
+  }
+
   public UserStatus status() {
     return status;
   }
@@ -486,6 +496,7 @@ public class User implements JsonReadable, Serializable {
       map.put("multi_factor_authentication", multiFactorAuthentication);
     if (hasRoles()) map.put("roles", roles);
     if (hasPermissions()) map.put("permissions", permissions);
+    if (hasAuthenticationDevices()) map.put("authentication_devices", authenticationDevices);
     if (exists()) map.put("status", status.name());
 
     return map;

@@ -12,7 +12,7 @@ public class AuthenticationTransactionQuerySqlExecutors {
   public AuthenticationTransactionQuerySqlExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
-    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
+    //    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
   public AuthenticationTransactionQuerySqlExecutor get(DatabaseType databaseType) {

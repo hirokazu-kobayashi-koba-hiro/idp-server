@@ -1,5 +1,6 @@
 package org.idp.server.core.ciba;
 
+import java.util.List;
 import org.idp.server.core.basic.jose.JoseContext;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
@@ -172,5 +173,13 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   public TenantIdentifier tenantIdentifier() {
     return serverConfiguration.tenantIdentifier();
+  }
+
+  public List<String> availableAuthenticationMethods() {
+    return serverConfiguration.availableAuthenticationMethods();
+  }
+
+  public boolean isFapiProfile() {
+    return profile().isFapiCiba();
   }
 }

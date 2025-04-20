@@ -18,7 +18,7 @@ public class InsertSqlCreator {
     params.add(authorizationRequest.profile().name());
     params.add(authorizationRequest.scopes().toStringValues());
     params.add(authorizationRequest.responseType().name());
-    params.add(authorizationRequest.clientId().value());
+    params.add(authorizationRequest.retrieveClientId().value());
     params.add(toJson(authorizationRequest.client()));
 
     if (authorizationRequest.hasRedirectUri()) {

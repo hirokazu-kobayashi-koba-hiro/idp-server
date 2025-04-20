@@ -1,10 +1,10 @@
 package org.idp.server.authenticators.webauthn4j;
 
 import java.util.Map;
-import org.idp.server.core.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.authentication.AuthenticationInteractionCommandRepository;
-import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.authentication.AuthenticationInteractionQueryRepository;
+import org.idp.server.core.authentication.AuthenticationInteractionRequest;
+import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.authentication.webauthn.*;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.tenant.Tenant;

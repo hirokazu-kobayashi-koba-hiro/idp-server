@@ -33,7 +33,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationInteractionResult previousResult,
+      AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
     EmailAuthenticationConfiguration emailAuthenticationConfiguration =

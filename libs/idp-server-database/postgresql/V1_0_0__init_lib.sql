@@ -127,6 +127,7 @@ CREATE TABLE idp_user
     credentials                    JSONB,
     hashed_password                TEXT,
     multi_factor_authentication    JSONB,
+    authentication_devices         JSONB,
     status                         VARCHAR(255)            NOT NULL,
     created_at                     TIMESTAMP DEFAULT now() NOT NULL,
     updated_at                     TIMESTAMP DEFAULT now() NOT NULL,
@@ -523,19 +524,17 @@ CREATE INDEX idx_authentication_configuration_type ON authentication_configurati
 
 CREATE TABLE authentication_transaction
 (
-    authorization_id               CHAR(36)                NOT NULL,
-    tenant_id                      CHAR(36)                NOT NULL,
-    authorization_flow             VARCHAR(255)            NOT NULL,
-    client_id                      VARCHAR(255)            NOT NULL,
-    client_payload                 JSONB                   NOT NULL,
-    user_id                        CHAR(36),
-    user_payload                   JSONB,
-    authentication_device_id       CHAR(36),
-    available_authentication_types JSONB                   NOT NULL,
-    required_authentication_types  JSONB,
-    created_at                     TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at                     TIMESTAMP DEFAULT now() NOT NULL,
-    expired_at                     TIMESTAMP DEFAULT now() NOT NULL,
+    authorization_id                     CHAR(36)                NOT NULL,
+    tenant_id                            CHAR(36)                NOT NULL,
+    authorization_flow                   VARCHAR(255)            NOT NULL,
+    client_id                            VARCHAR(255)            NOT NULL,
+    user_id                              CHAR(36),
+    user_payload                         JSONB,
+    authentication_device_id             CHAR(36),
+    available_authentication_types       JSONB                   NOT NULL,
+    required_any_of_authentication_types JSONB,
+    created_at                           TEXT NOT NULL,
+    expired_at                           TEXT NOT NULL,
     PRIMARY KEY (authorization_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );

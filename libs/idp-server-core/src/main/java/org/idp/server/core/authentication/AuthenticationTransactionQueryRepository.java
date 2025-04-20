@@ -4,5 +4,5 @@ import org.idp.server.core.tenant.Tenant;
 
 public interface AuthenticationTransactionQueryRepository {
 
-    AuthenticationTransaction get(Tenant tenant, AuthenticationTransactionIdentifier identifier);
+  AuthenticationTransaction get(Tenant tenant, AuthenticationTransactionIdentifier identifier);
 }

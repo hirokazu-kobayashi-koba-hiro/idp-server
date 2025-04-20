@@ -75,6 +75,8 @@ public class ServerConfiguration implements JsonReadable {
   long authorizationResponseDuration = 60;
   int backchannelAuthRequestExpiresIn = 300;
   int backchannelAuthPollingInterval = 5;
+  int oauthAuthorizationRequestExpiresIn = 1800;
+  List<String> availableAuthenticationMethods = new ArrayList<>(List.of("password"));
 
   public ServerConfiguration() {}
 
@@ -527,5 +529,13 @@ public class ServerConfiguration implements JsonReadable {
 
   public int backchannelAuthPollingInterval() {
     return backchannelAuthPollingInterval;
+  }
+
+  public int oauthAuthorizationRequestExpiresIn() {
+    return oauthAuthorizationRequestExpiresIn;
+  }
+
+  public List<String> availableAuthenticationMethods() {
+    return availableAuthenticationMethods;
   }
 }

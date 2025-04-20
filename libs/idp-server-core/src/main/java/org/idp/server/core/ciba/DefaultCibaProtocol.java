@@ -5,9 +5,6 @@ import java.util.logging.Logger;
 import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvider;
 import org.idp.server.core.basic.dependency.protcol.DefaultAuthorizationProvider;
 import org.idp.server.core.ciba.clientnotification.NotificationClient;
-import org.idp.server.core.ciba.exception.BackchannelAuthenticationBadRequestException;
-import org.idp.server.core.ciba.grant.CibaGrant;
-import org.idp.server.core.ciba.grant.CibaGrantFactory;
 import org.idp.server.core.ciba.handler.CibaAuthorizeHandler;
 import org.idp.server.core.ciba.handler.CibaDenyHandler;
 import org.idp.server.core.ciba.handler.CibaRequestErrorHandler;
@@ -16,17 +13,13 @@ import org.idp.server.core.ciba.handler.io.*;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.ciba.response.BackchannelAuthenticationResponse;
+import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
-import org.idp.server.core.oauth.authentication.Authentication;
-import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
-import org.idp.server.core.type.ciba.AuthReqId;
-import org.idp.server.core.type.extension.Pairs;
 
 public class DefaultCibaProtocol implements CibaProtocol {
 
@@ -64,7 +57,6 @@ public class DefaultCibaProtocol implements CibaProtocol {
     this.cibaDenyHandler =
         new CibaDenyHandler(
             cibaGrantRepository, serverConfigurationRepository, clientConfigurationRepository);
-    ;
     this.errorHandler = new CibaRequestErrorHandler();
     this.cibaGrantRepository = cibaGrantRepository;
     this.userRepository = userRepository;
@@ -93,53 +85,28 @@ public class DefaultCibaProtocol implements CibaProtocol {
    * </ul>
    *
    * @param request the CIBA request containing client authentication data and parameters
-   * @return a {@link CibaRequestResponse} containing the status and the backchannel authentication
+   * @return a {@link CibaRequestResult} containing the status and the backchannel authentication
    *     response
    */
-  public CibaRequestResponse request(CibaRequest request) {
+  public CibaRequestResult request(CibaRequest request) {
     try {
-      Tenant tenant = request.tenant();
-      Pairs<CibaRequestContext, BackchannelAuthenticationResponse> result =
-          cibaRequestHandler.handle(request);
-      CibaRequestContext context = result.getLeft();
-      BackchannelAuthenticationResponse response = result.getRight();
 
-      BackchannelAuthenticationRequest backchannelAuthenticationRequest =
-          context.backchannelAuthenticationRequest();
+      CibaRequestContext cibaRequestContext = cibaRequestHandler.handleRequest(request);
 
-      // TODO consider logic
-      User user =
-          userRepository.findBy(
-              tenant, backchannelAuthenticationRequest.loginHint().value(), "idp-server");
-
-      if (!user.exists()) {
-        throw new BackchannelAuthenticationBadRequestException(
-            "unknown_user_id",
-            "The OpenID Provider is not able to identify which end-user the Client wishes to be authenticated by means of the hint provided in the request (login_hint_token, id_token_hint, or login_hint).");
-      }
-      //      if (context.hasUserCode()) {
-      //        boolean authenticationResult =
-      //                cibaRequestDelegate.authenticate(context.tenantIdentifier(), user,
-      // context.userCode());
-      //        if (!authenticationResult) {
-      //          throw new BackchannelAuthenticationBadRequestException(
-      //                  "invalid_user_code", "backchannel authentication request user_code is
-      // invalid");
-      //        }
-      //      }
-
-      CibaGrantFactory cibaGrantFactory =
-          new CibaGrantFactory(context, response, user, new Authentication());
-      CibaGrant cibaGrant = cibaGrantFactory.create();
-      cibaGrantRepository.register(tenant, cibaGrant);
-
-      return new CibaRequestResponse(CibaRequestStatus.OK, context, response, user);
+      return new CibaRequestResult(CibaRequestStatus.OK, cibaRequestContext);
     } catch (Exception exception) {
       return errorHandler.handle(exception);
     }
   }
 
-  public BackchannelAuthenticationRequest get(Tenant tenant, AuthReqId authReqId) {
+  public CibaIssueResponse issueResponse(CibaIssueRequest issueRequest) {
+
+    return cibaRequestHandler.handleIssueResponse(issueRequest);
+  }
+
+  public BackchannelAuthenticationRequest get(
+      Tenant tenant,
+      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
 
     return null;
   }

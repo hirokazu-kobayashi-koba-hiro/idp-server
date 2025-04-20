@@ -27,7 +27,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationInteractionResult previousResult,
+      AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
     EmailVerificationChallenge emailVerificationChallenge =
@@ -48,13 +48,13 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,
           type,
-          previousResult.user(),
-          previousResult.authentication(),
+          transaction.user(),
+          new Authentication(),
           verificationResult.response(),
           DefaultSecurityEventType.email_verification_failure);
     }
 
-    User user = previousResult.user();
+    User user = transaction.user();
 
     Authentication authentication =
         new Authentication()

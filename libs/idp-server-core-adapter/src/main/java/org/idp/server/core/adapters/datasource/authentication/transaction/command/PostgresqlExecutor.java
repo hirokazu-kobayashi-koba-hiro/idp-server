@@ -2,9 +2,11 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.comma
 
 import java.util.ArrayList;
 import java.util.List;
+import org.idp.server.core.authentication.AuthenticationTransaction;
 import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.basic.datasource.SqlExecutor;
 import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.tenant.Tenant;
 
 public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlExecutor {
@@ -12,48 +14,45 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
   JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   @Override
-  public <T> void insert(Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
+  public void insert(Tenant tenant, AuthenticationTransaction authenticationTransaction) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
-            INSERT INTO authentication_interactions (authorization_id, tenant_id, interaction_type, payload) 
-            VALUES (?, ?, ?, ?::jsonb)
-            ON CONFLICT (id, type) DO UPDATE SET payload = ?::jsonb, updated_at = now()
+            INSERT INTO authentication_transaction (authorization_id, tenant_id, authorization_flow, client_id, user_id, user_payload, authentication_device_id, available_authentication_types, required_any_of_authentication_types, created_at, expired_at)
+            VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?::jsonb, ?::jsonb, ?, ?)
+            ON CONFLICT DO NOTHING;
             """;
 
-    String json = jsonConverter.write(payload);
-
+    User user = authenticationTransaction.user();
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
+    params.add(authenticationTransaction.identifier().value());
     params.add(tenant.identifierValue());
-    params.add(type);
-    params.add(json);
-    params.add(json);
+    params.add(authenticationTransaction.request().authorizationFlow().name());
+    params.add(authenticationTransaction.request().requestedClientId().value());
+    params.add(user.sub());
+    params.add(jsonConverter.write(user));
+    if (user.hasAuthenticationDevices()) {
+      params.add("");
+    } else {
+      params.add(null);
+    }
+    params.add(
+        jsonConverter.write(authenticationTransaction.request().availableAuthenticationTypes()));
+    params.add(
+        jsonConverter.write(
+            authenticationTransaction.request().requiredAnyOfAuthenticationTypes()));
+    params.add(authenticationTransaction.request().createdAt().toString());
+    params.add(authenticationTransaction.request().expiredAt().toString());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
 
   @Override
-  public <T> void update(Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
+  public void update(Tenant tenant, AuthenticationTransaction authenticationTransaction) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sqlTemplate =
-        """
-                UPDATE authentication_interactions
-                SET payload = ?::jsonb,
-                updated_at = now()
-                WHERE id = ?
-                AND tenant_id = ?
-                AND type = ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(jsonConverter.write(payload));
-    params.add(identifier.value());
-    params.add(tenant.identifierValue());
-    params.add(type);
-
-    sqlExecutor.execute(sqlTemplate, params);
   }
+
+  @Override
+  public void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier) {}
 }

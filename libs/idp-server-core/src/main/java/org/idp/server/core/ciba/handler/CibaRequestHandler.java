@@ -4,7 +4,12 @@ import java.util.UUID;
 import org.idp.server.core.ciba.*;
 import org.idp.server.core.ciba.context.CibaContextCreators;
 import org.idp.server.core.ciba.context.CibaRequestContextCreator;
+import org.idp.server.core.ciba.grant.CibaGrant;
+import org.idp.server.core.ciba.grant.CibaGrantFactory;
+import org.idp.server.core.ciba.handler.io.CibaIssueRequest;
+import org.idp.server.core.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.ciba.handler.io.CibaRequest;
+import org.idp.server.core.ciba.handler.io.CibaRequestStatus;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.ciba.response.BackchannelAuthenticationResponse;
@@ -15,9 +20,10 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.ciba.AuthReqId;
-import org.idp.server.core.type.extension.Pairs;
 
 /**
  * Handles CIBA (Client Initiated Backchannel Authentication) requests.
@@ -62,7 +68,7 @@ public class CibaRequestHandler {
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
-  public Pairs<CibaRequestContext, BackchannelAuthenticationResponse> handle(CibaRequest request) {
+  public CibaRequestContext handleRequest(CibaRequest request) {
     CibaRequestParameters parameters = request.toParameters();
     Tenant tenant = request.tenant();
 
@@ -84,6 +90,13 @@ public class CibaRequestHandler {
     verifier.verify();
     clientAuthenticatorHandler.authenticate(context);
 
+    return context;
+  }
+
+  public CibaIssueResponse handleIssueResponse(CibaIssueRequest request) {
+    CibaRequestContext context = request.context();
+    Tenant tenant = request.tenant();
+
     BackchannelAuthenticationResponse response =
         new BackchannelAuthenticationResponseBuilder()
             .add(new AuthReqId(UUID.randomUUID().toString()))
@@ -94,6 +107,12 @@ public class CibaRequestHandler {
     backchannelAuthenticationRequestRepository.register(
         tenant, context.backchannelAuthenticationRequest());
 
-    return Pairs.of(context, response);
+    User user = request.user();
+    CibaGrantFactory cibaGrantFactory =
+        new CibaGrantFactory(context, response, user, new Authentication());
+    CibaGrant cibaGrant = cibaGrantFactory.create();
+    cibaGrantRepository.register(tenant, cibaGrant);
+
+    return new CibaIssueResponse(CibaRequestStatus.OK, context, response, user);
   }
 }

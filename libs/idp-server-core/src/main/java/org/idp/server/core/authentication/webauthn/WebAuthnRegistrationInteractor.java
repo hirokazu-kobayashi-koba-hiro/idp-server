@@ -26,10 +26,10 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationInteractionResult previousResult,
+      AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
-    String userId = previousResult.user().sub();
+    String userId = transaction.user().sub();
     WebAuthnConfiguration configuration =
         configurationRepository.get(tenant, "webauthn", WebAuthnConfiguration.class);
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
@@ -43,7 +43,7 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
-        previousResult.user(),
+        transaction.user(),
         new Authentication(),
         response,
         DefaultSecurityEventType.webauthn_registration_success);

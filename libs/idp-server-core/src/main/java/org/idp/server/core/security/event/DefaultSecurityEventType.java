@@ -27,6 +27,9 @@ public enum DefaultSecurityEventType {
   login("User logged in"),
   login_with_session("User logged in with a session"),
   logout("User logged out"),
+  authentication_device_notification_success("User successfully received a device notification"),
+  authentication_device_notification_cancel("User canceled a device notification"),
+  authentication_device_notification_failure("User failed to receive a device notification"),
   backchannel_authentication_request_success(
       "User successfully authenticated with a backchannel authentication"),
   backchannel_authentication_request_failure(

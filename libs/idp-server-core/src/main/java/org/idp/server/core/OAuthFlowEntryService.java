@@ -35,6 +35,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   FederationInteractors federationInteractors;
   UserRegistrator userRegistrator;
   TenantRepository tenantRepository;
+  AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
+  AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
   OAuthFlowEventPublisher eventPublisher;
 
   public OAuthFlowEntryService(
@@ -44,6 +46,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       FederationInteractors federationInteractors,
       UserRepository userRepository,
       TenantRepository tenantRepository,
+      AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
+      AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       OAuthFlowEventPublisher eventPublisher) {
     this.oAuthProtocols = oAuthProtocols;
     this.oAuthSessionDelegate = oAuthSessiondelegate;
@@ -52,6 +56,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     this.userRepository = userRepository;
     this.userRegistrator = new UserRegistrator(userRepository);
     this.tenantRepository = tenantRepository;
+    this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
+    this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
     this.eventPublisher = eventPublisher;
   }
 
@@ -64,9 +70,15 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     OAuthRequest oAuthRequest = new OAuthRequest(tenant, params);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
-    OAuthRequestResponse request = oAuthProtocol.request(oAuthRequest);
+    OAuthRequestResponse requestResponse = oAuthProtocol.request(oAuthRequest);
 
-    return new Pairs<>(tenant, request);
+    if (requestResponse.isOK()) {
+      AuthenticationTransaction authenticationTransaction =
+          AuthenticationTransaction.createOnOAuthFlow(tenant, requestResponse);
+      authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
+    }
+
+    return new Pairs<>(tenant, requestResponse);
   }
 
   public OAuthViewDataResponse getViewData(
@@ -103,8 +115,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
     AuthenticationTransactionIdentifier authenticationTransactionIdentifier =
         new AuthenticationTransactionIdentifier(authorizationRequestIdentifier.value());
-    AuthenticationInteractionResult authenticationInteractionResult =
-        new AuthenticationInteractionResult();
+    AuthenticationTransaction authenticationTransaction =
+        authenticationTransactionQueryRepository.get(tenant, authenticationTransactionIdentifier);
 
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
@@ -112,7 +124,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
             authenticationTransactionIdentifier,
             type,
             request,
-            authenticationInteractionResult,
+            authenticationTransaction,
             userRepository);
 
     if (result.isSuccess()) {

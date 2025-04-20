@@ -103,6 +103,11 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(OrganizationRepository.class);
     TenantRepository tenantRepository =
         applicationComponentContainer.resolve(TenantRepository.class);
+    AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository =
+        applicationComponentContainer.resolve(AuthenticationTransactionCommandRepository.class);
+    AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository =
+        applicationComponentContainer.resolve(AuthenticationTransactionQueryRepository.class);
+
     RoleCommandRepository roleCommandRepository =
         applicationComponentContainer.resolve(RoleCommandRepository.class);
     PermissionCommandRepository permissionCommandRepository =
@@ -172,6 +177,8 @@ public class IdpServerApplication {
                 federationInteractors,
                 userRepository,
                 tenantRepository,
+                authenticationTransactionCommandRepository,
+                authenticationTransactionQueryRepository,
                 oAuthFLowEventPublisher),
             OAuthFlowApi.class,
             OperationType.WRITE,
@@ -213,6 +220,8 @@ public class IdpServerApplication {
                 authenticationInteractors,
                 userRepository,
                 tenantRepository,
+                authenticationTransactionCommandRepository,
+                authenticationTransactionQueryRepository,
                 cibaFlowEventPublisher),
             CibaFlowApi.class,
             OperationType.WRITE,

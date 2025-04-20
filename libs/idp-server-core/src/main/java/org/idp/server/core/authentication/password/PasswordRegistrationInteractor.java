@@ -33,7 +33,7 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationInteractionResult previousResult,
+      AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
     Map json = configurationQueryRepository.get(tenant, "signup", Map.class);

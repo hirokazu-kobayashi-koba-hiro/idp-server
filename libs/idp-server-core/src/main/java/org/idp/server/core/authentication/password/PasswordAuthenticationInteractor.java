@@ -28,7 +28,7 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationInteractionResult previousResult,
+      AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
     String username = request.optValueAsString("username", "");
