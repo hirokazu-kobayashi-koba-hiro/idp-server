@@ -1,18 +1,18 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.command;
 
 import org.idp.server.core.authentication.AuthenticationDependencyProvider;
-import org.idp.server.core.authentication.AuthenticationTransactionCommandRepository;
+import org.idp.server.core.authentication.AuthenticationInteractionCommandRepository;
 
 public class AuthenticationTransactionCommandDataSourceProvider
-    implements AuthenticationDependencyProvider<AuthenticationTransactionCommandRepository> {
+    implements AuthenticationDependencyProvider<AuthenticationInteractionCommandRepository> {
 
   @Override
-  public Class<AuthenticationTransactionCommandRepository> type() {
-    return AuthenticationTransactionCommandRepository.class;
+  public Class<AuthenticationInteractionCommandRepository> type() {
+    return AuthenticationInteractionCommandRepository.class;
   }
 
   @Override
-  public AuthenticationTransactionCommandRepository provide() {
-    return new AuthenticationTransactionCommandDataSource();
+  public AuthenticationInteractionCommandRepository provide() {
+    return new AuthenticationInteractionCommandDataSource();
   }
 }

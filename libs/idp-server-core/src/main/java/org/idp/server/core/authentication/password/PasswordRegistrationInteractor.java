@@ -8,7 +8,6 @@ import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.core.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.core.basic.json.schema.JsonSchemaValidator;
-import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.*;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
@@ -29,12 +28,12 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
   }
 
   @Override
-  public AuthenticationInteractionResult interact(
+  public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      OAuthSession oAuthSession,
+      AuthenticationInteractionResult previousResult,
       UserRepository userRepository) {
 
     Map json = configurationQueryRepository.get(tenant, "signup", Map.class);
@@ -50,7 +49,7 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
       response.put("error_description", "invalid request.");
       response.put("error_details", validationResult.errors());
 
-      return AuthenticationInteractionResult.clientError(
+      return AuthenticationInteractionRequestResult.clientError(
           response, type, DefaultSecurityEventType.user_signup_failure);
     }
 
@@ -63,7 +62,7 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
       response.put("error", "invalid_request");
       response.put("error_description", "user is conflict with username and password");
 
-      return new AuthenticationInteractionResult(
+      return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,
           type,
           existingUser,
@@ -82,7 +81,7 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
     response.put("user", user.toMap());
     response.put("authentication", authentication.toMap());
 
-    return new AuthenticationInteractionResult(
+    return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
         user,

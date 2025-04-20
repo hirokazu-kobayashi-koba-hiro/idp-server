@@ -210,6 +210,7 @@ public class IdpServerApplication {
         TenantAwareEntryServiceProxy.createProxy(
             new CibaFlowEntryService(
                 new CibaProtocols(protocolContainer.resolveAll(CibaProtocol.class)),
+                authenticationInteractors,
                 userRepository,
                 tenantRepository,
                 cibaFlowEventPublisher),

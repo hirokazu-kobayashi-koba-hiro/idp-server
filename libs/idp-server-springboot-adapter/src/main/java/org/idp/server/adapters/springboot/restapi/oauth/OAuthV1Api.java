@@ -7,7 +7,7 @@ import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.authentication.AuthenticationInteractionRequest;
-import org.idp.server.core.authentication.AuthenticationInteractionResult;
+import org.idp.server.core.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.authentication.AuthenticationInteractionType;
 import org.idp.server.core.federation.FederationType;
 import org.idp.server.core.federation.SsoProvider;
@@ -172,7 +172,7 @@ public class OAuthV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    AuthenticationInteractionResult result =
+    AuthenticationInteractionRequestResult result =
         oAuthFlowApi.interact(
             tenantId,
             authorizationRequestIdentifier,

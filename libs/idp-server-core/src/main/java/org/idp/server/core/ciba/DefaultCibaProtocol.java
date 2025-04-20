@@ -25,6 +25,7 @@ import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.core.type.ciba.AuthReqId;
 import org.idp.server.core.type.extension.Pairs;
 
 public class DefaultCibaProtocol implements CibaProtocol {
@@ -136,6 +137,11 @@ public class DefaultCibaProtocol implements CibaProtocol {
     } catch (Exception exception) {
       return errorHandler.handle(exception);
     }
+  }
+
+  public BackchannelAuthenticationRequest get(Tenant tenant, AuthReqId authReqId) {
+
+    return null;
   }
 
   public CibaAuthorizeResponse authorize(CibaAuthorizeRequest request) {

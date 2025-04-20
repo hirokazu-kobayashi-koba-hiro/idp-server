@@ -39,14 +39,14 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
   public OAuthFlowEntryService(
       OAuthProtocols oAuthProtocols,
-      OAuthSessionDelegate oAuthSessionService,
+      OAuthSessionDelegate oAuthSessiondelegate,
       AuthenticationInteractors authenticationInteractors,
       FederationInteractors federationInteractors,
       UserRepository userRepository,
       TenantRepository tenantRepository,
       OAuthFlowEventPublisher eventPublisher) {
     this.oAuthProtocols = oAuthProtocols;
-    this.oAuthSessionDelegate = oAuthSessionService;
+    this.oAuthSessionDelegate = oAuthSessiondelegate;
     this.authenticationInteractors = authenticationInteractors;
     this.federationInteractors = federationInteractors;
     this.userRepository = userRepository;
@@ -84,7 +84,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   }
 
   @Override
-  public AuthenticationInteractionResult interact(
+  public AuthenticationInteractionRequestResult interact(
       TenantIdentifier tenantIdentifier,
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
       AuthenticationInteractionType type,
@@ -103,13 +103,16 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
     AuthenticationTransactionIdentifier authenticationTransactionIdentifier =
         new AuthenticationTransactionIdentifier(authorizationRequestIdentifier.value());
-    AuthenticationInteractionResult result =
+    AuthenticationInteractionResult authenticationInteractionResult =
+        new AuthenticationInteractionResult();
+
+    AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
             tenant,
             authenticationTransactionIdentifier,
             type,
             request,
-            oAuthSession,
+            authenticationInteractionResult,
             userRepository);
 
     if (result.isSuccess()) {

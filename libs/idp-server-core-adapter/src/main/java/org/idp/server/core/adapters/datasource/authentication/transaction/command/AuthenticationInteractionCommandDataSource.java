@@ -1,17 +1,17 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.command;
 
-import org.idp.server.core.authentication.AuthenticationTransactionCommandRepository;
+import org.idp.server.core.authentication.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.tenant.Tenant;
 
-public class AuthenticationTransactionCommandDataSource
-    implements AuthenticationTransactionCommandRepository {
+public class AuthenticationInteractionCommandDataSource
+    implements AuthenticationInteractionCommandRepository {
 
   AuthenticationTransactionCommandSqlExecutors executors;
   JsonConverter jsonConverter;
 
-  public AuthenticationTransactionCommandDataSource() {
+  public AuthenticationInteractionCommandDataSource() {
     this.executors = new AuthenticationTransactionCommandSqlExecutors();
     this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   }
@@ -20,13 +20,13 @@ public class AuthenticationTransactionCommandDataSource
   public <T> void register(
       Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
     AuthenticationTransactionCommandSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.insert(identifier, type, payload);
+    executor.insert(tenant, identifier, type, payload);
   }
 
   @Override
   public <T> void update(
       Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
     AuthenticationTransactionCommandSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.update(identifier, type, payload);
+    executor.update(tenant, identifier, type, payload);
   }
 }

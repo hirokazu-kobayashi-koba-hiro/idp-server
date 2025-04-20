@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.date.SystemDateTime;
-import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
@@ -26,12 +25,12 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
   }
 
   @Override
-  public AuthenticationInteractionResult interact(
+  public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      OAuthSession oAuthSession,
+      AuthenticationInteractionResult previousResult,
       UserRepository userRepository) {
 
     WebAuthnConfiguration configuration =
@@ -54,7 +53,7 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
     response.put("user", user.toMap());
     response.put("authentication", authentication.toMap());
 
-    return new AuthenticationInteractionResult(
+    return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
         user,

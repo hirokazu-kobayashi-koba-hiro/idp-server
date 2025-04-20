@@ -6,7 +6,7 @@ import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 
-public class AuthenticationInteractionResult {
+public class AuthenticationInteractionRequestResult {
 
   AuthenticationInteractionStatus status;
   AuthenticationInteractionType type;
@@ -15,17 +15,15 @@ public class AuthenticationInteractionResult {
   Map<String, Object> response;
   DefaultSecurityEventType eventType;
 
-  public AuthenticationInteractionResult() {}
-
-  public static AuthenticationInteractionResult clientError(
+  public static AuthenticationInteractionRequestResult clientError(
       Map<String, Object> response,
       AuthenticationInteractionType type,
       DefaultSecurityEventType eventType) {
-    return new AuthenticationInteractionResult(
+    return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.CLIENT_ERROR, type, response, eventType);
   }
 
-  public AuthenticationInteractionResult(
+  public AuthenticationInteractionRequestResult(
       AuthenticationInteractionStatus status,
       AuthenticationInteractionType type,
       Map<String, Object> response,
@@ -36,7 +34,7 @@ public class AuthenticationInteractionResult {
     this.eventType = eventType;
   }
 
-  public AuthenticationInteractionResult(
+  public AuthenticationInteractionRequestResult(
       AuthenticationInteractionStatus status,
       AuthenticationInteractionType type,
       User user,

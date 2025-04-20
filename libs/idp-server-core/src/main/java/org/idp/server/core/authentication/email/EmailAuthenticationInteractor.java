@@ -3,7 +3,6 @@ package org.idp.server.core.authentication.email;
 import java.util.*;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.date.SystemDateTime;
-import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
@@ -12,23 +11,23 @@ import org.idp.server.core.tenant.Tenant;
 
 public class EmailAuthenticationInteractor implements AuthenticationInteractor {
 
-  AuthenticationTransactionCommandRepository commandRepository;
-  AuthenticationTransactionQueryRepository queryRepository;
+  AuthenticationInteractionCommandRepository commandRepository;
+  AuthenticationInteractionQueryRepository queryRepository;
 
   public EmailAuthenticationInteractor(
-      AuthenticationTransactionCommandRepository commandRepository,
-      AuthenticationTransactionQueryRepository queryRepository) {
+      AuthenticationInteractionCommandRepository commandRepository,
+      AuthenticationInteractionQueryRepository queryRepository) {
     this.commandRepository = commandRepository;
     this.queryRepository = queryRepository;
   }
 
   @Override
-  public AuthenticationInteractionResult interact(
+  public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      OAuthSession oAuthSession,
+      AuthenticationInteractionResult previousResult,
       UserRepository userRepository) {
 
     EmailVerificationChallenge emailVerificationChallenge =
@@ -46,16 +45,16 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
       commandRepository.update(
           tenant, authenticationTransactionIdentifier, "email", countUpEmailVerificationChallenge);
 
-      return new AuthenticationInteractionResult(
+      return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,
           type,
-          oAuthSession.user(),
-          oAuthSession.authentication(),
+          previousResult.user(),
+          previousResult.authentication(),
           verificationResult.response(),
           DefaultSecurityEventType.email_verification_failure);
     }
 
-    User user = oAuthSession.user();
+    User user = previousResult.user();
 
     Authentication authentication =
         new Authentication()
@@ -67,7 +66,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
     response.put("user", user.toMap());
     response.put("authentication", authentication.toMap());
 
-    return new AuthenticationInteractionResult(
+    return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
         user,

@@ -17,11 +17,11 @@ public class WebAuthnConfiguration implements JsonReadable {
     return details;
   }
 
-  public Map<String, Object> getDetail(String key) {
-    if (!details.containsKey(key)) {
+  public Map<String, Object> getDetail(WebAuthnExecutorType key) {
+    if (!details.containsKey(key.value())) {
       throw new WebAuthnCredentialNotFoundException(
           "invalid configuration. key: " + key + "is unregistered.");
     }
-    return details.get(key);
+    return details.get(key.value());
   }
 }

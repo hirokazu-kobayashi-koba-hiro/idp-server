@@ -50,13 +50,7 @@ public enum DefaultSecurityEventType {
   user_delete("User account was deleted"),
   member_invite("A member was invited to the organization"),
   member_join("A member joined the organization"),
-  member_leave("A member left the organization"),
-  subscription_start("A new subscription started"),
-  subscription_suspend("A subscription was suspended"),
-  subscription_end("A subscription ended"),
-  subscription_change("Subscription details were changed"),
-  subscription_add("An additional subscription was added"),
-  ;
+  member_leave("A member left the organization");
 
   String description;
 

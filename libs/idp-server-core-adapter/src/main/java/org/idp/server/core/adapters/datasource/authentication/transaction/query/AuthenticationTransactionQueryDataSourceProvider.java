@@ -1,18 +1,18 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.query;
 
 import org.idp.server.core.authentication.AuthenticationDependencyProvider;
-import org.idp.server.core.authentication.AuthenticationTransactionQueryRepository;
+import org.idp.server.core.authentication.AuthenticationInteractionQueryRepository;
 
 public class AuthenticationTransactionQueryDataSourceProvider
-    implements AuthenticationDependencyProvider<AuthenticationTransactionQueryRepository> {
+    implements AuthenticationDependencyProvider<AuthenticationInteractionQueryRepository> {
 
   @Override
-  public Class<AuthenticationTransactionQueryRepository> type() {
-    return AuthenticationTransactionQueryRepository.class;
+  public Class<AuthenticationInteractionQueryRepository> type() {
+    return AuthenticationInteractionQueryRepository.class;
   }
 
   @Override
-  public AuthenticationTransactionQueryRepository provide() {
-    return new AuthenticationTransactionQueryDataSource();
+  public AuthenticationInteractionQueryRepository provide() {
+    return new AuthenticationInteractionQueryDataSource();
   }
 }

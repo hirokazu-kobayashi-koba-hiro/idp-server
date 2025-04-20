@@ -3,18 +3,18 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.query
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.authentication.AuthenticationTransactionQueryRepository;
+import org.idp.server.core.authentication.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.authentication.exception.MfaTransactionNotFoundException;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.tenant.Tenant;
 
-public class AuthenticationTransactionQueryDataSource
-    implements AuthenticationTransactionQueryRepository {
+public class AuthenticationInteractionQueryDataSource
+    implements AuthenticationInteractionQueryRepository {
 
   AuthenticationTransactionQuerySqlExecutors executors;
   JsonConverter jsonConverter;
 
-  public AuthenticationTransactionQueryDataSource() {
+  public AuthenticationInteractionQueryDataSource() {
     this.executors = new AuthenticationTransactionQuerySqlExecutors();
     this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   }

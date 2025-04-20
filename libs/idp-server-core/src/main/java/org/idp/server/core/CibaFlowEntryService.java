@@ -1,31 +1,38 @@
 package org.idp.server.core;
 
 import java.util.Map;
+import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.ciba.*;
 import org.idp.server.core.ciba.handler.io.*;
+import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.oauth.identity.UserRepository;
+import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.security.event.CibaFlowEventPublisher;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
+import org.idp.server.core.type.ciba.AuthReqId;
 import org.idp.server.core.type.security.RequestAttributes;
 
 @Transaction
 public class CibaFlowEntryService implements CibaFlowApi {
 
   CibaProtocols cibaProtocols;
+  AuthenticationInteractors authenticationInteractors;
   UserRepository userRepository;
   TenantRepository tenantRepository;
   CibaFlowEventPublisher eventPublisher;
 
   public CibaFlowEntryService(
       CibaProtocols cibaProtocols,
+      AuthenticationInteractors authenticationInteractors,
       UserRepository userRepository,
       TenantRepository tenantRepository,
       CibaFlowEventPublisher eventPublisher) {
     this.cibaProtocols = cibaProtocols;
+    this.authenticationInteractors = authenticationInteractors;
     this.userRepository = userRepository;
     this.tenantRepository = tenantRepository;
     this.eventPublisher = eventPublisher;
@@ -57,6 +64,45 @@ public class CibaFlowEntryService implements CibaFlowApi {
     }
 
     return requestResponse;
+  }
+
+  public AuthenticationInteractionRequestResult interact(
+      TenantIdentifier tenantIdentifier,
+      AuthReqId authReqId,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
+
+    CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProtocolProvider());
+    BackchannelAuthenticationRequest backchannelAuthenticationRequest =
+        cibaProtocol.get(tenant, authReqId);
+
+    AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
+    AuthenticationTransactionIdentifier authenticationTransactionIdentifier =
+        new AuthenticationTransactionIdentifier(authReqId.value());
+
+    //TODO
+    AuthenticationInteractionResult authenticationInteractionResult =
+        new AuthenticationInteractionResult();
+    AuthenticationInteractionRequestResult result =
+        authenticationInteractor.interact(
+            tenant,
+            authenticationTransactionIdentifier,
+            type,
+            request,
+            authenticationInteractionResult,
+            userRepository);
+
+    eventPublisher.publish(
+        tenant,
+        backchannelAuthenticationRequest,
+        result.user(),
+        result.eventType(),
+        requestAttributes);
+
+    return result;
   }
 
   public CibaAuthorizeResponse authorize(

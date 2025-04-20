@@ -1,63 +1,74 @@
 CREATE TABLE organization
 (
-    id          CHAR(36)                NOT NULL PRIMARY KEY,
+    id          CHAR(36)                NOT NULL,
     name        VARCHAR(255)            NOT NULL,
     description TEXT,
     created_at  TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at  TIMESTAMP DEFAULT now() NOT NULL
+    updated_at  TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id)
 );
 
 CREATE TABLE tenant
 (
-    id         CHAR(36)     NOT NULL PRIMARY KEY,
+    id         CHAR(36)     NOT NULL,
     name       VARCHAR(255) NOT NULL,
     type       VARCHAR(10)  NOT NULL,
     domain     TEXT         NOT NULL,
     attributes JSONB,
     created_at TIMESTAMP    NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP    NOT NULL DEFAULT now()
+    updated_at TIMESTAMP    NOT NULL DEFAULT now(),
+    PRIMARY KEY (id)
 );
 
 CREATE UNIQUE INDEX unique_admin_tenant ON tenant (type) WHERE type = 'ADMIN';
 
 CREATE TABLE organization_tenants
 (
-    id              CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-    organization_id CHAR(36) REFERENCES organization (id) ON DELETE CASCADE,
-    tenant_id       CHAR(36) REFERENCES tenant (id) ON DELETE CASCADE,
-    assigned_at     TIMESTAMP            DEFAULT now() NOT NULL,
+    id              CHAR(36)  DEFAULT gen_random_uuid() NOT NULL,
+    organization_id CHAR(36)                            NOT NULL,
+    tenant_id       CHAR(36)                            NOT NULL,
+    assigned_at     TIMESTAMP DEFAULT now()             NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE,
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     UNIQUE (organization_id, tenant_id)
 );
 
 
 CREATE TABLE server_configuration
 (
-    tenant_id    CHAR(36)                NOT NULL PRIMARY KEY REFERENCES tenant (id) ON DELETE CASCADE,
+    tenant_id    CHAR(36)                NOT NULL,
     token_issuer TEXT                    NOT NULL,
     payload      JSONB                   NOT NULL,
     created_at   TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at   TIMESTAMP DEFAULT now() NOT NULL
+    updated_at   TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (tenant_id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 CREATE TABLE permission
 (
-    id          CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id   CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    id          CHAR(36)                NOT NULL,
+    tenant_id   CHAR(36)                NOT NULL,
     name        VARCHAR(255)            NOT NULL UNIQUE,
     description TEXT,
     created_at  TIMESTAMP DEFAULT now() NOT NULL,
     updated_at  TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     CONSTRAINT uk_tenant_permission UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE role
 (
-    id          CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id   CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    id          CHAR(36)                NOT NULL,
+    tenant_id   CHAR(36)                NOT NULL,
     name        VARCHAR(255)            NOT NULL,
     description VARCHAR(255),
     created_at  TIMESTAMP DEFAULT now() NOT NULL,
     updated_at  TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     CONSTRAINT uk_tenant_role UNIQUE (tenant_id, name)
 );
 
@@ -65,10 +76,13 @@ CREATE INDEX idx_role_tenant_name ON role (tenant_id, name);
 
 CREATE TABLE role_permission
 (
-    id            CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-    role_id       CHAR(36)                           NOT NULL REFERENCES role (id) ON DELETE CASCADE,
-    permission_id CHAR(36)                           NOT NULL REFERENCES permission (id) ON DELETE CASCADE,
-    created_at    TIMESTAMP            DEFAULT now() NOT NULL,
+    id            CHAR(36)  DEFAULT gen_random_uuid(),
+    role_id       CHAR(36)                NOT NULL,
+    permission_id CHAR(36)                NOT NULL,
+    created_at    TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permission (id) ON DELETE CASCADE,
     UNIQUE (role_id, permission_id)
 );
 
@@ -86,8 +100,8 @@ FROM role_permission rp
 
 CREATE TABLE idp_user
 (
-    id                             CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id                      CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    id                             CHAR(36)                NOT NULL,
+    tenant_id                      CHAR(36)                NOT NULL,
     provider_id                    VARCHAR(255)            NOT NULL,
     provider_user_id               VARCHAR(255)            NOT NULL,
     provider_user_original_payload JSONB,
@@ -116,6 +130,8 @@ CREATE TABLE idp_user
     status                         VARCHAR(255)            NOT NULL,
     created_at                     TIMESTAMP DEFAULT now() NOT NULL,
     updated_at                     TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     CONSTRAINT uk_tenant_provider_user unique (tenant_id, provider_user_id)
 );
 
@@ -124,10 +140,13 @@ CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
 
 CREATE TABLE idp_user_roles
 (
-    id          CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id     CHAR(36)                           NOT NULL REFERENCES idp_user (id) ON DELETE CASCADE,
-    role_id     CHAR(36)                           NOT NULL REFERENCES role (id) ON DELETE CASCADE,
-    assigned_at TIMESTAMP            DEFAULT now() NOT NULL,
+    id          CHAR(36)  DEFAULT gen_random_uuid(),
+    user_id     CHAR(36)                NOT NULL,
+    role_id     CHAR(36)                NOT NULL,
+    assigned_at TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE,
     UNIQUE (user_id, role_id)
 );
 
@@ -135,12 +154,15 @@ CREATE INDEX idx_idp_user_roles_user_role ON idp_user_roles (user_id, role_id);
 
 CREATE TABLE user_permission_override
 (
-    id            CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id       CHAR(36)                           NOT NULL REFERENCES idp_user (id) ON DELETE CASCADE,
-    permission_id CHAR(36)                           NOT NULL REFERENCES permission (id) ON DELETE CASCADE,
-    granted       BOOLEAN                            NOT NULL,
-    created_at    TIMESTAMP            DEFAULT now() NOT NULL,
-    UNIQUE (user_id, permission_id)
+    id            CHAR(36)  DEFAULT gen_random_uuid() NOT NULL,
+    user_id       CHAR(36)                            NOT NULL,
+    permission_id CHAR(36)                            NOT NULL,
+    granted       BOOLEAN                             NOT NULL,
+    created_at    TIMESTAMP DEFAULT now()             NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (user_id, permission_id),
+    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permission (id) ON DELETE CASCADE
 );
 
 CREATE VIEW user_effective_permissions_view AS
@@ -173,30 +195,38 @@ WHERE ovr.granted = true;
 
 CREATE TABLE organization_members
 (
-    id              CHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-    idp_user_id     CHAR(36) REFERENCES idp_user (id) ON DELETE CASCADE,
-    organization_id VARCHAR(255) REFERENCES organization (id) ON DELETE CASCADE,
-    role            VARCHAR(100)                       NOT NULL,
-    joined_at       TIMESTAMP            DEFAULT now() NOT NULL,
-    UNIQUE (idp_user_id, organization_id)
+    id              CHAR(36)  DEFAULT gen_random_uuid() NOT NULL,
+    idp_user_id     CHAR(36)                            NOT NULL,
+    organization_id VARCHAR(255)                        NOT NULL,
+    role            VARCHAR(100)                        NOT NULL,
+    joined_at       TIMESTAMP DEFAULT now()             NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (idp_user_id, organization_id),
+    FOREIGN KEY (idp_user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
+    FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
 );
 
 CREATE TABLE idp_user_current_organization
 (
-    idp_user_id     CHAR(36) REFERENCES idp_user (id) ON DELETE CASCADE PRIMARY KEY,
-    organization_id CHAR(36) REFERENCES organization (id) ON DELETE CASCADE,
+    idp_user_id     CHAR(36)                NOT NULL,
+    organization_id CHAR(36)                NOT NULL,
     created_at      TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at      TIMESTAMP DEFAULT now() NOT NULL
+    updated_at      TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (idp_user_id),
+    FOREIGN KEY (idp_user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
+    FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
 );
 
 CREATE TABLE client_configuration
 (
-    id         CHAR(36)                NOT NULL PRIMARY KEY,
+    id         CHAR(36)                NOT NULL,
     id_alias   VARCHAR(255),
-    tenant_id  CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    tenant_id  CHAR(36)                NOT NULL,
     payload    JSONB                   NOT NULL,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     CONSTRAINT uk_client_configuration_alias unique (id_alias, tenant_id)
 );
 
@@ -204,8 +234,8 @@ CREATE INDEX idx_client_configuration_alias ON client_configuration (id_alias, t
 
 CREATE TABLE authorization_request
 (
-    id                    CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id             CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    id                    CHAR(36)                NOT NULL,
+    tenant_id             CHAR(36)                NOT NULL,
     profile               VARCHAR(255)            NOT NULL,
     scopes                TEXT                    NOT NULL,
     response_type         VARCHAR(255)            NOT NULL,
@@ -229,13 +259,15 @@ CREATE TABLE authorization_request
     code_challenge_method VARCHAR(10),
     authorization_details JSONB,
     custom_params         JSONB                   NOT NULL,
-    created_at            TIMESTAMP DEFAULT now() NOT NULL
+    created_at            TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 CREATE TABLE authorization_code_grant
 (
-    authorization_request_id CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id                CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    authorization_request_id CHAR(36)                NOT NULL,
+    tenant_id                CHAR(36)                NOT NULL,
     authorization_code       VARCHAR(255)            NOT NULL,
     user_id                  CHAR(36)                NOT NULL,
     user_payload             JSONB                   NOT NULL,
@@ -250,10 +282,9 @@ CREATE TABLE authorization_code_grant
     expired_at               TEXT                    NOT NULL,
     consent_claims           JSONB,
     created_at               TIMESTAMP DEFAULT now() NOT NULL,
-    CONSTRAINT fk_authorization_code_grant_authorization_request_id
-        FOREIGN KEY (authorization_request_id)
-            REFERENCES authorization_request (id)
-            ON DELETE CASCADE
+    PRIMARY KEY (authorization_request_id),
+    FOREIGN KEY (authorization_request_id) REFERENCES authorization_request (id) ON DELETE CASCADE,
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_auth_code_grant_code ON authorization_code_grant (authorization_code);
@@ -261,8 +292,8 @@ CREATE INDEX idx_auth_code_grant_code ON authorization_code_grant (authorization
 
 CREATE TABLE oauth_token
 (
-    id                              CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id                       CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    id                              CHAR(36)                NOT NULL,
+    tenant_id                       CHAR(36)                NOT NULL,
     token_issuer                    TEXT                    NOT NULL,
     token_type                      VARCHAR(10)             NOT NULL,
     encrypted_access_token          TEXT                    NOT NULL,
@@ -290,7 +321,9 @@ CREATE TABLE oauth_token
     c_nonce_expires_in              TEXT                    NOT NULL,
     consent_claims                  JSONB,
     created_at                      TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at                      TIMESTAMP DEFAULT now() NOT NULL
+    updated_at                      TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_oauth_token_hashed_access_token ON oauth_token (tenant_id, hashed_access_token);
@@ -298,8 +331,8 @@ CREATE INDEX idx_oauth_token_hashed_refresh_token ON oauth_token (tenant_id, has
 
 CREATE TABLE backchannel_authentication_request
 (
-    id                        CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id                 CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    id                        CHAR(36)                NOT NULL,
+    tenant_id                 CHAR(36)                NOT NULL,
     profile                   VARCHAR(255)            NOT NULL,
     delivery_mode             VARCHAR(10)             NOT NULL,
     scopes                    TEXT                    NOT NULL,
@@ -314,13 +347,15 @@ CREATE TABLE backchannel_authentication_request
     requested_expiry          TEXT,
     request_object            TEXT,
     authorization_details     JSONB,
-    created_at                TIMESTAMP DEFAULT now() NOT NULL
+    created_at                TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 CREATE TABLE ciba_grant
 (
-    backchannel_authentication_request_id CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id                             CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    backchannel_authentication_request_id CHAR(36)                NOT NULL,
+    tenant_id                             CHAR(36)                NOT NULL,
     auth_req_id                           VARCHAR(255)            NOT NULL,
     expired_at                            TEXT                    NOT NULL,
     polling_interval                      TEXT                    NOT NULL,
@@ -337,18 +372,17 @@ CREATE TABLE ciba_grant
     authorization_details                 JSONB,
     consent_claims                        JSONB,
     created_at                            TIMESTAMP DEFAULT now() NOT NULL,
-    CONSTRAINT fk_ciba_grant_backchannel_authentication_request_id
-        FOREIGN KEY (backchannel_authentication_request_id)
-            REFERENCES backchannel_authentication_request (id)
-            ON DELETE CASCADE
+    PRIMARY KEY (backchannel_authentication_request_id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    FOREIGN KEY (backchannel_authentication_request_id) REFERENCES backchannel_authentication_request (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_ciba_grant_auth_req ON ciba_grant (auth_req_id);
 
 CREATE TABLE authorization_granted
 (
-    id                    CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id             CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    id                    CHAR(36)                NOT NULL,
+    tenant_id             CHAR(36)                NOT NULL,
     user_id               CHAR(36)                NOT NULL,
     user_payload          JSONB                   NOT NULL,
     authentication        JSONB                   NOT NULL,
@@ -362,7 +396,9 @@ CREATE TABLE authorization_granted
     consent_claims        JSONB,
     created_at            TIMESTAMP DEFAULT now() NOT NULL,
     updated_at            TIMESTAMP DEFAULT now() NOT NULL,
-    revoked_at            TIMESTAMP
+    revoked_at            TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_authorization_granted_tenant_client_user ON authorization_granted (tenant_id, client_id, user_id);
@@ -370,23 +406,25 @@ CREATE INDEX idx_authorization_granted_tenant_client_user ON authorization_grant
 
 CREATE TABLE verifiable_credential_transaction
 (
-    transaction_id        VARCHAR(255)            NOT NULL,
-    tenant_id             CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    id                    VARCHAR(255)            NOT NULL,
+    tenant_id             CHAR(36)                NOT NULL,
     credential_issuer     TEXT                    NOT NULL,
     client_id             VARCHAR(255)            NOT NULL,
     user_id               CHAR(36)                NOT NULL,
     verifiable_credential JSONB                   NOT NULL,
     status                VARCHAR(10)             NOT NULL,
     created_at            TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at            TIMESTAMP DEFAULT now() NOT NULL
+    updated_at            TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 CREATE TABLE security_event
 (
-    id          CHAR(36) PRIMARY KEY,
+    id          CHAR(36),
     type        VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
-    tenant_id   CHAR(36)     NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    tenant_id   CHAR(36)     NOT NULL,
     tenant_name VARCHAR(255) NOT NULL,
     client_id   VARCHAR(255) NOT NULL,
     client_name VARCHAR(255) NOT NULL,
@@ -396,7 +434,9 @@ CREATE TABLE security_event
     ip_address  INET,
     user_agent  TEXT,
     detail      JSONB        NOT NULL,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_events_type ON security_event (type);
@@ -408,12 +448,16 @@ CREATE INDEX idx_events_detail_jsonb ON security_event USING GIN (detail);
 
 CREATE TABLE security_event_notifications
 (
-    id          CHAR(36) PRIMARY KEY,
-    event_id    CHAR(36)     NOT NULL REFERENCES security_event (id) ON DELETE CASCADE,
+    id          CHAR(36),
+    tenant_id   CHAR(36)     NOT NULL,
+    event_id    CHAR(36)     NOT NULL,
     alert_type  VARCHAR(100) NOT NULL,
     channel     VARCHAR(50)  NOT NULL,
     status      VARCHAR(50)  NOT NULL,
-    notified_at TIMESTAMP    NOT NULL
+    notified_at TIMESTAMP    NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES security_event (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_security_event_notifications_event_id ON security_event_notifications (event_id);
@@ -421,13 +465,15 @@ CREATE INDEX idx_security_event_notifications_alert_type ON security_event_notif
 
 CREATE TABLE security_event_hook_configuration
 (
-    id              CHAR(36) NOT NULL PRIMARY KEY,
-    tenant_id       CHAR(36) NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    id              CHAR(36) NOT NULL,
+    tenant_id       CHAR(36) NOT NULL,
     payload         JSONB    NOT NULL,
     execution_order INTEGER  NOT NULL DEFAULT 0,
     enabled         BOOLEAN  NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMP         DEFAULT now() NOT NULL,
-    updated_at      TIMESTAMP         DEFAULT now() NOT NULL
+    updated_at      TIMESTAMP         DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_security_event_hook_configuration ON security_event_hook_configuration (tenant_id);
@@ -435,14 +481,16 @@ CREATE INDEX idx_security_event_hook_configuration_order ON security_event_hook_
 
 CREATE TABLE federation_configurations
 (
-    id                CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id         CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    id                CHAR(36)                NOT NULL,
+    tenant_id         CHAR(36)                NOT NULL,
     type              VARCHAR(255)            NOT NULL,
     sso_provider_name VARCHAR(255)            NOt NULL,
     payload           JSONB                   NOT NULL,
     created_at        TIMESTAMP DEFAULT now() NOT NULL,
     updated_at        TIMESTAMP DEFAULT now() NOT NULL,
-    CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider_name)
+    PRIMARY KEY (id),
+    CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider_name),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_federation_configurations_tenant ON federation_configurations (tenant_id);
@@ -450,33 +498,57 @@ CREATE INDEX idx_federation_configurations_type_sso_provider_name ON federation_
 
 CREATE TABLE federation_sso_session
 (
-    id         CHAR(36)                NOT NULL PRIMARY KEY,
+    id         CHAR(36)                NOT NULL,
+    tenant_id  CHAR(36)                NOT NULL,
     payload    JSONB                   NOT NULL,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at TIMESTAMP DEFAULT now() NOT NULL
+    updated_at TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 CREATE TABLE authentication_configuration
 (
     id         CHAR(36)                NOT NULL PRIMARY KEY,
-    tenant_id  CHAR(36)                NOT NULL REFERENCES tenant (id) ON DELETE CASCADE,
+    tenant_id  CHAR(36)                NOT NULL,
     type       VARCHAR(255)            NOT NULL,
     payload    JSONB                   NOT NULL,
     enabled    BOOLEAN                 NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at TIMESTAMP DEFAULT now() NOT NULL
+    updated_at TIMESTAMP DEFAULT now() NOT NULL,
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_authentication_configuration_type ON authentication_configuration (tenant_id, type);
 
-CREATE TABLE authentication_transactions
+CREATE TABLE authentication_transaction
 (
-    id         CHAR(36)                NOT NULL,
-    type       VARCHAR(255)            NOT NULL,
-    payload    JSONB                   NOT NULL,
-    created_at TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at TIMESTAMP DEFAULT now() NOT NULL,
-    PRIMARY KEY (id, type)
+    authorization_id               CHAR(36)                NOT NULL,
+    tenant_id                      CHAR(36)                NOT NULL,
+    authorization_flow             VARCHAR(255)            NOT NULL,
+    client_id                      VARCHAR(255)            NOT NULL,
+    client_payload                 JSONB                   NOT NULL,
+    user_id                        CHAR(36),
+    user_payload                   JSONB,
+    authentication_device_id       CHAR(36),
+    available_authentication_types JSONB                   NOT NULL,
+    required_authentication_types  JSONB,
+    created_at                     TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at                     TIMESTAMP DEFAULT now() NOT NULL,
+    expired_at                     TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (authorization_id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
-
+CREATE TABLE authentication_interactions
+(
+    authorization_id CHAR(36)                NOT NULL,
+    tenant_id        CHAR(36)                NOT NULL,
+    interaction_type VARCHAR(255)            NOT NULL,
+    payload          JSONB                   NOT NULL,
+    created_at       TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at       TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (authorization_id, interaction_type),
+    FOREIGN KEY (authorization_id) REFERENCES authentication_transaction (authorization_id) ON DELETE CASCADE,
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+);

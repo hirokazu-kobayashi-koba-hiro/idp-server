@@ -4,9 +4,9 @@ import org.idp.server.core.tenant.Tenant;
 
 public interface AuthenticationTransactionCommandRepository {
 
-  <T> void register(
-      Tenant tenant, AuthenticationTransactionIdentifier identifier, String key, T payload);
+    void register(Tenant tenant, AuthenticationTransaction authenticationTransaction);
 
-  <T> void update(
-      Tenant tenant, AuthenticationTransactionIdentifier identifier, String key, T payload);
+    void update(Tenant tenant, AuthenticationTransaction authenticationTransaction);
+
+    void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier);
 }
