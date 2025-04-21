@@ -55,7 +55,7 @@ public class TokenRevocationHandler {
     if (oAuthToken.exists()) {
       oAuthTokenRepository.delete(tenant, oAuthToken);
     }
-    return new TokenRevocationResponse(TokenRevocationRequestStatus.OK, Map.of());
+    return new TokenRevocationResponse(TokenRevocationRequestStatus.OK, oAuthToken, Map.of());
   }
 
   // TODO consider, because duplicated method token introspection handler

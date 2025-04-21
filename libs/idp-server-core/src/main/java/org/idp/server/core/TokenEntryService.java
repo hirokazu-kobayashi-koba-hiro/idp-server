@@ -74,7 +74,14 @@ public class TokenEntryService implements TokenApi {
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProtocolProvider());
 
-    return tokenProtocol.inspect(tokenIntrospectionRequest);
+    TokenIntrospectionResponse result = tokenProtocol.inspect(tokenIntrospectionRequest);
+
+    if (result.hasOAuthToken()) {
+      eventPublisher.publish(
+          tenant, result.oAuthToken(), result.securityEventType(), requestAttributes);
+    }
+
+    return result;
   }
 
   public TokenRevocationResponse revoke(
@@ -91,6 +98,13 @@ public class TokenEntryService implements TokenApi {
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProtocolProvider());
 
-    return tokenProtocol.revoke(revocationRequest);
+    TokenRevocationResponse result = tokenProtocol.revoke(revocationRequest);
+
+    if (result.hasOAuthToken()) {
+      eventPublisher.publish(
+          tenant, result.oAuthToken(), result.securityEventType(), requestAttributes);
+    }
+
+    return result;
   }
 }

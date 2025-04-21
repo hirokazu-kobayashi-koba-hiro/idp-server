@@ -49,6 +49,6 @@ public class UserinfoHandler {
         new UserinfoClaimsCreator(user, oAuthToken.authorizationGrant());
     Map<String, Object> claims = claimsCreator.createClaims();
     UserinfoResponse userinfoResponse = new UserinfoResponse(user, claims);
-    return new UserinfoRequestResponse(UserinfoRequestStatus.OK, userinfoResponse);
+    return new UserinfoRequestResponse(UserinfoRequestStatus.OK, oAuthToken, userinfoResponse);
   }
 }

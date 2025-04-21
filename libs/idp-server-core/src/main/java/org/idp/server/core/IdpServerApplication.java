@@ -213,7 +213,8 @@ public class IdpServerApplication {
             new UserinfoEntryService(
                 new UserinfoProtocols(protocolContainer.resolveAll(UserinfoProtocol.class)),
                 userRepository,
-                tenantRepository),
+                tenantRepository,
+                tokenEventPublisher),
             UserinfoApi.class,
             OperationType.WRITE,
             tenantDialectProvider);

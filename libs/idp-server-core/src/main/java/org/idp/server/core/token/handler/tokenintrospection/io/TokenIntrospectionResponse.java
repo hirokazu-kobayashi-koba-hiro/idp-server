@@ -1,6 +1,7 @@
 package org.idp.server.core.token.handler.tokenintrospection.io;
 
 import java.util.Map;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.token.OAuthToken;
 
 public class TokenIntrospectionResponse {
@@ -43,5 +44,29 @@ public class TokenIntrospectionResponse {
 
   public String subject() {
     return (String) response.get("sub");
+  }
+
+  public boolean isExpired() {
+    return status.isExpired();
+  }
+
+  public boolean isOK() {
+    return status.isOK();
+  }
+
+  public boolean hasOAuthToken() {
+    return oAuthToken != null && oAuthToken.exists();
+  }
+
+  public DefaultSecurityEventType securityEventType() {
+    if (isExpired()) {
+      return DefaultSecurityEventType.inspect_token_failure;
+    }
+
+    if (!isOK()) {
+      return DefaultSecurityEventType.inspect_token_failure;
+    }
+
+    return DefaultSecurityEventType.inspect_token_success;
   }
 }
