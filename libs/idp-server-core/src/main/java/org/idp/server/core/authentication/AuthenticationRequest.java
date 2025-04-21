@@ -1,7 +1,9 @@
 package org.idp.server.core.authentication;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.AuthorizationFlow;
@@ -73,5 +75,18 @@ public class AuthenticationRequest {
 
   public boolean hasUser() {
     return user != null && user.exists();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("authorization_flow", authorizationFlow);
+    map.put("tenant_id", tenantIdentifier.value());
+    map.put("client_id", requestedClientId.value());
+    map.put("user", user.toMap());
+    map.put("available_authentication_types", availableAuthenticationTypes);
+    map.put("required_any_of_authentication_types", requiredAnyOfAuthenticationTypes);
+    map.put("created_at", createdAt.toString());
+    map.put("expired_at", expiredAt.toString());
+    return map;
   }
 }

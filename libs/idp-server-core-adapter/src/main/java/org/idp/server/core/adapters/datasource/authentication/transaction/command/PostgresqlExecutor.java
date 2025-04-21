@@ -3,10 +3,11 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.comma
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.core.authentication.AuthenticationTransaction;
-import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.basic.datasource.SqlExecutor;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.oauth.identity.device.AuthenticationDevice;
 import org.idp.server.core.tenant.Tenant;
 
 public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlExecutor {
@@ -33,7 +34,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
     params.add(user.sub());
     params.add(jsonConverter.write(user));
     if (user.hasAuthenticationDevices()) {
-      params.add("");
+      AuthenticationDevice authenticationDevice = user.findPreferredForNotification();
+      params.add(authenticationDevice.id());
     } else {
       params.add(null);
     }
@@ -54,5 +56,5 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
   }
 
   @Override
-  public void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier) {}
+  public void delete(Tenant tenant, AuthorizationIdentifier identifier) {}
 }

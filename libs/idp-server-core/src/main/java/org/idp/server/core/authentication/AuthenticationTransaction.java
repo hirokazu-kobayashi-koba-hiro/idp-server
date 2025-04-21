@@ -1,7 +1,9 @@
 package org.idp.server.core.authentication;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
@@ -15,23 +17,22 @@ import org.idp.server.core.type.oauth.ExpiresIn;
 import org.idp.server.core.type.oauth.RequestedClientId;
 
 public class AuthenticationTransaction {
-  AuthenticationTransactionIdentifier identifier;
+  AuthorizationIdentifier identifier;
   AuthenticationRequest request;
   AuthenticationInteractionResults interactionResults;
 
   public static AuthenticationTransaction createOnOAuthFlow(
       Tenant tenant, OAuthRequestResponse requestResponse) {
-    AuthenticationTransactionIdentifier identifier =
-        new AuthenticationTransactionIdentifier(requestResponse.authorizationRequestIdentifier());
+    AuthorizationIdentifier identifier =
+        new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier());
     AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
     return new AuthenticationTransaction(identifier, authenticationRequest);
   }
 
   public static AuthenticationTransaction createOnCibaFlow(
       Tenant tenant, CibaIssueResponse cibaIssueResponse) {
-    AuthenticationTransactionIdentifier identifier =
-        new AuthenticationTransactionIdentifier(
-            cibaIssueResponse.backchannelAuthenticationRequestIdentifier());
+    AuthorizationIdentifier identifier =
+        new AuthorizationIdentifier(cibaIssueResponse.backchannelAuthenticationRequestIdentifier());
     AuthenticationRequest authenticationRequest =
         toAuthenticationRequest(tenant, cibaIssueResponse);
     return new AuthenticationTransaction(identifier, authenticationRequest);
@@ -89,13 +90,12 @@ public class AuthenticationTransaction {
 
   public AuthenticationTransaction() {}
 
-  AuthenticationTransaction(
-      AuthenticationTransactionIdentifier identifier, AuthenticationRequest request) {
+  AuthenticationTransaction(AuthorizationIdentifier identifier, AuthenticationRequest request) {
     this(identifier, request, new AuthenticationInteractionResults());
   }
 
   public AuthenticationTransaction(
-      AuthenticationTransactionIdentifier identifier,
+      AuthorizationIdentifier identifier,
       AuthenticationRequest request,
       AuthenticationInteractionResults interactionResults) {
     this.identifier = identifier;
@@ -103,7 +103,7 @@ public class AuthenticationTransaction {
     this.interactionResults = interactionResults;
   }
 
-  public AuthenticationTransactionIdentifier identifier() {
+  public AuthorizationIdentifier identifier() {
     return identifier;
   }
 
@@ -120,5 +120,12 @@ public class AuthenticationTransaction {
 
   public AuthenticationInteractionResults interactionResults() {
     return interactionResults;
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", identifier.value());
+    map.putAll(request.toMap());
+    return map;
   }
 }

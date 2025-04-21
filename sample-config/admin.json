@@ -449,6 +449,16 @@
       "postal_code": "10001",
       "country": "USA"
     },
+    "authentication_devices": [
+      {
+        "id": "7736a252-60b4-45f5-b817-65ea9a540860",
+        "platform": "iOS",
+        "os": "iOS 18.5",
+        "model": "iPhone15",
+        "notification_token": "test token",
+        "preferred_for_notification": true
+      }
+    ],
     "custom_properties": {
       "key": "value"
     },

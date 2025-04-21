@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.authentication.interaction.comma
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.basic.datasource.SqlExecutor;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.tenant.Tenant;
@@ -13,7 +13,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
 
   @Override
   public <T> void insert(
-      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
+      Tenant tenant, AuthorizationIdentifier identifier, String type, T payload) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -37,7 +37,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
 
   @Override
   public <T> void update(
-      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
+      Tenant tenant, AuthorizationIdentifier identifier, String type, T payload) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =

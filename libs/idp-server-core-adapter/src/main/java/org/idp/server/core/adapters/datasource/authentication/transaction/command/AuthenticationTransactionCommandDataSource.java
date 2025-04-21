@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.comma
 
 import org.idp.server.core.authentication.AuthenticationTransaction;
 import org.idp.server.core.authentication.AuthenticationTransactionCommandRepository;
-import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.tenant.Tenant;
 
 public class AuthenticationTransactionCommandDataSource
@@ -27,7 +27,7 @@ public class AuthenticationTransactionCommandDataSource
   }
 
   @Override
-  public void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier) {
+  public void delete(Tenant tenant, AuthorizationIdentifier identifier) {
     AuthenticationTransactionCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, identifier);
   }

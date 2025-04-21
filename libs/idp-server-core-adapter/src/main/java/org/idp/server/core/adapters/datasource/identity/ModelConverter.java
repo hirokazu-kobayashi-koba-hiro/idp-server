@@ -2,14 +2,13 @@ package org.idp.server.core.adapters.datasource.identity;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.oauth.identity.Address;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserStatus;
+import org.idp.server.core.oauth.identity.device.AuthenticationDevice;
 
 class ModelConverter {
 
@@ -72,6 +71,27 @@ class ModelConverter {
       List<String> permissions = jsonConverter.read(stringMap.get("permissions"), List.class);
       List<String> filtered = permissions.stream().filter(Objects::nonNull).toList();
       user.setPermissions(filtered);
+    }
+    if (stringMap.containsKey("authentication_devices")
+        && stringMap.get("authentication_devices") != null
+        && !stringMap.get("authentication_devices").equals("[]")) {
+      JsonNodeWrapper jsonNodeWrapper =
+          jsonConverter.readTree(stringMap.get("authentication_devices"));
+      List<JsonNodeWrapper> wrapperList = jsonNodeWrapper.elements();
+      List<AuthenticationDevice> authenticationDevices = new ArrayList<>();
+      for (JsonNodeWrapper wrapper : wrapperList) {
+        String id = wrapper.getValueOrEmptyAsString("id");
+        String platform = wrapper.getValueOrEmptyAsString("platform");
+        String os = wrapper.getValueOrEmptyAsString("os");
+        String model = wrapper.getValueOrEmptyAsString("model");
+        String notificationToken = wrapper.getValueOrEmptyAsString("notification_token");
+        boolean preferredForNotification = wrapper.getValueAsBoolean("preferred_for_notification");
+        AuthenticationDevice authenticationDevice =
+            new AuthenticationDevice(
+                id, platform, os, model, notificationToken, preferredForNotification);
+        authenticationDevices.add(authenticationDevice);
+      }
+      user.setAuthenticationDevices(authenticationDevices);
     }
 
     UserStatus userStatus = UserStatus.of(stringMap.getOrDefault("status", ""));

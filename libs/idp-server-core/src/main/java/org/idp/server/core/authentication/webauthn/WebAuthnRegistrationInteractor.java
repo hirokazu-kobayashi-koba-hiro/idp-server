@@ -23,7 +23,7 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
@@ -35,7 +35,7 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
     WebAuthnVerificationResult webAuthnVerificationResult =
         webAuthnExecutor.verifyRegistration(
-            tenant, authenticationTransactionIdentifier, userId, request, configuration);
+            tenant, authorizationIdentifier, userId, request, configuration);
 
     Map<String, Object> response = new HashMap<>();
     response.put("registration", webAuthnVerificationResult.toMap());

@@ -6,6 +6,8 @@ import java.util.*;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.json.JsonReadable;
 import org.idp.server.core.basic.vc.Credential;
+import org.idp.server.core.oauth.identity.device.AuthenticationDevice;
+import org.idp.server.core.oauth.identity.device.AuthenticationDevices;
 import org.idp.server.core.type.extension.CustomProperties;
 
 public class User implements JsonReadable, Serializable {
@@ -34,7 +36,7 @@ public class User implements JsonReadable, Serializable {
   LocalDateTime updatedAt;
   String hashedPassword;
   String rawPassword;
-  HashMap<String, Object> authenticationDevices = new HashMap<>();
+  List<AuthenticationDevice> authenticationDevices = new ArrayList<>();
   HashMap<String, Object> customProperties = new HashMap<>();
   List<HashMap<String, Object>> credentials = new ArrayList<>();
   HashMap<String, Object> multiFactorAuthentication = new HashMap<>();
@@ -289,7 +291,22 @@ public class User implements JsonReadable, Serializable {
     return this;
   }
 
-  public User setAuthenticationDevices(HashMap<String, Object> authenticationDevices) {
+  public AuthenticationDevices authenticationDevices() {
+    return new AuthenticationDevices(authenticationDevices);
+  }
+
+  public List<AuthenticationDevice> authenticationDevicesAsList() {
+    return authenticationDevices;
+  }
+
+  public AuthenticationDevice findPreferredForNotification() {
+    return authenticationDevices.stream()
+        .filter(AuthenticationDevice::isPreferredForNotification)
+        .findFirst()
+        .orElse(new AuthenticationDevice());
+  }
+
+  public User setAuthenticationDevices(List<AuthenticationDevice> authenticationDevices) {
     this.authenticationDevices = authenticationDevices;
     return this;
   }

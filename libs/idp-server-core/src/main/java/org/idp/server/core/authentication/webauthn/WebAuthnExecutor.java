@@ -1,7 +1,7 @@
 package org.idp.server.core.authentication.webauthn;
 
 import org.idp.server.core.authentication.AuthenticationInteractionRequest;
-import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.tenant.Tenant;
 
 public interface WebAuthnExecutor {
@@ -10,26 +10,26 @@ public interface WebAuthnExecutor {
 
   WebAuthnChallenge challengeRegistration(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationInteractionRequest request,
       WebAuthnConfiguration configuration);
 
   WebAuthnVerificationResult verifyRegistration(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthorizationIdentifier authorizationIdentifier,
       String userId,
       AuthenticationInteractionRequest request,
       WebAuthnConfiguration configuration);
 
   WebAuthnChallenge challengeAuthentication(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationInteractionRequest request,
       WebAuthnConfiguration configuration);
 
   WebAuthnVerificationResult verifyAuthentication(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationInteractionRequest request,
       WebAuthnConfiguration configuration);
 }

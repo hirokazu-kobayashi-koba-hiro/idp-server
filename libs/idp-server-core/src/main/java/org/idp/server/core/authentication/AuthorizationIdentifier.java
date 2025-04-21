@@ -4,22 +4,21 @@ import java.util.Objects;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 
-public class AuthenticationTransactionIdentifier {
+public class AuthorizationIdentifier {
   String value;
 
-  public AuthenticationTransactionIdentifier() {}
+  public AuthorizationIdentifier() {}
 
-  public AuthenticationTransactionIdentifier(
-      AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+  public AuthorizationIdentifier(AuthorizationRequestIdentifier authorizationRequestIdentifier) {
     this.value = authorizationRequestIdentifier.value();
   }
 
-  public AuthenticationTransactionIdentifier(
+  public AuthorizationIdentifier(
       BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
     this.value = backchannelAuthenticationRequestIdentifier.value();
   }
 
-  public AuthenticationTransactionIdentifier(String value) {
+  public AuthorizationIdentifier(String value) {
     this.value = value;
   }
 
@@ -30,7 +29,7 @@ public class AuthenticationTransactionIdentifier {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    AuthenticationTransactionIdentifier that = (AuthenticationTransactionIdentifier) o;
+    AuthorizationIdentifier that = (AuthorizationIdentifier) o;
     return Objects.equals(value, that.value);
   }
 

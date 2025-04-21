@@ -27,7 +27,7 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
@@ -39,7 +39,7 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
     WebAuthnVerificationResult webAuthnVerificationResult =
         webAuthnExecutor.verifyAuthentication(
-            tenant, authenticationTransactionIdentifier, request, configuration);
+            tenant, authorizationIdentifier, request, configuration);
 
     User user = userRepository.get(tenant, webAuthnVerificationResult.getUserId());
 

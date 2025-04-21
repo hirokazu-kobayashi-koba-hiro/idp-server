@@ -3,7 +3,7 @@ package org.idp.server.core.adapters.datasource.authentication.interaction.query
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.authentication.AuthenticationInteractionQueryRepository;
-import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.authentication.exception.MfaTransactionNotFoundException;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.tenant.Tenant;
@@ -20,8 +20,7 @@ public class AuthenticationInteractionQueryDataSource
   }
 
   @Override
-  public <T> T get(
-      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, Class<T> clazz) {
+  public <T> T get(Tenant tenant, AuthorizationIdentifier identifier, String type, Class<T> clazz) {
     AuthenticationInteractionQuerySqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> result = executor.selectOne(tenant, identifier, type);

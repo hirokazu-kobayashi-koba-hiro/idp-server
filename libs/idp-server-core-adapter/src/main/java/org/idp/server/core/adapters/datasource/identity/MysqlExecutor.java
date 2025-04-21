@@ -21,8 +21,8 @@ public class MysqlExecutor implements UserSqlExecutor {
                 (id, tenant_id, provider_id, provider_user_id, provider_user_original_payload, name, given_name, family_name, middle_name, nickname,
                  preferred_username, profile, picture, website, email, email_verified, gender,
                  birthdate, zoneinfo, locale, phone_number, phone_number_verified, address,
-                 custom_properties, credentials, hashed_password, multi_factor_authentication, status)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                 custom_properties, credentials, hashed_password, multi_factor_authentication, authentication_devices, status)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -53,6 +53,7 @@ public class MysqlExecutor implements UserSqlExecutor {
     params.add(jsonConverter.write(user.verifiableCredentials()));
     params.add(user.hashedPassword());
     params.add(jsonConverter.write(user.multiFactorAuthentication()));
+    params.add(jsonConverter.write(user.authenticationDevicesAsList()));
     params.add(user.statusName());
 
     sqlExecutor.execute(sqlTemplate, params);

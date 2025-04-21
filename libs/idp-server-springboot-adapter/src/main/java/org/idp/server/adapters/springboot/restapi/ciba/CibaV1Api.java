@@ -1,7 +1,8 @@
-package org.idp.server.adapters.springboot.restapi;
+package org.idp.server.adapters.springboot.restapi.ciba;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.ciba.CibaFlowApi;
 import org.idp.server.core.ciba.handler.io.CibaAuthorizeResponse;

@@ -6,7 +6,7 @@ import java.util.Map;
 import org.idp.server.core.authentication.AuthenticationInteractionResults;
 import org.idp.server.core.authentication.AuthenticationRequest;
 import org.idp.server.core.authentication.AuthenticationTransaction;
-import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -18,8 +18,7 @@ public class ModelConverter {
   static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   static AuthenticationTransaction convert(Map<String, String> map) {
-    AuthenticationTransactionIdentifier identifier =
-        new AuthenticationTransactionIdentifier(map.get("authorization_id"));
+    AuthorizationIdentifier identifier = new AuthorizationIdentifier(map.get("authorization_id"));
     AuthorizationFlow authorizationFlow = AuthorizationFlow.valueOf(map.get("authorization_flow"));
     TenantIdentifier tenantIdentifier = new TenantIdentifier(map.get("tenant_id"));
     RequestedClientId requestedClientId = new RequestedClientId(map.get("client_id"));

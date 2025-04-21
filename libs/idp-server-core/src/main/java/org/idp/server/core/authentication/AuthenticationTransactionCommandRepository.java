@@ -8,5 +8,5 @@ public interface AuthenticationTransactionCommandRepository {
 
   void update(Tenant tenant, AuthenticationTransaction authenticationTransaction);
 
-  void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier);
+  void delete(Tenant tenant, AuthorizationIdentifier identifier);
 }

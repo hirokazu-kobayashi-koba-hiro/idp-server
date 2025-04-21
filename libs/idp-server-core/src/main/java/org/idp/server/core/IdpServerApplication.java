@@ -2,6 +2,7 @@ package org.idp.server.core;
 
 import org.idp.server.core.admin.*;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
 import org.idp.server.core.basic.crypto.AesCipher;
@@ -63,6 +64,7 @@ public class IdpServerApplication {
   OidcMetaDataApi oidcMetaDataApi;
   UserinfoApi userinfoApi;
   CibaFlowApi cibaFlowApi;
+  AuthenticationDeviceApi authenticationDeviceApi;
   SecurityEventApi securityEventApi;
   OnboardingApi onboardingApi;
   ServerManagementApi serverManagementApi;
@@ -227,6 +229,14 @@ public class IdpServerApplication {
             OperationType.WRITE,
             tenantDialectProvider);
 
+    this.authenticationDeviceApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AuthenticationDeviceEntryService(
+                tenantRepository, authenticationTransactionQueryRepository),
+            AuthenticationDeviceApi.class,
+            OperationType.READ,
+            tenantDialectProvider);
+
     this.securityEventApi =
         TenantAwareEntryServiceProxy.createProxy(
             new SecurityEventEntryService(
@@ -297,6 +307,10 @@ public class IdpServerApplication {
 
   public CibaFlowApi cibaFlowApi() {
     return cibaFlowApi;
+  }
+
+  public AuthenticationDeviceApi authenticationDeviceApi() {
+    return authenticationDeviceApi;
   }
 
   public SecurityEventApi securityEventApi() {

@@ -113,15 +113,15 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         oAuthSessionDelegate.findOrInitialize(authorizationRequest.sessionKey());
 
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
-    AuthenticationTransactionIdentifier authenticationTransactionIdentifier =
-        new AuthenticationTransactionIdentifier(authorizationRequestIdentifier.value());
+    AuthorizationIdentifier authorizationIdentifier =
+        new AuthorizationIdentifier(authorizationRequestIdentifier.value());
     AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(tenant, authenticationTransactionIdentifier);
+        authenticationTransactionQueryRepository.get(tenant, authorizationIdentifier);
 
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
             tenant,
-            authenticationTransactionIdentifier,
+            authorizationIdentifier,
             type,
             request,
             authenticationTransaction,

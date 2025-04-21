@@ -27,6 +27,17 @@ public class JsonNodeWrapper {
     return values;
   }
 
+  public List<JsonNodeWrapper> elements() {
+    List<JsonNodeWrapper> list = new ArrayList<>();
+    if (jsonNode.isArray()) {
+      Iterator<JsonNode> iterator = jsonNode.elements();
+      while (iterator.hasNext()) {
+        list.add(new JsonNodeWrapper(iterator.next()));
+      }
+    }
+    return list;
+  }
+
   public boolean contains(String fieldName) {
     return jsonNode.has(fieldName);
   }
@@ -41,6 +52,10 @@ public class JsonNodeWrapper {
 
   public int getValueAsInt(String fieldName) {
     return jsonNode.get(fieldName).asInt();
+  }
+
+  public boolean getValueAsBoolean(String fieldName) {
+    return jsonNode.get(fieldName).asBoolean();
   }
 
   public String asText() {
