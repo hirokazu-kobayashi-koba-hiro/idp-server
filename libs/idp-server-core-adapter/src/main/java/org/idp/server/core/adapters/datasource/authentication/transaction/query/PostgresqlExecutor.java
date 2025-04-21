@@ -39,6 +39,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
                 FROM authentication_transaction
                 WHERE authentication_device_id = ?
                 AND tenant_id = ?
+                ORDER BY created_at DESC
                 limit 1
                 """;
     List<Object> params = new ArrayList<>();

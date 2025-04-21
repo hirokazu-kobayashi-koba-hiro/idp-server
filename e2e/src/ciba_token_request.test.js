@@ -2,8 +2,10 @@ import { describe, expect, it } from "@jest/globals";
 
 import {
   completeBackchannelAuthentications,
+  getAuthenticationDeviceAuthenticationTransaction,
+  postAuthenticationDeviceInteraction,
   requestBackchannelAuthentications,
-  requestToken,
+  requestToken
 } from "./api/oauthClient";
 import {
   clientSecretJwtClient,
@@ -86,11 +88,20 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(200);
 
-      const completeResponse = await completeBackchannelAuthentications({
-        endpoint:
-          serverConfig.backchannelAuthenticationAutomatedCompleteEndpoint,
-        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
-        action: "deny",
+      const authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: serverConfig.authenticationDeviceEndpoint,
+        deviceId: serverConfig.ciba.authenticationDeviceId,
+        params: {},
+      });
+
+      console.log(authenticationTransactionResponse.data);
+      expect(authenticationTransactionResponse.status).toBe(200);
+
+      const completeResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransactionResponse.data.authorization_flow,
+        id: authenticationTransactionResponse.data.id,
+        interactionType: "authentication-device-deny",
       });
       expect(completeResponse.status).toBe(200);
 
@@ -127,11 +138,24 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(200);
 
-      const completeResponse = await completeBackchannelAuthentications({
-        endpoint:
-          serverConfig.backchannelAuthenticationAutomatedCompleteEndpoint,
-        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
-        action: "allow",
+      const authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: serverConfig.authenticationDeviceEndpoint,
+        deviceId: serverConfig.ciba.authenticationDeviceId,
+        params: {},
+      });
+
+      console.log(authenticationTransactionResponse.data);
+      expect(authenticationTransactionResponse.status).toBe(200);
+
+      const completeResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransactionResponse.data.authorization_flow,
+        id: authenticationTransactionResponse.data.id,
+        interactionType: "password-authentication",
+        body: {
+          username: serverConfig.ciba.loginHint,
+          password: serverConfig.ciba.userCode,
+        }
       });
       expect(completeResponse.status).toBe(200);
 

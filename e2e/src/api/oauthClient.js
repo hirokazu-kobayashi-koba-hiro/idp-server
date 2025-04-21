@@ -476,6 +476,21 @@ export const requestBackchannelAuthentications = async ({
   });
 };
 
+export const postAuthenticationDeviceInteraction = async ({
+ endpoint,
+ flowType,
+ id,
+ interactionType,
+ body,
+}) => {
+
+  const url = endpoint.replace("{flow-type}", flowType).replace("{id}", id);
+  return await postWithJson({
+    url: url + interactionType,
+    body,
+  });
+};
+
 export const completeBackchannelAuthentications = async ({
   endpoint,
   authReqId,
@@ -483,6 +498,18 @@ export const completeBackchannelAuthentications = async ({
 }) => {
   return await post({
     url: `${endpoint}?auth_req_id=${authReqId}&action=${action}`,
+  });
+};
+
+export const getAuthenticationDeviceAuthenticationTransaction = async ({
+  endpoint,
+  deviceId,
+  params,
+}) => {
+  const url = endpoint.replace("{id}", deviceId);
+  return await get({
+    url: url,
+    params,
   });
 };
 

@@ -88,4 +88,8 @@ public class AuthenticationInteractionRequestResult {
   public boolean hasAuthentication() {
     return Objects.nonNull(authentication) && authentication.exists();
   }
+
+  public int statusCode() {
+    return this.status.statusCode();
+  }
 }

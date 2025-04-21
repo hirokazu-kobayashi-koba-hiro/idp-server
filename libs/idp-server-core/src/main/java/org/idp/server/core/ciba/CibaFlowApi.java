@@ -4,8 +4,6 @@ import java.util.Map;
 import org.idp.server.core.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.authentication.AuthenticationInteractionType;
-import org.idp.server.core.ciba.handler.io.CibaAuthorizeResponse;
-import org.idp.server.core.ciba.handler.io.CibaDenyResponse;
 import org.idp.server.core.ciba.handler.io.CibaRequestResponse;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -25,10 +23,4 @@ public interface CibaFlowApi {
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes);
-
-  CibaAuthorizeResponse authorize(
-      TenantIdentifier tenantIdentifier, String authReqId, RequestAttributes requestAttributes);
-
-  CibaDenyResponse deny(
-      TenantIdentifier tenantIdentifier, String authReqId, RequestAttributes requestAttributes);
 }

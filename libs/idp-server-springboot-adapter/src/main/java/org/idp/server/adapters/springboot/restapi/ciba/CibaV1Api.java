@@ -5,8 +5,6 @@ import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.ciba.CibaFlowApi;
-import org.idp.server.core.ciba.handler.io.CibaAuthorizeResponse;
-import org.idp.server.core.ciba.handler.io.CibaDenyResponse;
 import org.idp.server.core.ciba.handler.io.CibaRequestResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.security.RequestAttributes;
@@ -31,39 +29,19 @@ public class CibaV1Api implements ParameterTransformable {
       @RequestBody(required = false) MultiValueMap<String, String> body,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       HttpServletRequest httpServletRequest) {
 
     Map<String, String[]> params = transform(body);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     CibaRequestResponse response =
-        cibaFlowApi.request(tenantId, params, authorizationHeader, clientCert, requestAttributes);
+        cibaFlowApi.request(
+            tenantIdentifier, params, authorizationHeader, clientCert, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", response.contentTypeValue());
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
-  }
-
-  @PostMapping("/automated-complete")
-  public ResponseEntity<?> complete(
-      @RequestParam("auth_req_id") String authReqId,
-      @RequestParam("action") String action,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      HttpServletRequest httpServletRequest) {
-
-    RequestAttributes requestAttributes = transform(httpServletRequest);
-
-    if (action.equals("allow")) {
-
-      CibaAuthorizeResponse authorizeResponse =
-          cibaFlowApi.authorize(tenantIdentifier, authReqId, requestAttributes);
-      return new ResponseEntity<>(HttpStatus.valueOf(authorizeResponse.statusCode()));
-    }
-
-    CibaDenyResponse cibaDenyResponse =
-        cibaFlowApi.deny(tenantIdentifier, authReqId, requestAttributes);
-    return new ResponseEntity<>(HttpStatus.valueOf(cibaDenyResponse.statusCode()));
   }
 }

@@ -12,6 +12,8 @@ import org.idp.server.core.ciba.handler.io.CibaRequest;
 import org.idp.server.core.ciba.handler.io.CibaRequestStatus;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
+import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
+import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.core.ciba.response.BackchannelAuthenticationResponseBuilder;
 import org.idp.server.core.ciba.verifier.CibaRequestVerifier;
@@ -114,5 +116,12 @@ public class CibaRequestHandler {
     cibaGrantRepository.register(tenant, cibaGrant);
 
     return new CibaIssueResponse(CibaRequestStatus.OK, context, response, user);
+  }
+
+  public BackchannelAuthenticationRequest handleGettingRequest(
+      Tenant tenant,
+      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
+    return backchannelAuthenticationRequestRepository.find(
+        tenant, backchannelAuthenticationRequestIdentifier);
   }
 }

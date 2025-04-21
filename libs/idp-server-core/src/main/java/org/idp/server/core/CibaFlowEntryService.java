@@ -4,10 +4,10 @@ import java.util.Map;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.ciba.*;
-import org.idp.server.core.ciba.exception.BackchannelAuthenticationBadRequestException;
 import org.idp.server.core.ciba.handler.io.*;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.security.event.CibaFlowEventPublisher;
@@ -15,6 +15,8 @@ import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
+import org.idp.server.core.type.oauth.Error;
+import org.idp.server.core.type.oauth.ErrorDescription;
 import org.idp.server.core.type.security.RequestAttributes;
 
 @Transaction
@@ -76,9 +78,12 @@ public class CibaFlowEntryService implements CibaFlowApi {
           DefaultSecurityEventType.backchannel_authentication_request_success,
           requestAttributes);
 
-      throw new BackchannelAuthenticationBadRequestException(
-          "unknown_user_id",
-          "The OpenID Provider is not able to identify which end-user the Client wishes to be authenticated by means of the hint provided in the request (login_hint_token, id_token_hint, or login_hint).");
+      BackchannelAuthenticationErrorResponse errorResponse =
+          new BackchannelAuthenticationErrorResponse(
+              new Error("unknown_user_id"),
+              new ErrorDescription(
+                  "The OpenID Provider is not able to identify which end-user the Client wishes to be authenticated by means of the hint provided in the request (login_hint_token, id_token_hint, or login_hint)."));
+      return new CibaRequestResponse(CibaRequestStatus.BAD_REQUEST, errorResponse);
     }
 
     CibaIssueResponse issueResponse =
@@ -134,7 +139,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
 
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
     AuthorizationIdentifier authorizationIdentifier =
-        new AuthorizationIdentifier(backchannelAuthenticationRequestIdentifier);
+        backchannelAuthenticationRequestIdentifier.toAuthorizationIdentifier();
 
     AuthenticationTransaction authenticationTransaction =
         authenticationTransactionQueryRepository.get(tenant, authorizationIdentifier);
@@ -154,28 +159,30 @@ public class CibaFlowEntryService implements CibaFlowApi {
         result.eventType(),
         requestAttributes);
 
+    if (authenticationTransaction.isComplete()) {
+      CibaAuthorizeRequest cibaAuthorizeRequest =
+          new CibaAuthorizeRequest(tenant, backchannelAuthenticationRequestIdentifier);
+      cibaProtocol.authorize(cibaAuthorizeRequest);
+      eventPublisher.publish(
+          tenant,
+          backchannelAuthenticationRequest,
+          result.user(),
+          DefaultSecurityEventType.backchannel_authentication_authorize,
+          requestAttributes);
+    }
+
+    if (authenticationTransaction.isDeny()) {
+      CibaDenyRequest cibaDenyRequest =
+          new CibaDenyRequest(tenant, backchannelAuthenticationRequestIdentifier);
+      cibaProtocol.deny(cibaDenyRequest);
+      eventPublisher.publish(
+          tenant,
+          backchannelAuthenticationRequest,
+          result.user(),
+          DefaultSecurityEventType.backchannel_authentication_deny,
+          requestAttributes);
+    }
+
     return result;
-  }
-
-  public CibaAuthorizeResponse authorize(
-      TenantIdentifier tenantIdentifier, String authReqId, RequestAttributes requestAttributes) {
-
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
-    CibaAuthorizeRequest cibaAuthorizeRequest = new CibaAuthorizeRequest(tenant, authReqId);
-
-    CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProtocolProvider());
-
-    return cibaProtocol.authorize(cibaAuthorizeRequest);
-  }
-
-  public CibaDenyResponse deny(
-      TenantIdentifier tenantIdentifier, String authReqId, RequestAttributes requestAttributes) {
-
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
-    CibaDenyRequest cibaDenyRequest = new CibaDenyRequest(tenant, authReqId);
-
-    CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProtocolProvider());
-
-    return cibaProtocol.deny(cibaDenyRequest);
   }
 }

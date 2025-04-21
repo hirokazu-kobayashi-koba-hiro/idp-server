@@ -7,7 +7,7 @@ export const serverConfig = {
   authenticationEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/`,
   authenticationDeviceEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authentication-devices/{id}/authentications`,
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authentication-devices/{id}/authentications/latest`,
   authorizeEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/authorize`,
   denyEndpoint:
@@ -23,6 +23,7 @@ export const serverConfig = {
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications`,
   backchannelAuthenticationAutomatedCompleteEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications/automated-complete`,
+  authenticationDeviceInteractionEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/{flow-type}/{id}/`,
   discoveryEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration`,
   credentialEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials`,
@@ -33,6 +34,7 @@ export const serverConfig = {
     userCode: "successUserCode",
     bindingMessage: "999",
     invalidLoginHint: "invalid",
+    authenticationDeviceId: "7736a252-60b4-45f5-b817-65ea9a540860",
   },
   oauth: {
     username: "ito.ichiro@gmail.com",

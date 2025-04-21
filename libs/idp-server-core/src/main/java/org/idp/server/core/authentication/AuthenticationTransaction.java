@@ -128,4 +128,14 @@ public class AuthenticationTransaction {
     map.putAll(request.toMap());
     return map;
   }
+
+  // TODO implement. this is debug code
+  public boolean isComplete() {
+    return true;
+  }
+
+  // TODO implement. this is debug code
+  public boolean isDeny() {
+    return false;
+  }
 }

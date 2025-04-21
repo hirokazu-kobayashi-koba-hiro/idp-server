@@ -108,7 +108,8 @@ public class DefaultCibaProtocol implements CibaProtocol {
       Tenant tenant,
       BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
 
-    return null;
+    return cibaRequestHandler.handleGettingRequest(
+        tenant, backchannelAuthenticationRequestIdentifier);
   }
 
   public CibaAuthorizeResponse authorize(CibaAuthorizeRequest request) {

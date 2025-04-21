@@ -6,6 +6,7 @@ import java.util.Map;
 import org.idp.server.core.basic.datasource.SqlExecutor;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.ciba.grant.CibaGrant;
+import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.type.ciba.AuthReqId;
 
@@ -101,6 +102,23 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(authReqId.value());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
+  public Map<String, String> selectOne(
+      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
+                FROM ciba_grant
+                WHERE backchannel_authentication_request_id = ?;
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(backchannelAuthenticationRequestIdentifier.value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

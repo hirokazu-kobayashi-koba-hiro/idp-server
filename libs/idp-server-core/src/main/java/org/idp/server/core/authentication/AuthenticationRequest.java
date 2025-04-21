@@ -79,7 +79,7 @@ public class AuthenticationRequest {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("authorization_flow", authorizationFlow);
+    map.put("authorization_flow", authorizationFlow.value());
     map.put("tenant_id", tenantIdentifier.value());
     map.put("client_id", requestedClientId.value());
     map.put("user", user.toMap());
