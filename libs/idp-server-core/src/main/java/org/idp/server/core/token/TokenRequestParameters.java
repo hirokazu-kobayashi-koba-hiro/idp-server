@@ -148,4 +148,8 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
   public List<String> multiValueKeys() {
     return values.multiValueKeys();
   }
+
+  public boolean isRefreshTokenGrant() {
+    return grantType() == GrantType.refresh_token;
+  }
 }

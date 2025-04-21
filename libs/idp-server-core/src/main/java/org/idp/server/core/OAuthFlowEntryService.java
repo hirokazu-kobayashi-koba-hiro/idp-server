@@ -228,7 +228,11 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     if (authorize.isOk()) {
       userRegistrator.registerOrUpdate(tenant, user);
       eventPublisher.publish(
-          tenant, authorizationRequest, user, DefaultSecurityEventType.login, requestAttributes);
+          tenant,
+          authorizationRequest,
+          user,
+          DefaultSecurityEventType.oauth_authorize,
+          requestAttributes);
     } else {
       eventPublisher.publish(
           tenant,
@@ -271,7 +275,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         tenant,
         authorizationRequest,
         session.user(),
-        DefaultSecurityEventType.login_with_session,
+        DefaultSecurityEventType.oauth_authorize_with_session,
         requestAttributes);
 
     return authorize;
@@ -283,13 +287,27 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
+
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
+
+    AuthorizationRequest authorizationRequest =
+        oAuthProtocol.get(tenant, authorizationRequestIdentifier);
+    OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
+
     OAuthDenyRequest denyRequest =
         new OAuthDenyRequest(
             tenant, authorizationRequestIdentifier.value(), OAuthDenyReason.access_denied);
 
-    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
+    OAuthDenyResponse denyResponse = oAuthProtocol.deny(denyRequest);
 
-    return oAuthProtocol.deny(denyRequest);
+    eventPublisher.publish(
+        tenant,
+        authorizationRequest,
+        session.user(),
+        DefaultSecurityEventType.oauth_deny,
+        requestAttributes);
+
+    return denyResponse;
   }
 
   public OAuthLogoutResponse logout(

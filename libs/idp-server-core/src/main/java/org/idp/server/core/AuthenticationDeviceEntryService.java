@@ -33,6 +33,10 @@ public class AuthenticationDeviceEntryService implements AuthenticationDeviceApi
     AuthenticationTransaction authenticationTransaction =
         authenticationTransactionQueryRepository.findLatest(tenant, authenticationDeviceIdentifier);
 
+    if (!authenticationTransaction.exists()) {
+      return AuthenticationTransactionFindingResponse.notFound();
+    }
+
     return AuthenticationTransactionFindingResponse.success(authenticationTransaction);
   }
 }

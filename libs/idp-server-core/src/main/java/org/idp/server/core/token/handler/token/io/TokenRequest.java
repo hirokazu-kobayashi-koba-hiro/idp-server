@@ -84,4 +84,9 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
   public ClientCert toClientCert() {
     return new ClientCert(clientCert);
   }
+
+  public boolean isRefreshTokenGrant() {
+    TokenRequestParameters parameters = toParameters();
+    return parameters.isRefreshTokenGrant();
+  }
 }

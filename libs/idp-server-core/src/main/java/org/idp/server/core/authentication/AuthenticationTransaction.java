@@ -138,4 +138,8 @@ public class AuthenticationTransaction {
   public boolean isDeny() {
     return false;
   }
+
+  public boolean exists() {
+    return identifier != null && identifier.exists();
+  }
 }

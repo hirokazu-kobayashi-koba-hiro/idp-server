@@ -2,7 +2,9 @@ package org.idp.server.core.token;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
+import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.token.AccessToken;
 import org.idp.server.core.oauth.token.RefreshToken;
@@ -131,5 +133,21 @@ public class OAuthToken {
 
   public TokenIssuer tokenIssuer() {
     return accessToken.tokenIssuer();
+  }
+
+  public RequestedClientId requestedClientId() {
+    return accessToken.requestedClientId();
+  }
+
+  public User user() {
+    return accessToken.user();
+  }
+
+  public Client client() {
+    return accessToken.client();
+  }
+
+  public String clientName() {
+    return accessToken.client().nameValue();
   }
 }

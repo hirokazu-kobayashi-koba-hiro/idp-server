@@ -5,6 +5,7 @@ import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationResponse;
+import org.idp.server.core.type.security.RequestAttributes;
 
 public interface TokenApi {
 
@@ -12,14 +13,18 @@ public interface TokenApi {
       TenantIdentifier tenantId,
       Map<String, String[]> params,
       String authorizationHeader,
-      String clientCert);
+      String clientCert,
+      RequestAttributes requestAttributes);
 
   TokenIntrospectionResponse inspect(
-      TenantIdentifier tenantIdentifier, Map<String, String[]> params);
+      TenantIdentifier tenantIdentifier,
+      Map<String, String[]> params,
+      RequestAttributes requestAttributes);
 
   TokenRevocationResponse revoke(
       TenantIdentifier tenantId,
       Map<String, String[]> request,
       String authorizationHeader,
-      String clientCert);
+      String clientCert,
+      RequestAttributes requestAttributes);
 }

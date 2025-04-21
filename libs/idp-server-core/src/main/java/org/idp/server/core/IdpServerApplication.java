@@ -45,6 +45,7 @@ import org.idp.server.core.security.SecurityEventPublisher;
 import org.idp.server.core.security.event.CibaFlowEventPublisher;
 import org.idp.server.core.security.event.OAuthFlowEventPublisher;
 import org.idp.server.core.security.event.SecurityEventRepository;
+import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.hook.SecurityEventHooksLoader;
 import org.idp.server.core.tenant.AdminTenantContext;
@@ -162,6 +163,7 @@ public class IdpServerApplication {
         new OAuthFlowEventPublisher(securityEventPublisher);
     CibaFlowEventPublisher cibaFlowEventPublisher =
         new CibaFlowEventPublisher(securityEventPublisher);
+    TokenEventPublisher tokenEventPublisher = new TokenEventPublisher(securityEventPublisher);
 
     OidcSsoExecutors oidcSsoExecutors = OidcSsoExecutorLoader.load();
     FederationDependencyContainer federationDependencyContainer =
@@ -191,7 +193,8 @@ public class IdpServerApplication {
             new TokenEntryService(
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 userRepository,
-                tenantRepository),
+                tenantRepository,
+                tokenEventPublisher),
             TokenApi.class,
             OperationType.WRITE,
             tenantDialectProvider);

@@ -102,7 +102,9 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         flowType: authenticationTransactionResponse.data.authorization_flow,
         id: authenticationTransactionResponse.data.id,
         interactionType: "authentication-device-deny",
+        body: {}
       });
+      console.log(completeResponse.data);
       expect(completeResponse.status).toBe(200);
 
       const tokenResponse = await requestToken({

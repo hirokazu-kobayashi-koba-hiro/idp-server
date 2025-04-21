@@ -2,8 +2,10 @@ package org.idp.server.core.oauth.token;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
+import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -110,7 +112,7 @@ public class AccessToken {
     return authorizationGrant.clientIdentifier();
   }
 
-  public RequestedClientId clientId() {
+  public RequestedClientId requestedClientId() {
     return authorizationGrant.requestedClientId();
   }
 
@@ -136,5 +138,13 @@ public class AccessToken {
 
   public boolean matchThumbprint(ClientCertificationThumbprint thumbprint) {
     return clientCertificationThumbprint.equals(thumbprint);
+  }
+
+  public User user() {
+    return authorizationGrant.user();
+  }
+
+  public Client client() {
+    return authorizationGrant.client();
   }
 }
