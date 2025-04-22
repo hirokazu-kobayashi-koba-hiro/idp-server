@@ -45,9 +45,9 @@ public class MysqlExecutor implements AuthenticationInteractionCommandSqlExecuto
                 UPDATE authentication_interactions
                 SET payload = ?,
                 updated_at = now()
-                WHERE id = ?
+                WHERE authorization_id = ?
                 AND tenant_id =
-                AND type = ?
+                AND interaction_type = ?
                 """;
 
     List<Object> params = new ArrayList<>();

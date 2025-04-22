@@ -20,7 +20,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
         """
             INSERT INTO authentication_interactions (authorization_id, tenant_id, interaction_type, payload)
             VALUES (?, ?, ?, ?::jsonb)
-            ON CONFLICT (authorization_id, type) DO UPDATE SET payload = ?::jsonb, updated_at = now()
+            ON CONFLICT (authorization_id, interaction_type) DO UPDATE SET payload = ?::jsonb, updated_at = now()
             """;
 
     String json = jsonConverter.write(payload);
@@ -45,9 +45,9 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
                 UPDATE authentication_interactions
                 SET payload = ?::jsonb,
                 updated_at = now()
-                WHERE id = ?
+                WHERE authorization_id = ?
                 AND tenant_id = ?
-                AND type = ?
+                AND interaction_type = ?
                 """;
 
     List<Object> params = new ArrayList<>();
