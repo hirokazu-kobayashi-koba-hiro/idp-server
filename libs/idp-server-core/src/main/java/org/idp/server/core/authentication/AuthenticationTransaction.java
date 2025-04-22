@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
@@ -19,6 +20,7 @@ import org.idp.server.core.type.oauth.RequestedClientId;
 public class AuthenticationTransaction {
   AuthorizationIdentifier identifier;
   AuthenticationRequest request;
+  AuthenticationInteractionType lastInteractionType;
   AuthenticationInteractionResults interactionResults;
 
   public static AuthenticationTransaction createOnOAuthFlow(
@@ -41,7 +43,7 @@ public class AuthenticationTransaction {
   private static AuthenticationRequest toAuthenticationRequest(
       Tenant tenant, OAuthRequestResponse requestResponse) {
     AuthorizationRequest authorizationRequest = requestResponse.authorizationRequest();
-    AuthorizationFlow authorizationFlow = AuthorizationFlow.CIBA;
+    AuthorizationFlow authorizationFlow = AuthorizationFlow.OAUTH;
     TenantIdentifier tenantIdentifier = tenant.identifier();
 
     RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
@@ -88,18 +90,57 @@ public class AuthenticationTransaction {
         expiredAt);
   }
 
+  public AuthenticationTransaction update(
+      AuthenticationInteractionRequestResult interactionRequestResult) {
+    Set<AuthenticationInteractionResult> set = interactionResults.toSet();
+
+    AuthenticationRequest updatedRequest =
+        interactionRequestResult.isIdentifyUserEventType()
+            ? request.updateUser(interactionRequestResult)
+            : request;
+    if (interactionResults.contains(interactionRequestResult.interactionTypeName())) {
+
+      AuthenticationInteractionResult foundResult =
+          interactionResults.get(interactionRequestResult.interactionTypeName());
+      AuthenticationInteractionResult updatedInteraction =
+          foundResult.update(interactionRequestResult);
+      set.remove(foundResult);
+      set.add(updatedInteraction);
+
+    } else {
+
+      int successCount = interactionRequestResult.isSuccess() ? 1 : 0;
+      int failureCount = interactionRequestResult.isSuccess() ? 0 : 1;
+      AuthenticationInteractionResult result =
+          new AuthenticationInteractionResult(
+              interactionRequestResult.interactionTypeName(), 1, successCount, failureCount);
+      set.add(result);
+    }
+
+    AuthenticationInteractionType lastInteractionType = interactionRequestResult.type();
+    AuthenticationInteractionResults updatedResults = new AuthenticationInteractionResults(set);
+    return new AuthenticationTransaction(
+        identifier, updatedRequest, lastInteractionType, updatedResults);
+  }
+
   public AuthenticationTransaction() {}
 
   AuthenticationTransaction(AuthorizationIdentifier identifier, AuthenticationRequest request) {
-    this(identifier, request, new AuthenticationInteractionResults());
+    this(
+        identifier,
+        request,
+        new AuthenticationInteractionType(),
+        new AuthenticationInteractionResults());
   }
 
   public AuthenticationTransaction(
       AuthorizationIdentifier identifier,
       AuthenticationRequest request,
+      AuthenticationInteractionType lastInteractionType,
       AuthenticationInteractionResults interactionResults) {
     this.identifier = identifier;
     this.request = request;
+    this.lastInteractionType = lastInteractionType;
     this.interactionResults = interactionResults;
   }
 
@@ -122,6 +163,18 @@ public class AuthenticationTransaction {
     return interactionResults;
   }
 
+  public Set<AuthenticationInteractionResult> interactionResultsAsSet() {
+    return interactionResults.toSet();
+  }
+
+  public AuthenticationInteractionType lastInteractionType() {
+    return lastInteractionType;
+  }
+
+  public AuthenticationInteractionResult lastInteraction() {
+    return interactionResults.get(lastInteractionType.name());
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", identifier.value());
@@ -129,17 +182,26 @@ public class AuthenticationTransaction {
     return map;
   }
 
-  // TODO implement. this is debug code
   public boolean isComplete() {
-    return true;
+    if (request.requiredAnyOfAuthenticationTypes().isEmpty()) {
+      return interactionResults.containsAnySuccess();
+    }
+
+    return request.requiredAnyOfAuthenticationTypes().stream()
+        .anyMatch(required -> interactionResults.contains(required));
   }
 
   // TODO implement. this is debug code
   public boolean isDeny() {
+
     return false;
   }
 
   public boolean exists() {
     return identifier != null && identifier.exists();
+  }
+
+  public boolean hasInteractions() {
+    return interactionResults != null && interactionResults.exists();
   }
 }

@@ -114,6 +114,10 @@ public class CibaFlowEntryService implements CibaFlowApi {
             authenticationTransaction,
             userRepository);
 
+    AuthenticationTransaction updatedTransaction =
+        authenticationTransaction.update(interactionRequestResult);
+    authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
+
     eventPublisher.publish(
         tenant,
         issueResponse.request(),
@@ -151,6 +155,9 @@ public class CibaFlowEntryService implements CibaFlowApi {
             request,
             authenticationTransaction,
             userRepository);
+
+    AuthenticationTransaction updatedTransaction = authenticationTransaction.update(result);
+    authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     eventPublisher.publish(
         tenant,

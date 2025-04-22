@@ -9,6 +9,7 @@ import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.federation.io.FederationRequestResponse;
 import org.idp.server.core.oauth.*;
+import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRegistrator;
@@ -114,7 +115,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
     AuthorizationIdentifier authorizationIdentifier =
-        new AuthorizationIdentifier(authorizationRequestIdentifier.value());
+        authorizationRequestIdentifier.toAuthorizationIdentifier();
     AuthenticationTransaction authenticationTransaction =
         authenticationTransactionQueryRepository.get(tenant, authorizationIdentifier);
 
@@ -126,6 +127,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
             request,
             authenticationTransaction,
             userRepository);
+
+    AuthenticationTransaction updatedTransaction = authenticationTransaction.update(result);
+    authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     if (result.isSuccess()) {
       OAuthSession updated = oAuthSession.didAuthentication(result.user(), result.authentication());
@@ -216,12 +220,22 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
+
+    AuthenticationTransaction authenticationTransaction =
+        authenticationTransactionQueryRepository.get(
+            tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
+
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
 
     User user = session.user();
     OAuthAuthorizeRequest oAuthAuthorizeRequest =
         new OAuthAuthorizeRequest(
-            tenant, authorizationRequestIdentifier.value(), user, session.authentication());
+            tenant,
+            authorizationRequestIdentifier.value(),
+            user,
+            authenticationTransaction.isComplete()
+                ? session.authentication()
+                : new Authentication());
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 

@@ -1,93 +1,65 @@
 package org.idp.server.core.authentication;
 
-import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.oauth.authentication.Authentication;
-import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.security.event.DefaultSecurityEventType;
 
 public class AuthenticationInteractionResult {
 
-  AuthenticationInteractionStatus status;
-  AuthenticationInteractionType type;
-  User user;
-  Authentication authentication;
-  Map<String, Object> response;
-  DefaultSecurityEventType eventType;
+  String type;
+  int callCount;
+  int successCount;
+  int failureCount;
 
   public AuthenticationInteractionResult() {}
 
-  public static AuthenticationInteractionResult clientError(
-      Map<String, Object> response,
-      AuthenticationInteractionType type,
-      DefaultSecurityEventType eventType) {
-    return new AuthenticationInteractionResult(
-        AuthenticationInteractionStatus.CLIENT_ERROR, type, response, eventType);
-  }
-
   public AuthenticationInteractionResult(
-      AuthenticationInteractionStatus status,
-      AuthenticationInteractionType type,
-      Map<String, Object> response,
-      DefaultSecurityEventType eventType) {
-    this.status = status;
+      String type, int callCount, int successCount, int failureCount) {
     this.type = type;
-    this.response = response;
-    this.eventType = eventType;
+    this.callCount = callCount;
+    this.successCount = successCount;
+    this.failureCount = failureCount;
   }
 
-  public AuthenticationInteractionResult(
-      AuthenticationInteractionStatus status,
-      AuthenticationInteractionType type,
-      User user,
-      Authentication authentication,
-      Map<String, Object> response,
-      DefaultSecurityEventType eventType) {
-    this.status = status;
-    this.type = type;
-    this.user = user;
-    this.authentication = authentication;
-    this.response = response;
-    this.eventType = eventType;
-  }
-
-  public AuthenticationInteractionStatus status() {
-    return status;
-  }
-
-  public boolean isSuccess() {
-    return status.isSuccess();
-  }
-
-  public boolean isError() {
-    return status.isError();
-  }
-
-  public AuthenticationInteractionType type() {
+  public String type() {
     return type;
   }
 
-  public User user() {
-    return user;
+  public int callCount() {
+    return callCount;
   }
 
-  public Authentication authentication() {
-    return authentication;
+  public int successCount() {
+    return successCount;
   }
 
-  public Map<String, Object> response() {
-    return response;
+  public int failureCount() {
+    return failureCount;
   }
 
-  public DefaultSecurityEventType eventType() {
-    return eventType;
+  public AuthenticationInteractionResult update(
+      AuthenticationInteractionRequestResult interactionRequestResult) {
+    int increaseSuccessCount = interactionRequestResult.isSuccess() ? 1 : 0;
+    int increaseFailureCount = interactionRequestResult.isSuccess() ? 0 : 1;
+
+    return new AuthenticationInteractionResult(
+        type,
+        callCount + 1,
+        successCount + increaseSuccessCount,
+        failureCount + increaseFailureCount);
   }
 
-  public boolean hasUser() {
-    return Objects.nonNull(user) && user.exists();
+  public boolean exists() {
+    return type != null && !type.isEmpty();
   }
 
-  public boolean hasAuthentication() {
-    return Objects.nonNull(authentication) && authentication.exists();
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    AuthenticationInteractionResult that = (AuthenticationInteractionResult) o;
+    return Objects.equals(type, that.type);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(type);
   }
 }

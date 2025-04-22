@@ -81,6 +81,10 @@ public class AuthenticationInteractionRequestResult {
     return eventType;
   }
 
+  public String interactionTypeName() {
+    return type.name();
+  }
+
   public boolean hasUser() {
     return Objects.nonNull(user) && user.exists();
   }
@@ -91,5 +95,9 @@ public class AuthenticationInteractionRequestResult {
 
   public int statusCode() {
     return this.status.statusCode();
+  }
+
+  public boolean isIdentifyUserEventType() {
+    return eventType.isIdentifyUserEventType();
   }
 }

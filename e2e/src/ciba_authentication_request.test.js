@@ -40,6 +40,19 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
     console.log(authenticationTransactionResponse.data);
     expect(authenticationTransactionResponse.status).toBe(200);
 
+    const failureResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransactionResponse.data.authorization_flow,
+      id: authenticationTransactionResponse.data.id,
+      interactionType: "password-authentication",
+      body: {
+        username: serverConfig.ciba.loginHint,
+        password: "serverConfig.ciba.userCode",
+      }
+    });
+    console.log(failureResponse.data);
+    console.log(failureResponse.status);
+
     const completeResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
       flowType: authenticationTransactionResponse.data.authorization_flow,

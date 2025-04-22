@@ -1,13 +1,10 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.query;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import org.idp.server.core.authentication.AuthenticationInteractionResults;
-import org.idp.server.core.authentication.AuthenticationRequest;
-import org.idp.server.core.authentication.AuthenticationTransaction;
-import org.idp.server.core.authentication.AuthorizationIdentifier;
+import java.util.*;
+import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.AuthorizationFlow;
@@ -38,13 +35,16 @@ public class ModelConverter {
             requiredAnyOfAuthenticationTypes,
             createdAt,
             expiredAt);
-    AuthenticationInteractionResults interactionResults = new AuthenticationInteractionResults();
-    return new AuthenticationTransaction(identifier, request, interactionResults);
+    AuthenticationInteractionType lastInteractionType =
+        new AuthenticationInteractionType(map.get("last_interaction_type"));
+    AuthenticationInteractionResults interactionResults = toAuthenticationInteractionResults(map);
+    return new AuthenticationTransaction(
+        identifier, request, lastInteractionType, interactionResults);
   }
 
   static User toUser(Map<String, String> map) {
-    if (map.containsKey("user") && map.get("user") != null) {
-      return jsonConverter.read(map.get("user"), User.class);
+    if (map.containsKey("user_payload") && map.get("user_payload") != null) {
+      return jsonConverter.read(map.get("user_payload"), User.class);
     }
     return User.notFound();
   }
@@ -55,5 +55,25 @@ public class ModelConverter {
       return jsonConverter.read(map.get("required_any_of_authentication_types"), List.class);
     }
     return List.of();
+  }
+
+  static AuthenticationInteractionResults toAuthenticationInteractionResults(
+      Map<String, String> map) {
+    if (map.containsKey("interactions") && map.get("interactions") != null) {
+
+      JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(map.get("interactions"));
+      Set<AuthenticationInteractionResult> results = new HashSet<>();
+      for (JsonNodeWrapper wrapper : jsonNodeWrapper.elements()) {
+        String type = wrapper.getValueOrEmptyAsString("type");
+        int callCount = wrapper.getValueAsInt("call_count");
+        int successCount = wrapper.getValueAsInt("success_count");
+        int failureCount = wrapper.getValueAsInt("failure_count");
+        results.add(
+            new AuthenticationInteractionResult(type, callCount, successCount, failureCount));
+      }
+      return new AuthenticationInteractionResults(results);
+    }
+
+    return new AuthenticationInteractionResults();
   }
 }

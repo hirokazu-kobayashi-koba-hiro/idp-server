@@ -81,4 +81,8 @@ public enum DefaultSecurityEventType {
   public SecurityEventDescription toEventDescription() {
     return new SecurityEventDescription(description);
   }
+
+  public boolean isIdentifyUserEventType() {
+    return this == user_signup || this == password_success;
+  }
 }

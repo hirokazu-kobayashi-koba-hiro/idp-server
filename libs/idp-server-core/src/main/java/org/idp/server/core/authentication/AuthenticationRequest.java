@@ -89,4 +89,18 @@ public class AuthenticationRequest {
     map.put("expired_at", expiredAt.toString());
     return map;
   }
+
+  public AuthenticationRequest updateUser(
+      AuthenticationInteractionRequestResult interactionRequestResult) {
+    User user = interactionRequestResult.user();
+    return new AuthenticationRequest(
+        authorizationFlow,
+        tenantIdentifier,
+        requestedClientId,
+        user,
+        availableAuthenticationTypes,
+        requiredAnyOfAuthenticationTypes,
+        createdAt,
+        expiredAt);
+  }
 }

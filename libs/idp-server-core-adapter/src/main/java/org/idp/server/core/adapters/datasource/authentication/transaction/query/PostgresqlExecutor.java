@@ -16,7 +16,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
 
     String sqlTemplate =
         """
-            SELECT  authorization_id, tenant_id, authorization_flow, client_id, user_id, user_payload, authentication_device_id, available_authentication_types, required_any_of_authentication_types, created_at, expired_at
+            SELECT  authorization_id, tenant_id, authorization_flow, client_id, user_id, user_payload, authentication_device_id, available_authentication_types, required_any_of_authentication_types, last_interaction_type, interactions, created_at, expired_at
             FROM authentication_transaction
             WHERE authorization_id = ?
             AND tenant_id = ?
@@ -35,7 +35,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
 
     String sqlTemplate =
         """
-                SELECT  authorization_id, tenant_id, authorization_flow, client_id, user_id, user_payload, authentication_device_id, available_authentication_types, required_any_of_authentication_types, created_at, expired_at
+                SELECT  authorization_id, tenant_id, authorization_flow, client_id, user_id, user_payload, authentication_device_id, available_authentication_types, required_any_of_authentication_types, last_interaction_type, interactions, created_at, expired_at
                 FROM authentication_transaction
                 WHERE authentication_device_id = ?
                 AND tenant_id = ?

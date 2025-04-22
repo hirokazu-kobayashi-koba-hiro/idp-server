@@ -129,6 +129,6 @@ public class OAuthRequestResponse {
   }
 
   public boolean isOK() {
-    return status.isOK();
+    return status.isSuccess();
   }
 }
