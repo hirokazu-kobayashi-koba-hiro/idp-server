@@ -4,6 +4,7 @@ import org.idp.server.core.ciba.CibaRequestContext;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.ciba.user.UserHint;
+import org.idp.server.core.ciba.user.UserHintRelatedParams;
 import org.idp.server.core.ciba.user.UserHintType;
 import org.idp.server.core.type.ContentType;
 
@@ -71,5 +72,9 @@ public class CibaRequestResult {
 
   public UserHint userhint() {
     return cibaRequestContext.userHint();
+  }
+
+  public UserHintRelatedParams userHintRelatedParams() {
+    return cibaRequestContext.userHintRelatedParams();
   }
 }

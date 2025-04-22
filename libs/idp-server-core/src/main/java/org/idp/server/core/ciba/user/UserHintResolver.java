@@ -6,5 +6,9 @@ import org.idp.server.core.tenant.Tenant;
 
 public interface UserHintResolver {
 
-  User resolve(Tenant tenant, UserHint userHint, UserRepository userRepository);
+  User resolve(
+      Tenant tenant,
+      UserHint userHint,
+      UserHintRelatedParams userHintRelatedParams,
+      UserRepository userRepository);
 }

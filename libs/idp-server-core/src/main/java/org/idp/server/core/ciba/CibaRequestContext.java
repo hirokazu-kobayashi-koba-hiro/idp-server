@@ -1,10 +1,12 @@
 package org.idp.server.core.ciba;
 
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.basic.jose.JoseContext;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.ciba.user.UserHint;
+import org.idp.server.core.ciba.user.UserHintRelatedParams;
 import org.idp.server.core.ciba.user.UserHintType;
 import org.idp.server.core.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.clientauthenticator.BackchannelRequestParameters;
@@ -191,5 +193,13 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   public UserHint userHint() {
     return backchannelAuthenticationRequest.userHint();
+  }
+
+  public UserHintRelatedParams userHintRelatedParams() {
+    String serverJwks = serverConfiguration.jwks();
+    String clientJwks = clientConfiguration.jwks();
+    String clientSecret = clientConfiguration.clientSecretValue();
+    return new UserHintRelatedParams(
+        Map.of("serverJwks", serverJwks, "clientJwks", clientJwks, "clientSecret", clientSecret));
   }
 }

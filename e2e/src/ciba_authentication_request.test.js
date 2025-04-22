@@ -18,7 +18,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
   const ciba = serverConfig.ciba;
 
   it("success pattern", async () => {
-    const backchannelAuthenticationResponse =
+    let backchannelAuthenticationResponse =
       await requestBackchannelAuthentications({
         endpoint: serverConfig.backchannelAuthenticationEndpoint,
         clientId: clientSecretPostClient.clientId,
@@ -74,6 +74,18 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
     });
     console.log(tokenResponse.data);
     expect(tokenResponse.status).toBe(200);
+
+    backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+      endpoint: serverConfig.backchannelAuthenticationEndpoint,
+      clientId: clientSecretPostClient.clientId,
+      scope: "openid profile phone email" + clientSecretPostClient.scope,
+      bindingMessage: ciba.bindingMessage,
+      userCode: ciba.userCode,
+      idTokenHint: tokenResponse.data.id_token,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    console.log(backchannelAuthenticationResponse.data);
+    expect(backchannelAuthenticationResponse.status).toBe(200);
   });
 
   describe("7. Backchannel Authentication Endpoint", () => {

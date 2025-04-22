@@ -71,7 +71,12 @@ public class CibaFlowEntryService implements CibaFlowApi {
     }
 
     UserHintResolver userHintResolver = this.userHintResolvers.get(requestResult.userHintType());
-    User user = userHintResolver.resolve(tenant, requestResult.userhint(), userRepository);
+    User user =
+        userHintResolver.resolve(
+            tenant,
+            requestResult.userhint(),
+            requestResult.userHintRelatedParams(),
+            userRepository);
 
     if (!user.exists()) {
       eventPublisher.publish(

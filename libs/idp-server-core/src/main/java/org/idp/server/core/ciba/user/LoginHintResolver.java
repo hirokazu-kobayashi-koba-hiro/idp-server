@@ -9,7 +9,11 @@ import org.idp.server.core.type.extension.Pairs;
 public class LoginHintResolver implements UserHintResolver {
 
   @Override
-  public User resolve(Tenant tenant, UserHint userHint, UserRepository userRepository) {
+  public User resolve(
+      Tenant tenant,
+      UserHint userHint,
+      UserHintRelatedParams userHintRelatedParams,
+      UserRepository userRepository) {
     String loginHint = userHint.value();
 
     List<LoginHintMatcher> matchers =
