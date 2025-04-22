@@ -8,7 +8,9 @@ public interface UserRepository {
 
   User get(Tenant tenant, String userId);
 
-  User findBy(Tenant tenant, String email, String providerId);
+  User findByEmail(Tenant tenant, String hint, String providerId);
+
+  User findByPhone(Tenant tenant, String hint, String providerId);
 
   List<User> findList(Tenant tenant, int limit, int offset);
 

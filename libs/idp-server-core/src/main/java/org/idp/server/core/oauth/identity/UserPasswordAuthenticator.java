@@ -18,7 +18,7 @@ public class UserPasswordAuthenticator implements PasswordCredentialsGrantDelega
   }
 
   public User findAndAuthenticate(Tenant tenant, Username username, Password password) {
-    User user = userRepository.findBy(tenant, username.value(), "idp-server");
+    User user = userRepository.findByEmail(tenant, username.value(), "idp-server");
     if (!user.exists()) {
       return User.notFound();
     }

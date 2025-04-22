@@ -30,7 +30,8 @@ export const serverConfig = {
   credentialBatchEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials/batch-requests`,
   enabledSsr: false,
   ciba: {
-    loginHint: "ito.ichiro@gmail.com",
+    loginHint: "email:ito.ichiro@gmail.com,idp-server",
+    username: "ito.ichiro@gmail.com",
     userCode: "successUserCode",
     bindingMessage: "999",
     invalidLoginHint: "invalid",

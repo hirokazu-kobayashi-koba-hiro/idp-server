@@ -133,10 +133,10 @@ CREATE TABLE idp_user
     updated_at                     TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
-    CONSTRAINT uk_tenant_provider_user unique (tenant_id, provider_user_id)
+    CONSTRAINT uk_tenant_provider_user unique (tenant_id, provider_id, provider_user_id)
 );
 
-CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_user_id);
+CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_id, provider_user_id);
 CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
 
 CREATE TABLE idp_user_roles

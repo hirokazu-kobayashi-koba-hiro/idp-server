@@ -86,7 +86,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
     transactionCommandRepository.register(
         tenant, authorizationIdentifier, "email", emailVerificationChallenge);
 
-    User user = userRepository.findBy(tenant, email, "idp-server");
+    User user = userRepository.findByEmail(tenant, email, "idp-server");
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,

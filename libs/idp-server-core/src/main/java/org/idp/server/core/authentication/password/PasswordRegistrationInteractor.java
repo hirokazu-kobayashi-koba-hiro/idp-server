@@ -54,7 +54,7 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
     }
 
     User existingUser =
-        userRepository.findBy(tenant, request.optValueAsString("email", ""), "idp-server");
+        userRepository.findByEmail(tenant, request.optValueAsString("email", ""), "idp-server");
 
     if (existingUser.exists()) {
 

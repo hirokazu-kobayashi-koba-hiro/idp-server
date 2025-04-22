@@ -8,6 +8,8 @@ import org.idp.server.core.ciba.handler.io.*;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.ciba.response.BackchannelAuthenticationErrorResponse;
+import org.idp.server.core.ciba.user.UserHintResolver;
+import org.idp.server.core.ciba.user.UserHintResolvers;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.security.event.CibaFlowEventPublisher;
@@ -23,6 +25,7 @@ import org.idp.server.core.type.security.RequestAttributes;
 public class CibaFlowEntryService implements CibaFlowApi {
 
   CibaProtocols cibaProtocols;
+  UserHintResolvers userHintResolvers;
   AuthenticationInteractors authenticationInteractors;
   UserRepository userRepository;
   TenantRepository tenantRepository;
@@ -39,6 +42,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       CibaFlowEventPublisher eventPublisher) {
     this.cibaProtocols = cibaProtocols;
+    this.userHintResolvers = new UserHintResolvers();
     this.authenticationInteractors = authenticationInteractors;
     this.userRepository = userRepository;
     this.tenantRepository = tenantRepository;
@@ -66,9 +70,8 @@ public class CibaFlowEntryService implements CibaFlowApi {
       return requestResult.toErrorResponse();
     }
 
-    // TODO consider logic on provider-id
-    User user =
-        userRepository.findBy(tenant, requestResult.request().loginHint().value(), "idp-server");
+    UserHintResolver userHintResolver = this.userHintResolvers.get(requestResult.userHintType());
+    User user = userHintResolver.resolve(tenant, requestResult.userhint(), userRepository);
 
     if (!user.exists()) {
       eventPublisher.publish(

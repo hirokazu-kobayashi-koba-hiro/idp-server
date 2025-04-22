@@ -4,6 +4,8 @@ import java.util.List;
 import org.idp.server.core.basic.jose.JoseContext;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.ciba.user.UserHint;
+import org.idp.server.core.ciba.user.UserHintType;
 import org.idp.server.core.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.core.configuration.ClientConfiguration;
@@ -181,5 +183,13 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   public boolean isFapiProfile() {
     return profile().isFapiCiba();
+  }
+
+  public UserHintType userHintType() {
+    return backchannelAuthenticationRequest.userHintType();
+  }
+
+  public UserHint userHint() {
+    return backchannelAuthenticationRequest.userHint();
   }
 }

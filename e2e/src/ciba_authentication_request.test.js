@@ -46,7 +46,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       id: authenticationTransactionResponse.data.id,
       interactionType: "password-authentication",
       body: {
-        username: serverConfig.ciba.loginHint,
+        username: serverConfig.ciba.username,
         password: "serverConfig.ciba.userCode",
       }
     });
@@ -59,7 +59,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       id: authenticationTransactionResponse.data.id,
       interactionType: "password-authentication",
       body: {
-        username: serverConfig.ciba.loginHint,
+        username: serverConfig.ciba.username,
         password: serverConfig.ciba.userCode,
       }
     });

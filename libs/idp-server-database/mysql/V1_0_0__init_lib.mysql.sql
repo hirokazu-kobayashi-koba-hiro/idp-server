@@ -130,12 +130,11 @@ CREATE TABLE idp_user
     created_at                     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at                     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
-    CONSTRAINT uk_tenant_provider_user unique (tenant_id, provider_user_id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    CONSTRAINT uk_tenant_provider_user unique (tenant_id, provider_id, provider_user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_user_id);
-
+CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_id, provider_user_id);
 CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
 
 CREATE TABLE idp_user_roles
@@ -523,14 +522,33 @@ CREATE TABLE authentication_configuration
 
 CREATE INDEX idx_authentication_configuration_type ON authentication_configuration (tenant_id, type);
 
+CREATE TABLE authentication_transaction
+(
+    authorization_id                     CHAR(36)     NOT NULL,
+    tenant_id                            CHAR(36)     NOT NULL,
+    authorization_flow                   VARCHAR(255) NOT NULL,
+    client_id                            VARCHAR(255) NOT NULL,
+    user_id                              CHAR(36),
+    user_payload                         JSON,
+    authentication_device_id             CHAR(36),
+    available_authentication_types       JSON         NOT NULL,
+    required_any_of_authentication_types JSON,
+    last_interaction_type                VARCHAR(255),
+    interactions                         JSON,
+    created_at                           TEXT         NOT NULL,
+    expired_at                           TEXT         NOT NULL,
+    PRIMARY KEY (authorization_id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE authentication_interactions
 (
     authorization_id CHAR(36)                NOT NULL,
     tenant_id        CHAR(36)                NOT NULL,
     interaction_type VARCHAR(255)            NOT NULL,
-    payload          JSON                   NOT NULL,
-    created_at       TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at       TIMESTAMP DEFAULT now() NOT NULL,
+    payload          JSON                    NOT NULL,
+    created_at       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (authorization_id, interaction_type),
     FOREIGN KEY (authorization_id) REFERENCES authentication_transaction (authorization_id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
