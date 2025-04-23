@@ -4,6 +4,7 @@ public enum TokenIntrospectionRequestStatus {
   OK(200),
   BAD_REQUEST(400),
   INVALID_TOKEN(200),
+  EXPIRED_TOKEN(200),
   SERVER_ERROR(500);
 
   int statusCode;
@@ -14,5 +15,13 @@ public enum TokenIntrospectionRequestStatus {
 
   public int statusCode() {
     return statusCode;
+  }
+
+  public boolean isOK() {
+    return this == OK;
+  }
+
+  public boolean isExpired() {
+    return this == EXPIRED_TOKEN;
   }
 }

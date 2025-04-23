@@ -3,10 +3,13 @@ package org.idp.server.core;
 import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
+import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.type.oauth.Subject;
+import org.idp.server.core.type.security.RequestAttributes;
 import org.idp.server.core.userinfo.UserinfoApi;
 import org.idp.server.core.userinfo.UserinfoProtocol;
 import org.idp.server.core.userinfo.UserinfoProtocols;
@@ -20,14 +23,17 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
   UserinfoProtocols userinfoProtocols;
   UserRepository userRepository;
   TenantRepository tenantRepository;
+  TokenEventPublisher eventPublisher;
 
   public UserinfoEntryService(
       UserinfoProtocols userinfoProtocols,
       UserRepository userRepository,
-      TenantRepository tenantRepository) {
+      TenantRepository tenantRepository,
+      TokenEventPublisher eventPublisher) {
     this.userinfoProtocols = userinfoProtocols;
     this.userRepository = userRepository;
     this.tenantRepository = tenantRepository;
+    this.eventPublisher = eventPublisher;
   }
 
   @Override
@@ -36,7 +42,10 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
   }
 
   public UserinfoRequestResponse request(
-      TenantIdentifier tenantIdentifier, String authorizationHeader, String clientCert) {
+      TenantIdentifier tenantIdentifier,
+      String authorizationHeader,
+      String clientCert,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
@@ -45,6 +54,16 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
     UserinfoProtocol userinfoProtocol =
         userinfoProtocols.get(tenant.authorizationProtocolProvider());
 
-    return userinfoProtocol.request(userinfoRequest, this);
+    UserinfoRequestResponse result = userinfoProtocol.request(userinfoRequest, this);
+
+    if (result.isOK()) {
+      eventPublisher.publish(
+          tenant,
+          result.oAuthToken(),
+          DefaultSecurityEventType.userinfo_success,
+          requestAttributes);
+    }
+
+    return result;
   }
 }

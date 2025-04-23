@@ -1,6 +1,8 @@
 package org.idp.server.core.ciba.request;
 
 import org.idp.server.core.ciba.CibaProfile;
+import org.idp.server.core.ciba.user.UserHint;
+import org.idp.server.core.ciba.user.UserHintType;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.*;
@@ -186,5 +188,25 @@ public class BackchannelAuthenticationRequest {
 
   public boolean hasAuthorizationDetails() {
     return authorizationDetails.exists();
+  }
+
+  public UserHintType userHintType() {
+    if (hasIdTokenHint()) {
+      return UserHintType.ID_TOKEN_HINT;
+    }
+    if (hasLoginHintToken()) {
+      return UserHintType.LOGIN_HINT_TOKEN;
+    }
+    return UserHintType.LOGIN_HINT;
+  }
+
+  public UserHint userHint() {
+    if (hasIdTokenHint()) {
+      return new UserHint(idTokenHint.value());
+    }
+    if (hasLoginHintToken()) {
+      return new UserHint(loginHintToken.value());
+    }
+    return new UserHint(loginHint.value());
   }
 }

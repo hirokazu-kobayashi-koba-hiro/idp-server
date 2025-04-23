@@ -3,7 +3,6 @@ package org.idp.server.core.authentication.webauthn;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.authentication.*;
-import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
@@ -23,12 +22,12 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
   }
 
   @Override
-  public AuthenticationInteractionResult interact(
+  public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      OAuthSession oAuthSession,
+      AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
     WebAuthnConfiguration configuration =
@@ -37,12 +36,12 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
     WebAuthnChallenge webAuthnChallenge =
         webAuthnExecutor.challengeRegistration(
-            tenant, authenticationTransactionIdentifier, request, configuration);
+            tenant, authorizationIdentifier, request, configuration);
 
     Map<String, Object> response = new HashMap<>();
     response.put("challenge", webAuthnChallenge.challenge());
 
-    return new AuthenticationInteractionResult(
+    return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
         new User(),

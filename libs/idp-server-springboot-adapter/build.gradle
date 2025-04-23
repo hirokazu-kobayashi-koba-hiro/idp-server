@@ -16,6 +16,7 @@ dependencies {
 	implementation project(':libs:idp-server-core')
 	implementation project(':libs:idp-server-core-adapter')
 	implementation project(':libs:idp-server-webauthn')
+	implementation project(':libs:idp-server-fcm-adapter')
 	implementation 'com.webauthn4j:webauthn4j-core:0.28.5.RELEASE'
 
 	implementation 'org.springframework.boot:spring-boot-starter-web'

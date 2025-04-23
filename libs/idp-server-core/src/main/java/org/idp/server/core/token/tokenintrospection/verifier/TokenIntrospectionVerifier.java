@@ -3,7 +3,7 @@ package org.idp.server.core.token.tokenintrospection.verifier;
 import java.time.LocalDateTime;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.token.tokenintrospection.exception.TokenInvalidException;
+import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequestStatus;
 
 public class TokenIntrospectionVerifier {
 
@@ -13,13 +13,16 @@ public class TokenIntrospectionVerifier {
     this.oAuthToken = oAuthToken;
   }
 
-  public void verify() {
+  public TokenIntrospectionRequestStatus verify() {
+
     if (!oAuthToken.exists()) {
-      throw new TokenInvalidException("not found token");
+      return TokenIntrospectionRequestStatus.INVALID_TOKEN;
     }
     LocalDateTime now = SystemDateTime.now();
     if (oAuthToken.isExpire(now)) {
-      throw new TokenInvalidException("token is expired");
+      return TokenIntrospectionRequestStatus.EXPIRED_TOKEN;
     }
+
+    return TokenIntrospectionRequestStatus.OK;
   }
 }

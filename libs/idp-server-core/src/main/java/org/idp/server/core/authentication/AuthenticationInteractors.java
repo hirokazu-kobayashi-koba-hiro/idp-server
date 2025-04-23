@@ -17,7 +17,8 @@ public class AuthenticationInteractors {
     AuthenticationInteractor interactor = values.get(type);
 
     if (Objects.isNull(interactor)) {
-      throw new MfaInteractorUnSupportedException("No OAuthInteractor found for type " + type);
+      throw new MfaInteractorUnSupportedException(
+          "No OAuthInteractor found for type " + type.name());
     }
 
     return interactor;

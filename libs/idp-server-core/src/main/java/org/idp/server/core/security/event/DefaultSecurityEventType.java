@@ -24,15 +24,31 @@ public enum DefaultSecurityEventType {
   federation_success("Federation success"),
   federation_failure("Federation failed"),
   authorize_failure("Authorize failure"),
-  login("User logged in"),
-  login_with_session("User logged in with a session"),
+  oauth_authorize("OAuth Authorize success"),
+  oauth_authorize_with_session("OAuth Authorize success with a session"),
+  oauth_deny("OAuth Deny success"),
+  issue_token_success("Issue token success"),
+  issue_token_failure("Issue token failure"),
+  refresh_token_success("Refresh token success"),
+  refresh_token_failure("Refresh token failure"),
+  login_success("User logged in"),
   logout("User logged out"),
+  userinfo_success("Userinfo success"),
+  userinfo_failure("Userinfo failure"),
+  inspect_token_success("Inspect token success"),
+  inspect_token_failure("Inspect token failure"),
+  inspect_token_expired("Inspect token expired"),
+  revoke_token_success("Revoke token success"),
+  revoke_token_failure("Revoke token failure"),
+  authentication_device_notification_success("User successfully received a device notification"),
+  authentication_device_notification_cancel("User canceled a device notification"),
+  authentication_device_notification_failure("User failed to receive a device notification"),
   backchannel_authentication_request_success(
       "User successfully authenticated with a backchannel authentication"),
   backchannel_authentication_request_failure(
       "User failed authentication with a backchannel authentication"),
   backchannel_authentication_authorize("User authorized with a backchannel authentication"),
-  getBackchannel_authentication_deny("User denied with a backchannel authentication"),
+  backchannel_authentication_deny("User denied with a backchannel authentication"),
   password_reset("User reset their password"),
   password_change("User changed their password"),
   application_create("Application was created"),
@@ -50,13 +66,7 @@ public enum DefaultSecurityEventType {
   user_delete("User account was deleted"),
   member_invite("A member was invited to the organization"),
   member_join("A member joined the organization"),
-  member_leave("A member left the organization"),
-  subscription_start("A new subscription started"),
-  subscription_suspend("A subscription was suspended"),
-  subscription_end("A subscription ended"),
-  subscription_change("Subscription details were changed"),
-  subscription_add("An additional subscription was added"),
-  ;
+  member_leave("A member left the organization");
 
   String description;
 
@@ -70,5 +80,9 @@ public enum DefaultSecurityEventType {
 
   public SecurityEventDescription toEventDescription() {
     return new SecurityEventDescription(description);
+  }
+
+  public boolean isIdentifyUserEventType() {
+    return this == user_signup || this == password_success;
   }
 }

@@ -28,11 +28,16 @@ public class TokenIntrospectionHandler {
 
     OAuthToken oAuthToken = find(request);
     TokenIntrospectionVerifier verifier = new TokenIntrospectionVerifier(oAuthToken);
-    verifier.verify();
+    TokenIntrospectionRequestStatus verifiedStatus = verifier.verify();
+
+    if (!verifiedStatus.isOK()) {
+      Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
+      return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
+    }
 
     Map<String, Object> contents =
         TokenIntrospectionContentsCreator.createSuccessContents(oAuthToken);
-    return new TokenIntrospectionResponse(TokenIntrospectionRequestStatus.OK, oAuthToken, contents);
+    return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
   }
 
   OAuthToken find(TokenIntrospectionRequest request) {

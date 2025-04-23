@@ -2,6 +2,9 @@ package org.idp.server.core;
 
 import org.idp.server.core.admin.*;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
+import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiers;
+import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiersLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
 import org.idp.server.core.basic.crypto.AesCipher;
@@ -44,6 +47,7 @@ import org.idp.server.core.security.SecurityEventPublisher;
 import org.idp.server.core.security.event.CibaFlowEventPublisher;
 import org.idp.server.core.security.event.OAuthFlowEventPublisher;
 import org.idp.server.core.security.event.SecurityEventRepository;
+import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.hook.SecurityEventHooksLoader;
 import org.idp.server.core.tenant.AdminTenantContext;
@@ -63,6 +67,7 @@ public class IdpServerApplication {
   OidcMetaDataApi oidcMetaDataApi;
   UserinfoApi userinfoApi;
   CibaFlowApi cibaFlowApi;
+  AuthenticationDeviceApi authenticationDeviceApi;
   SecurityEventApi securityEventApi;
   OnboardingApi onboardingApi;
   ServerManagementApi serverManagementApi;
@@ -103,6 +108,11 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(OrganizationRepository.class);
     TenantRepository tenantRepository =
         applicationComponentContainer.resolve(TenantRepository.class);
+    AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository =
+        applicationComponentContainer.resolve(AuthenticationTransactionCommandRepository.class);
+    AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository =
+        applicationComponentContainer.resolve(AuthenticationTransactionQueryRepository.class);
+
     RoleCommandRepository roleCommandRepository =
         applicationComponentContainer.resolve(RoleCommandRepository.class);
     PermissionCommandRepository permissionCommandRepository =
@@ -131,6 +141,10 @@ public class IdpServerApplication {
     WebAuthnExecutors webAuthnExecutors =
         WebAuthnExecutorLoader.load(authenticationDependencyContainer);
     authenticationDependencyContainer.register(WebAuthnExecutors.class, webAuthnExecutors);
+    AuthenticationDeviceNotifiers authenticationDeviceNotifiers =
+        AuthenticationDeviceNotifiersLoader.load();
+    authenticationDependencyContainer.register(
+        AuthenticationDeviceNotifiers.class, authenticationDeviceNotifiers);
 
     AuthenticationInteractors authenticationInteractors =
         AuthenticationInteractorLoader.load(authenticationDependencyContainer);
@@ -155,6 +169,7 @@ public class IdpServerApplication {
         new OAuthFlowEventPublisher(securityEventPublisher);
     CibaFlowEventPublisher cibaFlowEventPublisher =
         new CibaFlowEventPublisher(securityEventPublisher);
+    TokenEventPublisher tokenEventPublisher = new TokenEventPublisher(securityEventPublisher);
 
     OidcSsoExecutors oidcSsoExecutors = OidcSsoExecutorLoader.load();
     FederationDependencyContainer federationDependencyContainer =
@@ -172,6 +187,8 @@ public class IdpServerApplication {
                 federationInteractors,
                 userRepository,
                 tenantRepository,
+                authenticationTransactionCommandRepository,
+                authenticationTransactionQueryRepository,
                 oAuthFLowEventPublisher),
             OAuthFlowApi.class,
             OperationType.WRITE,
@@ -182,7 +199,8 @@ public class IdpServerApplication {
             new TokenEntryService(
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 userRepository,
-                tenantRepository),
+                tenantRepository,
+                tokenEventPublisher),
             TokenApi.class,
             OperationType.WRITE,
             tenantDialectProvider);
@@ -201,7 +219,8 @@ public class IdpServerApplication {
             new UserinfoEntryService(
                 new UserinfoProtocols(protocolContainer.resolveAll(UserinfoProtocol.class)),
                 userRepository,
-                tenantRepository),
+                tenantRepository,
+                tokenEventPublisher),
             UserinfoApi.class,
             OperationType.WRITE,
             tenantDialectProvider);
@@ -210,11 +229,22 @@ public class IdpServerApplication {
         TenantAwareEntryServiceProxy.createProxy(
             new CibaFlowEntryService(
                 new CibaProtocols(protocolContainer.resolveAll(CibaProtocol.class)),
+                authenticationInteractors,
                 userRepository,
                 tenantRepository,
+                authenticationTransactionCommandRepository,
+                authenticationTransactionQueryRepository,
                 cibaFlowEventPublisher),
             CibaFlowApi.class,
             OperationType.WRITE,
+            tenantDialectProvider);
+
+    this.authenticationDeviceApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AuthenticationDeviceEntryService(
+                tenantRepository, authenticationTransactionQueryRepository),
+            AuthenticationDeviceApi.class,
+            OperationType.READ,
             tenantDialectProvider);
 
     this.securityEventApi =
@@ -287,6 +317,10 @@ public class IdpServerApplication {
 
   public CibaFlowApi cibaFlowApi() {
     return cibaFlowApi;
+  }
+
+  public AuthenticationDeviceApi authenticationDeviceApi() {
+    return authenticationDeviceApi;
   }
 
   public SecurityEventApi securityEventApi() {

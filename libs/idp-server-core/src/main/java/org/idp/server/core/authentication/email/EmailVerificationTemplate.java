@@ -2,14 +2,14 @@ package org.idp.server.core.authentication.email;
 
 import org.idp.server.core.basic.json.JsonReadable;
 
-public class EmailTemplate implements JsonReadable {
+public class EmailVerificationTemplate implements JsonReadable {
 
   String subject;
   String body;
 
-  public EmailTemplate() {}
+  public EmailVerificationTemplate() {}
 
-  public EmailTemplate(String subject, String body) {
+  public EmailVerificationTemplate(String subject, String body) {
     this.subject = subject;
     this.body = body;
   }

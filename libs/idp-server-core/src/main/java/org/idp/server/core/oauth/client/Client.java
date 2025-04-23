@@ -22,4 +22,8 @@ public class Client {
   public boolean exists() {
     return identifier != null && !identifier.exists();
   }
+
+  public String nameValue() {
+    return name.value();
+  }
 }

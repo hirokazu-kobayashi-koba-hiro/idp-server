@@ -1,13 +1,13 @@
-package org.idp.server.core.authentication;
+package org.idp.server.core.notification.device;
 
 import java.util.Objects;
 
-public class AuthenticationTransactionIdentifier {
+public class NotificationToken {
   String value;
 
-  public AuthenticationTransactionIdentifier() {}
+  public NotificationToken() {}
 
-  public AuthenticationTransactionIdentifier(String value) {
+  public NotificationToken(String value) {
     this.value = value;
   }
 
@@ -18,12 +18,16 @@ public class AuthenticationTransactionIdentifier {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    AuthenticationTransactionIdentifier that = (AuthenticationTransactionIdentifier) o;
+    NotificationToken that = (NotificationToken) o;
     return Objects.equals(value, that.value);
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(value);
+  }
+
+  public boolean exists() {
+    return value != null && !value.isEmpty();
   }
 }

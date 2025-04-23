@@ -9,7 +9,8 @@ public enum StandardAuthenticationInteraction {
   WEBAUTHN_REGISTRATION("webauthn-registration"),
   WEBAUTHN_AUTHENTICATION_CHALLENGE("webauthn-authentication-challenge"),
   WEBAUTHN_AUTHENTICATION("webauthn-authentication"),
-  ;
+  AUTHENTICATION_DEVICE_NOTIFICATION("authentication-device-notification"),
+  FIDO_UAF("fido-uaf");
 
   String type;
 

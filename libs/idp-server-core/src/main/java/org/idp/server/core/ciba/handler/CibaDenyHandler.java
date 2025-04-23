@@ -6,10 +6,10 @@ import org.idp.server.core.ciba.handler.io.CibaDenyRequest;
 import org.idp.server.core.ciba.handler.io.CibaDenyResponse;
 import org.idp.server.core.ciba.handler.io.CibaDenyStatus;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
+import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.ciba.AuthReqId;
 
 public class CibaDenyHandler {
 
@@ -27,11 +27,13 @@ public class CibaDenyHandler {
   }
 
   public CibaDenyResponse handle(CibaDenyRequest request) {
-    AuthReqId authReqId = request.toAuthReqId();
+    BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier =
+        request.backchannelAuthenticationRequestIdentifier();
     Tenant tenant = request.tenant();
     serverConfigurationRepository.get(tenant);
 
-    CibaGrant cibaGrant = cibaGrantRepository.find(tenant, authReqId);
+    CibaGrant cibaGrant =
+        cibaGrantRepository.get(tenant, backchannelAuthenticationRequestIdentifier);
     CibaGrant updated = cibaGrant.update(CibaGrantStatus.access_denied);
     cibaGrantRepository.update(tenant, updated);
 

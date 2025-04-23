@@ -12,6 +12,8 @@ public interface UserSqlExecutor {
 
   Map<String, String> selectByEmail(Tenant tenant, String email, String providerId);
 
+  Map<String, String> selectByPhone(Tenant tenant, String phone, String providerId);
+
   List<Map<String, String>> selectList(Tenant tenant, int limit, int offset);
 
   void update(Tenant tenant, User user);

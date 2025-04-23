@@ -6,6 +6,8 @@ import java.util.*;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.json.JsonReadable;
 import org.idp.server.core.basic.vc.Credential;
+import org.idp.server.core.oauth.identity.device.AuthenticationDevice;
+import org.idp.server.core.oauth.identity.device.AuthenticationDevices;
 import org.idp.server.core.type.extension.CustomProperties;
 
 public class User implements JsonReadable, Serializable {
@@ -34,6 +36,7 @@ public class User implements JsonReadable, Serializable {
   LocalDateTime updatedAt;
   String hashedPassword;
   String rawPassword;
+  List<AuthenticationDevice> authenticationDevices = new ArrayList<>();
   HashMap<String, Object> customProperties = new HashMap<>();
   List<HashMap<String, Object>> credentials = new ArrayList<>();
   HashMap<String, Object> multiFactorAuthentication = new HashMap<>();
@@ -288,6 +291,33 @@ public class User implements JsonReadable, Serializable {
     return this;
   }
 
+  public AuthenticationDevices authenticationDevices() {
+    return new AuthenticationDevices(authenticationDevices);
+  }
+
+  public AuthenticationDevice getPrimaryAuthenticationDevice() {
+    return authenticationDevices.stream()
+        .filter(AuthenticationDevice::isPreferredForNotification)
+        .findFirst()
+        .orElseThrow(() -> new RuntimeException("Primary authentication device not found"));
+  }
+
+  public List<AuthenticationDevice> authenticationDevicesAsList() {
+    return authenticationDevices;
+  }
+
+  public AuthenticationDevice findPreferredForNotification() {
+    return authenticationDevices.stream()
+        .filter(AuthenticationDevice::isPreferredForNotification)
+        .findFirst()
+        .orElse(new AuthenticationDevice());
+  }
+
+  public User setAuthenticationDevices(List<AuthenticationDevice> authenticationDevices) {
+    this.authenticationDevices = authenticationDevices;
+    return this;
+  }
+
   public boolean exists() {
     return Objects.nonNull(sub) && !sub.isEmpty();
   }
@@ -441,6 +471,10 @@ public class User implements JsonReadable, Serializable {
     return permissions != null && !permissions.isEmpty();
   }
 
+  public boolean hasAuthenticationDevices() {
+    return authenticationDevices != null && !authenticationDevices.isEmpty();
+  }
+
   public UserStatus status() {
     return status;
   }
@@ -486,6 +520,7 @@ public class User implements JsonReadable, Serializable {
       map.put("multi_factor_authentication", multiFactorAuthentication);
     if (hasRoles()) map.put("roles", roles);
     if (hasPermissions()) map.put("permissions", permissions);
+    if (hasAuthenticationDevices()) map.put("authentication_devices", authenticationDevices);
     if (exists()) map.put("status", status.name());
 
     return map;

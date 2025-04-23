@@ -38,7 +38,7 @@ public class UserManagementEntryService implements UserManagementApi {
   @Override
   public User findBy(TenantIdentifier tenantIdentifier, String email, String providerId) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    return userRepository.findBy(tenant, email, providerId);
+    return userRepository.findByEmail(tenant, email, providerId);
   }
 
   @Override

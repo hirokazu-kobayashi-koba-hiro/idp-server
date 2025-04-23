@@ -5,7 +5,6 @@ import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.http.*;
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
@@ -26,12 +25,12 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
   }
 
   @Override
-  public AuthenticationInteractionResult interact(
+  public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      OAuthSession oAuthSession,
+      AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
     LegacyIdServiceAuthenticationConfiguration configuration =
@@ -52,7 +51,7 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
 
     if (authenticationResult.isError()) {
 
-      return new AuthenticationInteractionResult(
+      return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,
           type,
           authenticationResult.toMap(),
@@ -96,7 +95,7 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
     result.put("user", user.toMap());
     result.put("authentication", authentication.toMap());
 
-    return new AuthenticationInteractionResult(
+    return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
         user,

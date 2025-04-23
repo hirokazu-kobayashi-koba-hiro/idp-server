@@ -1,5 +1,6 @@
 package org.idp.server.core.oauth.io;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.configuration.ClientConfiguration;
@@ -7,6 +8,7 @@ import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
+import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.AuthorizationErrorResponse;
 import org.idp.server.core.oauth.response.AuthorizationResponse;
 import org.idp.server.core.type.oauth.Error;
@@ -88,6 +90,10 @@ public class OAuthRequestResponse {
     return authorizationRequest.identifier().value();
   }
 
+  public AuthorizationRequestIdentifier authorizationRequestIdentifier() {
+    return authorizationRequest.identifier();
+  }
+
   public List<String> scopeList() {
     return authorizationRequest.scopes().toStringList();
   }
@@ -102,5 +108,27 @@ public class OAuthRequestResponse {
 
   public String sessionKey() {
     return sessionKey;
+  }
+
+  public List<String> availableAuthenticationTypes() {
+    return serverConfiguration.availableAuthenticationMethods();
+  }
+
+  public List<String> requiredAnyOfAuthenticationTypes() {
+    List<String> methods = new ArrayList<>();
+    if (authorizationRequest.isFapiProfile()) {
+      methods.add("webauthn");
+      methods.add("fido-uaf");
+      methods.add("fido2");
+    }
+    return methods;
+  }
+
+  public int oauthAuthorizationRequestExpiresIn() {
+    return serverConfiguration.oauthAuthorizationRequestExpiresIn();
+  }
+
+  public boolean isOK() {
+    return status.isSuccess();
   }
 }

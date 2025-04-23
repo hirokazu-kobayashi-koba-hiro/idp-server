@@ -2,6 +2,7 @@ package org.idp.server.core.token.handler.token.io;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.TokenErrorResponse;
 import org.idp.server.core.token.TokenResponse;
@@ -9,12 +10,14 @@ import org.idp.server.core.token.TokenResponseBuilder;
 
 public class TokenRequestResponse {
   TokenRequestStatus status;
+  OAuthToken oAuthToken;
   TokenResponse tokenResponse;
   TokenErrorResponse errorResponse;
   Map<String, String> headers;
 
   public TokenRequestResponse(TokenRequestStatus status, OAuthToken oAuthToken) {
     this.status = status;
+    this.oAuthToken = oAuthToken;
     this.tokenResponse =
         new TokenResponseBuilder()
             .add(oAuthToken.accessTokenEntity())
@@ -57,6 +60,10 @@ public class TokenRequestResponse {
     return headers;
   }
 
+  public OAuthToken oAuthToken() {
+    return oAuthToken;
+  }
+
   public TokenResponse tokenResponse() {
     return tokenResponse;
   }
@@ -71,5 +78,29 @@ public class TokenRequestResponse {
 
   public int statusCode() {
     return status.statusCode();
+  }
+
+  public boolean isOK() {
+    return status.isOK();
+  }
+
+  public boolean hasIdToken() {
+    return oAuthToken.hasIdToken();
+  }
+
+  public DefaultSecurityEventType securityEventType(TokenRequest tokenRequest) {
+    if (!isOK()) {
+      return DefaultSecurityEventType.issue_token_failure;
+    }
+
+    if (hasIdToken()) {
+      return DefaultSecurityEventType.login_success;
+    }
+
+    if (tokenRequest.isRefreshTokenGrant()) {
+      return DefaultSecurityEventType.refresh_token_success;
+    }
+
+    return DefaultSecurityEventType.issue_token_success;
   }
 }

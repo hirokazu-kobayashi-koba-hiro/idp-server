@@ -35,7 +35,7 @@ public class OAuthDenyHandler {
 
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
-    RequestedClientId requestedClientId = authorizationRequest.clientId();
+    RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tenant, requestedClientId);

@@ -3,8 +3,8 @@ package org.idp.server.core.authentication.webauthn;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.authentication.*;
-import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
@@ -22,12 +22,12 @@ public class WebAuthnAuthenticationChallengeInteractor implements Authentication
   }
 
   @Override
-  public AuthenticationInteractionResult interact(
+  public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      OAuthSession oAuthSession,
+      AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
     WebAuthnConfiguration configuration =
@@ -36,15 +36,15 @@ public class WebAuthnAuthenticationChallengeInteractor implements Authentication
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
     WebAuthnChallenge webAuthnChallenge =
         webAuthnExecutor.challengeAuthentication(
-            tenant, authenticationTransactionIdentifier, request, configuration);
+            tenant, authorizationIdentifier, request, configuration);
 
     Map<String, Object> response = new HashMap<>();
     response.put("challenge", webAuthnChallenge.challenge());
 
-    return new AuthenticationInteractionResult(
+    return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
-        oAuthSession.user(),
+        new User(),
         new Authentication(),
         response,
         DefaultSecurityEventType.webauthn_authentication_challenge);

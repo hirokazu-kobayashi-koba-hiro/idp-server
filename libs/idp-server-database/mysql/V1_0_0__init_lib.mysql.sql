@@ -1,31 +1,34 @@
 CREATE TABLE organization
 (
-    id          CHAR(36)                           NOT NULL PRIMARY KEY,
+    id          CHAR(36)                           NOT NULL,
     name        VARCHAR(255)                       NOT NULL,
     description TEXT,
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
+    updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE tenant
 (
-    id         CHAR(36)     NOT NULL PRIMARY KEY,
+    id         CHAR(36)     NOT NULL,
     name       VARCHAR(255) NOT NULL,
     type       VARCHAR(10)  NOT NULL,
     domain     TEXT         NOT NULL,
     attributes JSON,
     created_at DATETIME     NOT NULL DEFAULT now(),
-    updated_at DATETIME     NOT NULL DEFAULT now()
+    updated_at DATETIME     NOT NULL DEFAULT now(),
+    PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- CREATE UNIQUE INDEX unique_admin_tenant ON tenant (type) WHERE type = 'ADMIN';
 
 CREATE TABLE organization_tenants
 (
-    id              CHAR(36)               NOT NULL PRIMARY KEY,
+    id              CHAR(36)               NOT NULL,
     organization_id CHAR(36)               NOT NULL,
     tenant_id       CHAR(36)               NOT NULL,
     assigned_at     DATETIME DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
     UNIQUE (organization_id, tenant_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
@@ -33,34 +36,37 @@ CREATE TABLE organization_tenants
 
 CREATE TABLE server_configuration
 (
-    tenant_id    CHAR(36)                           NOT NULL PRIMARY KEY,
+    tenant_id    CHAR(36)                           NOT NULL,
     token_issuer TEXT                               NOT NULL,
     payload      JSON                               NOT NULL,
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (tenant_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE permission
 (
-    id          CHAR(36)                           NOT NULL PRIMARY KEY,
+    id          CHAR(36)                           NOT NULL,
     tenant_id   CHAR(36)                           NOT NULL,
     name        VARCHAR(255)                       NOT NULL UNIQUE,
     description TEXT,
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
     CONSTRAINT uk_tenant_permission UNIQUE (tenant_id, name),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE role
 (
-    id          CHAR(36)                           NOT NULL PRIMARY KEY,
+    id          CHAR(36)                           NOT NULL,
     tenant_id   CHAR(36)                           NOT NULL,
     name        VARCHAR(255)                       NOT NULL,
     description VARCHAR(255),
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
     CONSTRAINT uk_tenant_role UNIQUE (tenant_id, name),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -69,10 +75,11 @@ CREATE INDEX idx_role_tenant_name ON role (tenant_id, name);
 
 CREATE TABLE role_permission
 (
-    id            CHAR(36) PRIMARY KEY,
+    id            CHAR(36)               NOT NULL,
     role_id       CHAR(36)               NOT NULL,
     permission_id CHAR(36)               NOT NULL,
     created_at    DATETIME DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
     UNIQUE (role_id, permission_id),
     FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE,
     FOREIGN KEY (permission_id) REFERENCES permission (id) ON DELETE CASCADE
@@ -92,7 +99,7 @@ FROM role_permission rp
 
 CREATE TABLE idp_user
 (
-    id                             CHAR(36)                           NOT NULL PRIMARY KEY,
+    id                             CHAR(36)                           NOT NULL,
     tenant_id                      CHAR(36)                           NOT NULL,
     provider_id                    VARCHAR(255)                       NOT NULL,
     provider_user_id               VARCHAR(255)                       NOT NULL,
@@ -122,32 +129,36 @@ CREATE TABLE idp_user
     status                         VARCHAR(255)                       NOT NULL,
     created_at                     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at                     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT uk_tenant_provider_user unique (tenant_id, provider_user_id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    CONSTRAINT uk_tenant_provider_user unique (tenant_id, provider_id, provider_user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_user_id);
-
+CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_id, provider_user_id);
 CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
 
 CREATE TABLE idp_user_roles
 (
-    id          CHAR(36) PRIMARY KEY,
-    user_id     CHAR(36)               NOT NULL REFERENCES idp_user (id) ON DELETE CASCADE,
-    role_id     CHAR(36)               NOT NULL REFERENCES role (id) ON DELETE CASCADE,
+    id          CHAR(36)               NOT NULL,
+    user_id     CHAR(36)               NOT NULL,
+    role_id     CHAR(36)               NOT NULL,
     assigned_at DATETIME DEFAULT now() NOT NULL,
-    UNIQUE (user_id, role_id)
+    PRIMARY KEY (id),
+    UNIQUE (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_idp_user_roles_user_role ON idp_user_roles (user_id, role_id);
 
 CREATE TABLE user_permission_override
 (
-    id            CHAR(36) PRIMARY KEY,
+    id            CHAR(36)               NOT NULL,
     user_id       CHAR(36)               NOT NULL,
     permission_id CHAR(36)               NOT NULL,
     granted       TINYINT(1)                            NOT NULL,
     created_at    DATETIME DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
     UNIQUE (user_id, permission_id),
     FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
     FOREIGN KEY (permission_id) REFERENCES permission (id) ON DELETE CASCADE
@@ -183,11 +194,12 @@ WHERE ovr.granted = true;
 
 CREATE TABLE organization_members
 (
-    id              CHAR(36) PRIMARY KEY,
+    id              CHAR(36)               NOT NULL,
     idp_user_id     CHAR(36)               NOT NULL,
     organization_id VARCHAR(255)           NOT NULL,
     role            VARCHAR(100)           NOT NULL,
     joined_at       DATETIME DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
     UNIQUE (idp_user_id, organization_id),
     FOREIGN KEY (idp_user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
     FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
@@ -195,22 +207,24 @@ CREATE TABLE organization_members
 
 CREATE TABLE idp_user_current_organization
 (
-    idp_user_id     CHAR(36) PRIMARY KEY,
+    idp_user_id     CHAR(36)                           NOT NULL,
     organization_id CHAR(36)                           NOT NULL,
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (idp_user_id),
     FOREIGN KEY (idp_user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
     FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE client_configuration
 (
-    id         CHAR(36)                           NOT NULL PRIMARY KEY,
+    id         CHAR(36)                           NOT NULL,
     id_alias   VARCHAR(255),
     tenant_id  CHAR(36)                           NOT NULL,
     payload    JSON                               NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
     CONSTRAINT uk_client_configuration_alias unique (id_alias, tenant_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -219,7 +233,7 @@ CREATE INDEX idx_client_configuration_alias ON client_configuration (id_alias, t
 
 CREATE TABLE authorization_request
 (
-    id                    CHAR(36)                           NOT NULL PRIMARY KEY,
+    id                    CHAR(36)                           NOT NULL,
     tenant_id             CHAR(36)                           NOT NULL,
     profile               VARCHAR(255)                       NOT NULL,
     scopes                TEXT                               NOT NULL,
@@ -245,12 +259,13 @@ CREATE TABLE authorization_request
     authorization_details JSON,
     custom_params         JSON                               NOT NULL,
     created_at            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE authorization_code_grant
 (
-    authorization_request_id CHAR(36)                           NOT NULL PRIMARY KEY,
+    authorization_request_id CHAR(36)                           NOT NULL,
     tenant_id                CHAR(36)                           NOT NULL,
     authorization_code       VARCHAR(255)                       NOT NULL,
     user_id                  CHAR(36)                           NOT NULL,
@@ -266,10 +281,8 @@ CREATE TABLE authorization_code_grant
     expired_at               TEXT                               NOT NULL,
     consent_claims           JSON,
     created_at               DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT fk_authorization_code_grant_authorization_request_id
-        FOREIGN KEY (authorization_request_id)
-            REFERENCES authorization_request (id)
-            ON DELETE CASCADE,
+    PRIMARY KEY (authorization_request_id),
+    FOREIGN KEY (authorization_request_id) REFERENCES authorization_request (id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -277,7 +290,7 @@ CREATE INDEX idx_auth_code_grant_code ON authorization_code_grant (authorization
 
 CREATE TABLE oauth_token
 (
-    id                              CHAR(36)                           NOT NULL PRIMARY KEY,
+    id                              CHAR(36)                           NOT NULL,
     tenant_id                       CHAR(36)                           NOT NULL,
     token_issuer                    TEXT                               NOT NULL,
     token_type                      VARCHAR(10)                        NOT NULL,
@@ -307,6 +320,7 @@ CREATE TABLE oauth_token
     consent_claims                  JSON,
     created_at                      DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at                      DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -316,7 +330,7 @@ CREATE INDEX idx_oauth_token_hashed_refresh_token ON oauth_token (tenant_id, has
 
 CREATE TABLE backchannel_authentication_request
 (
-    id                        CHAR(36)                           NOT NULL PRIMARY KEY,
+    id                        CHAR(36)                           NOT NULL,
     tenant_id                 CHAR(36)                           NOT NULL,
     profile                   VARCHAR(255)                       NOT NULL,
     delivery_mode             VARCHAR(10)                        NOT NULL,
@@ -333,12 +347,13 @@ CREATE TABLE backchannel_authentication_request
     request_object            TEXT,
     authorization_details     JSON,
     created_at                DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE ciba_grant
 (
-    backchannel_authentication_request_id CHAR(36)                           NOT NULL PRIMARY KEY,
+    backchannel_authentication_request_id CHAR(36)                           NOT NULL,
     tenant_id                             CHAR(36)                           NOT NULL,
     auth_req_id                           VARCHAR(255)                       NOT NULL,
     expired_at                            TEXT                               NOT NULL,
@@ -356,10 +371,8 @@ CREATE TABLE ciba_grant
     authorization_details                 JSON,
     consent_claims                        JSON,
     created_at                            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT fk_ciba_grant_backchannel_authentication_request_id
-        FOREIGN KEY (backchannel_authentication_request_id)
-            REFERENCES backchannel_authentication_request (id)
-            ON DELETE CASCADE,
+    PRIMARY KEY (backchannel_authentication_request_id),
+    FOREIGN KEY (backchannel_authentication_request_id) REFERENCES backchannel_authentication_request (id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -367,7 +380,7 @@ CREATE INDEX idx_ciba_grant_auth_req ON ciba_grant (auth_req_id);
 
 CREATE TABLE authorization_granted
 (
-    id                    CHAR(36)                           NOT NULL PRIMARY KEY,
+    id                    CHAR(36)                           NOT NULL,
     tenant_id             CHAR(36)                           NOT NULL,
     user_id               CHAR(36)                           NOT NULL,
     user_payload          JSON                               NOT NULL,
@@ -383,6 +396,7 @@ CREATE TABLE authorization_granted
     created_at            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     revoked_at            DATETIME,
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -390,7 +404,7 @@ CREATE INDEX idx_authorization_granted_tenant_client_user ON authorization_grant
 
 CREATE TABLE verifiable_credential_transaction
 (
-    transaction_id        VARCHAR(255)                       NOT NULL,
+    id                    VARCHAR(255)                       NOT NULL,
     tenant_id             CHAR(36)                           NOT NULL,
     credential_issuer     TEXT                               NOT NULL,
     client_id             VARCHAR(255)                       NOT NULL,
@@ -399,12 +413,13 @@ CREATE TABLE verifiable_credential_transaction
     status                VARCHAR(10)                        NOT NULL,
     created_at            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE security_event
 (
-    id          CHAR(36) PRIMARY KEY,
+    id          CHAR(36)     NOT NULL,
     type        VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
     tenant_id   CHAR(36)     NOT NULL,
@@ -418,6 +433,7 @@ CREATE TABLE security_event
     user_agent  TEXT,
     detail      JSON         NOT NULL,
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -434,12 +450,13 @@ CREATE INDEX idx_events_created_at ON security_event (created_at);
 
 CREATE TABLE security_event_notifications
 (
-    id          CHAR(36) PRIMARY KEY,
+    id          CHAR(36)     NOT NULL,
     event_id    CHAR(36)     NOT NULL,
     alert_type  VARCHAR(100) NOT NULL,
     channel     VARCHAR(50)  NOT NULL,
     status      VARCHAR(50)  NOT NULL,
-    notified_at DATETIME     NOT NULL
+    notified_at DATETIME     NOT NULL,
+    PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_security_event_notifications_event_id ON security_event_notifications (event_id);
@@ -448,13 +465,14 @@ CREATE INDEX idx_security_event_notifications_alert_type ON security_event_notif
 
 CREATE TABLE security_event_hook_configuration
 (
-    id              CHAR(36)               NOT NULL PRIMARY KEY,
+    id              CHAR(36)               NOT NULL,
     tenant_id       CHAR(36)               NOT NULL,
     payload         JSON                   NOT NULL,
     execution_order INTEGER                NOT NULL DEFAULT 0,
     enabled         TINYINT(1)  NOT NULL DEFAULT TRUE,
     created_at      DATETIME DEFAULT now() NOT NULL,
     updated_at      DATETIME DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -464,13 +482,14 @@ CREATE INDEX idx_security_event_hook_configuration_order ON security_event_hook_
 
 CREATE TABLE federation_configurations
 (
-    id                CHAR(36)                           NOT NULL PRIMARY KEY,
+    id                CHAR(36)                           NOT NULL,
     tenant_id         CHAR(36)                           NOT NULL,
     type              VARCHAR(255)                       NOT NULL,
     sso_provider_name VARCHAR(255)                       NOt NULL,
     payload           JSON                               NOT NULL,
     created_at        DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at        DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
     CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider_name),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -481,32 +500,56 @@ CREATE INDEX idx_federation_configurations_type_sso_provider_name ON federation_
 
 CREATE TABLE federation_sso_session
 (
-    id         CHAR(36)                           NOT NULL PRIMARY KEY,
+    id         CHAR(36)                           NOT NULL,
     payload    JSON                               NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE authentication_configuration
 (
-    id         CHAR(36)                           NOT NULL PRIMARY KEY,
+    id         CHAR(36)                           NOT NULL,
     tenant_id  CHAR(36)                           NOT NULL,
     type       VARCHAR(255)                       NOT NULL,
     payload    JSON                               NOT NULL,
     enabled    TINYINT(1)                 NOT NULL DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_authentication_configuration_type ON authentication_configuration (tenant_id, type);
 
-CREATE TABLE authentication_transactions
+CREATE TABLE authentication_transaction
 (
-    id         CHAR(36)                           NOT NULL,
-    type       VARCHAR(255)                       NOT NULL,
-    payload    JSON                               NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    PRIMARY KEY (id, type)
+    authorization_id                     CHAR(36)     NOT NULL,
+    tenant_id                            CHAR(36)     NOT NULL,
+    authorization_flow                   VARCHAR(255) NOT NULL,
+    client_id                            VARCHAR(255) NOT NULL,
+    user_id                              CHAR(36),
+    user_payload                         JSON,
+    authentication_device_id             CHAR(36),
+    available_authentication_types       JSON         NOT NULL,
+    required_any_of_authentication_types JSON,
+    last_interaction_type                VARCHAR(255),
+    interactions                         JSON,
+    created_at                           TEXT         NOT NULL,
+    expired_at                           TEXT         NOT NULL,
+    PRIMARY KEY (authorization_id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE authentication_interactions
+(
+    authorization_id CHAR(36)                NOT NULL,
+    tenant_id        CHAR(36)                NOT NULL,
+    interaction_type VARCHAR(255)            NOT NULL,
+    payload          JSON                    NOT NULL,
+    created_at       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (authorization_id, interaction_type),
+    FOREIGN KEY (authorization_id) REFERENCES authentication_transaction (authorization_id) ON DELETE CASCADE,
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

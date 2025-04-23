@@ -99,7 +99,8 @@ public class DefaultTokenProtocol implements TokenProtocol {
       return tokenRevocationHandler.handle(request);
     } catch (Exception exception) {
       log.log(Level.SEVERE, exception.getMessage(), exception);
-      return new TokenRevocationResponse(TokenRevocationRequestStatus.SERVER_ERROR, Map.of());
+      return new TokenRevocationResponse(
+          TokenRevocationRequestStatus.SERVER_ERROR, new OAuthToken(), Map.of());
     }
   }
 }

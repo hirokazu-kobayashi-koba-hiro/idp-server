@@ -1,10 +1,14 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.command;
 
-import org.idp.server.core.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.authentication.AuthenticationTransaction;
+import org.idp.server.core.authentication.AuthorizationIdentifier;
+import org.idp.server.core.tenant.Tenant;
 
 public interface AuthenticationTransactionCommandSqlExecutor {
 
-  <T> void insert(AuthenticationTransactionIdentifier identifier, String key, T payload);
+  void insert(Tenant tenant, AuthenticationTransaction authenticationTransaction);
 
-  <T> void update(AuthenticationTransactionIdentifier identifier, String key, T payload);
+  void update(Tenant tenant, AuthenticationTransaction authenticationTransaction);
+
+  void delete(Tenant tenant, AuthorizationIdentifier identifier);
 }

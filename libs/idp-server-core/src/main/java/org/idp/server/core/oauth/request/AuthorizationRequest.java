@@ -132,7 +132,7 @@ public class AuthorizationRequest {
     return !responseType.isUndefined();
   }
 
-  public RequestedClientId clientId() {
+  public RequestedClientId retrieveClientId() {
     return requestedClientId;
   }
 
@@ -314,6 +314,10 @@ public class AuthorizationRequest {
 
   public boolean isInvalidMaxAge() {
     return !maxAge.isValid();
+  }
+
+  public boolean isFapiProfile() {
+    return profile.isFapiBaseline() || profile.isFapiAdvance();
   }
 
   public boolean isOidcProfile() {

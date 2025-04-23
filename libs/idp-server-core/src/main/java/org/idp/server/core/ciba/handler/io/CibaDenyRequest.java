@@ -1,19 +1,21 @@
 package org.idp.server.core.ciba.handler.io;
 
+import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.ciba.AuthReqId;
 
 public class CibaDenyRequest {
   Tenant tenant;
-  String authReqId;
+  BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier;
 
-  public CibaDenyRequest(Tenant tenant, String authReqId) {
+  public CibaDenyRequest(
+      Tenant tenant,
+      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
     this.tenant = tenant;
-    this.authReqId = authReqId;
+    this.backchannelAuthenticationRequestIdentifier = backchannelAuthenticationRequestIdentifier;
   }
 
-  public AuthReqId toAuthReqId() {
-    return new AuthReqId(authReqId);
+  public BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier() {
+    return backchannelAuthenticationRequestIdentifier;
   }
 
   public Tenant tenant() {

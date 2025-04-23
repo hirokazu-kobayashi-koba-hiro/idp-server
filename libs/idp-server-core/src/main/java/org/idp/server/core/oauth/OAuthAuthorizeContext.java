@@ -75,7 +75,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
   public AuthorizationGrant authorize() {
 
     TenantIdentifier tenantIdentifier = authorizationRequest.tenantIdentifier();
-    RequestedClientId requestedClientId = authorizationRequest.clientId();
+    RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
     Client client = clientConfiguration.client();
 
     Scopes scopes = authorizationRequest.scopes();

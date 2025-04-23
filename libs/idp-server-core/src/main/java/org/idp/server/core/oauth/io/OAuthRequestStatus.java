@@ -10,7 +10,10 @@ public enum OAuthRequestStatus {
   REDIRECABLE_BAD_REQUEST,
   SERVER_ERROR;
 
-  public boolean isOK() {
-    return this == OK;
+  public boolean isSuccess() {
+    return this == OK
+        || this == OK_SESSION_ENABLE
+        || this == NO_INTERACTION_OK
+        || this == OK_ACCOUNT_CREATION;
   }
 }

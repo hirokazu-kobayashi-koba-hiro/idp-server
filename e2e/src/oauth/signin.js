@@ -206,6 +206,7 @@ export const requestAuthorizations = async ({
           endpoint: serverConfig.authenticationEndpoint + "email-verification-challenge",
           id,
           body: {
+            email: "test@gmail.com",
             email_template: "authentication"
           },
         });

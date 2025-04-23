@@ -14,4 +14,8 @@ public enum TokenRevocationRequestStatus {
   public int statusCode() {
     return statusCode;
   }
+
+  public boolean isOK() {
+    return this == OK;
+  }
 }

@@ -8,6 +8,7 @@ import org.idp.server.core.ciba.handler.io.CibaAuthorizeResponse;
 import org.idp.server.core.ciba.handler.io.CibaAuthorizeStatus;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
+import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfiguration;
@@ -15,7 +16,6 @@ import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
-import org.idp.server.core.type.ciba.AuthReqId;
 
 public class CibaAuthorizeHandler {
 
@@ -44,10 +44,13 @@ public class CibaAuthorizeHandler {
   }
 
   public CibaAuthorizeResponse handle(CibaAuthorizeRequest request) {
-    AuthReqId authReqId = request.toAuthReqId();
+    BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier =
+        request.backchannleAuthenticationIdentifier();
+
     Tenant tenant = request.tenant();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
-    CibaGrant cibaGrant = cibaGrantRepository.find(tenant, authReqId);
+    CibaGrant cibaGrant =
+        cibaGrantRepository.get(tenant, backchannelAuthenticationRequestIdentifier);
 
     // TODO verify
 

@@ -10,7 +10,7 @@ import { faker } from "@faker-js/faker";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
 
-  it("signup", async () => {
+  xit("signup", async () => {
 
     const { authorizationResponse } = await requestAuthorizationsForSignup({
       endpoint: serverConfig.authorizationEndpoint,

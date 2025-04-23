@@ -1,6 +1,7 @@
 package org.idp.server.core.ciba.request;
 
 import java.util.Objects;
+import org.idp.server.core.authentication.AuthorizationIdentifier;
 
 public class BackchannelAuthenticationRequestIdentifier {
   String value;
@@ -31,5 +32,9 @@ public class BackchannelAuthenticationRequestIdentifier {
 
   public boolean exists() {
     return Objects.nonNull(value) && !value.isEmpty();
+  }
+
+  public AuthorizationIdentifier toAuthorizationIdentifier() {
+    return new AuthorizationIdentifier(value);
   }
 }

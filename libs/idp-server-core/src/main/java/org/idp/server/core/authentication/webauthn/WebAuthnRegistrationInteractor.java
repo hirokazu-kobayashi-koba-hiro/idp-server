@@ -3,7 +3,6 @@ package org.idp.server.core.authentication.webauthn;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.authentication.*;
-import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
@@ -22,29 +21,29 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
   }
 
   @Override
-  public AuthenticationInteractionResult interact(
+  public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      OAuthSession oAuthSession,
+      AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
-    String userId = oAuthSession.user().sub();
+    String userId = transaction.user().sub();
     WebAuthnConfiguration configuration =
         configurationRepository.get(tenant, "webauthn", WebAuthnConfiguration.class);
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
     WebAuthnVerificationResult webAuthnVerificationResult =
         webAuthnExecutor.verifyRegistration(
-            tenant, authenticationTransactionIdentifier, userId, request, configuration);
+            tenant, authorizationIdentifier, userId, request, configuration);
 
     Map<String, Object> response = new HashMap<>();
     response.put("registration", webAuthnVerificationResult.toMap());
 
-    return new AuthenticationInteractionResult(
+    return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
-        oAuthSession.user(),
+        transaction.user(),
         new Authentication(),
         response,
         DefaultSecurityEventType.webauthn_registration_success);

@@ -2,16 +2,20 @@ package org.idp.server.core.userinfo.handler.io;
 
 import java.util.Map;
 import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.userinfo.UserinfoErrorResponse;
 import org.idp.server.core.userinfo.UserinfoResponse;
 
 public class UserinfoRequestResponse {
   UserinfoRequestStatus status;
+  OAuthToken oAuthToken;
   UserinfoResponse userinfoResponse;
   UserinfoErrorResponse errorResponse;
 
-  public UserinfoRequestResponse(UserinfoRequestStatus status, UserinfoResponse userinfoResponse) {
+  public UserinfoRequestResponse(
+      UserinfoRequestStatus status, OAuthToken oAuthToken, UserinfoResponse userinfoResponse) {
     this.status = status;
+    this.oAuthToken = oAuthToken;
     this.userinfoResponse = userinfoResponse;
     this.errorResponse = new UserinfoErrorResponse();
   }
@@ -38,6 +42,10 @@ public class UserinfoRequestResponse {
     return userinfoResponse;
   }
 
+  public OAuthToken oAuthToken() {
+    return oAuthToken;
+  }
+
   public User user() {
     return userinfoResponse.user();
   }
@@ -48,5 +56,9 @@ public class UserinfoRequestResponse {
 
   public int statusCode() {
     return status.statusCode();
+  }
+
+  public boolean isOK() {
+    return status.isOK();
   }
 }

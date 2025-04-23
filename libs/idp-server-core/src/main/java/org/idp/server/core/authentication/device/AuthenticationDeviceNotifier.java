@@ -1,6 +1,15 @@
 package org.idp.server.core.authentication.device;
 
+import org.idp.server.core.notification.device.NotificationChannel;
+import org.idp.server.core.oauth.identity.device.AuthenticationDevice;
+import org.idp.server.core.tenant.Tenant;
+
 public interface AuthenticationDeviceNotifier {
 
-  void notify(AuthenticationDevice device);
+  NotificationChannel chanel();
+
+  void notify(
+      Tenant tenant,
+      AuthenticationDevice device,
+      AuthenticationDeviceNotificationConfiguration configuration);
 }

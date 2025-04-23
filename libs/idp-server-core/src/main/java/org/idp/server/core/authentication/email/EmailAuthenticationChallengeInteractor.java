@@ -6,8 +6,8 @@ import org.idp.server.core.authentication.*;
 import org.idp.server.core.notification.EmailSender;
 import org.idp.server.core.notification.EmailSenders;
 import org.idp.server.core.notification.EmailSendingRequest;
-import org.idp.server.core.oauth.OAuthSession;
 import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
@@ -15,12 +15,12 @@ import org.idp.server.core.tenant.Tenant;
 public class EmailAuthenticationChallengeInteractor implements AuthenticationInteractor {
 
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
-  AuthenticationTransactionCommandRepository transactionCommandRepository;
+  AuthenticationInteractionCommandRepository transactionCommandRepository;
   EmailSenders emailSenders;
 
   public EmailAuthenticationChallengeInteractor(
       AuthenticationConfigurationQueryRepository configurationQueryRepository,
-      AuthenticationTransactionCommandRepository transactionCommandRepository,
+      AuthenticationInteractionCommandRepository transactionCommandRepository,
       EmailSenders emailSenders) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.transactionCommandRepository = transactionCommandRepository;
@@ -28,23 +28,25 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
   }
 
   @Override
-  public AuthenticationInteractionResult interact(
+  public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      OAuthSession oAuthSession,
+      AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
     EmailAuthenticationConfiguration emailAuthenticationConfiguration =
         configurationQueryRepository.get(tenant, "email", EmailAuthenticationConfiguration.class);
 
-    if (!oAuthSession.hasUser()) {
+    String email = request.optValueAsString("email", "");
+
+    if (email.isEmpty()) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "invalid_request");
-      response.put("error_description", "session is invalid. email is not specified");
+      response.put("error_description", "email is required.");
 
-      return new AuthenticationInteractionResult(
+      return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,
           type,
           response,
@@ -56,7 +58,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       response.put("error", "invalid_request");
       response.put("error_description", "session is invalid. email is not specified");
 
-      return new AuthenticationInteractionResult(
+      return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,
           type,
           response,
@@ -65,16 +67,15 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
 
     OneTimePassword oneTimePassword = OneTimePasswordGenerator.generate();
     String sender = emailAuthenticationConfiguration.sender();
-    String to = oAuthSession.user().email();
-    EmailTemplate emailTemplate =
+    EmailVerificationTemplate emailVerificationTemplate =
         emailAuthenticationConfiguration.findTemplate(request.getValueAsString("email_template"));
-    String subject = emailTemplate.subject();
+    String subject = emailVerificationTemplate.subject();
     int retryCountLimitation = emailAuthenticationConfiguration.retryCountLimitation();
     int expireSeconds = emailAuthenticationConfiguration.expireSeconds();
 
-    String body = emailTemplate.interpolateBody(oneTimePassword.value(), expireSeconds);
+    String body = emailVerificationTemplate.interpolateBody(oneTimePassword.value(), expireSeconds);
 
-    EmailSendingRequest emailSendingRequest = new EmailSendingRequest(sender, to, subject, body);
+    EmailSendingRequest emailSendingRequest = new EmailSendingRequest(sender, email, subject, body);
 
     EmailSender emailSender = emailSenders.get(emailAuthenticationConfiguration.senderType());
     emailSender.send(emailSendingRequest, emailAuthenticationConfiguration.setting());
@@ -83,12 +84,14 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
         EmailVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
 
     transactionCommandRepository.register(
-        tenant, authenticationTransactionIdentifier, "email", emailVerificationChallenge);
+        tenant, authorizationIdentifier, "email", emailVerificationChallenge);
 
-    return new AuthenticationInteractionResult(
+    User user = userRepository.findByEmail(tenant, email, "idp-server");
+
+    return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
-        oAuthSession.user(),
+        user,
         new Authentication(),
         Map.of(),
         DefaultSecurityEventType.email_verification_request);

@@ -1,10 +1,11 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.query;
 
-import org.idp.server.core.authentication.AuthenticationDependencyProvider;
 import org.idp.server.core.authentication.AuthenticationTransactionQueryRepository;
+import org.idp.server.core.basic.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.core.basic.dependency.ApplicationComponentProvider;
 
 public class AuthenticationTransactionQueryDataSourceProvider
-    implements AuthenticationDependencyProvider<AuthenticationTransactionQueryRepository> {
+    implements ApplicationComponentProvider<AuthenticationTransactionQueryRepository> {
 
   @Override
   public Class<AuthenticationTransactionQueryRepository> type() {
@@ -12,7 +13,8 @@ public class AuthenticationTransactionQueryDataSourceProvider
   }
 
   @Override
-  public AuthenticationTransactionQueryRepository provide() {
+  public AuthenticationTransactionQueryRepository provide(
+      ApplicationComponentDependencyContainer container) {
     return new AuthenticationTransactionQueryDataSource();
   }
 }

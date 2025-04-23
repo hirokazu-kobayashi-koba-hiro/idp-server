@@ -8,7 +8,7 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
   String sender;
   String type;
   Map<String, Map<String, Object>> settings;
-  Map<String, EmailTemplate> templates;
+  Map<String, EmailVerificationTemplate> templates;
   int retryCountLimitation;
   int expireSeconds;
 
@@ -16,7 +16,7 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
 
   public EmailAuthenticationConfiguration(
       String sender,
-      Map<String, EmailTemplate> templates,
+      Map<String, EmailVerificationTemplate> templates,
       int retryCountLimitation,
       int expireSeconds) {
     this.sender = sender;
@@ -33,8 +33,8 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
     return sender;
   }
 
-  public EmailTemplate findTemplate(String templateKey) {
-    return templates.getOrDefault(templateKey, new EmailTemplate());
+  public EmailVerificationTemplate findTemplate(String templateKey) {
+    return templates.getOrDefault(templateKey, new EmailVerificationTemplate());
   }
 
   public EmailSenderSetting setting() {

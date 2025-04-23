@@ -7,3 +7,4 @@ org.idp.server.core.authentication.webauthn.WebAuthnRegistrationIChallengeIntera
 org.idp.server.core.authentication.webauthn.WebAuthnRegistrationInteractorFactory
 org.idp.server.core.authentication.webauthn.WebAuthnAuthenticationChallengeInteractorFactory
 org.idp.server.core.authentication.webauthn.WebAuthnAuthenticationInteractorFactory
+org.idp.server.core.authentication.device.AuthenticationDeviceNotificationInteractorFactory

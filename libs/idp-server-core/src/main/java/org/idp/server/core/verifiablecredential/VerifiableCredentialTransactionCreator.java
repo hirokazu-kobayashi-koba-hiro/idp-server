@@ -28,7 +28,7 @@ public class VerifiableCredentialTransactionCreator {
 
     TransactionId transactionId = new TransactionId(UUID.randomUUID().toString());
     CredentialIssuer credentialIssuer = verifiableCredentialConfiguration.credentialIssuer();
-    RequestedClientId requestedClientId = oAuthToken.accessToken().clientId();
+    RequestedClientId requestedClientId = oAuthToken.accessToken().requestedClientId();
     Subject subject = oAuthToken.subject();
     Credential credential = delegateResponse.credential();
     VerifiableCredentialTransactionStatus status = delegateResponse.status();

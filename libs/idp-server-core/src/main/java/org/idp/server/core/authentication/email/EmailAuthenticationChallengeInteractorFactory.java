@@ -16,8 +16,8 @@ public class EmailAuthenticationChallengeInteractorFactory
 
     AuthenticationConfigurationQueryRepository configurationQueryRepository =
         container.resolve(AuthenticationConfigurationQueryRepository.class);
-    AuthenticationTransactionCommandRepository transactionCommandRepository =
-        container.resolve(AuthenticationTransactionCommandRepository.class);
+    AuthenticationInteractionCommandRepository transactionCommandRepository =
+        container.resolve(AuthenticationInteractionCommandRepository.class);
     EmailSenders emailSenders = container.resolve(EmailSenders.class);
     return new EmailAuthenticationChallengeInteractor(
         configurationQueryRepository, transactionCommandRepository, emailSenders);
