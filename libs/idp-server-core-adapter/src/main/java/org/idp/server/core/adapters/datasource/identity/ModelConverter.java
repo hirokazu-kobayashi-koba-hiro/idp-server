@@ -84,11 +84,18 @@ class ModelConverter {
         String platform = wrapper.getValueOrEmptyAsString("platform");
         String os = wrapper.getValueOrEmptyAsString("os");
         String model = wrapper.getValueOrEmptyAsString("model");
-        String notificationToken = wrapper.getValueOrEmptyAsString("notification_token");
+        String notificationChannel = wrapper.getValueOrEmptyAsString("push_notification_channel");
+        String notificationToken = wrapper.getValueOrEmptyAsString("push_notification_token");
         boolean preferredForNotification = wrapper.getValueAsBoolean("preferred_for_notification");
         AuthenticationDevice authenticationDevice =
             new AuthenticationDevice(
-                id, platform, os, model, notificationToken, preferredForNotification);
+                id,
+                platform,
+                os,
+                model,
+                notificationChannel,
+                notificationToken,
+                preferredForNotification);
         authenticationDevices.add(authenticationDevice);
       }
       user.setAuthenticationDevices(authenticationDevices);

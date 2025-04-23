@@ -10,4 +10,6 @@ include 'libs:idp-server-webauthn'
 findProject(':libs:idp-server-webauthn')?.name = 'idp-server-webauthn'
 include 'libs:idp-server-core-adapter'
 findProject(':libs:idp-server-core-adapter')?.name = 'idp-server-core-adapter'
+include 'libs:idp-server-fcm-adapter'
+findProject(':libs:idp-server-fcm-adapter')?.name = 'idp-server-fcm-adapter'
 

@@ -2,13 +2,16 @@ package org.idp.server.core.oauth.identity.device;
 
 import java.io.Serializable;
 import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.core.notification.push.PushNotificationChannel;
+import org.idp.server.core.notification.push.PushNotificationToken;
 
 public class AuthenticationDevice implements Serializable, JsonReadable {
   String id;
   String platform;
   String os;
   String model;
-  String notificationToken;
+  String pushNotificationChannel;
+  String pushNotificationToken;
   boolean preferredForNotification;
 
   public AuthenticationDevice() {}
@@ -18,13 +21,15 @@ public class AuthenticationDevice implements Serializable, JsonReadable {
       String platform,
       String os,
       String model,
-      String notificationToken,
+      String pushNotificationChannel,
+      String pushNotificationToken,
       boolean preferredForNotification) {
     this.id = id;
     this.platform = platform;
     this.os = os;
     this.model = model;
-    this.notificationToken = notificationToken;
+    this.pushNotificationChannel = pushNotificationChannel;
+    this.pushNotificationToken = pushNotificationToken;
     this.preferredForNotification = preferredForNotification;
   }
 
@@ -44,8 +49,12 @@ public class AuthenticationDevice implements Serializable, JsonReadable {
     return model;
   }
 
-  public String notificationToken() {
-    return notificationToken;
+  public PushNotificationChannel pushNotificationChannel() {
+    return new PushNotificationChannel(pushNotificationChannel);
+  }
+
+  public PushNotificationToken pushNotificationToken() {
+    return new PushNotificationToken(pushNotificationToken);
   }
 
   public boolean isPreferredForNotification() {

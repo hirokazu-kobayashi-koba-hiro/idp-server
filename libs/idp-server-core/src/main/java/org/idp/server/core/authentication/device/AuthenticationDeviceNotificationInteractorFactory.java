@@ -12,6 +12,12 @@ public class AuthenticationDeviceNotificationInteractorFactory
 
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
-    return new AuthenticationDeviceNotificationInteractor();
+
+    AuthenticationDeviceNotifiers authenticationDeviceNotifiers =
+        container.resolve(AuthenticationDeviceNotifiers.class);
+    AuthenticationConfigurationQueryRepository configurationQueryRepository =
+        container.resolve(AuthenticationConfigurationQueryRepository.class);
+    return new AuthenticationDeviceNotificationInteractor(
+        authenticationDeviceNotifiers, configurationQueryRepository);
   }
 }

@@ -3,6 +3,8 @@ package org.idp.server.core;
 import org.idp.server.core.admin.*;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
+import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiers;
+import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiersLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
 import org.idp.server.core.basic.crypto.AesCipher;
@@ -139,6 +141,10 @@ public class IdpServerApplication {
     WebAuthnExecutors webAuthnExecutors =
         WebAuthnExecutorLoader.load(authenticationDependencyContainer);
     authenticationDependencyContainer.register(WebAuthnExecutors.class, webAuthnExecutors);
+    AuthenticationDeviceNotifiers authenticationDeviceNotifiers =
+        AuthenticationDeviceNotifiersLoader.load();
+    authenticationDependencyContainer.register(
+        AuthenticationDeviceNotifiers.class, authenticationDeviceNotifiers);
 
     AuthenticationInteractors authenticationInteractors =
         AuthenticationInteractorLoader.load(authenticationDependencyContainer);
