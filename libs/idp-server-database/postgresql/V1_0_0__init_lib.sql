@@ -553,3 +553,52 @@ CREATE TABLE authentication_interactions
     FOREIGN KEY (authorization_id) REFERENCES authentication_transaction (authorization_id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
+
+CREATE TABLE identity_verification_applications
+(
+    id                           CHAR(36)                NOT NULL,
+    tenant_id                    CHAR(36)                NOT NULL,
+    client_id                    VARCHAR(255)            NOT NULL,
+    user_id                      CHAR(36)                NOT NULL,
+    application_type             VARCHAR(255)            NOT NULL,
+    application_details          JSONB                   NOT NULL,
+    trust_framework              VARCHAR(255)            NOT NULL,
+    trust_framework_details      JSONB                   NOT NULL,
+    status                       VARCHAR(255)            NOT NULL,
+    requested_at                 TEXT                    NOT NULL,
+    external_application_id      TEXT,
+    external_application_details JSONB,
+    examination_results          JSONB,
+    comment                      TEXT,
+    created_at                   TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at                   TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_verification_user ON identity_verification_applications (user_id);
+CREATE INDEX idx_verification_tenant_client ON identity_verification_applications (tenant_id, client_id);
+CREATE INDEX idx_verification_status ON identity_verification_applications (status);
+CREATE INDEX idx_verification_external_ref ON identity_verification_applications (external_application_id);
+
+CREATE TABLE identity_verification_results
+(
+    id                      CHAR(36)                NOT NULL,
+    tenant_id               CHAR(36)                NOT NULL,
+    user_id                 CHAR(36)                NOT NULL,
+    trust_framework         VARCHAR(255)            NOT NULL,
+    trust_framework_details JSONB                   NOT NULL,
+    verified_claims         JSONB                   NOT NULL,
+    verified_at             TEXT,
+    valid_until             TEXT,
+    application_id          CHAR(36),
+    source_type             VARCHAR(255),
+    source_name             VARCHAR(255),
+    signature               TEXT,
+    created_at              TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (application_id) REFERENCES identity_verification_applications (id) ON DELETE CASCADE,
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE
+);
