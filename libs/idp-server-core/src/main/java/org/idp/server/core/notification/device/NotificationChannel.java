@@ -1,13 +1,13 @@
-package org.idp.server.core.notification.push;
+package org.idp.server.core.notification.device;
 
 import java.util.Objects;
 
-public class PushNotificationChannel {
+public class NotificationChannel {
   String name;
 
-  public PushNotificationChannel() {}
+  public NotificationChannel() {}
 
-  public PushNotificationChannel(String name) {
+  public NotificationChannel(String name) {
     this.name = name;
   }
 
@@ -18,7 +18,7 @@ public class PushNotificationChannel {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    PushNotificationChannel that = (PushNotificationChannel) o;
+    NotificationChannel that = (NotificationChannel) o;
     return Objects.equals(name, that.name);
   }
 

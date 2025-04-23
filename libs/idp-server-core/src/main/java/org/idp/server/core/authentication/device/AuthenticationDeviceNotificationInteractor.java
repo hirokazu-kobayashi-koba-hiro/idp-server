@@ -2,7 +2,8 @@ package org.idp.server.core.authentication.device;
 
 import java.util.Map;
 import org.idp.server.core.authentication.*;
-import org.idp.server.core.notification.push.PushNotificationChannel;
+import org.idp.server.core.notification.device.NotificationChannel;
+import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.oauth.identity.device.AuthenticationDevice;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
@@ -29,13 +30,18 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
       AuthenticationTransaction transaction,
       UserRepository userRepository) {
 
+    AuthenticationDeviceNotificationConfiguration configuration =
+        configurationQueryRepository.get(
+            tenant, "authentication-device", AuthenticationDeviceNotificationConfiguration.class);
+
     // TODO
-    AuthenticationDevice authenticationDevice = new AuthenticationDevice();
-    PushNotificationChannel channel = new PushNotificationChannel("fcm");
+    User user = transaction.user();
+    AuthenticationDevice authenticationDevice = user.getPrimaryAuthenticationDevice();
+    NotificationChannel channel = new NotificationChannel("fcm");
 
     AuthenticationDeviceNotifier notifier = authenticationDeviceNotifiers.get(channel);
 
-    notifier.notify(authenticationDevice);
+    notifier.notify(tenant, authenticationDevice, configuration);
 
     AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
     Map<String, Object> response = Map.of();

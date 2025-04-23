@@ -455,8 +455,8 @@
         "platform": "iOS",
         "os": "iOS 18.5",
         "model": "iPhone15",
-        "push_notification_channel": "fcm",
-        "push_notification_token": "test token",
+        "notification_channel": "fcm",
+        "notification_token": "test token",
         "preferred_for_notification": true
       }
     ],

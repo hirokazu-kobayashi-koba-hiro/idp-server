@@ -295,6 +295,13 @@ public class User implements JsonReadable, Serializable {
     return new AuthenticationDevices(authenticationDevices);
   }
 
+  public AuthenticationDevice getPrimaryAuthenticationDevice() {
+    return authenticationDevices.stream()
+        .filter(AuthenticationDevice::isPreferredForNotification)
+        .findFirst()
+        .orElseThrow(() -> new RuntimeException("Primary authentication device not found"));
+  }
+
   public List<AuthenticationDevice> authenticationDevicesAsList() {
     return authenticationDevices;
   }

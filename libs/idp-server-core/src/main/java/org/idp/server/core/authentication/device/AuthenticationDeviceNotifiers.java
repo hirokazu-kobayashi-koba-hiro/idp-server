@@ -1,19 +1,19 @@
 package org.idp.server.core.authentication.device;
 
 import java.util.Map;
-import org.idp.server.core.notification.push.PushNotificationChannel;
+import org.idp.server.core.notification.device.NotificationChannel;
 import org.idp.server.core.type.exception.UnSupportedException;
 
 public class AuthenticationDeviceNotifiers {
 
-  Map<PushNotificationChannel, AuthenticationDeviceNotifier> notifiers;
+  Map<NotificationChannel, AuthenticationDeviceNotifier> notifiers;
 
   public AuthenticationDeviceNotifiers(
-      Map<PushNotificationChannel, AuthenticationDeviceNotifier> notifiers) {
+      Map<NotificationChannel, AuthenticationDeviceNotifier> notifiers) {
     this.notifiers = notifiers;
   }
 
-  public AuthenticationDeviceNotifier get(PushNotificationChannel channel) {
+  public AuthenticationDeviceNotifier get(NotificationChannel channel) {
     AuthenticationDeviceNotifier notifier = notifiers.get(channel);
 
     if (notifier == null) {

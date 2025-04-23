@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.logging.Logger;
-import org.idp.server.core.notification.push.PushNotificationChannel;
+import org.idp.server.core.notification.device.NotificationChannel;
 
 public class AuthenticationDeviceNotifiersLoader {
 
@@ -12,7 +12,7 @@ public class AuthenticationDeviceNotifiersLoader {
       Logger.getLogger(AuthenticationDeviceNotifiersLoader.class.getName());
 
   public static AuthenticationDeviceNotifiers load() {
-    Map<PushNotificationChannel, AuthenticationDeviceNotifier> notifiers = new HashMap<>();
+    Map<NotificationChannel, AuthenticationDeviceNotifier> notifiers = new HashMap<>();
     ServiceLoader<AuthenticationDeviceNotifier> loader =
         ServiceLoader.load(AuthenticationDeviceNotifier.class);
 
