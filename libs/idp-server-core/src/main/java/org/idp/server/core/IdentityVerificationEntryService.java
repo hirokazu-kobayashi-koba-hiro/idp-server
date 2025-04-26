@@ -101,47 +101,57 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   }
 
   @Override
-  public IdentityVerificationApplicationResponse process(TenantIdentifier tenantIdentifier, User user, OAuthToken oAuthToken, IdentityVerificationApplicationIdentifier identifier, IdentityVerificationType identityVerificationType, IdentityVerificationProcess identityVerificationProcess, IdentityVerificationApplicationRequest request, RequestAttributes requestAttributes) {
+  public IdentityVerificationApplicationResponse process(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      IdentityVerificationApplicationIdentifier identifier,
+      IdentityVerificationType identityVerificationType,
+      IdentityVerificationProcess identityVerificationProcess,
+      IdentityVerificationApplicationRequest request,
+      RequestAttributes requestAttributes) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
     IdentityVerificationConfiguration verificationConfiguration =
-            configurationQueryRepository.get(tenant, identityVerificationType);
+        configurationQueryRepository.get(tenant, identityVerificationType);
     IdentityVerificationProcessConfiguration processConfiguration =
-            verificationConfiguration.getProcessConfig(identityVerificationProcess);
+        verificationConfiguration.getProcessConfig(identityVerificationProcess);
 
     IdentityVerificationApplicationValidator applicationValidator =
-            new IdentityVerificationApplicationValidator(processConfiguration, request);
+        new IdentityVerificationApplicationValidator(processConfiguration, request);
     IdentityVerificationApplicationValidationResult validationResult =
-            applicationValidator.validate();
+        applicationValidator.validate();
 
     if (validationResult.isError()) {
 
       eventPublisher.publish(
-              tenant,
-              oAuthToken,
-              identityVerificationType,
-              identityVerificationProcess,
-              false,
-              requestAttributes);
+          tenant,
+          oAuthToken,
+          identityVerificationType,
+          identityVerificationProcess,
+          false,
+          requestAttributes);
       return validationResult.errorResponse();
     }
 
-    IdentityVerificationApplication application = applicationQueryRepository.get(tenant, identifier);
+    IdentityVerificationApplication application =
+        applicationQueryRepository.get(tenant, identifier);
 
     WorkflowApplyingResult applyingResult =
-            externalWorkflowDelegationClient.execute(request, processConfiguration);
+        externalWorkflowDelegationClient.execute(request, processConfiguration);
 
-    IdentityVerificationApplication updated = application.update(identityVerificationProcess, request, applyingResult);
+    IdentityVerificationApplication updated =
+        application.update(identityVerificationProcess, request, applyingResult);
 
     applicationCommandRepository.update(tenant, updated);
 
     eventPublisher.publish(
-            tenant,
-            oAuthToken,
-            identityVerificationType,
-            identityVerificationProcess,
-            true,
-            requestAttributes);
+        tenant,
+        oAuthToken,
+        identityVerificationType,
+        identityVerificationProcess,
+        true,
+        requestAttributes);
 
     Map<String, Object> response = new HashMap<>();
     response.put("application_id", application.externalApplicationId());

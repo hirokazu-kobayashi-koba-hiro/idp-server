@@ -1,6 +1,7 @@
 package org.idp.server.core;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.logging.Logger;
@@ -54,9 +55,25 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
                 + ": "
                 + method.getName());
         return result;
-      } catch (Exception e) {
+      } catch (InvocationTargetException e) {
         TransactionManager.rollbackTransaction();
-        log.info("rollback transaction: " + target.getClass().getName() + ": " + method.getName());
+        log.severe(
+            "rollback transaction (InvocationTargetException): "
+                + target.getClass().getName()
+                + ": "
+                + method.getName()
+                + ", cause: "
+                + e.getTargetException().toString());
+        throw e.getTargetException();
+      } catch (Throwable e) {
+        TransactionManager.rollbackTransaction();
+        log.severe(
+            "rollback transaction: "
+                + target.getClass().getName()
+                + ": "
+                + method.getName()
+                + ", cause: "
+                + e);
         throw e;
       }
     } else {

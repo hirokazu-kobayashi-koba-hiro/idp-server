@@ -27,7 +27,12 @@ public class TokenEventCreator {
     this.requestAttributes = requestAttributes;
   }
 
-  public TokenEventCreator(Tenant tenant, OAuthToken oAuthToken, SecurityEventType securityEventType, SecurityEventDescription securityEventDescription, RequestAttributes requestAttributes) {
+  public TokenEventCreator(
+      Tenant tenant,
+      OAuthToken oAuthToken,
+      SecurityEventType securityEventType,
+      SecurityEventDescription securityEventDescription,
+      RequestAttributes requestAttributes) {
     this.tenant = tenant;
     this.oAuthToken = oAuthToken;
     this.securityEventType = securityEventType;

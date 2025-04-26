@@ -19,14 +19,14 @@ public interface IdentityVerificationApi {
       RequestAttributes requestAttributes);
 
   IdentityVerificationApplicationResponse process(
-          TenantIdentifier tenantIdentifier,
-          User user,
-          OAuthToken oAuthToken,
-          IdentityVerificationApplicationIdentifier identifier,
-          IdentityVerificationType identityVerificationType,
-          IdentityVerificationProcess identityVerificationProcess,
-          IdentityVerificationApplicationRequest request,
-          RequestAttributes requestAttributes);
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      IdentityVerificationApplicationIdentifier identifier,
+      IdentityVerificationType identityVerificationType,
+      IdentityVerificationProcess identityVerificationProcess,
+      IdentityVerificationApplicationRequest request,
+      RequestAttributes requestAttributes);
 
   void callbackProcess();
 

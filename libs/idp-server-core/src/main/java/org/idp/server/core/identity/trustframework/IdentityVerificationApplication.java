@@ -118,8 +118,8 @@ public class IdentityVerificationApplication {
   }
 
   public IdentityVerificationApplication update(
-          IdentityVerificationProcess process,
-       IdentityVerificationApplicationRequest request,
+      IdentityVerificationProcess process,
+      IdentityVerificationApplicationRequest request,
       WorkflowApplyingResult applyingResult) {
 
     return new IdentityVerificationApplication();

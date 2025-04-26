@@ -44,7 +44,7 @@ public class IdentityV1Api implements ParameterTransformable {
             resourceOwnerPrincipal.getUser(),
             resourceOwnerPrincipal.getOAuthToken(),
             verificationType,
-                identityVerificationProcess,
+            identityVerificationProcess,
             new IdentityVerificationApplicationRequest(requestBody),
             requestAttributes);
 
@@ -56,30 +56,30 @@ public class IdentityV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/{verification-process}")
   public ResponseEntity<?> process(
-          @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
-          @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-          @PathVariable("id") IdentityVerificationApplicationIdentifier identifier,
-          @PathVariable("verification-type") IdentityVerificationType verificationType,
-          @PathVariable("verification-process") IdentityVerificationProcess identityVerificationProcess,
-          @RequestBody(required = false) Map<String, Object> requestBody,
-          HttpServletRequest httpServletRequest) {
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") IdentityVerificationApplicationIdentifier identifier,
+      @PathVariable("verification-type") IdentityVerificationType verificationType,
+      @PathVariable("verification-process") IdentityVerificationProcess identityVerificationProcess,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     IdentityVerificationApplicationResponse response =
-            identityVerificationApi.process(
-                    tenantIdentifier,
-                    resourceOwnerPrincipal.getUser(),
-                    resourceOwnerPrincipal.getOAuthToken(),
-                    identifier,
-                    verificationType,
-                    identityVerificationProcess,
-                    new IdentityVerificationApplicationRequest(requestBody),
-                    requestAttributes);
+        identityVerificationApi.process(
+            tenantIdentifier,
+            resourceOwnerPrincipal.getUser(),
+            resourceOwnerPrincipal.getOAuthToken(),
+            identifier,
+            verificationType,
+            identityVerificationProcess,
+            new IdentityVerificationApplicationRequest(requestBody),
+            requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
-            response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }

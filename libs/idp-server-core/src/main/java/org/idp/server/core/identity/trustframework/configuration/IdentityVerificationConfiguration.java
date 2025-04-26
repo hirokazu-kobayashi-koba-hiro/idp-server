@@ -2,8 +2,8 @@ package org.idp.server.core.identity.trustframework.configuration;
 
 import java.util.Map;
 import org.idp.server.core.basic.json.JsonReadable;
-import org.idp.server.core.identity.trustframework.IdentityVerificationType;
 import org.idp.server.core.identity.trustframework.IdentityVerificationProcess;
+import org.idp.server.core.identity.trustframework.IdentityVerificationType;
 import org.idp.server.core.identity.trustframework.exception.IdentityVerificationApplicationConfigurationNotFoundException;
 
 public class IdentityVerificationConfiguration implements JsonReadable {
@@ -31,7 +31,8 @@ public class IdentityVerificationConfiguration implements JsonReadable {
     return processes;
   }
 
-  public IdentityVerificationProcessConfiguration getProcessConfig(IdentityVerificationProcess process) {
+  public IdentityVerificationProcessConfiguration getProcessConfig(
+      IdentityVerificationProcess process) {
     if (!processes.containsKey(process.name())) {
       throw new IdentityVerificationApplicationConfigurationNotFoundException(
           "invalid configuration. type: " + process.name() + "is unregistered.");

@@ -28,17 +28,21 @@ public class TokenEventPublisher {
   }
 
   public void publish(
-          Tenant tenant,
-          OAuthToken oAuthToken,
-          IdentityVerificationType type,
-          IdentityVerificationProcess identityVerificationProcess,
-          boolean result,
-          RequestAttributes requestAttributes) {
+      Tenant tenant,
+      OAuthToken oAuthToken,
+      IdentityVerificationType type,
+      IdentityVerificationProcess identityVerificationProcess,
+      boolean result,
+      RequestAttributes requestAttributes) {
     String resultString = result ? "success" : "failure";
-    SecurityEventType securityEventType = new SecurityEventType(type.name() + "_" + identityVerificationProcess.name() + "_" + resultString);
-    SecurityEventDescription securityEventDescription = new SecurityEventDescription(securityEventType.value());
+    SecurityEventType securityEventType =
+        new SecurityEventType(
+            type.name() + "_" + identityVerificationProcess.name() + "_" + resultString);
+    SecurityEventDescription securityEventDescription =
+        new SecurityEventDescription(securityEventType.value());
     TokenEventCreator eventCreator =
-            new TokenEventCreator(tenant, oAuthToken, securityEventType, securityEventDescription, requestAttributes);
+        new TokenEventCreator(
+            tenant, oAuthToken, securityEventType, securityEventDescription, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }
