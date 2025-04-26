@@ -6,20 +6,20 @@ import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.type.oauth.RequestedClientId;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
-public class Operator extends AbstractAuthenticationToken {
+public class ResourceOwnerPrincipal extends AbstractAuthenticationToken {
 
   User user;
-  OAuthToken oauthToken;
+  OAuthToken oAuthToken;
 
-  public Operator(User user, OAuthToken oAuthToken, List<IdPScope> idPScopes) {
+  public ResourceOwnerPrincipal(User user, OAuthToken oAuthToken, List<IdPScope> idPScopes) {
     super(idPScopes);
     this.user = user;
-    this.oauthToken = oAuthToken;
+    this.oAuthToken = oAuthToken;
   }
 
   @Override
   public Object getCredentials() {
-    return oauthToken;
+    return oAuthToken;
   }
 
   @Override
@@ -32,6 +32,6 @@ public class Operator extends AbstractAuthenticationToken {
   }
 
   public RequestedClientId getRequestedClientId() {
-    return oauthToken.requestedClientId();
+    return oAuthToken.requestedClientId();
   }
 }

@@ -1,12 +1,19 @@
 import { describe, expect, it } from "@jest/globals";
 import { post } from "./lib/http";
-import { serverConfig } from "./testConfig";
+import { clientSecretPostClient, serverConfig } from "./testConfig";
+import { loginForClientSecretPost } from "./ciba/login";
 
 describe("", () => {
 
   describe("success pattern", () => {
 
     it("apply", async () => {
+
+      const tokenResponse = await loginForClientSecretPost({
+        serverConfig,
+        client: clientSecretPostClient,
+        scope: "identity_verification_application identity_verification_delete identity_credentials_update"
+      });
 
       const applyUrl = serverConfig.identityVerificationApplyEndpoint
         .replace("{type}", "ekyc")
@@ -15,7 +22,8 @@ describe("", () => {
       const applyResponse = await post({
         url: applyUrl,
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${tokenResponse.access_token}`
         },
         body: {
           "last_name": "john",

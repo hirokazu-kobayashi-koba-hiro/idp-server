@@ -3,9 +3,9 @@ package org.idp.server.core.adapters.datasource.identity.trustframework.config;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.identity.trustframework.IdentityVerificationConfiguration;
-import org.idp.server.core.identity.trustframework.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.identity.trustframework.IdentityVerificationType;
+import org.idp.server.core.identity.trustframework.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.identity.trustframework.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.identity.trustframework.exception.IdentityVerificationConfigurationNotFoundException;
 import org.idp.server.core.tenant.Tenant;
 

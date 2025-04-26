@@ -4,8 +4,8 @@ import org.idp.server.core.basic.http.HttpClientFactory;
 import org.idp.server.core.basic.http.HttpRequestBaseParams;
 import org.idp.server.core.basic.http.HttpRequestExecutor;
 import org.idp.server.core.basic.http.HttpRequestResult;
-import org.idp.server.core.identity.trustframework.IdentityVerificationApplicationRequest;
-import org.idp.server.core.identity.trustframework.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationRequest;
+import org.idp.server.core.identity.trustframework.configuration.IdentityVerificationProcessConfiguration;
 
 public class ExternalWorkflowDelegationClient {
 
@@ -15,7 +15,7 @@ public class ExternalWorkflowDelegationClient {
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
   }
 
-  public WorkflowApplyingResult apply(
+  public WorkflowApplyingResult execute(
       IdentityVerificationApplicationRequest request,
       IdentityVerificationProcessConfiguration processConfig) {
 
@@ -28,6 +28,6 @@ public class ExternalWorkflowDelegationClient {
             processConfig.httpRequestDynamicBodyKeys(),
             processConfig.httpRequestStaticBody());
 
-    return new WorkflowApplyingResult(executionResult.statusCode(), executionResult.toMap());
+    return new WorkflowApplyingResult(executionResult);
   }
 }

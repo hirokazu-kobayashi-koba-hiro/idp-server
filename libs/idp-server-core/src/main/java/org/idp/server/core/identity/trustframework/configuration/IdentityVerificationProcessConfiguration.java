@@ -1,4 +1,4 @@
-package org.idp.server.core.identity.trustframework;
+package org.idp.server.core.identity.trustframework.configuration;
 
 import java.util.List;
 import java.util.Map;

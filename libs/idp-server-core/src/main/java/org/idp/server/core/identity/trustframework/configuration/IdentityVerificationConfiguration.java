@@ -1,7 +1,10 @@
-package org.idp.server.core.identity.trustframework;
+package org.idp.server.core.identity.trustframework.configuration;
 
 import java.util.Map;
 import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.core.identity.trustframework.IdentityVerificationType;
+import org.idp.server.core.identity.trustframework.VerificationProcess;
+import org.idp.server.core.identity.trustframework.exception.IdentityVerificationApplicationConfigurationNotFoundException;
 
 public class IdentityVerificationConfiguration implements JsonReadable {
   String type;

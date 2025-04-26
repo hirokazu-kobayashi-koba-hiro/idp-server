@@ -1,7 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 
 import {
-  completeBackchannelAuthentications,
   getAuthenticationDeviceAuthenticationTransaction,
   postAuthenticationDeviceInteraction,
   requestBackchannelAuthentications,

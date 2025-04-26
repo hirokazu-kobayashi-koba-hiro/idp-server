@@ -1,13 +1,24 @@
 package org.idp.server.core.basic.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import java.util.*;
 
 public class JsonNodeWrapper {
   JsonNode jsonNode;
 
+  public static JsonNodeWrapper empty() {
+    return new JsonNodeWrapper(JsonNodeFactory.instance.objectNode());
+  }
+
   public JsonNodeWrapper(JsonNode jsonNode) {
     this.jsonNode = jsonNode;
+  }
+
+  public static JsonNodeWrapper from(Map<String, Object> map) {
+    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    String json = jsonConverter.write(map);
+    return jsonConverter.readTree(json);
   }
 
   public Iterator<String> fieldNames() {

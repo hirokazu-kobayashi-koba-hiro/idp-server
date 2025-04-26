@@ -1,29 +1,35 @@
-package org.idp.server.core.identity.trustframework;
+package org.idp.server.core.identity.trustframework.application;
 
 import java.util.Map;
+import org.idp.server.core.identity.trustframework.IdentityVerificationApplicationStatus;
 
 public class IdentityVerificationApplicationResponse {
 
-  IdentityVerificationApplicationStatus status;
+  org.idp.server.core.identity.trustframework.IdentityVerificationApplicationStatus status;
   Map<String, Object> response;
 
   public static IdentityVerificationApplicationResponse OK(Map<String, Object> response) {
     return new IdentityVerificationApplicationResponse(
-        IdentityVerificationApplicationStatus.OK, response);
+        org.idp.server.core.identity.trustframework.IdentityVerificationApplicationStatus.OK,
+        response);
   }
 
   public static IdentityVerificationApplicationResponse CLIENT_ERROR(Map<String, Object> response) {
     return new IdentityVerificationApplicationResponse(
-        IdentityVerificationApplicationStatus.CLIENT_ERROR, response);
+        org.idp.server.core.identity.trustframework.IdentityVerificationApplicationStatus
+            .CLIENT_ERROR,
+        response);
   }
 
   private IdentityVerificationApplicationResponse(
-      IdentityVerificationApplicationStatus status, Map<String, Object> response) {
+      org.idp.server.core.identity.trustframework.IdentityVerificationApplicationStatus status,
+      Map<String, Object> response) {
     this.status = status;
     this.response = response;
   }
 
-  public IdentityVerificationApplicationStatus status() {
+  public org.idp.server.core.identity.trustframework.IdentityVerificationApplicationStatus
+      status() {
     return status;
   }
 

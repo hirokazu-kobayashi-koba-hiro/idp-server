@@ -1,6 +1,7 @@
 package org.idp.server.core.token;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.client.Client;
@@ -149,5 +150,9 @@ public class OAuthToken {
 
   public String clientName() {
     return accessToken.client().nameValue();
+  }
+
+  public List<String> scopeAsList() {
+    return accessToken.scopes().toStringList();
   }
 }

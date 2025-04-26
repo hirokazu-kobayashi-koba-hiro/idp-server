@@ -26,6 +26,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   ManagementApiFilter managementApiFilter;
+  ProtectedResourceApiFilter protectedResourceApiFilter;
   String adminAuthViewUrl;
   String authViewUrl;
   String serverUrl;
@@ -33,11 +34,13 @@ public class SecurityConfig {
 
   public SecurityConfig(
       ManagementApiFilter managementApiFilter,
+      ProtectedResourceApiFilter protectedResourceApiFilter,
       @Value("${idp.configurations.adminAuthViewUrl}") String adminAuthViewUrl,
       @Value("${idp.configurations.authViewUrl}") String authViewUrl,
       @Value("${idp.configurations.serverUrl}") String serverUrl,
       @Value("${idp.configurations.additionalAuthViewUrls}") String additionalAuthViewUrls) {
     this.managementApiFilter = managementApiFilter;
+    this.protectedResourceApiFilter = protectedResourceApiFilter;
     this.adminAuthViewUrl = adminAuthViewUrl;
     this.authViewUrl = authViewUrl;
     this.serverUrl = serverUrl;
@@ -69,10 +72,14 @@ public class SecurityConfig {
                     "/{tenant-id}/api/v1/management/management/users",
                     "/{tenant-id}/api/v1/management/management/users/**")
                 .hasAuthority(IdPScope.user_management.name())
+                .requestMatchers(
+                    "/{tenant-id}/api/v1/identity/{verification-type}/{verification-process}")
+                .hasAuthority(IdPScope.identity_verification_application.name())
                 .anyRequest()
                 .permitAll());
 
     http.addFilterBefore(managementApiFilter, BasicAuthenticationFilter.class);
+    http.addFilterBefore(protectedResourceApiFilter, ManagementApiFilter.class);
 
     return http.build();
   }

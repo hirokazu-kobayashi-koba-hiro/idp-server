@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.identity.trustframework.applicat
 
 import org.idp.server.core.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.core.basic.dependency.ApplicationComponentProvider;
-import org.idp.server.core.identity.trustframework.IdentityVerificationApplicationCommandRepository;
+import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationCommandRepository;
 
 public class IdentityVerificationApplicationCommandDataSourceProvider
     implements ApplicationComponentProvider<IdentityVerificationApplicationCommandRepository> {

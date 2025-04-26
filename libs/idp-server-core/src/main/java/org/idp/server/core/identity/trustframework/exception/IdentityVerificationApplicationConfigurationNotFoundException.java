@@ -1,4 +1,4 @@
-package org.idp.server.core.identity.trustframework;
+package org.idp.server.core.identity.trustframework.exception;
 
 import org.idp.server.core.type.exception.NotFoundException;
 

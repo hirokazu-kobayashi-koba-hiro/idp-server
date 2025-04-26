@@ -1,5 +1,6 @@
-package org.idp.server.core.identity.trustframework;
+package org.idp.server.core.identity.trustframework.configuration;
 
+import org.idp.server.core.identity.trustframework.IdentityVerificationType;
 import org.idp.server.core.tenant.Tenant;
 
 public interface IdentityVerificationConfigurationQueryRepository {
