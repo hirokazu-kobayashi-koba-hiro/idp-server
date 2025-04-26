@@ -2,12 +2,12 @@ package org.idp.server.core.identity.trustframework;
 
 import java.util.Objects;
 
-public class VerificationProcess {
+public class IdentityVerificationProcess {
   String name;
 
-  public VerificationProcess() {}
+  public IdentityVerificationProcess() {}
 
-  public VerificationProcess(String name) {
+  public IdentityVerificationProcess(String name) {
     this.name = name;
   }
 
@@ -18,7 +18,7 @@ public class VerificationProcess {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    VerificationProcess that = (VerificationProcess) o;
+    IdentityVerificationProcess that = (IdentityVerificationProcess) o;
     return Objects.equals(name, that.name);
   }
 

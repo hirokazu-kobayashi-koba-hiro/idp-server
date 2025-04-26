@@ -1,5 +1,7 @@
 package org.idp.server.core.security.event;
 
+import org.idp.server.core.identity.trustframework.IdentityVerificationProcess;
+import org.idp.server.core.identity.trustframework.IdentityVerificationType;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventPublisher;
 import org.idp.server.core.tenant.Tenant;
@@ -21,6 +23,22 @@ public class TokenEventPublisher {
       RequestAttributes requestAttributes) {
     TokenEventCreator eventCreator =
         new TokenEventCreator(tenant, oAuthToken, type, requestAttributes);
+    SecurityEvent securityEvent = eventCreator.create();
+    securityEventPublisher.publish(securityEvent);
+  }
+
+  public void publish(
+          Tenant tenant,
+          OAuthToken oAuthToken,
+          IdentityVerificationType type,
+          IdentityVerificationProcess identityVerificationProcess,
+          boolean result,
+          RequestAttributes requestAttributes) {
+    String resultString = result ? "success" : "failure";
+    SecurityEventType securityEventType = new SecurityEventType(type.name() + "_" + identityVerificationProcess.name() + "_" + resultString);
+    SecurityEventDescription securityEventDescription = new SecurityEventDescription(securityEventType.value());
+    TokenEventCreator eventCreator =
+            new TokenEventCreator(tenant, oAuthToken, securityEventType, securityEventDescription, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }

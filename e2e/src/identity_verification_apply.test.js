@@ -40,19 +40,31 @@ describe("identity-verification application", () => {
             "region": "test",
             "postal_code": "1000001",
             "country": "JP"
-          },
-          "document_type": "driver_license",
-          "document_number": "A123456789",
-          "document_expiry_date": "2030-12-31",
-          "selfie_image": "iVBORw0KGgoAAAANSUhEUgAAAAUA...",
-          "document_front_image": "iVBORw0KGgoAAAANSUhEUgAAAAUA...",
-          "document_back_image": "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
+          }
         }
 
       });
 
       console.log(applyResponse.data);
       expect(applyResponse.status).toBe(200);
+
+      const processEndpoint = serverConfig.identityVerificationProcessEndpoint
+        .replace("{type}", "ekyc")
+        .replace("{id}", applyResponse.data.id);
+      const requestEkycResponse = await post({
+        url: processEndpoint.replace("{process}", "issue-ekyc"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${tokenResponse.access_token}`
+        },
+        body: {
+          "trust_framework":"eidas",
+          "document_type": "driver_license",
+        }
+      });
+      console.log(requestEkycResponse.data);
+      expect(requestEkycResponse.status).toBe(200);
+
     });
   });
 });

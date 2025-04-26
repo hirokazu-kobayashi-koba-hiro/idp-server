@@ -37,6 +37,7 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
 
     String authorization = request.getHeader("Authorization");
+    String clientCert = request.getHeader("x-ssl-cert");
 
     try {
       TenantIdentifier adminTenantIdentifier = extractTenantIdentifier(request);

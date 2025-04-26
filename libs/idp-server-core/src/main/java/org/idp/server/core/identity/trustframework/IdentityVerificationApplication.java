@@ -117,6 +117,14 @@ public class IdentityVerificationApplication {
         requestedAt);
   }
 
+  public IdentityVerificationApplication update(
+          IdentityVerificationProcess process,
+       IdentityVerificationApplicationRequest request,
+      WorkflowApplyingResult applyingResult) {
+
+    return new IdentityVerificationApplication();
+  }
+
   public IdentityVerificationApplicationIdentifier identifier() {
     return identifier;
   }

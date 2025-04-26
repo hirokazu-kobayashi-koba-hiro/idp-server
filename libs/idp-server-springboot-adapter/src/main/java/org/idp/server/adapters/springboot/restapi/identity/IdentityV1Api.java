@@ -6,6 +6,7 @@ import org.idp.server.adapters.springboot.operation.ResourceOwnerPrincipal;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.identity.trustframework.*;
+import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationRequest;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -17,7 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/api/v1/identity/{verification-type}/{verification-process}")
+@RequestMapping("/{tenant-id}/api/v1/identity/{verification-type}")
 public class IdentityV1Api implements ParameterTransformable {
 
   IdentityVerificationApi identityVerificationApi;
@@ -26,14 +27,12 @@ public class IdentityV1Api implements ParameterTransformable {
     this.identityVerificationApi = idpServerApplication.identityVerificationApi();
   }
 
-  @PostMapping
+  @PostMapping("/{verification-process}")
   public ResponseEntity<?> apply(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("verification-type") IdentityVerificationType verificationType,
-      @PathVariable("verification-process") VerificationProcess verificationProcess,
+      @PathVariable("verification-process") IdentityVerificationProcess identityVerificationProcess,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
@@ -45,7 +44,7 @@ public class IdentityV1Api implements ParameterTransformable {
             resourceOwnerPrincipal.getUser(),
             resourceOwnerPrincipal.getOAuthToken(),
             verificationType,
-            verificationProcess,
+                identityVerificationProcess,
             new IdentityVerificationApplicationRequest(requestBody),
             requestAttributes);
 
@@ -53,5 +52,34 @@ public class IdentityV1Api implements ParameterTransformable {
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/{id}/{verification-process}")
+  public ResponseEntity<?> process(
+          @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+          @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+          @PathVariable("id") IdentityVerificationApplicationIdentifier identifier,
+          @PathVariable("verification-type") IdentityVerificationType verificationType,
+          @PathVariable("verification-process") IdentityVerificationProcess identityVerificationProcess,
+          @RequestBody(required = false) Map<String, Object> requestBody,
+          HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    IdentityVerificationApplicationResponse response =
+            identityVerificationApi.process(
+                    tenantIdentifier,
+                    resourceOwnerPrincipal.getUser(),
+                    resourceOwnerPrincipal.getOAuthToken(),
+                    identifier,
+                    verificationType,
+                    identityVerificationProcess,
+                    new IdentityVerificationApplicationRequest(requestBody),
+                    requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+            response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }

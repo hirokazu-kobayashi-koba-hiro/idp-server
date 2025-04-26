@@ -33,8 +33,8 @@ public class OperatorAuthenticationEntryService implements OperatorAuthenticatio
   }
 
   public Pairs<User, OAuthToken> authenticate(
-      TenantIdentifier adminTenantIdentifier, String authorizationHeader) {
-    Tenant adminTenant = tenantRepository.getAdmin();
+      TenantIdentifier tenantIdentifier, String authorizationHeader) {
+    Tenant adminTenant = tenantRepository.get(tenantIdentifier);
 
     TokenIntrospectionCreator tokenIntrospectionCreator =
         new TokenIntrospectionCreator(adminTenant, authorizationHeader);

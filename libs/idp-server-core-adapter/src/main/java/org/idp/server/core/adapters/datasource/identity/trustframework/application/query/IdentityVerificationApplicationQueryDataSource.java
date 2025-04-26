@@ -11,6 +11,7 @@ public class IdentityVerificationApplicationQueryDataSource
   @Override
   public IdentityVerificationApplication get(
       Tenant tenant, IdentityVerificationApplicationIdentifier identifier) {
-    return null;
+
+    return new IdentityVerificationApplication();
   }
 }

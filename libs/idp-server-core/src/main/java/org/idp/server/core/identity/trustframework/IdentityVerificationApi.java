@@ -1,6 +1,7 @@
 package org.idp.server.core.identity.trustframework;
 
 import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationRequest;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -13,9 +14,19 @@ public interface IdentityVerificationApi {
       User user,
       OAuthToken oAuthToken,
       IdentityVerificationType identityVerificationType,
-      VerificationProcess verificationProcess,
+      IdentityVerificationProcess identityVerificationProcess,
       IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes);
+
+  IdentityVerificationApplicationResponse process(
+          TenantIdentifier tenantIdentifier,
+          User user,
+          OAuthToken oAuthToken,
+          IdentityVerificationApplicationIdentifier identifier,
+          IdentityVerificationType identityVerificationType,
+          IdentityVerificationProcess identityVerificationProcess,
+          IdentityVerificationApplicationRequest request,
+          RequestAttributes requestAttributes);
 
   void callbackProcess();
 
