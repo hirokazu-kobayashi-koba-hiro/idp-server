@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.operation;
 
 import java.util.List;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 public class Operator extends AbstractAuthenticationToken {

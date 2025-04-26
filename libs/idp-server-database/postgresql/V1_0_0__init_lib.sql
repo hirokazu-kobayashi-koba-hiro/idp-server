@@ -510,13 +510,14 @@ CREATE TABLE federation_sso_session
 
 CREATE TABLE authentication_configuration
 (
-    id         CHAR(36)                NOT NULL PRIMARY KEY,
+    id         CHAR(36)                NOT NULL,
     tenant_id  CHAR(36)                NOT NULL,
     type       VARCHAR(255)            NOT NULL,
     payload    JSONB                   NOT NULL,
     enabled    BOOLEAN                 NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
@@ -553,6 +554,21 @@ CREATE TABLE authentication_interactions
     FOREIGN KEY (authorization_id) REFERENCES authentication_transaction (authorization_id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
+
+CREATE TABLE identity_verification_configurations
+(
+    id         CHAR(36)                NOT NULL,
+    tenant_id  CHAR(36)                NOT NULL,
+    type       VARCHAR(255)            NOT NULL,
+    payload    JSONB                   NOT NULL,
+    enabled    BOOLEAN                 NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_identity_verification_configurations_type ON identity_verification_configurations (tenant_id, type);
 
 CREATE TABLE identity_verification_applications
 (

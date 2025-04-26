@@ -5,7 +5,7 @@ import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationTransactionFindingResponse;
-import org.idp.server.core.oauth.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.core.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.security.RequestAttributes;
 import org.springframework.http.HttpHeaders;

@@ -1,7 +1,7 @@
 package org.idp.server.core.admin;
 
 import java.util.List;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.TenantIdentifier;
 
 public interface UserManagementApi {

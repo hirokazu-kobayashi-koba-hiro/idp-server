@@ -5,7 +5,7 @@ import org.idp.server.core.authentication.AuthenticationTransaction;
 import org.idp.server.core.authentication.AuthenticationTransactionNotFoundException;
 import org.idp.server.core.authentication.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.authentication.AuthorizationIdentifier;
-import org.idp.server.core.oauth.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.core.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.tenant.Tenant;
 
 public class AuthenticationTransactionQueryDataSource

@@ -3,8 +3,8 @@ package org.idp.server.core.adapters.datasource.identity.permission;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.core.basic.datasource.SqlExecutor;
-import org.idp.server.core.oauth.identity.permission.Permission;
-import org.idp.server.core.oauth.identity.permission.Permissions;
+import org.idp.server.core.identity.permission.Permission;
+import org.idp.server.core.identity.permission.Permissions;
 import org.idp.server.core.tenant.Tenant;
 
 public class MysqlExecutor implements PermissionSqlExecutor {

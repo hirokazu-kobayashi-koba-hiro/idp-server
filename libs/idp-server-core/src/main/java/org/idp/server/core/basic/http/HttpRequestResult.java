@@ -35,7 +35,7 @@ public class HttpRequestResult {
     Map<String, Object> map = new HashMap<>();
     map.put("status_code", statusCode);
     map.put("headers", headers);
-    map.put("body", body);
+    map.put("body", body.toMap());
     return map;
   }
 

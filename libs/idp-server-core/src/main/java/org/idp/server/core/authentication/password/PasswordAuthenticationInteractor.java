@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.date.SystemDateTime;
+import org.idp.server.core.identity.PasswordVerificationDelegation;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.oauth.authentication.Authentication;
-import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
-import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 

@@ -5,7 +5,7 @@ import java.util.*;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.AuthorizationFlow;
 import org.idp.server.core.type.oauth.RequestedClientId;

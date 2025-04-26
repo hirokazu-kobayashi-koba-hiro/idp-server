@@ -3,12 +3,12 @@ package org.idp.server.core.authentication.email;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.notification.EmailSender;
 import org.idp.server.core.notification.EmailSenders;
 import org.idp.server.core.notification.EmailSendingRequest;
 import org.idp.server.core.oauth.authentication.Authentication;
-import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 

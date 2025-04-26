@@ -5,7 +5,7 @@ import org.idp.server.core.authentication.AuthenticationTransactionQueryReposito
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.basic.datasource.Transaction;
-import org.idp.server.core.oauth.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.core.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;

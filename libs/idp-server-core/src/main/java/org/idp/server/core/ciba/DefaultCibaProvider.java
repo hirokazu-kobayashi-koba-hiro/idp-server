@@ -7,7 +7,7 @@ import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
-import org.idp.server.core.oauth.identity.UserRepository;
+import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 public class DefaultCibaProvider implements ProtocolProvider<CibaProtocol> {

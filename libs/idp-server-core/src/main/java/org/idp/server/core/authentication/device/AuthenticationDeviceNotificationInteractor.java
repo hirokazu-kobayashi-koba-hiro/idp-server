@@ -2,10 +2,10 @@ package org.idp.server.core.authentication.device;
 
 import java.util.Map;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.device.AuthenticationDevice;
 import org.idp.server.core.notification.device.NotificationChannel;
-import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserRepository;
-import org.idp.server.core.oauth.identity.device.AuthenticationDevice;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 

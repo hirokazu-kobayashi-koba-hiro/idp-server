@@ -1,6 +1,6 @@
 package org.idp.server.core.admin;
 
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.Pairs;
 

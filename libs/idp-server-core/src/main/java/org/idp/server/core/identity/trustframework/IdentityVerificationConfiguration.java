@@ -1,0 +1,38 @@
+package org.idp.server.core.identity.trustframework;
+
+import java.util.Map;
+import org.idp.server.core.basic.json.JsonReadable;
+
+public class IdentityVerificationConfiguration implements JsonReadable {
+  String type;
+  String delegation;
+  String description;
+
+  Map<String, IdentityVerificationProcessConfiguration> processes;
+
+  public IdentityVerificationConfiguration() {}
+
+  public IdentityVerificationType type() {
+    return new IdentityVerificationType(type);
+  }
+
+  public String delegation() {
+    return delegation;
+  }
+
+  public String description() {
+    return description;
+  }
+
+  public Map<String, IdentityVerificationProcessConfiguration> processes() {
+    return processes;
+  }
+
+  public IdentityVerificationProcessConfiguration getProcessConfig(VerificationProcess process) {
+    if (!processes.containsKey(process.name())) {
+      throw new IdentityVerificationApplicationConfigurationNotFoundException(
+          "invalid configuration. type: " + process.name() + "is unregistered.");
+    }
+    return processes.get(process.name());
+  }
+}

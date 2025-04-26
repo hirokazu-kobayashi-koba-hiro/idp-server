@@ -1,8 +1,8 @@
 package org.idp.server.core.ciba.user;
 
 import java.util.List;
-import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserRepository;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.extension.Pairs;
 

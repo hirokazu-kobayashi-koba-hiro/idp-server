@@ -2,12 +2,12 @@ package org.idp.server.core.oauth.grant;
 
 import java.util.HashSet;
 import java.util.Set;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.client.ClientName;
 import org.idp.server.core.oauth.grant.consent.ConsentClaims;
-import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;

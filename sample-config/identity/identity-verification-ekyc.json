@@ -1,0 +1,48 @@
+{
+  "type": "ekyc",
+  "provider_name": "mocky",
+  "processes": {
+    "apply": {
+      "url": "https://run.mocky.io/v3/73f192dd-7bcd-4415-8fc7-811c56684cb7",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer dummy-token"
+      },
+      "dynamic_body_keys": ["username", "password"],
+      "static_body": {},
+      "request_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "eKYC Application",
+        "type": "object",
+        "required": ["last_name", "first_name", "last_name_kana", "first_name_kana", "birthdate", "nationality", "address", "document_type", "document_number", "selfie_image", "document_front_image"],
+        "properties": {
+          "last_name": { "type": "string", "maxLength": 255 },
+          "first_name": { "type": "string", "maxLength": 255 },
+          "last_name_kana": { "type": "string", "maxLength": 255 },
+          "first_name_kana": { "type": "string", "maxLength": 255 },
+          "birthdate": { "type": "string", "format": "date" },
+          "nationality": { "type": "string", "maxLength": 255 },
+          "address": {
+            "type": "object",
+            "properties": {
+              "street_address": { "type": "string", "maxLength": 255 },
+              "locality": { "type": "string", "maxLength": 255 },
+              "region": { "type": "string", "maxLength": 255 },
+              "postal_code": { "type": "string", "maxLength": 255 },
+              "country": { "type": "string", "maxLength": 255 }
+            },
+            "additionalProperties": false
+          },
+          "document_type": { "type": "string", "maxLength": 50 },
+          "document_number": { "type": "string", "maxLength": 100 },
+          "document_expiry_date": { "type": "string", "format": "date" },
+          "selfie_image": { "type": "string", "contentEncoding": "base64" },
+          "document_front_image": { "type": "string", "contentEncoding": "base64" },
+          "document_back_image": { "type": "string", "contentEncoding": "base64" }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

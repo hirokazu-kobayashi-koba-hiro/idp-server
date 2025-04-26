@@ -47,6 +47,9 @@ public class JsonNodeWrapper {
   }
 
   public String getValueOrEmptyAsString(String fieldName) {
+    if (!contains(fieldName)) {
+      return "";
+    }
     return jsonNode.get(fieldName).asText("");
   }
 

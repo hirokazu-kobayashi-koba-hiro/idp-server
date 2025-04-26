@@ -1,7 +1,7 @@
 package org.idp.server.core.authentication.password;
 
 import org.idp.server.core.authentication.*;
-import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
+import org.idp.server.core.identity.PasswordEncodeDelegation;
 
 public class PasswordRegistrationFactory implements AuthenticationInteractorFactory {
 

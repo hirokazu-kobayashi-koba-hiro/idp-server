@@ -2,9 +2,9 @@ package org.idp.server.core.ciba.grant;
 
 import java.time.LocalDateTime;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
-import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.ciba.AuthReqId;
 import org.idp.server.core.type.ciba.Interval;

@@ -3,7 +3,7 @@ package org.idp.server.core.adapters.datasource.authentication.config;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.authentication.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.authentication.exception.MfaConfigurationNotFoundException;
+import org.idp.server.core.authentication.exception.AuthenticationConfigurationNotFoundException;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.tenant.Tenant;
 
@@ -24,7 +24,7 @@ public class AuthenticationConfigurationQueryDataSource
     Map<String, String> result = executor.selectOne(tenant, type);
 
     if (Objects.isNull(result) || result.isEmpty()) {
-      throw new MfaConfigurationNotFoundException(
+      throw new AuthenticationConfigurationNotFoundException(
           String.format(
               "Mfa Configuration is Not Found (%s) (%s)", tenant.identifierValue(), type));
     }

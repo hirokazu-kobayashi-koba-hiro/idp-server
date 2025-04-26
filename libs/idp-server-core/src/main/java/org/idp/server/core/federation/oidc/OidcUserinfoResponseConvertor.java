@@ -3,7 +3,7 @@ package org.idp.server.core.federation.oidc;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 
 public class OidcUserinfoResponseConvertor {
 

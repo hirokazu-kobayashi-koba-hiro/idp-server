@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.identity.role;
 
-import org.idp.server.core.oauth.identity.role.Role;
-import org.idp.server.core.oauth.identity.role.RoleCommandRepository;
-import org.idp.server.core.oauth.identity.role.Roles;
+import org.idp.server.core.identity.role.Role;
+import org.idp.server.core.identity.role.RoleCommandRepository;
+import org.idp.server.core.identity.role.Roles;
 import org.idp.server.core.tenant.Tenant;
 
 public class RoleCommandDataSource implements RoleCommandRepository {
