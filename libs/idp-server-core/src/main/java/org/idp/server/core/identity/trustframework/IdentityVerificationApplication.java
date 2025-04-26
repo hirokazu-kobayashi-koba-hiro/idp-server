@@ -1,12 +1,15 @@
 package org.idp.server.core.identity.trustframework;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
+import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationDetails;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationRequest;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationStatus;
+import org.idp.server.core.identity.trustframework.delegation.ExternalApplicationDetails;
 import org.idp.server.core.identity.trustframework.delegation.WorkflowApplyingResult;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
@@ -21,11 +24,12 @@ public class IdentityVerificationApplication {
   IdentityVerificationApplicationDetails applicationDetails;
   String sub;
   String externalApplicationId;
-
+  ExternalApplicationDetails externalApplicationDetails;
   TrustFramework trustFramework;
   TrustFrameworkDetails trustFrameworkDetails;
   IdentityVerificationApplicationStatus status;
   String comment;
+  LocalDateTime requestedAt;
 
   public IdentityVerificationApplication() {}
 
@@ -37,7 +41,9 @@ public class IdentityVerificationApplication {
       IdentityVerificationApplicationDetails details,
       String sub,
       String externalApplicationId,
-      IdentityVerificationApplicationStatus status) {
+      ExternalApplicationDetails externalApplicationDetails,
+      IdentityVerificationApplicationStatus status,
+      LocalDateTime requestedAt) {
     this.identifier = identifier;
     this.identityVerificationType = verificationType;
     this.tenantIdentifier = tenantIdentifier;
@@ -45,7 +51,9 @@ public class IdentityVerificationApplication {
     this.applicationDetails = details;
     this.sub = sub;
     this.externalApplicationId = externalApplicationId;
+    this.externalApplicationDetails = externalApplicationDetails;
     this.status = status;
+    this.requestedAt = requestedAt;
   }
 
   public IdentityVerificationApplication(
@@ -56,6 +64,7 @@ public class IdentityVerificationApplication {
       IdentityVerificationApplicationDetails applicationDetails,
       String sub,
       String externalApplicationId,
+      ExternalApplicationDetails externalApplicationDetails,
       TrustFramework trustFramework,
       TrustFrameworkDetails trustFrameworkDetails,
       String comment) {
@@ -66,6 +75,7 @@ public class IdentityVerificationApplication {
     this.applicationDetails = applicationDetails;
     this.sub = sub;
     this.externalApplicationId = externalApplicationId;
+    this.externalApplicationDetails = externalApplicationDetails;
     this.trustFramework = trustFramework;
     this.trustFrameworkDetails = trustFrameworkDetails;
     this.comment = comment;
@@ -89,6 +99,10 @@ public class IdentityVerificationApplication {
         new IdentityVerificationApplicationDetails(JsonNodeWrapper.from(request.toMap()));
 
     String externalApplicationId = applyingResult.extractValueFromBody("application_id");
+    ExternalApplicationDetails externalApplicationDetails =
+        new ExternalApplicationDetails(applyingResult.body());
+
+    LocalDateTime requestedAt = SystemDateTime.now();
 
     return new IdentityVerificationApplication(
         identifier,
@@ -98,7 +112,9 @@ public class IdentityVerificationApplication {
         details,
         sub,
         externalApplicationId,
-        IdentityVerificationApplicationStatus.REQUESTED);
+        externalApplicationDetails,
+        IdentityVerificationApplicationStatus.REQUESTED,
+        requestedAt);
   }
 
   public IdentityVerificationApplicationIdentifier identifier() {
@@ -129,6 +145,10 @@ public class IdentityVerificationApplication {
     return externalApplicationId;
   }
 
+  public ExternalApplicationDetails externalApplicationDetails() {
+    return externalApplicationDetails;
+  }
+
   public TrustFramework trustFramework() {
     return trustFramework;
   }
@@ -143,5 +163,9 @@ public class IdentityVerificationApplication {
 
   public IdentityVerificationApplicationStatus status() {
     return status;
+  }
+
+  public LocalDateTime requestedAt() {
+    return requestedAt;
   }
 }

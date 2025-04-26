@@ -3,7 +3,7 @@ import { post } from "./lib/http";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
 import { loginForClientSecretPost } from "./ciba/login";
 
-describe("", () => {
+describe("identity-verification application", () => {
 
   describe("success pattern", () => {
 
@@ -32,6 +32,8 @@ describe("", () => {
           "first_name_kana": "mac",
           "birthdate": "1992-02-12",
           "nationality": "JP",
+          "email_address": "test@gmail.com",
+          "mobile_phone_number": "09012345678",
           "address": {
             "street_address": "test",
             "locality": "test",

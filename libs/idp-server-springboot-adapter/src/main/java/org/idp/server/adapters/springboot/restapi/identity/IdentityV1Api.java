@@ -42,8 +42,8 @@ public class IdentityV1Api implements ParameterTransformable {
     IdentityVerificationApplicationResponse response =
         identityVerificationApi.apply(
             tenantIdentifier,
-            resourceOwnerPrincipal.getRequestedClientId(),
             resourceOwnerPrincipal.getUser(),
+            resourceOwnerPrincipal.getOAuthToken(),
             verificationType,
             verificationProcess,
             new IdentityVerificationApplicationRequest(requestBody),

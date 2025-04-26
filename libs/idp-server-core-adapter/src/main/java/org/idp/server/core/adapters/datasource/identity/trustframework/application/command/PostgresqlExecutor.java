@@ -3,7 +3,6 @@ package org.idp.server.core.adapters.datasource.identity.trustframework.applicat
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.core.basic.datasource.SqlExecutor;
-import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.identity.trustframework.IdentityVerificationApplication;
 import org.idp.server.core.tenant.Tenant;
@@ -39,15 +38,18 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     if (application.trustFrameworkDetails() != null) {
       params.add(jsonConverter.write(application.trustFrameworkDetails().toMap()));
     } else {
-      params.add("{}");
+      params.add(null);
     }
 
     params.add(application.status().name());
-    params.add(SystemDateTime.now().toString());
-
+    params.add(application.requestedAt().toString());
     params.add(application.externalApplicationId());
 
-    params.add("{}");
+    if (application.externalApplicationDetails() != null) {
+      params.add(jsonConverter.write(application.externalApplicationDetails().toMap()));
+    } else {
+      params.add(null);
+    }
 
     sqlExecutor.execute(sqlTemplate, params);
   }

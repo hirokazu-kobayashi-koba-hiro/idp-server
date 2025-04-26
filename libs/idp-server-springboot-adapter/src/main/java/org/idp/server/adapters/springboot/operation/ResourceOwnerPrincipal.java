@@ -31,6 +31,10 @@ public class ResourceOwnerPrincipal extends AbstractAuthenticationToken {
     return user;
   }
 
+  public OAuthToken getOAuthToken() {
+    return oAuthToken;
+  }
+
   public RequestedClientId getRequestedClientId() {
     return oAuthToken.requestedClientId();
   }

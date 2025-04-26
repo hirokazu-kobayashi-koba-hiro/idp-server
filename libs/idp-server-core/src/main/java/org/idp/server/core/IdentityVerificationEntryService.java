@@ -3,11 +3,6 @@ package org.idp.server.core;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.basic.datasource.Transaction;
-import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.basic.json.JsonNodeWrapper;
-import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
-import org.idp.server.core.basic.json.schema.JsonSchemaValidationResult;
-import org.idp.server.core.basic.json.schema.JsonSchemaValidator;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.trustframework.*;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationCommandRepository;
@@ -19,10 +14,14 @@ import org.idp.server.core.identity.trustframework.configuration.IdentityVerific
 import org.idp.server.core.identity.trustframework.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.identity.trustframework.delegation.ExternalWorkflowDelegationClient;
 import org.idp.server.core.identity.trustframework.delegation.WorkflowApplyingResult;
+import org.idp.server.core.identity.trustframework.validation.IdentityVerificationApplicationValidationResult;
+import org.idp.server.core.identity.trustframework.validation.IdentityVerificationApplicationValidator;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
+import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.type.security.RequestAttributes;
 
 @Transaction
@@ -33,27 +32,27 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   IdentityVerificationApplicationQueryRepository applicationQueryRepository;
   ExternalWorkflowDelegationClient externalWorkflowDelegationClient;
   TenantRepository tenantRepository;
-  JsonConverter jsonConverter;
+  TokenEventPublisher eventPublisher;
 
   public IdentityVerificationEntryService(
       IdentityVerificationConfigurationQueryRepository configurationQueryRepository,
       IdentityVerificationApplicationCommandRepository applicationCommandRepository,
       IdentityVerificationApplicationQueryRepository applicationQueryRepository,
-      TenantRepository tenantRepository) {
+      TenantRepository tenantRepository,
+      TokenEventPublisher eventPublisher) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.applicationCommandRepository = applicationCommandRepository;
     this.applicationQueryRepository = applicationQueryRepository;
     this.tenantRepository = tenantRepository;
     this.externalWorkflowDelegationClient = new ExternalWorkflowDelegationClient();
-    // TODO remove
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.eventPublisher = eventPublisher;
   }
 
   @Override
   public IdentityVerificationApplicationResponse apply(
       TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
       User user,
+      OAuthToken oAuthToken,
       IdentityVerificationType identityVerificationType,
       VerificationProcess verificationProcess,
       IdentityVerificationApplicationRequest request,
@@ -64,21 +63,20 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
         configurationQueryRepository.get(tenant, identityVerificationType);
     IdentityVerificationProcessConfiguration processConfiguration =
         verificationConfiguration.getProcessConfig(verificationProcess);
-    JsonNodeWrapper definition =
-        jsonConverter.readTree(processConfiguration.requestValidationSchema());
-    JsonSchemaDefinition jsonSchemaDefinition = new JsonSchemaDefinition(definition);
-    JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);
 
-    JsonNodeWrapper requestJson = jsonConverter.readTree(request.toMap());
-    JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(requestJson);
+    IdentityVerificationApplicationValidator applicationValidator =
+        new IdentityVerificationApplicationValidator(processConfiguration, request);
+    IdentityVerificationApplicationValidationResult validationResult =
+        applicationValidator.validate();
 
-    if (!validationResult.isValid()) {
+    if (validationResult.isError()) {
 
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_request");
-      response.put("error_description", "identity verification application is invalid.");
-      response.put("error_details", validationResult.errors());
-      return IdentityVerificationApplicationResponse.CLIENT_ERROR(response);
+      eventPublisher.publish(
+          tenant,
+          oAuthToken,
+          DefaultSecurityEventType.identity_verification_application_failure,
+          requestAttributes);
+      return validationResult.errorResponse();
     }
 
     WorkflowApplyingResult applyingResult =
@@ -86,8 +84,19 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     IdentityVerificationApplication application =
         IdentityVerificationApplication.create(
-            tenant, requestedClientId, user, identityVerificationType, request, applyingResult);
+            tenant,
+            oAuthToken.requestedClientId(),
+            user,
+            identityVerificationType,
+            request,
+            applyingResult);
     applicationCommandRepository.register(tenant, application);
+
+    eventPublisher.publish(
+        tenant,
+        oAuthToken,
+        DefaultSecurityEventType.identity_verification_application_apply,
+        requestAttributes);
 
     Map<String, Object> response = new HashMap<>();
     response.put("application_id", application.externalApplicationId());

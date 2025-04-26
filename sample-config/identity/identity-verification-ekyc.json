@@ -15,7 +15,7 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "title": "eKYC Application",
         "type": "object",
-        "required": ["last_name", "first_name", "last_name_kana", "first_name_kana", "birthdate", "nationality", "address", "document_type", "document_number", "selfie_image", "document_front_image"],
+        "required": ["last_name", "first_name", "last_name_kana", "first_name_kana", "birthdate", "nationality", "email_address", "mobile_phone_number", "address", "document_type", "document_number", "selfie_image", "document_front_image"],
         "properties": {
           "last_name": { "type": "string", "maxLength": 255 },
           "first_name": { "type": "string", "maxLength": 255 },
@@ -23,6 +23,8 @@
           "first_name_kana": { "type": "string", "maxLength": 255 },
           "birthdate": { "type": "string", "format": "date" },
           "nationality": { "type": "string", "maxLength": 255 },
+          "email_address": { "type": "string", "maxLength": 255, "pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$" },
+          "mobile_phone_number": { "type": "string", "maxLength": 11, "pattern": "^[0-9]{10,11}$" },
           "address": {
             "type": "object",
             "properties": {
