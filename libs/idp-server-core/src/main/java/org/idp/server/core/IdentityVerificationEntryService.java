@@ -4,16 +4,16 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.trustframework.*;
-import org.idp.server.core.identity.trustframework.application.*;
-import org.idp.server.core.identity.trustframework.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.identity.trustframework.configuration.IdentityVerificationConfigurationQueryRepository;
-import org.idp.server.core.identity.trustframework.configuration.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.identity.trustframework.delegation.ExternalWorkflowApplyingResult;
-import org.idp.server.core.identity.trustframework.delegation.ExternalWorkflowDelegationClient;
-import org.idp.server.core.identity.trustframework.result.IdentityVerificationResultCommandRepository;
-import org.idp.server.core.identity.trustframework.validation.IdentityVerificationRequestValidator;
-import org.idp.server.core.identity.trustframework.validation.IdentityVerificationValidationResult;
+import org.idp.server.core.identity.verification.*;
+import org.idp.server.core.identity.verification.application.*;
+import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
+import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplyingResult;
+import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDelegationClient;
+import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
+import org.idp.server.core.identity.verification.validation.IdentityVerificationRequestValidator;
+import org.idp.server.core.identity.verification.validation.IdentityVerificationValidationResult;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.tenant.Tenant;
@@ -54,18 +54,19 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
-      IdentityVerificationType identityVerificationType,
-      IdentityVerificationProcess identityVerificationProcess,
+      IdentityVerificationType type,
+      IdentityVerificationProcess process,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration verificationConfiguration =
-        configurationQueryRepository.get(tenant, identityVerificationType);
+        configurationQueryRepository.get(tenant, type);
+    IdentityVerificationApplications applications = applicationQueryRepository.getAll(tenant, user);
 
     ExternalWorkflowApplyingResult applyingResult =
         externalWorkflowDelegationClient.execute(
-            request, identityVerificationProcess, verificationConfiguration);
+            tenant, user, applications, type, process, request, verificationConfiguration);
     if (applyingResult.isError()) {
 
       eventPublisher.publish(
@@ -81,7 +82,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
             tenant,
             oAuthToken.requestedClientId(),
             user,
-            identityVerificationType,
+            type,
             request,
             verificationConfiguration.externalWorkflowDelegation(),
             applyingResult);
@@ -105,8 +106,8 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       User user,
       OAuthToken oAuthToken,
       IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType identityVerificationType,
-      IdentityVerificationProcess identityVerificationProcess,
+      IdentityVerificationType type,
+      IdentityVerificationProcess process,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
 
@@ -114,11 +115,12 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, identifier);
     IdentityVerificationConfiguration verificationConfiguration =
-        configurationQueryRepository.get(tenant, identityVerificationType);
+        configurationQueryRepository.get(tenant, type);
+    IdentityVerificationApplications applications = applicationQueryRepository.getAll(tenant, user);
 
     ExternalWorkflowApplyingResult applyingResult =
         externalWorkflowDelegationClient.execute(
-            request, identityVerificationProcess, verificationConfiguration);
+            tenant, user, applications, type, process, request, verificationConfiguration);
     if (applyingResult.isError()) {
 
       eventPublisher.publish(
@@ -131,15 +133,15 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     }
 
     IdentityVerificationApplication updated =
-        application.updateProcess(identityVerificationProcess, request, applyingResult);
+        application.updateProcess(process, request, applyingResult);
 
     applicationCommandRepository.update(tenant, updated);
 
     eventPublisher.publish(
         tenant,
         oAuthToken,
-        identityVerificationType,
-        identityVerificationProcess,
+        type,
+        process,
         true,
         requestAttributes);
 
@@ -151,16 +153,16 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   public IdentityVerificationResponse callbackExamination(
       TenantIdentifier tenantIdentifier,
       IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType identityVerificationType,
-      IdentityVerificationProcess identityVerificationProcess,
+      IdentityVerificationType type,
+      IdentityVerificationProcess process,
       IdentityVerificationRequest request) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
     IdentityVerificationConfiguration verificationConfiguration =
-        configurationQueryRepository.get(tenant, identityVerificationType);
+        configurationQueryRepository.get(tenant, type);
     IdentityVerificationProcessConfiguration processConfiguration =
-        verificationConfiguration.getProcessConfig(identityVerificationProcess);
+        verificationConfiguration.getProcessConfig(process);
 
     IdentityVerificationRequestValidator applicationValidator =
         new IdentityVerificationRequestValidator(processConfiguration, request);
@@ -175,7 +177,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
         applicationQueryRepository.get(tenant, identifier);
 
     IdentityVerificationApplication updatedExamination =
-        application.updateExamination(identityVerificationProcess, request);
+        application.updateExamination(process, request);
     applicationCommandRepository.update(tenant, updatedExamination);
 
     Map<String, Object> response = new HashMap<>();
@@ -186,16 +188,16 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   public IdentityVerificationResponse callbackResult(
       TenantIdentifier tenantIdentifier,
       IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType identityVerificationType,
-      IdentityVerificationProcess identityVerificationProcess,
+      IdentityVerificationType type,
+      IdentityVerificationProcess process,
       IdentityVerificationRequest request) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
     IdentityVerificationConfiguration verificationConfiguration =
-        configurationQueryRepository.get(tenant, identityVerificationType);
+        configurationQueryRepository.get(tenant, type);
     IdentityVerificationProcessConfiguration processConfiguration =
-        verificationConfiguration.getProcessConfig(identityVerificationProcess);
+        verificationConfiguration.getProcessConfig(process);
 
     IdentityVerificationRequestValidator applicationValidator =
         new IdentityVerificationRequestValidator(processConfiguration, request);
@@ -210,7 +212,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
         applicationQueryRepository.get(tenant, identifier);
 
     IdentityVerificationApplication updatedExamination =
-        application.updateExamination(identityVerificationProcess, request);
+        application.updateExamination(process, request);
     applicationCommandRepository.update(tenant, updatedExamination);
 
     IdentityVerificationResult identityVerificationResult =

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.core.basic.datasource.SqlExecutor;
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.identity.trustframework.IdentityVerificationApplication;
+import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.tenant.Tenant;
 
 public class PostgresqlExecutor implements IdentityVerificationApplicationCommandSqlExecutor {

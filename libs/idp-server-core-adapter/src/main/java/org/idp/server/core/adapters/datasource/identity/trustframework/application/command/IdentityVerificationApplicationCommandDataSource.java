@@ -1,7 +1,7 @@
 package org.idp.server.core.adapters.datasource.identity.trustframework.application.command;
 
-import org.idp.server.core.identity.trustframework.IdentityVerificationApplication;
-import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationCommandRepository;
+import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
+import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.tenant.Tenant;
 
 public class IdentityVerificationApplicationCommandDataSource

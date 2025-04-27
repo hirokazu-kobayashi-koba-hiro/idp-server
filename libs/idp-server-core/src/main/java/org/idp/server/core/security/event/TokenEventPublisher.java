@@ -1,7 +1,7 @@
 package org.idp.server.core.security.event;
 
-import org.idp.server.core.identity.trustframework.IdentityVerificationProcess;
-import org.idp.server.core.identity.trustframework.IdentityVerificationType;
+import org.idp.server.core.identity.verification.IdentityVerificationProcess;
+import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventPublisher;
 import org.idp.server.core.tenant.Tenant;

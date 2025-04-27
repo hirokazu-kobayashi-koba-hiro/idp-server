@@ -20,6 +20,10 @@ public class JsonSchemaValidationResult {
     return new JsonSchemaValidationResult(false, errors);
   }
 
+  public static JsonSchemaValidationResult empty() {
+    return new JsonSchemaValidationResult(true, List.of());
+  }
+
   public boolean isValid() {
     return valid;
   }
