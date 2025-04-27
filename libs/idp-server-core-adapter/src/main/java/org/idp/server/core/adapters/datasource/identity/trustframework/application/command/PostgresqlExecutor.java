@@ -43,7 +43,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
 
     params.add(application.status().name());
     params.add(application.requestedAt().toString());
-    params.add(application.externalApplicationId());
+    params.add(application.externalApplicationId().value());
 
     if (application.externalApplicationDetails() != null) {
       params.add(jsonConverter.write(application.externalApplicationDetails().toMap()));

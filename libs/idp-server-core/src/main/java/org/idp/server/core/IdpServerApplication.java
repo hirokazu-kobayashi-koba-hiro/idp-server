@@ -38,6 +38,7 @@ import org.idp.server.core.identity.trustframework.IdentityVerificationApi;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationQueryRepository;
 import org.idp.server.core.identity.trustframework.configuration.IdentityVerificationConfigurationQueryRepository;
+import org.idp.server.core.identity.trustframework.result.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.notification.EmailSenderLoader;
 import org.idp.server.core.notification.EmailSenders;
 import org.idp.server.core.oauth.OAuthFlowApi;
@@ -127,6 +128,8 @@ public class IdpServerApplication {
                 IdentityVerificationApplicationCommandRepository.class);
     IdentityVerificationApplicationQueryRepository identityVerificationApplicationQueryRepository =
         applicationComponentContainer.resolve(IdentityVerificationApplicationQueryRepository.class);
+    IdentityVerificationResultCommandRepository identityVerificationResultCommandRepository =
+        applicationComponentContainer.resolve(IdentityVerificationResultCommandRepository.class);
 
     RoleCommandRepository roleCommandRepository =
         applicationComponentContainer.resolve(RoleCommandRepository.class);
@@ -268,6 +271,7 @@ public class IdpServerApplication {
                 identityVerificationConfigurationQueryRepository,
                 identityVerificationApplicationCommandRepository,
                 identityVerificationApplicationQueryRepository,
+                identityVerificationResultCommandRepository,
                 tenantRepository,
                 tokenEventPublisher),
             IdentityVerificationApi.class,

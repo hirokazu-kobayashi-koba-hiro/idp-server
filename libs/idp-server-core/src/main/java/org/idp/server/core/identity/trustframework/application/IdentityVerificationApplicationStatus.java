@@ -5,7 +5,7 @@ public enum IdentityVerificationApplicationStatus {
   APPLYING,
   PROCESSING,
   APPROVED,
-  DISAPPROVED,
+  REJECTED,
   EXPIRED,
   CANCELLED
 }

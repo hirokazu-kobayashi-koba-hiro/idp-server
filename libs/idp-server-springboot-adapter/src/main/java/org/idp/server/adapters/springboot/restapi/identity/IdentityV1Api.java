@@ -7,8 +7,8 @@ import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.identity.trustframework.*;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationRequest;
-import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationResponse;
+import org.idp.server.core.identity.trustframework.application.IdentityVerificationRequest;
+import org.idp.server.core.identity.trustframework.application.IdentityVerificationResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.security.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -38,14 +38,14 @@ public class IdentityV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    IdentityVerificationApplicationResponse response =
+    IdentityVerificationResponse response =
         identityVerificationApi.apply(
             tenantIdentifier,
             resourceOwnerPrincipal.getUser(),
             resourceOwnerPrincipal.getOAuthToken(),
             verificationType,
             identityVerificationProcess,
-            new IdentityVerificationApplicationRequest(requestBody),
+            new IdentityVerificationRequest(requestBody),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -66,7 +66,7 @@ public class IdentityV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    IdentityVerificationApplicationResponse response =
+    IdentityVerificationResponse response =
         identityVerificationApi.process(
             tenantIdentifier,
             resourceOwnerPrincipal.getUser(),
@@ -74,7 +74,7 @@ public class IdentityV1Api implements ParameterTransformable {
             identifier,
             verificationType,
             identityVerificationProcess,
-            new IdentityVerificationApplicationRequest(requestBody),
+            new IdentityVerificationRequest(requestBody),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

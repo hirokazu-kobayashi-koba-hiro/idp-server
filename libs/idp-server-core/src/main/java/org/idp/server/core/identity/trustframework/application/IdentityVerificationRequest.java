@@ -3,12 +3,12 @@ package org.idp.server.core.identity.trustframework.application;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class IdentityVerificationApplicationRequest {
+public class IdentityVerificationRequest {
   Map<String, Object> values;
 
-  public IdentityVerificationApplicationRequest() {}
+  public IdentityVerificationRequest() {}
 
-  public IdentityVerificationApplicationRequest(Map<String, Object> values) {
+  public IdentityVerificationRequest(Map<String, Object> values) {
     this.values = values;
   }
 

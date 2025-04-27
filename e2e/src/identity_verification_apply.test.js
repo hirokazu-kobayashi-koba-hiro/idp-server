@@ -9,6 +9,7 @@ describe("identity-verification application", () => {
 
     it("apply", async () => {
 
+      const type = "investment-account-opening";
       const tokenResponse = await loginForClientSecretPost({
         serverConfig,
         client: clientSecretPostClient,
@@ -16,7 +17,7 @@ describe("identity-verification application", () => {
       });
 
       const applyUrl = serverConfig.identityVerificationApplyEndpoint
-        .replace("{type}", "ekyc")
+        .replace("{type}", type)
         .replace("{process}", "apply")
       ;
       const applyResponse = await post({
@@ -49,10 +50,11 @@ describe("identity-verification application", () => {
       expect(applyResponse.status).toBe(200);
 
       const processEndpoint = serverConfig.identityVerificationProcessEndpoint
-        .replace("{type}", "ekyc")
+        .replace("{type}", type)
         .replace("{id}", applyResponse.data.id);
+
       const requestEkycResponse = await post({
-        url: processEndpoint.replace("{process}", "issue-ekyc"),
+        url: processEndpoint.replace("{process}", "request-ekyc"),
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${tokenResponse.access_token}`
@@ -64,6 +66,17 @@ describe("identity-verification application", () => {
       });
       console.log(requestEkycResponse.data);
       expect(requestEkycResponse.status).toBe(200);
+
+      const completeEkycResponse = await post({
+        url: processEndpoint.replace("{process}", "complete-ekyc"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${tokenResponse.access_token}`
+        },
+        body: {}
+      });
+      console.log(completeEkycResponse.data);
+      expect(completeEkycResponse.status).toBe(200);
 
     });
   });

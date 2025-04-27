@@ -150,6 +150,7 @@ public class AuthorizationCodeGrantService
               clientConfiguration);
       oAuthTokenBuilder.add(idToken);
     }
+
     if (authorizationRequest.isVerifiableCredentialRequest()) {
       CNonce cNonce = createCNonce();
       CNonceExpiresIn cNonceExpiresIn = new CNonceExpiresIn(3600L);

@@ -3,7 +3,7 @@ package org.idp.server.core.identity.trustframework.validation;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.basic.json.schema.JsonSchemaValidationResult;
-import org.idp.server.core.identity.trustframework.application.IdentityVerificationApplicationResponse;
+import org.idp.server.core.identity.trustframework.application.IdentityVerificationResponse;
 
 public class IdentityVerificationApplicationValidationResult {
 
@@ -22,11 +22,11 @@ public class IdentityVerificationApplicationValidationResult {
     return !validationResult.isValid();
   }
 
-  public IdentityVerificationApplicationResponse errorResponse() {
+  public IdentityVerificationResponse errorResponse() {
     Map<String, Object> response = new HashMap<>();
     response.put("error", "invalid_request");
     response.put("error_description", "identity verification application is invalid.");
     response.put("error_details", validationResult.errors());
-    return IdentityVerificationApplicationResponse.CLIENT_ERROR(response);
+    return IdentityVerificationResponse.CLIENT_ERROR(response);
   }
 }

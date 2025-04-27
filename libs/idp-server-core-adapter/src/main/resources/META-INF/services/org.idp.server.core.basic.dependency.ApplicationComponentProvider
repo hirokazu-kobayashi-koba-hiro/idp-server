@@ -19,3 +19,4 @@ org.idp.server.core.adapters.datasource.authentication.transaction.query.Authent
 org.idp.server.core.adapters.datasource.identity.trustframework.config.IdentityVerificationConfigurationDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.trustframework.application.command.IdentityVerificationApplicationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.trustframework.application.query.IdentityVerificationApplicationQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.trustframework.result.command.IdentityVerificationResultCommandDataSourceProvider

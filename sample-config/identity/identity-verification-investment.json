@@ -1,6 +1,14 @@
 {
-  "type": "ekyc",
-  "provider_name": "mocky",
+  "type": "investment-account-opening",
+  "external_workflow_delegation": "mocky",
+  "oauth_authorization": {
+    "type": "password",
+    "token_endpoint": "https://run.mocky.io/v3/04646fc3-8cce-44c8-bc59-5c64df51bf82",
+    "client_id": "your-client-id",
+    "username": "username",
+    "password": "password",
+    "scope": "application"
+  },
   "processes": {
     "apply": {
       "url": "https://run.mocky.io/v3/73f192dd-7bcd-4415-8fc7-811c56684cb7",
@@ -51,13 +59,31 @@
       "static_body": {},
       "request_validation_schema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "request eKYC ",
+        "title": "request eKYC",
         "type": "object",
         "required": ["trust_framework", "document_type"],
         "properties": {
           "trust_framework": { "type": "string", "maxLength": 100 },
           "document_type": { "type": "string", "maxLength": 50 }
         },
+        "additionalProperties": false
+      }
+    },
+    "complete-ekyc": {
+      "url": "https://run.mocky.io/v3/73f192dd-7bcd-4415-8fc7-811c56684cb7",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer dummy-token"
+      },
+      "dynamic_body_keys": [],
+      "static_body": {},
+      "request_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "complete eKYC",
+        "type": "object",
+        "required": [],
+        "properties": {},
         "additionalProperties": false
       }
     }

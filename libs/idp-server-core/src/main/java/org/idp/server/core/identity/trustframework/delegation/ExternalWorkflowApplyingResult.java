@@ -5,14 +5,14 @@ import java.util.Map;
 import org.idp.server.core.basic.http.HttpRequestResult;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
 
-public class WorkflowApplyingResult {
+public class ExternalWorkflowApplyingResult {
   int statusCode;
   Map<String, List<String>> headers;
   JsonNodeWrapper body;
 
-  public WorkflowApplyingResult() {}
+  public ExternalWorkflowApplyingResult() {}
 
-  public WorkflowApplyingResult(HttpRequestResult httpRequestResult) {
+  public ExternalWorkflowApplyingResult(HttpRequestResult httpRequestResult) {
     this.statusCode = httpRequestResult.statusCode();
     this.headers = httpRequestResult.headers();
     this.body = httpRequestResult.body();
@@ -32,5 +32,10 @@ public class WorkflowApplyingResult {
 
   public String extractValueFromBody(String key) {
     return body.getValueOrEmptyAsString(key);
+  }
+
+  // TODO use response definition
+  public ExternalWorkflowApplicationIdentifier extractApplicationIdentifierFromBody() {
+    return new ExternalWorkflowApplicationIdentifier(extractValueFromBody("application_id"));
   }
 }
