@@ -33,7 +33,7 @@ describe("identity-verification application", () => {
           "first_name_kana": "mac",
           "birthdate": "1992-02-12",
           "nationality": "JP",
-          "email_address": "test@gmail.com",
+          "email_address": "ito.ichiro@gmail.com",
           "mobile_phone_number": "09012345678",
           "address": {
             "street_address": "test",

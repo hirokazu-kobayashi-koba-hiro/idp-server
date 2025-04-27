@@ -137,13 +137,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     applicationCommandRepository.update(tenant, updated);
 
-    eventPublisher.publish(
-        tenant,
-        oAuthToken,
-        type,
-        process,
-        true,
-        requestAttributes);
+    eventPublisher.publish(tenant, oAuthToken, type, process, true, requestAttributes);
 
     Map<String, Object> response = new HashMap<>();
     return IdentityVerificationResponse.OK(response);

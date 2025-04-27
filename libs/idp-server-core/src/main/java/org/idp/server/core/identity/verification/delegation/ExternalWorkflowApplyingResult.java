@@ -24,13 +24,13 @@ public class ExternalWorkflowApplyingResult {
   }
 
   public static ExternalWorkflowApplyingResult requestVerificationError(
-          IdentityVerificationValidationResult requestIdValidationResult,
-          IdentityVerificationRequestVerificationResult verifyResult) {
+      IdentityVerificationValidationResult requestIdValidationResult,
+      IdentityVerificationRequestVerificationResult verifyResult) {
     return new ExternalWorkflowApplyingResult(
-            requestIdValidationResult,
-            verifyResult,
-            new ExternalWorkflowApplyingExecutionResult(),
-            new IdentityVerificationValidationResult());
+        requestIdValidationResult,
+        verifyResult,
+        new ExternalWorkflowApplyingExecutionResult(),
+        new IdentityVerificationValidationResult());
   }
 
   public static ExternalWorkflowApplyingResult executionError(
@@ -38,7 +38,10 @@ public class ExternalWorkflowApplyingResult {
       IdentityVerificationRequestVerificationResult verifyResult,
       ExternalWorkflowApplyingExecutionResult executionResult) {
     return new ExternalWorkflowApplyingResult(
-        requestIdValidationResult, verifyResult, executionResult, new IdentityVerificationValidationResult());
+        requestIdValidationResult,
+        verifyResult,
+        executionResult,
+        new IdentityVerificationValidationResult());
   }
 
   public ExternalWorkflowApplyingResult(

@@ -47,6 +47,15 @@
         },
         "additionalProperties": false
       },
+      "request_verification_schema": {
+        "duplicate_application": true,
+        "unmatched_user_claims_email": {
+          "property": "email_address"
+        },
+        "unmatched_user_claims_phone": {
+          "property": "mobile_phone_number"
+        }
+      },
       "response_validation_schema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "title": "application response",

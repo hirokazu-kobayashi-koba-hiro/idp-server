@@ -17,6 +17,8 @@ public class IdentityVerificationRequestVerifiers {
   public IdentityVerificationRequestVerifiers() {
     this.verifiers = new ArrayList<>();
     this.verifiers.add(new DenyDuplicateIdentityVerificationApplicationVerifier());
+    this.verifiers.add(new UnmatchedEmailIdentityVerificationApplicationVerifier());
+    this.verifiers.add(new UnmatchedPhoneIdentityVerificationApplicationVerifier());
   }
 
   public IdentityVerificationRequestVerificationResult verify(
@@ -30,7 +32,8 @@ public class IdentityVerificationRequestVerifiers {
 
     for (IdentityVerificationRequestVerifier verifier : verifiers) {
 
-      if (!verifier.shouldVerify(tenant, user, applications, type, processes, request, verificationConfiguration)) {
+      if (!verifier.shouldVerify(
+          tenant, user, applications, type, processes, request, verificationConfiguration)) {
         continue;
       }
 
@@ -41,7 +44,6 @@ public class IdentityVerificationRequestVerifiers {
       if (verifyResult.isError()) {
         return verifyResult;
       }
-
     }
 
     return IdentityVerificationRequestVerificationResult.success();

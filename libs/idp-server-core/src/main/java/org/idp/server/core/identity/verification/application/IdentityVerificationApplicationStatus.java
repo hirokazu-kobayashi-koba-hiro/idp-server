@@ -9,7 +9,6 @@ public enum IdentityVerificationApplicationStatus {
   EXPIRED,
   CANCELLED;
 
-
   public boolean isRunning() {
     return this == REQUESTED || this == APPLYING || this == PROCESSING;
   }

@@ -1,10 +1,9 @@
 package org.idp.server.core.identity.verification.application;
 
-import org.idp.server.core.identity.verification.IdentityVerificationType;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import org.idp.server.core.identity.verification.IdentityVerificationType;
 
 public class IdentityVerificationApplications implements Iterable<IdentityVerificationApplication> {
 
@@ -24,7 +23,9 @@ public class IdentityVerificationApplications implements Iterable<IdentityVerifi
   }
 
   public boolean containsRunningState(IdentityVerificationType type) {
-    return values.stream().anyMatch(application -> application.identityVerificationType().equals(type)
-            && application.isRunning());
+    return values.stream()
+        .anyMatch(
+            application ->
+                application.identityVerificationType().equals(type) && application.isRunning());
   }
 }

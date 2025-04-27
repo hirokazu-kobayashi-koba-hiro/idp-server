@@ -2,6 +2,8 @@ package org.idp.server.core.identity.verification.verifier;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
@@ -11,8 +13,10 @@ import org.idp.server.core.identity.verification.configuration.IdentityVerificat
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.tenant.Tenant;
 
-public class DenyDuplicateIdentityVerificationApplicationVerifier
+public class UnmatchedPhoneIdentityVerificationApplicationVerifier
     implements IdentityVerificationRequestVerifier {
+
+  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
 
   @Override
   public boolean shouldVerify(
@@ -32,8 +36,7 @@ public class DenyDuplicateIdentityVerificationApplicationVerifier
       return false;
     }
 
-    return verificationSchema.containsKey("duplicate_application")
-        && (Boolean) verificationSchema.get("duplicate_application");
+    return verificationSchema.containsKey("unmatched_user_claims_phone");
   }
 
   @Override
@@ -46,9 +49,19 @@ public class DenyDuplicateIdentityVerificationApplicationVerifier
       IdentityVerificationRequest request,
       IdentityVerificationConfiguration verificationConfiguration) {
 
-    if (applications.containsRunningState(type)) {
-      List<String> errors = List.of("Duplicate application found for type " + type.name());
-      return IdentityVerificationRequestVerificationResult.failure(errors);
+    IdentityVerificationProcessConfiguration processConfig =
+        verificationConfiguration.getProcessConfig(processes);
+    Map<String, Object> verificationSchema = processConfig.requestVerificationSchema();
+    JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(verificationSchema);
+    JsonNodeWrapper unmatchedUserClaims =
+        jsonNodeWrapper.getValueAsJsonNode("unmatched_user_claims_phone");
+
+    String property = unmatchedUserClaims.getValueOrEmptyAsString("property");
+    String requestValue = request.optValueAsString(property, "");
+
+    if (!requestValue.equals(user.phoneNumber())) {
+      return IdentityVerificationRequestVerificationResult.failure(
+          List.of("PhoneNumber does not match"));
     }
 
     return IdentityVerificationRequestVerificationResult.success();
