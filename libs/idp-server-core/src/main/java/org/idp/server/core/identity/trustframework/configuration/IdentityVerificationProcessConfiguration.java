@@ -14,6 +14,7 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
   Map<String, Object> staticBody;
   List<UserInfoMappingRule> userinfoMappingRules;
   Map<String, Object> requestValidationSchema;
+  Map<String, Object> responseValidationSchema;
 
   public IdentityVerificationProcessConfiguration() {}
 
@@ -43,5 +44,9 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
 
   public Map<String, Object> requestValidationSchema() {
     return requestValidationSchema;
+  }
+
+  public Map<String, Object> responseValidationSchema() {
+    return responseValidationSchema;
   }
 }

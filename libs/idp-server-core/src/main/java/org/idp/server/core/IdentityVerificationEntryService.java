@@ -12,8 +12,8 @@ import org.idp.server.core.identity.trustframework.configuration.IdentityVerific
 import org.idp.server.core.identity.trustframework.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.identity.trustframework.delegation.ExternalWorkflowDelegationClient;
 import org.idp.server.core.identity.trustframework.result.IdentityVerificationResultCommandRepository;
-import org.idp.server.core.identity.trustframework.validation.IdentityVerificationApplicationValidationResult;
-import org.idp.server.core.identity.trustframework.validation.IdentityVerificationApplicationValidator;
+import org.idp.server.core.identity.trustframework.validation.IdentityVerificationRequestValidator;
+import org.idp.server.core.identity.trustframework.validation.IdentityVerificationValidationResult;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.tenant.Tenant;
@@ -60,30 +60,21 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, identityVerificationType);
-    IdentityVerificationProcessConfiguration processConfiguration =
-        verificationConfiguration.getProcessConfig(identityVerificationProcess);
 
-    IdentityVerificationApplicationValidator applicationValidator =
-        new IdentityVerificationApplicationValidator(processConfiguration, request);
-    IdentityVerificationApplicationValidationResult validationResult =
-        applicationValidator.validate();
-
-    if (validationResult.isError()) {
+    ExternalWorkflowApplyingResult applyingResult =
+        externalWorkflowDelegationClient.execute(
+            request, identityVerificationProcess, verificationConfiguration);
+    if (applyingResult.isError()) {
 
       eventPublisher.publish(
           tenant,
           oAuthToken,
           DefaultSecurityEventType.identity_verification_application_failure,
           requestAttributes);
-      return validationResult.errorResponse();
+      return applyingResult.errorResponse();
     }
-
-    ExternalWorkflowApplyingResult applyingResult =
-        externalWorkflowDelegationClient.execute(
-            request, processConfiguration, verificationConfiguration.oauthAuthorization());
 
     IdentityVerificationApplication application =
         IdentityVerificationApplication.create(
@@ -94,6 +85,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
             request,
             verificationConfiguration.externalWorkflowDelegation(),
             applyingResult);
+
     applicationCommandRepository.register(tenant, application);
 
     eventPublisher.publish(
@@ -119,35 +111,24 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-
+    IdentityVerificationApplication application =
+        applicationQueryRepository.get(tenant, identifier);
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, identityVerificationType);
-    IdentityVerificationProcessConfiguration processConfiguration =
-        verificationConfiguration.getProcessConfig(identityVerificationProcess);
 
-    IdentityVerificationApplicationValidator applicationValidator =
-        new IdentityVerificationApplicationValidator(processConfiguration, request);
-    IdentityVerificationApplicationValidationResult validationResult =
-        applicationValidator.validate();
-
-    if (validationResult.isError()) {
+    ExternalWorkflowApplyingResult applyingResult =
+        externalWorkflowDelegationClient.execute(
+            request, identityVerificationProcess, verificationConfiguration);
+    if (applyingResult.isError()) {
 
       eventPublisher.publish(
           tenant,
           oAuthToken,
-          identityVerificationType,
-          identityVerificationProcess,
-          false,
+          DefaultSecurityEventType.identity_verification_application_failure,
           requestAttributes);
-      return validationResult.errorResponse();
+
+      return applyingResult.errorResponse();
     }
-
-    IdentityVerificationApplication application =
-        applicationQueryRepository.get(tenant, identifier);
-
-    ExternalWorkflowApplyingResult applyingResult =
-        externalWorkflowDelegationClient.execute(
-            request, processConfiguration, verificationConfiguration.oauthAuthorization());
 
     IdentityVerificationApplication updated =
         application.updateProcess(identityVerificationProcess, request, applyingResult);
@@ -181,10 +162,9 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     IdentityVerificationProcessConfiguration processConfiguration =
         verificationConfiguration.getProcessConfig(identityVerificationProcess);
 
-    IdentityVerificationApplicationValidator applicationValidator =
-        new IdentityVerificationApplicationValidator(processConfiguration, request);
-    IdentityVerificationApplicationValidationResult validationResult =
-        applicationValidator.validate();
+    IdentityVerificationRequestValidator applicationValidator =
+        new IdentityVerificationRequestValidator(processConfiguration, request);
+    IdentityVerificationValidationResult validationResult = applicationValidator.validate();
 
     if (validationResult.isError()) {
 
@@ -217,10 +197,9 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     IdentityVerificationProcessConfiguration processConfiguration =
         verificationConfiguration.getProcessConfig(identityVerificationProcess);
 
-    IdentityVerificationApplicationValidator applicationValidator =
-        new IdentityVerificationApplicationValidator(processConfiguration, request);
-    IdentityVerificationApplicationValidationResult validationResult =
-        applicationValidator.validate();
+    IdentityVerificationRequestValidator applicationValidator =
+        new IdentityVerificationRequestValidator(processConfiguration, request);
+    IdentityVerificationValidationResult validationResult = applicationValidator.validate();
 
     if (validationResult.isError()) {
 

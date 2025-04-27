@@ -23,6 +23,10 @@ public class HttpRequestResult {
     return statusCode;
   }
 
+  public boolean isSuccess() {
+    return statusCode < 400;
+  }
+
   public Map<String, List<String>> headers() {
     return headers;
   }

@@ -46,10 +46,20 @@
           }
         },
         "additionalProperties": false
+      },
+      "response_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "application response",
+        "type": "object",
+        "required": ["application_id"],
+        "properties": {
+          "application_id": { "type": "string" }
+        },
+        "additionalProperties": false
       }
     },
     "request-ekyc": {
-      "url": "https://run.mocky.io/v3/73f192dd-7bcd-4415-8fc7-811c56684cb7",
+      "url": "https://run.mocky.io/v3/c303abbb-5d0b-417f-bcf0-8a83312f830b",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json",
@@ -67,6 +77,22 @@
           "document_type": { "type": "string", "maxLength": 50 }
         },
         "additionalProperties": false
+      },
+      "response_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "request eKYC response",
+        "type": "object",
+        "required": ["ekyc_url"],
+        "properties": {
+          "application_id": { "type": "string" },
+          "ekyc_details": {
+            "type": "object",
+            "properties": {
+              "ekyc_url": ""
+            }
+          }
+        },
+        "additionalProperties": false
       }
     },
     "complete-ekyc": {
@@ -81,6 +107,14 @@
       "request_validation_schema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "title": "complete eKYC",
+        "type": "object",
+        "required": [],
+        "properties": {},
+        "additionalProperties": false
+      },
+      "response_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "complete eKYC response",
         "type": "object",
         "required": [],
         "properties": {},

@@ -1,41 +1,77 @@
 package org.idp.server.core.identity.trustframework.delegation;
 
-import java.util.List;
-import java.util.Map;
-import org.idp.server.core.basic.http.HttpRequestResult;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
+import org.idp.server.core.identity.trustframework.application.IdentityVerificationResponse;
+import org.idp.server.core.identity.trustframework.validation.IdentityVerificationValidationResult;
 
 public class ExternalWorkflowApplyingResult {
-  int statusCode;
-  Map<String, List<String>> headers;
-  JsonNodeWrapper body;
+
+  IdentityVerificationValidationResult requestIdValidationResult;
+  ExternalWorkflowApplyingExecutionResult executionResult;
+  IdentityVerificationValidationResult responseValidationResult;
 
   public ExternalWorkflowApplyingResult() {}
 
-  public ExternalWorkflowApplyingResult(HttpRequestResult httpRequestResult) {
-    this.statusCode = httpRequestResult.statusCode();
-    this.headers = httpRequestResult.headers();
-    this.body = httpRequestResult.body();
+  public static ExternalWorkflowApplyingResult requestError(
+      IdentityVerificationValidationResult requestIdValidationResult) {
+    return new ExternalWorkflowApplyingResult(
+        requestIdValidationResult,
+        new ExternalWorkflowApplyingExecutionResult(),
+        new IdentityVerificationValidationResult());
   }
 
-  public int statusCode() {
-    return statusCode;
+  public static ExternalWorkflowApplyingResult executionError(
+      IdentityVerificationValidationResult requestIdValidationResult,
+      ExternalWorkflowApplyingExecutionResult executionResult) {
+    return new ExternalWorkflowApplyingResult(
+        requestIdValidationResult, executionResult, new IdentityVerificationValidationResult());
   }
 
-  public Map<String, List<String>> headers() {
-    return headers;
+  public static ExternalWorkflowApplyingResult responseError(
+      IdentityVerificationValidationResult requestIdValidationResult,
+      ExternalWorkflowApplyingExecutionResult executionResult,
+      IdentityVerificationValidationResult responseValidationResult) {
+    return new ExternalWorkflowApplyingResult(
+        requestIdValidationResult, executionResult, responseValidationResult);
+  }
+
+  public ExternalWorkflowApplyingResult(
+      IdentityVerificationValidationResult requestIdValidationResult,
+      ExternalWorkflowApplyingExecutionResult executionResult,
+      IdentityVerificationValidationResult responseValidationResult) {
+    this.requestIdValidationResult = requestIdValidationResult;
+    this.executionResult = executionResult;
+    this.responseValidationResult = responseValidationResult;
+  }
+
+  public boolean isError() {
+    return requestIdValidationResult.isError()
+        || executionResult.isClientError()
+        || responseValidationResult.isError();
+  }
+
+  public ExternalWorkflowApplicationIdentifier extractApplicationIdentifierFromBody() {
+    return new ExternalWorkflowApplicationIdentifier(
+        executionResult.extractValueFromBody("application_id"));
+  }
+
+  public IdentityVerificationResponse errorResponse() {
+    if (requestIdValidationResult.isError()) {
+      return requestIdValidationResult.errorResponse();
+    }
+
+    if (executionResult.isClientError()) {
+      return IdentityVerificationResponse.CLIENT_ERROR(executionResult.body().toMap());
+    }
+
+    if (executionResult.isServerError()) {
+      return IdentityVerificationResponse.SERVER_ERROR(executionResult.body().toMap());
+    }
+
+    return responseValidationResult.errorResponse();
   }
 
   public JsonNodeWrapper body() {
-    return body;
-  }
-
-  public String extractValueFromBody(String key) {
-    return body.getValueOrEmptyAsString(key);
-  }
-
-  // TODO use response definition
-  public ExternalWorkflowApplicationIdentifier extractApplicationIdentifierFromBody() {
-    return new ExternalWorkflowApplicationIdentifier(extractValueFromBody("application_id"));
+    return executionResult.body();
   }
 }

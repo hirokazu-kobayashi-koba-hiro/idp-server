@@ -3,9 +3,14 @@ package org.idp.server.core.identity.trustframework.delegation;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.basic.http.*;
+import org.idp.server.core.identity.trustframework.IdentityVerificationProcess;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationRequest;
+import org.idp.server.core.identity.trustframework.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.identity.trustframework.configuration.IdentityVerificationOAuthAuthorizationConfiguration;
 import org.idp.server.core.identity.trustframework.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.identity.trustframework.validation.IdentityVerificationRequestValidator;
+import org.idp.server.core.identity.trustframework.validation.IdentityVerificationResponseValidator;
+import org.idp.server.core.identity.trustframework.validation.IdentityVerificationValidationResult;
 import org.idp.server.core.type.oauth.AccessTokenEntity;
 
 public class ExternalWorkflowDelegationClient {
@@ -20,9 +25,22 @@ public class ExternalWorkflowDelegationClient {
 
   public ExternalWorkflowApplyingResult execute(
       IdentityVerificationRequest request,
-      IdentityVerificationProcessConfiguration processConfig,
-      IdentityVerificationOAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
+      IdentityVerificationProcess identityVerificationProcess,
+      IdentityVerificationConfiguration verificationConfiguration) {
 
+    IdentityVerificationProcessConfiguration processConfig =
+        verificationConfiguration.getProcessConfig(identityVerificationProcess);
+
+    IdentityVerificationRequestValidator applicationValidator =
+        new IdentityVerificationRequestValidator(processConfig, request);
+    IdentityVerificationValidationResult requestValidationResult = applicationValidator.validate();
+
+    if (requestValidationResult.isError()) {
+      return ExternalWorkflowApplyingResult.requestError(requestValidationResult);
+    }
+
+    IdentityVerificationOAuthAuthorizationConfiguration oAuthAuthorizationConfig =
+        verificationConfiguration.oauthAuthorization();
     HttpRequestHeaders httpRequestHeaders =
         createHttpRequestHeaders(processConfig.httpRequestHeaders(), oAuthAuthorizationConfig);
 
@@ -35,7 +53,21 @@ public class ExternalWorkflowDelegationClient {
             processConfig.httpRequestDynamicBodyKeys(),
             processConfig.httpRequestStaticBody());
 
-    return new ExternalWorkflowApplyingResult(executionResult);
+    ExternalWorkflowApplyingExecutionResult externalWorkflowApplyingExecutionResult =
+        new ExternalWorkflowApplyingExecutionResult(executionResult);
+    if (!executionResult.isSuccess()) {
+      return ExternalWorkflowApplyingResult.executionError(
+          requestValidationResult, externalWorkflowApplyingExecutionResult);
+    }
+
+    IdentityVerificationResponseValidator responseValidator =
+        new IdentityVerificationResponseValidator(processConfig, executionResult.body());
+    IdentityVerificationValidationResult responseValidationResult = responseValidator.validate();
+
+    return new ExternalWorkflowApplyingResult(
+        responseValidationResult,
+        externalWorkflowApplyingExecutionResult,
+        responseValidationResult);
   }
 
   public HttpRequestHeaders createHttpRequestHeaders(

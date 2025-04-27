@@ -5,12 +5,13 @@ import java.util.Map;
 import org.idp.server.core.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.core.identity.trustframework.application.IdentityVerificationResponse;
 
-public class IdentityVerificationApplicationValidationResult {
+public class IdentityVerificationValidationResult {
 
   JsonSchemaValidationResult validationResult;
 
-  public IdentityVerificationApplicationValidationResult(
-      JsonSchemaValidationResult validationResult) {
+  public IdentityVerificationValidationResult() {}
+
+  public IdentityVerificationValidationResult(JsonSchemaValidationResult validationResult) {
     this.validationResult = validationResult;
   }
 

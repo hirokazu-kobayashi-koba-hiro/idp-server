@@ -5,20 +5,21 @@ import org.idp.server.core.identity.trustframework.IdentityVerificationApplicati
 
 public class IdentityVerificationResponse {
 
-  org.idp.server.core.identity.trustframework.IdentityVerificationApplicationStatus status;
+  IdentityVerificationApplicationStatus status;
   Map<String, Object> response;
 
   public static IdentityVerificationResponse OK(Map<String, Object> response) {
-    return new IdentityVerificationResponse(
-        org.idp.server.core.identity.trustframework.IdentityVerificationApplicationStatus.OK,
-        response);
+    return new IdentityVerificationResponse(IdentityVerificationApplicationStatus.OK, response);
   }
 
   public static IdentityVerificationResponse CLIENT_ERROR(Map<String, Object> response) {
     return new IdentityVerificationResponse(
-        org.idp.server.core.identity.trustframework.IdentityVerificationApplicationStatus
-            .CLIENT_ERROR,
-        response);
+        IdentityVerificationApplicationStatus.CLIENT_ERROR, response);
+  }
+
+  public static IdentityVerificationResponse SERVER_ERROR(Map<String, Object> response) {
+    return new IdentityVerificationResponse(
+        IdentityVerificationApplicationStatus.SERVER_ERROR, response);
   }
 
   private IdentityVerificationResponse(

@@ -5,31 +5,28 @@ import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.core.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.core.basic.json.schema.JsonSchemaValidator;
-import org.idp.server.core.identity.trustframework.application.IdentityVerificationRequest;
 import org.idp.server.core.identity.trustframework.configuration.IdentityVerificationProcessConfiguration;
 
-public class IdentityVerificationApplicationValidator {
+public class IdentityVerificationResponseValidator {
   IdentityVerificationProcessConfiguration processConfiguration;
-  IdentityVerificationRequest request;
+  JsonNodeWrapper response;
   JsonConverter jsonConverter;
 
-  public IdentityVerificationApplicationValidator(
-      IdentityVerificationProcessConfiguration processConfiguration,
-      IdentityVerificationRequest request) {
+  public IdentityVerificationResponseValidator(
+      IdentityVerificationProcessConfiguration processConfiguration, JsonNodeWrapper response) {
     this.processConfiguration = processConfiguration;
-    this.request = request;
+    this.response = response;
     this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   }
 
-  public IdentityVerificationApplicationValidationResult validate() {
+  public IdentityVerificationValidationResult validate() {
     JsonNodeWrapper definition =
-        jsonConverter.readTree(processConfiguration.requestValidationSchema());
+        jsonConverter.readTree(processConfiguration.responseValidationSchema());
     JsonSchemaDefinition jsonSchemaDefinition = new JsonSchemaDefinition(definition);
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);
 
-    JsonNodeWrapper requestJson = jsonConverter.readTree(request.toMap());
-    JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(requestJson);
+    JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(response);
 
-    return new IdentityVerificationApplicationValidationResult(validationResult);
+    return new IdentityVerificationValidationResult(validationResult);
   }
 }
