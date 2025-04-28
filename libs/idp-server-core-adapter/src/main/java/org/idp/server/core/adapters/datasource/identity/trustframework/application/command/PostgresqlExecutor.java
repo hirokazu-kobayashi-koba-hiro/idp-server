@@ -58,36 +58,40 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
   @Override
   public void update(Tenant tenant, IdentityVerificationApplication application) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-            UPDATE identity_verification_applications
-            SET application_details = ?::jsonb,
-            trust_framework = ?,
-            trust_framework_details = ?::jsonb,
-            status = ?,
-            external_application_details = ?::jsonb
-            WHERE id = ?
-            AND tenant_id = ?;
-            """;
+    StringBuilder sqlBuilder = new StringBuilder();
     List<Object> params = new ArrayList<>();
+
+    sqlBuilder.append("UPDATE identity_verification_applications SET ");
+
+    List<String> setClauses = new ArrayList<>();
+    setClauses.add("application_details = ?::jsonb");
     params.add(jsonConverter.write(application.applicationDetails().toMap()));
+
     if (application.hasTrustFramework()) {
+      setClauses.add("trust_framework = ?");
       params.add(application.trustFramework().name());
-    } else {
-      params.add(null);
     }
+
     if (application.hasTrustFrameworkDetails()) {
+      setClauses.add("trust_framework_details = ?::jsonb");
       params.add(jsonConverter.write(application.trustFrameworkDetails().toMap()));
-    } else {
-      params.add(null);
     }
+
+    setClauses.add("status = ?");
     params.add(application.status().name());
+
     if (application.hasExternalApplicationDetails()) {
+      setClauses.add("external_application_details = ?::jsonb");
       params.add(jsonConverter.write(application.externalApplicationDetails().toMap()));
     }
+
+    setClauses.add("updated_at = now()");
+    sqlBuilder.append(String.join(", ", setClauses));
+
+    sqlBuilder.append(" WHERE id = ? AND tenant_id = ?");
     params.add(application.identifier().value());
     params.add(tenant.identifierValue());
 
-    sqlExecutor.execute(sqlTemplate, params);
+    sqlExecutor.execute(sqlBuilder.toString(), params);
   }
 }
