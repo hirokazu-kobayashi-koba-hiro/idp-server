@@ -15,9 +15,20 @@ public class JsonNodeWrapper {
     this.jsonNode = jsonNode;
   }
 
-  public static JsonNodeWrapper from(Map<String, Object> map) {
+  public static JsonNodeWrapper fromObject(Map<String, Object> map) {
+    if (map == null || map.isEmpty()) {
+      return empty();
+    }
     JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
     String json = jsonConverter.write(map);
+    return jsonConverter.readTree(json);
+  }
+
+  public static JsonNodeWrapper fromString(String json) {
+    if (json == null || json.isEmpty()) {
+      return empty();
+    }
+    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
     return jsonConverter.readTree(json);
   }
 

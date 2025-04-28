@@ -1,7 +1,6 @@
-package org.idp.server.core.identity.verification.application;
+package org.idp.server.core.identity.verification.io;
 
 import java.util.Map;
-import org.idp.server.core.identity.verification.IdentityVerificationApplicationStatus;
 
 public class IdentityVerificationResponse {
 
@@ -23,13 +22,12 @@ public class IdentityVerificationResponse {
   }
 
   private IdentityVerificationResponse(
-      org.idp.server.core.identity.verification.IdentityVerificationApplicationStatus status,
-      Map<String, Object> response) {
+      IdentityVerificationApplicationStatus status, Map<String, Object> response) {
     this.status = status;
     this.response = response;
   }
 
-  public org.idp.server.core.identity.verification.IdentityVerificationApplicationStatus status() {
+  public IdentityVerificationApplicationStatus status() {
     return status;
   }
 

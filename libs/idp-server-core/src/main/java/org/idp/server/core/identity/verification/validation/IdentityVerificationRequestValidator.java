@@ -5,7 +5,7 @@ import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.core.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.core.basic.json.schema.JsonSchemaValidator;
-import org.idp.server.core.identity.verification.application.IdentityVerificationRequest;
+import org.idp.server.core.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 
 public class IdentityVerificationRequestValidator {

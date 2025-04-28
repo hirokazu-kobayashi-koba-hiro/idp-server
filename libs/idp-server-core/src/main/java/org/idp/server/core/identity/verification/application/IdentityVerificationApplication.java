@@ -6,6 +6,7 @@ import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
+import org.idp.server.core.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationDetails;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
@@ -32,35 +33,9 @@ public class IdentityVerificationApplication {
   TrustFramework trustFramework;
   TrustFrameworkDetails trustFrameworkDetails;
   IdentityVerificationApplicationStatus status;
-  String comment;
   LocalDateTime requestedAt;
 
   public IdentityVerificationApplication() {}
-
-  private IdentityVerificationApplication(
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType verificationType,
-      TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
-      IdentityVerificationApplicationDetails details,
-      String sub,
-      ExternalWorkflowDelegation externalWorkflowDelegation,
-      ExternalWorkflowApplicationIdentifier externalApplicationId,
-      ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails,
-      IdentityVerificationApplicationStatus status,
-      LocalDateTime requestedAt) {
-    this.identifier = identifier;
-    this.identityVerificationType = verificationType;
-    this.tenantIdentifier = tenantIdentifier;
-    this.requestedClientId = requestedClientId;
-    this.applicationDetails = details;
-    this.sub = sub;
-    this.externalWorkflowDelegation = externalWorkflowDelegation;
-    this.externalApplicationId = externalApplicationId;
-    this.externalWorkflowApplicationDetails = externalWorkflowApplicationDetails;
-    this.status = status;
-    this.requestedAt = requestedAt;
-  }
 
   public IdentityVerificationApplication(
       IdentityVerificationApplicationIdentifier identifier,
@@ -74,7 +49,8 @@ public class IdentityVerificationApplication {
       ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails,
       TrustFramework trustFramework,
       TrustFrameworkDetails trustFrameworkDetails,
-      String comment) {
+      IdentityVerificationApplicationStatus status,
+      LocalDateTime requestedAt) {
     this.identifier = identifier;
     this.identityVerificationType = identityVerificationType;
     this.tenantIdentifier = tenantIdentifier;
@@ -86,7 +62,8 @@ public class IdentityVerificationApplication {
     this.externalWorkflowApplicationDetails = externalWorkflowApplicationDetails;
     this.trustFramework = trustFramework;
     this.trustFrameworkDetails = trustFrameworkDetails;
-    this.comment = comment;
+    this.status = status;
+    this.requestedAt = requestedAt;
   }
 
   public static IdentityVerificationApplication create(
@@ -100,17 +77,20 @@ public class IdentityVerificationApplication {
 
     IdentityVerificationApplicationIdentifier identifier =
         new IdentityVerificationApplicationIdentifier(UUID.randomUUID().toString());
-
     TenantIdentifier tenantIdentifier = tenant.identifier();
     String sub = user.sub();
-
     IdentityVerificationApplicationDetails details =
-        new IdentityVerificationApplicationDetails(JsonNodeWrapper.from(request.toMap()));
+        new IdentityVerificationApplicationDetails(JsonNodeWrapper.fromObject(request.toMap()));
 
     ExternalWorkflowApplicationIdentifier externalApplicationId =
         applyingResult.extractApplicationIdentifierFromBody();
     ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails =
         new ExternalWorkflowApplicationDetails(applyingResult.body());
+
+    TrustFramework trustFramework = new TrustFramework(request.extractTrustFramework());
+    TrustFrameworkDetails trustFrameworkDetails =
+        new TrustFrameworkDetails(
+            JsonNodeWrapper.fromObject(request.extractTrustFrameworkDetails()));
 
     LocalDateTime requestedAt = SystemDateTime.now();
 
@@ -124,6 +104,8 @@ public class IdentityVerificationApplication {
         externalWorkflowDelegation,
         externalApplicationId,
         externalWorkflowApplicationDetails,
+        trustFramework,
+        trustFrameworkDetails,
         IdentityVerificationApplicationStatus.REQUESTED,
         requestedAt);
   }
@@ -133,7 +115,31 @@ public class IdentityVerificationApplication {
       IdentityVerificationRequest request,
       ExternalWorkflowApplyingResult applyingResult) {
 
-    return new IdentityVerificationApplication();
+    // TODO merge
+    IdentityVerificationApplicationDetails details =
+        new IdentityVerificationApplicationDetails(JsonNodeWrapper.fromObject(request.toMap()));
+    ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails =
+        new ExternalWorkflowApplicationDetails(applyingResult.body());
+
+    TrustFramework trustFramework = new TrustFramework(request.extractTrustFramework());
+    TrustFrameworkDetails trustFrameworkDetails =
+        new TrustFrameworkDetails(
+            JsonNodeWrapper.fromObject(request.extractTrustFrameworkDetails()));
+
+    return new IdentityVerificationApplication(
+        identifier,
+        identityVerificationType,
+        tenantIdentifier,
+        requestedClientId,
+        details,
+        sub,
+        externalWorkflowDelegation,
+        externalApplicationId,
+        externalWorkflowApplicationDetails,
+        trustFramework,
+        trustFrameworkDetails,
+        IdentityVerificationApplicationStatus.APPLYING,
+        requestedAt);
   }
 
   public IdentityVerificationApplication updateExamination(
@@ -166,6 +172,10 @@ public class IdentityVerificationApplication {
     return sub;
   }
 
+  public ExternalWorkflowDelegation externalWorkflowDelegation() {
+    return externalWorkflowDelegation;
+  }
+
   public ExternalWorkflowApplicationIdentifier externalApplicationId() {
     return externalApplicationId;
   }
@@ -182,10 +192,6 @@ public class IdentityVerificationApplication {
     return trustFrameworkDetails;
   }
 
-  public String comment() {
-    return comment;
-  }
-
   public IdentityVerificationApplicationStatus status() {
     return status;
   }
@@ -196,5 +202,18 @@ public class IdentityVerificationApplication {
 
   public LocalDateTime requestedAt() {
     return requestedAt;
+  }
+
+  public boolean hasTrustFramework() {
+    return trustFramework != null && trustFramework.exists();
+  }
+
+  public boolean hasTrustFrameworkDetails() {
+    return trustFrameworkDetails != null && trustFrameworkDetails.exists();
+  }
+
+  public boolean hasExternalApplicationDetails() {
+    return externalWorkflowApplicationDetails != null
+        && externalWorkflowApplicationDetails.exists();
   }
 }

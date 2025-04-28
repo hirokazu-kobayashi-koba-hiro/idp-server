@@ -2,8 +2,7 @@ package org.idp.server.core.identity.verification;
 
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.identity.verification.application.IdentityVerificationRequest;
-import org.idp.server.core.identity.verification.application.IdentityVerificationResponse;
+import org.idp.server.core.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.type.security.RequestAttributes;

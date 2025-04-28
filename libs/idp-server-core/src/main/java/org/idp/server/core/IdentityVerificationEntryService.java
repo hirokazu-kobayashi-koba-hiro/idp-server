@@ -11,6 +11,8 @@ import org.idp.server.core.identity.verification.configuration.IdentityVerificat
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDelegationClient;
+import org.idp.server.core.identity.verification.io.IdentityVerificationResponse;
+import org.idp.server.core.identity.verification.result.IdentityVerificationResult;
 import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.identity.verification.validation.IdentityVerificationRequestValidator;
 import org.idp.server.core.identity.verification.validation.IdentityVerificationValidationResult;
@@ -86,9 +88,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
             request,
             verificationConfiguration.externalWorkflowDelegation(),
             applyingResult);
-
     applicationCommandRepository.register(tenant, application);
-
     eventPublisher.publish(
         tenant,
         oAuthToken,
@@ -96,7 +96,8 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
         requestAttributes);
 
     Map<String, Object> response = new HashMap<>();
-    response.put("id", application.externalApplicationId().value());
+    response.put("id", application.identifier().value());
+    response.put("external_application_id", application.externalApplicationId().value());
     return IdentityVerificationResponse.OK(response);
   }
 
@@ -134,9 +135,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     IdentityVerificationApplication updated =
         application.updateProcess(process, request, applyingResult);
-
     applicationCommandRepository.update(tenant, updated);
-
     eventPublisher.publish(tenant, oAuthToken, type, process, true, requestAttributes);
 
     Map<String, Object> response = new HashMap<>();

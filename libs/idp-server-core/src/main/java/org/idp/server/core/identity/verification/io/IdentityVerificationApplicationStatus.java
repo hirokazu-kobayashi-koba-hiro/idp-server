@@ -1,4 +1,4 @@
-package org.idp.server.core.identity.verification;
+package org.idp.server.core.identity.verification.io;
 
 public enum IdentityVerificationApplicationStatus {
   OK(200),

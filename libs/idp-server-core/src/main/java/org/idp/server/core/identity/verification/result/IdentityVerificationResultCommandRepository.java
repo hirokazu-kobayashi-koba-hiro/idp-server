@@ -1,6 +1,5 @@
 package org.idp.server.core.identity.verification.result;
 
-import org.idp.server.core.identity.verification.IdentityVerificationResult;
 import org.idp.server.core.tenant.Tenant;
 
 public interface IdentityVerificationResultCommandRepository {

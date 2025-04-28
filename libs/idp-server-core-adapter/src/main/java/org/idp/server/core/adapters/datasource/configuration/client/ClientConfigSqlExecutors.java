@@ -19,7 +19,7 @@ public class ClientConfigSqlExecutors {
     ClientConfigSqlExecutor executor = executors.get(databaseType);
 
     if (executor == null) {
-      throw new UnSupportedException("Unknown dialect " + databaseType);
+      throw new UnSupportedException("Unknown dialect " + databaseType.name());
     }
 
     return executor;

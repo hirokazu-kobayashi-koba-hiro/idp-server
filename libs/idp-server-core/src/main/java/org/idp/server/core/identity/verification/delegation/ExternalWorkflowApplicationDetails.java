@@ -22,4 +22,8 @@ public class ExternalWorkflowApplicationDetails {
   public Map<String, Object> toMap() {
     return json.toMap();
   }
+
+  public boolean exists() {
+    return json != null && json.exists();
+  }
 }

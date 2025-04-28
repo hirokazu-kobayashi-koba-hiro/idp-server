@@ -1,7 +1,7 @@
-package org.idp.server.core.identity.verification;
+package org.idp.server.core.identity.verification.result;
 
+import org.idp.server.core.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
-import org.idp.server.core.identity.verification.application.IdentityVerificationRequest;
 
 public class IdentityVerificationResult {
 

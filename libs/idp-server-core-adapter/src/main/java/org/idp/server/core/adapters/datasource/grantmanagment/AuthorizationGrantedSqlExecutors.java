@@ -19,7 +19,7 @@ public class AuthorizationGrantedSqlExecutors {
     AuthorizationGrantedSqlExecutor executor = executors.get(databaseType);
 
     if (executor == null) {
-      throw new UnSupportedException("Unknown dialect " + databaseType);
+      throw new UnSupportedException("Unknown dialect " + databaseType.name());
     }
 
     return executor;

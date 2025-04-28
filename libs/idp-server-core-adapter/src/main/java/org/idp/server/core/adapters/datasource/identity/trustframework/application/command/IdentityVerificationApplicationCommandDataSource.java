@@ -22,5 +22,10 @@ public class IdentityVerificationApplicationCommandDataSource
   }
 
   @Override
-  public void update(Tenant tenant, IdentityVerificationApplication application) {}
+  public void update(Tenant tenant, IdentityVerificationApplication application) {
+
+    IdentityVerificationApplicationCommandSqlExecutor executor =
+        executors.get(tenant.databaseType());
+    executor.update(tenant, application);
+  }
 }

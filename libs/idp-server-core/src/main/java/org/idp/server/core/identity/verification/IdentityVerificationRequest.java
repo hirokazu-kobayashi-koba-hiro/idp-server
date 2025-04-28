@@ -1,4 +1,4 @@
-package org.idp.server.core.identity.verification.application;
+package org.idp.server.core.identity.verification;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -57,5 +57,13 @@ public class IdentityVerificationRequest {
 
   public boolean exists() {
     return values != null && !values.isEmpty();
+  }
+
+  public String extractTrustFramework() {
+    return optValueAsString("trust_framework", "");
+  }
+
+  public Map<String, Object> extractTrustFrameworkDetails() {
+    return optValueAsMap("trust_framework_details", Map.of());
   }
 }

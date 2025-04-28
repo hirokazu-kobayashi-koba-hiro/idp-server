@@ -5,4 +5,6 @@ import org.idp.server.core.tenant.Tenant;
 
 public interface IdentityVerificationApplicationCommandSqlExecutor {
   void insert(Tenant tenant, IdentityVerificationApplication application);
+
+  void update(Tenant tenant, IdentityVerificationApplication application);
 }
