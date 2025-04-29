@@ -1,5 +1,6 @@
 package org.idp.server.core.adapters.datasource.identity.trustframework.application.query;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
@@ -34,8 +35,18 @@ public class IdentityVerificationApplicationQueryDataSource
   }
 
   @Override
-  public IdentityVerificationApplications getAll(Tenant tenant, User user) {
+  public IdentityVerificationApplications findAll(Tenant tenant, User user) {
 
-    return new IdentityVerificationApplications();
+    IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
+
+    List<Map<String, String>> result = executor.selectList(tenant, user);
+
+    if (result == null || result.isEmpty()) {
+      return new IdentityVerificationApplications();
+    }
+
+    List<IdentityVerificationApplication> applicationList =
+        result.stream().map(ModelConverter::convert).toList();
+    return new IdentityVerificationApplications(applicationList);
   }
 }

@@ -64,7 +64,8 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
-    IdentityVerificationApplications applications = applicationQueryRepository.getAll(tenant, user);
+    IdentityVerificationApplications applications =
+        applicationQueryRepository.findAll(tenant, user);
 
     ExternalWorkflowApplyingResult applyingResult =
         externalWorkflowDelegationClient.execute(
@@ -119,7 +120,8 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
         applicationQueryRepository.get(tenant, identifier);
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
-    IdentityVerificationApplications applications = applicationQueryRepository.getAll(tenant, user);
+    IdentityVerificationApplications applications =
+        applicationQueryRepository.findAll(tenant, user);
 
     ExternalWorkflowApplyingResult applyingResult =
         externalWorkflowDelegationClient.execute(

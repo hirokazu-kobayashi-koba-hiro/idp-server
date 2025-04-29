@@ -8,5 +8,5 @@ public interface IdentityVerificationApplicationQueryRepository {
   IdentityVerificationApplication get(
       Tenant tenant, IdentityVerificationApplicationIdentifier identifier);
 
-  IdentityVerificationApplications getAll(Tenant tenant, User user);
+  IdentityVerificationApplications findAll(Tenant tenant, User user);
 }

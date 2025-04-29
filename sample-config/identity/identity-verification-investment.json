@@ -48,7 +48,7 @@
         "additionalProperties": false
       },
       "request_verification_schema": {
-        "duplicate_application": true,
+        "duplicate_application": false,
         "unmatched_user_claims_email": {
           "property": "email_address"
         },
