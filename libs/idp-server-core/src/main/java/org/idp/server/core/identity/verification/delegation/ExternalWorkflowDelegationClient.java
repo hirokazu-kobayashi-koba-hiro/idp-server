@@ -11,6 +11,7 @@ import org.idp.server.core.identity.verification.application.IdentityVerificatio
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationOAuthAuthorizationConfiguration;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.identity.verification.delegation.request.AdditionalRequestParameterResolvers;
 import org.idp.server.core.identity.verification.validation.IdentityVerificationRequestValidator;
 import org.idp.server.core.identity.verification.validation.IdentityVerificationResponseValidator;
 import org.idp.server.core.identity.verification.validation.IdentityVerificationValidationResult;
@@ -23,11 +24,13 @@ public class ExternalWorkflowDelegationClient {
 
   OAuthAuthorizationResolvers authorizationResolvers;
   IdentityVerificationRequestVerifiers requestVerifiers;
+  AdditionalRequestParameterResolvers additionalRequestParameterResolvers;
   HttpRequestExecutor httpRequestExecutor;
 
   public ExternalWorkflowDelegationClient() {
     this.authorizationResolvers = new OAuthAuthorizationResolvers();
     this.requestVerifiers = new IdentityVerificationRequestVerifiers();
+    this.additionalRequestParameterResolvers = new AdditionalRequestParameterResolvers();
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
   }
 
@@ -66,6 +69,17 @@ public class ExternalWorkflowDelegationClient {
     HttpRequestHeaders httpRequestHeaders =
         createHttpRequestHeaders(processConfig.httpRequestHeaders(), oAuthAuthorizationConfig);
 
+    HttpRequestStaticBody httpRequestStaticBody =
+        resolveStaticBody(
+            processConfig.httpRequestStaticBody(),
+            tenant,
+            user,
+            applications,
+            type,
+            processes,
+            request,
+            verificationConfiguration);
+
     HttpRequestResult executionResult =
         httpRequestExecutor.execute(
             processConfig.httpRequestUrl(),
@@ -73,7 +87,7 @@ public class ExternalWorkflowDelegationClient {
             httpRequestHeaders,
             new HttpRequestBaseParams(request.toMap()),
             processConfig.httpRequestDynamicBodyKeys(),
-            processConfig.httpRequestStaticBody());
+            httpRequestStaticBody);
 
     ExternalWorkflowApplyingExecutionResult externalWorkflowApplyingExecutionResult =
         new ExternalWorkflowApplyingExecutionResult(executionResult);
@@ -95,6 +109,23 @@ public class ExternalWorkflowDelegationClient {
         verifyResult,
         externalWorkflowApplyingExecutionResult,
         responseValidationResult);
+  }
+
+  private HttpRequestStaticBody resolveStaticBody(
+      HttpRequestStaticBody staticBody,
+      Tenant tenant,
+      User user,
+      IdentityVerificationApplications applications,
+      IdentityVerificationType type,
+      IdentityVerificationProcess processes,
+      IdentityVerificationRequest request,
+      IdentityVerificationConfiguration verificationConfiguration) {
+    Map<String, Object> parameters = new HashMap<>(staticBody.toMap());
+    Map<String, Object> additionalParameters =
+        additionalRequestParameterResolvers.resolve(
+            tenant, user, applications, type, processes, request, verificationConfiguration);
+    parameters.putAll(additionalParameters);
+    return new HttpRequestStaticBody(parameters);
   }
 
   public HttpRequestHeaders createHttpRequestHeaders(

@@ -1,6 +1,6 @@
-package org.idp.server.core.identity.verification.verifier;
+package org.idp.server.core.identity.verification.delegation.request;
 
-import java.util.List;
+import java.util.Map;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;
@@ -9,10 +9,9 @@ import org.idp.server.core.identity.verification.application.IdentityVerificatio
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.tenant.Tenant;
 
-public class ContinuousCustomerDueDiligenceIdentityVerificationVerifier
-    implements IdentityVerificationRequestVerifier {
+public interface AdditionalRequestParameterResolver {
 
-  public boolean shouldVerify(
+  default boolean shouldResolve(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,
@@ -20,30 +19,15 @@ public class ContinuousCustomerDueDiligenceIdentityVerificationVerifier
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
       IdentityVerificationConfiguration verificationConfiguration) {
-
-    return type.isContinuousCustomerDueDiligence();
+    return false;
   }
 
-  @Override
-  public IdentityVerificationRequestVerificationResult verify(
+  Map<String, Object> resolve(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
-
-    if (!applications.containsApproved(verificationConfiguration.approvedTargetTypes())) {
-
-      List<String> errors =
-          List.of(
-              String.format(
-                  "user does not have approved application required any type (%s)",
-                  verificationConfiguration.approvedTargetTypesAsString()));
-      return IdentityVerificationRequestVerificationResult.failure(errors);
-    }
-
-    return IdentityVerificationRequestVerificationResult.success();
-  }
+      IdentityVerificationConfiguration verificationConfiguration);
 }

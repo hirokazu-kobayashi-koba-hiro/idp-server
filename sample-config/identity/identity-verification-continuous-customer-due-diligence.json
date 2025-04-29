@@ -58,6 +58,10 @@
           "property": "mobile_phone_number"
         }
       },
+      "request_additional_parameter_schema": {
+        "$schema": "original",
+        "user_id": true
+      },
       "response_validation_schema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "title": "application response",
@@ -70,7 +74,7 @@
       }
     },
     "request-ekyc": {
-      "url": "https://run.mocky.io/v3/c303abbb-5d0b-417f-bcf0-8a83312f830b",
+      "url": "https://run.mocky.io/v3/0a587222-da2b-4713-b090-e4ff8447a02b",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json",

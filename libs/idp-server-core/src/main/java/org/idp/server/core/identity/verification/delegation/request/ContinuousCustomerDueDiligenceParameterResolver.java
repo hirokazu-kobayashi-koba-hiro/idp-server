@@ -1,18 +1,22 @@
-package org.idp.server.core.identity.verification.verifier;
+package org.idp.server.core.identity.verification.delegation.request;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
+import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.tenant.Tenant;
 
-public class ContinuousCustomerDueDiligenceIdentityVerificationVerifier
-    implements IdentityVerificationRequestVerifier {
+public class ContinuousCustomerDueDiligenceParameterResolver
+    implements AdditionalRequestParameterResolver {
 
-  public boolean shouldVerify(
+  public boolean shouldResolve(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,
@@ -24,8 +28,9 @@ public class ContinuousCustomerDueDiligenceIdentityVerificationVerifier
     return type.isContinuousCustomerDueDiligence();
   }
 
+  //TODO improve to be dynamic
   @Override
-  public IdentityVerificationRequestVerificationResult verify(
+  public Map<String, Object> resolve(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,
@@ -33,17 +38,18 @@ public class ContinuousCustomerDueDiligenceIdentityVerificationVerifier
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
       IdentityVerificationConfiguration verificationConfiguration) {
+    Map<String, Object> additionalParameters = new HashMap<>();
 
-    if (!applications.containsApproved(verificationConfiguration.approvedTargetTypes())) {
-
-      List<String> errors =
-          List.of(
-              String.format(
-                  "user does not have approved application required any type (%s)",
-                  verificationConfiguration.approvedTargetTypesAsString()));
-      return IdentityVerificationRequestVerificationResult.failure(errors);
+    List<Map<String, Object>> applicationList = new ArrayList<>();
+    for (IdentityVerificationApplication application : applications) {
+      Map<String, Object> applicationMap = new HashMap<>();
+      applicationMap.put("application_number", application.externalApplicationId().value());
+      applicationMap.put("application_type", application.identityVerificationType().name());
+      applicationList.add(applicationMap);
     }
 
-    return IdentityVerificationRequestVerificationResult.success();
+    additionalParameters.put("relation_applications", applicationList);
+
+    return additionalParameters;
   }
 }

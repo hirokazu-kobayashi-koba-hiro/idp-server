@@ -17,6 +17,7 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
   List<UserInfoMappingRule> userinfoMappingRules;
   Map<String, Object> requestValidationSchema;
   Map<String, Object> requestVerificationSchema;
+  Map<String, Object> requestAdditionalParameterSchema;
   Map<String, Object> responseValidationSchema;
   Map<String, Object> rejectedConditionSchema;
 
@@ -54,6 +55,10 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
     return requestVerificationSchema;
   }
 
+  public Map<String, Object> requestAdditionalParameterSchema() {
+    return requestAdditionalParameterSchema;
+  }
+
   public Map<String, Object> responseValidationSchema() {
     return responseValidationSchema;
   }
@@ -66,15 +71,7 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
     return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(requestValidationSchema));
   }
 
-  public JsonSchemaDefinition requestVerificationSchemaAsDefinition() {
-    return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(requestVerificationSchema));
-  }
-
   public JsonSchemaDefinition responseValidationSchemaAsDefinition() {
     return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(responseValidationSchema));
-  }
-
-  public JsonSchemaDefinition rejectedConditionSchemaAsDefinition() {
-    return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(rejectedConditionSchema));
   }
 }

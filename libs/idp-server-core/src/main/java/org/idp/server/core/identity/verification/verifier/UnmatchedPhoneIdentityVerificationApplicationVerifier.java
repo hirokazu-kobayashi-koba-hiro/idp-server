@@ -36,7 +36,8 @@ public class UnmatchedPhoneIdentityVerificationApplicationVerifier
       return false;
     }
 
-    return verificationSchema.containsKey("unmatched_user_claims_phone");
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(verificationSchema);
+    return jsonNodeWrapper.optValueAsBoolean("unmatched_user_claims_phone", false);
   }
 
   @Override

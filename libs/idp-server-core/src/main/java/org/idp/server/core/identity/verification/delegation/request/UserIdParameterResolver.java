@@ -1,6 +1,6 @@
-package org.idp.server.core.identity.verification.verifier;
+package org.idp.server.core.identity.verification.delegation.request;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.User;
@@ -12,11 +12,9 @@ import org.idp.server.core.identity.verification.configuration.IdentityVerificat
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.tenant.Tenant;
 
-public class UnmatchedEmailIdentityVerificationApplicationVerifier
-    implements IdentityVerificationRequestVerifier {
+public class UserIdParameterResolver implements AdditionalRequestParameterResolver {
 
-  @Override
-  public boolean shouldVerify(
+  public boolean shouldResolve(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,
@@ -24,21 +22,21 @@ public class UnmatchedEmailIdentityVerificationApplicationVerifier
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
       IdentityVerificationConfiguration verificationConfiguration) {
-
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(processes);
-    Map<String, Object> verificationSchema = processConfig.requestVerificationSchema();
+    Map<String, Object> additionalParameterSchema =
+        processConfig.requestAdditionalParameterSchema();
 
-    if (verificationSchema == null || verificationSchema.isEmpty()) {
+    if (additionalParameterSchema == null || additionalParameterSchema.isEmpty()) {
       return false;
     }
 
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(verificationSchema);
-    return jsonNodeWrapper.optValueAsBoolean("unmatched_user_claims_email", false);
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(additionalParameterSchema);
+    return jsonNodeWrapper.optValueAsBoolean("user_id", false);
   }
 
   @Override
-  public IdentityVerificationRequestVerificationResult verify(
+  public Map<String, Object> resolve(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,
@@ -46,21 +44,13 @@ public class UnmatchedEmailIdentityVerificationApplicationVerifier
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
       IdentityVerificationConfiguration verificationConfiguration) {
-
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(processes);
-    Map<String, Object> verificationSchema = processConfig.requestVerificationSchema();
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(verificationSchema);
-    JsonNodeWrapper unmatchedUserClaims =
-        jsonNodeWrapper.getValueAsJsonNode("unmatched_user_claims_email");
-
-    String property = unmatchedUserClaims.getValueOrEmptyAsString("property");
-    String requestValue = request.optValueAsString(property, "");
-
-    if (!requestValue.equals(user.email())) {
-      return IdentityVerificationRequestVerificationResult.failure(List.of("Email does not match"));
+    Map<String, Object> additionalParameters = new HashMap<>();
+    additionalParameters.put("user_id", user.sub());
+    String providerUserId = user.providerUserId();
+    if (user.hasProviderUserId()) {
+      additionalParameters.put("provider_user_id", providerUserId);
     }
 
-    return IdentityVerificationRequestVerificationResult.success();
+    return additionalParameters;
   }
 }

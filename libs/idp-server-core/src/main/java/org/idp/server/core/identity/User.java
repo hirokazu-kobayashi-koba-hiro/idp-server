@@ -322,6 +322,10 @@ public class User implements JsonReadable, Serializable {
     return Objects.nonNull(sub) && !sub.isEmpty();
   }
 
+  public boolean hasProviderUserId() {
+    return providerUserId != null && !providerUserId.isEmpty();
+  }
+
   public boolean hasName() {
     return Objects.nonNull(name) && !name.isEmpty();
   }
