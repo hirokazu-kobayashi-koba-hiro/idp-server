@@ -75,6 +75,11 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
       params.add(jsonConverter.write(application.externalApplicationDetails().toMap()));
     }
 
+    if (application.hasExaminationResults()) {
+      setClauses.add("examination_results = ?::jsonb");
+      params.add(jsonConverter.write(application.examinationResultsAsMapList()));
+    }
+
     setClauses.add("processes = ?::jsonb");
     params.add(jsonConverter.write(application.processesAsList()));
 

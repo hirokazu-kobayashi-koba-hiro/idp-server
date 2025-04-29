@@ -38,12 +38,13 @@ public class ModelConverter {
             JsonNodeWrapper.fromString(map.get("external_application_details")));
 
     TrustFramework trustFramework = new TrustFramework(map.get("trust_framework"));
+    IdentityVerificationExaminationResults examinationResults = toExaminationResults(map);
     IdentityVerificationApplicationProcesses processes = toProcesses(map);
 
     IdentityVerificationApplicationStatus status =
         IdentityVerificationApplicationStatus.of(map.get("status"));
-
     LocalDateTime requestedAt = LocalDateTime.parse(map.get("requested_at"));
+
     return new IdentityVerificationApplication(
         identifier,
         verificationType,
@@ -55,9 +56,25 @@ public class ModelConverter {
         externalApplicationId,
         externalWorkflowApplicationDetails,
         trustFramework,
+        examinationResults,
         processes,
         status,
         requestedAt);
+  }
+
+  private static IdentityVerificationExaminationResults toExaminationResults(
+      Map<String, String> map) {
+    if (map.get("examination_results") == null || map.get("examination_results").isEmpty()) {
+      return new IdentityVerificationExaminationResults();
+    }
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(map.get("examination_results"));
+    List<IdentityVerificationExaminationResult> examinationResultList = new ArrayList<>();
+
+    for (JsonNodeWrapper wrapper : jsonNodeWrapper.elements()) {
+      examinationResultList.add(new IdentityVerificationExaminationResult(wrapper));
+    }
+
+    return new IdentityVerificationExaminationResults(examinationResultList);
   }
 
   static IdentityVerificationApplicationProcesses toProcesses(Map<String, String> map) {

@@ -7,6 +7,7 @@ import org.idp.server.core.basic.datasource.SqlExecutor;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationQueries;
+import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.core.tenant.Tenant;
 
 public class PostgresqlExecutor implements IdentityVerificationApplicationQuerySqlExecutor {
@@ -20,6 +21,25 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
             + " "
             + """
                  WHERE id = ?
+                 AND tenant_id = ?;
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(identifier.value());
+    params.add(tenant.identifierValue());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
+  public Map<String, String> selectOne(
+      Tenant tenant, ExternalWorkflowApplicationIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
+                 WHERE external_application_id = ?
                  AND tenant_id = ?;
                 """;
 
@@ -109,6 +129,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
                        external_application_id,
                        external_application_details,
                        trust_framework,
+                       examination_results,
                        processes,
                        status,
                        requested_at,

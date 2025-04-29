@@ -9,6 +9,7 @@ import org.idp.server.core.identity.verification.application.*;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDelegationClient;
 import org.idp.server.core.identity.verification.io.IdentityVerificationDynamicResponseMapper;
@@ -186,7 +187,8 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       IdentityVerificationApplicationIdentifier identifier,
       IdentityVerificationType type,
       IdentityVerificationProcess process,
-      IdentityVerificationRequest request) {
+      IdentityVerificationRequest request,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
@@ -208,7 +210,45 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
         applicationQueryRepository.get(tenant, identifier);
 
     IdentityVerificationApplication updatedExamination =
-        application.updateExamination(process, request);
+        application.updateExamination(process, request, verificationConfiguration);
+    applicationCommandRepository.update(tenant, updatedExamination);
+
+    Map<String, Object> response = new HashMap<>();
+    return IdentityVerificationResponse.OK(response);
+  }
+
+  @Override
+  public IdentityVerificationResponse callbackExaminationForStaticPath(
+      TenantIdentifier tenantIdentifier,
+      IdentityVerificationType type,
+      IdentityVerificationRequest request,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    IdentityVerificationConfiguration verificationConfiguration =
+        configurationQueryRepository.get(tenant, type);
+
+    ExternalWorkflowApplicationIdentifier externalWorkflowApplicationIdentifier =
+        new ExternalWorkflowApplicationIdentifier(
+            request.getValueAsString(
+                verificationConfiguration.externalWorkflowApplicationIdParam().name()));
+    IdentityVerificationApplication application =
+        applicationQueryRepository.get(tenant, externalWorkflowApplicationIdentifier);
+    IdentityVerificationProcess process = new IdentityVerificationProcess("callback-examination");
+    IdentityVerificationProcessConfiguration processConfiguration =
+        verificationConfiguration.getProcessConfig(process);
+
+    IdentityVerificationRequestValidator applicationValidator =
+        new IdentityVerificationRequestValidator(processConfiguration, request);
+    IdentityVerificationValidationResult validationResult = applicationValidator.validate();
+
+    if (validationResult.isError()) {
+
+      return validationResult.errorResponse();
+    }
+
+    IdentityVerificationApplication updatedExamination =
+        application.updateExamination(process, request, verificationConfiguration);
     applicationCommandRepository.update(tenant, updatedExamination);
 
     Map<String, Object> response = new HashMap<>();
@@ -221,7 +261,8 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       IdentityVerificationApplicationIdentifier identifier,
       IdentityVerificationType type,
       IdentityVerificationProcess process,
-      IdentityVerificationRequest request) {
+      IdentityVerificationRequest request,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
@@ -243,7 +284,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
         applicationQueryRepository.get(tenant, identifier);
 
     IdentityVerificationApplication updatedExamination =
-        application.updateExamination(process, request);
+        application.updateExamination(process, request, verificationConfiguration);
     applicationCommandRepository.update(tenant, updatedExamination);
 
     IdentityVerificationResult identityVerificationResult =

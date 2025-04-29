@@ -27,6 +27,7 @@ export const serverConfig = {
   identityVerificationApplyEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/{process}`,
   identityVerificationProcessEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/{id}/{process}`,
   identityVerificationApplicationsEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications`,
+  identityVerificationApplicationsStaticCallbackExaminationEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/callback-examination`,
   discoveryEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration`,
   credentialEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials`,

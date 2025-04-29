@@ -106,4 +106,52 @@ public class IdentityV1Api implements ParameterTransformable {
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
+
+  @PostMapping("/{verification-type}/callback-examination")
+  public ResponseEntity<?> callback(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("verification-type") IdentityVerificationType verificationType,
+      @RequestBody Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    IdentityVerificationResponse response =
+        identityVerificationApi.callbackExaminationForStaticPath(
+            tenantIdentifier,
+            verificationType,
+            new IdentityVerificationRequest(requestBody),
+            requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/{verification-type}/{id}/{verification-process}/callback-examination")
+  public ResponseEntity<?> callbackExamination(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") IdentityVerificationApplicationIdentifier identifier,
+      @PathVariable("verification-type") IdentityVerificationType verificationType,
+      @PathVariable("verification-process") IdentityVerificationProcess identityVerificationProcess,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    IdentityVerificationResponse response =
+        identityVerificationApi.callbackExamination(
+            tenantIdentifier,
+            identifier,
+            verificationType,
+            identityVerificationProcess,
+            new IdentityVerificationRequest(requestBody),
+            requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
 }

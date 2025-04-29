@@ -47,7 +47,9 @@ describe("identity-verification application", () => {
 
       console.log(applyResponse.data);
       expect(applyResponse.status).toBe(200);
-      const applicationId = applyResponse.data.id
+
+      const applicationId = applyResponse.data.id;
+      const externalId = applyResponse.data.external_workflow_application_id;
 
       const processEndpoint = serverConfig.identityVerificationProcessEndpoint
         .replace("{type}", type)
@@ -79,8 +81,71 @@ describe("identity-verification application", () => {
       expect(completeEkycResponse.status).toBe(200);
 
 
-      const applicationsResponse = await get({
+      let applicationsResponse = await get({
         url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=applying&trust_framework=eidas&external_workflow_delegation=mocky`,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${tokenResponse.access_token}`
+        }
+      });
+      console.log(JSON.stringify(applicationsResponse.data, null, 2));
+      expect(applicationsResponse.status).toBe(200);
+      expect(applicationsResponse.data.list.length).toBe(1);
+      expect(applicationsResponse.data.list[0].id).toBe(applicationId);
+
+      const callbackEndpoint = serverConfig.identityVerificationApplicationsStaticCallbackExaminationEndpoint
+        .replace("{type}", type);
+
+      let callbackExaminationResponse = await post({
+        url: callbackEndpoint,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${tokenResponse.access_token}`
+        },
+        body: {
+          "application_id": externalId,
+          "step": "first-examination",
+          "comment": "test comment",
+          "rejected": false
+        }
+      });
+      console.log(callbackExaminationResponse.data);
+      expect(callbackExaminationResponse.status).toBe(200);
+
+
+      applicationsResponse = await get({
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=examination_processing&trust_framework=eidas&external_workflow_delegation=mocky`,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${tokenResponse.access_token}`
+        }
+      });
+      console.log(JSON.stringify(applicationsResponse.data, null, 2));
+      expect(applicationsResponse.status).toBe(200);
+      expect(applicationsResponse.data.list.length).toBe(1);
+      expect(applicationsResponse.data.list[0].id).toBe(applicationId);
+
+      callbackExaminationResponse = await post({
+        url: callbackEndpoint,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${tokenResponse.access_token}`
+        },
+        body: {
+          "application_id": externalId,
+          "step": "second-examination",
+          "comment": "unmatched identity document",
+          "rejected": true,
+          "note": "note",
+          "operator": "userA"
+        }
+      });
+      console.log(callbackExaminationResponse.data);
+      expect(callbackExaminationResponse.status).toBe(200);
+
+
+      applicationsResponse = await get({
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=rejected&trust_framework=eidas&external_workflow_delegation=mocky`,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${tokenResponse.access_token}`

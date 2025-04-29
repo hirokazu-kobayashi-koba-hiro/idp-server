@@ -33,6 +33,7 @@ public class IdentityVerificationApplication {
   ExternalWorkflowApplicationIdentifier externalApplicationId;
   ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails;
   TrustFramework trustFramework;
+  IdentityVerificationExaminationResults examinations;
   IdentityVerificationApplicationProcesses processes;
   IdentityVerificationApplicationStatus status;
   LocalDateTime requestedAt;
@@ -50,6 +51,7 @@ public class IdentityVerificationApplication {
       ExternalWorkflowApplicationIdentifier externalApplicationId,
       ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails,
       TrustFramework trustFramework,
+      IdentityVerificationExaminationResults examinations,
       IdentityVerificationApplicationProcesses processes,
       IdentityVerificationApplicationStatus status,
       LocalDateTime requestedAt) {
@@ -63,6 +65,7 @@ public class IdentityVerificationApplication {
     this.externalApplicationId = externalApplicationId;
     this.externalWorkflowApplicationDetails = externalWorkflowApplicationDetails;
     this.trustFramework = trustFramework;
+    this.examinations = examinations;
     this.processes = processes;
     this.status = status;
     this.requestedAt = requestedAt;
@@ -113,6 +116,7 @@ public class IdentityVerificationApplication {
         externalApplicationId,
         externalWorkflowApplicationDetails,
         trustFramework,
+        new IdentityVerificationExaminationResults(),
         processes,
         IdentityVerificationApplicationStatus.REQUESTED,
         requestedAt);
@@ -148,15 +152,48 @@ public class IdentityVerificationApplication {
         externalApplicationId,
         mergedExternalWorkflowApplicationDetails,
         trustFramework,
+        new IdentityVerificationExaminationResults(),
         addedProcesses,
         IdentityVerificationApplicationStatus.APPLYING,
         requestedAt);
   }
 
   public IdentityVerificationApplication updateExamination(
-      IdentityVerificationProcess process, IdentityVerificationRequest request) {
+      IdentityVerificationProcess process,
+      IdentityVerificationRequest request,
+      IdentityVerificationConfiguration verificationConfiguration) {
 
-    return new IdentityVerificationApplication();
+    IdentityVerificationProcessConfiguration processConfig =
+        verificationConfiguration.getProcessConfig(process);
+
+    IdentityVerificationExaminationResult identityVerificationExaminationResult =
+        IdentityVerificationExaminationResult.create(request, processConfig);
+    IdentityVerificationExaminationResults addExaminations =
+        examinations.add(identityVerificationExaminationResult);
+    IdentityVerificationApplicationProcess applicationProcess =
+        new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
+    IdentityVerificationApplicationProcesses addedProcesses = processes.add(applicationProcess);
+
+    IdentityVerificationApplicationStatus status =
+        IdentityVerificationApplicationStatus.isRejected(request, processConfig)
+            ? IdentityVerificationApplicationStatus.REJECTED
+            : IdentityVerificationApplicationStatus.EXAMINATION_PROCESSING;
+
+    return new IdentityVerificationApplication(
+        identifier,
+        identityVerificationType,
+        tenantIdentifier,
+        requestedClientId,
+        userId,
+        applicationDetails,
+        externalWorkflowDelegation,
+        externalApplicationId,
+        externalWorkflowApplicationDetails,
+        trustFramework,
+        addExaminations,
+        addedProcesses,
+        status,
+        requestedAt);
   }
 
   public IdentityVerificationApplicationIdentifier identifier() {
@@ -199,6 +236,14 @@ public class IdentityVerificationApplication {
     return trustFramework;
   }
 
+  public IdentityVerificationExaminationResults examinationResults() {
+    return examinations;
+  }
+
+  public List<Map<String, Object>> examinationResultsAsMapList() {
+    return examinations.toMapList();
+  }
+
   public IdentityVerificationApplicationProcesses processes() {
     return processes;
   }
@@ -232,6 +277,10 @@ public class IdentityVerificationApplication {
         && externalWorkflowApplicationDetails.exists();
   }
 
+  public boolean hasExaminationResults() {
+    return examinations != null && examinations.exists();
+  }
+
   public Map<String, Object> toMap() {
     HashMap<String, Object> map = new HashMap<>();
     map.put("id", identifier.value());
@@ -244,6 +293,7 @@ public class IdentityVerificationApplication {
     map.put("external_application_id", externalApplicationId.value());
     map.put("external_application_details", externalWorkflowApplicationDetails.toMap());
     map.put("trust_framework", trustFramework.name());
+    map.put("examination_results", examinationResultsAsMapList());
     map.put("processes", processesAsMapList());
     map.put("status", status.value());
     map.put("requested_at", requestedAt.toString());

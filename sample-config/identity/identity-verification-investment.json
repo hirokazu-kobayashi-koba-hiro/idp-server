@@ -126,6 +126,27 @@
         "properties": {},
         "additionalProperties": false
       }
+    },
+    "callback-examination": {
+      "type": "callback",
+      "request_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "start-examination",
+        "type": "object",
+        "required": ["application_id"],
+        "properties": {
+          "application_id": { "type": "string", "store": true },
+          "step": { "type": "string", "store": true },
+          "comment": { "type": "string", "store": true },
+          "rejected": { "type": "boolean", "store": true }
+        },
+        "additionalProperties": false
+      },
+      "rejected_condition_schema": {
+        "field": "rejected",
+        "type": "boolean",
+        "expected_value": true
+      }
     }
   }
 }

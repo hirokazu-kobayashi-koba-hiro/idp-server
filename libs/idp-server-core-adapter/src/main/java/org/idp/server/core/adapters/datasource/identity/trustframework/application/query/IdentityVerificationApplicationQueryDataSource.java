@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.application.*;
+import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.core.identity.verification.exception.IdentityVerificationApplicationNotFoundException;
 import org.idp.server.core.tenant.Tenant;
 
@@ -19,6 +20,21 @@ public class IdentityVerificationApplicationQueryDataSource
   @Override
   public IdentityVerificationApplication get(
       Tenant tenant, IdentityVerificationApplicationIdentifier identifier) {
+    IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
+
+    Map<String, String> result = executor.selectOne(tenant, identifier);
+
+    if (result == null || result.isEmpty()) {
+      throw new IdentityVerificationApplicationNotFoundException(
+          String.format("IdentityVerificationApplication not found (%s)", identifier.value()));
+    }
+
+    return ModelConverter.convert(result);
+  }
+
+  @Override
+  public IdentityVerificationApplication get(
+      Tenant tenant, ExternalWorkflowApplicationIdentifier identifier) {
     IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> result = executor.selectOne(tenant, identifier);

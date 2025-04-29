@@ -40,12 +40,20 @@ public interface IdentityVerificationApi {
       IdentityVerificationApplicationIdentifier identifier,
       IdentityVerificationType identityVerificationType,
       IdentityVerificationProcess identityVerificationProcess,
-      IdentityVerificationRequest request);
+      IdentityVerificationRequest request,
+      RequestAttributes requestAttributes);
+
+  IdentityVerificationResponse callbackExaminationForStaticPath(
+      TenantIdentifier tenantIdentifier,
+      IdentityVerificationType type,
+      IdentityVerificationRequest request,
+      RequestAttributes requestAttributes);
 
   IdentityVerificationResponse callbackResult(
       TenantIdentifier tenantIdentifier,
       IdentityVerificationApplicationIdentifier identifier,
       IdentityVerificationType identityVerificationType,
       IdentityVerificationProcess identityVerificationProcess,
-      IdentityVerificationRequest request);
+      IdentityVerificationRequest request,
+      RequestAttributes requestAttributes);
 }
