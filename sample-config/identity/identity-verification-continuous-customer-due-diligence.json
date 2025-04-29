@@ -64,7 +64,7 @@
         "type": "object",
         "required": ["application_id"],
         "properties": {
-          "application_id": { "type": "string" }
+          "application_id": { "type": "string", "id": true, "response": true, "store": true }
         },
         "additionalProperties": false
       }
@@ -96,12 +96,7 @@
         "required": ["ekyc_url"],
         "properties": {
           "application_id": { "type": "string" },
-          "ekyc_details": {
-            "type": "object",
-            "properties": {
-              "ekyc_url": ""
-            }
-          }
+          "ekyc_url": { "type": "string", "response": true, "store": true }
         },
         "additionalProperties": false
       }

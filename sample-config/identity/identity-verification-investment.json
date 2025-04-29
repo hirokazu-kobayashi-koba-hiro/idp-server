@@ -35,6 +35,7 @@
           "mobile_phone_number": { "type": "string", "maxLength": 11, "pattern": "^[0-9]{10,11}$", "store": true },
           "address": {
             "type": "object",
+            "store": true,
             "properties": {
               "street_address": { "type": "string", "maxLength": 255 },
               "locality": { "type": "string", "maxLength": 255 },
@@ -62,7 +63,7 @@
         "type": "object",
         "required": ["application_id"],
         "properties": {
-          "application_id": { "type": "string" }
+          "application_id": { "type": "string", "id": true, "response": true, "store": true }
         },
         "additionalProperties": false
       }
@@ -94,12 +95,7 @@
         "required": ["ekyc_url"],
         "properties": {
           "application_id": { "type": "string" },
-          "ekyc_details": {
-            "type": "object",
-            "properties": {
-              "ekyc_url": ""
-            }
-          }
+          "ekyc_url": { "type": "string", "response": true, "store": true }
         },
         "additionalProperties": false
       }
