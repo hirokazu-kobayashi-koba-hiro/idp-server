@@ -1,6 +1,7 @@
 {
   "type": "continuous-customer-due-diligence",
   "external_workflow_delegation": "mocky",
+  "external_workflow_application_id_param": "application_id",
   "oauth_authorization": {
     "type": "password",
     "token_endpoint": "https://run.mocky.io/v3/04646fc3-8cce-44c8-bc59-5c64df51bf82",
@@ -12,7 +13,7 @@
   "approved_target_types": ["investment-account-opening", "nisa-account-opening"],
   "processes": {
     "apply": {
-      "url": "https://run.mocky.io/v3/73f192dd-7bcd-4415-8fc7-811c56684cb7",
+      "url": "https://run.mocky.io/v3/1f706ee6-9bca-45d2-9676-d0c85c48ccb9",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json",

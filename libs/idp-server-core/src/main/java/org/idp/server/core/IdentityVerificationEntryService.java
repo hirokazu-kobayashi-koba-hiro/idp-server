@@ -231,7 +231,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     ExternalWorkflowApplicationIdentifier externalWorkflowApplicationIdentifier =
         new ExternalWorkflowApplicationIdentifier(
             request.getValueAsString(
-                verificationConfiguration.externalWorkflowApplicationIdParam().name()));
+                verificationConfiguration.externalWorkflowApplicationIdParam().value()));
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, externalWorkflowApplicationIdentifier);
     IdentityVerificationProcess process = new IdentityVerificationProcess("callback-examination");

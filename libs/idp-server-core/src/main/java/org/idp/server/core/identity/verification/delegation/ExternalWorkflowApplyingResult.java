@@ -70,7 +70,7 @@ public class ExternalWorkflowApplyingResult {
 
   public ExternalWorkflowApplicationIdentifier extractApplicationIdentifierFromBody() {
     return new ExternalWorkflowApplicationIdentifier(
-        executionResult.extractValueFromBody(externalApplicationIdParam.name()));
+        executionResult.extractValueFromBody(externalApplicationIdParam.value()));
   }
 
   public IdentityVerificationResponse errorResponse() {
