@@ -86,7 +86,11 @@ public class ExternalWorkflowDelegationClient {
         new IdentityVerificationResponseValidator(processConfig, executionResult.body());
     IdentityVerificationValidationResult responseValidationResult = responseValidator.validate();
 
+    ExternalWorkflowApplicationIdParam externalWorkflowApplicationIdParam =
+        verificationConfiguration.externalWorkflowApplicationIdParam();
+
     return new ExternalWorkflowApplyingResult(
+        externalWorkflowApplicationIdParam,
         responseValidationResult,
         verifyResult,
         externalWorkflowApplyingExecutionResult,

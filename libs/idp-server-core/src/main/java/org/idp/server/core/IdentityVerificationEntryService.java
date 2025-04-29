@@ -11,6 +11,7 @@ import org.idp.server.core.identity.verification.configuration.IdentityVerificat
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDelegationClient;
+import org.idp.server.core.identity.verification.io.IdentityVerificationDynamicResponseMapper;
 import org.idp.server.core.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.identity.verification.result.IdentityVerificationResult;
 import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
@@ -98,9 +99,13 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
         DefaultSecurityEventType.identity_verification_application_apply,
         requestAttributes);
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("id", application.identifier().value());
-    response.put("external_application_id", application.externalApplicationId().value());
+    Map<String, Object> response =
+        IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
+            application,
+            applyingResult.externalWorkflowResponse(),
+            process,
+            verificationConfiguration);
+
     return IdentityVerificationResponse.OK(response);
   }
 
@@ -166,7 +171,12 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     applicationCommandRepository.update(tenant, updated);
     eventPublisher.publish(tenant, oAuthToken, type, process, true, requestAttributes);
 
-    Map<String, Object> response = new HashMap<>();
+    Map<String, Object> response =
+        IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
+            application,
+            applyingResult.externalWorkflowResponse(),
+            process,
+            verificationConfiguration);
     return IdentityVerificationResponse.OK(response);
   }
 

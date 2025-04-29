@@ -6,6 +6,7 @@ import java.util.Map;
 import org.idp.server.core.basic.json.JsonReadable;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
+import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDelegation;
 import org.idp.server.core.identity.verification.exception.IdentityVerificationApplicationConfigurationNotFoundException;
 
@@ -14,6 +15,7 @@ public class IdentityVerificationConfiguration implements JsonReadable {
   String delegation;
   String description;
   String externalWorkflowDelegation;
+  String externalWorkflowApplicationIdParam;
   IdentityVerificationOAuthAuthorizationConfiguration oauthAuthorization;
   Map<String, IdentityVerificationProcessConfiguration> processes;
   List<String> approvedTargetTypes = new ArrayList<>();
@@ -34,6 +36,10 @@ public class IdentityVerificationConfiguration implements JsonReadable {
 
   public ExternalWorkflowDelegation externalWorkflowDelegation() {
     return new ExternalWorkflowDelegation(externalWorkflowDelegation);
+  }
+
+  public ExternalWorkflowApplicationIdParam externalWorkflowApplicationIdParam() {
+    return new ExternalWorkflowApplicationIdParam(externalWorkflowApplicationIdParam);
   }
 
   public IdentityVerificationOAuthAuthorizationConfiguration oauthAuthorization() {

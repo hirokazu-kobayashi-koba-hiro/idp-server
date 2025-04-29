@@ -92,7 +92,8 @@ public class IdentityVerificationApplication {
     ExternalWorkflowApplicationIdentifier externalApplicationId =
         applyingResult.extractApplicationIdentifierFromBody();
     ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails =
-        ExternalWorkflowApplicationDetails.create(applyingResult.body(), processConfig);
+        ExternalWorkflowApplicationDetails.create(
+            applyingResult.externalWorkflowResponse(), processConfig);
 
     TrustFramework trustFramework = new TrustFramework(request.extractTrustFramework());
     LocalDateTime requestedAt = SystemDateTime.now();
@@ -128,7 +129,8 @@ public class IdentityVerificationApplication {
     IdentityVerificationApplicationDetails mergedApplicationDetails =
         applicationDetails.merge(request, processConfig);
     ExternalWorkflowApplicationDetails mergedExternalWorkflowApplicationDetails =
-        externalWorkflowApplicationDetails.merge(applyingResult.body(), processConfig);
+        externalWorkflowApplicationDetails.merge(
+            applyingResult.externalWorkflowResponse(), processConfig);
     TrustFramework trustFramework = new TrustFramework(request.extractTrustFramework());
 
     IdentityVerificationApplicationProcess applicationProcess =

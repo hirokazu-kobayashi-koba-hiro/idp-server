@@ -7,6 +7,7 @@ import org.idp.server.core.identity.verification.verifier.IdentityVerificationRe
 
 public class ExternalWorkflowApplyingResult {
 
+  ExternalWorkflowApplicationIdParam externalApplicationIdParam;
   IdentityVerificationValidationResult requestIdValidationResult;
   IdentityVerificationRequestVerificationResult verifyResult;
   ExternalWorkflowApplyingExecutionResult executionResult;
@@ -17,6 +18,7 @@ public class ExternalWorkflowApplyingResult {
   public static ExternalWorkflowApplyingResult requestError(
       IdentityVerificationValidationResult requestIdValidationResult) {
     return new ExternalWorkflowApplyingResult(
+        new ExternalWorkflowApplicationIdParam(),
         requestIdValidationResult,
         IdentityVerificationRequestVerificationResult.empty(),
         new ExternalWorkflowApplyingExecutionResult(),
@@ -27,6 +29,7 @@ public class ExternalWorkflowApplyingResult {
       IdentityVerificationValidationResult requestIdValidationResult,
       IdentityVerificationRequestVerificationResult verifyResult) {
     return new ExternalWorkflowApplyingResult(
+        new ExternalWorkflowApplicationIdParam(),
         requestIdValidationResult,
         verifyResult,
         new ExternalWorkflowApplyingExecutionResult(),
@@ -38,6 +41,7 @@ public class ExternalWorkflowApplyingResult {
       IdentityVerificationRequestVerificationResult verifyResult,
       ExternalWorkflowApplyingExecutionResult executionResult) {
     return new ExternalWorkflowApplyingResult(
+        new ExternalWorkflowApplicationIdParam(),
         requestIdValidationResult,
         verifyResult,
         executionResult,
@@ -45,10 +49,12 @@ public class ExternalWorkflowApplyingResult {
   }
 
   public ExternalWorkflowApplyingResult(
+      ExternalWorkflowApplicationIdParam externalApplicationIdParam,
       IdentityVerificationValidationResult requestIdValidationResult,
       IdentityVerificationRequestVerificationResult verifyResult,
       ExternalWorkflowApplyingExecutionResult executionResult,
       IdentityVerificationValidationResult responseValidationResult) {
+    this.externalApplicationIdParam = externalApplicationIdParam;
     this.requestIdValidationResult = requestIdValidationResult;
     this.verifyResult = verifyResult;
     this.executionResult = executionResult;
@@ -64,7 +70,7 @@ public class ExternalWorkflowApplyingResult {
 
   public ExternalWorkflowApplicationIdentifier extractApplicationIdentifierFromBody() {
     return new ExternalWorkflowApplicationIdentifier(
-        executionResult.extractValueFromBody("application_id"));
+        executionResult.extractValueFromBody(externalApplicationIdParam.name()));
   }
 
   public IdentityVerificationResponse errorResponse() {
@@ -87,7 +93,7 @@ public class ExternalWorkflowApplyingResult {
     return responseValidationResult.errorResponse();
   }
 
-  public JsonNodeWrapper body() {
+  public JsonNodeWrapper externalWorkflowResponse() {
     return executionResult.body();
   }
 }

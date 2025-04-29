@@ -48,4 +48,8 @@ public class JsonSchemaProperty {
   public boolean shouldStore() {
     return propertySchema.optValueAsBoolean("store", false);
   }
+
+  public boolean shouldRespond() {
+    return propertySchema.optValueAsBoolean("respond", true);
+  }
 }
