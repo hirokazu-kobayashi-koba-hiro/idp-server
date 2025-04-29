@@ -28,4 +28,9 @@ public class IdentityVerificationApplications implements Iterable<IdentityVerifi
             application ->
                 application.identityVerificationType().equals(type) && application.isRunning());
   }
+
+  public boolean containsApprovedTarget(List<String> targeTypes) {
+    return values.stream()
+        .anyMatch(application -> targeTypes.contains(application.identityVerificationType.name()));
+  }
 }

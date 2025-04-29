@@ -19,6 +19,7 @@ public class IdentityVerificationRequestVerifiers {
     this.verifiers.add(new DenyDuplicateIdentityVerificationApplicationVerifier());
     this.verifiers.add(new UnmatchedEmailIdentityVerificationApplicationVerifier());
     this.verifiers.add(new UnmatchedPhoneIdentityVerificationApplicationVerifier());
+    this.verifiers.add(new ContinuousCustomerDueDiligenceIdentityVerificationVerifier());
   }
 
   public IdentityVerificationRequestVerificationResult verify(

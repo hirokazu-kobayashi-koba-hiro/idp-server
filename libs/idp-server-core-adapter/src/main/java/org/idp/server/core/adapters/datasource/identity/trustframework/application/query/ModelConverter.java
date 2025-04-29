@@ -1,18 +1,16 @@
 package org.idp.server.core.adapters.datasource.identity.trustframework.application.query;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
-import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
-import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationDetails;
-import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationStatus;
+import org.idp.server.core.identity.verification.application.*;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationDetails;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDelegation;
 import org.idp.server.core.identity.verification.trustframework.TrustFramework;
-import org.idp.server.core.identity.verification.trustframework.TrustFrameworkDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.RequestedClientId;
 
@@ -40,8 +38,7 @@ public class ModelConverter {
             JsonNodeWrapper.fromString(map.get("external_application_details")));
 
     TrustFramework trustFramework = new TrustFramework(map.get("trust_framework"));
-    TrustFrameworkDetails trustFrameworkDetails =
-        new TrustFrameworkDetails(JsonNodeWrapper.fromString(map.get("trust_framework_details")));
+    IdentityVerificationApplicationProcesses processes = toProcesses(map);
 
     LocalDateTime requestedAt = LocalDateTime.parse(map.get("requested_at"));
     return new IdentityVerificationApplication(
@@ -49,14 +46,29 @@ public class ModelConverter {
         verificationType,
         tenantIdentifier,
         requestedClientId,
-        details,
         sub,
+        details,
         externalWorkflowDelegation,
         externalApplicationId,
         externalWorkflowApplicationDetails,
         trustFramework,
-        trustFrameworkDetails,
+        processes,
         IdentityVerificationApplicationStatus.REQUESTED,
         requestedAt);
+  }
+
+  static IdentityVerificationApplicationProcesses toProcesses(Map<String, String> map) {
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(map.get("processes"));
+    List<IdentityVerificationApplicationProcess> processList = new ArrayList<>();
+
+    for (JsonNodeWrapper wrapper : jsonNodeWrapper.elements()) {
+      String process = wrapper.getValueOrEmptyAsString("process");
+      String requestedAt = wrapper.getValueOrEmptyAsString("requested_at");
+      IdentityVerificationApplicationProcess applicationProcess =
+          new IdentityVerificationApplicationProcess(process, requestedAt);
+      processList.add(applicationProcess);
+    }
+
+    return new IdentityVerificationApplicationProcesses(processList);
   }
 }

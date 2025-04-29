@@ -41,9 +41,4 @@ public class ExternalWorkflowApplyingExecutionResult {
   public String extractValueFromBody(String key) {
     return body.getValueOrEmptyAsString(key);
   }
-
-  // TODO use response definition
-  public ExternalWorkflowApplicationIdentifier extractApplicationIdentifierFromBody() {
-    return new ExternalWorkflowApplicationIdentifier(extractValueFromBody("application_id"));
-  }
 }

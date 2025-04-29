@@ -1,6 +1,9 @@
 package org.idp.server.core.identity.verification.verifier;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import org.idp.server.core.identity.verification.io.IdentityVerificationResponse;
 
 public class IdentityVerificationRequestVerificationResult {
 
@@ -34,5 +37,13 @@ public class IdentityVerificationRequestVerificationResult {
 
   public List<String> errors() {
     return errors;
+  }
+
+  public IdentityVerificationResponse errorResponse() {
+    Map<String, Object> response = new HashMap<>();
+    response.put("error", "invalid_request");
+    response.put("error_description", "identity verification application is invalid.");
+    response.put("error_details", errors);
+    return IdentityVerificationResponse.CLIENT_ERROR(response);
   }
 }

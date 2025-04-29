@@ -39,6 +39,10 @@ public class IdentityVerificationRequest {
     return (Long) values.getOrDefault(key, defaultValue);
   }
 
+  public Object getValue(String key) {
+    return values.get(key);
+  }
+
   public Map<String, Object> getValueAsMap(String key) {
     return (Map<String, Object>) values.get(key);
   }
@@ -61,9 +65,5 @@ public class IdentityVerificationRequest {
 
   public String extractTrustFramework() {
     return optValueAsString("trust_framework", "");
-  }
-
-  public Map<String, Object> extractTrustFrameworkDetails() {
-    return optValueAsMap("trust_framework_details", Map.of());
   }
 }

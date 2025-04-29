@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.authentication.legacy.UserInfoMappingRule;
 import org.idp.server.core.basic.http.*;
+import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
 
 public class IdentityVerificationProcessConfiguration implements JsonReadable {
   String url;
@@ -53,5 +55,17 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
 
   public Map<String, Object> responseValidationSchema() {
     return responseValidationSchema;
+  }
+
+  public JsonSchemaDefinition requestValidationSchemaAsDefinition() {
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(requestValidationSchema));
+  }
+
+  public JsonSchemaDefinition requestVerificationSchemaAsDefinition() {
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(requestVerificationSchema));
+  }
+
+  public JsonSchemaDefinition responseValidationSchemaAsDefinition() {
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(responseValidationSchema));
   }
 }

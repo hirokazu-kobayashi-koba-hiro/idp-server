@@ -22,9 +22,9 @@ public class IdentityVerificationRequestValidator {
   }
 
   public IdentityVerificationValidationResult validate() {
-    JsonNodeWrapper definition =
-        jsonConverter.readTree(processConfiguration.requestValidationSchema());
-    JsonSchemaDefinition jsonSchemaDefinition = new JsonSchemaDefinition(definition);
+
+    JsonSchemaDefinition jsonSchemaDefinition =
+        processConfiguration.requestValidationSchemaAsDefinition();
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);
 
     JsonNodeWrapper requestJson = jsonConverter.readTree(request.toMap());

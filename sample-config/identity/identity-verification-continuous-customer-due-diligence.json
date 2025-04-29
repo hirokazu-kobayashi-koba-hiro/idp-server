@@ -1,5 +1,5 @@
 {
-  "type": "investment-account-opening",
+  "type": "continuous-customer-due-diligence",
   "external_workflow_delegation": "mocky",
   "oauth_authorization": {
     "type": "password",
@@ -9,6 +9,7 @@
     "password": "password",
     "scope": "application"
   },
+  "approved_target_types": ["investment-account-opening", "nisa-account-opening"],
   "processes": {
     "apply": {
       "url": "https://run.mocky.io/v3/73f192dd-7bcd-4415-8fc7-811c56684cb7",
@@ -29,12 +30,13 @@
           "first_name": { "type": "string", "maxLength": 255, "store": true },
           "last_name_kana": { "type": "string", "maxLength": 255, "store": true },
           "first_name_kana": { "type": "string", "maxLength": 255, "store": true },
-          "birthdate": { "type": "string", "format": "date, \"store\": true" },
+          "birthdate": { "type": "string", "format": "date", "store": true },
           "nationality": { "type": "string", "maxLength": 255, "store": true },
           "email_address": { "type": "string", "maxLength": 255, "pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$", "store": true },
           "mobile_phone_number": { "type": "string", "maxLength": 11, "pattern": "^[0-9]{10,11}$", "store": true },
           "address": {
             "type": "object",
+            "store": false,
             "properties": {
               "street_address": { "type": "string", "maxLength": 255 },
               "locality": { "type": "string", "maxLength": 255 },

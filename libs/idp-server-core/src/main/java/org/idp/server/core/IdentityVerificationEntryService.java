@@ -87,7 +87,9 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
             type,
             request,
             verificationConfiguration.externalWorkflowDelegation(),
-            applyingResult);
+            applyingResult,
+            process,
+            verificationConfiguration);
     applicationCommandRepository.register(tenant, application);
     eventPublisher.publish(
         tenant,
@@ -134,7 +136,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     }
 
     IdentityVerificationApplication updated =
-        application.updateProcess(process, request, applyingResult);
+        application.updateProcess(process, request, applyingResult, verificationConfiguration);
     applicationCommandRepository.update(tenant, updated);
     eventPublisher.publish(tenant, oAuthToken, type, process, true, requestAttributes);
 

@@ -1,5 +1,7 @@
 package org.idp.server.core.identity.verification.configuration;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.basic.json.JsonReadable;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
@@ -14,6 +16,7 @@ public class IdentityVerificationConfiguration implements JsonReadable {
   String externalWorkflowDelegation;
   IdentityVerificationOAuthAuthorizationConfiguration oauthAuthorization;
   Map<String, IdentityVerificationProcessConfiguration> processes;
+  List<String> approvedTargetTypes = new ArrayList<>();
 
   public IdentityVerificationConfiguration() {}
 
@@ -55,5 +58,13 @@ public class IdentityVerificationConfiguration implements JsonReadable {
           "invalid configuration. type: " + process.name() + "is unregistered.");
     }
     return processes.get(process.name());
+  }
+
+  public List<String> approvedTargetTypes() {
+    return approvedTargetTypes;
+  }
+
+  public String approvedTargetTypesAsString() {
+    return String.join(",", approvedTargetTypes);
   }
 }

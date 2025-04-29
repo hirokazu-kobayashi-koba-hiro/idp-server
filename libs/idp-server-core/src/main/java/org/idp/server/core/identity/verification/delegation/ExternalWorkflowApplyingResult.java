@@ -57,6 +57,7 @@ public class ExternalWorkflowApplyingResult {
 
   public boolean isError() {
     return requestIdValidationResult.isError()
+        || verifyResult.isError()
         || executionResult.isClientError()
         || responseValidationResult.isError();
   }
@@ -69,6 +70,10 @@ public class ExternalWorkflowApplyingResult {
   public IdentityVerificationResponse errorResponse() {
     if (requestIdValidationResult.isError()) {
       return requestIdValidationResult.errorResponse();
+    }
+
+    if (verifyResult.isError()) {
+      return verifyResult.errorResponse();
     }
 
     if (executionResult.isClientError()) {

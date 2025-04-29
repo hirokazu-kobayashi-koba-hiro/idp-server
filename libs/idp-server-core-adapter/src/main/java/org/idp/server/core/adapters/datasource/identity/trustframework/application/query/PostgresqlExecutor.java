@@ -21,13 +21,13 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
                        user_id,
                        verification_type,
                        application_details,
-                       trust_framework,
-                       trust_framework_details,
-                       status,
-                       requested_at,
                        external_workflow_delegation,
                        external_application_id,
                        external_application_details,
+                       trust_framework,
+                       processes,
+                       status,
+                       requested_at,
                        examination_results,
                        comment
                  FROM identity_verification_applications

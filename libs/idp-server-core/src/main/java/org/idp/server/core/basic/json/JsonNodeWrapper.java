@@ -68,6 +68,10 @@ public class JsonNodeWrapper {
     return jsonNode;
   }
 
+  public Object getValue(String fieldName) {
+    return jsonNode.get(fieldName);
+  }
+
   public String getValueOrEmptyAsString(String fieldName) {
     if (!contains(fieldName)) {
       return "";
@@ -81,6 +85,10 @@ public class JsonNodeWrapper {
 
   public boolean getValueAsBoolean(String fieldName) {
     return jsonNode.get(fieldName).asBoolean();
+  }
+
+  public boolean optValueAsBoolean(String fieldName, boolean defaultValue) {
+    return jsonNode.has(fieldName) ? jsonNode.get(fieldName).asBoolean() : defaultValue;
   }
 
   public String asText() {

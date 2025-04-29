@@ -20,9 +20,8 @@ public class IdentityVerificationResponseValidator {
   }
 
   public IdentityVerificationValidationResult validate() {
-    JsonNodeWrapper definition =
-        jsonConverter.readTree(processConfiguration.responseValidationSchema());
-    JsonSchemaDefinition jsonSchemaDefinition = new JsonSchemaDefinition(definition);
+    JsonSchemaDefinition jsonSchemaDefinition =
+        processConfiguration.responseValidationSchemaAsDefinition();
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);
 
     JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(response);
