@@ -25,7 +25,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     params.add(application.identifier().value());
     params.add(tenant.identifierValue());
     params.add(application.requestedClientId().value());
-    params.add(application.sub());
+    params.add(application.userId());
     params.add(application.identityVerificationType().name());
     params.add(jsonConverter.write(application.applicationDetails().toMap()));
 
@@ -44,7 +44,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     }
 
     params.add(jsonConverter.write(application.processesAsList()));
-    params.add(application.status().name());
+    params.add(application.status().value());
     params.add(application.requestedAt().toString());
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -68,7 +68,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     }
 
     setClauses.add("status = ?");
-    params.add(application.status().name());
+    params.add(application.status().value());
 
     if (application.hasExternalApplicationDetails()) {
       setClauses.add("external_application_details = ?::jsonb");

@@ -3,10 +3,7 @@ package org.idp.server.core.adapters.datasource.identity.trustframework.applicat
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
-import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationQueryRepository;
-import org.idp.server.core.identity.verification.application.IdentityVerificationApplications;
+import org.idp.server.core.identity.verification.application.*;
 import org.idp.server.core.identity.verification.exception.IdentityVerificationApplicationNotFoundException;
 import org.idp.server.core.tenant.Tenant;
 
@@ -40,6 +37,22 @@ public class IdentityVerificationApplicationQueryDataSource
     IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
 
     List<Map<String, String>> result = executor.selectList(tenant, user);
+
+    if (result == null || result.isEmpty()) {
+      return new IdentityVerificationApplications();
+    }
+
+    List<IdentityVerificationApplication> applicationList =
+        result.stream().map(ModelConverter::convert).toList();
+    return new IdentityVerificationApplications(applicationList);
+  }
+
+  @Override
+  public IdentityVerificationApplications findList(
+      Tenant tenant, User user, IdentityVerificationApplicationQueries queries) {
+    IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
+
+    List<Map<String, String>> result = executor.selectList(tenant, user, queries);
 
     if (result == null || result.isEmpty()) {
       return new IdentityVerificationApplications();

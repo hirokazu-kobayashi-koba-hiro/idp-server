@@ -3,6 +3,7 @@ package org.idp.server.core.identity.verification.application;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class IdentityVerificationApplicationProcesses
     implements Iterable<IdentityVerificationApplicationProcess> {
@@ -36,5 +37,9 @@ public class IdentityVerificationApplicationProcesses
 
   public List<IdentityVerificationApplicationProcess> toList() {
     return values;
+  }
+
+  public List<Map<String, Object>> toMapList() {
+    return values.stream().map(IdentityVerificationApplicationProcess::toMap).toList();
   }
 }

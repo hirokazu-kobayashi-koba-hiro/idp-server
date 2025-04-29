@@ -40,6 +40,9 @@ public class ModelConverter {
     TrustFramework trustFramework = new TrustFramework(map.get("trust_framework"));
     IdentityVerificationApplicationProcesses processes = toProcesses(map);
 
+    IdentityVerificationApplicationStatus status =
+        IdentityVerificationApplicationStatus.of(map.get("status"));
+
     LocalDateTime requestedAt = LocalDateTime.parse(map.get("requested_at"));
     return new IdentityVerificationApplication(
         identifier,
@@ -53,7 +56,7 @@ public class ModelConverter {
         externalWorkflowApplicationDetails,
         trustFramework,
         processes,
-        IdentityVerificationApplicationStatus.REQUESTED,
+        status,
         requestedAt);
   }
 

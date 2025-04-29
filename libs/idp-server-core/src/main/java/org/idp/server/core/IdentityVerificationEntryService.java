@@ -105,6 +105,30 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   }
 
   @Override
+  public IdentityVerificationResponse findApplications(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      IdentityVerificationApplicationQueries queries,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
+
+    IdentityVerificationApplications applications =
+        applicationQueryRepository.findList(tenant, user, queries);
+
+    eventPublisher.publish(
+        tenant,
+        oAuthToken,
+        DefaultSecurityEventType.identity_verification_application_findList,
+        requestAttributes);
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("list", applications.toList());
+    return IdentityVerificationResponse.OK(response);
+  }
+
+  @Override
   public IdentityVerificationResponse process(
       TenantIdentifier tenantIdentifier,
       User user,

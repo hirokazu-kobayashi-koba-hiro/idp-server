@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { post } from "./lib/http";
+import { get, post } from "./lib/http";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
 import { loginForClientSecretPost } from "./ciba/login";
 
@@ -43,15 +43,15 @@ describe("identity-verification application", () => {
             "country": "JP"
           }
         }
-
       });
 
       console.log(applyResponse.data);
       expect(applyResponse.status).toBe(200);
+      const applicationId = applyResponse.data.id
 
       const processEndpoint = serverConfig.identityVerificationProcessEndpoint
         .replace("{type}", type)
-        .replace("{id}", applyResponse.data.id);
+        .replace("{id}", applicationId);
 
       const requestEkycResponse = await post({
         url: processEndpoint.replace("{process}", "request-ekyc"),
@@ -77,6 +77,19 @@ describe("identity-verification application", () => {
       });
       console.log(completeEkycResponse.data);
       expect(completeEkycResponse.status).toBe(200);
+
+
+      const applicationsResponse = await get({
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=applying&trust_framework=eidas&external_workflow_delegation=mocky`,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${tokenResponse.access_token}`
+        }
+      });
+      console.log(JSON.stringify(applicationsResponse.data, null, 2));
+      expect(applicationsResponse.status).toBe(200);
+      expect(applicationsResponse.data.list.length).toBe(1);
+      expect(applicationsResponse.data.list[0].id).toBe(applicationId);
 
     });
   });

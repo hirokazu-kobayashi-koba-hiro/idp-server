@@ -8,6 +8,7 @@ import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.identity.verification.*;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationQueries;
 import org.idp.server.core.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.security.RequestAttributes;
@@ -18,7 +19,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/api/v1/identity/{verification-type}")
+@RequestMapping("/{tenant-id}/api/v1/identity/applications")
 public class IdentityV1Api implements ParameterTransformable {
 
   IdentityVerificationApi identityVerificationApi;
@@ -27,7 +28,7 @@ public class IdentityV1Api implements ParameterTransformable {
     this.identityVerificationApi = idpServerApplication.identityVerificationApi();
   }
 
-  @PostMapping("/{verification-process}")
+  @PostMapping("/{verification-type}/{verification-process}")
   public ResponseEntity<?> apply(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
@@ -54,7 +55,30 @@ public class IdentityV1Api implements ParameterTransformable {
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
-  @PostMapping("/{id}/{verification-process}")
+  @GetMapping
+  public ResponseEntity<?> findList(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestParam Map<String, String> queryParams,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    IdentityVerificationResponse response =
+        identityVerificationApi.findApplications(
+            tenantIdentifier,
+            resourceOwnerPrincipal.getUser(),
+            resourceOwnerPrincipal.getOAuthToken(),
+            new IdentityVerificationApplicationQueries(queryParams),
+            requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/{verification-type}/{id}/{verification-process}")
   public ResponseEntity<?> process(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,

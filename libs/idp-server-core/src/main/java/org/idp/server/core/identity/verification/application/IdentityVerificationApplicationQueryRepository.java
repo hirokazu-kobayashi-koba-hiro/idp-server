@@ -9,4 +9,7 @@ public interface IdentityVerificationApplicationQueryRepository {
       Tenant tenant, IdentityVerificationApplicationIdentifier identifier);
 
   IdentityVerificationApplications findAll(Tenant tenant, User user);
+
+  IdentityVerificationApplications findList(
+      Tenant tenant, User user, IdentityVerificationApplicationQueries queries);
 }
