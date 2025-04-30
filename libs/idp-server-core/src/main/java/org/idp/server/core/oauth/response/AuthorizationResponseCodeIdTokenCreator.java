@@ -1,8 +1,8 @@
 package org.idp.server.core.oauth.response;
 
-import org.idp.server.core.identity.IdTokenCreatable;
-import org.idp.server.core.identity.IdTokenCustomClaims;
-import org.idp.server.core.identity.IdTokenCustomClaimsBuilder;
+import org.idp.server.core.oauth.identity.IdTokenCreatable;
+import org.idp.server.core.oauth.identity.IdTokenCustomClaims;
+import org.idp.server.core.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oauth.OAuthAuthorizeContext;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.type.extension.JarmPayload;

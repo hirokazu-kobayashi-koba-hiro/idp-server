@@ -3,7 +3,7 @@ package org.idp.server.core.adapters.datasource.oauth.request;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.identity.RequestedClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;

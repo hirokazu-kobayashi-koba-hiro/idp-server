@@ -1,4 +1,4 @@
-package org.idp.server.core.identity;
+package org.idp.server.core.oauth.identity;
 
 import java.util.Arrays;
 import org.idp.server.core.basic.base64.Base64Codeable;

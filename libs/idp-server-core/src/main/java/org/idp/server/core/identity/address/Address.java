@@ -1,4 +1,4 @@
-package org.idp.server.core.identity;
+package org.idp.server.core.identity.address;
 
 import java.io.Serializable;
 import java.util.HashMap;

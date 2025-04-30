@@ -1,4 +1,4 @@
-package org.idp.server.core.identity;
+package org.idp.server.core.oauth.identity;
 
 import java.util.Objects;
 import org.idp.server.core.basic.json.JsonReadable;

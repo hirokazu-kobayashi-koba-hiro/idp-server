@@ -1,7 +1,7 @@
 package org.idp.server.core.userinfo;
 
 import java.util.Map;
-import org.idp.server.core.identity.IndividualClaimsCreatable;
+import org.idp.server.core.oauth.identity.IndividualClaimsCreatable;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 

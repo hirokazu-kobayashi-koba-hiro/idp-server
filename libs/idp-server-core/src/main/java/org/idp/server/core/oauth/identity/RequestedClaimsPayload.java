@@ -1,4 +1,4 @@
-package org.idp.server.core.identity;
+package org.idp.server.core.oauth.identity;
 
 import java.util.ArrayList;
 import java.util.List;

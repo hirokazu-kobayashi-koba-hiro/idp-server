@@ -9,7 +9,7 @@ import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.core.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.core.basic.json.schema.JsonSchemaValidator;
 import org.idp.server.core.identity.IdPUserCreator;
-import org.idp.server.core.identity.PasswordEncodeDelegation;
+import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.oauth.authentication.Authentication;

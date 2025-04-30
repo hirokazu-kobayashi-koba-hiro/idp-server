@@ -8,7 +8,7 @@ import org.idp.server.core.basic.jose.JoseContext;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.identity.RequestedClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;

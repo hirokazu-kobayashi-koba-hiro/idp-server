@@ -1,6 +1,6 @@
 package org.idp.server.core.oauth.request;
 
-import org.idp.server.core.identity.RequestedClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;

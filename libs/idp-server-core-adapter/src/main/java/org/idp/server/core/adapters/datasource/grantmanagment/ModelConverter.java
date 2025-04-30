@@ -8,7 +8,7 @@ import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.grantmangment.AuthorizationGranted;
 import org.idp.server.core.grantmangment.AuthorizationGrantedIdentifier;
-import org.idp.server.core.identity.RequestedClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;

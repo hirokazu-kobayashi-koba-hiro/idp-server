@@ -2,7 +2,7 @@ package org.idp.server.core.oauth.grant;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import org.idp.server.core.identity.RequestedIdTokenClaims;
+import org.idp.server.core.oauth.identity.RequestedIdTokenClaims;
 import org.idp.server.core.type.oauth.ResponseType;
 import org.idp.server.core.type.oauth.Scopes;
 

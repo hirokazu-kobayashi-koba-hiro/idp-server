@@ -1,14 +1,16 @@
-package org.idp.server.core.identity;
+package org.idp.server.core.oauth.identity;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
 import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
 
 public interface IndividualClaimsCreatable extends ClaimHashable {
 
   default Map<String, Object> createIndividualClaims(
-      User user, GrantIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
+          User user, GrantIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
 
     HashMap<String, Object> claims = new HashMap<>();
 

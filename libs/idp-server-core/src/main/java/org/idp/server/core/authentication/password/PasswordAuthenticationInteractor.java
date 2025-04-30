@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.basic.date.SystemDateTime;
-import org.idp.server.core.identity.PasswordVerificationDelegation;
+import org.idp.server.core.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.oauth.authentication.Authentication;

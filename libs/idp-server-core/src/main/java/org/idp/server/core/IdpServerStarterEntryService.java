@@ -11,7 +11,7 @@ import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
-import org.idp.server.core.identity.PasswordEncodeDelegation;
+import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.UserStatus;

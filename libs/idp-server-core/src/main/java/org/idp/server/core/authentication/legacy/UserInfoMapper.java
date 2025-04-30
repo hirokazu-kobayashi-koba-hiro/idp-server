@@ -2,7 +2,7 @@ package org.idp.server.core.authentication.legacy;
 
 import java.util.*;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
-import org.idp.server.core.identity.Address;
+import org.idp.server.core.identity.address.Address;
 import org.idp.server.core.identity.User;
 
 public class UserInfoMapper {

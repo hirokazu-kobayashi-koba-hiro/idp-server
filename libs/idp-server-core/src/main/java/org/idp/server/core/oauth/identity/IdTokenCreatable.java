@@ -1,4 +1,4 @@
-package org.idp.server.core.identity;
+package org.idp.server.core.oauth.identity;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -8,6 +8,7 @@ import org.idp.server.core.basic.jose.*;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ConfigurationInvalidException;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.type.extension.ExpiredAt;

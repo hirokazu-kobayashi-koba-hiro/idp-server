@@ -1,4 +1,4 @@
-package org.idp.server.core.identity;
+package org.idp.server.core.oauth.identity;
 
 import org.idp.server.core.type.extension.CustomProperties;
 import org.idp.server.core.type.oauth.AccessTokenEntity;

@@ -1,4 +1,4 @@
-package org.idp.server.core.identity;
+package org.idp.server.core.identity.exception;
 
 import org.idp.server.core.type.exception.NotFoundException;
 
