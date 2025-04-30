@@ -2,10 +2,10 @@ package org.idp.server.core.oauth.grant;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.client.ClientIdentifier;
-import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.extension.ExpiredAt;

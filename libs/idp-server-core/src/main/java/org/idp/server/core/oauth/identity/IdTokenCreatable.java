@@ -8,6 +8,7 @@ import org.idp.server.core.basic.jose.*;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ConfigurationInvalidException;
 import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.type.extension.ExpiredAt;
@@ -21,6 +22,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       Authentication authentication,
       AuthorizationGrant authorizationGrant,
       IdTokenCustomClaims customClaims,
+      RequestedClaimsPayload requestedClaimsPayload,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
@@ -31,6 +33,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
               authentication,
               customClaims,
               authorizationGrant,
+              requestedClaimsPayload,
               serverConfiguration.tokenIssuer(),
               serverConfiguration.idTokenDuration(),
               serverConfiguration.isIdTokenStrictMode());
@@ -63,6 +66,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       Authentication authentication,
       IdTokenCustomClaims idTokenCustomClaims,
       AuthorizationGrant authorizationGrant,
+      RequestedClaimsPayload requestedClaimsPayload,
       TokenIssuer tokenIssuer,
       long idTokenDuration,
       boolean idTokenStrictMode) {
@@ -99,7 +103,11 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
     }
 
     Map<String, Object> individualClaims =
-        createIndividualClaims(user, authorizationGrant.idTokenClaims(), idTokenStrictMode);
+        createIndividualClaims(
+            user,
+            authorizationGrant.idTokenClaims(),
+            idTokenStrictMode,
+            requestedClaimsPayload.idToken());
     claims.putAll(individualClaims);
     return claims;
   }

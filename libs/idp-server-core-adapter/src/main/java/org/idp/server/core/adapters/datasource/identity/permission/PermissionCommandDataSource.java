@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.identity.permission;
 
-import org.idp.server.core.oauth.identity.permission.Permission;
-import org.idp.server.core.oauth.identity.permission.PermissionCommandRepository;
-import org.idp.server.core.oauth.identity.permission.Permissions;
+import org.idp.server.core.identity.permission.Permission;
+import org.idp.server.core.identity.permission.PermissionCommandRepository;
+import org.idp.server.core.identity.permission.Permissions;
 import org.idp.server.core.tenant.Tenant;
 
 public class PermissionCommandDataSource implements PermissionCommandRepository {

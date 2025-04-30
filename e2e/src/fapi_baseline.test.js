@@ -10,7 +10,6 @@ import { requestAuthorizations, certThumbprint } from "./oauth/signin";
 import { createJwtWithPrivateKey, generateJti, verifyAndDecodeJwt } from "./lib/jose";
 import {
   calculateCodeChallengeWithS256,
-  createClientAssertion,
   createInvalidClientAssertionWithPrivateKey,
 } from "./lib/oauth";
 import { toEpocTime } from "./lib/util";

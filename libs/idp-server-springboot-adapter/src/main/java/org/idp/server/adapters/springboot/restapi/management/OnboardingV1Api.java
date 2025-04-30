@@ -4,7 +4,7 @@ import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.admin.OnboardingApi;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.AdminTenantContext;
 import org.idp.server.core.tenant.ServerDomain;
 import org.idp.server.core.tenant.TenantIdentifier;

@@ -24,11 +24,7 @@ public class RequestedUserinfoClaims implements JsonReadable {
   ClaimsObject phoneNumberVerified;
   ClaimsObject address;
   ClaimsObject updatedAt;
-
-  // extension
-  ClaimsObject termsAccepted;
-  ClaimsObject termsVersion;
-  ClaimsObject termsAcceptedAt;
+  VerifiedClaimsObject verifiedClaims;
 
   public RequestedUserinfoClaims() {}
 
@@ -108,16 +104,8 @@ public class RequestedUserinfoClaims implements JsonReadable {
     return updatedAt;
   }
 
-  public ClaimsObject termsAccepted() {
-    return termsAccepted;
-  }
-
-  public ClaimsObject termsVersion() {
-    return termsVersion;
-  }
-
-  public ClaimsObject termsAcceptedAt() {
-    return termsAcceptedAt;
+  public VerifiedClaimsObject verifiedClaims() {
+    return verifiedClaims;
   }
 
   public boolean hasSub() {
@@ -196,15 +184,7 @@ public class RequestedUserinfoClaims implements JsonReadable {
     return Objects.nonNull(updatedAt);
   }
 
-  public boolean hasTermsAccepted() {
-    return Objects.nonNull(termsAccepted);
-  }
-
-  public boolean hasTermsVersion() {
-    return Objects.nonNull(termsVersion);
-  }
-
-  public boolean hasTermsAcceptedAt() {
-    return Objects.nonNull(termsAcceptedAt);
+  public boolean hasVerifiedClaims() {
+    return Objects.nonNull(verifiedClaims);
   }
 }

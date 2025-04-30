@@ -2,8 +2,8 @@ package org.idp.server.core.oauth.io;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
-import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;

@@ -126,6 +126,8 @@ CREATE TABLE idp_user
     credentials                    JSON,
     hashed_password                TEXT,
     multi_factor_authentication    JSON,
+    authentication_devices         JSON,
+    verified_claims                JSON,
     status                         VARCHAR(255)                       NOT NULL,
     created_at                     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at                     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,

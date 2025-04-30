@@ -5,7 +5,7 @@ import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.admin.ClientManagementApi;
 import org.idp.server.core.configuration.handler.io.ClientConfigurationManagementListResponse;
 import org.idp.server.core.configuration.handler.io.ClientConfigurationManagementResponse;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.RequestedClientId;
 import org.springframework.http.HttpHeaders;

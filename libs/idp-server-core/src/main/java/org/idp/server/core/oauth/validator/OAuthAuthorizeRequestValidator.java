@@ -1,9 +1,9 @@
 package org.idp.server.core.oauth.validator;
 
 import java.util.Objects;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
-import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.type.extension.CustomProperties;
 

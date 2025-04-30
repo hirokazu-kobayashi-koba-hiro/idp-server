@@ -3,8 +3,8 @@ package org.idp.server.core.authentication.webauthn;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.oauth.authentication.Authentication;
-import org.idp.server.core.oauth.identity.UserRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 

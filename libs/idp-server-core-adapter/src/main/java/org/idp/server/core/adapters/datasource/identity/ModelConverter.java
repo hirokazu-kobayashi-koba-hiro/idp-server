@@ -5,10 +5,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
-import org.idp.server.core.oauth.identity.Address;
-import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserStatus;
-import org.idp.server.core.oauth.identity.device.AuthenticationDevice;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserStatus;
+import org.idp.server.core.identity.address.Address;
+import org.idp.server.core.identity.device.AuthenticationDevice;
 
 class ModelConverter {
 
@@ -99,6 +99,12 @@ class ModelConverter {
         authenticationDevices.add(authenticationDevice);
       }
       user.setAuthenticationDevices(authenticationDevices);
+    }
+
+    if (stringMap.containsKey("verified_claims") && !stringMap.get("verified_claims").isEmpty()) {
+      HashMap<String, Object> verifiedClaims =
+          jsonConverter.read(stringMap.get("verified_claims"), HashMap.class);
+      user.setVerifiedClaims(verifiedClaims);
     }
 
     UserStatus userStatus = UserStatus.of(stringMap.getOrDefault("status", ""));

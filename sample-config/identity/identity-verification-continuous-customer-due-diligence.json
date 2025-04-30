@@ -1,0 +1,136 @@
+{
+  "type": "continuous-customer-due-diligence",
+  "external_workflow_delegation": "mocky",
+  "external_workflow_application_id_param": "application_id",
+  "oauth_authorization": {
+    "type": "password",
+    "token_endpoint": "https://run.mocky.io/v3/04646fc3-8cce-44c8-bc59-5c64df51bf82",
+    "client_id": "your-client-id",
+    "username": "username",
+    "password": "password",
+    "scope": "application"
+  },
+  "approved_target_types": ["investment-account-opening", "nisa-account-opening"],
+  "processes": {
+    "apply": {
+      "url": "https://run.mocky.io/v3/1f706ee6-9bca-45d2-9676-d0c85c48ccb9",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer dummy-token"
+      },
+      "dynamic_body_keys": ["last_name", "first_name", "last_name_kana", "last_name_kana", "first_name_kana", "birthdate", "nationality", "email_address", "mobile_phone_number", "address"],
+      "static_body": {},
+      "request_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "request Application",
+        "type": "object",
+        "required": ["last_name", "first_name", "last_name_kana", "first_name_kana", "birthdate", "nationality", "email_address", "mobile_phone_number", "address"],
+        "properties": {
+          "last_name": { "type": "string", "maxLength": 255, "store": true },
+          "first_name": { "type": "string", "maxLength": 255, "store": true },
+          "last_name_kana": { "type": "string", "maxLength": 255, "store": true },
+          "first_name_kana": { "type": "string", "maxLength": 255, "store": true },
+          "birthdate": { "type": "string", "format": "date", "store": true },
+          "nationality": { "type": "string", "maxLength": 255, "store": true },
+          "email_address": { "type": "string", "maxLength": 255, "pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$", "store": true },
+          "mobile_phone_number": { "type": "string", "maxLength": 11, "pattern": "^[0-9]{10,11}$", "store": true },
+          "address": {
+            "type": "object",
+            "store": false,
+            "properties": {
+              "street_address": { "type": "string", "maxLength": 255 },
+              "locality": { "type": "string", "maxLength": 255 },
+              "region": { "type": "string", "maxLength": 255 },
+              "postal_code": { "type": "string", "maxLength": 255 },
+              "country": { "type": "string", "maxLength": 255 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "request_verification_schema": {
+        "duplicate_application": true,
+        "unmatched_user_claims_email": {
+          "property": "email_address"
+        },
+        "unmatched_user_claims_phone": {
+          "property": "mobile_phone_number"
+        }
+      },
+      "request_additional_parameter_schema": {
+        "$schema": "original",
+        "user_id": true
+      },
+      "response_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "application response",
+        "type": "object",
+        "required": ["application_id"],
+        "properties": {
+          "application_id": { "type": "string", "id": true, "respond": true, "store": true }
+        },
+        "additionalProperties": false
+      }
+    },
+    "request-ekyc": {
+      "url": "https://run.mocky.io/v3/0a587222-da2b-4713-b090-e4ff8447a02b",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer dummy-token"
+      },
+      "dynamic_body_keys": ["trust_framework", "document_type"],
+      "static_body": {},
+      "request_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "request eKYC",
+        "type": "object",
+        "required": ["trust_framework", "document_type"],
+        "properties": {
+          "trust_framework": { "type": "string", "maxLength": 100, "store": true },
+          "document_type": { "type": "string", "maxLength": 50, "store": true }
+        },
+        "additionalProperties": false
+      },
+      "response_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "request eKYC response",
+        "type": "object",
+        "required": ["ekyc_url"],
+        "properties": {
+          "application_id": { "type": "string" },
+          "ekyc_url": { "type": "string", "respond": true, "store": true }
+        },
+        "additionalProperties": false
+      }
+    },
+    "complete-ekyc": {
+      "url": "https://run.mocky.io/v3/73f192dd-7bcd-4415-8fc7-811c56684cb7",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer dummy-token"
+      },
+      "dynamic_body_keys": [],
+      "static_body": {},
+      "request_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "complete eKYC",
+        "type": "object",
+        "required": [],
+        "properties": {},
+        "additionalProperties": false
+      },
+      "response_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "complete eKYC response",
+        "type": "object",
+        "required": [],
+        "properties": {},
+        "additionalProperties": false
+      }
+    }
+  }
+}

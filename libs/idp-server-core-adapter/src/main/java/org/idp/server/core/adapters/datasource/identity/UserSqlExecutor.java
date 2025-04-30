@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.identity;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.Tenant;
 
 public interface UserSqlExecutor {

@@ -146,10 +146,12 @@ public class AuthorizationCodeGrantService
               authorizationCodeGrant.authentication(),
               authorizationGrant,
               idTokenCustomClaims,
+              authorizationRequest.requestedClaimsPayload(),
               serverConfiguration,
               clientConfiguration);
       oAuthTokenBuilder.add(idToken);
     }
+
     if (authorizationRequest.isVerifiableCredentialRequest()) {
       CNonce cNonce = createCNonce();
       CNonceExpiresIn cNonceExpiresIn = new CNonceExpiresIn(3600L);

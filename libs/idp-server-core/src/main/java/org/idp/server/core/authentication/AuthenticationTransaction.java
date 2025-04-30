@@ -8,7 +8,7 @@ import java.util.Set;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.io.OAuthRequestResponse;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.tenant.Tenant;

@@ -1,6 +1,6 @@
 package org.idp.server.core.basic.json.schema;
 
-import java.util.List;
+import java.util.*;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
 
 public class JsonSchemaDefinition {
@@ -20,6 +20,26 @@ public class JsonSchemaDefinition {
         .toList();
   }
 
+  public JsonNodeWrapper getField(String fieldName) {
+    return definition.getValueAsJsonNode(fieldName);
+  }
+
+  public Map<String, JsonSchemaProperty> getProperties() {
+    JsonNodeWrapper jsonNodeWrapper = definition.getValueAsJsonNode("properties");
+    Map<String, JsonSchemaProperty> properties = new HashMap<>();
+
+    jsonNodeWrapper
+        .fieldNames()
+        .forEachRemaining(
+            fieldName -> {
+              JsonSchemaProperty jsonSchemaProperty =
+                  new JsonSchemaProperty(jsonNodeWrapper.getValueAsJsonNode(fieldName));
+              properties.put(fieldName, jsonSchemaProperty);
+            });
+
+    return properties;
+  }
+
   public boolean hasProperty(String propertyName) {
     return definition.getValueAsJsonNode("properties").contains(propertyName);
   }
@@ -27,5 +47,9 @@ public class JsonSchemaDefinition {
   public JsonSchemaProperty propertySchema(String fieldName) {
     return new JsonSchemaProperty(
         definition.getValueAsJsonNode("properties").getValueAsJsonNode(fieldName));
+  }
+
+  public Iterator<String> propertyNames() {
+    return definition.fieldNames();
   }
 }

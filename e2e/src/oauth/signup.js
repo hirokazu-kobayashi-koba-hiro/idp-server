@@ -1,5 +1,4 @@
 import {
-  authenticateWithPassword,
   authorize,
   createAuthorizationRequest,
   deny,

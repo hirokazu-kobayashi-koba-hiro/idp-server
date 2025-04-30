@@ -29,7 +29,7 @@ idp:
 
 logging:
   level:
-    root: info
+    root: debug
     web: info
 
 

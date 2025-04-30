@@ -16,3 +16,7 @@ org.idp.server.core.adapters.datasource.tenant.TenantDataSourceProvider
 org.idp.server.core.adapters.datasource.token.OAuthTokenDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.transaction.command.AuthenticationTransactionCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.transaction.query.AuthenticationTransactionQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.verification.config.IdentityVerificationConfigurationDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.verification.application.command.IdentityVerificationApplicationCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.verification.application.query.IdentityVerificationApplicationQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.verification.result.command.IdentityVerificationResultCommandDataSourceProvider

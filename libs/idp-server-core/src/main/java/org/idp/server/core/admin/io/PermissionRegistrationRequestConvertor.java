@@ -3,8 +3,8 @@ package org.idp.server.core.admin.io;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.idp.server.core.oauth.identity.permission.Permission;
-import org.idp.server.core.oauth.identity.permission.Permissions;
+import org.idp.server.core.identity.permission.Permission;
+import org.idp.server.core.identity.permission.Permissions;
 
 public class PermissionRegistrationRequestConvertor {
 

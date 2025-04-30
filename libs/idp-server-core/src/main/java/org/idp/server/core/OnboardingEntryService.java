@@ -9,9 +9,9 @@ import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
-import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserRegistrator;
-import org.idp.server.core.oauth.identity.UserRepository;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserRegistrator;
+import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.organization.*;
 import org.idp.server.core.tenant.*;
 

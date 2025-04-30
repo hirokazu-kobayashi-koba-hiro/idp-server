@@ -9,6 +9,10 @@ public class JsonSchemaProperty {
     this.propertySchema = propertySchema;
   }
 
+  public String key() {
+    return "";
+  }
+
   public String type() {
     return propertySchema.getValueOrEmptyAsString("type");
   }
@@ -39,5 +43,13 @@ public class JsonSchemaProperty {
 
   public boolean exists() {
     return propertySchema != null && propertySchema.exists();
+  }
+
+  public boolean shouldStore() {
+    return propertySchema.optValueAsBoolean("store", false);
+  }
+
+  public boolean shouldRespond() {
+    return propertySchema.optValueAsBoolean("respond", true);
   }
 }

@@ -7,6 +7,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.type.exception.InvalidConfigurationException;
@@ -15,6 +17,7 @@ public class HttpRequestExecutor {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;
+  Logger log = Logger.getLogger(HttpRequestExecutor.class.getName());
 
   public HttpRequestExecutor(HttpClient httpClient) {
     this.httpClient = httpClient;
@@ -36,6 +39,9 @@ public class HttpRequestExecutor {
               httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
       Map<String, Object> requestBody = requestBodyCreator.create();
 
+      log.log(Level.FINE, "Request headers: {0}", httpRequestHeaders);
+      log.log(Level.FINE, "Request body: {0}", requestBody);
+
       HttpRequest.Builder httpRequestBuilder =
           HttpRequest.newBuilder()
               .uri(new URI(httpRequestUrl.value()))
@@ -49,7 +55,10 @@ public class HttpRequestExecutor {
       HttpResponse<String> httpResponse =
           httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-      JsonNodeWrapper jsonResponse = jsonConverter.readTree(httpResponse.body());
+      log.log(Level.FINE, "Response status: {0}", httpResponse.statusCode());
+      log.log(Level.FINE, "Response body: {0}", httpResponse.body());
+
+      JsonNodeWrapper jsonResponse = resolveResponseBody(httpResponse);
 
       return new HttpRequestResult(
           httpResponse.statusCode(), httpResponse.headers().map(), jsonResponse);
@@ -60,6 +69,14 @@ public class HttpRequestExecutor {
     } catch (IOException | InterruptedException e) {
       throw new HttpNetworkErrorException("Http request is failed.", e);
     }
+  }
+
+  private JsonNodeWrapper resolveResponseBody(HttpResponse<String> httpResponse) {
+    if (httpResponse.body() == null || httpResponse.body().isEmpty()) {
+      return JsonNodeWrapper.empty();
+    }
+
+    return jsonConverter.readTree(httpResponse.body());
   }
 
   private void setHeaders(

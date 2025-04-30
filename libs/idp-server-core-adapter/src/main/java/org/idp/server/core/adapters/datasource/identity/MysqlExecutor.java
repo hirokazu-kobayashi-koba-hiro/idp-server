@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.basic.datasource.SqlExecutor;
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.Tenant;
 
 public class MysqlExecutor implements UserSqlExecutor {
@@ -17,13 +17,72 @@ public class MysqlExecutor implements UserSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                INSERT INTO idp_user
-                (id, tenant_id, provider_id, provider_user_id, provider_user_original_payload, name, given_name, family_name, middle_name, nickname,
-                 preferred_username, profile, picture, website, email, email_verified, gender,
-                 birthdate, zoneinfo, locale, phone_number, phone_number_verified, address,
-                 custom_properties, credentials, hashed_password, multi_factor_authentication, authentication_devices, status)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                """;
+                    INSERT INTO idp_user
+                    (
+                    id,
+                    tenant_id,
+                    provider_id,
+                    provider_user_id,
+                    provider_user_original_payload,
+                    name,
+                    given_name,
+                    family_name,
+                    middle_name,
+                    nickname,
+                    preferred_username,
+                    profile,
+                    picture,
+                    website,
+                    email,
+                    email_verified,
+                    gender,
+                    birthdate,
+                    zoneinfo,
+                    locale,
+                    phone_number,
+                    phone_number_verified,
+                    address,
+                    custom_properties,
+                    credentials,
+                    hashed_password,
+                    multi_factor_authentication,
+                    authentication_devices,
+                    verified_claims,
+                    status)
+                    VALUES
+                    (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?::jsonb,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?::jsonb,
+                    ?::jsonb,
+                    ?::jsonb,
+                    ?,
+                    ?::jsonb,
+                    ?::jsonb,
+                    ?::jsonb,
+                    ?
+                    );
+                    """;
 
     List<Object> params = new ArrayList<>();
     params.add(user.sub());
@@ -54,6 +113,7 @@ public class MysqlExecutor implements UserSqlExecutor {
     params.add(user.hashedPassword());
     params.add(jsonConverter.write(user.multiFactorAuthentication()));
     params.add(jsonConverter.write(user.authenticationDevicesAsList()));
+    params.add(jsonConverter.write(user.verifiedClaims()));
     params.add(user.statusName());
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -138,9 +198,30 @@ public class MysqlExecutor implements UserSqlExecutor {
     String sqlTemplate =
         """
               UPDATE idp_user
-              SET name = ?, given_name = ?, family_name = ?, middle_name = ?, nickname = ?, preferred_username = ?,
-              profile = ?, picture = ?, website = ?, email = ?, email_verified = ?, gender = ?, birthdate = ?, zoneinfo = ?,
-              locale = ?, phone_number = ?, phone_number_verified = ?, custom_properties = ?, updated_at = now()
+              SET name = ?,
+              given_name = ?,
+              family_name = ?,
+              middle_name = ?,
+              nickname = ?,
+              preferred_username = ?,
+              profile = ?,
+              picture = ?,
+              website = ?,
+              email = ?,
+              email_verified = ?,
+              gender = ?,
+              birthdate = ?,
+              zoneinfo = ?,
+              locale = ?,
+              phone_number = ?,
+              phone_number_verified = ?,
+              address = ?,
+              custom_properties = ?,
+              multi_factor_authentication = ?,
+              authentication_devices = ?,
+              verified_claims = ?,
+              status = ?,
+              updated_at = now()
               WHERE id = ?;
               """;
 
@@ -162,7 +243,12 @@ public class MysqlExecutor implements UserSqlExecutor {
     params.add(user.locale());
     params.add(user.phoneNumber());
     params.add(user.phoneNumberVerified());
+    params.add(jsonConverter.write(user.address()));
     params.add(jsonConverter.write(user.customPropertiesValue()));
+    params.add(jsonConverter.write(user.multiFactorAuthentication()));
+    params.add(jsonConverter.write(user.authenticationDevicesAsList()));
+    params.add(jsonConverter.write(user.verifiedClaims()));
+    params.add(user.statusName());
     params.add(user.sub());
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -219,6 +305,8 @@ public class MysqlExecutor implements UserSqlExecutor {
                                idp_user.credentials,
                                idp_user.hashed_password,
                                idp_user.multi_factor_authentication,
+                               idp_user.authentication_devices,
+                               idp_user.verified_claims,
                                idp_user.status,
                                idp_user.created_at,
                                idp_user.updated_at,

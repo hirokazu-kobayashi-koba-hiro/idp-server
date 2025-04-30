@@ -328,4 +328,12 @@ public class ClientConfiguration implements JsonReadable {
   public Client client() {
     return new Client(clientIdentifier(), clientName());
   }
+
+  public boolean hasJwks() {
+    return jwks != null && !jwks.isEmpty();
+  }
+
+  public boolean hasSecret() {
+    return clientSecret != null && !clientSecret.isEmpty();
+  }
 }

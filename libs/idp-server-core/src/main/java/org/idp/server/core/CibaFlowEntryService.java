@@ -10,8 +10,8 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifi
 import org.idp.server.core.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.ciba.user.UserHintResolver;
 import org.idp.server.core.ciba.user.UserHintResolvers;
-import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserRepository;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.security.event.CibaFlowEventPublisher;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;

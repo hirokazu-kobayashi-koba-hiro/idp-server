@@ -2,7 +2,7 @@ package org.idp.server.core.security.event;
 
 import java.util.HashMap;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.security.RequestAttributes;

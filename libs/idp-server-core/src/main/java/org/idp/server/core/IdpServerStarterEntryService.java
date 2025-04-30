@@ -11,14 +11,14 @@ import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
-import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
-import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserRepository;
-import org.idp.server.core.oauth.identity.UserStatus;
-import org.idp.server.core.oauth.identity.permission.PermissionCommandRepository;
-import org.idp.server.core.oauth.identity.permission.Permissions;
-import org.idp.server.core.oauth.identity.role.RoleCommandRepository;
-import org.idp.server.core.oauth.identity.role.Roles;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.UserStatus;
+import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.identity.permission.PermissionCommandRepository;
+import org.idp.server.core.identity.permission.Permissions;
+import org.idp.server.core.identity.role.RoleCommandRepository;
+import org.idp.server.core.identity.role.Roles;
 import org.idp.server.core.organization.Organization;
 import org.idp.server.core.organization.OrganizationRepository;
 import org.idp.server.core.tenant.*;
@@ -74,7 +74,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     User user = jsonConverter.read(request.get("user"), User.class);
     String encode = passwordEncodeDelegation.encode(user.rawPassword());
     user.setHashedPassword(encode);
-    user.transitStatus(UserStatus.REGISTERED);
+    User updatedUser = user.transitStatus(UserStatus.REGISTERED);
 
     Organization organization = organizationRequest.toOrganization();
     Tenant tenant =
@@ -91,7 +91,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     organizationRepository.register(tenant, organization);
     permissionCommandRepository.bulkRegister(tenant, permissions);
     roleCommandRepository.bulkRegister(tenant, roles);
-    userRepository.register(tenant, user);
+    userRepository.register(tenant, updatedUser);
 
     return Map.of("organization", organization.toMap(), "tenant", tenant.toMap());
   }

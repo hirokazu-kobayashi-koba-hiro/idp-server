@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserNotFoundException;
-import org.idp.server.core.oauth.identity.UserRepository;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.exception.UserNotFoundException;
 import org.idp.server.core.tenant.Tenant;
 
 public class UserDataSource implements UserRepository {

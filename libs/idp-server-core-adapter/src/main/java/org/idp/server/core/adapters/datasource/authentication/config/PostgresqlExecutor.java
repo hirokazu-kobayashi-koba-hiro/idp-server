@@ -17,6 +17,7 @@ public class PostgresqlExecutor implements AuthenticationConfigSqlExecutor {
             FROM authentication_configuration
             WHERE tenant_id = ?
             AND type = ?
+            AND enabled = true
             """;
 
     List<Object> params = new ArrayList<>();

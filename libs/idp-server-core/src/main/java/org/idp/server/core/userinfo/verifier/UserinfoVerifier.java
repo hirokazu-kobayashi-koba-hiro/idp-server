@@ -3,7 +3,7 @@ package org.idp.server.core.userinfo.verifier;
 import java.time.LocalDateTime;
 import org.idp.server.core.basic.date.SystemDateTime;
 import org.idp.server.core.basic.x509.X509CertInvalidException;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.mtls.ClientCertification;
 import org.idp.server.core.oauth.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oauth.mtls.ClientCertificationThumbprintCalculator;

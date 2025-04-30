@@ -28,18 +28,23 @@ import org.idp.server.core.federation.FederationInteractorLoader;
 import org.idp.server.core.federation.FederationInteractors;
 import org.idp.server.core.federation.oidc.OidcSsoExecutorLoader;
 import org.idp.server.core.federation.oidc.OidcSsoExecutors;
+import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.identity.authentication.PasswordVerificationDelegation;
+import org.idp.server.core.identity.authentication.UserPasswordAuthenticator;
+import org.idp.server.core.identity.permission.PermissionCommandRepository;
+import org.idp.server.core.identity.role.RoleCommandRepository;
+import org.idp.server.core.identity.verification.IdentityVerificationApi;
+import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationCommandRepository;
+import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationQueryRepository;
+import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
+import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.notification.EmailSenderLoader;
 import org.idp.server.core.notification.EmailSenders;
 import org.idp.server.core.oauth.OAuthFlowApi;
 import org.idp.server.core.oauth.OAuthProtocol;
 import org.idp.server.core.oauth.OAuthProtocols;
 import org.idp.server.core.oauth.OAuthSessionDelegate;
-import org.idp.server.core.oauth.identity.PasswordEncodeDelegation;
-import org.idp.server.core.oauth.identity.PasswordVerificationDelegation;
-import org.idp.server.core.oauth.identity.UserPasswordAuthenticator;
-import org.idp.server.core.oauth.identity.UserRepository;
-import org.idp.server.core.oauth.identity.permission.PermissionCommandRepository;
-import org.idp.server.core.oauth.identity.role.RoleCommandRepository;
 import org.idp.server.core.organization.OrganizationRepository;
 import org.idp.server.core.security.SecurityEventApi;
 import org.idp.server.core.security.SecurityEventHooks;
@@ -68,6 +73,7 @@ public class IdpServerApplication {
   UserinfoApi userinfoApi;
   CibaFlowApi cibaFlowApi;
   AuthenticationDeviceApi authenticationDeviceApi;
+  IdentityVerificationApi identityVerificationApi;
   SecurityEventApi securityEventApi;
   OnboardingApi onboardingApi;
   ServerManagementApi serverManagementApi;
@@ -112,6 +118,18 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(AuthenticationTransactionCommandRepository.class);
     AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository =
         applicationComponentContainer.resolve(AuthenticationTransactionQueryRepository.class);
+    IdentityVerificationConfigurationQueryRepository
+        identityVerificationConfigurationQueryRepository =
+            applicationComponentContainer.resolve(
+                IdentityVerificationConfigurationQueryRepository.class);
+    IdentityVerificationApplicationCommandRepository
+        identityVerificationApplicationCommandRepository =
+            applicationComponentContainer.resolve(
+                IdentityVerificationApplicationCommandRepository.class);
+    IdentityVerificationApplicationQueryRepository identityVerificationApplicationQueryRepository =
+        applicationComponentContainer.resolve(IdentityVerificationApplicationQueryRepository.class);
+    IdentityVerificationResultCommandRepository identityVerificationResultCommandRepository =
+        applicationComponentContainer.resolve(IdentityVerificationResultCommandRepository.class);
 
     RoleCommandRepository roleCommandRepository =
         applicationComponentContainer.resolve(RoleCommandRepository.class);
@@ -247,6 +265,20 @@ public class IdpServerApplication {
             OperationType.READ,
             tenantDialectProvider);
 
+    this.identityVerificationApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new IdentityVerificationEntryService(
+                identityVerificationConfigurationQueryRepository,
+                identityVerificationApplicationCommandRepository,
+                identityVerificationApplicationQueryRepository,
+                identityVerificationResultCommandRepository,
+                tenantRepository,
+                userRepository,
+                tokenEventPublisher),
+            IdentityVerificationApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
+
     this.securityEventApi =
         TenantAwareEntryServiceProxy.createProxy(
             new SecurityEventEntryService(
@@ -321,6 +353,10 @@ public class IdpServerApplication {
 
   public AuthenticationDeviceApi authenticationDeviceApi() {
     return authenticationDeviceApi;
+  }
+
+  public IdentityVerificationApi identityVerificationApi() {
+    return identityVerificationApi;
   }
 
   public SecurityEventApi securityEventApi() {

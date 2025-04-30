@@ -1,8 +1,8 @@
 package org.idp.server.core;
 
 import org.idp.server.core.basic.datasource.Transaction;
-import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserRepository;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.tenant.Tenant;

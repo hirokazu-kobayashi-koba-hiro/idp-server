@@ -24,6 +24,11 @@ export const serverConfig = {
   backchannelAuthenticationAutomatedCompleteEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications/automated-complete`,
   authenticationDeviceInteractionEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/{flow-type}/{id}/`,
+  identityVerificationApplyEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/{process}`,
+  identityVerificationProcessEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/{id}/{process}`,
+  identityVerificationApplicationsEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications`,
+  identityVerificationApplicationsStaticCallbackExaminationEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/callback-examination`,
+  identityVerificationApplicationsStaticCallbackResultEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/callback-result`,
   discoveryEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration`,
   credentialEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials`,

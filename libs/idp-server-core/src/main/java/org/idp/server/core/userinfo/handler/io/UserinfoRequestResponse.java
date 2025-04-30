@@ -1,7 +1,7 @@
 package org.idp.server.core.userinfo.handler.io;
 
 import java.util.Map;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.userinfo.UserinfoErrorResponse;
 import org.idp.server.core.userinfo.UserinfoResponse;

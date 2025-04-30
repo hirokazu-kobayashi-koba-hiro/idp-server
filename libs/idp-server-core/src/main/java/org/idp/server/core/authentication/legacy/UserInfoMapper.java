@@ -2,8 +2,8 @@ package org.idp.server.core.authentication.legacy;
 
 import java.util.*;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
-import org.idp.server.core.oauth.identity.Address;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.address.Address;
 
 public class UserInfoMapper {
   String providerName;

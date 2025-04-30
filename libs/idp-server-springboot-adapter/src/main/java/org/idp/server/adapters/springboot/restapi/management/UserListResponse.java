@@ -2,7 +2,7 @@ package org.idp.server.adapters.springboot.restapi.management;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 
 public class UserListResponse {
   @JsonProperty("list")

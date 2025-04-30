@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.basic.datasource.SqlExecutor;
-import org.idp.server.core.oauth.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.core.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.tenant.Tenant;
 
 public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExecutor {

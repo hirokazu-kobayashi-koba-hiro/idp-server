@@ -2,8 +2,8 @@ package org.idp.server.core.authentication;
 
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
-import org.idp.server.core.oauth.identity.User;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 
 public class AuthenticationInteractionRequestResult {

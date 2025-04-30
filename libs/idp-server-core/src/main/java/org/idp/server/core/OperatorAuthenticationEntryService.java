@@ -3,11 +3,12 @@ package org.idp.server.core;
 import org.idp.server.core.admin.OperatorAuthenticationApi;
 import org.idp.server.core.admin.TokenIntrospectionCreator;
 import org.idp.server.core.basic.datasource.Transaction;
-import org.idp.server.core.oauth.identity.User;
-import org.idp.server.core.oauth.identity.UserRepository;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
+import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.TokenProtocol;
 import org.idp.server.core.token.TokenProtocols;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
@@ -31,9 +32,9 @@ public class OperatorAuthenticationEntryService implements OperatorAuthenticatio
     this.userRepository = userRepository;
   }
 
-  public Pairs<User, String> authenticate(
-      TenantIdentifier adminTenantIdentifier, String authorizationHeader) {
-    Tenant adminTenant = tenantRepository.getAdmin();
+  public Pairs<User, OAuthToken> authenticate(
+      TenantIdentifier tenantIdentifier, String authorizationHeader) {
+    Tenant adminTenant = tenantRepository.get(tenantIdentifier);
 
     TokenIntrospectionCreator tokenIntrospectionCreator =
         new TokenIntrospectionCreator(adminTenant, authorizationHeader);
@@ -53,6 +54,6 @@ public class OperatorAuthenticationEntryService implements OperatorAuthenticatio
     }
     User user = userRepository.get(adminTenant, introspectionResponse.subject());
 
-    return new Pairs<>(user, tokenIntrospectionRequest.token());
+    return new Pairs<>(user, introspectionResponse.oAuthToken());
   }
 }

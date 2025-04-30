@@ -1,7 +1,7 @@
 package org.idp.server.core.security.event;
 
 import java.util.HashMap;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
@@ -24,6 +24,19 @@ public class TokenEventCreator {
     this.oAuthToken = oAuthToken;
     this.securityEventType = defaultSecurityEventType.toEventType();
     this.securityEventDescription = defaultSecurityEventType.toEventDescription();
+    this.requestAttributes = requestAttributes;
+  }
+
+  public TokenEventCreator(
+      Tenant tenant,
+      OAuthToken oAuthToken,
+      SecurityEventType securityEventType,
+      SecurityEventDescription securityEventDescription,
+      RequestAttributes requestAttributes) {
+    this.tenant = tenant;
+    this.oAuthToken = oAuthToken;
+    this.securityEventType = securityEventType;
+    this.securityEventDescription = securityEventDescription;
     this.requestAttributes = requestAttributes;
   }
 

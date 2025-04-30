@@ -1,13 +1,35 @@
 package org.idp.server.core.basic.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import java.util.*;
 
 public class JsonNodeWrapper {
   JsonNode jsonNode;
 
+  public static JsonNodeWrapper empty() {
+    return new JsonNodeWrapper(JsonNodeFactory.instance.objectNode());
+  }
+
   public JsonNodeWrapper(JsonNode jsonNode) {
     this.jsonNode = jsonNode;
+  }
+
+  public static JsonNodeWrapper fromObject(Map<String, Object> map) {
+    if (map == null || map.isEmpty()) {
+      return empty();
+    }
+    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    String json = jsonConverter.write(map);
+    return jsonConverter.readTree(json);
+  }
+
+  public static JsonNodeWrapper fromString(String json) {
+    if (json == null || json.isEmpty()) {
+      return empty();
+    }
+    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    return jsonConverter.readTree(json);
   }
 
   public Iterator<String> fieldNames() {
@@ -23,6 +45,15 @@ public class JsonNodeWrapper {
     Iterator<JsonNode> iterator = jsonNode.get(fieldName).elements();
     while (iterator.hasNext()) {
       values.add(new JsonNodeWrapper(iterator.next()));
+    }
+    return values;
+  }
+
+  public List<Map<String, Object>> getValueAsJsonNodeListAsMap(String fieldName) {
+    List<Map<String, Object>> values = new ArrayList<>();
+    Iterator<JsonNode> iterator = jsonNode.get(fieldName).elements();
+    while (iterator.hasNext()) {
+      values.add(new JsonNodeWrapper(iterator.next()).toMap());
     }
     return values;
   }
@@ -46,7 +77,14 @@ public class JsonNodeWrapper {
     return jsonNode;
   }
 
+  public Object getValue(String fieldName) {
+    return jsonNode.get(fieldName);
+  }
+
   public String getValueOrEmptyAsString(String fieldName) {
+    if (!contains(fieldName)) {
+      return "";
+    }
     return jsonNode.get(fieldName).asText("");
   }
 
@@ -56,6 +94,10 @@ public class JsonNodeWrapper {
 
   public boolean getValueAsBoolean(String fieldName) {
     return jsonNode.get(fieldName).asBoolean();
+  }
+
+  public boolean optValueAsBoolean(String fieldName, boolean defaultValue) {
+    return jsonNode.has(fieldName) ? jsonNode.get(fieldName).asBoolean() : defaultValue;
   }
 
   public String asText() {

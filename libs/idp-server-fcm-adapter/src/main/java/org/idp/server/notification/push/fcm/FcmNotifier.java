@@ -11,7 +11,7 @@ import org.idp.server.core.authentication.device.AuthenticationDeviceNotifier;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.notification.device.NotificationChannel;
 import org.idp.server.core.notification.device.NotificationTemplate;
-import org.idp.server.core.oauth.identity.device.AuthenticationDevice;
+import org.idp.server.core.identity.device.AuthenticationDevice;
 import org.idp.server.core.tenant.Tenant;
 
 import java.io.ByteArrayInputStream;

@@ -8,9 +8,10 @@ import org.idp.server.adapters.springboot.operation.IdPScope;
 import org.idp.server.adapters.springboot.operation.Operator;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.admin.OperatorAuthenticationApi;
-import org.idp.server.core.oauth.identity.User;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.AdminTenantContext;
 import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.type.exception.UnauthorizedException;
 import org.idp.server.core.type.extension.Pairs;
 import org.slf4j.Logger;
@@ -38,7 +39,7 @@ public class ManagementApiFilter extends OncePerRequestFilter {
 
     try {
       TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
-      Pairs<User, String> result =
+      Pairs<User, OAuthToken> result =
           operatorAuthenticationApi.authenticate(adminTenantIdentifier, authorization);
 
       Operator operator =

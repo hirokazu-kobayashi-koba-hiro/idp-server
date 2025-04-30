@@ -43,6 +43,7 @@ public class AuthorizationResponseVpTokenIdTokenCreator
             context.authentication(),
             context.authorize(),
             idTokenCustomClaims,
+            context.requestedClaimsPayload(),
             context.serverConfiguration(),
             context.clientConfiguration());
     AuthorizationResponseBuilder authorizationResponseBuilder =

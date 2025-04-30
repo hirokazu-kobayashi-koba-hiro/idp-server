@@ -49,6 +49,7 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
             context.authentication(),
             context.authorize(),
             idTokenCustomClaims,
+            context.requestedClaimsPayload(),
             context.serverConfiguration(),
             context.clientConfiguration());
 
