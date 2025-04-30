@@ -2,7 +2,7 @@ package org.idp.server.core.oauth.identity;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
 import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
@@ -10,7 +10,10 @@ import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
 public interface IndividualClaimsCreatable extends ClaimHashable {
 
   default Map<String, Object> createIndividualClaims(
-          User user, GrantIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
+      User user,
+      GrantIdTokenClaims idTokenClaims,
+      boolean idTokenStrictMode,
+      RequestedIdTokenClaims requestedIdTokenClaims) {
 
     HashMap<String, Object> claims = new HashMap<>();
 
@@ -83,6 +86,70 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
 
     if (!idTokenStrictMode && user.hasCustomProperties()) {
       claims.putAll(user.customPropertiesValue());
+    }
+
+    if (idTokenClaims.hasVerifiedClaims()) {
+      VerifiedClaimsObject verifiedClaimsObject = requestedIdTokenClaims.verifiedClaims();
+      JsonNodeWrapper userVerifiedClaims = user.verifiedClaimsNodeWrapper();
+      Map<String, Object> verified = new HashMap<>();
+
+      JsonNodeWrapper verificationNodeWrapper = verifiedClaimsObject.verificationNodeWrapper();
+      Map<String, Object> verification = new HashMap<>();
+      JsonNodeWrapper verificationClaim = userVerifiedClaims.getValueAsJsonNode("verification");
+      if (verificationNodeWrapper.contains("trust_framework")
+          && verificationClaim.contains("trust_framework")) {
+        verification.put(
+            "trust_framework", verificationClaim.getValueOrEmptyAsString("trust_framework"));
+      }
+      if (verificationNodeWrapper.contains("evidence") && verificationClaim.contains("evidence")) {
+        verification.put("evidence", verificationClaim.getValueAsJsonNodeListAsMap("evidence"));
+      }
+
+      JsonNodeWrapper claimsNodeWrapper = verifiedClaimsObject.claimsNodeWrapper();
+      JsonNodeWrapper userClaims = userVerifiedClaims.getValueAsJsonNode("claims");
+      Map<String, Object> verifiedClaims = new HashMap<>();
+      if (claimsNodeWrapper.contains("name") && userClaims.contains("name")) {
+        verifiedClaims.put("name", userClaims.getValueOrEmptyAsString("name"));
+      }
+      if (claimsNodeWrapper.contains("given_name") && userClaims.contains("given_name")) {
+        verifiedClaims.put("given_name", userClaims.getValueOrEmptyAsString("given_name"));
+      }
+      if (claimsNodeWrapper.contains("family_name") && userClaims.contains("family_name")) {
+        verifiedClaims.put("family_name", userClaims.getValueOrEmptyAsString("family_name"));
+      }
+      if (claimsNodeWrapper.contains("middle_name") && userClaims.contains("middle_name")) {
+        verifiedClaims.put("middle_name", userClaims.getValueOrEmptyAsString("middle_name"));
+      }
+      if (claimsNodeWrapper.contains("gender") && userClaims.contains("gender")) {
+        verifiedClaims.put("gender", userClaims.getValueOrEmptyAsString("gender"));
+      }
+      if (claimsNodeWrapper.contains("birthdate") && userClaims.contains("birthdate")) {
+        verifiedClaims.put("birthdate", userClaims.getValueOrEmptyAsString("birthdate"));
+      }
+      if (claimsNodeWrapper.contains("locale") && userClaims.contains("locale")) {
+        verifiedClaims.put("locale", userClaims.getValueOrEmptyAsString("locale"));
+      }
+      if (claimsNodeWrapper.contains("address") && userClaims.contains("address")) {
+        verifiedClaims.put("address", userClaims.getValueAsJsonNode("address").toMap());
+      }
+      if (claimsNodeWrapper.contains("phone_number") && userClaims.contains("phone_number")) {
+        verifiedClaims.put("phone_number", userClaims.getValueOrEmptyAsString("phone_number"));
+      }
+      if (claimsNodeWrapper.contains("phone_number_verified")
+          && userClaims.contains("phone_number_verified")) {
+        verifiedClaims.put(
+            "phone_number_verified", userClaims.getValueAsBoolean("phone_number_verified"));
+      }
+      if (claimsNodeWrapper.contains("email") && userClaims.contains("email")) {
+        verifiedClaims.put("email", userClaims.getValueOrEmptyAsString("email"));
+      }
+      if (claimsNodeWrapper.contains("email_verified") && userClaims.contains("email_verified")) {
+        verifiedClaims.put(
+            "email_verified", userVerifiedClaims.getValueAsBoolean("email_verified"));
+      }
+      verified.put("verification", verification);
+      verified.put("claims", verifiedClaims);
+      claims.put("verified_claims", verified);
     }
 
     return claims;

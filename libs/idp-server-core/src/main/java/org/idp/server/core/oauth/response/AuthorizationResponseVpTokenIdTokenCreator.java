@@ -1,11 +1,11 @@
 package org.idp.server.core.oauth.response;
 
-import org.idp.server.core.oauth.identity.IdTokenCreatable;
-import org.idp.server.core.oauth.identity.IdTokenCustomClaims;
-import org.idp.server.core.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oauth.OAuthAuthorizeContext;
 import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
+import org.idp.server.core.oauth.identity.IdTokenCreatable;
+import org.idp.server.core.oauth.identity.IdTokenCustomClaims;
+import org.idp.server.core.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.token.VpTokenCreatable;
 import org.idp.server.core.type.extension.JarmPayload;
@@ -43,6 +43,7 @@ public class AuthorizationResponseVpTokenIdTokenCreator
             context.authentication(),
             context.authorize(),
             idTokenCustomClaims,
+            context.requestedClaimsPayload(),
             context.serverConfiguration(),
             context.clientConfiguration());
     AuthorizationResponseBuilder authorizationResponseBuilder =

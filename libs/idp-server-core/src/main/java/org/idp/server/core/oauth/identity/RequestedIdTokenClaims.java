@@ -27,6 +27,7 @@ public class RequestedIdTokenClaims implements JsonReadable {
   ClaimsObject phoneNumberVerified;
   ClaimsObject address;
   ClaimsObject updatedAt;
+  VerifiedClaimsObject verifiedClaims;
 
   public RequestedIdTokenClaims() {}
 
@@ -122,6 +123,10 @@ public class RequestedIdTokenClaims implements JsonReadable {
     return updatedAt;
   }
 
+  public VerifiedClaimsObject verifiedClaims() {
+    return verifiedClaims;
+  }
+
   public boolean hasAuthTime() {
     return Objects.nonNull(authTime);
   }
@@ -212,5 +217,9 @@ public class RequestedIdTokenClaims implements JsonReadable {
 
   public boolean hasUpdatedAt() {
     return Objects.nonNull(updatedAt);
+  }
+
+  public boolean hasVerifiedClaims() {
+    return Objects.nonNull(verifiedClaims);
   }
 }

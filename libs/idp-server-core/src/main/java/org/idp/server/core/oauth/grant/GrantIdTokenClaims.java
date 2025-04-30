@@ -67,6 +67,8 @@ public class GrantIdTokenClaims implements Iterable<String> {
     if (shouldAddUpdatedAt(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("updated_at");
 
+    if (shouldAddVerifiedClaims(idTokenClaims)) claims.add("verified_claims");
+
     return new GrantIdTokenClaims(claims);
   }
 
@@ -179,6 +181,10 @@ public class GrantIdTokenClaims implements Iterable<String> {
 
   public boolean hasUpdatedAt() {
     return Objects.nonNull(values) && values.contains("updated_at");
+  }
+
+  public boolean hasVerifiedClaims() {
+    return Objects.nonNull(values) && values.contains("verified_claims");
   }
 
   private static boolean shouldAddName(
@@ -521,6 +527,10 @@ public class GrantIdTokenClaims implements Iterable<String> {
       return idTokenClaims.hasUpdatedAt();
     }
     return scopes.contains("profile");
+  }
+
+  public static boolean shouldAddVerifiedClaims(RequestedIdTokenClaims idTokenClaims) {
+    return idTokenClaims.hasVerifiedClaims();
   }
 
   public boolean contains(String claims) {

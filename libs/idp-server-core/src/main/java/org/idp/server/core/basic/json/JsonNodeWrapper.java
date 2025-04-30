@@ -49,6 +49,15 @@ public class JsonNodeWrapper {
     return values;
   }
 
+  public List<Map<String, Object>> getValueAsJsonNodeListAsMap(String fieldName) {
+    List<Map<String, Object>> values = new ArrayList<>();
+    Iterator<JsonNode> iterator = jsonNode.get(fieldName).elements();
+    while (iterator.hasNext()) {
+      values.add(new JsonNodeWrapper(iterator.next()).toMap());
+    }
+    return values;
+  }
+
   public List<JsonNodeWrapper> elements() {
     List<JsonNodeWrapper> list = new ArrayList<>();
     if (jsonNode.isArray()) {

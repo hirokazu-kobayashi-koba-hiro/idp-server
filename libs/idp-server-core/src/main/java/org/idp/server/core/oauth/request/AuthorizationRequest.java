@@ -1,11 +1,11 @@
 package org.idp.server.core.oauth.request;
 
-import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
-import org.idp.server.core.oauth.identity.RequestedIdTokenClaims;
-import org.idp.server.core.oauth.identity.RequestedUserinfoClaims;
 import org.idp.server.core.oauth.AuthorizationProfile;
 import org.idp.server.core.oauth.OAuthSessionKey;
 import org.idp.server.core.oauth.client.Client;
+import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
+import org.idp.server.core.oauth.identity.RequestedIdTokenClaims;
+import org.idp.server.core.oauth.identity.RequestedUserinfoClaims;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.type.oauth.*;

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
 import org.idp.server.core.basic.date.SystemDateTime;
+import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.basic.json.JsonReadable;
 import org.idp.server.core.basic.vc.Credential;
 import org.idp.server.core.identity.address.Address;
@@ -305,6 +306,10 @@ public class User implements JsonReadable, Serializable {
 
   public HashMap<String, Object> verifiedClaims() {
     return verifiedClaims;
+  }
+
+  public JsonNodeWrapper verifiedClaimsNodeWrapper() {
+    return JsonNodeWrapper.fromObject(verifiedClaims);
   }
 
   public boolean hasVerifiedClaims() {

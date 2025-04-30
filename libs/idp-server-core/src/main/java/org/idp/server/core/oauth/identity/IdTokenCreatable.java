@@ -22,6 +22,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       Authentication authentication,
       AuthorizationGrant authorizationGrant,
       IdTokenCustomClaims customClaims,
+      RequestedClaimsPayload requestedClaimsPayload,
       ServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
@@ -32,6 +33,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
               authentication,
               customClaims,
               authorizationGrant,
+              requestedClaimsPayload,
               serverConfiguration.tokenIssuer(),
               serverConfiguration.idTokenDuration(),
               serverConfiguration.isIdTokenStrictMode());
@@ -64,6 +66,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       Authentication authentication,
       IdTokenCustomClaims idTokenCustomClaims,
       AuthorizationGrant authorizationGrant,
+      RequestedClaimsPayload requestedClaimsPayload,
       TokenIssuer tokenIssuer,
       long idTokenDuration,
       boolean idTokenStrictMode) {
@@ -100,7 +103,11 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
     }
 
     Map<String, Object> individualClaims =
-        createIndividualClaims(user, authorizationGrant.idTokenClaims(), idTokenStrictMode);
+        createIndividualClaims(
+            user,
+            authorizationGrant.idTokenClaims(),
+            idTokenStrictMode,
+            requestedClaimsPayload.idToken());
     claims.putAll(individualClaims);
     return claims;
   }
