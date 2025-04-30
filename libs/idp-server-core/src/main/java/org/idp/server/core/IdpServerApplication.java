@@ -273,6 +273,7 @@ public class IdpServerApplication {
                 identityVerificationApplicationQueryRepository,
                 identityVerificationResultCommandRepository,
                 tenantRepository,
+                userRepository,
                 tokenEventPublisher),
             IdentityVerificationApi.class,
             OperationType.WRITE,

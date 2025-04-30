@@ -42,6 +42,7 @@ public class User implements JsonReadable, Serializable {
   HashMap<String, Object> multiFactorAuthentication = new HashMap<>();
   List<String> roles = new ArrayList<>();
   List<String> permissions = new ArrayList<>();
+  HashMap<String, Object> verifiedClaims = new HashMap<>();
   UserStatus status = UserStatus.UNREGISTERED;
 
   public static User notFound() {
@@ -291,6 +292,24 @@ public class User implements JsonReadable, Serializable {
     return this;
   }
 
+  public User setVerifiedClaims(HashMap<String, Object> verifiedClaims) {
+    this.verifiedClaims = verifiedClaims;
+    return this;
+  }
+
+  public User setVerifiedClaims(Map<String, Object> verifiedClaims) {
+    this.verifiedClaims = new HashMap<>(verifiedClaims);
+    return this;
+  }
+
+  public HashMap<String, Object> verifiedClaims() {
+    return verifiedClaims;
+  }
+
+  public boolean hasVerifiedClaims() {
+    return Objects.nonNull(verifiedClaims) && !verifiedClaims.isEmpty();
+  }
+
   public AuthenticationDevices authenticationDevices() {
     return new AuthenticationDevices(authenticationDevices);
   }
@@ -525,6 +544,7 @@ public class User implements JsonReadable, Serializable {
     if (hasRoles()) map.put("roles", roles);
     if (hasPermissions()) map.put("permissions", permissions);
     if (hasAuthenticationDevices()) map.put("authentication_devices", authenticationDevices);
+    if (hasVerifiedClaims()) map.put("verified_claims", verifiedClaims);
     if (exists()) map.put("status", status.name());
 
     return map;

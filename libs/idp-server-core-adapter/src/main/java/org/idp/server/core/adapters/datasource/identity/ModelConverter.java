@@ -101,6 +101,12 @@ class ModelConverter {
       user.setAuthenticationDevices(authenticationDevices);
     }
 
+    if (stringMap.containsKey("verified_claims") && !stringMap.get("verified_claims").isEmpty()) {
+      HashMap<String, Object> verifiedClaims =
+          jsonConverter.read(stringMap.get("verified_claims"), HashMap.class);
+      user.setVerifiedClaims(verifiedClaims);
+    }
+
     UserStatus userStatus = UserStatus.of(stringMap.getOrDefault("status", ""));
     user.setStatus(userStatus);
 

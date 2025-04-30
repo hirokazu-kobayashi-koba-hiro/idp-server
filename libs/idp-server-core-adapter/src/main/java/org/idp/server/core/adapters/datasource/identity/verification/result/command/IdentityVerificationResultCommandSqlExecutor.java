@@ -5,5 +5,4 @@ import org.idp.server.core.tenant.Tenant;
 
 public interface IdentityVerificationResultCommandSqlExecutor {
   void insert(Tenant tenant, IdentityVerificationResult result);
-
 }

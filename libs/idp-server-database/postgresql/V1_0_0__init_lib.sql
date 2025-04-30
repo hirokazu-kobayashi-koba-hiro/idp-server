@@ -128,6 +128,7 @@ CREATE TABLE idp_user
     hashed_password                TEXT,
     multi_factor_authentication    JSONB,
     authentication_devices         JSONB,
+    verified_claims                JSONB,
     status                         VARCHAR(255)            NOT NULL,
     created_at                     TIMESTAMP DEFAULT now() NOT NULL,
     updated_at                     TIMESTAMP DEFAULT now() NOT NULL,

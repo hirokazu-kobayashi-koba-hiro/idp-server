@@ -3,8 +3,10 @@ package org.idp.server.core.identity;
 public enum UserStatus {
   UNREGISTERED("Account has not been created"),
   REGISTERED("Registered but email not verified"),
-  VERIFIED("Email verified, ready to activate"),
-  ACTIVE("Account is active and usable"),
+  CONTACT_VERIFIED("Email or phone verified"),
+  IDENTITY_VERIFIED("Identity verified"),
+  IDENTITY_VERIFICATION_REQUIRED("Identity verification (ekyc) required"),
+  ACTIVATED("Account activated"),
   LOCKED("Temporarily locked due to failures"),
   DISABLED("Disabled by user or admin"),
   SUSPENDED("Suspended due to policy violations"),
@@ -13,7 +15,7 @@ public enum UserStatus {
   DELETED("Permanently deleted"),
   FEDERATED_ONLY("Login via external IdP only");
 
-  final String description;
+  String description;
 
   UserStatus(String description) {
     this.description = description;

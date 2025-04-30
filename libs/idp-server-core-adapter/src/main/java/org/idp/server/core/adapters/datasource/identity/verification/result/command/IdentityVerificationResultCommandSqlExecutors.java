@@ -1,10 +1,9 @@
 package org.idp.server.core.adapters.datasource.identity.verification.result.command;
 
-import org.idp.server.core.basic.datasource.DatabaseType;
-import org.idp.server.core.type.exception.UnSupportedException;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.basic.datasource.DatabaseType;
+import org.idp.server.core.type.exception.UnSupportedException;
 
 public class IdentityVerificationResultCommandSqlExecutors {
 

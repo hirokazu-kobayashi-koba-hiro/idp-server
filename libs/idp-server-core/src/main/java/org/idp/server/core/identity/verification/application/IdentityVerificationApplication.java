@@ -197,39 +197,38 @@ public class IdentityVerificationApplication {
   }
 
   public IdentityVerificationApplication completeExamination(
-          IdentityVerificationProcess process,
-          IdentityVerificationRequest request,
-          IdentityVerificationConfiguration verificationConfiguration) {
+      IdentityVerificationProcess process,
+      IdentityVerificationRequest request,
+      IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =
-            verificationConfiguration.getProcessConfig(process);
+        verificationConfiguration.getProcessConfig(process);
 
     IdentityVerificationExaminationResult identityVerificationExaminationResult =
-            IdentityVerificationExaminationResult.create(request, processConfig);
+        IdentityVerificationExaminationResult.create(request, processConfig);
     IdentityVerificationExaminationResults addExaminations =
-            examinations.add(identityVerificationExaminationResult);
+        examinations.add(identityVerificationExaminationResult);
     IdentityVerificationApplicationProcess applicationProcess =
-            new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
+        new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
     IdentityVerificationApplicationProcesses addedProcesses = processes.add(applicationProcess);
 
-    IdentityVerificationApplicationStatus status =
-                    IdentityVerificationApplicationStatus.APPROVED;
+    IdentityVerificationApplicationStatus status = IdentityVerificationApplicationStatus.APPROVED;
 
     return new IdentityVerificationApplication(
-            identifier,
-            identityVerificationType,
-            tenantIdentifier,
-            requestedClientId,
-            userId,
-            applicationDetails,
-            externalWorkflowDelegation,
-            externalApplicationId,
-            externalWorkflowApplicationDetails,
-            trustFramework,
-            addExaminations,
-            addedProcesses,
-            status,
-            requestedAt);
+        identifier,
+        identityVerificationType,
+        tenantIdentifier,
+        requestedClientId,
+        userId,
+        applicationDetails,
+        externalWorkflowDelegation,
+        externalApplicationId,
+        externalWorkflowApplicationDetails,
+        trustFramework,
+        addExaminations,
+        addedProcesses,
+        status,
+        requestedAt);
   }
 
   public IdentityVerificationApplicationIdentifier identifier() {

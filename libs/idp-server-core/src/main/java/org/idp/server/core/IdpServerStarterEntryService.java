@@ -74,7 +74,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     User user = jsonConverter.read(request.get("user"), User.class);
     String encode = passwordEncodeDelegation.encode(user.rawPassword());
     user.setHashedPassword(encode);
-    user.transitStatus(UserStatus.REGISTERED);
+    User updatedUser = user.transitStatus(UserStatus.REGISTERED);
 
     Organization organization = organizationRequest.toOrganization();
     Tenant tenant =
@@ -91,7 +91,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     organizationRepository.register(tenant, organization);
     permissionCommandRepository.bulkRegister(tenant, permissions);
     roleCommandRepository.bulkRegister(tenant, roles);
-    userRepository.register(tenant, user);
+    userRepository.register(tenant, updatedUser);
 
     return Map.of("organization", organization.toMap(), "tenant", tenant.toMap());
   }

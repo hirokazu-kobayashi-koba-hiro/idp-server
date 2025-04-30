@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.basic.datasource.Transaction;
 import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.UserStatus;
 import org.idp.server.core.identity.verification.*;
 import org.idp.server.core.identity.verification.application.*;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -35,6 +37,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   IdentityVerificationResultCommandRepository resultCommandRepository;
   IdentityVerificationHandler identityVerificationHandler;
   TenantRepository tenantRepository;
+  UserRepository userRepository;
   TokenEventPublisher eventPublisher;
 
   public IdentityVerificationEntryService(
@@ -43,12 +46,14 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       IdentityVerificationApplicationQueryRepository applicationQueryRepository,
       IdentityVerificationResultCommandRepository resultCommandRepository,
       TenantRepository tenantRepository,
+      UserRepository userRepository,
       TokenEventPublisher eventPublisher) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.applicationCommandRepository = applicationCommandRepository;
     this.applicationQueryRepository = applicationQueryRepository;
     this.tenantRepository = tenantRepository;
     this.resultCommandRepository = resultCommandRepository;
+    this.userRepository = userRepository;
     this.identityVerificationHandler = new IdentityVerificationHandler();
     this.eventPublisher = eventPublisher;
   }
@@ -192,7 +197,8 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
 
-    IdentityVerificationProcess process = ReservedIdentityVerificationProcess.CALLBACK_EXAMINATION.toProcess();
+    IdentityVerificationProcess process =
+        ReservedIdentityVerificationProcess.CALLBACK_EXAMINATION.toProcess();
     IdentityVerificationProcessConfiguration processConfiguration =
         verificationConfiguration.getProcessConfig(process);
 
@@ -206,11 +212,11 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     }
 
     ExternalWorkflowApplicationIdentifier externalWorkflowApplicationIdentifier =
-            new ExternalWorkflowApplicationIdentifier(
-                    request.getValueAsString(
-                            verificationConfiguration.externalWorkflowApplicationIdParam().value()));
+        new ExternalWorkflowApplicationIdentifier(
+            request.getValueAsString(
+                verificationConfiguration.externalWorkflowApplicationIdParam().value()));
     IdentityVerificationApplication application =
-            applicationQueryRepository.get(tenant, externalWorkflowApplicationIdentifier);
+        applicationQueryRepository.get(tenant, externalWorkflowApplicationIdentifier);
 
     IdentityVerificationApplication updatedExamination =
         application.updateExamination(process, request, verificationConfiguration);
@@ -231,7 +237,8 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
-    IdentityVerificationProcess process = ReservedIdentityVerificationProcess.CALLBACK_RESULT.toProcess();
+    IdentityVerificationProcess process =
+        ReservedIdentityVerificationProcess.CALLBACK_RESULT.toProcess();
     IdentityVerificationProcessConfiguration processConfiguration =
         verificationConfiguration.getProcessConfig(process);
 
@@ -245,9 +252,9 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     }
 
     ExternalWorkflowApplicationIdentifier externalWorkflowApplicationIdentifier =
-            new ExternalWorkflowApplicationIdentifier(
-                    request.getValueAsString(
-                            verificationConfiguration.externalWorkflowApplicationIdParam().value()));
+        new ExternalWorkflowApplicationIdentifier(
+            request.getValueAsString(
+                verificationConfiguration.externalWorkflowApplicationIdParam().value()));
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, externalWorkflowApplicationIdentifier);
 
@@ -258,6 +265,14 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     IdentityVerificationResult identityVerificationResult =
         IdentityVerificationResult.create(updatedExamination, request, verificationConfiguration);
     resultCommandRepository.register(tenant, identityVerificationResult);
+
+    // TODO dynamic lifecycle management
+    User user = userRepository.get(tenant, application.userId());
+    User verifiedUser =
+        user.transitStatus(UserStatus.IDENTITY_VERIFIED)
+            .setVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
+
+    userRepository.update(tenant, verifiedUser);
 
     Map<String, Object> response = new HashMap<>();
     return IdentityVerificationResponse.OK(response);

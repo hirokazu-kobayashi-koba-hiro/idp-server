@@ -42,7 +42,9 @@ public class ContinuousCustomerDueDiligenceParameterResolver
     List<Map<String, Object>> applicationList = new ArrayList<>();
     for (IdentityVerificationApplication application : applications) {
       Map<String, Object> applicationMap = new HashMap<>();
-      applicationMap.put(verificationConfiguration.externalWorkflowApplicationIdParam().value(), application.externalApplicationId().value());
+      applicationMap.put(
+          verificationConfiguration.externalWorkflowApplicationIdParam().value(),
+          application.externalApplicationId().value());
       applicationMap.put("application_type", application.identityVerificationType().name());
       applicationList.add(applicationMap);
     }

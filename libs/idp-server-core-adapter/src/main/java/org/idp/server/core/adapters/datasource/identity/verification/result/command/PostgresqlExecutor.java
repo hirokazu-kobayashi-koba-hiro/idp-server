@@ -1,12 +1,11 @@
 package org.idp.server.core.adapters.datasource.identity.verification.result.command;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.core.basic.datasource.SqlExecutor;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.identity.verification.result.IdentityVerificationResult;
 import org.idp.server.core.tenant.Tenant;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlExecutor {
 
@@ -49,6 +48,4 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
 
     sqlExecutor.execute(sqlTemplate, params);
   }
-
-
 }

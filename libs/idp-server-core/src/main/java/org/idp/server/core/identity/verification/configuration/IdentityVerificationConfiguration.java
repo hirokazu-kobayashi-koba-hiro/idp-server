@@ -3,7 +3,6 @@ package org.idp.server.core.identity.verification.configuration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.basic.json.JsonReadable;
 import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
