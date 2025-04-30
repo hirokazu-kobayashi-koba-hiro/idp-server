@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.identity.trustframework.application.query;
+package org.idp.server.core.adapters.datasource.identity.verification.application.query;
 
 import java.util.HashMap;
 import java.util.Map;

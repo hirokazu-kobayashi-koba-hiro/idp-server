@@ -4,7 +4,7 @@ import java.util.*;
 import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.core.basic.json.schema.JsonSchemaProperty;
 
-public class IdentityVerificationApplicationMapper {
+public class IdentityVerificationMapper {
 
   public static Map<String, Object> mapping(
       Map<String, Object> request, JsonSchemaDefinition schemaDefinition) {

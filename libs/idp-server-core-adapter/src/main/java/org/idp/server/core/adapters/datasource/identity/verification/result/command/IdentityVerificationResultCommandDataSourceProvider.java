@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.identity.trustframework.result.command;
+package org.idp.server.core.adapters.datasource.identity.verification.result.command;
 
 import org.idp.server.core.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.core.basic.dependency.ApplicationComponentProvider;

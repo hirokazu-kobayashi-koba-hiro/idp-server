@@ -1,4 +1,4 @@
-package org.idp.server.core.identity.verification.delegation;
+package org.idp.server.core.identity.verification.handler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +11,7 @@ import org.idp.server.core.identity.verification.application.IdentityVerificatio
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationOAuthAuthorizationConfiguration;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.identity.verification.delegation.*;
 import org.idp.server.core.identity.verification.delegation.request.AdditionalRequestParameterResolvers;
 import org.idp.server.core.identity.verification.validation.IdentityVerificationRequestValidator;
 import org.idp.server.core.identity.verification.validation.IdentityVerificationResponseValidator;
@@ -20,21 +21,21 @@ import org.idp.server.core.identity.verification.verifier.IdentityVerificationRe
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.type.oauth.AccessTokenEntity;
 
-public class ExternalWorkflowDelegationClient {
+public class IdentityVerificationHandler {
 
   OAuthAuthorizationResolvers authorizationResolvers;
   IdentityVerificationRequestVerifiers requestVerifiers;
   AdditionalRequestParameterResolvers additionalRequestParameterResolvers;
   HttpRequestExecutor httpRequestExecutor;
 
-  public ExternalWorkflowDelegationClient() {
+  public IdentityVerificationHandler() {
     this.authorizationResolvers = new OAuthAuthorizationResolvers();
     this.requestVerifiers = new IdentityVerificationRequestVerifiers();
     this.additionalRequestParameterResolvers = new AdditionalRequestParameterResolvers();
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
   }
 
-  public ExternalWorkflowApplyingResult execute(
+  public ExternalWorkflowApplyingResult handleRequest(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,

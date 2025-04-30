@@ -3,7 +3,10 @@ package org.idp.server.core.identity.verification.configuration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
@@ -19,6 +22,7 @@ public class IdentityVerificationConfiguration implements JsonReadable {
   IdentityVerificationOAuthAuthorizationConfiguration oauthAuthorization;
   Map<String, IdentityVerificationProcessConfiguration> processes;
   List<String> approvedTargetTypes = new ArrayList<>();
+  Map<String, Object> verifiedClaimsSchema;
 
   public IdentityVerificationConfiguration() {}
 
@@ -72,5 +76,13 @@ public class IdentityVerificationConfiguration implements JsonReadable {
 
   public String approvedTargetTypesAsString() {
     return String.join(",", approvedTargetTypes);
+  }
+
+  public Map<String, Object> verifiedClaimsSchema() {
+    return verifiedClaimsSchema;
+  }
+
+  public JsonSchemaDefinition verifiedClaimsSchemaAsDefinition() {
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(verifiedClaimsSchema));
   }
 }

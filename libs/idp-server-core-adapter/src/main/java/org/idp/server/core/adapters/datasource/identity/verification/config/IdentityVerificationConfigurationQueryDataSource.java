@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.identity.trustframework.config;
+package org.idp.server.core.adapters.datasource.identity.verification.config;
 
 import java.util.Map;
 import java.util.Objects;

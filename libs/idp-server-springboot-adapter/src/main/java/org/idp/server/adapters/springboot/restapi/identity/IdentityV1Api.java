@@ -129,23 +129,19 @@ public class IdentityV1Api implements ParameterTransformable {
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
-  @PostMapping("/{verification-type}/{id}/{verification-process}/callback-examination")
+  @PostMapping("/{verification-type}/callback-result")
   public ResponseEntity<?> callbackExamination(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("id") IdentityVerificationApplicationIdentifier identifier,
       @PathVariable("verification-type") IdentityVerificationType verificationType,
-      @PathVariable("verification-process") IdentityVerificationProcess identityVerificationProcess,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     IdentityVerificationResponse response =
-        identityVerificationApi.callbackExamination(
+        identityVerificationApi.callbackResultForStaticPath(
             tenantIdentifier,
-            identifier,
             verificationType,
-            identityVerificationProcess,
             new IdentityVerificationRequest(requestBody),
             requestAttributes);
 

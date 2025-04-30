@@ -35,25 +35,15 @@ public interface IdentityVerificationApi {
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes);
 
-  IdentityVerificationResponse callbackExamination(
-      TenantIdentifier tenantIdentifier,
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType identityVerificationType,
-      IdentityVerificationProcess identityVerificationProcess,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes);
-
   IdentityVerificationResponse callbackExaminationForStaticPath(
       TenantIdentifier tenantIdentifier,
       IdentityVerificationType type,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes);
 
-  IdentityVerificationResponse callbackResult(
+  IdentityVerificationResponse callbackResultForStaticPath(
       TenantIdentifier tenantIdentifier,
-      IdentityVerificationApplicationIdentifier identifier,
       IdentityVerificationType identityVerificationType,
-      IdentityVerificationProcess identityVerificationProcess,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes);
 }
