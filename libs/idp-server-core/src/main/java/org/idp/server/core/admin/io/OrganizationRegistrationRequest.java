@@ -1,10 +1,10 @@
 package org.idp.server.core.admin.io;
 
 import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.core.organization.Organization;
-import org.idp.server.core.organization.OrganizationDescription;
-import org.idp.server.core.organization.OrganizationIdentifier;
-import org.idp.server.core.organization.OrganizationName;
+import org.idp.server.core.multi_tenancy.organization.Organization;
+import org.idp.server.core.multi_tenancy.organization.OrganizationDescription;
+import org.idp.server.core.multi_tenancy.organization.OrganizationIdentifier;
+import org.idp.server.core.multi_tenancy.organization.OrganizationName;
 
 public class OrganizationRegistrationRequest implements JsonReadable {
 

@@ -19,9 +19,9 @@ import org.idp.server.core.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.identity.permission.Permissions;
 import org.idp.server.core.identity.role.RoleCommandRepository;
 import org.idp.server.core.identity.role.Roles;
-import org.idp.server.core.organization.Organization;
-import org.idp.server.core.organization.OrganizationRepository;
-import org.idp.server.core.tenant.*;
+import org.idp.server.core.multi_tenancy.organization.Organization;
+import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
+import org.idp.server.core.multi_tenancy.tenant.*;
 
 @Transaction
 public class IdpServerStarterEntryService implements IdpServerStarterApi {

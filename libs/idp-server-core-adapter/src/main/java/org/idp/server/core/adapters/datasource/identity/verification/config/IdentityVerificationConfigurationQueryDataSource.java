@@ -7,7 +7,7 @@ import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.identity.verification.exception.IdentityVerificationConfigurationNotFoundException;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationConfigurationQueryDataSource
     implements IdentityVerificationConfigurationQueryRepository {

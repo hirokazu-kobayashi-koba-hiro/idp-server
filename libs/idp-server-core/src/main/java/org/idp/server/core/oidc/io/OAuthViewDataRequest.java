@@ -1,7 +1,7 @@
 package org.idp.server.core.oidc.io;
 
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class OAuthViewDataRequest {
   Tenant tenant;

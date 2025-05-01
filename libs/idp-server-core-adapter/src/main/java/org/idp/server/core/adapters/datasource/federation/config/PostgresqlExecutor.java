@@ -6,7 +6,7 @@ import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.core.federation.FederationType;
 import org.idp.server.core.federation.SsoProvider;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements FederationConfigurationQuerySqlExecutor {
 

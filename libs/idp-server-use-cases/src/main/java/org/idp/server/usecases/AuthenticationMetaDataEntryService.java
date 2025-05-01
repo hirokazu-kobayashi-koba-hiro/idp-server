@@ -4,9 +4,9 @@ import org.idp.server.core.authentication.AuthenticationConfigurationQueryReposi
 import org.idp.server.core.authentication.AuthenticationMetaDataApi;
 import org.idp.server.core.authentication.fidouaf.*;
 import org.idp.server.basic.datasource.Transaction;
-import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
 
 @Transaction
 public class AuthenticationMetaDataEntryService implements AuthenticationMetaDataApi {

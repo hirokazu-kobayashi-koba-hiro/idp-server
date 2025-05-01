@@ -10,7 +10,7 @@ import org.idp.server.core.identity.verification.application.IdentityVerificatio
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.core.identity.verification.verified.claims.VerifiedClaims;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public class IdentityVerificationResult {
 

@@ -6,7 +6,7 @@ import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.usecases.IdpServerApplication;
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.io.OAuthLogoutResponse;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

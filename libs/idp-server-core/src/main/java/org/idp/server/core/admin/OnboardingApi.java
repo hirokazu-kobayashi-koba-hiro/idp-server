@@ -2,7 +2,7 @@ package org.idp.server.core.admin;
 
 import java.util.Map;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public interface OnboardingApi {
 

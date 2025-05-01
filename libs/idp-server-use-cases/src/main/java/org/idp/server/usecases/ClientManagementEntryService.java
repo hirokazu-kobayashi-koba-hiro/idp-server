@@ -6,9 +6,9 @@ import org.idp.server.core.oidc.configuration.handler.ClientConfigurationErrorHa
 import org.idp.server.core.oidc.configuration.handler.ClientConfigurationHandler;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementListResponse;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementResponse;
-import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 
 @Transaction

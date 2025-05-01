@@ -6,8 +6,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.logging.Logger;
 import org.idp.server.basic.datasource.*;
-import org.idp.server.core.tenant.MissingRequiredTenantIdentifierException;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.MissingRequiredTenantIdentifierException;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public class TenantAwareEntryServiceProxy implements InvocationHandler {
   private final Object target;

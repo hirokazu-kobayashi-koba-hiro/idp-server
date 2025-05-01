@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
-import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
+import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;

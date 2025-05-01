@@ -3,7 +3,7 @@ package org.idp.server.core.adapters.datasource.federation.session.command;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.federation.SsoSessionCommandRepository;
 import org.idp.server.core.federation.SsoSessionIdentifier;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class SsoSessionCommandDataSource implements SsoSessionCommandRepository {
 

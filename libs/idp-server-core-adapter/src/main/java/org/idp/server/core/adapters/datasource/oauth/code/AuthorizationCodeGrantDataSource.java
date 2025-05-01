@@ -5,7 +5,7 @@ import java.util.Objects;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.basic.type.oauth.AuthorizationCode;
 
 public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantRepository {

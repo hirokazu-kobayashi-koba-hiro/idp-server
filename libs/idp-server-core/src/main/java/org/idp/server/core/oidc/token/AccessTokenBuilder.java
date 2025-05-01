@@ -2,7 +2,7 @@ package org.idp.server.core.oidc.token;
 
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.extension.CreatedAt;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;

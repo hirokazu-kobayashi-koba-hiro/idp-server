@@ -10,7 +10,7 @@ import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.device.AuthenticationDevice;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlExecutor {
 

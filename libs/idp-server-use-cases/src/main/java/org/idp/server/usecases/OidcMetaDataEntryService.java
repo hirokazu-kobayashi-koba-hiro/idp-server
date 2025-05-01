@@ -1,14 +1,14 @@
 package org.idp.server.usecases;
 
 import org.idp.server.basic.datasource.Transaction;
-import org.idp.server.core.discovery.DiscoveryProtocol;
-import org.idp.server.core.discovery.DiscoveryProtocols;
-import org.idp.server.core.discovery.OidcMetaDataApi;
-import org.idp.server.core.discovery.handler.io.JwksRequestResponse;
-import org.idp.server.core.discovery.handler.io.ServerConfigurationRequestResponse;
-import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.tenant.TenantRepository;
+import org.idp.server.core.oidc.discovery.DiscoveryProtocol;
+import org.idp.server.core.oidc.discovery.DiscoveryProtocols;
+import org.idp.server.core.oidc.discovery.OidcMetaDataApi;
+import org.idp.server.core.oidc.discovery.handler.io.JwksRequestResponse;
+import org.idp.server.core.oidc.discovery.handler.io.ServerConfigurationRequestResponse;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
 
 @Transaction
 public class OidcMetaDataEntryService implements OidcMetaDataApi {

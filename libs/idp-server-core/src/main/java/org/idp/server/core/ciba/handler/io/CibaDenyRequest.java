@@ -1,7 +1,7 @@
 package org.idp.server.core.ciba.handler.io;
 
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class CibaDenyRequest {
   Tenant tenant;

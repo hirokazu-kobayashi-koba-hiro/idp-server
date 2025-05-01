@@ -1,8 +1,8 @@
 package org.idp.server.core.admin;
 
-import org.idp.server.core.tenant.ServerDomain;
-import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.tenant.TenantType;
+import org.idp.server.core.multi_tenancy.tenant.ServerDomain;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantType;
 
 public interface ServerManagementApi {
 

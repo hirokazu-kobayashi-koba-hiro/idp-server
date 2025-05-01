@@ -4,7 +4,7 @@ import java.util.List;
 import org.idp.server.usecases.IdpServerApplication;
 import org.idp.server.core.admin.UserManagementApi;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

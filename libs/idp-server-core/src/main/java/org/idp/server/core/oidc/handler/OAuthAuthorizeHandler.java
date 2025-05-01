@@ -19,7 +19,7 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.response.*;
 import org.idp.server.core.oidc.validator.OAuthAuthorizeRequestValidator;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.basic.type.extension.CustomProperties;

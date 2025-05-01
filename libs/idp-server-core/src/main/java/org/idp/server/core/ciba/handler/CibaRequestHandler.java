@@ -24,7 +24,7 @@ import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.basic.type.ciba.AuthReqId;
 
 /**

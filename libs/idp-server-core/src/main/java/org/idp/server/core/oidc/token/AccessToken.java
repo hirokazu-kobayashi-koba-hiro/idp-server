@@ -8,7 +8,7 @@ import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.extension.CreatedAt;
 import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.basic.type.extension.ExpiredAt;

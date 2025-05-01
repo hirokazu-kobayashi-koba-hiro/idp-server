@@ -5,7 +5,7 @@ import java.util.List;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.core.identity.role.Role;
 import org.idp.server.core.identity.role.Roles;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class MysqlExecutor implements RoleSqlExecutor {
 

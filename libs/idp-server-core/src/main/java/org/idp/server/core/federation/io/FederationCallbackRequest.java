@@ -4,7 +4,7 @@ import java.util.Map;
 import org.idp.server.core.federation.FederationCallbackParameters;
 import org.idp.server.core.federation.SsoState;
 import org.idp.server.core.federation.SsoStateCoder;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public class FederationCallbackRequest {
 

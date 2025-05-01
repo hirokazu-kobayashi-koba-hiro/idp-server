@@ -10,7 +10,7 @@ import org.idp.server.core.oidc.OAuthRequestPattern;
 import org.idp.server.core.oidc.factory.NormalRequestFactory;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 /** NormalPatternContextService */
 public class NormalPatternContextCreator implements OAuthRequestContextCreator {

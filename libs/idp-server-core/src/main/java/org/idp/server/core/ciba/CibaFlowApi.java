@@ -6,7 +6,7 @@ import org.idp.server.core.authentication.AuthenticationInteractionRequestResult
 import org.idp.server.core.authentication.AuthenticationInteractionType;
 import org.idp.server.core.ciba.handler.io.CibaRequestResponse;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.security.RequestAttributes;
 
 public interface CibaFlowApi {

@@ -1,7 +1,7 @@
 package org.idp.server.core.authentication;
 
 import org.idp.server.core.authentication.fidouaf.FidoUafExecutionResult;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public interface AuthenticationMetaDataApi {
 

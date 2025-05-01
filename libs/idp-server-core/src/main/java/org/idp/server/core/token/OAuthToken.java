@@ -9,7 +9,7 @@ import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.token.AccessToken;
 import org.idp.server.core.oidc.token.RefreshToken;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.basic.type.verifiablecredential.CNonce;

@@ -8,7 +8,7 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.security.hook.SecurityEventHookConfiguration;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurations;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class SecurityEventHookConfigurationQueryDataSource
     implements SecurityEventHookConfigurationQueryRepository {

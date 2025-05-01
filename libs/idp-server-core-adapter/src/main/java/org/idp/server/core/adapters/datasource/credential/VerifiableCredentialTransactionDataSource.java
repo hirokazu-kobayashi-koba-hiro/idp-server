@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.credential;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.basic.exception.NotFoundException;
 import org.idp.server.basic.type.verifiablecredential.TransactionId;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialTransaction;

@@ -5,17 +5,17 @@ import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.security.event.TokenEventPublisher;
-import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
 import org.idp.server.basic.type.oauth.Subject;
 import org.idp.server.basic.type.security.RequestAttributes;
-import org.idp.server.core.userinfo.UserinfoApi;
-import org.idp.server.core.userinfo.UserinfoProtocol;
-import org.idp.server.core.userinfo.UserinfoProtocols;
-import org.idp.server.core.userinfo.handler.UserinfoDelegate;
-import org.idp.server.core.userinfo.handler.io.UserinfoRequest;
-import org.idp.server.core.userinfo.handler.io.UserinfoRequestResponse;
+import org.idp.server.core.oidc.userinfo.UserinfoApi;
+import org.idp.server.core.oidc.userinfo.UserinfoProtocol;
+import org.idp.server.core.oidc.userinfo.UserinfoProtocols;
+import org.idp.server.core.oidc.userinfo.handler.UserinfoDelegate;
+import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequest;
+import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
 
 @Transaction
 public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {

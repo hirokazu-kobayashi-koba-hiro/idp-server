@@ -23,7 +23,7 @@ import org.idp.server.core.ciba.CibaProtocols;
 import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.oidc.configuration.handler.ClientConfigurationHandler;
-import org.idp.server.core.discovery.*;
+import org.idp.server.core.oidc.discovery.*;
 import org.idp.server.core.federation.FederationDependencyContainer;
 import org.idp.server.core.federation.FederationDependencyContainerLoader;
 import org.idp.server.core.federation.FederationInteractorLoader;
@@ -47,7 +47,7 @@ import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.OAuthProtocol;
 import org.idp.server.core.oidc.OAuthProtocols;
 import org.idp.server.core.oidc.OAuthSessionDelegate;
-import org.idp.server.core.organization.OrganizationRepository;
+import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.core.security.SecurityEventApi;
 import org.idp.server.core.security.SecurityEventHooks;
 import org.idp.server.core.security.SecurityEventPublisher;
@@ -57,13 +57,13 @@ import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.hook.SecurityEventHooksLoader;
-import org.idp.server.core.tenant.AdminTenantContext;
-import org.idp.server.core.tenant.TenantDialectProvider;
-import org.idp.server.core.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.AdminTenantContext;
+import org.idp.server.core.multi_tenancy.tenant.TenantDialectProvider;
+import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
 import org.idp.server.core.token.*;
-import org.idp.server.core.userinfo.UserinfoApi;
-import org.idp.server.core.userinfo.UserinfoProtocol;
-import org.idp.server.core.userinfo.UserinfoProtocols;
+import org.idp.server.core.oidc.userinfo.UserinfoApi;
+import org.idp.server.core.oidc.userinfo.UserinfoProtocol;
+import org.idp.server.core.oidc.userinfo.UserinfoProtocols;
 
 /** IdpServerApplication */
 public class IdpServerApplication {

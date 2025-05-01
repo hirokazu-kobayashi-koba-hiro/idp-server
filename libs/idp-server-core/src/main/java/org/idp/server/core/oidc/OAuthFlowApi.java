@@ -11,8 +11,8 @@ import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.federation.io.FederationRequestResponse;
 import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.basic.type.security.RequestAttributes;
 

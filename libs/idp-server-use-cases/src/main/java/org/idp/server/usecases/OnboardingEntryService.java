@@ -12,8 +12,8 @@ import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
 import org.idp.server.core.identity.UserRepository;
-import org.idp.server.core.organization.*;
-import org.idp.server.core.tenant.*;
+import org.idp.server.core.multi_tenancy.organization.*;
+import org.idp.server.core.multi_tenancy.tenant.*;
 
 @Transaction
 public class OnboardingEntryService implements OnboardingApi {

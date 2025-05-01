@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
-import org.idp.server.core.organization.Organization;
-import org.idp.server.core.organization.OrganizationIdentifier;
+import org.idp.server.core.multi_tenancy.organization.Organization;
+import org.idp.server.core.multi_tenancy.organization.OrganizationIdentifier;
 
 public class MysqlExecutor implements OrganizationSqlExecutor {
 

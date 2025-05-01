@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
-import org.idp.server.core.organization.*;
+import org.idp.server.core.multi_tenancy.organization.*;
 
 public class PostgresqlExecutor implements OrganizationSqlExecutor {
 

@@ -2,7 +2,7 @@ package org.idp.server.core.admin;
 
 import java.util.List;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public interface UserManagementApi {
   void register(TenantIdentifier tenantIdentifier, User user);

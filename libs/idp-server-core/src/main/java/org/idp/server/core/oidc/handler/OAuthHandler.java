@@ -14,7 +14,7 @@ import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.request.OAuthLogoutParameters;
 import org.idp.server.core.oidc.view.OAuthViewData;
 import org.idp.server.core.oidc.view.OAuthViewDataCreator;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class OAuthHandler {

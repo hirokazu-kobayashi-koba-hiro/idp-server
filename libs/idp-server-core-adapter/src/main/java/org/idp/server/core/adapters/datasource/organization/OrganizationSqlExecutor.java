@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.organization;
 
 import java.util.Map;
-import org.idp.server.core.organization.Organization;
-import org.idp.server.core.organization.OrganizationIdentifier;
+import org.idp.server.core.multi_tenancy.organization.Organization;
+import org.idp.server.core.multi_tenancy.organization.OrganizationIdentifier;
 
 public interface OrganizationSqlExecutor {
   void insert(Organization organization);

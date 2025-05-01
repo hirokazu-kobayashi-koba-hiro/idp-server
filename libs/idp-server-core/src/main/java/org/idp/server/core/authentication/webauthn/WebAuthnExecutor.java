@@ -2,7 +2,7 @@ package org.idp.server.core.authentication.webauthn;
 
 import org.idp.server.core.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.authentication.AuthorizationIdentifier;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public interface WebAuthnExecutor {
 

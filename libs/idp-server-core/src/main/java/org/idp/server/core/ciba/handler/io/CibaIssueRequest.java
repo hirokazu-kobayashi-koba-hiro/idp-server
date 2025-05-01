@@ -3,7 +3,7 @@ package org.idp.server.core.ciba.handler.io;
 import org.idp.server.core.ciba.CibaRequestContext;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class CibaIssueRequest {
 

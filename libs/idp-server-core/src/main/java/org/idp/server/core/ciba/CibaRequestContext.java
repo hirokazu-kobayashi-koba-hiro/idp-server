@@ -13,7 +13,7 @@ import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters
 import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.oidc.client.Client;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.ciba.Interval;
 import org.idp.server.basic.type.ciba.UserCode;
 import org.idp.server.basic.type.mtls.ClientCert;

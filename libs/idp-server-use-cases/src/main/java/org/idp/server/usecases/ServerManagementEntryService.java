@@ -5,8 +5,8 @@ import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.oidc.configuration.handler.ServerConfigurationHandler;
-import org.idp.server.core.organization.initial.TenantCreator;
-import org.idp.server.core.tenant.*;
+import org.idp.server.core.multi_tenancy.organization.initial.TenantCreator;
+import org.idp.server.core.multi_tenancy.tenant.*;
 
 @Transaction
 public class ServerManagementEntryService implements ServerManagementApi {

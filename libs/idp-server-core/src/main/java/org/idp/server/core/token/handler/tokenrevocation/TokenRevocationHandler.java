@@ -6,7 +6,7 @@ import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationRequestStatus;

@@ -1,8 +1,8 @@
 package org.idp.server.adapters.springboot.restapi.management;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.idp.server.core.organization.OrganizationName;
-import org.idp.server.core.tenant.TenantName;
+import org.idp.server.core.multi_tenancy.organization.OrganizationName;
+import org.idp.server.core.multi_tenancy.tenant.TenantName;
 
 // TODO set annotation for validation
 public class InitialRegistrationRequest {

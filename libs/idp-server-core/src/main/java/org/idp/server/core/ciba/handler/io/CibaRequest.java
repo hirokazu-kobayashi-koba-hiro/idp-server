@@ -3,7 +3,7 @@ package org.idp.server.core.ciba.handler.io;
 import java.util.Map;
 import org.idp.server.basic.http.BasicAuth;
 import org.idp.server.core.ciba.CibaRequestParameters;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.AuthorizationHeaderHandlerable;
 import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.basic.type.oauth.ClientSecretBasic;

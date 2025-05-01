@@ -4,7 +4,7 @@ import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
-import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
+import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.gateway.RequestObjectHttpClient;
 import org.idp.server.core.oidc.handler.*;
 import org.idp.server.core.oidc.io.*;
@@ -13,7 +13,7 @@ import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.response.AuthorizationResponse;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 /** OAuthApi */
