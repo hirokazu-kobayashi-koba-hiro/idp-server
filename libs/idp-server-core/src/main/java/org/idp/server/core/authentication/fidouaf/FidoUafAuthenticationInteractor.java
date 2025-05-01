@@ -54,8 +54,8 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
           DefaultSecurityEventType.fido_uaf_authentication_failure);
     }
 
-    // TODO
-    String deviceId = executionResult.getValueAsStringFromContents("user_id");
+    String deviceId =
+        executionResult.getValueAsStringFromContents(fidoUafConfiguration.deviceIdParam());
     User user = userRepository.findByAuthenticationDevice(tenant, deviceId);
     Authentication authentication =
         new Authentication()

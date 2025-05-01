@@ -40,7 +40,7 @@ public class ExternalFidoUafServerConfiguration implements JsonReadable {
   public ExternalFidoUafServerExecutionConfiguration getExecutionConfig(String executionType) {
     if (!executions.containsKey(executionType)) {
       throw new IdentityVerificationApplicationConfigurationNotFoundException(
-          "invalid configuration. type: " + executionType + "is unregistered.");
+          "invalid configuration. type: " + executionType + " is unregistered.");
     }
     return executions.get(executionType);
   }

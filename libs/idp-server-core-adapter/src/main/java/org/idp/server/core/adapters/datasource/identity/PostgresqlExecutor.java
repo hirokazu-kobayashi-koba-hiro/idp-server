@@ -284,12 +284,12 @@ public class PostgresqlExecutor implements UserSqlExecutor {
         String.format(
             selectSql,
             """
-                        WHERE tenant_id = ?
+                        WHERE idp_user.tenant_id = ?
                         AND EXISTS (
                                   SELECT 1
-                                  FROM jsonb_array_elements(authentication_devices) AS device
+                                  FROM jsonb_array_elements(idp_user.authentication_devices) AS device
                                   WHERE device->>'id' = ?
-                        ):
+                        )
                     """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());

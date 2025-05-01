@@ -78,4 +78,8 @@ public class FidoUafExecutionResult {
   public boolean exists() {
     return contents != null && !contents.isEmpty();
   }
+
+  public int statusCode() {
+    return status.code();
+  }
 }

@@ -36,7 +36,8 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
     AuthenticationDeviceIdentifier authenticationDeviceIdentifier =
         AuthenticationDeviceIdentifier.generate();
     FidoUafExecutionRequest fidoUafExecutionRequest =
-        new FidoUafExecutionRequest(Map.of("user_id", authenticationDeviceIdentifier.value()));
+        new FidoUafExecutionRequest(
+            Map.of(fidoUafConfiguration.deviceIdParam(), authenticationDeviceIdentifier.value()));
     FidoUafExecutionResult executionResult =
         fidoUafExecutor.challengeRegistration(
             tenant, authorizationIdentifier, fidoUafExecutionRequest, fidoUafConfiguration);

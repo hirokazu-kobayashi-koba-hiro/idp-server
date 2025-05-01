@@ -278,7 +278,26 @@ public class MysqlExecutor implements UserSqlExecutor {
 
   @Override
   public Map<String, String> selectByAuthenticationDevice(Tenant tenant, String deviceId) {
-    return Map.of();
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        String.format(
+            selectSql,
+            """
+                    JOIN JSON_TABLE(
+                                   idp_user.authentication_devices,
+                                   '$[*]' COLUMNS (
+                                     device_id VARCHAR(255) PATH '$.id'
+                                   )
+                                 ) AS device
+                                 ON device.device_id = ?
+                                 WHERE idp_user.tenant_id = ?
+                    """);
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+    params.add(deviceId);
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
   String selectSql =

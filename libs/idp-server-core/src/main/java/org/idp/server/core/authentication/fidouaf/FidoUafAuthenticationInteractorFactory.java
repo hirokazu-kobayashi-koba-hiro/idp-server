@@ -6,7 +6,7 @@ public class FidoUafAuthenticationInteractorFactory implements AuthenticationInt
 
   @Override
   public AuthenticationInteractionType type() {
-    return StandardAuthenticationInteraction.FIDO_UAF_AUTHENTICATION_CHALLENGE.toType();
+    return StandardAuthenticationInteraction.FIDO_UAF_AUTHENTICATION.toType();
   }
 
   @Override

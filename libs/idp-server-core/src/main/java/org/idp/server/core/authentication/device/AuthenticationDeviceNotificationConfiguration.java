@@ -28,7 +28,7 @@ public class AuthenticationDeviceNotificationConfiguration {
 
     if (!details.containsKey(channel.name())) {
       throw new WebAuthnCredentialNotFoundException(
-          "invalid configuration. key: " + channel.name() + "is unregistered.");
+          "invalid configuration. key: " + channel.name() + " is unregistered.");
     }
 
     return details.get(channel.name());

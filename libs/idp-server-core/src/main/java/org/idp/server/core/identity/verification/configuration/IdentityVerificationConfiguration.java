@@ -65,7 +65,7 @@ public class IdentityVerificationConfiguration implements JsonReadable {
       IdentityVerificationProcess process) {
     if (!processes.containsKey(process.name())) {
       throw new IdentityVerificationApplicationConfigurationNotFoundException(
-          "invalid configuration. type: " + process.name() + "is unregistered.");
+          "invalid configuration. type: " + process.name() + " is unregistered.");
     }
     return processes.get(process.name());
   }
