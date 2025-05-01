@@ -6,16 +6,23 @@
 
 ## Overview
 
-This project is a flexible and extensible Identity Provider (IdP) implementation that fully supports the OAuth 2.0 and
-OpenID Connect specifications.
+A modern, developer-first Identity Provider designed for security, flexibility, and federation.
 
-It can be used as:
+🔐 OAuth2 & OpenID Connect / 🔄 Federation / 🧩 Verifiable Credentials / 🔌 Extensible by Design
 
-- A **standalone server** for managing authentication and authorization flows out of the box
-- A **Java library** that can be embedded into your own applications to add OAuth2/OIDC functionality programmatically
+→ For SaaS, Fintech, and Trust Framework providers who need full control over identity flows.
 
-Built with modularity and customization in mind, it provides robust APIs for handling users, clients, grants, MFA, and
-hooks, while remaining lightweight and easy to integrate into any Java-based ecosystem.
+
+## Why `idp-server`?
+
+Many existing identity solutions are either tightly coupled to specific platforms or too generic to handle real-world complexity.
+idp-server is built to give you full control and composability without compromise.
+
+- ✅ Clean, domain-driven modular architecture designed for maintainability and clarity
+- 🔁 Supports advanced flows like CIBA, Federation, Grant Management, and VC issuance
+- 🔧 Can run as a standalone server or be embedded as a lightweight Java library
+- 🌍 Ideal for organizations building identity-first products or trust frameworks
+- Built for developers who need precision, flexibility, and future-proof identity infrastructure.
 
 ## 🗂 System Architecture (Container Level)
 
