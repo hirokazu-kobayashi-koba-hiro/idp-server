@@ -21,4 +21,8 @@ public class HttpRequestDynamicBodyKeys implements Iterable<String> {
   public boolean exists() {
     return values != null && !values.isEmpty();
   }
+
+  public boolean shouldIncludeAll() {
+    return !exists();
+  }
 }

@@ -19,4 +19,6 @@ public interface UserSqlExecutor {
   void update(Tenant tenant, User user);
 
   Map<String, String> selectByProvider(Tenant tenant, String providerId, String providerUserId);
+
+  Map<String, String> selectByAuthenticationDevice(Tenant tenant, String deviceId);
 }

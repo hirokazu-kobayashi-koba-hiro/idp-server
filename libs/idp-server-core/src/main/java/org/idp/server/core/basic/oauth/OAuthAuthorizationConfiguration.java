@@ -1,13 +1,12 @@
-package org.idp.server.core.identity.verification.configuration;
+package org.idp.server.core.basic.oauth;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.basic.json.JsonReadable;
-import org.idp.server.core.identity.verification.delegation.OAuthAuthorizationType;
 
-public class IdentityVerificationOAuthAuthorizationConfiguration implements JsonReadable {
+public class OAuthAuthorizationConfiguration implements JsonReadable {
 
   String type;
   String tokenEndpoint;
@@ -18,9 +17,9 @@ public class IdentityVerificationOAuthAuthorizationConfiguration implements Json
   String username;
   String password;
 
-  public IdentityVerificationOAuthAuthorizationConfiguration() {}
+  public OAuthAuthorizationConfiguration() {}
 
-  public IdentityVerificationOAuthAuthorizationConfiguration(
+  public OAuthAuthorizationConfiguration(
       String type,
       String tokenEndpoint,
       String clientAuthenticationType,

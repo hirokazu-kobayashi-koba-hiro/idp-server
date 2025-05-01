@@ -1,4 +1,4 @@
-package org.idp.server.core.identity.verification.delegation;
+package org.idp.server.core.basic.oauth;
 
 public enum OAuthAuthorizationType {
   CLIENT_CREDENTIALS("client_credentials"),

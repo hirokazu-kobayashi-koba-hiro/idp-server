@@ -6,6 +6,7 @@ import java.util.Map;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.basic.json.JsonReadable;
 import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
+import org.idp.server.core.basic.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
@@ -18,7 +19,7 @@ public class IdentityVerificationConfiguration implements JsonReadable {
   String description;
   String externalWorkflowDelegation;
   String externalWorkflowApplicationIdParam;
-  IdentityVerificationOAuthAuthorizationConfiguration oauthAuthorization;
+  OAuthAuthorizationConfiguration oauthAuthorization;
   Map<String, IdentityVerificationProcessConfiguration> processes;
   List<String> approvedTargetTypes = new ArrayList<>();
   Map<String, Object> verifiedClaimsSchema;
@@ -45,9 +46,9 @@ public class IdentityVerificationConfiguration implements JsonReadable {
     return new ExternalWorkflowApplicationIdParam(externalWorkflowApplicationIdParam);
   }
 
-  public IdentityVerificationOAuthAuthorizationConfiguration oauthAuthorization() {
+  public OAuthAuthorizationConfiguration oauthAuthorization() {
     if (oauthAuthorization == null) {
-      return new IdentityVerificationOAuthAuthorizationConfiguration();
+      return new OAuthAuthorizationConfiguration();
     }
     return oauthAuthorization;
   }
@@ -64,7 +65,7 @@ public class IdentityVerificationConfiguration implements JsonReadable {
       IdentityVerificationProcess process) {
     if (!processes.containsKey(process.name())) {
       throw new IdentityVerificationApplicationConfigurationNotFoundException(
-          "invalid configuration. type: " + process.name() + "is unregistered.");
+          "invalid configuration. type: " + process.name() + " is unregistered.");
     }
     return processes.get(process.name());
   }

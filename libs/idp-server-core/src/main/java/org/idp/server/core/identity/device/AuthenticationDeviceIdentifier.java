@@ -1,9 +1,14 @@
 package org.idp.server.core.identity.device;
 
 import java.util.Objects;
+import java.util.UUID;
 
 public class AuthenticationDeviceIdentifier {
   String value;
+
+  public static AuthenticationDeviceIdentifier generate() {
+    return new AuthenticationDeviceIdentifier(UUID.randomUUID().toString());
+  }
 
   public AuthenticationDeviceIdentifier() {}
 
