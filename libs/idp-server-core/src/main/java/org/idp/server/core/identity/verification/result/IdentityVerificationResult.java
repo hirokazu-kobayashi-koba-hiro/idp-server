@@ -2,7 +2,7 @@ package org.idp.server.core.identity.verification.result;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import org.idp.server.core.basic.date.SystemDateTime;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;

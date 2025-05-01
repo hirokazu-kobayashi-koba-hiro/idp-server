@@ -7,26 +7,26 @@ import org.idp.server.core.ciba.gateway.ClientNotificationGateway;
 import org.idp.server.core.ciba.grant.CibaGrant;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.grantmangment.AuthorizationGranted;
 import org.idp.server.core.grantmangment.AuthorizationGrantedIdentifier;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
-import org.idp.server.core.oauth.authentication.Authentication;
-import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
-import org.idp.server.core.oauth.identity.IdTokenCreatable;
-import org.idp.server.core.oauth.identity.IdTokenCustomClaims;
-import org.idp.server.core.oauth.identity.IdTokenCustomClaimsBuilder;
-import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
-import org.idp.server.core.oauth.token.*;
+import org.idp.server.core.oidc.authentication.Authentication;
+import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
+import org.idp.server.core.oidc.identity.IdTokenCreatable;
+import org.idp.server.core.oidc.identity.IdTokenCustomClaims;
+import org.idp.server.core.oidc.identity.IdTokenCustomClaimsBuilder;
+import org.idp.server.core.oidc.identity.RequestedClaimsPayload;
+import org.idp.server.core.oidc.token.*;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.OAuthTokenBuilder;
 import org.idp.server.core.token.OAuthTokenIdentifier;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
-import org.idp.server.core.type.oauth.ExpiresIn;
-import org.idp.server.core.type.oauth.TokenType;
-import org.idp.server.core.type.oidc.IdToken;
+import org.idp.server.basic.type.oauth.ExpiresIn;
+import org.idp.server.basic.type.oauth.TokenType;
+import org.idp.server.basic.type.oidc.IdToken;
 
 // FIXME consider. this is bad code.
 public class ClientNotificationService

@@ -2,8 +2,8 @@ package org.idp.server.core.ciba.verifier;
 
 import org.idp.server.core.ciba.CibaRequestContext;
 import org.idp.server.core.ciba.exception.BackchannelAuthenticationBadRequestException;
-import org.idp.server.core.oauth.exception.RequestObjectInvalidException;
-import org.idp.server.core.oauth.verifier.extension.RequestObjectVerifyable;
+import org.idp.server.core.oidc.exception.RequestObjectInvalidException;
+import org.idp.server.core.oidc.verifier.extension.RequestObjectVerifyable;
 
 public class CibaRequestObjectVerifier implements CibaExtensionVerifier, RequestObjectVerifyable {
 

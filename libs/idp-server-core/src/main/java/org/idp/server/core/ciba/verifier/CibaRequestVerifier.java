@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.ciba.CibaRequestContext;
-import org.idp.server.core.type.exception.UnSupportedException;
+import org.idp.server.basic.exception.UnSupportedException;
 
 public class CibaRequestVerifier {
 

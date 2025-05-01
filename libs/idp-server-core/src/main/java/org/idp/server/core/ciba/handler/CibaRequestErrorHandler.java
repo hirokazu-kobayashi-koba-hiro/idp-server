@@ -6,9 +6,9 @@ import org.idp.server.core.ciba.exception.BackchannelAuthenticationBadRequestExc
 import org.idp.server.core.ciba.handler.io.CibaRequestResult;
 import org.idp.server.core.ciba.handler.io.CibaRequestStatus;
 import org.idp.server.core.ciba.response.BackchannelAuthenticationErrorResponse;
-import org.idp.server.core.clientauthenticator.exception.ClientUnAuthorizedException;
-import org.idp.server.core.type.oauth.Error;
-import org.idp.server.core.type.oauth.ErrorDescription;
+import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.basic.type.oauth.Error;
+import org.idp.server.basic.type.oauth.ErrorDescription;
 
 public class CibaRequestErrorHandler {
 

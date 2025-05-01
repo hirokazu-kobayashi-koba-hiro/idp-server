@@ -3,12 +3,12 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.query
 import java.time.LocalDateTime;
 import java.util.*;
 import org.idp.server.core.authentication.*;
-import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.AuthorizationFlow;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.AuthorizationFlow;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class ModelConverter {
 

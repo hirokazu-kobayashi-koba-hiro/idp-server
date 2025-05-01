@@ -1,19 +1,19 @@
 package org.idp.server.core.token;
 
 import java.util.Objects;
-import org.idp.server.core.clientauthenticator.BackchannelRequestContext;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.oauth.client.ClientIdentifier;
+import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.OAuthRequestKey;
-import org.idp.server.core.type.ciba.AuthReqId;
-import org.idp.server.core.type.ciba.BackchannelTokenDeliveryMode;
-import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.mtls.ClientCert;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.pkce.CodeVerifier;
+import org.idp.server.basic.type.OAuthRequestKey;
+import org.idp.server.basic.type.ciba.AuthReqId;
+import org.idp.server.basic.type.ciba.BackchannelTokenDeliveryMode;
+import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.mtls.ClientCert;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.pkce.CodeVerifier;
 
 public class TokenRequestContext implements BackchannelRequestContext {
 

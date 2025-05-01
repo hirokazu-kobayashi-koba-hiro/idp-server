@@ -2,7 +2,7 @@ package org.idp.server.core;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.datasource.Transaction;
+import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.UserStatus;
@@ -26,7 +26,7 @@ import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
 import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.type.security.RequestAttributes;
+import org.idp.server.basic.type.security.RequestAttributes;
 
 @Transaction
 public class IdentityVerificationEntryService implements IdentityVerificationApi {

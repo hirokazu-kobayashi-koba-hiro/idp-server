@@ -2,7 +2,7 @@ package org.idp.server.core.ciba.user;
 
 import java.util.function.Function;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.type.extension.Pairs;
+import org.idp.server.basic.type.extension.Pairs;
 
 public class PrefixMatcher implements LoginHintMatcher {
 

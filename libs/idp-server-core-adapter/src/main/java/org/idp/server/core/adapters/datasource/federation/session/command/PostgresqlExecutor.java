@@ -2,8 +2,8 @@ package org.idp.server.core.adapters.datasource.federation.session.command;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.basic.datasource.SqlExecutor;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.datasource.SqlExecutor;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.federation.SsoSessionIdentifier;
 
 public class PostgresqlExecutor implements SsoSessionCommandSqlExecutor {

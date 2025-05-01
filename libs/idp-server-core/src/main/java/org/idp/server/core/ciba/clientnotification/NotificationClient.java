@@ -5,7 +5,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.logging.Logger;
-import org.idp.server.core.basic.http.HttpClientFactory;
+import org.idp.server.basic.http.HttpClientFactory;
 import org.idp.server.core.ciba.gateway.ClientNotificationGateway;
 
 public class NotificationClient implements ClientNotificationGateway {

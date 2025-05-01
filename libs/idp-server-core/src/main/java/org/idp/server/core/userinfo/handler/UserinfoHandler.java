@@ -1,14 +1,14 @@
 package org.idp.server.core.userinfo.handler;
 
 import java.util.Map;
-import org.idp.server.core.configuration.ClientConfigurationRepository;
-import org.idp.server.core.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.tokenintrospection.exception.TokenInvalidException;
-import org.idp.server.core.type.oauth.AccessTokenEntity;
+import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.core.userinfo.UserinfoClaimsCreator;
 import org.idp.server.core.userinfo.UserinfoResponse;
 import org.idp.server.core.userinfo.handler.io.UserinfoRequest;

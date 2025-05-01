@@ -2,10 +2,10 @@ package org.idp.server.core.adapters.datasource.oauth.request;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.oauth.exception.OAuthException;
-import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.oidc.exception.OAuthException;
+import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
+import org.idp.server.core.oidc.request.AuthorizationRequest;
+import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
 
 public class AuthorizationRequestDataSource implements AuthorizationRequestRepository {

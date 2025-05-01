@@ -3,7 +3,7 @@ package org.idp.server.core.admin.io;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.identity.permission.Permission;
 import org.idp.server.core.identity.permission.Permissions;
 import org.idp.server.core.identity.role.Role;

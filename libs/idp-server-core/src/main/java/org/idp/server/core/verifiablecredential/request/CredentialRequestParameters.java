@@ -1,10 +1,10 @@
 package org.idp.server.core.verifiablecredential.request;
 
 import java.util.Map;
-import org.idp.server.core.type.OAuthRequestKey;
-import org.idp.server.core.type.verifiablecredential.CredentialDefinitionEntity;
-import org.idp.server.core.type.verifiablecredential.Format;
-import org.idp.server.core.type.verifiablecredential.ProofEntity;
+import org.idp.server.basic.type.OAuthRequestKey;
+import org.idp.server.basic.type.verifiablecredential.CredentialDefinitionEntity;
+import org.idp.server.basic.type.verifiablecredential.Format;
+import org.idp.server.basic.type.verifiablecredential.ProofEntity;
 
 public class CredentialRequestParameters implements VerifiableCredentialRequestTransformable {
   Map<String, Object> values;

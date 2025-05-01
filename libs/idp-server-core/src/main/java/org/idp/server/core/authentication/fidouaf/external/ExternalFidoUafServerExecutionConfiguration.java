@@ -2,8 +2,8 @@ package org.idp.server.core.authentication.fidouaf.external;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.basic.http.*;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.http.*;
+import org.idp.server.basic.json.JsonReadable;
 
 public class ExternalFidoUafServerExecutionConfiguration implements JsonReadable {
   String url;

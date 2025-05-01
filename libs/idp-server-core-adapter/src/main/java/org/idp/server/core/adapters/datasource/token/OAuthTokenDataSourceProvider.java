@@ -1,9 +1,9 @@
 package org.idp.server.core.adapters.datasource.token;
 
-import org.idp.server.core.basic.crypto.AesCipher;
-import org.idp.server.core.basic.crypto.HmacHasher;
-import org.idp.server.core.basic.dependency.ApplicationComponentDependencyContainer;
-import org.idp.server.core.basic.dependency.ApplicationComponentProvider;
+import org.idp.server.basic.crypto.AesCipher;
+import org.idp.server.basic.crypto.HmacHasher;
+import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 public class OAuthTokenDataSourceProvider

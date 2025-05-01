@@ -5,7 +5,7 @@ import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationResponse;
-import org.idp.server.core.type.security.RequestAttributes;
+import org.idp.server.basic.type.security.RequestAttributes;
 
 public interface TokenApi {
 

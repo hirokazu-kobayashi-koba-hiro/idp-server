@@ -1,6 +1,6 @@
 package org.idp.server.core.verifiablecredential;
 
-import org.idp.server.core.basic.vc.Credential;
+import org.idp.server.basic.vc.Credential;
 
 public class CredentialDelegateResponse {
   VerifiableCredentialTransactionStatus status;

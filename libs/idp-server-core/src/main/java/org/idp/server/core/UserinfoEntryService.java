@@ -1,6 +1,6 @@
 package org.idp.server.core;
 
-import org.idp.server.core.basic.datasource.Transaction;
+import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
@@ -8,8 +8,8 @@ import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
-import org.idp.server.core.type.oauth.Subject;
-import org.idp.server.core.type.security.RequestAttributes;
+import org.idp.server.basic.type.oauth.Subject;
+import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.userinfo.UserinfoApi;
 import org.idp.server.core.userinfo.UserinfoProtocol;
 import org.idp.server.core.userinfo.UserinfoProtocols;

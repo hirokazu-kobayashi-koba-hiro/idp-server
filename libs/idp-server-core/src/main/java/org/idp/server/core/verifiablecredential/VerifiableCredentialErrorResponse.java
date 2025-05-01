@@ -1,8 +1,8 @@
 package org.idp.server.core.verifiablecredential;
 
-import org.idp.server.core.type.oauth.Error;
-import org.idp.server.core.type.oauth.ErrorDescription;
-import org.idp.server.core.type.oauth.ErrorResponseCreatable;
+import org.idp.server.basic.type.oauth.Error;
+import org.idp.server.basic.type.oauth.ErrorDescription;
+import org.idp.server.basic.type.oauth.ErrorResponseCreatable;
 
 public class VerifiableCredentialErrorResponse implements ErrorResponseCreatable {
   Error error;

@@ -2,9 +2,9 @@ package org.idp.server.core.identity.verification.io;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.json.JsonNodeWrapper;
-import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
-import org.idp.server.core.basic.json.schema.JsonSchemaProperty;
+import org.idp.server.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.json.schema.JsonSchemaDefinition;
+import org.idp.server.basic.json.schema.JsonSchemaProperty;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;

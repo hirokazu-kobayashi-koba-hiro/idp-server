@@ -1,6 +1,6 @@
 package org.idp.server.core;
 
-import org.idp.server.core.basic.datasource.Transaction;
+import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.security.*;
 import org.idp.server.core.security.SecurityEventApi;
 import org.idp.server.core.security.event.SecurityEventRepository;

@@ -1,12 +1,12 @@
 package org.idp.server.core.federation.oidc;
 
 import java.util.UUID;
-import org.idp.server.core.basic.http.QueryParams;
+import org.idp.server.basic.http.QueryParams;
 import org.idp.server.core.federation.FederationType;
 import org.idp.server.core.federation.SsoProvider;
 import org.idp.server.core.federation.SsoState;
 import org.idp.server.core.federation.SsoStateCoder;
-import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
 
 public class OidcSsoSessionCreator {

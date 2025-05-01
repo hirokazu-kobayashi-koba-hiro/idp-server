@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.ciba.request;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestBuilder;

@@ -1,7 +1,7 @@
 package org.idp.server.core.admin;
 
-import org.idp.server.core.oauth.OAuthSession;
-import org.idp.server.core.oauth.OAuthSessionKey;
+import org.idp.server.core.oidc.OAuthSession;
+import org.idp.server.core.oidc.OAuthSessionKey;
 
 public interface OAuthSessionRepository {
 

@@ -2,14 +2,14 @@ package org.idp.server.core.token.handler.token.io;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.http.BasicAuth;
+import org.idp.server.basic.http.BasicAuth;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.AuthorizationHeaderHandlerable;
 import org.idp.server.core.token.TokenRequestParameters;
-import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.mtls.ClientCert;
-import org.idp.server.core.type.oauth.ClientSecretBasic;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.mtls.ClientCert;
+import org.idp.server.basic.type.oauth.ClientSecretBasic;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class TokenRequest implements AuthorizationHeaderHandlerable {
   Tenant tenant;

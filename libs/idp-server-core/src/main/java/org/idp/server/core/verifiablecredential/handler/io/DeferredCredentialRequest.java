@@ -3,9 +3,9 @@ package org.idp.server.core.verifiablecredential.handler.io;
 import java.util.Map;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.AuthorizationHeaderHandlerable;
-import org.idp.server.core.type.mtls.ClientCert;
-import org.idp.server.core.type.oauth.AccessTokenEntity;
-import org.idp.server.core.type.verifiablecredential.TransactionId;
+import org.idp.server.basic.type.mtls.ClientCert;
+import org.idp.server.basic.type.oauth.AccessTokenEntity;
+import org.idp.server.basic.type.verifiablecredential.TransactionId;
 import org.idp.server.core.verifiablecredential.request.DeferredCredentialRequestParameters;
 
 public class DeferredCredentialRequest implements AuthorizationHeaderHandlerable {

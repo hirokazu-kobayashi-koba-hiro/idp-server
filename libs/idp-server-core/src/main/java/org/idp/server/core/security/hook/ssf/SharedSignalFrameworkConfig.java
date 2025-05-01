@@ -1,7 +1,7 @@
 package org.idp.server.core.security.hook.ssf;
 
 import java.util.Map;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class SharedSignalFrameworkConfig implements JsonReadable {
 

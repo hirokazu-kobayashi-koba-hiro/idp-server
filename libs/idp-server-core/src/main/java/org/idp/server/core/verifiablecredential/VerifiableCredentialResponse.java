@@ -1,8 +1,8 @@
 package org.idp.server.core.verifiablecredential;
 
-import org.idp.server.core.type.verifiablecredential.CNonce;
-import org.idp.server.core.type.verifiablecredential.CNonceExpiresIn;
-import org.idp.server.core.type.verifiablecredential.Format;
+import org.idp.server.basic.type.verifiablecredential.CNonce;
+import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;
+import org.idp.server.basic.type.verifiablecredential.Format;
 
 public class VerifiableCredentialResponse {
   Format format;

@@ -1,13 +1,13 @@
 package org.idp.server.core.ciba.request;
 
 import java.util.Set;
-import org.idp.server.core.basic.jose.JoseContext;
+import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.ciba.CibaRequestParameters;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.type.oauth.ClientSecretBasic;
-import org.idp.server.core.type.oauth.Scopes;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.basic.type.oauth.ClientSecretBasic;
+import org.idp.server.basic.type.oauth.Scopes;
 
 /** NormalRequestFactory */
 public class NormalRequestFactory implements BackchannelAuthenticationRequestFactory {

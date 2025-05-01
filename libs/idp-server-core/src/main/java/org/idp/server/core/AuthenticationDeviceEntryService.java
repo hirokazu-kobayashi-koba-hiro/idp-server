@@ -4,12 +4,12 @@ import org.idp.server.core.authentication.AuthenticationTransaction;
 import org.idp.server.core.authentication.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationTransactionFindingResponse;
-import org.idp.server.core.basic.datasource.Transaction;
+import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;
-import org.idp.server.core.type.security.RequestAttributes;
+import org.idp.server.basic.type.security.RequestAttributes;
 
 @Transaction
 public class AuthenticationDeviceEntryService implements AuthenticationDeviceApi {

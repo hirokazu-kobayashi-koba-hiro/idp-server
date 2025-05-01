@@ -1,7 +1,7 @@
 package org.idp.server.core.adapters.security.hook;
 
 import java.util.Map;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.security.event.SecurityEventType;
 
 public class SlackSecurityEventHookConfiguration implements JsonReadable {

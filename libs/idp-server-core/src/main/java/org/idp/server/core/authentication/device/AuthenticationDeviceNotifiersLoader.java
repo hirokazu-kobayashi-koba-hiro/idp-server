@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.logging.Logger;
-import org.idp.server.core.notification.device.NotificationChannel;
+import org.idp.server.core.authentication.notification.device.NotificationChannel;
 
 public class AuthenticationDeviceNotifiersLoader {
 

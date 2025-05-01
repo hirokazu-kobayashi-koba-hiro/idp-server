@@ -6,8 +6,8 @@ import org.idp.server.core.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.AuthorizationFlow;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.AuthorizationFlow;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class CibaAuthenticationTransactionCreator {
 

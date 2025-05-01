@@ -3,9 +3,9 @@ package org.idp.server.core.adapters.datasource.configuration.server;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.basic.datasource.SqlExecutor;
-import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.basic.datasource.SqlExecutor;
+import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.tenant.TenantIdentifier;
 
 public class PostgresqlExecutor implements ServerConfigSqlExecutor {

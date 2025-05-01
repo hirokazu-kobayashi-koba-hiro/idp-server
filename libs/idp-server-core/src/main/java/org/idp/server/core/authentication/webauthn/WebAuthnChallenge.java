@@ -1,7 +1,7 @@
 package org.idp.server.core.authentication.webauthn;
 
 import java.io.Serializable;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class WebAuthnChallenge implements Serializable, JsonReadable {
 

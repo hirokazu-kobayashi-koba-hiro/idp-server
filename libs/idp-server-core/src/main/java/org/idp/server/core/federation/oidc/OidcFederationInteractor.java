@@ -1,13 +1,13 @@
 package org.idp.server.core.federation.oidc;
 
-import org.idp.server.core.basic.jose.JoseContext;
-import org.idp.server.core.basic.jose.JoseHandler;
-import org.idp.server.core.basic.jose.JoseInvalidException;
+import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.jose.JoseHandler;
+import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.*;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
-import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
 
 public class OidcFederationInteractor implements FederationInteractor {

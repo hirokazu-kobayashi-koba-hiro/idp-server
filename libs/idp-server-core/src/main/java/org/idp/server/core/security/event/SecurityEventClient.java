@@ -3,7 +3,7 @@ package org.idp.server.core.security.event;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class SecurityEventClient {
 

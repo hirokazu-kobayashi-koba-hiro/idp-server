@@ -3,7 +3,7 @@ package org.idp.server.core;
 import org.idp.server.core.authentication.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.authentication.AuthenticationMetaDataApi;
 import org.idp.server.core.authentication.fidouaf.*;
-import org.idp.server.core.basic.datasource.Transaction;
+import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantRepository;

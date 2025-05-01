@@ -1,7 +1,7 @@
 package org.idp.server.core.admin;
 
 import java.util.Map;
-import org.idp.server.core.basic.http.QueryParams;
+import org.idp.server.basic.http.QueryParams;
 
 public class AuthorizationRequestBuilder {
   String authorizationEndpoint;

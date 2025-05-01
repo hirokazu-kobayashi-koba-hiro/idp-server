@@ -1,8 +1,8 @@
 package org.idp.server.core.ciba.response;
 
-import org.idp.server.core.type.ciba.AuthReqId;
-import org.idp.server.core.type.ciba.Interval;
-import org.idp.server.core.type.oauth.ExpiresIn;
+import org.idp.server.basic.type.ciba.AuthReqId;
+import org.idp.server.basic.type.ciba.Interval;
+import org.idp.server.basic.type.oauth.ExpiresIn;
 
 public class BackchannelAuthenticationResponse {
 

@@ -2,13 +2,13 @@ package org.idp.server.core.adapters.datasource.token;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.basic.crypto.AesCipher;
-import org.idp.server.core.basic.crypto.HmacHasher;
-import org.idp.server.core.basic.datasource.SqlExecutor;
+import org.idp.server.basic.crypto.AesCipher;
+import org.idp.server.basic.crypto.HmacHasher;
+import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.type.oauth.AccessTokenEntity;
-import org.idp.server.core.type.oauth.RefreshTokenEntity;
+import org.idp.server.basic.type.oauth.AccessTokenEntity;
+import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 
 public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
 

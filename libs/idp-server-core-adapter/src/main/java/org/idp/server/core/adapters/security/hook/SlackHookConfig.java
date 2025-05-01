@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.security.hook;
 
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class SlackHookConfig implements JsonReadable {
   String description;

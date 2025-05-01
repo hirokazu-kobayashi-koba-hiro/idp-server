@@ -8,11 +8,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 import java.util.logging.Logger;
-import org.idp.server.core.basic.http.HttpClientErrorException;
-import org.idp.server.core.basic.http.HttpClientFactory;
-import org.idp.server.core.basic.http.HttpNetworkErrorException;
-import org.idp.server.core.basic.http.QueryParams;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.http.HttpClientErrorException;
+import org.idp.server.basic.http.HttpClientFactory;
+import org.idp.server.basic.http.HttpNetworkErrorException;
+import org.idp.server.basic.http.QueryParams;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.federation.SsoProvider;
 
 public class FacebookOidcExecutor implements OidcSsoExecutor {

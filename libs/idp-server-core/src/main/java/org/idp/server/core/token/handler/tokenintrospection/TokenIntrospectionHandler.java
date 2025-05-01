@@ -11,8 +11,8 @@ import org.idp.server.core.token.tokenintrospection.TokenIntrospectionContentsCr
 import org.idp.server.core.token.tokenintrospection.TokenIntrospectionRequestParameters;
 import org.idp.server.core.token.tokenintrospection.validator.TokenIntrospectionValidator;
 import org.idp.server.core.token.tokenintrospection.verifier.TokenIntrospectionVerifier;
-import org.idp.server.core.type.oauth.AccessTokenEntity;
-import org.idp.server.core.type.oauth.RefreshTokenEntity;
+import org.idp.server.basic.type.oauth.AccessTokenEntity;
+import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 
 public class TokenIntrospectionHandler {
 

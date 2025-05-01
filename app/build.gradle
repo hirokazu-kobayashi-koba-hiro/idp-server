@@ -24,7 +24,7 @@ dependencies {
 
 	implementation project(':libs:idp-server-core')
 	implementation project(':libs:idp-server-core-adapter')
-	implementation project(':libs:idp-server-webauthn')
+	implementation project(':libs:idp-server-webauthn4j-adapter')
 	implementation project(':libs:idp-server-springboot-adapter')
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'

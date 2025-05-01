@@ -5,7 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.logging.Logger;
-import org.idp.server.core.basic.datasource.*;
+import org.idp.server.basic.datasource.*;
 import org.idp.server.core.tenant.MissingRequiredTenantIdentifierException;
 import org.idp.server.core.tenant.TenantIdentifier;
 
@@ -34,7 +34,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
 
         TransactionManager.createConnection(DatabaseType.POSTGRESQL);
-        DatabaseType databaseType = dialectProvider.provide(tenantIdentifier);
+        DatabaseType databaseType = dialectProvider.provide(tenantIdentifier.value());
         TransactionManager.closeConnection();
 
         TransactionManager.beginTransaction(databaseType);

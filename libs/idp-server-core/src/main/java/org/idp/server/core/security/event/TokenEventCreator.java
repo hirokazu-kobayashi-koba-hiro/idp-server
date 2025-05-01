@@ -5,7 +5,7 @@ import org.idp.server.core.identity.User;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.type.security.RequestAttributes;
+import org.idp.server.basic.type.security.RequestAttributes;
 
 public class TokenEventCreator {
 

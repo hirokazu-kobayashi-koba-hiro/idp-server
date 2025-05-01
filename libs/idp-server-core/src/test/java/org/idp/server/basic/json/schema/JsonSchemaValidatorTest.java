@@ -1,12 +1,10 @@
 package org.idp.server.basic.json.schema;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.idp.server.core.basic.json.JsonNodeWrapper;
-import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
-import org.idp.server.core.basic.json.schema.JsonSchemaValidationResult;
-import org.idp.server.core.basic.json.schema.JsonSchemaValidator;
+import org.idp.server.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.json.schema.JsonSchemaDefinition;
+import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
+import org.idp.server.basic.json.schema.JsonSchemaValidator;
 import org.junit.jupiter.api.Test;
 
 public class JsonSchemaValidatorTest {

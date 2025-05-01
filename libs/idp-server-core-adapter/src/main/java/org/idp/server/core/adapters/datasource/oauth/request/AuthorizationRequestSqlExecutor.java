@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.oauth.request;
 
 import java.util.Map;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.oidc.request.AuthorizationRequest;
+import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
 public interface AuthorizationRequestSqlExecutor {
 

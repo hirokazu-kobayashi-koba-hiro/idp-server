@@ -3,7 +3,7 @@ package org.idp.server.core.identity.verification.validation;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.basic.json.schema.JsonSchemaValidationResult;
+import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.core.identity.verification.io.IdentityVerificationResponse;
 
 public class IdentityVerificationValidationResult {

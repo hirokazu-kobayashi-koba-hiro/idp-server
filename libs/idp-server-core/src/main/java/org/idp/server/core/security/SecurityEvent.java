@@ -5,10 +5,10 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.security.event.*;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.oauth.RequestedClientId;
-import org.idp.server.core.type.oauth.TokenIssuer;
-import org.idp.server.core.type.security.IpAddress;
-import org.idp.server.core.type.security.UserAgent;
+import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.TokenIssuer;
+import org.idp.server.basic.type.security.IpAddress;
+import org.idp.server.basic.type.security.UserAgent;
 
 public class SecurityEvent {
 

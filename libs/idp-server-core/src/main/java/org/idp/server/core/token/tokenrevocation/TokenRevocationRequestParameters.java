@@ -2,10 +2,10 @@ package org.idp.server.core.token.tokenrevocation;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.clientauthenticator.BackchannelRequestParameters;
-import org.idp.server.core.type.ArrayValueMap;
-import org.idp.server.core.type.OAuthRequestKey;
-import org.idp.server.core.type.oauth.*;
+import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
+import org.idp.server.basic.type.ArrayValueMap;
+import org.idp.server.basic.type.OAuthRequestKey;
+import org.idp.server.basic.type.oauth.*;
 
 /** TokenRevocationRequestParameters */
 public class TokenRevocationRequestParameters implements BackchannelRequestParameters {

@@ -8,8 +8,8 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifi
 import org.idp.server.core.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.type.ContentType;
-import org.idp.server.core.type.oauth.ExpiresIn;
+import org.idp.server.basic.type.ContentType;
+import org.idp.server.basic.type.oauth.ExpiresIn;
 
 // TODO to be more readable name
 public class CibaIssueResponse {

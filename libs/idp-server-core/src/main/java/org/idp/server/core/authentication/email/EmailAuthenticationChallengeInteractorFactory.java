@@ -1,7 +1,7 @@
 package org.idp.server.core.authentication.email;
 
 import org.idp.server.core.authentication.*;
-import org.idp.server.core.notification.EmailSenders;
+import org.idp.server.core.authentication.notification.EmailSenders;
 
 public class EmailAuthenticationChallengeInteractorFactory
     implements AuthenticationInteractorFactory {

@@ -5,7 +5,7 @@ import org.idp.server.core.authentication.*;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.device.AuthenticationDevice;
-import org.idp.server.core.notification.device.NotificationChannel;
+import org.idp.server.core.authentication.notification.device.NotificationChannel;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 

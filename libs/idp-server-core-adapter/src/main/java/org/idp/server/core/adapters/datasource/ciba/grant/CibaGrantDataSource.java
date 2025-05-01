@@ -7,7 +7,7 @@ import org.idp.server.core.ciba.grant.CibaGrant;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.ciba.AuthReqId;
+import org.idp.server.basic.type.ciba.AuthReqId;
 
 public class CibaGrantDataSource implements CibaGrantRepository {
 

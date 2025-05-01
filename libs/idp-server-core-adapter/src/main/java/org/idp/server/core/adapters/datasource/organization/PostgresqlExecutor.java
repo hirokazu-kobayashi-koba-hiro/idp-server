@@ -3,7 +3,7 @@ package org.idp.server.core.adapters.datasource.organization;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.basic.datasource.SqlExecutor;
+import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.core.organization.*;
 
 public class PostgresqlExecutor implements OrganizationSqlExecutor {

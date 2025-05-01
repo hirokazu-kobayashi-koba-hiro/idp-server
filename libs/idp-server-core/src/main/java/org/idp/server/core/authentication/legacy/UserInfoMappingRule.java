@@ -1,6 +1,6 @@
 package org.idp.server.core.authentication.legacy;
 
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class UserInfoMappingRule implements JsonReadable {
   String from;

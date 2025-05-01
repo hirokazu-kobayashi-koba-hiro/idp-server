@@ -1,8 +1,8 @@
 package org.idp.server.core.discovery.handler;
 
 import java.util.Map;
-import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.discovery.JwksResponseCreator;
 import org.idp.server.core.discovery.ServerConfigurationResponseCreator;
 import org.idp.server.core.discovery.handler.io.JwksRequestResponse;

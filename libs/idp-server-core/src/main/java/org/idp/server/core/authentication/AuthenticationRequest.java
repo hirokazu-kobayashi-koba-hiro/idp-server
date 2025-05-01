@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.AuthorizationFlow;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.AuthorizationFlow;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class AuthenticationRequest {
 

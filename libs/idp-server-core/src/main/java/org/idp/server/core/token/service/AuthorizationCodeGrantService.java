@@ -1,31 +1,31 @@
 package org.idp.server.core.token.service;
 
 import java.util.UUID;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.grantmangment.AuthorizationGranted;
 import org.idp.server.core.grantmangment.AuthorizationGrantedIdentifier;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
-import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
-import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
-import org.idp.server.core.oauth.grant.AuthorizationGrant;
-import org.idp.server.core.oauth.identity.IdTokenCreatable;
-import org.idp.server.core.oauth.identity.IdTokenCustomClaims;
-import org.idp.server.core.oauth.identity.IdTokenCustomClaimsBuilder;
-import org.idp.server.core.oauth.repository.AuthorizationCodeGrantRepository;
-import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.oauth.token.*;
-import org.idp.server.core.oauth.vc.CNonceCreatable;
+import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
+import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
+import org.idp.server.core.oidc.grant.AuthorizationGrant;
+import org.idp.server.core.oidc.identity.IdTokenCreatable;
+import org.idp.server.core.oidc.identity.IdTokenCustomClaims;
+import org.idp.server.core.oidc.identity.IdTokenCustomClaimsBuilder;
+import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
+import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
+import org.idp.server.core.oidc.request.AuthorizationRequest;
+import org.idp.server.core.oidc.token.*;
+import org.idp.server.core.oidc.vc.CNonceCreatable;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.TokenRequestCodeGrantValidator;
 import org.idp.server.core.token.verifier.AuthorizationCodeGrantVerifier;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.IdToken;
-import org.idp.server.core.type.verifiablecredential.CNonce;
-import org.idp.server.core.type.verifiablecredential.CNonceExpiresIn;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.IdToken;
+import org.idp.server.basic.type.verifiablecredential.CNonce;
+import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;
 
 /**
  * 4.1.3. Access Token Request authorization code handling

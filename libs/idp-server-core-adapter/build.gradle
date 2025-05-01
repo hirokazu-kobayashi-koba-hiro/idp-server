@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
 	implementation project(':libs:idp-server-core')
+	implementation project(':libs:idp-server-core-supporter')
 	runtimeOnly 'org.postgresql:postgresql:42.7.2'
 	runtimeOnly 'com.mysql:mysql-connector-j:9.2.0'
 	implementation 'com.zaxxer:HikariCP:6.3.0'

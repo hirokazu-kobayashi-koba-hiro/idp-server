@@ -2,7 +2,7 @@ package org.idp.server.core.identity.verification.delegation.request;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;

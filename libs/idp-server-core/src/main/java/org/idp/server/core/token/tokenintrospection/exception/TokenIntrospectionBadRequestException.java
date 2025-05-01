@@ -1,7 +1,7 @@
 package org.idp.server.core.token.tokenintrospection.exception;
 
-import org.idp.server.core.type.oauth.Error;
-import org.idp.server.core.type.oauth.ErrorDescription;
+import org.idp.server.basic.type.oauth.Error;
+import org.idp.server.basic.type.oauth.ErrorDescription;
 
 public class TokenIntrospectionBadRequestException extends RuntimeException {
   String error;

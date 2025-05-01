@@ -2,7 +2,7 @@ package org.idp.server.core.verifiablecredential;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.type.verifiablecredential.Format;
+import org.idp.server.basic.type.verifiablecredential.Format;
 
 public class VerifiableCredentialCreators {
 

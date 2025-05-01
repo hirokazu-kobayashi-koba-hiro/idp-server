@@ -1,9 +1,9 @@
 package org.idp.server.core.userinfo;
 
-import org.idp.server.core.basic.dependency.ApplicationComponentContainer;
-import org.idp.server.core.basic.dependency.protcol.ProtocolProvider;
-import org.idp.server.core.configuration.ClientConfigurationRepository;
-import org.idp.server.core.configuration.ServerConfigurationRepository;
+import org.idp.server.basic.dependency.ApplicationComponentContainer;
+import org.idp.server.basic.dependency.protocol.ProtocolProvider;
+import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 public class DefaultUserinfoProtocolProvider implements ProtocolProvider<UserinfoProtocol> {

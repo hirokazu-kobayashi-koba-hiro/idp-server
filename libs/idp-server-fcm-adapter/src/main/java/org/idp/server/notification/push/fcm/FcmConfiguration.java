@@ -1,10 +1,7 @@
 package org.idp.server.notification.push.fcm;
 
-import org.idp.server.core.authentication.email.EmailSenderSetting;
-import org.idp.server.core.authentication.email.EmailVerificationTemplate;
-import org.idp.server.core.basic.json.JsonReadable;
-import org.idp.server.core.notification.EmailSenderType;
-import org.idp.server.core.notification.device.NotificationTemplate;
+import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.core.authentication.notification.device.NotificationTemplate;
 
 import java.util.Map;
 

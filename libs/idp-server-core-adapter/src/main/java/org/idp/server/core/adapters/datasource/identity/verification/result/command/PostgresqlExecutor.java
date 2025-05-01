@@ -2,8 +2,8 @@ package org.idp.server.core.adapters.datasource.identity.verification.result.com
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.basic.datasource.SqlExecutor;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.datasource.SqlExecutor;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.identity.verification.result.IdentityVerificationResult;
 import org.idp.server.core.tenant.Tenant;
 
