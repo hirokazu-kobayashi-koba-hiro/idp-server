@@ -10,7 +10,7 @@ import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.AuthorizationGrantBuilder;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.basic.type.ciba.Interval;
 import org.idp.server.basic.type.extension.ExpiredAt;

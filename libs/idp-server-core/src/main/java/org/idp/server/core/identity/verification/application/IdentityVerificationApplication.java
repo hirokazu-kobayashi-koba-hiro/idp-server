@@ -17,8 +17,8 @@ import org.idp.server.core.identity.verification.delegation.ExternalWorkflowAppl
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDelegation;
 import org.idp.server.core.identity.verification.trustframework.TrustFramework;
-import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class IdentityVerificationApplication {

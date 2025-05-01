@@ -5,7 +5,7 @@ import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.fidouaf.*;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
 

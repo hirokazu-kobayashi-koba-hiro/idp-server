@@ -15,7 +15,7 @@ import org.idp.server.basic.notification.NotificationTemplateInterpolator;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventHookExecutor;
 import org.idp.server.core.security.hook.*;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.basic.exception.InvalidConfigurationException;
 
 public class SlacklNotificationSecurityEventHookExecutor implements SecurityEventHookExecutor {

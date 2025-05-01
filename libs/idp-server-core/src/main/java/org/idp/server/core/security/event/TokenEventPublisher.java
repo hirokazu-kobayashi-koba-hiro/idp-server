@@ -4,7 +4,7 @@ import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventPublisher;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.basic.type.security.RequestAttributes;
 

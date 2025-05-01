@@ -6,7 +6,7 @@ import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.client.ClientName;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.basic.type.extension.RegisteredRedirectUris;
 import org.idp.server.basic.type.oauth.*;

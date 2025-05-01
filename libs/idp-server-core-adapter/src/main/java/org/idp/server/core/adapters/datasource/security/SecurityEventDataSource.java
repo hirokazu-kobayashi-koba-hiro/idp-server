@@ -5,7 +5,7 @@ import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEvents;
 import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.event.SecurityEventSearchCriteria;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class SecurityEventDataSource implements SecurityEventRepository {
 

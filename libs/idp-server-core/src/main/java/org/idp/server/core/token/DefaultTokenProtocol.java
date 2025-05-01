@@ -9,7 +9,7 @@ import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepos
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
-import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
+import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.token.handler.token.TokenRequestErrorHandler;

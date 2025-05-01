@@ -7,7 +7,7 @@ import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepos
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestBuilder;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class BackchannelAuthenticationRequestDataSource
     implements BackchannelAuthenticationRequestRepository {

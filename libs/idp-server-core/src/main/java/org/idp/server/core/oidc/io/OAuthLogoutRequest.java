@@ -2,7 +2,7 @@ package org.idp.server.core.oidc.io;
 
 import java.util.Map;
 import org.idp.server.core.oidc.request.OAuthLogoutParameters;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class OAuthLogoutRequest {
   Tenant tenant;

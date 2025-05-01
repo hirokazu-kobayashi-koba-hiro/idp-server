@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
-import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public class MysqlExecutor implements TenantSqlExecutor {
 

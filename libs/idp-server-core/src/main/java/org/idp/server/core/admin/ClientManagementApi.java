@@ -2,7 +2,7 @@ package org.idp.server.core.admin;
 
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementListResponse;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementResponse;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public interface ClientManagementApi {

@@ -7,7 +7,7 @@ import org.idp.server.core.identity.User;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public class FederationInteractionResult {
 

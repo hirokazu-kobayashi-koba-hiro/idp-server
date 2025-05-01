@@ -12,7 +12,7 @@ import org.idp.server.core.oidc.factory.AuthorizationRequestFactory;
 import org.idp.server.core.oidc.factory.FapiAdvanceRequestObjectPatternFactory;
 import org.idp.server.core.oidc.factory.RequestObjectPatternFactory;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.basic.type.OAuthRequestKey;
 
 /** OAuthRequestContextService */

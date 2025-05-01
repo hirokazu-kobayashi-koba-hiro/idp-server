@@ -6,7 +6,7 @@ import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public class PostgresqlExecutor implements ServerConfigSqlExecutor {
 

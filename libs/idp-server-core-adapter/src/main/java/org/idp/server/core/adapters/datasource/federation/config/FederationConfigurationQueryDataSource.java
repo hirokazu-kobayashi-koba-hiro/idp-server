@@ -7,7 +7,7 @@ import org.idp.server.core.federation.FederationConfigurationNotFoundException;
 import org.idp.server.core.federation.FederationConfigurationQueryRepository;
 import org.idp.server.core.federation.FederationType;
 import org.idp.server.core.federation.SsoProvider;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class FederationConfigurationQueryDataSource
     implements FederationConfigurationQueryRepository {

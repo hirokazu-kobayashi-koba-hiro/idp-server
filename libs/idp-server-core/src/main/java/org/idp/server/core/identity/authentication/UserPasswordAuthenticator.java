@@ -2,7 +2,7 @@ package org.idp.server.core.identity.authentication;
 
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.basic.type.oauth.Password;
 import org.idp.server.basic.type.oauth.Username;

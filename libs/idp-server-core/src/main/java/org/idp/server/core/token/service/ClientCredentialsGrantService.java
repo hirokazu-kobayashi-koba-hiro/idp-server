@@ -8,7 +8,7 @@ import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.oidc.token.AccessToken;
 import org.idp.server.core.oidc.token.AccessTokenCreatable;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.ClientCredentialsGrantValidator;

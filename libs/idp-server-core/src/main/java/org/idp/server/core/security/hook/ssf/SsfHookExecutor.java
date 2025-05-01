@@ -14,7 +14,7 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventHookExecutor;
 import org.idp.server.core.security.hook.*;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class SsfHookExecutor implements SecurityEventHookExecutor {
 

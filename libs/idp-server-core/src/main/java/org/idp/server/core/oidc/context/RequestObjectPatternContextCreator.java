@@ -14,7 +14,7 @@ import org.idp.server.core.oidc.factory.AuthorizationRequestFactory;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
 import org.idp.server.core.oidc.validator.RequestObjectValidator;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 /** RequestObjectPatternContextService */
 public class RequestObjectPatternContextCreator implements OAuthRequestContextCreator {

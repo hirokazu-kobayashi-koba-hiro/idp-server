@@ -11,7 +11,7 @@ import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class ContinuousCustomerDueDiligenceParameterResolver
     implements AdditionalRequestParameterResolver {

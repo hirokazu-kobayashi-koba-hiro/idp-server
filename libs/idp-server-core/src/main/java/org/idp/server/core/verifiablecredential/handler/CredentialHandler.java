@@ -8,7 +8,7 @@ import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.oidc.token.AccessToken;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;

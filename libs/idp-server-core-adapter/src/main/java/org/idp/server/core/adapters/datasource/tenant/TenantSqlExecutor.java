@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.tenant;
 
 import java.util.Map;
-import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public interface TenantSqlExecutor {
 

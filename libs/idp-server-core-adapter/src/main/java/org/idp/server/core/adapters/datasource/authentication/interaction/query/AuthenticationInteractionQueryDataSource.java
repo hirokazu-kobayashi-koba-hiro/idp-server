@@ -6,7 +6,7 @@ import org.idp.server.core.authentication.AuthenticationInteractionQueryReposito
 import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.authentication.exception.MfaTransactionNotFoundException;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationInteractionQueryDataSource
     implements AuthenticationInteractionQueryRepository {

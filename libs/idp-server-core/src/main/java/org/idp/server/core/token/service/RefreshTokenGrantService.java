@@ -6,7 +6,7 @@ import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.token.*;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.RefreshTokenGrantValidator;

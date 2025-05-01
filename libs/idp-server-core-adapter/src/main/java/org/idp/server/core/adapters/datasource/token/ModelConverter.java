@@ -18,7 +18,7 @@ import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.token.AccessToken;
 import org.idp.server.core.oidc.token.RefreshToken;
-import org.idp.server.core.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.OAuthTokenBuilder;
 import org.idp.server.core.token.OAuthTokenIdentifier;

@@ -5,7 +5,7 @@ import java.util.Map;
 import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.HmacHasher;
 import org.idp.server.basic.datasource.SqlExecutor;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.type.oauth.RefreshTokenEntity;

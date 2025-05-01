@@ -10,7 +10,7 @@ import org.idp.server.core.authentication.notification.EmailSenders;
 import org.idp.server.core.authentication.notification.EmailSendingRequest;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class EmailAuthenticationChallengeInteractor implements AuthenticationInteractor {
 

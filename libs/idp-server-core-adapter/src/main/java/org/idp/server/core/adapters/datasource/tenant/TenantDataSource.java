@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.tenant.*;
+import org.idp.server.core.multi_tenancy.tenant.*;
 
 public class TenantDataSource implements TenantRepository {
 

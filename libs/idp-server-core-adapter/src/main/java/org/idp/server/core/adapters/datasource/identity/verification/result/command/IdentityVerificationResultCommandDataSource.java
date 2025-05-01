@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.identity.verification.result.com
 
 import org.idp.server.core.identity.verification.result.IdentityVerificationResult;
 import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationResultCommandDataSource
     implements IdentityVerificationResultCommandRepository {

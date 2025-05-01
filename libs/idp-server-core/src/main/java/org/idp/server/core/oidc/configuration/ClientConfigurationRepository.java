@@ -2,7 +2,7 @@ package org.idp.server.core.oidc.configuration;
 
 import java.util.List;
 import org.idp.server.core.oidc.client.ClientIdentifier;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public interface ClientConfigurationRepository {

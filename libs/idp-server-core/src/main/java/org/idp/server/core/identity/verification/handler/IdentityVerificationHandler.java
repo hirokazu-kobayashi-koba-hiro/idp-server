@@ -20,7 +20,7 @@ import org.idp.server.core.identity.verification.validation.IdentityVerification
 import org.idp.server.core.identity.verification.validation.IdentityVerificationValidationResult;
 import org.idp.server.core.identity.verification.verifier.IdentityVerificationRequestVerificationResult;
 import org.idp.server.core.identity.verification.verifier.IdentityVerificationRequestVerifiers;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 
 public class IdentityVerificationHandler {

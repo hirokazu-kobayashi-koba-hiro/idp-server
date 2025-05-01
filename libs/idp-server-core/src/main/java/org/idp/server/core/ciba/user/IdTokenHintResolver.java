@@ -5,7 +5,7 @@ import org.idp.server.basic.jose.JoseHandler;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
-import org.idp.server.core.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class IdTokenHintResolver implements UserHintResolver {
 
