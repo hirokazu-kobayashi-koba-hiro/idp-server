@@ -1,7 +1,7 @@
 package org.idp.server.core.oauth.vp.request;
 
 import java.util.Objects;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class InputDescriptor implements JsonReadable {
 

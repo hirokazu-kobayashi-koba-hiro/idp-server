@@ -24,9 +24,9 @@ import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.OAuthTokenBuilder;
 import org.idp.server.core.token.OAuthTokenIdentifier;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
-import org.idp.server.core.type.oauth.ExpiresIn;
-import org.idp.server.core.type.oauth.TokenType;
-import org.idp.server.core.type.oidc.IdToken;
+import org.idp.server.basic.type.oauth.ExpiresIn;
+import org.idp.server.basic.type.oauth.TokenType;
+import org.idp.server.basic.type.oidc.IdToken;
 
 // FIXME consider. this is bad code.
 public class ClientNotificationService

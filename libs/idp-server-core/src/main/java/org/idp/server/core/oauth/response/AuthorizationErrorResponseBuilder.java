@@ -1,11 +1,11 @@
 package org.idp.server.core.oauth.response;
 
-import org.idp.server.core.basic.http.QueryParams;
-import org.idp.server.core.type.extension.JarmPayload;
-import org.idp.server.core.type.extension.ResponseModeValue;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oauth.Error;
-import org.idp.server.core.type.oidc.ResponseMode;
+import org.idp.server.basic.http.QueryParams;
+import org.idp.server.basic.type.extension.JarmPayload;
+import org.idp.server.basic.type.extension.ResponseModeValue;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oauth.Error;
+import org.idp.server.basic.type.oidc.ResponseMode;
 
 public class AuthorizationErrorResponseBuilder {
   RedirectUri redirectUri;

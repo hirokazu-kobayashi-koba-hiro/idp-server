@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.tenant;
 
 import java.util.Map;
-import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.tenant.*;
 
 class ModelConverter {

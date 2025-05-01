@@ -2,9 +2,9 @@ package org.idp.server.core.oauth.clientcredentials;
 
 import java.util.Objects;
 import org.idp.server.core.oauth.mtls.ClientCertification;
-import org.idp.server.core.type.oauth.ClientAuthenticationType;
-import org.idp.server.core.type.oauth.ClientSecret;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.ClientAuthenticationType;
+import org.idp.server.basic.type.oauth.ClientSecret;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class ClientCredentials {
   RequestedClientId requestedClientId;

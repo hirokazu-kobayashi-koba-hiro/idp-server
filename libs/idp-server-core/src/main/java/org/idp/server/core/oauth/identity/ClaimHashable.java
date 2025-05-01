@@ -1,8 +1,8 @@
 package org.idp.server.core.oauth.identity;
 
 import java.util.Arrays;
-import org.idp.server.core.basic.base64.Base64Codeable;
-import org.idp.server.core.basic.hash.MessageDigestable;
+import org.idp.server.basic.base64.Base64Codeable;
+import org.idp.server.basic.hash.MessageDigestable;
 
 /**
  * example at_hash case

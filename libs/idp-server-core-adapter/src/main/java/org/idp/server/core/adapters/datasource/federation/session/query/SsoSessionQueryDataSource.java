@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.federation.session.query;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.federation.SsoSessionIdentifier;
 import org.idp.server.core.federation.SsoSessionNotFoundException;
 import org.idp.server.core.federation.SsoSessionQueryRepository;

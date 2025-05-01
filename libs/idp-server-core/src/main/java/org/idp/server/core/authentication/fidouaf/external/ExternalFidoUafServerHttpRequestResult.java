@@ -1,7 +1,7 @@
 package org.idp.server.core.authentication.fidouaf.external;
 
 import java.util.Map;
-import org.idp.server.core.basic.http.HttpRequestResult;
+import org.idp.server.basic.http.HttpRequestResult;
 
 public class ExternalFidoUafServerHttpRequestResult {
 

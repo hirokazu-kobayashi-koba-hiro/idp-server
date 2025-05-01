@@ -1,7 +1,7 @@
 package org.idp.server.core.identity.device;
 
 import java.io.Serializable;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.notification.device.NotificationChannel;
 import org.idp.server.core.notification.device.NotificationToken;
 

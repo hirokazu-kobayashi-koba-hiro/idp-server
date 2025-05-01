@@ -5,7 +5,7 @@ import java.util.Map;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public interface ClientConfigSqlExecutor {
 

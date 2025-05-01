@@ -3,9 +3,9 @@ package org.idp.server.core.adapters.datasource.token;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.basic.crypto.AesCipher;
-import org.idp.server.core.basic.crypto.EncryptedData;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.crypto.AesCipher;
+import org.idp.server.basic.crypto.EncryptedData;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.client.Client;
@@ -22,13 +22,13 @@ import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.OAuthTokenBuilder;
 import org.idp.server.core.token.OAuthTokenIdentifier;
-import org.idp.server.core.type.extension.CreatedAt;
-import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.extension.ExpiredAt;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.IdToken;
-import org.idp.server.core.type.verifiablecredential.CNonce;
-import org.idp.server.core.type.verifiablecredential.CNonceExpiresIn;
+import org.idp.server.basic.type.extension.CreatedAt;
+import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.IdToken;
+import org.idp.server.basic.type.verifiablecredential.CNonce;
+import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;
 
 class ModelConverter {
 

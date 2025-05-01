@@ -2,10 +2,10 @@ package org.idp.server.core.identity.verification.handler;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.http.*;
-import org.idp.server.core.basic.oauth.OAuthAuthorizationConfiguration;
-import org.idp.server.core.basic.oauth.OAuthAuthorizationResolver;
-import org.idp.server.core.basic.oauth.OAuthAuthorizationResolvers;
+import org.idp.server.basic.http.*;
+import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
+import org.idp.server.basic.oauth.OAuthAuthorizationResolver;
+import org.idp.server.basic.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;
@@ -21,7 +21,7 @@ import org.idp.server.core.identity.verification.validation.IdentityVerification
 import org.idp.server.core.identity.verification.verifier.IdentityVerificationRequestVerificationResult;
 import org.idp.server.core.identity.verification.verifier.IdentityVerificationRequestVerifiers;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.oauth.AccessTokenEntity;
+import org.idp.server.basic.type.oauth.AccessTokenEntity;
 
 public class IdentityVerificationHandler {
 
@@ -139,8 +139,8 @@ public class IdentityVerificationHandler {
     if (oAuthAuthorizationConfig.exists()) {
       OAuthAuthorizationResolver resolver =
           authorizationResolvers.get(oAuthAuthorizationConfig.type());
-      AccessTokenEntity accessTokenEntity = resolver.resolve(oAuthAuthorizationConfig);
-      values.put("Authorization", "Bearer " + accessTokenEntity.value());
+      String accessToken = resolver.resolve(oAuthAuthorizationConfig);
+      values.put("Authorization", "Bearer " + accessToken);
     }
 
     return new HttpRequestHeaders(values);

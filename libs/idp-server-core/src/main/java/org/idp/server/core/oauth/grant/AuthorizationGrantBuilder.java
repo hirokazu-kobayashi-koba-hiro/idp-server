@@ -6,9 +6,9 @@ import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.grant.consent.ConsentClaims;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.oauth.RequestedClientId;
-import org.idp.server.core.type.oauth.Scopes;
+import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.Scopes;
 
 public class AuthorizationGrantBuilder {
 

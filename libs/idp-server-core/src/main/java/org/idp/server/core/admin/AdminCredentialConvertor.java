@@ -1,6 +1,6 @@
 package org.idp.server.core.admin;
 
-import org.idp.server.core.basic.http.BasicAuth;
+import org.idp.server.basic.http.BasicAuth;
 import org.idp.server.core.token.AuthorizationHeaderHandlerable;
 
 public class AdminCredentialConvertor implements AuthorizationHeaderHandlerable {

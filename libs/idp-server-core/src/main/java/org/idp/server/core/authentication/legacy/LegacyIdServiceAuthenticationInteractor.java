@@ -2,9 +2,9 @@ package org.idp.server.core.authentication.legacy;
 
 import java.util.*;
 import org.idp.server.core.authentication.*;
-import org.idp.server.core.basic.date.SystemDateTime;
-import org.idp.server.core.basic.http.*;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.date.SystemDateTime;
+import org.idp.server.basic.http.*;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.oauth.authentication.Authentication;

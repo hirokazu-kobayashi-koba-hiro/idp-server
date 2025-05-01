@@ -2,7 +2,7 @@ package org.idp.server.core.verifiablecredential.verifier;
 
 import java.security.PublicKey;
 import java.util.List;
-import org.idp.server.core.basic.jose.*;
+import org.idp.server.basic.jose.*;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.VerifiableCredentialConfiguration;
 import org.idp.server.core.token.OAuthToken;

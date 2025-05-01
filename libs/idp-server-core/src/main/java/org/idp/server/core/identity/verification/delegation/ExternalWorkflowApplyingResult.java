@@ -1,6 +1,6 @@
 package org.idp.server.core.identity.verification.delegation;
 
-import org.idp.server.core.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.identity.verification.validation.IdentityVerificationValidationResult;
 import org.idp.server.core.identity.verification.verifier.IdentityVerificationRequestVerificationResult;

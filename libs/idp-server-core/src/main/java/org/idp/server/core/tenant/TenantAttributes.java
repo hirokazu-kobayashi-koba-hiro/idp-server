@@ -3,9 +3,9 @@ package org.idp.server.core.tenant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import org.idp.server.core.basic.datasource.DatabaseType;
-import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvider;
-import org.idp.server.core.basic.dependency.protcol.DefaultAuthorizationProvider;
+import org.idp.server.basic.datasource.DatabaseType;
+import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 
 public class TenantAttributes {
   Map<String, Object> values;

@@ -1,8 +1,8 @@
 package org.idp.server.core.oauth.token;
 
 import java.util.Map;
-import org.idp.server.core.basic.base64.Base64Codeable;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.base64.Base64Codeable;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ConfigurationInvalidException;
 import org.idp.server.core.configuration.ServerConfiguration;
@@ -10,9 +10,9 @@ import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.vp.response.VerifiablePresentationBuilder;
-import org.idp.server.core.type.verifiablecredential.VerifiableCredentialContext;
-import org.idp.server.core.type.verifiablecredential.VerifiableCredentialType;
-import org.idp.server.core.type.verifiablepresentation.VpToken;
+import org.idp.server.basic.type.verifiablecredential.VerifiableCredentialContext;
+import org.idp.server.basic.type.verifiablecredential.VerifiableCredentialType;
+import org.idp.server.basic.type.verifiablepresentation.VpToken;
 
 public interface VpTokenCreatable extends Base64Codeable {
 

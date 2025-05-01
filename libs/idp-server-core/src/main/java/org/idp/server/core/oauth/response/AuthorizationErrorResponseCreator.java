@@ -2,10 +2,10 @@ package org.idp.server.core.oauth.response;
 
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
-import org.idp.server.core.type.extension.JarmPayload;
-import org.idp.server.core.type.extension.ResponseModeValue;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.ResponseMode;
+import org.idp.server.basic.type.extension.JarmPayload;
+import org.idp.server.basic.type.extension.ResponseModeValue;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.ResponseMode;
 
 public class AuthorizationErrorResponseCreator
     implements RedirectUriDecidable, ResponseModeDecidable, JarmCreatable {

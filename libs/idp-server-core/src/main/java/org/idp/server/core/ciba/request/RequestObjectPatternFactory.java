@@ -1,16 +1,16 @@
 package org.idp.server.core.ciba.request;
 
 import java.util.Set;
-import org.idp.server.core.basic.jose.JoseContext;
-import org.idp.server.core.basic.jose.JsonWebTokenClaims;
+import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.ciba.CibaRequestObjectParameters;
 import org.idp.server.core.ciba.CibaRequestParameters;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.type.ciba.*;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.*;
+import org.idp.server.basic.type.ciba.*;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.*;
 
 /**
  * RequestObjectPatternFactory

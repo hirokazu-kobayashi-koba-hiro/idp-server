@@ -3,8 +3,8 @@ package org.idp.server.core.authentication.fidouaf.external;
 import java.util.Map;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.fidouaf.*;
-import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.basic.oauth.OAuthAuthorizationConfiguration;
+import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.core.tenant.Tenant;
 
 public class ExternalFidoUafServerExecutor implements FidoUafExecutor {

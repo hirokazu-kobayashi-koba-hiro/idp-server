@@ -3,7 +3,7 @@ package org.idp.server.core.identity.address;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class Address implements JsonReadable, Serializable {
 

@@ -1,7 +1,7 @@
 package org.idp.server.core.federation.oidc;
 
 import java.util.UUID;
-import org.idp.server.core.basic.http.QueryParams;
+import org.idp.server.basic.http.QueryParams;
 import org.idp.server.core.federation.FederationType;
 import org.idp.server.core.federation.SsoProvider;
 import org.idp.server.core.federation.SsoState;

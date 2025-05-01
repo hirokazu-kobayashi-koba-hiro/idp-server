@@ -4,8 +4,8 @@ import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.type.OAuthRequestKey;
-import org.idp.server.core.type.oidc.Prompts;
+import org.idp.server.basic.type.OAuthRequestKey;
+import org.idp.server.basic.type.oidc.Prompts;
 
 /**
  * 3.1.2.2. Authentication Request Validation

@@ -2,7 +2,7 @@ package org.idp.server.core.oauth.io;
 
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.extension.OAuthDenyReason;
+import org.idp.server.basic.type.extension.OAuthDenyReason;
 
 public class OAuthDenyRequest {
   Tenant tenant;

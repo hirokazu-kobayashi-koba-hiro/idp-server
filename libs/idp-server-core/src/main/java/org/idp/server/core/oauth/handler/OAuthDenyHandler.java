@@ -12,7 +12,7 @@ import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.*;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.oauth.*;
+import org.idp.server.basic.type.oauth.*;
 
 public class OAuthDenyHandler {
 

@@ -2,8 +2,8 @@ package org.idp.server.core.federation;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.type.ArrayValueMap;
-import org.idp.server.core.type.oauth.*;
+import org.idp.server.basic.type.ArrayValueMap;
+import org.idp.server.basic.type.oauth.*;
 
 /** FederationCallbackParameters */
 public class FederationCallbackParameters {

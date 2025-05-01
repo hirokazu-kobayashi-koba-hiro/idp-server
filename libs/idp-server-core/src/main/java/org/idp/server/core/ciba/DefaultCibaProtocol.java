@@ -2,8 +2,8 @@ package org.idp.server.core.ciba;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvider;
-import org.idp.server.core.basic.dependency.protcol.DefaultAuthorizationProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.core.ciba.clientnotification.NotificationClient;
 import org.idp.server.core.ciba.handler.CibaAuthorizeHandler;
 import org.idp.server.core.ciba.handler.CibaDenyHandler;

@@ -2,9 +2,9 @@ package org.idp.server.core.oauth.token;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import org.idp.server.core.type.extension.CreatedAt;
-import org.idp.server.core.type.extension.ExpiredAt;
-import org.idp.server.core.type.oauth.RefreshTokenEntity;
+import org.idp.server.basic.type.extension.CreatedAt;
+import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 
 public class RefreshToken {
   RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity();

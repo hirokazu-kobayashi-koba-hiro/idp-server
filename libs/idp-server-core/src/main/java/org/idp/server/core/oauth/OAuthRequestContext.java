@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.basic.date.SystemDateTime;
-import org.idp.server.core.basic.jose.JoseContext;
+import org.idp.server.basic.date.SystemDateTime;
+import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.grantmangment.AuthorizationGranted;
@@ -25,11 +25,11 @@ import org.idp.server.core.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.oauth.response.ResponseModeDecidable;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.OAuthRequestKey;
-import org.idp.server.core.type.extension.RegisteredRedirectUris;
-import org.idp.server.core.type.extension.ResponseModeValue;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.ResponseMode;
+import org.idp.server.basic.type.OAuthRequestKey;
+import org.idp.server.basic.type.extension.RegisteredRedirectUris;
+import org.idp.server.basic.type.extension.ResponseModeValue;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.ResponseMode;
 
 /** OAuthRequestContext */
 public class OAuthRequestContext implements ResponseModeDecidable {

@@ -1,17 +1,17 @@
 package org.idp.server.core.clientauthenticator;
 
-import org.idp.server.core.basic.x509.X509CertInvalidException;
-import org.idp.server.core.basic.x509.X509Certification;
+import org.idp.server.basic.x509.X509CertInvalidException;
+import org.idp.server.basic.x509.X509Certification;
 import org.idp.server.core.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.oauth.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.oauth.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.mtls.ClientCertification;
-import org.idp.server.core.type.mtls.ClientCert;
-import org.idp.server.core.type.oauth.ClientAuthenticationType;
-import org.idp.server.core.type.oauth.ClientSecret;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.mtls.ClientCert;
+import org.idp.server.basic.type.oauth.ClientAuthenticationType;
+import org.idp.server.basic.type.oauth.ClientSecret;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 class TlsClientAuthAuthenticator implements ClientAuthenticator {
 

@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.authentication.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.authentication.exception.AuthenticationConfigurationNotFoundException;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.tenant.Tenant;
 
 public class AuthenticationConfigurationQueryDataSource

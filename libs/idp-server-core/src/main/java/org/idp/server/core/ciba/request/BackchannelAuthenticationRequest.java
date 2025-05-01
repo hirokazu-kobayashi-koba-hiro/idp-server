@@ -5,13 +5,13 @@ import org.idp.server.core.ciba.user.UserHint;
 import org.idp.server.core.ciba.user.UserHintType;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.ciba.*;
-import org.idp.server.core.type.oauth.RequestedClientId;
-import org.idp.server.core.type.oauth.Scopes;
-import org.idp.server.core.type.oidc.AcrValues;
-import org.idp.server.core.type.oidc.IdTokenHint;
-import org.idp.server.core.type.oidc.LoginHint;
-import org.idp.server.core.type.oidc.RequestObject;
+import org.idp.server.basic.type.ciba.*;
+import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.Scopes;
+import org.idp.server.basic.type.oidc.AcrValues;
+import org.idp.server.basic.type.oidc.IdTokenHint;
+import org.idp.server.basic.type.oidc.LoginHint;
+import org.idp.server.basic.type.oidc.RequestObject;
 
 public class BackchannelAuthenticationRequest {
   BackchannelAuthenticationRequestIdentifier identifier;

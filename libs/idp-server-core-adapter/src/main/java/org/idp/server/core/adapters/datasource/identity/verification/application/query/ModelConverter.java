@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.application.*;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationDetails;
@@ -12,7 +12,7 @@ import org.idp.server.core.identity.verification.delegation.ExternalWorkflowAppl
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDelegation;
 import org.idp.server.core.identity.verification.trustframework.TrustFramework;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class ModelConverter {
 

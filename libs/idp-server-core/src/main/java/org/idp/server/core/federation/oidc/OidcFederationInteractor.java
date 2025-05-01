@@ -1,8 +1,8 @@
 package org.idp.server.core.federation.oidc;
 
-import org.idp.server.core.basic.jose.JoseContext;
-import org.idp.server.core.basic.jose.JoseHandler;
-import org.idp.server.core.basic.jose.JoseInvalidException;
+import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.jose.JoseHandler;
+import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.*;
 import org.idp.server.core.identity.User;

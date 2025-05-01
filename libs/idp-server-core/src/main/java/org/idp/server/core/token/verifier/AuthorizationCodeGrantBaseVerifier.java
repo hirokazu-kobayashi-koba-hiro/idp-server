@@ -5,7 +5,7 @@ import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.token.TokenRequestContext;
 import org.idp.server.core.token.exception.TokenBadRequestException;
-import org.idp.server.core.type.oauth.GrantType;
+import org.idp.server.basic.type.oauth.GrantType;
 
 public class AuthorizationCodeGrantBaseVerifier implements AuthorizationCodeGrantVerifierInterface {
 

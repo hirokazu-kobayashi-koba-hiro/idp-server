@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot.restapi;
 import jakarta.servlet.http.HttpServletRequest;
 import org.idp.server.core.IdpServerApplication;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.security.RequestAttributes;
+import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.userinfo.UserinfoApi;
 import org.idp.server.core.userinfo.handler.io.UserinfoRequestResponse;
 import org.springframework.http.HttpStatus;

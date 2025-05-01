@@ -1,6 +1,6 @@
 package org.idp.server.core.notification.exception;
 
-import org.idp.server.core.type.exception.InternalServerErrorException;
+import org.idp.server.basic.exception.InternalServerErrorException;
 
 public class EmailSendingInternalServerErrorException extends InternalServerErrorException {
   public EmailSendingInternalServerErrorException(String message) {

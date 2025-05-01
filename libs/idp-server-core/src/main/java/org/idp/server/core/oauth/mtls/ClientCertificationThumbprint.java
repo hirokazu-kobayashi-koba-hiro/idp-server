@@ -1,8 +1,8 @@
 package org.idp.server.core.oauth.mtls;
 
 import java.util.Objects;
-import org.idp.server.core.basic.base64.Base64Codeable;
-import org.idp.server.core.basic.hash.MessageDigestable;
+import org.idp.server.basic.base64.Base64Codeable;
+import org.idp.server.basic.hash.MessageDigestable;
 
 /**
  * certificate-thumbprint

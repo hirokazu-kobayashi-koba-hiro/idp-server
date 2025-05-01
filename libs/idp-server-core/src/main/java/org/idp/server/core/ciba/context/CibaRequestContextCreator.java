@@ -1,17 +1,17 @@
 package org.idp.server.core.ciba.context;
 
 import java.util.Set;
-import org.idp.server.core.basic.jose.JoseContext;
-import org.idp.server.core.basic.jose.JsonWebTokenClaims;
+import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.ciba.CibaRequestContext;
 import org.idp.server.core.ciba.CibaRequestParameters;
 import org.idp.server.core.ciba.CibaRequestPattern;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.type.OAuthRequestKey;
-import org.idp.server.core.type.mtls.ClientCert;
-import org.idp.server.core.type.oauth.ClientSecretBasic;
+import org.idp.server.basic.type.OAuthRequestKey;
+import org.idp.server.basic.type.mtls.ClientCert;
+import org.idp.server.basic.type.oauth.ClientSecretBasic;
 
 public interface CibaRequestContextCreator {
 

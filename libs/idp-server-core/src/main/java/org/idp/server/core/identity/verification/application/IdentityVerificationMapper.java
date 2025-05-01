@@ -1,8 +1,8 @@
 package org.idp.server.core.identity.verification.application;
 
 import java.util.*;
-import org.idp.server.core.basic.json.schema.JsonSchemaDefinition;
-import org.idp.server.core.basic.json.schema.JsonSchemaProperty;
+import org.idp.server.basic.json.schema.JsonSchemaDefinition;
+import org.idp.server.basic.json.schema.JsonSchemaProperty;
 
 public class IdentityVerificationMapper {
 

@@ -3,7 +3,7 @@ package org.idp.server.core.oauth.vp.response;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.basic.vc.Credential;
+import org.idp.server.basic.vc.Credential;
 
 public class VerifiablePresentationBuilder {
   Map<String, Object> values = new HashMap<>();

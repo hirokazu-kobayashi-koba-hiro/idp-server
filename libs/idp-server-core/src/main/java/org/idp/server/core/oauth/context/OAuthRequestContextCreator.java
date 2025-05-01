@@ -1,8 +1,8 @@
 package org.idp.server.core.oauth.context;
 
 import java.util.Set;
-import org.idp.server.core.basic.jose.JoseContext;
-import org.idp.server.core.basic.jose.JsonWebTokenClaims;
+import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.AuthorizationProfile;
@@ -13,7 +13,7 @@ import org.idp.server.core.oauth.factory.FapiAdvanceRequestObjectPatternFactory;
 import org.idp.server.core.oauth.factory.RequestObjectPatternFactory;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.OAuthRequestKey;
+import org.idp.server.basic.type.OAuthRequestKey;
 
 /** OAuthRequestContextService */
 public interface OAuthRequestContextCreator {

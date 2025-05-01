@@ -5,9 +5,9 @@ import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.token.VpTokenCreatable;
-import org.idp.server.core.type.extension.JarmPayload;
-import org.idp.server.core.type.extension.ResponseModeValue;
-import org.idp.server.core.type.verifiablepresentation.VpToken;
+import org.idp.server.basic.type.extension.JarmPayload;
+import org.idp.server.basic.type.extension.ResponseModeValue;
+import org.idp.server.basic.type.verifiablepresentation.VpToken;
 
 public class AuthorizationResponseVpTokenCreator
     implements AuthorizationResponseCreator, VpTokenCreatable, RedirectUriDecidable, JarmCreatable {

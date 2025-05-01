@@ -3,14 +3,14 @@ package org.idp.server.core.identity;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
-import org.idp.server.core.basic.date.SystemDateTime;
-import org.idp.server.core.basic.json.JsonNodeWrapper;
-import org.idp.server.core.basic.json.JsonReadable;
-import org.idp.server.core.basic.vc.Credential;
+import org.idp.server.basic.date.SystemDateTime;
+import org.idp.server.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.basic.vc.Credential;
 import org.idp.server.core.identity.address.Address;
 import org.idp.server.core.identity.device.AuthenticationDevice;
 import org.idp.server.core.identity.device.AuthenticationDevices;
-import org.idp.server.core.type.extension.CustomProperties;
+import org.idp.server.basic.type.extension.CustomProperties;
 
 public class User implements JsonReadable, Serializable {
   String sub;

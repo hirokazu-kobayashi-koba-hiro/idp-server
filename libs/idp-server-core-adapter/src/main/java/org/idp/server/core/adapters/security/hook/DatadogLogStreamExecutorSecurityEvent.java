@@ -8,14 +8,14 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.http.*;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.http.*;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventHookExecutor;
 import org.idp.server.core.security.hook.*;
 import org.idp.server.core.security.hook.webhook.WebHookConfiguration;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.exception.InvalidConfigurationException;
+import org.idp.server.basic.exception.InvalidConfigurationException;
 
 public class DatadogLogStreamExecutorSecurityEvent implements SecurityEventHookExecutor {
 

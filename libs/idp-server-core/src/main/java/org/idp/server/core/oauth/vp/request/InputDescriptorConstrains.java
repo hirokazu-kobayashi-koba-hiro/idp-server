@@ -2,7 +2,7 @@ package org.idp.server.core.oauth.vp.request;
 
 import java.util.Iterator;
 import java.util.List;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class InputDescriptorConstrains
     implements Iterable<InputDescriptorConstrainsFields>, JsonReadable {

@@ -1,12 +1,12 @@
 package org.idp.server.core.oauth.verifier;
 
-import org.idp.server.core.basic.http.InvalidUriException;
-import org.idp.server.core.basic.http.UriWrapper;
+import org.idp.server.basic.http.InvalidUriException;
+import org.idp.server.basic.http.UriWrapper;
 import org.idp.server.core.oauth.OAuthRequestContext;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.verifier.base.AuthorizationRequestVerifier;
 import org.idp.server.core.oauth.verifier.base.OAuthRequestBaseVerifier;
-import org.idp.server.core.type.extension.RegisteredRedirectUris;
+import org.idp.server.basic.type.extension.RegisteredRedirectUris;
 
 public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
 

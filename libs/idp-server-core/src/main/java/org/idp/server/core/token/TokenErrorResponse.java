@@ -1,8 +1,8 @@
 package org.idp.server.core.token;
 
-import org.idp.server.core.type.oauth.Error;
-import org.idp.server.core.type.oauth.ErrorDescription;
-import org.idp.server.core.type.oauth.ErrorResponseCreatable;
+import org.idp.server.basic.type.oauth.Error;
+import org.idp.server.basic.type.oauth.ErrorDescription;
+import org.idp.server.basic.type.oauth.ErrorResponseCreatable;
 
 public class TokenErrorResponse implements ErrorResponseCreatable {
   Error error;

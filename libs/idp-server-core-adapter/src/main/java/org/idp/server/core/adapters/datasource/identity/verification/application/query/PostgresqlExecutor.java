@@ -3,7 +3,7 @@ package org.idp.server.core.adapters.datasource.identity.verification.applicatio
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.basic.datasource.SqlExecutor;
+import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationQueries;

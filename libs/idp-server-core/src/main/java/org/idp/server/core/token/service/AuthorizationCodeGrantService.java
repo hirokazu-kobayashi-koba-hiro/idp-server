@@ -22,10 +22,10 @@ import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.TokenRequestCodeGrantValidator;
 import org.idp.server.core.token.verifier.AuthorizationCodeGrantVerifier;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.IdToken;
-import org.idp.server.core.type.verifiablecredential.CNonce;
-import org.idp.server.core.type.verifiablecredential.CNonceExpiresIn;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.IdToken;
+import org.idp.server.basic.type.verifiablecredential.CNonce;
+import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;
 
 /**
  * 4.1.3. Access Token Request authorization code handling

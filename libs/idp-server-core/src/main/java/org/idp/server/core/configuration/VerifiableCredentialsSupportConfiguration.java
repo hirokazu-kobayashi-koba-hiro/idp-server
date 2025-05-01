@@ -3,7 +3,7 @@ package org.idp.server.core.configuration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class VerifiableCredentialsSupportConfiguration implements JsonReadable {
   String format;

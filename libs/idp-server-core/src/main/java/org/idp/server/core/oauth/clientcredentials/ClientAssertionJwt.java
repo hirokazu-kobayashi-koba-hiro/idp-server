@@ -1,8 +1,8 @@
 package org.idp.server.core.oauth.clientcredentials;
 
 import java.util.Objects;
-import org.idp.server.core.basic.jose.JsonWebSignature;
-import org.idp.server.core.basic.jose.JsonWebTokenClaims;
+import org.idp.server.basic.jose.JsonWebSignature;
+import org.idp.server.basic.jose.JsonWebTokenClaims;
 
 public class ClientAssertionJwt {
   JsonWebSignature jsonWebSignature;

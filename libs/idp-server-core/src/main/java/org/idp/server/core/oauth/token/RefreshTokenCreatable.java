@@ -1,13 +1,13 @@
 package org.idp.server.core.oauth.token;
 
 import java.time.LocalDateTime;
-import org.idp.server.core.basic.date.SystemDateTime;
-import org.idp.server.core.basic.random.RandomStringGenerator;
+import org.idp.server.basic.date.SystemDateTime;
+import org.idp.server.basic.random.RandomStringGenerator;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.type.extension.CreatedAt;
-import org.idp.server.core.type.extension.ExpiredAt;
-import org.idp.server.core.type.oauth.RefreshTokenEntity;
+import org.idp.server.basic.type.extension.CreatedAt;
+import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 
 public interface RefreshTokenCreatable {
 

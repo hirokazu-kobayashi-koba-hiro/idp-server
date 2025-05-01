@@ -1,18 +1,18 @@
 package org.idp.server.core.oauth.request;
 
-import static org.idp.server.core.type.OAuthRequestKey.*;
+import static org.idp.server.basic.type.OAuthRequestKey.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oauth.OAuthRequestPattern;
-import org.idp.server.core.type.ArrayValueMap;
-import org.idp.server.core.type.OAuthRequestKey;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.*;
-import org.idp.server.core.type.pkce.CodeChallenge;
-import org.idp.server.core.type.pkce.CodeChallengeMethod;
-import org.idp.server.core.type.rar.AuthorizationDetailsEntity;
+import org.idp.server.basic.type.ArrayValueMap;
+import org.idp.server.basic.type.OAuthRequestKey;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.*;
+import org.idp.server.basic.type.pkce.CodeChallenge;
+import org.idp.server.basic.type.pkce.CodeChallengeMethod;
+import org.idp.server.basic.type.rar.AuthorizationDetailsEntity;
 
 /** OAuthRequestParameters */
 public class OAuthRequestParameters {

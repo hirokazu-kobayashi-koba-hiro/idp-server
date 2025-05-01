@@ -3,7 +3,7 @@ package org.idp.server.core.configuration.handler;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ClientConfigurationRepository;
 import org.idp.server.core.configuration.ClientConfigurationResponseCreator;
@@ -12,7 +12,7 @@ import org.idp.server.core.configuration.handler.io.ClientConfigurationManagemen
 import org.idp.server.core.configuration.handler.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.configuration.handler.io.ClientConfigurationManagementStatus;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class ClientConfigurationHandler {
 

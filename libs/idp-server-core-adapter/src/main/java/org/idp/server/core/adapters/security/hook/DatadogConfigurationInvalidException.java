@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.security.hook;
 
-import org.idp.server.core.type.exception.InvalidConfigurationException;
+import org.idp.server.basic.exception.InvalidConfigurationException;
 
 public class DatadogConfigurationInvalidException extends InvalidConfigurationException {
   public DatadogConfigurationInvalidException(String message) {

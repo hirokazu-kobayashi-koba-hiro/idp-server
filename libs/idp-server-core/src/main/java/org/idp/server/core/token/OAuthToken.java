@@ -10,10 +10,10 @@ import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.token.AccessToken;
 import org.idp.server.core.oauth.token.RefreshToken;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.IdToken;
-import org.idp.server.core.type.verifiablecredential.CNonce;
-import org.idp.server.core.type.verifiablecredential.CNonceExpiresIn;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.IdToken;
+import org.idp.server.basic.type.verifiablecredential.CNonce;
+import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;
 
 public class OAuthToken {
   OAuthTokenIdentifier identifier;

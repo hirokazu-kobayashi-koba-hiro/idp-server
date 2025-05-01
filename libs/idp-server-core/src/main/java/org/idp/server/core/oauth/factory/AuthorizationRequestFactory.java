@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import org.idp.server.core.basic.jose.JoseContext;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.AuthorizationProfile;
@@ -15,8 +15,8 @@ import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
-import org.idp.server.core.type.oidc.ClaimsValue;
-import org.idp.server.core.type.rar.AuthorizationDetailsEntity;
+import org.idp.server.basic.type.oidc.ClaimsValue;
+import org.idp.server.basic.type.rar.AuthorizationDetailsEntity;
 
 /** AuthorizationRequestFactory */
 public interface AuthorizationRequestFactory {

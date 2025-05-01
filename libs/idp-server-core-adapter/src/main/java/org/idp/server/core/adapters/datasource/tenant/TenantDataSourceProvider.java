@@ -1,7 +1,7 @@
 package org.idp.server.core.adapters.datasource.tenant;
 
-import org.idp.server.core.basic.dependency.ApplicationComponentDependencyContainer;
-import org.idp.server.core.basic.dependency.ApplicationComponentProvider;
+import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.tenant.TenantRepository;
 
 public class TenantDataSourceProvider implements ApplicationComponentProvider<TenantRepository> {

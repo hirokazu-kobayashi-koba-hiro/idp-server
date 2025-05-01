@@ -9,8 +9,8 @@ import org.idp.server.core.oauth.io.OAuthDenyResponse;
 import org.idp.server.core.oauth.io.OAuthDenyStatus;
 import org.idp.server.core.oauth.response.AuthorizationErrorResponse;
 import org.idp.server.core.oauth.response.AuthorizationErrorResponseCreator;
-import org.idp.server.core.type.oauth.Error;
-import org.idp.server.core.type.oauth.ErrorDescription;
+import org.idp.server.basic.type.oauth.Error;
+import org.idp.server.basic.type.oauth.ErrorDescription;
 
 public class OAuthDenyErrorHandler {
 

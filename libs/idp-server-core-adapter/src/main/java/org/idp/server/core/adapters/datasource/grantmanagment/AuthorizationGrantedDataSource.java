@@ -1,12 +1,12 @@
 package org.idp.server.core.adapters.datasource.grantmanagment;
 
 import java.util.*;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.grantmangment.AuthorizationGranted;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepository {
 

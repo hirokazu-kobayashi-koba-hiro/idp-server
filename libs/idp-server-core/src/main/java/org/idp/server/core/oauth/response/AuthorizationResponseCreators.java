@@ -1,13 +1,13 @@
 package org.idp.server.core.oauth.response;
 
-import static org.idp.server.core.type.oauth.ResponseType.*;
-import static org.idp.server.core.type.oauth.ResponseType.none;
+import static org.idp.server.basic.type.oauth.ResponseType.*;
+import static org.idp.server.basic.type.oauth.ResponseType.none;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.type.exception.UnSupportedException;
-import org.idp.server.core.type.oauth.ResponseType;
+import org.idp.server.basic.exception.UnSupportedException;
+import org.idp.server.basic.type.oauth.ResponseType;
 
 public class AuthorizationResponseCreators {
   Map<ResponseType, AuthorizationResponseCreator> values;

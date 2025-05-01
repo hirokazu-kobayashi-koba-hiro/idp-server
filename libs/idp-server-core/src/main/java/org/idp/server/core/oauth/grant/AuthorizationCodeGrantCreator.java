@@ -3,8 +3,8 @@ package org.idp.server.core.oauth.grant;
 import org.idp.server.core.oauth.OAuthAuthorizeContext;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oauth.response.AuthorizationResponse;
-import org.idp.server.core.type.extension.ExpiredAt;
-import org.idp.server.core.type.oauth.*;
+import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.oauth.*;
 
 public class AuthorizationCodeGrantCreator {
 

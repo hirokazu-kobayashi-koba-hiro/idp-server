@@ -1,8 +1,8 @@
 package org.idp.server.core.oauth.factory;
 
 import java.util.Set;
-import org.idp.server.core.basic.jose.JoseContext;
-import org.idp.server.core.basic.jose.JsonWebTokenClaims;
+import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.AuthorizationProfile;
@@ -10,11 +10,11 @@ import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.oauth.request.RequestObjectParameters;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.*;
-import org.idp.server.core.type.pkce.CodeChallenge;
-import org.idp.server.core.type.pkce.CodeChallengeMethod;
-import org.idp.server.core.type.rar.AuthorizationDetailsEntity;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.*;
+import org.idp.server.basic.type.pkce.CodeChallenge;
+import org.idp.server.basic.type.pkce.CodeChallengeMethod;
+import org.idp.server.basic.type.rar.AuthorizationDetailsEntity;
 
 /**
  * shall only use the parameters included in the signed request object passed via the request or

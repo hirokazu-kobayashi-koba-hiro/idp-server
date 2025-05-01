@@ -1,9 +1,9 @@
 package org.idp.server.core.oauth.context;
 
 import java.util.Set;
-import org.idp.server.core.basic.jose.JoseContext;
-import org.idp.server.core.basic.jose.JoseHandler;
-import org.idp.server.core.basic.jose.JoseInvalidException;
+import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.jose.JoseHandler;
+import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.AuthorizationProfile;
@@ -15,7 +15,7 @@ import org.idp.server.core.oauth.gateway.RequestObjectGateway;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.oidc.RequestObject;
+import org.idp.server.basic.type.oidc.RequestObject;
 
 /** RequestUriPatternContextService */
 public class RequestUriPatternContextCreator implements OAuthRequestContextCreator {

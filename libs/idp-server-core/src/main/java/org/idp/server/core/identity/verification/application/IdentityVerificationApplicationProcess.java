@@ -2,7 +2,7 @@ package org.idp.server.core.identity.verification.application;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 
 public class IdentityVerificationApplicationProcess implements JsonReadable {

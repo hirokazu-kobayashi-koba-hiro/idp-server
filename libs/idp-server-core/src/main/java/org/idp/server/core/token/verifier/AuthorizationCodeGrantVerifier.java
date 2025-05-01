@@ -6,7 +6,7 @@ import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.token.TokenRequestContext;
-import org.idp.server.core.type.exception.UnSupportedException;
+import org.idp.server.basic.exception.UnSupportedException;
 
 public class AuthorizationCodeGrantVerifier {
   TokenRequestContext tokenRequestContext;

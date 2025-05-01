@@ -13,8 +13,8 @@ import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.extension.Pairs;
-import org.idp.server.core.type.security.RequestAttributes;
+import org.idp.server.basic.type.extension.Pairs;
+import org.idp.server.basic.type.security.RequestAttributes;
 
 public interface OAuthFlowApi {
   Pairs<Tenant, OAuthRequestResponse> request(

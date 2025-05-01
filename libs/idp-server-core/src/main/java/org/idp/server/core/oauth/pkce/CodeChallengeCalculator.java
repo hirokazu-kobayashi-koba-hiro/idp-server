@@ -1,9 +1,9 @@
 package org.idp.server.core.oauth.pkce;
 
-import org.idp.server.core.basic.base64.Base64Codeable;
-import org.idp.server.core.basic.hash.MessageDigestable;
-import org.idp.server.core.type.pkce.CodeChallenge;
-import org.idp.server.core.type.pkce.CodeVerifier;
+import org.idp.server.basic.base64.Base64Codeable;
+import org.idp.server.basic.hash.MessageDigestable;
+import org.idp.server.basic.type.pkce.CodeChallenge;
+import org.idp.server.basic.type.pkce.CodeVerifier;
 
 public class CodeChallengeCalculator implements MessageDigestable, Base64Codeable {
 

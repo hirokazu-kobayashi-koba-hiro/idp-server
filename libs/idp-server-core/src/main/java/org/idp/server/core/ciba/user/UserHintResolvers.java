@@ -2,7 +2,7 @@ package org.idp.server.core.ciba.user;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.type.exception.UnSupportedException;
+import org.idp.server.basic.exception.UnSupportedException;
 
 public class UserHintResolvers {
 

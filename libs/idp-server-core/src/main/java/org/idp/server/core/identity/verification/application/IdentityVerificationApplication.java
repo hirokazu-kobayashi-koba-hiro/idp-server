@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.idp.server.core.basic.date.SystemDateTime;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;
@@ -19,7 +19,7 @@ import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDele
 import org.idp.server.core.identity.verification.trustframework.TrustFramework;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class IdentityVerificationApplication {
 

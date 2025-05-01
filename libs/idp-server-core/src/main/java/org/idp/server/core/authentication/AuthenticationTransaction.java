@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.core.basic.date.SystemDateTime;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.core.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.identity.User;
@@ -13,9 +13,9 @@ import org.idp.server.core.oauth.io.OAuthRequestResponse;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.AuthorizationFlow;
-import org.idp.server.core.type.oauth.ExpiresIn;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.AuthorizationFlow;
+import org.idp.server.basic.type.oauth.ExpiresIn;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class AuthenticationTransaction {
   AuthorizationIdentifier identifier;

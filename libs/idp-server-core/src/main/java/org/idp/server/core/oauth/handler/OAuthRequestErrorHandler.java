@@ -10,8 +10,8 @@ import org.idp.server.core.oauth.io.OAuthRequestResponse;
 import org.idp.server.core.oauth.io.OAuthRequestStatus;
 import org.idp.server.core.oauth.response.AuthorizationErrorResponse;
 import org.idp.server.core.oauth.response.AuthorizationErrorResponseCreator;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oauth.Error;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oauth.Error;
 
 public class OAuthRequestErrorHandler {
 

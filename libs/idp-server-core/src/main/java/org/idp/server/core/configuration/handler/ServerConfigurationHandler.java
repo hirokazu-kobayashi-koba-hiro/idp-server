@@ -1,7 +1,7 @@
 package org.idp.server.core.configuration.handler;
 
 import java.util.UUID;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.tenant.Tenant;

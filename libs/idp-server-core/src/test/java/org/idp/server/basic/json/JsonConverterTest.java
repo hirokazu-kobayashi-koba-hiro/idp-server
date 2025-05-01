@@ -1,7 +1,7 @@
 package org.idp.server.basic.json;
 
 import java.util.List;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.junit.jupiter.api.Assertions;

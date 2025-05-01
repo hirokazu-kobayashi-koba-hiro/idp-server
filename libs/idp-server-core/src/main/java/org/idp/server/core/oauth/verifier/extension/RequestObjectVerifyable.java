@@ -1,9 +1,9 @@
 package org.idp.server.core.oauth.verifier.extension;
 
 import java.util.Date;
-import org.idp.server.core.basic.date.SystemDateTime;
-import org.idp.server.core.basic.jose.JoseContext;
-import org.idp.server.core.basic.jose.JsonWebTokenClaims;
+import org.idp.server.basic.date.SystemDateTime;
+import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.exception.RequestObjectInvalidException;

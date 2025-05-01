@@ -2,7 +2,7 @@ package org.idp.server.core.oauth.grant.consent;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class ConsentClaims implements JsonReadable {
 

@@ -3,11 +3,11 @@ package org.idp.server.core.oauth.token;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
-import org.idp.server.core.basic.date.SystemDateTime;
-import org.idp.server.core.basic.jose.JoseInvalidException;
-import org.idp.server.core.basic.jose.JsonWebKeyInvalidException;
-import org.idp.server.core.basic.jose.JsonWebSignature;
-import org.idp.server.core.basic.jose.JsonWebSignatureFactory;
+import org.idp.server.basic.date.SystemDateTime;
+import org.idp.server.basic.jose.JoseInvalidException;
+import org.idp.server.basic.jose.JsonWebKeyInvalidException;
+import org.idp.server.basic.jose.JsonWebSignature;
+import org.idp.server.basic.jose.JsonWebSignatureFactory;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ConfigurationInvalidException;
 import org.idp.server.core.configuration.ServerConfiguration;
@@ -16,11 +16,11 @@ import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.mtls.ClientCertification;
 import org.idp.server.core.oauth.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oauth.mtls.ClientCertificationThumbprintCalculator;
-import org.idp.server.core.type.extension.CreatedAt;
-import org.idp.server.core.type.extension.ExpiredAt;
-import org.idp.server.core.type.oauth.AccessTokenEntity;
-import org.idp.server.core.type.oauth.ExpiresIn;
-import org.idp.server.core.type.oauth.TokenType;
+import org.idp.server.basic.type.extension.CreatedAt;
+import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.oauth.AccessTokenEntity;
+import org.idp.server.basic.type.oauth.ExpiresIn;
+import org.idp.server.basic.type.oauth.TokenType;
 
 public interface AccessTokenCreatable {
 

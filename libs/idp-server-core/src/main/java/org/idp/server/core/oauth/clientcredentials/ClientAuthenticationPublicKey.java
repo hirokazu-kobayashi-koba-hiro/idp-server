@@ -1,8 +1,8 @@
 package org.idp.server.core.oauth.clientcredentials;
 
 import java.util.Objects;
-import org.idp.server.core.basic.jose.JsonWebKey;
-import org.idp.server.core.basic.jose.JsonWebKeyType;
+import org.idp.server.basic.jose.JsonWebKey;
+import org.idp.server.basic.jose.JsonWebKeyType;
 
 public class ClientAuthenticationPublicKey {
 

@@ -3,11 +3,11 @@ package org.idp.server.core.oauth;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
-import org.idp.server.core.basic.date.SystemDateTime;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.type.oidc.MaxAge;
+import org.idp.server.basic.type.oidc.MaxAge;
 
 public class OAuthSession implements Serializable {
   OAuthSessionKey oAuthSessionKey;

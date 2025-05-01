@@ -2,8 +2,8 @@ package org.idp.server.core.adapters.datasource.tenant;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.basic.datasource.DatabaseType;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.datasource.DatabaseType;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.tenant.*;
 
 public class TenantDataSource implements TenantRepository {

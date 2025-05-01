@@ -1,7 +1,7 @@
 package org.idp.server.core;
 
 import org.idp.server.core.admin.ServerManagementApi;
-import org.idp.server.core.basic.datasource.Transaction;
+import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.configuration.handler.ServerConfigurationHandler;

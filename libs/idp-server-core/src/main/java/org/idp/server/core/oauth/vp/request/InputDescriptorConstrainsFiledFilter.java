@@ -1,6 +1,6 @@
 package org.idp.server.core.oauth.vp.request;
 
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class InputDescriptorConstrainsFiledFilter implements JsonReadable {
   String type;

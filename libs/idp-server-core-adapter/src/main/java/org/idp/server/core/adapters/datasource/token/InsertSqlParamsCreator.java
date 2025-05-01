@@ -2,10 +2,10 @@ package org.idp.server.core.adapters.datasource.token;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.basic.crypto.AesCipher;
-import org.idp.server.core.basic.crypto.EncryptedData;
-import org.idp.server.core.basic.crypto.HmacHasher;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.crypto.AesCipher;
+import org.idp.server.basic.crypto.EncryptedData;
+import org.idp.server.basic.crypto.HmacHasher;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.token.OAuthToken;
 

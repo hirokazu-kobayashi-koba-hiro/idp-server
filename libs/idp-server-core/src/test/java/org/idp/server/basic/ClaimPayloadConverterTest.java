@@ -1,6 +1,6 @@
 package org.idp.server.basic;
 
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

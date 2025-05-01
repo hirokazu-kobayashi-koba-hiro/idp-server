@@ -1,7 +1,7 @@
 package org.idp.server.core.adapters.datasource.configuration.server;
 
 import java.util.Map;
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.configuration.ServerConfiguration;
 
 class ModelConverter {

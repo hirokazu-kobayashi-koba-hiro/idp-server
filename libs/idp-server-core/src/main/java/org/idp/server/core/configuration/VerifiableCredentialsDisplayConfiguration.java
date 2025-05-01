@@ -2,7 +2,7 @@ package org.idp.server.core.configuration;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class VerifiableCredentialsDisplayConfiguration implements JsonReadable {
   String name;

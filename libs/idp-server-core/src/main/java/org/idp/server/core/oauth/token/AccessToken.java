@@ -9,10 +9,10 @@ import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.extension.CreatedAt;
-import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.extension.ExpiredAt;
-import org.idp.server.core.type.oauth.*;
+import org.idp.server.basic.type.extension.CreatedAt;
+import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.oauth.*;
 
 public class AccessToken {
   TenantIdentifier tenantIdentifier;

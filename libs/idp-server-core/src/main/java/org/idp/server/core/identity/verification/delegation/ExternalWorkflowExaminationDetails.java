@@ -1,7 +1,7 @@
 package org.idp.server.core.identity.verification.delegation;
 
 import java.util.Map;
-import org.idp.server.core.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.json.JsonNodeWrapper;
 
 public class ExternalWorkflowExaminationDetails {
 

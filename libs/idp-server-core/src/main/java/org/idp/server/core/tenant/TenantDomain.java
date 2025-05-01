@@ -1,6 +1,6 @@
 package org.idp.server.core.tenant;
 
-import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.basic.type.oauth.TokenIssuer;
 
 public class TenantDomain {
   String value;

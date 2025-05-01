@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.oauth.OAuthRequestPattern;
 import org.idp.server.core.oauth.gateway.RequestObjectGateway;
-import org.idp.server.core.type.exception.UnSupportedException;
+import org.idp.server.basic.exception.UnSupportedException;
 
 public class OAuthRequestContextCreators {
   Map<OAuthRequestPattern, OAuthRequestContextCreator> values;

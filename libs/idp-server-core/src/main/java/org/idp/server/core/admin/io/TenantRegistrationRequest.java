@@ -1,6 +1,6 @@
 package org.idp.server.core.admin.io;
 
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.tenant.TenantName;
 

@@ -2,7 +2,7 @@ package org.idp.server.core.authentication;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import org.idp.server.core.type.exception.NotFoundException;
+import org.idp.server.basic.exception.NotFoundException;
 
 public class AuthenticationInteractionResults implements Iterable<AuthenticationInteractionResult> {
 

@@ -6,7 +6,7 @@ import org.idp.server.core.identity.verification.application.IdentityVerificatio
 import org.idp.server.core.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.type.security.RequestAttributes;
+import org.idp.server.basic.type.security.RequestAttributes;
 
 public interface IdentityVerificationApi {
   IdentityVerificationResponse apply(

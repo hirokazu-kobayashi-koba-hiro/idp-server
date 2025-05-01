@@ -1,6 +1,6 @@
 package org.idp.server.core.oauth;
 
-import org.idp.server.core.basic.dependency.protcol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
 import org.idp.server.core.oauth.io.*;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;

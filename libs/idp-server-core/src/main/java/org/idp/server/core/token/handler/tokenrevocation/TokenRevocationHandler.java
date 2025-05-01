@@ -15,8 +15,8 @@ import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.tokenrevocation.TokenRevocationRequestContext;
 import org.idp.server.core.token.tokenrevocation.TokenRevocationRequestParameters;
 import org.idp.server.core.token.tokenrevocation.validator.TokenRevocationValidator;
-import org.idp.server.core.type.oauth.AccessTokenEntity;
-import org.idp.server.core.type.oauth.RefreshTokenEntity;
+import org.idp.server.basic.type.oauth.AccessTokenEntity;
+import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 
 public class TokenRevocationHandler {
   OAuthTokenRepository oAuthTokenRepository;

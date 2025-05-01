@@ -1,13 +1,13 @@
 package org.idp.server.core.oauth.response;
 
-import org.idp.server.core.basic.http.QueryParams;
+import org.idp.server.basic.http.QueryParams;
 import org.idp.server.core.oauth.token.AccessToken;
-import org.idp.server.core.type.extension.JarmPayload;
-import org.idp.server.core.type.extension.ResponseModeValue;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.IdToken;
-import org.idp.server.core.type.oidc.ResponseMode;
-import org.idp.server.core.type.verifiablepresentation.VpToken;
+import org.idp.server.basic.type.extension.JarmPayload;
+import org.idp.server.basic.type.extension.ResponseModeValue;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.IdToken;
+import org.idp.server.basic.type.oidc.ResponseMode;
+import org.idp.server.basic.type.verifiablepresentation.VpToken;
 
 public class AuthorizationResponseBuilder {
   RedirectUri redirectUri;

@@ -1,17 +1,17 @@
 package org.idp.server.core.clientauthenticator;
 
-import org.idp.server.core.basic.jose.JoseContext;
-import org.idp.server.core.basic.jose.JoseHandler;
-import org.idp.server.core.basic.jose.JoseInvalidException;
+import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.jose.JoseHandler;
+import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.core.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.oauth.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.oauth.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.mtls.ClientCertification;
-import org.idp.server.core.type.oauth.ClientAuthenticationType;
-import org.idp.server.core.type.oauth.ClientSecret;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.ClientAuthenticationType;
+import org.idp.server.basic.type.oauth.ClientSecret;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 class PrivateKeyJwtAuthenticator
     implements ClientAuthenticator, ClientAuthenticationJwtValidatable {

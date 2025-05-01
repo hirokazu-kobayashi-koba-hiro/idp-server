@@ -22,8 +22,8 @@ import org.idp.server.core.oauth.validator.OAuthAuthorizeRequestValidator;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
-import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 /** OAuthAuthorizeHandler */
 public class OAuthAuthorizeHandler {

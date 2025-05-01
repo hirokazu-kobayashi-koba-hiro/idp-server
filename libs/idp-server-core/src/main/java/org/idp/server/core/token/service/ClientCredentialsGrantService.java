@@ -13,8 +13,8 @@ import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.ClientCredentialsGrantValidator;
 import org.idp.server.core.token.verifier.ClientCredentialsGrantVerifier;
-import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.oauth.Scopes;
+import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.oauth.Scopes;
 
 public class ClientCredentialsGrantService
     implements OAuthTokenCreationService, AccessTokenCreatable {

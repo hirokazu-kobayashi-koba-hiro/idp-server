@@ -3,7 +3,7 @@ package org.idp.server.core.oauth.identity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class RequestedClaimsPayload implements JsonReadable {
   RequestedUserinfoClaims userinfo = new RequestedUserinfoClaims();

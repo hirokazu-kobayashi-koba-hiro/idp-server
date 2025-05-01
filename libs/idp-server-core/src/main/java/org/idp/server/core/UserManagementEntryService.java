@@ -2,7 +2,7 @@ package org.idp.server.core;
 
 import java.util.List;
 import org.idp.server.core.admin.UserManagementApi;
-import org.idp.server.core.basic.datasource.Transaction;
+import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.tenant.Tenant;

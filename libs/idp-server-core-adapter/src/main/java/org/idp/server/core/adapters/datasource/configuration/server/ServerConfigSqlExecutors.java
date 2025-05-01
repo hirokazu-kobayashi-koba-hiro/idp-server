@@ -2,8 +2,8 @@ package org.idp.server.core.adapters.datasource.configuration.server;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.datasource.DatabaseType;
-import org.idp.server.core.type.exception.UnSupportedException;
+import org.idp.server.basic.datasource.DatabaseType;
+import org.idp.server.basic.exception.UnSupportedException;
 
 public class ServerConfigSqlExecutors {
 

@@ -8,8 +8,8 @@ import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.token.TokenRequestContext;
 import org.idp.server.core.token.exception.TokenBadRequestException;
-import org.idp.server.core.type.oauth.ClientAuthenticationType;
-import org.idp.server.core.type.oauth.ClientSecret;
+import org.idp.server.basic.type.oauth.ClientAuthenticationType;
+import org.idp.server.basic.type.oauth.ClientSecret;
 
 public class AuthorizationCodeGrantFapiBaselineVerifier
     implements AuthorizationCodeGrantVerifierInterface {

@@ -1,8 +1,8 @@
 package org.idp.server.core.oauth.exception;
 
 import org.idp.server.core.oauth.OAuthRequestContext;
-import org.idp.server.core.type.oauth.Error;
-import org.idp.server.core.type.oauth.ErrorDescription;
+import org.idp.server.basic.type.oauth.Error;
+import org.idp.server.basic.type.oauth.ErrorDescription;
 
 public class OAuthRedirectableBadRequestException extends RuntimeException {
 

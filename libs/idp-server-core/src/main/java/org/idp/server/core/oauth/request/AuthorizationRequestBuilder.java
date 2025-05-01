@@ -5,10 +5,10 @@ import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.identity.RequestedClaimsPayload;
 import org.idp.server.core.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.*;
-import org.idp.server.core.type.pkce.CodeChallenge;
-import org.idp.server.core.type.pkce.CodeChallengeMethod;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.*;
+import org.idp.server.basic.type.pkce.CodeChallenge;
+import org.idp.server.basic.type.pkce.CodeChallengeMethod;
 
 /** AuthorizationRequestBuilder */
 public class AuthorizationRequestBuilder {

@@ -1,6 +1,6 @@
 package org.idp.server.core;
 
-import org.idp.server.core.basic.datasource.Transaction;
+import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.discovery.DiscoveryProtocol;
 import org.idp.server.core.discovery.DiscoveryProtocols;
 import org.idp.server.core.discovery.OidcMetaDataApi;

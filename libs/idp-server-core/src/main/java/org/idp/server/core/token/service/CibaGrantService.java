@@ -23,8 +23,8 @@ import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.CibaGrantValidator;
 import org.idp.server.core.token.verifier.CibaGrantVerifier;
-import org.idp.server.core.type.ciba.AuthReqId;
-import org.idp.server.core.type.oidc.IdToken;
+import org.idp.server.basic.type.ciba.AuthReqId;
+import org.idp.server.basic.type.oidc.IdToken;
 
 public class CibaGrantService
     implements OAuthTokenCreationService,

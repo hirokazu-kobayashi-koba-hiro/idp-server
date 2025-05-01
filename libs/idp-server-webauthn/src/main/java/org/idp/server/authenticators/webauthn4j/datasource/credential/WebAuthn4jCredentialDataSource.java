@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredential;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentialRepository;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentials;
-import org.idp.server.core.basic.datasource.SqlExecutor;
+import org.idp.server.basic.datasource.SqlExecutor;
 
 public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepository {
 

@@ -8,10 +8,10 @@ import org.idp.server.core.oauth.identity.IdTokenCustomClaims;
 import org.idp.server.core.oauth.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.token.VpTokenCreatable;
-import org.idp.server.core.type.extension.JarmPayload;
-import org.idp.server.core.type.extension.ResponseModeValue;
-import org.idp.server.core.type.oidc.IdToken;
-import org.idp.server.core.type.verifiablepresentation.VpToken;
+import org.idp.server.basic.type.extension.JarmPayload;
+import org.idp.server.basic.type.extension.ResponseModeValue;
+import org.idp.server.basic.type.oidc.IdToken;
+import org.idp.server.basic.type.verifiablepresentation.VpToken;
 
 public class AuthorizationResponseVpTokenIdTokenCreator
     implements AuthorizationResponseCreator,

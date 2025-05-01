@@ -2,7 +2,7 @@ package org.idp.server.core.ciba;
 
 import java.util.HashMap;
 import java.util.List;
-import org.idp.server.core.basic.jose.JoseContext;
+import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.ciba.user.UserHint;
@@ -14,10 +14,10 @@ import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.ciba.Interval;
-import org.idp.server.core.type.ciba.UserCode;
-import org.idp.server.core.type.mtls.ClientCert;
-import org.idp.server.core.type.oauth.*;
+import org.idp.server.basic.type.ciba.Interval;
+import org.idp.server.basic.type.ciba.UserCode;
+import org.idp.server.basic.type.mtls.ClientCert;
+import org.idp.server.basic.type.oauth.*;
 
 public class CibaRequestContext implements BackchannelRequestContext {
 

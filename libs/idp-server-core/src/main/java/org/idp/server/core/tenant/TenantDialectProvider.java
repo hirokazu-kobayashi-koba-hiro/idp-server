@@ -1,7 +1,7 @@
 package org.idp.server.core.tenant;
 
-import org.idp.server.core.basic.datasource.DatabaseType;
-import org.idp.server.core.basic.datasource.DialectProvider;
+import org.idp.server.basic.datasource.DatabaseType;
+import org.idp.server.basic.datasource.DialectProvider;
 
 public class TenantDialectProvider implements DialectProvider {
 
@@ -12,8 +12,8 @@ public class TenantDialectProvider implements DialectProvider {
   }
 
   @Override
-  public DatabaseType provide(TenantIdentifier tenantIdentifier) {
-
+  public DatabaseType provide(String tenantId) {
+    TenantIdentifier tenantIdentifier = new TenantIdentifier(tenantId);
     if (AdminTenantContext.isAdmin(tenantIdentifier)) {
       return DatabaseType.POSTGRESQL;
     }

@@ -22,10 +22,10 @@ import org.idp.server.core.token.handler.token.io.TokenRequestStatus;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.service.*;
 import org.idp.server.core.token.validator.TokenRequestValidator;
-import org.idp.server.core.type.extension.CustomProperties;
-import org.idp.server.core.type.mtls.ClientCert;
-import org.idp.server.core.type.oauth.ClientSecretBasic;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.mtls.ClientCert;
+import org.idp.server.basic.type.oauth.ClientSecretBasic;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class TokenRequestHandler {
 

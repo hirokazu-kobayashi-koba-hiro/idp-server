@@ -3,14 +3,14 @@ package org.idp.server.core.oauth.response;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.type.extension.JarmPayload;
-import org.idp.server.core.type.extension.OAuthDenyReason;
-import org.idp.server.core.type.extension.ResponseModeValue;
-import org.idp.server.core.type.oauth.Error;
-import org.idp.server.core.type.oauth.ErrorDescription;
-import org.idp.server.core.type.oauth.RedirectUri;
-import org.idp.server.core.type.oauth.TokenIssuer;
-import org.idp.server.core.type.oidc.ResponseMode;
+import org.idp.server.basic.type.extension.JarmPayload;
+import org.idp.server.basic.type.extension.OAuthDenyReason;
+import org.idp.server.basic.type.extension.ResponseModeValue;
+import org.idp.server.basic.type.oauth.Error;
+import org.idp.server.basic.type.oauth.ErrorDescription;
+import org.idp.server.basic.type.oauth.RedirectUri;
+import org.idp.server.basic.type.oauth.TokenIssuer;
+import org.idp.server.basic.type.oidc.ResponseMode;
 
 public class AuthorizationDenyErrorResponseCreator
     implements RedirectUriDecidable, ResponseModeDecidable, JarmCreatable {

@@ -6,9 +6,9 @@ import org.idp.server.core.oauth.grant.AuthorizationGrant;
 import org.idp.server.core.oauth.request.AuthorizationRequest;
 import org.idp.server.core.oauth.token.AccessToken;
 import org.idp.server.core.oauth.token.AccessTokenCreatable;
-import org.idp.server.core.type.extension.JarmPayload;
-import org.idp.server.core.type.extension.ResponseModeValue;
-import org.idp.server.core.type.oauth.*;
+import org.idp.server.basic.type.extension.JarmPayload;
+import org.idp.server.basic.type.extension.ResponseModeValue;
+import org.idp.server.basic.type.oauth.*;
 
 public class AuthorizationResponseCodeTokenCreator
     implements AuthorizationResponseCreator,

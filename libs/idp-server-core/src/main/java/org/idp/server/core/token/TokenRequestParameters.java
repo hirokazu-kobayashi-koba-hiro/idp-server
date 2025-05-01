@@ -3,11 +3,11 @@ package org.idp.server.core.token;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.clientauthenticator.BackchannelRequestParameters;
-import org.idp.server.core.type.ArrayValueMap;
-import org.idp.server.core.type.OAuthRequestKey;
-import org.idp.server.core.type.ciba.AuthReqId;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.pkce.CodeVerifier;
+import org.idp.server.basic.type.ArrayValueMap;
+import org.idp.server.basic.type.OAuthRequestKey;
+import org.idp.server.basic.type.ciba.AuthReqId;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.pkce.CodeVerifier;
 
 /** TokenRequestParameters */
 public class TokenRequestParameters implements BackchannelRequestParameters {

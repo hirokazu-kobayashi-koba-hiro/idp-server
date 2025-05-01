@@ -2,11 +2,11 @@ package org.idp.server.core.verifiablecredential;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.json.JsonConverter;
-import org.idp.server.core.type.verifiablecredential.CNonce;
-import org.idp.server.core.type.verifiablecredential.CNonceExpiresIn;
-import org.idp.server.core.type.verifiablecredential.Format;
-import org.idp.server.core.type.verifiablecredential.TransactionId;
+import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.basic.type.verifiablecredential.CNonce;
+import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;
+import org.idp.server.basic.type.verifiablecredential.Format;
+import org.idp.server.basic.type.verifiablecredential.TransactionId;
 
 public class VerifiableCredentialResponseBuilder {
   Format format;

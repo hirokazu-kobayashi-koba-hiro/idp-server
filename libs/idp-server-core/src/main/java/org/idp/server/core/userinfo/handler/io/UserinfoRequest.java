@@ -2,8 +2,8 @@ package org.idp.server.core.userinfo.handler.io;
 
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.AuthorizationHeaderHandlerable;
-import org.idp.server.core.type.mtls.ClientCert;
-import org.idp.server.core.type.oauth.AccessTokenEntity;
+import org.idp.server.basic.type.mtls.ClientCert;
+import org.idp.server.basic.type.oauth.AccessTokenEntity;
 
 public class UserinfoRequest implements AuthorizationHeaderHandlerable {
   Tenant tenant;

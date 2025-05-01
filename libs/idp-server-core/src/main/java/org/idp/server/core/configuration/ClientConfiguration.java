@@ -2,14 +2,14 @@ package org.idp.server.core.configuration;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.oauth.client.Client;
 import org.idp.server.core.oauth.client.ClientIdentifier;
 import org.idp.server.core.oauth.client.ClientName;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.ciba.BackchannelTokenDeliveryMode;
-import org.idp.server.core.type.extension.RegisteredRedirectUris;
-import org.idp.server.core.type.oauth.*;
+import org.idp.server.basic.type.ciba.BackchannelTokenDeliveryMode;
+import org.idp.server.basic.type.extension.RegisteredRedirectUris;
+import org.idp.server.basic.type.oauth.*;
 
 /** ClientConfiguration */
 public class ClientConfiguration implements JsonReadable {

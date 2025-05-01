@@ -1,11 +1,11 @@
 package org.idp.server.core.clientauthenticator;
 
-import static org.idp.server.core.type.oauth.ClientAuthenticationType.*;
+import static org.idp.server.basic.type.oauth.ClientAuthenticationType.*;
 
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
-import org.idp.server.core.type.oauth.ClientAuthenticationType;
+import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 
 public class ClientAuthenticatorHandler {
 

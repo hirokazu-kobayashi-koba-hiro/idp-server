@@ -3,17 +3,17 @@ package org.idp.server.core.oauth.identity;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.date.SystemDateTime;
-import org.idp.server.core.basic.jose.*;
+import org.idp.server.basic.date.SystemDateTime;
+import org.idp.server.basic.jose.*;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ConfigurationInvalidException;
 import org.idp.server.core.configuration.ServerConfiguration;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.grant.AuthorizationGrant;
-import org.idp.server.core.type.extension.ExpiredAt;
-import org.idp.server.core.type.oauth.*;
-import org.idp.server.core.type.oidc.IdToken;
+import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.IdToken;
 
 public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashable {
 

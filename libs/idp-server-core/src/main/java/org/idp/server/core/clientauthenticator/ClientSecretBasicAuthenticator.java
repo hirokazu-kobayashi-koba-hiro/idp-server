@@ -6,10 +6,10 @@ import org.idp.server.core.oauth.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.oauth.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.oauth.clientcredentials.ClientCredentials;
 import org.idp.server.core.oauth.mtls.ClientCertification;
-import org.idp.server.core.type.oauth.ClientAuthenticationType;
-import org.idp.server.core.type.oauth.ClientSecret;
-import org.idp.server.core.type.oauth.ClientSecretBasic;
-import org.idp.server.core.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.ClientAuthenticationType;
+import org.idp.server.basic.type.oauth.ClientSecret;
+import org.idp.server.basic.type.oauth.ClientSecretBasic;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 
 /**
  * client secret basic

@@ -5,7 +5,7 @@ import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.type.extension.CustomProperties;
+import org.idp.server.basic.type.extension.CustomProperties;
 
 public class OAuthAuthorizeRequestValidator {
   AuthorizationRequestIdentifier authorizationRequestIdentifier;

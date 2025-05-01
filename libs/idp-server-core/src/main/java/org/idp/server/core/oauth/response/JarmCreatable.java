@@ -3,17 +3,17 @@ package org.idp.server.core.oauth.response;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.basic.date.SystemDateTime;
-import org.idp.server.core.basic.jose.JoseInvalidException;
-import org.idp.server.core.basic.jose.JsonWebKeyInvalidException;
-import org.idp.server.core.basic.jose.JsonWebSignature;
-import org.idp.server.core.basic.jose.JsonWebSignatureFactory;
+import org.idp.server.basic.date.SystemDateTime;
+import org.idp.server.basic.jose.JoseInvalidException;
+import org.idp.server.basic.jose.JsonWebKeyInvalidException;
+import org.idp.server.basic.jose.JsonWebSignature;
+import org.idp.server.basic.jose.JsonWebSignatureFactory;
 import org.idp.server.core.configuration.ClientConfiguration;
 import org.idp.server.core.configuration.ConfigurationInvalidException;
 import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.type.extension.CreatedAt;
-import org.idp.server.core.type.extension.ExpiredAt;
-import org.idp.server.core.type.extension.JarmPayload;
+import org.idp.server.basic.type.extension.CreatedAt;
+import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.JarmPayload;
 
 public interface JarmCreatable {
 

@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.datasource.security;
 
-import org.idp.server.core.basic.json.JsonConverter;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEvents;
 import org.idp.server.core.security.event.SecurityEventRepository;

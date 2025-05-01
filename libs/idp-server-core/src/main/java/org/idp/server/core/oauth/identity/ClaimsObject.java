@@ -1,7 +1,7 @@
 package org.idp.server.core.oauth.identity;
 
 import java.util.List;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 
 public class ClaimsObject implements JsonReadable {
   boolean essential;

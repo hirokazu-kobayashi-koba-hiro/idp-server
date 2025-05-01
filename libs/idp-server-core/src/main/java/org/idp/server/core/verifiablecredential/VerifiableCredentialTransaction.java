@@ -1,11 +1,11 @@
 package org.idp.server.core.verifiablecredential;
 
 import java.util.Objects;
-import org.idp.server.core.basic.vc.Credential;
-import org.idp.server.core.type.oauth.RequestedClientId;
-import org.idp.server.core.type.oauth.Subject;
-import org.idp.server.core.type.verifiablecredential.CredentialIssuer;
-import org.idp.server.core.type.verifiablecredential.TransactionId;
+import org.idp.server.basic.vc.Credential;
+import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.Subject;
+import org.idp.server.basic.type.verifiablecredential.CredentialIssuer;
+import org.idp.server.basic.type.verifiablecredential.TransactionId;
 
 public class VerifiableCredentialTransaction {
   TransactionId transactionId;

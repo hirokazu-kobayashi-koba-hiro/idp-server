@@ -25,7 +25,7 @@ import org.idp.server.core.configuration.ServerConfigurationRepository;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oauth.authentication.Authentication;
 import org.idp.server.core.tenant.Tenant;
-import org.idp.server.core.type.ciba.AuthReqId;
+import org.idp.server.basic.type.ciba.AuthReqId;
 
 /**
  * Handles CIBA (Client Initiated Backchannel Authentication) requests.

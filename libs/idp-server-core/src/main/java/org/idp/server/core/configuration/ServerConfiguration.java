@@ -1,11 +1,11 @@
 package org.idp.server.core.configuration;
 
 import java.util.*;
-import org.idp.server.core.basic.json.JsonReadable;
+import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.tenant.TenantIdentifier;
-import org.idp.server.core.type.oauth.GrantType;
-import org.idp.server.core.type.oauth.ResponseType;
-import org.idp.server.core.type.oauth.TokenIssuer;
+import org.idp.server.basic.type.oauth.GrantType;
+import org.idp.server.basic.type.oauth.ResponseType;
+import org.idp.server.basic.type.oauth.TokenIssuer;
 
 /** ServerConfiguration */
 public class ServerConfiguration implements JsonReadable {
