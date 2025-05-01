@@ -3,13 +3,15 @@ package org.idp.server.core.identity.verification.handler;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.basic.http.*;
+import org.idp.server.core.basic.oauth.OAuthAuthorizationConfiguration;
+import org.idp.server.core.basic.oauth.OAuthAuthorizationResolver;
+import org.idp.server.core.basic.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationOAuthAuthorizationConfiguration;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.identity.verification.delegation.*;
 import org.idp.server.core.identity.verification.delegation.request.AdditionalRequestParameterResolvers;
@@ -65,7 +67,7 @@ public class IdentityVerificationHandler {
           requestValidationResult, verifyResult);
     }
 
-    IdentityVerificationOAuthAuthorizationConfiguration oAuthAuthorizationConfig =
+    OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
         verificationConfiguration.oauthAuthorization();
     HttpRequestHeaders httpRequestHeaders =
         createHttpRequestHeaders(processConfig.httpRequestHeaders(), oAuthAuthorizationConfig);
@@ -129,9 +131,9 @@ public class IdentityVerificationHandler {
     return new HttpRequestStaticBody(parameters);
   }
 
-  public HttpRequestHeaders createHttpRequestHeaders(
+  private HttpRequestHeaders createHttpRequestHeaders(
       HttpRequestHeaders httpRequestHeaders,
-      IdentityVerificationOAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
+      OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
     Map<String, String> values = new HashMap<>(httpRequestHeaders.toMap());
 
     if (oAuthAuthorizationConfig.exists()) {

@@ -276,6 +276,11 @@ public class MysqlExecutor implements UserSqlExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
+  @Override
+  public Map<String, String> selectByAuthenticationDevice(Tenant tenant, String deviceId) {
+    return Map.of();
+  }
+
   String selectSql =
       """
                   SELECT

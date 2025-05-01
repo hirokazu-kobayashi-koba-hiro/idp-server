@@ -1,4 +1,4 @@
-package org.idp.server.core.identity.verification.delegation;
+package org.idp.server.core.basic.oauth;
 
 import java.io.IOException;
 import java.net.URI;
@@ -13,24 +13,21 @@ import org.idp.server.core.basic.http.HttpNetworkErrorException;
 import org.idp.server.core.basic.http.QueryParams;
 import org.idp.server.core.basic.json.JsonConverter;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationOAuthAuthorizationConfiguration;
 import org.idp.server.core.type.oauth.AccessTokenEntity;
 
-public class ResourceOwnerPasswordCredentialsAuthorizationResolver
-    implements OAuthAuthorizationResolver {
+public class ClientCredentialsAuthorizationResolver implements OAuthAuthorizationResolver {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;
-  Logger log =
-      Logger.getLogger(ResourceOwnerPasswordCredentialsAuthorizationResolver.class.getName());
+  Logger log = Logger.getLogger(ClientCredentialsAuthorizationResolver.class.getName());
 
-  public ResourceOwnerPasswordCredentialsAuthorizationResolver() {
+  public ClientCredentialsAuthorizationResolver() {
     this.httpClient = HttpClientFactory.defaultClient();
     this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
   }
 
   @Override
-  public AccessTokenEntity resolve(IdentityVerificationOAuthAuthorizationConfiguration config) {
+  public AccessTokenEntity resolve(OAuthAuthorizationConfiguration config) {
     try {
 
       QueryParams queryParams = new QueryParams(config.toMap());
@@ -41,6 +38,10 @@ public class ResourceOwnerPasswordCredentialsAuthorizationResolver
               .header("Content-Type", "application/x-www-form-urlencoded")
               .header("Accept", "application/json")
               .POST(HttpRequest.BodyPublishers.ofString(queryParams.params()));
+
+      if (config.isClientSecretBasic()) {
+        builder.header("Authorization", config.basicAuthenticationValue());
+      }
 
       HttpRequest request = builder.build();
 

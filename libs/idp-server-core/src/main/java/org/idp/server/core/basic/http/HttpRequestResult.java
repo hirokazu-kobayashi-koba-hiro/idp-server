@@ -43,7 +43,11 @@ public class HttpRequestResult {
     return map;
   }
 
-  public boolean isError() {
-    return statusCode >= 400;
+  public boolean isClientError() {
+    return statusCode >= 400 && statusCode < 500;
+  }
+
+  public boolean isServerError() {
+    return statusCode >= 500;
   }
 }

@@ -23,6 +23,14 @@ public class AuthenticationInteractionRequestResult {
         AuthenticationInteractionStatus.CLIENT_ERROR, type, response, eventType);
   }
 
+  public static AuthenticationInteractionRequestResult serverError(
+      Map<String, Object> response,
+      AuthenticationInteractionType type,
+      DefaultSecurityEventType eventType) {
+    return new AuthenticationInteractionRequestResult(
+        AuthenticationInteractionStatus.SERVER_ERROR, type, response, eventType);
+  }
+
   public AuthenticationInteractionRequestResult(
       AuthenticationInteractionStatus status,
       AuthenticationInteractionType type,

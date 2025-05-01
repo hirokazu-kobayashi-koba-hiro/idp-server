@@ -8,3 +8,7 @@ org.idp.server.core.authentication.webauthn.WebAuthnRegistrationInteractorFactor
 org.idp.server.core.authentication.webauthn.WebAuthnAuthenticationChallengeInteractorFactory
 org.idp.server.core.authentication.webauthn.WebAuthnAuthenticationInteractorFactory
 org.idp.server.core.authentication.device.AuthenticationDeviceNotificationInteractorFactory
+org.idp.server.core.authentication.fidouaf.FidoUafRegistrationChallengeInteractorFactory
+org.idp.server.core.authentication.fidouaf.FidoUafRegistrationInteractorFactory
+org.idp.server.core.authentication.fidouaf.FidoUafAuthenticationChallengeInteractorFactory
+org.idp.server.core.authentication.fidouaf.FidoUafAuthenticationInteractorFactory

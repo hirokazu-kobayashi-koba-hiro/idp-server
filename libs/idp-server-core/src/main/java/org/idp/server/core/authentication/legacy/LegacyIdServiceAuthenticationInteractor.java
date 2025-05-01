@@ -49,7 +49,7 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
             authenticationConfig.httpRequestDynamicBodyKeys(),
             authenticationConfig.httpRequestStaticBody());
 
-    if (authenticationResult.isError()) {
+    if (authenticationResult.isClientError()) {
 
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,

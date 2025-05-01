@@ -25,9 +25,14 @@ public class HttpRequestBodyCreator {
       body.putAll(httpRequestStaticBody.toMap());
     }
 
-    for (String key : httpRequestDynamicBodyKeys) {
-      Object value = baseParams.getValue(key);
-      body.put(key, value);
+    if (httpRequestDynamicBodyKeys.shouldIncludeAll()) {
+
+      body.putAll(baseParams.toMap());
+    } else {
+      for (String key : httpRequestDynamicBodyKeys) {
+        Object value = baseParams.getValue(key);
+        body.put(key, value);
+      }
     }
 
     return body;

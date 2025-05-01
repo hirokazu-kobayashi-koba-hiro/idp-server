@@ -276,6 +276,28 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
+  @Override
+  public Map<String, String> selectByAuthenticationDevice(Tenant tenant, String deviceId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        String.format(
+            selectSql,
+            """
+                        WHERE tenant_id = ?
+                        AND EXISTS (
+                                  SELECT 1
+                                  FROM jsonb_array_elements(authentication_devices) AS device
+                                  WHERE device->>'id' = ?
+                        ):
+                    """);
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+    params.add(deviceId);
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
   String selectSql =
       """
                   SELECT

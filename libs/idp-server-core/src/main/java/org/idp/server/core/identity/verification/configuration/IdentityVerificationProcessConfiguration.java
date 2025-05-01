@@ -2,7 +2,6 @@ package org.idp.server.core.identity.verification.configuration;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.authentication.legacy.UserInfoMappingRule;
 import org.idp.server.core.basic.http.*;
 import org.idp.server.core.basic.json.JsonNodeWrapper;
 import org.idp.server.core.basic.json.JsonReadable;
@@ -14,7 +13,6 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
   Map<String, String> headers;
   List<String> dynamicBodyKeys;
   Map<String, Object> staticBody;
-  List<UserInfoMappingRule> userinfoMappingRules;
   Map<String, Object> requestValidationSchema;
   Map<String, Object> requestVerificationSchema;
   Map<String, Object> requestAdditionalParameterSchema;
@@ -41,10 +39,6 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
 
   public HttpRequestStaticBody httpRequestStaticBody() {
     return new HttpRequestStaticBody(staticBody);
-  }
-
-  public List<UserInfoMappingRule> userinfoMappingRules() {
-    return userinfoMappingRules;
   }
 
   public Map<String, Object> requestValidationSchema() {

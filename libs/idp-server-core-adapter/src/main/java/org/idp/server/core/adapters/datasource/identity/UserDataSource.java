@@ -91,4 +91,16 @@ public class UserDataSource implements UserRepository {
 
     return ModelConverter.convert(result);
   }
+
+  @Override
+  public User findByAuthenticationDevice(Tenant tenant, String deviceId) {
+    UserSqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectByAuthenticationDevice(tenant, deviceId);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return new User();
+    }
+
+    return ModelConverter.convert(result);
+  }
 }
