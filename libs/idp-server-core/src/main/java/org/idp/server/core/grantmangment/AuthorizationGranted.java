@@ -1,9 +1,9 @@
 package org.idp.server.core.grantmangment;
 
-import org.idp.server.core.oauth.grant.AuthorizationGrant;
-import org.idp.server.core.oauth.grant.GrantIdTokenClaims;
-import org.idp.server.core.oauth.grant.GrantUserinfoClaims;
-import org.idp.server.core.oauth.grant.consent.ConsentClaims;
+import org.idp.server.core.oidc.grant.AuthorizationGrant;
+import org.idp.server.core.oidc.grant.GrantIdTokenClaims;
+import org.idp.server.core.oidc.grant.GrantUserinfoClaims;
+import org.idp.server.core.oidc.grant.consent.ConsentClaims;
 import org.idp.server.basic.type.oauth.Scopes;
 
 public class AuthorizationGranted {

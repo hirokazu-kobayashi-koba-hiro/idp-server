@@ -4,9 +4,9 @@ import static org.idp.server.core.token.handler.token.io.TokenRequestStatus.*;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.idp.server.core.clientauthenticator.exception.ClientUnAuthorizedException;
-import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
-import org.idp.server.core.configuration.ServerConfigurationNotFoundException;
+import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.oidc.configuration.ClientConfigurationNotFoundException;
+import org.idp.server.core.oidc.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.core.token.TokenErrorResponse;
 import org.idp.server.core.token.exception.TokenBadRequestException;
 import org.idp.server.core.token.handler.token.io.TokenRequestResponse;

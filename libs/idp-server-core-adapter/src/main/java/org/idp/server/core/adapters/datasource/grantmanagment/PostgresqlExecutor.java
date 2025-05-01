@@ -7,7 +7,7 @@ import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.grantmangment.AuthorizationGranted;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.oauth.grant.AuthorizationGrant;
+import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 

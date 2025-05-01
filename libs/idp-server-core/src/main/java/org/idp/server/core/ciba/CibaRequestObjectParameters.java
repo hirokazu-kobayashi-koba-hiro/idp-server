@@ -5,7 +5,7 @@ import static org.idp.server.basic.type.OAuthRequestKey.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.clientauthenticator.BackchannelRequestParameters;
+import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.basic.type.OAuthRequestKey;
 import org.idp.server.basic.type.ciba.*;
 import org.idp.server.basic.type.oauth.*;

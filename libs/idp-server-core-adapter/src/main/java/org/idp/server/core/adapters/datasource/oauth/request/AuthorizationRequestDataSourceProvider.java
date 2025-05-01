@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.oauth.request;
 
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
-import org.idp.server.core.oauth.repository.AuthorizationRequestRepository;
+import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 
 public class AuthorizationRequestDataSourceProvider
     implements ApplicationComponentProvider<AuthorizationRequestRepository> {

@@ -3,7 +3,7 @@ package org.idp.server.core.discovery;
 import java.util.Map;
 import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
-import org.idp.server.core.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.discovery.handler.DiscoveryHandler;
 import org.idp.server.core.discovery.handler.io.JwksRequestResponse;
 import org.idp.server.core.discovery.handler.io.JwksRequestStatus;

@@ -2,8 +2,8 @@ package org.idp.server.adapters.springboot.authorization.datasource;
 
 import jakarta.servlet.http.HttpSession;
 import org.idp.server.core.admin.OAuthHttpSessionRepository;
-import org.idp.server.core.oauth.OAuthSession;
-import org.idp.server.core.oauth.OAuthSessionKey;
+import org.idp.server.core.oidc.OAuthSession;
+import org.idp.server.core.oidc.OAuthSessionKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;

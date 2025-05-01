@@ -1,7 +1,7 @@
 package org.idp.server.core.verifiablecredential.request;
 
 import java.util.Objects;
-import org.idp.server.core.oauth.vc.CredentialDefinition;
+import org.idp.server.core.oidc.vc.CredentialDefinition;
 import org.idp.server.basic.type.verifiablecredential.DocType;
 import org.idp.server.basic.type.verifiablecredential.Format;
 

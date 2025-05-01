@@ -1,6 +1,6 @@
 package org.idp.server.core.verifiablecredential.verifier;
 
-import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.core.verifiablecredential.exception.VerifiableCredentialBadRequestException;

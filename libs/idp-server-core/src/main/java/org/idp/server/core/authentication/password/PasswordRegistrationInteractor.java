@@ -12,7 +12,7 @@ import org.idp.server.core.identity.IdPUserCreator;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
-import org.idp.server.core.oauth.authentication.Authentication;
+import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.Tenant;
 

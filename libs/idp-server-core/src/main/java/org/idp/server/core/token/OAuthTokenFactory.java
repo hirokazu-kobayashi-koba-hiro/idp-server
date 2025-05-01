@@ -1,9 +1,9 @@
 package org.idp.server.core.token;
 
 import java.util.UUID;
-import org.idp.server.core.oauth.grant.AuthorizationGrant;
-import org.idp.server.core.oauth.response.AuthorizationResponse;
-import org.idp.server.core.oauth.token.AccessToken;
+import org.idp.server.core.oidc.grant.AuthorizationGrant;
+import org.idp.server.core.oidc.response.AuthorizationResponse;
+import org.idp.server.core.oidc.token.AccessToken;
 
 public class OAuthTokenFactory {
 

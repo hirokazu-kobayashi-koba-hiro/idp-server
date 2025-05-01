@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
+import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.basic.type.oauth.AuthorizationCode;
 
 public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {

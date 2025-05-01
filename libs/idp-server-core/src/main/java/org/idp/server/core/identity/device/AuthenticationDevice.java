@@ -2,8 +2,8 @@ package org.idp.server.core.identity.device;
 
 import java.io.Serializable;
 import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.core.notification.device.NotificationChannel;
-import org.idp.server.core.notification.device.NotificationToken;
+import org.idp.server.core.authentication.notification.device.NotificationChannel;
+import org.idp.server.core.authentication.notification.device.NotificationToken;
 
 public class AuthenticationDevice implements Serializable, JsonReadable {
   String id;

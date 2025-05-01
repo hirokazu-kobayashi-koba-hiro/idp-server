@@ -14,8 +14,8 @@ import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepos
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.configuration.ClientConfigurationRepository;
-import org.idp.server.core.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.grantmangment.AuthorizationGrantedRepository;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.tenant.Tenant;

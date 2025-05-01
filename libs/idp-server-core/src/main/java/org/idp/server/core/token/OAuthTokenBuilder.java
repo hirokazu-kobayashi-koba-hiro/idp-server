@@ -1,7 +1,7 @@
 package org.idp.server.core.token;
 
-import org.idp.server.core.oauth.token.AccessToken;
-import org.idp.server.core.oauth.token.RefreshToken;
+import org.idp.server.core.oidc.token.AccessToken;
+import org.idp.server.core.oidc.token.RefreshToken;
 import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.basic.type.verifiablecredential.CNonce;
 import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;

@@ -1,8 +1,8 @@
 package org.idp.server.core.userinfo.handler;
 
 import java.util.Map;
-import org.idp.server.core.configuration.ClientConfigurationRepository;
-import org.idp.server.core.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;

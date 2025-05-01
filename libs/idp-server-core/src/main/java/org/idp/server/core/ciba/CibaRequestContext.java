@@ -8,11 +8,11 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifi
 import org.idp.server.core.ciba.user.UserHint;
 import org.idp.server.core.ciba.user.UserHintRelatedParams;
 import org.idp.server.core.ciba.user.UserHintType;
-import org.idp.server.core.clientauthenticator.BackchannelRequestContext;
-import org.idp.server.core.clientauthenticator.BackchannelRequestParameters;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.oauth.client.Client;
+import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
+import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.basic.type.ciba.Interval;
 import org.idp.server.basic.type.ciba.UserCode;

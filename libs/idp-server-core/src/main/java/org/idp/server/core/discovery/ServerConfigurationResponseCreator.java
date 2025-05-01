@@ -2,7 +2,7 @@ package org.idp.server.core.discovery;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
 
 public class ServerConfigurationResponseCreator {
   ServerConfiguration serverConfiguration;

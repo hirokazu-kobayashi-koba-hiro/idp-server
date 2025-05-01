@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
-import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.oidc.request.AuthorizationRequest;
+import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
 public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
 

@@ -3,8 +3,8 @@ package org.idp.server.core.adapters.datasource.oauth.code;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.oauth.grant.AuthorizationCodeGrant;
-import org.idp.server.core.oauth.repository.AuthorizationCodeGrantRepository;
+import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
+import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.basic.type.oauth.AuthorizationCode;
 

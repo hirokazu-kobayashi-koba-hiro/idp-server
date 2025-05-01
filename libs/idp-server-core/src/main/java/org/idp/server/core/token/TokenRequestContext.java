@@ -1,10 +1,10 @@
 package org.idp.server.core.token;
 
 import java.util.Objects;
-import org.idp.server.core.clientauthenticator.BackchannelRequestContext;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.configuration.ServerConfiguration;
-import org.idp.server.core.oauth.client.ClientIdentifier;
+import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.core.tenant.TenantIdentifier;
 import org.idp.server.basic.type.OAuthRequestKey;

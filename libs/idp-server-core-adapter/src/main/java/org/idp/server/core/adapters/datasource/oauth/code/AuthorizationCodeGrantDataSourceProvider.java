@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.oauth.code;
 
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
-import org.idp.server.core.oauth.repository.AuthorizationCodeGrantRepository;
+import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 
 public class AuthorizationCodeGrantDataSourceProvider
     implements ApplicationComponentProvider<AuthorizationCodeGrantRepository> {

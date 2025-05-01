@@ -5,8 +5,8 @@ import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.core.ciba.*;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.NormalRequestFactory;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.basic.type.oauth.ClientSecretBasic;
 

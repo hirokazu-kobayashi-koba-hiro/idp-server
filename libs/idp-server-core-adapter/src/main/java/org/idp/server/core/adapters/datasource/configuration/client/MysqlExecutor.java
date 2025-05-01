@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.configuration.ClientConfiguration;
-import org.idp.server.core.oauth.client.ClientIdentifier;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 

@@ -1,6 +1,6 @@
 package org.idp.server.core.token;
 
-import org.idp.server.core.oauth.rar.AuthorizationDetails;
+import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.basic.type.verifiablecredential.CNonce;

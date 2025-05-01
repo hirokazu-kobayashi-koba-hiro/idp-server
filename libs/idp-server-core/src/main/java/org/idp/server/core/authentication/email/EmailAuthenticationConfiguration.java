@@ -2,7 +2,7 @@ package org.idp.server.core.authentication.email;
 
 import java.util.Map;
 import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.core.notification.EmailSenderType;
+import org.idp.server.core.authentication.notification.EmailSenderType;
 
 public class EmailAuthenticationConfiguration implements JsonReadable {
   String sender;

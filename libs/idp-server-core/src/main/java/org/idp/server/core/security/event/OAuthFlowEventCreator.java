@@ -2,7 +2,7 @@ package org.idp.server.core.security.event;
 
 import java.util.HashMap;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.oauth.request.AuthorizationRequest;
+import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.tenant.Tenant;
 import org.idp.server.basic.type.security.RequestAttributes;

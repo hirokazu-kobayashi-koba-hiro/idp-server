@@ -3,7 +3,7 @@ package org.idp.server.core.federation;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.federation.io.FederationRequestResponse;
 import org.idp.server.core.identity.UserRepository;
-import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.tenant.Tenant;
 
 public interface FederationInteractor {

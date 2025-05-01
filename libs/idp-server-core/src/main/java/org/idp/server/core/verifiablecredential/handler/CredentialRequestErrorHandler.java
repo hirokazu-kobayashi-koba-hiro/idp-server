@@ -2,8 +2,8 @@ package org.idp.server.core.verifiablecredential.handler;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.idp.server.core.configuration.ClientConfigurationNotFoundException;
-import org.idp.server.core.configuration.ServerConfigurationNotFoundException;
+import org.idp.server.core.oidc.configuration.ClientConfigurationNotFoundException;
+import org.idp.server.core.oidc.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialErrorResponse;

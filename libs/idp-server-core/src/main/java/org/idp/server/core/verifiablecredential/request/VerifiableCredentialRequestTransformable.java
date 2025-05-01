@@ -9,7 +9,7 @@ import org.idp.server.basic.jose.JsonWebKeyInvalidException;
 import org.idp.server.basic.jose.JsonWebSignatureHeader;
 import org.idp.server.basic.x509.X509CertInvalidException;
 import org.idp.server.basic.x509.X509Certification;
-import org.idp.server.core.oauth.vc.CredentialDefinition;
+import org.idp.server.core.oidc.vc.CredentialDefinition;
 import org.idp.server.basic.type.verifiablecredential.DocType;
 import org.idp.server.basic.type.verifiablecredential.Format;
 import org.idp.server.basic.type.verifiablecredential.ProofType;

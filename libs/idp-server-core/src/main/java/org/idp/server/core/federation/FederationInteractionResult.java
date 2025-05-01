@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.federation.oidc.OidcSsoSession;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.oauth.authentication.Authentication;
-import org.idp.server.core.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.oidc.authentication.Authentication;
+import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.tenant.TenantIdentifier;
 
