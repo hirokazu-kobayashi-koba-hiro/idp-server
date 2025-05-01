@@ -1,17 +1,17 @@
-package org.idp.server.core.authentication;
+package org.idp.server.core.authentication.fidouaf;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class AuthenticationInteractionRequest {
+public class FidoUafExecutionRequest {
 
   Map<String, Object> values;
 
-  public static AuthenticationInteractionRequest empty() {
-    return new AuthenticationInteractionRequest(Map.of());
+  public static FidoUafExecutionRequest empty() {
+    return new FidoUafExecutionRequest(Map.of());
   }
 
-  public AuthenticationInteractionRequest(Map<String, Object> values) {
+  public FidoUafExecutionRequest(Map<String, Object> values) {
     this.values = values;
   }
 

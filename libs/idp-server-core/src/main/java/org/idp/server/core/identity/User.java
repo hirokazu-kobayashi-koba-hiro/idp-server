@@ -343,6 +343,11 @@ public class User implements JsonReadable, Serializable {
     return this;
   }
 
+  public User addAuthenticationDevice(AuthenticationDevice authenticationDevice) {
+    this.authenticationDevices.add(authenticationDevice);
+    return this;
+  }
+
   public boolean exists() {
     return Objects.nonNull(sub) && !sub.isEmpty();
   }

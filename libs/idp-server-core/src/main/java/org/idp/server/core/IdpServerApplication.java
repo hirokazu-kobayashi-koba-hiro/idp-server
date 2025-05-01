@@ -5,6 +5,8 @@ import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiers;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiersLoader;
+import org.idp.server.core.authentication.fidouaf.FidoUafExecutorLoader;
+import org.idp.server.core.authentication.fidouaf.FidoUafExecutors;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
 import org.idp.server.core.basic.crypto.AesCipher;
@@ -72,6 +74,7 @@ public class IdpServerApplication {
   OidcMetaDataApi oidcMetaDataApi;
   UserinfoApi userinfoApi;
   CibaFlowApi cibaFlowApi;
+  AuthenticationMetaDataApi authenticationMetaDataApi;
   AuthenticationDeviceApi authenticationDeviceApi;
   IdentityVerificationApi identityVerificationApi;
   SecurityEventApi securityEventApi;
@@ -164,6 +167,10 @@ public class IdpServerApplication {
     authenticationDependencyContainer.register(
         AuthenticationDeviceNotifiers.class, authenticationDeviceNotifiers);
 
+    FidoUafExecutors fidoUafExecutors =
+        FidoUafExecutorLoader.load(authenticationDependencyContainer);
+    authenticationDependencyContainer.register(FidoUafExecutors.class, fidoUafExecutors);
+
     AuthenticationInteractors authenticationInteractors =
         AuthenticationInteractorLoader.load(authenticationDependencyContainer);
 
@@ -254,6 +261,17 @@ public class IdpServerApplication {
                 authenticationTransactionQueryRepository,
                 cibaFlowEventPublisher),
             CibaFlowApi.class,
+            OperationType.WRITE,
+            tenantDialectProvider);
+
+    this.authenticationMetaDataApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AuthenticationMetaDataEntryService(
+                authenticationDependencyContainer.resolve(
+                    AuthenticationConfigurationQueryRepository.class),
+                fidoUafExecutors,
+                tenantRepository),
+            AuthenticationMetaDataApi.class,
             OperationType.WRITE,
             tenantDialectProvider);
 
@@ -349,6 +367,10 @@ public class IdpServerApplication {
 
   public CibaFlowApi cibaFlowApi() {
     return cibaFlowApi;
+  }
+
+  public AuthenticationMetaDataApi authenticationMetaDataApi() {
+    return authenticationMetaDataApi;
   }
 
   public AuthenticationDeviceApi authenticationDeviceApi() {

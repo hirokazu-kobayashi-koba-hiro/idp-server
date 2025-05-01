@@ -1,4 +1,4 @@
-package org.idp.server.core.identity.verification.delegation;
+package org.idp.server.core.basic.oauth;
 
 import java.util.HashMap;
 import java.util.Map;

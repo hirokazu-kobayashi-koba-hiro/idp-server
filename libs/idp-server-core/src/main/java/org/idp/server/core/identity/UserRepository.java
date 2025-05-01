@@ -17,4 +17,6 @@ public interface UserRepository {
   void update(Tenant tenant, User user);
 
   User findByProvider(Tenant tenant, String providerId, String providerUserId);
+
+  User findByAuthenticationDevice(Tenant tenant, String deviceId);
 }
