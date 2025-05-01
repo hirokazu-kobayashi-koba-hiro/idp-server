@@ -1,6 +1,6 @@
 package org.idp.server.adapters.springboot.restapi.metadata;
 
-import org.idp.server.core.IdpServerApplication;
+import org.idp.server.usecases.IdpServerApplication;
 import org.idp.server.core.authentication.AuthenticationMetaDataApi;
 import org.idp.server.core.authentication.fidouaf.FidoUafExecutionResult;
 import org.idp.server.core.tenant.TenantIdentifier;

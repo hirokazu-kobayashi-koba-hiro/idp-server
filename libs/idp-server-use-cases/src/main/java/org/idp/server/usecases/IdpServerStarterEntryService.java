@@ -1,4 +1,4 @@
-package org.idp.server.core;
+package org.idp.server.usecases;
 
 import java.util.List;
 import java.util.Map;

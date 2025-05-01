@@ -1,4 +1,4 @@
-package org.idp.server.core;
+package org.idp.server.usecases;
 
 import org.idp.server.core.authentication.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.authentication.AuthenticationMetaDataApi;

@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot.restapi.oauth;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.core.IdpServerApplication;
+import org.idp.server.usecases.IdpServerApplication;
 import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.oidc.OAuthFlowApi;

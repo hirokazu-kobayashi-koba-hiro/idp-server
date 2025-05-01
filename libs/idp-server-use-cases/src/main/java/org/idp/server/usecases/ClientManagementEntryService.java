@@ -1,4 +1,4 @@
-package org.idp.server.core;
+package org.idp.server.usecases;
 
 import org.idp.server.core.admin.ClientManagementApi;
 import org.idp.server.basic.datasource.Transaction;

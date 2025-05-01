@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.adapters.springboot.operation.ResourceOwnerPrincipal;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.core.IdpServerApplication;
+import org.idp.server.usecases.IdpServerApplication;
 import org.idp.server.core.identity.verification.*;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;

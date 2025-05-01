@@ -2,7 +2,7 @@ package org.idp.server.adapters.springboot.restapi.authentication.device;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.core.IdpServerApplication;
+import org.idp.server.usecases.IdpServerApplication;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.identity.device.AuthenticationDeviceIdentifier;

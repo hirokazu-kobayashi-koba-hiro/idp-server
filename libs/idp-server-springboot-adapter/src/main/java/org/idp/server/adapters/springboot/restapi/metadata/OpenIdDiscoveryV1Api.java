@@ -1,6 +1,6 @@
 package org.idp.server.adapters.springboot.restapi.metadata;
 
-import org.idp.server.core.IdpServerApplication;
+import org.idp.server.usecases.IdpServerApplication;
 import org.idp.server.core.discovery.OidcMetaDataApi;
 import org.idp.server.core.discovery.handler.io.JwksRequestResponse;
 import org.idp.server.core.discovery.handler.io.ServerConfigurationRequestResponse;

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.adapters.springboot.operation.IdPScope;
 import org.idp.server.adapters.springboot.operation.ResourceOwnerPrincipal;
-import org.idp.server.core.IdpServerApplication;
+import org.idp.server.usecases.IdpServerApplication;
 import org.idp.server.core.admin.OperatorAuthenticationApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.tenant.TenantIdentifier;
