@@ -37,7 +37,7 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
 
     FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(request.toMap());
     FidoUafExecutionResult executionResult =
-        fidoUafExecutor.challengeRegistration(
+        fidoUafExecutor.verifyAuthentication(
             tenant, authorizationIdentifier, fidoUafExecutionRequest, fidoUafConfiguration);
 
     if (executionResult.isClientError()) {

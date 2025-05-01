@@ -18,7 +18,6 @@ public interface FidoUafExecutor {
   FidoUafExecutionResult verifyRegistration(
       Tenant tenant,
       AuthorizationIdentifier authorizationIdentifier,
-      String userId,
       FidoUafExecutionRequest request,
       FidoUafConfiguration configuration);
 

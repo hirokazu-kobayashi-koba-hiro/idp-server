@@ -46,7 +46,6 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
   public FidoUafExecutionResult verifyRegistration(
       Tenant tenant,
       AuthorizationIdentifier authorizationIdentifier,
-      String userId,
       FidoUafExecutionRequest request,
       FidoUafConfiguration configuration) {
 
