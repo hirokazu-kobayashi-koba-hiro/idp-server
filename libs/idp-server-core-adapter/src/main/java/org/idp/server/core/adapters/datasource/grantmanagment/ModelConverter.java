@@ -6,9 +6,13 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.grant_management.AuthorizationGranted;
 import org.idp.server.core.grant_management.AuthorizationGrantedIdentifier;
 import org.idp.server.core.identity.User;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
@@ -19,10 +23,6 @@ import org.idp.server.core.oidc.grant.consent.ConsentClaims;
 import org.idp.server.core.oidc.identity.RequestedClaimsPayload;
 import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.basic.type.oauth.Scopes;
 
 class ModelConverter {
 

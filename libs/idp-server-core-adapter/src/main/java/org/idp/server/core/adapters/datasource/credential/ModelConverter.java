@@ -2,11 +2,11 @@ package org.idp.server.core.adapters.datasource.credential;
 
 import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.basic.vc.Credential;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Subject;
 import org.idp.server.basic.type.verifiablecredential.CredentialIssuer;
 import org.idp.server.basic.type.verifiablecredential.TransactionId;
+import org.idp.server.basic.vc.Credential;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialTransaction;
 import org.idp.server.core.verifiablecredential.VerifiableCredentialTransactionStatus;
 

@@ -1,7 +1,7 @@
 package org.idp.server.core.ciba.user;
 
-import org.idp.server.core.identity.User;
 import org.idp.server.basic.type.extension.Pairs;
+import org.idp.server.core.identity.User;
 
 public interface LoginHintMatcher {
   boolean matches(String hint);

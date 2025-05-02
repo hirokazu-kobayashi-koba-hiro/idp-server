@@ -7,9 +7,9 @@ import org.idp.server.core.ciba.handler.io.CibaDenyResponse;
 import org.idp.server.core.ciba.handler.io.CibaDenyStatus;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class CibaDenyHandler {
 

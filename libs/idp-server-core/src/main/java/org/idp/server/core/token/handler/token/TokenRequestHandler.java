@@ -1,17 +1,21 @@
 package org.idp.server.core.token.handler.token;
 
+import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.mtls.ClientCert;
+import org.idp.server.basic.type.oauth.ClientSecretBasic;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
+import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
+import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
-import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.core.token.TokenRequestContext;
@@ -22,10 +26,6 @@ import org.idp.server.core.token.handler.token.io.TokenRequestStatus;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.service.*;
 import org.idp.server.core.token.validator.TokenRequestValidator;
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.mtls.ClientCert;
-import org.idp.server.basic.type.oauth.ClientSecretBasic;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class TokenRequestHandler {
 

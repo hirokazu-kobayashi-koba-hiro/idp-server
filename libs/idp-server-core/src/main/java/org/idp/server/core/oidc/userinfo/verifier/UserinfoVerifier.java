@@ -2,6 +2,7 @@ package org.idp.server.core.oidc.userinfo.verifier;
 
 import java.time.LocalDateTime;
 import org.idp.server.basic.date.SystemDateTime;
+import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.basic.x509.X509CertInvalidException;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oidc.mtls.ClientCertification;
@@ -10,7 +11,6 @@ import org.idp.server.core.oidc.mtls.ClientCertificationThumbprintCalculator;
 import org.idp.server.core.oidc.token.AccessToken;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.tokenintrospection.exception.TokenInvalidException;
-import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.core.verifiablecredential.exception.VerifiableCredentialTokenInvalidException;
 
 public class UserinfoVerifier {

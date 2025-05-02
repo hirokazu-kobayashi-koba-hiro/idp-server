@@ -1,8 +1,8 @@
 package org.idp.server.adapters.springboot.event;
 
-import org.idp.server.usecases.IdpServerApplication;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventApi;
+import org.idp.server.usecases.IdpServerApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;

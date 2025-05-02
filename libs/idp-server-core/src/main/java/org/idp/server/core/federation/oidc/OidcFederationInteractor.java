@@ -7,8 +7,8 @@ import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.*;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
-import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
 public class OidcFederationInteractor implements FederationInteractor {
 

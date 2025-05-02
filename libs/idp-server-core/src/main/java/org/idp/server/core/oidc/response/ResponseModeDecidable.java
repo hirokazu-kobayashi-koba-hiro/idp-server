@@ -1,9 +1,9 @@
 package org.idp.server.core.oidc.response;
 
-import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.basic.type.extension.ResponseModeValue;
 import org.idp.server.basic.type.oauth.ResponseType;
 import org.idp.server.basic.type.oidc.ResponseMode;
+import org.idp.server.core.oidc.AuthorizationProfile;
 
 public interface ResponseModeDecidable {
 

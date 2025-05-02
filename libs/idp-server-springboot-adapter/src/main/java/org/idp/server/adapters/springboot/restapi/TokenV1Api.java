@@ -2,13 +2,13 @@ package org.idp.server.adapters.springboot.restapi;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.TokenApi;
 import org.idp.server.core.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationResponse;
-import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

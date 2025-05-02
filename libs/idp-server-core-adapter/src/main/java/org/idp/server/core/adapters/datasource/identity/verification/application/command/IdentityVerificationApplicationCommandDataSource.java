@@ -1,7 +1,9 @@
 package org.idp.server.core.adapters.datasource.identity.verification.application.command;
 
+import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationCommandRepository;
+import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationApplicationCommandDataSource
@@ -15,7 +17,6 @@ public class IdentityVerificationApplicationCommandDataSource
 
   @Override
   public void register(Tenant tenant, IdentityVerificationApplication application) {
-
     IdentityVerificationApplicationCommandSqlExecutor executor =
         executors.get(tenant.databaseType());
     executor.insert(tenant, application);
@@ -23,9 +24,16 @@ public class IdentityVerificationApplicationCommandDataSource
 
   @Override
   public void update(Tenant tenant, IdentityVerificationApplication application) {
-
     IdentityVerificationApplicationCommandSqlExecutor executor =
         executors.get(tenant.databaseType());
     executor.update(tenant, application);
+  }
+
+  @Override
+  public void delete(
+      Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier) {
+    IdentityVerificationApplicationCommandSqlExecutor executor =
+        executors.get(tenant.databaseType());
+    executor.delete(tenant, user, identifier);
   }
 }

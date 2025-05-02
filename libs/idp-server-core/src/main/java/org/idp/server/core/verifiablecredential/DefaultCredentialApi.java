@@ -4,13 +4,13 @@ import org.idp.server.core.verifiablecredential.handler.CredentialHandler;
 import org.idp.server.core.verifiablecredential.handler.CredentialRequestErrorHandler;
 import org.idp.server.core.verifiablecredential.handler.io.*;
 
-public class CredentialApiImpl implements CredentialProtocol {
+public class DefaultCredentialApi implements CredentialProtocol {
 
   CredentialHandler credentialHandler;
   CredentialRequestErrorHandler credentialRequestErrorHandler;
   VerifiableCredentialDelegate delegate;
 
-  public CredentialApiImpl(CredentialHandler credentialHandler) {
+  public DefaultCredentialApi(CredentialHandler credentialHandler) {
     this.credentialHandler = credentialHandler;
     this.credentialRequestErrorHandler = new CredentialRequestErrorHandler();
   }

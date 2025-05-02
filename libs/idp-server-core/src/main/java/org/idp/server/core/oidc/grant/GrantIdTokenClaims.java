@@ -2,9 +2,9 @@ package org.idp.server.core.oidc.grant;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import org.idp.server.core.oidc.identity.RequestedIdTokenClaims;
 import org.idp.server.basic.type.oauth.ResponseType;
 import org.idp.server.basic.type.oauth.Scopes;
+import org.idp.server.core.oidc.identity.RequestedIdTokenClaims;
 
 public class GrantIdTokenClaims implements Iterable<String> {
 

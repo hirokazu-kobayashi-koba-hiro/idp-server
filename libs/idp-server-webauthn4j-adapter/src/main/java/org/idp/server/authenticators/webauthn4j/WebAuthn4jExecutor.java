@@ -1,12 +1,12 @@
 package org.idp.server.authenticators.webauthn4j;
 
 import java.util.Map;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.authentication.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.authentication.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.authentication.webauthn.*;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class WebAuthn4jExecutor implements WebAuthnExecutor {

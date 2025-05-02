@@ -44,4 +44,13 @@ export const postWithJson = async ({ url, headers, body }) => {
   }
 };
 
-
+export const deletion = async ({ url, headers }) => {
+  try {
+    return await client.delete(url, {
+      headers,
+      withCredentials: true
+    });
+  } catch (e) {
+    return e.response ? e.response : e;
+  }
+};

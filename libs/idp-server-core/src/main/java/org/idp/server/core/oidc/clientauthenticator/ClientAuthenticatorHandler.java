@@ -4,8 +4,8 @@ import static org.idp.server.basic.type.oauth.ClientAuthenticationType.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.basic.type.oauth.ClientAuthenticationType;
+import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 
 public class ClientAuthenticatorHandler {
 

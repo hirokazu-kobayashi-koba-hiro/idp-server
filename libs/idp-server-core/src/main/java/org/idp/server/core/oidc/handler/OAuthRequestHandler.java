@@ -1,12 +1,13 @@
 package org.idp.server.core.oidc.handler;
 
+import org.idp.server.core.grant_management.AuthorizationGranted;
+import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.oidc.*;
 import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
-import org.idp.server.core.grant_management.AuthorizationGranted;
-import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.oidc.*;
 import org.idp.server.core.oidc.context.*;
 import org.idp.server.core.oidc.gateway.RequestObjectGateway;
 import org.idp.server.core.oidc.io.OAuthRequest;
@@ -14,7 +15,6 @@ import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
 import org.idp.server.core.oidc.validator.OAuthRequestValidator;
 import org.idp.server.core.oidc.verifier.OAuthRequestVerifier;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 /** OAuthRequestHandler */
 public class OAuthRequestHandler {

@@ -3,21 +3,21 @@ package org.idp.server.core.ciba;
 import java.util.HashMap;
 import java.util.List;
 import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.type.ciba.Interval;
+import org.idp.server.basic.type.ciba.UserCode;
+import org.idp.server.basic.type.mtls.ClientCert;
+import org.idp.server.basic.type.oauth.*;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.ciba.user.UserHint;
 import org.idp.server.core.ciba.user.UserHintRelatedParams;
 import org.idp.server.core.ciba.user.UserHintType;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.oidc.client.Client;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.basic.type.ciba.Interval;
-import org.idp.server.basic.type.ciba.UserCode;
-import org.idp.server.basic.type.mtls.ClientCert;
-import org.idp.server.basic.type.oauth.*;
 
 public class CibaRequestContext implements BackchannelRequestContext {
 
@@ -204,7 +204,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
     }
 
     if (clientConfiguration.hasSecret()) {
-      map.put("clientSecret", clientConfiguration.clientSecret());
+      map.put("clientSecret", clientConfiguration.clientSecret().value());
     }
 
     return new UserHintRelatedParams(map);

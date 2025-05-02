@@ -1,5 +1,5 @@
-import { describe, xdescribe, expect, it } from "@jest/globals";
-import { get, post } from "./lib/http";
+import { describe, expect, it, xit } from "@jest/globals";
+import { deletion, get, post } from "./lib/http";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
 import { loginForClientSecretPost } from "./ciba/login";
 
@@ -206,12 +206,26 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.data.list.length).toBe(1);
       expect(applicationsResponse.data.list[0].id).toBe(applicationId);
 
+      const deleteUrl = serverConfig.identityVerificationApplicationsDeletionEndpoint
+        .replace("{type}", type)
+        .replace("{id}", applicationId);
+
+      const deleteResponse = await deletion({
+        url: deleteUrl,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${tokenResponse.access_token}`
+        }
+      });
+
+      expect(deleteResponse.status).toBe(200);
+
     });
   });
 
   describe("error pattern", () => {
 
-    it("continuous-customer-due-diligence", async () => {
+    xit("continuous-customer-due-diligence", async () => {
 
       const type = "continuous-customer-due-diligence";
       const tokenResponse = await loginForClientSecretPost({

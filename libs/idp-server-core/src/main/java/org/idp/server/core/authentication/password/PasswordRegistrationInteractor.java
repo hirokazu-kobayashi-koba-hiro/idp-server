@@ -2,19 +2,19 @@ package org.idp.server.core.authentication.password;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.authentication.*;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.basic.json.schema.JsonSchemaValidator;
+import org.idp.server.core.authentication.*;
 import org.idp.server.core.identity.IdPUserCreator;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class PasswordRegistrationInteractor implements AuthenticationInteractor {
 

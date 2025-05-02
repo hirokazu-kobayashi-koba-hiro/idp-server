@@ -1,12 +1,12 @@
 package org.idp.server.core.identity.verification;
 
+import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationQueries;
 import org.idp.server.core.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
-import org.idp.server.basic.type.security.RequestAttributes;
 
 public interface IdentityVerificationApi {
   IdentityVerificationResponse apply(
@@ -45,5 +45,13 @@ public interface IdentityVerificationApi {
       TenantIdentifier tenantIdentifier,
       IdentityVerificationType identityVerificationType,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes);
+
+  IdentityVerificationResponse delete(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      IdentityVerificationApplicationIdentifier identifier,
+      IdentityVerificationType type,
       RequestAttributes requestAttributes);
 }

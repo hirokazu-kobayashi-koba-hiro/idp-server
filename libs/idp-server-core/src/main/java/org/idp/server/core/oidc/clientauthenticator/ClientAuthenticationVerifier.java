@@ -1,9 +1,9 @@
 package org.idp.server.core.oidc.clientauthenticator;
 
 import java.util.Objects;
+import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 
 public class ClientAuthenticationVerifier {
   ClientAuthenticationType clientAuthenticationType;

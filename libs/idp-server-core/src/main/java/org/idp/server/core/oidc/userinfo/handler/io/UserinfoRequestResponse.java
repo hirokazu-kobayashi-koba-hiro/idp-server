@@ -2,9 +2,9 @@ package org.idp.server.core.oidc.userinfo.handler.io;
 
 import java.util.Map;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.oidc.userinfo.UserinfoErrorResponse;
 import org.idp.server.core.oidc.userinfo.UserinfoResponse;
+import org.idp.server.core.token.OAuthToken;
 
 public class UserinfoRequestResponse {
   UserinfoRequestStatus status;

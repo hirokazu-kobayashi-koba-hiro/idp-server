@@ -1,12 +1,12 @@
 package org.idp.server.core.ciba.handler.io;
 
+import org.idp.server.basic.type.ContentType;
 import org.idp.server.core.ciba.CibaRequestContext;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.ciba.user.UserHint;
 import org.idp.server.core.ciba.user.UserHintRelatedParams;
 import org.idp.server.core.ciba.user.UserHintType;
-import org.idp.server.basic.type.ContentType;
 
 public class CibaRequestResult {
   CibaRequestStatus status;

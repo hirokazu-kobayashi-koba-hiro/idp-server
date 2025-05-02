@@ -2,12 +2,12 @@ package org.idp.server.core.token.handler.tokenrevocation.io;
 
 import java.util.Map;
 import org.idp.server.basic.http.BasicAuth;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.token.AuthorizationHeaderHandlerable;
-import org.idp.server.core.token.tokenrevocation.TokenRevocationRequestParameters;
 import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.basic.type.oauth.ClientSecretBasic;
 import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.token.AuthorizationHeaderHandlerable;
+import org.idp.server.core.token.tokenrevocation.TokenRevocationRequestParameters;
 
 public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
 

@@ -30,6 +30,7 @@ export const serverConfig = {
   identityVerificationApplicationsEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications`,
   identityVerificationApplicationsStaticCallbackExaminationEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/callback-examination`,
   identityVerificationApplicationsStaticCallbackResultEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/callback-result`,
+  identityVerificationApplicationsDeletionEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/{id}`,
   discoveryEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration`,
   credentialEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials`,

@@ -1,8 +1,8 @@
 package org.idp.server.core.authentication.device;
 
 import java.util.Map;
-import org.idp.server.core.authentication.webauthn.WebAuthnCredentialNotFoundException;
 import org.idp.server.core.authentication.notification.device.NotificationChannel;
+import org.idp.server.core.authentication.webauthn.WebAuthnCredentialNotFoundException;
 
 public class AuthenticationDeviceNotificationConfiguration {
   String channel;

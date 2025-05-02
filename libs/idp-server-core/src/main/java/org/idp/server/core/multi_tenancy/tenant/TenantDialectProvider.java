@@ -1,7 +1,6 @@
 package org.idp.server.core.multi_tenancy.tenant;
 
 import org.idp.server.basic.datasource.DatabaseType;
-import org.idp.server.basic.datasource.DialectProvider;
 
 public class TenantDialectProvider implements DialectProvider {
 
@@ -12,8 +11,7 @@ public class TenantDialectProvider implements DialectProvider {
   }
 
   @Override
-  public DatabaseType provide(String tenantId) {
-    TenantIdentifier tenantIdentifier = new TenantIdentifier(tenantId);
+  public DatabaseType provide(TenantIdentifier tenantIdentifier) {
     if (AdminTenantContext.isAdmin(tenantIdentifier)) {
       return DatabaseType.POSTGRESQL;
     }

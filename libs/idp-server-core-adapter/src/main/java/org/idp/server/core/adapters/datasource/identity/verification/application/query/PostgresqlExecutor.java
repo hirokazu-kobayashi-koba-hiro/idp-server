@@ -14,19 +14,21 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
 
   @Override
   public Map<String, String> selectOne(
-      Tenant tenant, IdentityVerificationApplicationIdentifier identifier) {
+      Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         selectSql
             + " "
             + """
                  WHERE id = ?
-                 AND tenant_id = ?;
+                 AND tenant_id = ?
+                 AND user_id = ?;
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
     params.add(tenant.identifierValue());
+    params.add(user.sub());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.query;
 
-import org.idp.server.core.authentication.AuthenticationTransactionQueryRepository;
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
+import org.idp.server.core.authentication.AuthenticationTransactionQueryRepository;
 
 public class AuthenticationTransactionQueryDataSourceProvider
     implements ApplicationComponentProvider<AuthenticationTransactionQueryRepository> {

@@ -7,9 +7,16 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.type.OAuthRequestKey;
+import org.idp.server.basic.type.extension.RegisteredRedirectUris;
+import org.idp.server.basic.type.extension.ResponseModeValue;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.ResponseMode;
+import org.idp.server.core.grant_management.AuthorizationGranted;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.grant_management.AuthorizationGranted;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oidc.grant.GrantIdTokenClaims;
 import org.idp.server.core.oidc.grant.GrantUserinfoClaims;
@@ -23,13 +30,6 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
 import org.idp.server.core.oidc.response.ResponseModeDecidable;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.basic.type.OAuthRequestKey;
-import org.idp.server.basic.type.extension.RegisteredRedirectUris;
-import org.idp.server.basic.type.extension.ResponseModeValue;
-import org.idp.server.basic.type.oauth.*;
-import org.idp.server.basic.type.oidc.ResponseMode;
 
 /** OAuthRequestContext */
 public class OAuthRequestContext implements ResponseModeDecidable {

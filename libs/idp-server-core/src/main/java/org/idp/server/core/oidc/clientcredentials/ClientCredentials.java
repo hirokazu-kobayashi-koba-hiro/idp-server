@@ -1,10 +1,10 @@
 package org.idp.server.core.oidc.clientcredentials;
 
 import java.util.Objects;
-import org.idp.server.core.oidc.mtls.ClientCertification;
 import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 import org.idp.server.basic.type.oauth.ClientSecret;
 import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.core.oidc.mtls.ClientCertification;
 
 public class ClientCredentials {
   RequestedClientId requestedClientId;

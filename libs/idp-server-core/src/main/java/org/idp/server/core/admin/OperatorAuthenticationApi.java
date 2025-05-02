@@ -1,9 +1,9 @@
 package org.idp.server.core.admin;
 
+import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
-import org.idp.server.basic.type.extension.Pairs;
 
 public interface OperatorAuthenticationApi {
 

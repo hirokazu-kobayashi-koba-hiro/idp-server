@@ -3,13 +3,13 @@ package org.idp.server.core.oidc.discovery;
 import java.util.Map;
 import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.oidc.discovery.handler.DiscoveryHandler;
 import org.idp.server.core.oidc.discovery.handler.io.JwksRequestResponse;
 import org.idp.server.core.oidc.discovery.handler.io.JwksRequestStatus;
 import org.idp.server.core.oidc.discovery.handler.io.ServerConfigurationRequestResponse;
 import org.idp.server.core.oidc.discovery.handler.io.ServerConfigurationRequestStatus;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class DefaultDiscoveryProtocol implements DiscoveryProtocol {
 

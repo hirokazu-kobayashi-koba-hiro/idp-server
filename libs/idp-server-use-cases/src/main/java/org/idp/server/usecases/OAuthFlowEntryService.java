@@ -2,15 +2,21 @@ package org.idp.server.usecases;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.authentication.*;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.date.SystemDateTime;
+import org.idp.server.basic.type.extension.OAuthDenyReason;
+import org.idp.server.basic.type.extension.Pairs;
+import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.core.authentication.*;
 import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.federation.io.FederationRequestResponse;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
 import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
 import org.idp.server.core.oidc.*;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
@@ -19,12 +25,6 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.security.event.OAuthFlowEventPublisher;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
-import org.idp.server.basic.type.extension.OAuthDenyReason;
-import org.idp.server.basic.type.extension.Pairs;
-import org.idp.server.basic.type.security.RequestAttributes;
 
 @Transaction
 public class OAuthFlowEntryService implements OAuthFlowApi {

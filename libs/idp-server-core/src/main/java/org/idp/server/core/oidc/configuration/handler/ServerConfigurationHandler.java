@@ -2,9 +2,9 @@ package org.idp.server.core.oidc.configuration.handler;
 
 import java.util.UUID;
 import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class ServerConfigurationHandler {
 

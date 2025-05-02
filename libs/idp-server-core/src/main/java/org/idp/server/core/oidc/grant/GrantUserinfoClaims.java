@@ -2,8 +2,8 @@ package org.idp.server.core.oidc.grant;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import org.idp.server.core.oidc.identity.RequestedUserinfoClaims;
 import org.idp.server.basic.type.oauth.Scopes;
+import org.idp.server.core.oidc.identity.RequestedUserinfoClaims;
 
 public class GrantUserinfoClaims implements Iterable<String> {
 

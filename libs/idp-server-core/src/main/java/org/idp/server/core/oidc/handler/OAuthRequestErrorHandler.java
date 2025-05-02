@@ -2,6 +2,8 @@ package org.idp.server.core.oidc.handler;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.core.oidc.configuration.ClientConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
@@ -10,8 +12,6 @@ import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.core.oidc.io.OAuthRequestStatus;
 import org.idp.server.core.oidc.response.AuthorizationErrorResponse;
 import org.idp.server.core.oidc.response.AuthorizationErrorResponseCreator;
-import org.idp.server.basic.type.oauth.*;
-import org.idp.server.basic.type.oauth.Error;
 
 public class OAuthRequestErrorHandler {
 

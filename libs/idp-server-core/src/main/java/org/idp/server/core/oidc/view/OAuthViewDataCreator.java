@@ -3,9 +3,9 @@ package org.idp.server.core.oidc.view;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 
 public class OAuthViewDataCreator {

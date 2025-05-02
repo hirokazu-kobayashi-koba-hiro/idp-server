@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.command;
 
-import org.idp.server.core.authentication.AuthenticationTransactionCommandRepository;
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
+import org.idp.server.core.authentication.AuthenticationTransactionCommandRepository;
 
 public class AuthenticationTransactionCommandDataSourceProvider
     implements ApplicationComponentProvider<AuthenticationTransactionCommandRepository> {

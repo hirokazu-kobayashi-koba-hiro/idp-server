@@ -2,12 +2,12 @@ package org.idp.server.core.authentication.device;
 
 import java.util.Map;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.notification.device.NotificationChannel;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.device.AuthenticationDevice;
-import org.idp.server.core.authentication.notification.device.NotificationChannel;
-import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
 
 public class AuthenticationDeviceNotificationInteractor implements AuthenticationInteractor {
 

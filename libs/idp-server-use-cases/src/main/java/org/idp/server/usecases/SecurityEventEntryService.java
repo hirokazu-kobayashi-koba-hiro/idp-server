@@ -1,14 +1,14 @@
 package org.idp.server.usecases;
 
 import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
 import org.idp.server.core.security.*;
 import org.idp.server.core.security.SecurityEventApi;
 import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.handler.SecurityEventHandler;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
 
 @Transaction
 public class SecurityEventEntryService implements SecurityEventApi {

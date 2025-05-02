@@ -1,8 +1,8 @@
 package org.idp.server.core.authentication.fidouaf;
 
 import java.util.Map;
-import org.idp.server.core.authentication.webauthn.WebAuthnCredentialNotFoundException;
 import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.core.authentication.webauthn.WebAuthnCredentialNotFoundException;
 
 public class FidoUafConfiguration implements JsonReadable {
   String type;

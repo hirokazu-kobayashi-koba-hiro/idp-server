@@ -1,15 +1,18 @@
 package org.idp.server.core.oidc.handler;
 
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
+import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.identity.User;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.OAuthAuthorizeContext;
 import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.OAuthSessionDelegate;
 import org.idp.server.core.oidc.OAuthSessionKey;
 import org.idp.server.core.oidc.authentication.Authentication;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrantCreator;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
@@ -19,11 +22,8 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.response.*;
 import org.idp.server.core.oidc.validator.OAuthAuthorizeRequestValidator;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 
 /** OAuthAuthorizeHandler */
 public class OAuthAuthorizeHandler {

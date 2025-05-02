@@ -3,13 +3,6 @@ package org.idp.server.core.adapters.datasource.ciba.request;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.ciba.CibaProfile;
-import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestBuilder;
-import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.oidc.rar.AuthorizationDetail;
-import org.idp.server.core.oidc.rar.AuthorizationDetails;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.ciba.*;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
@@ -17,6 +10,13 @@ import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.basic.type.oidc.IdTokenHint;
 import org.idp.server.basic.type.oidc.LoginHint;
 import org.idp.server.basic.type.oidc.RequestObject;
+import org.idp.server.core.ciba.CibaProfile;
+import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
+import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestBuilder;
+import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.oidc.rar.AuthorizationDetail;
+import org.idp.server.core.oidc.rar.AuthorizationDetails;
 
 class ModelConverter {
 
