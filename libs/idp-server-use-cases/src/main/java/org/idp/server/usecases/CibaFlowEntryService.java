@@ -6,6 +6,8 @@ import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.repository.AuthenticationTransactionCommandRepository;
+import org.idp.server.core.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.ciba.*;
 import org.idp.server.core.ciba.handler.io.*;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;

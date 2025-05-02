@@ -1,4 +1,4 @@
-package org.idp.server.core.authentication;
+package org.idp.server.core.authentication.exception;
 
 import org.idp.server.basic.exception.NotFoundException;
 

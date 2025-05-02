@@ -1,4 +1,4 @@
-package org.idp.server.core.authentication;
+package org.idp.server.core.authentication.factory;
 
 public interface AuthenticationDependencyProvider<T> {
   Class<T> type();

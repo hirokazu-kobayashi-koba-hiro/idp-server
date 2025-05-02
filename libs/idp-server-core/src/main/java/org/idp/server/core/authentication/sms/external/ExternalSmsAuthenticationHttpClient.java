@@ -6,7 +6,6 @@ import org.idp.server.basic.http.*;
 import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.basic.oauth.OAuthAuthorizationResolver;
 import org.idp.server.basic.oauth.OAuthAuthorizationResolvers;
-import org.idp.server.core.authentication.fidouaf.external.ExternalFidoUafServerHttpRequestResult;
 import org.idp.server.core.authentication.sms.SmsAuthenticationExecutionRequest;
 
 public class ExternalSmsAuthenticationHttpClient {
@@ -19,7 +18,7 @@ public class ExternalSmsAuthenticationHttpClient {
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
   }
 
-  public ExternalFidoUafServerHttpRequestResult execute(
+  public ExternalSmsAuthenticationHttpRequestResult execute(
       SmsAuthenticationExecutionRequest request,
       ExternalSmsAuthenticationExecutionConfiguration configuration,
       OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
@@ -36,7 +35,7 @@ public class ExternalSmsAuthenticationHttpClient {
             configuration.httpRequestDynamicBodyKeys(),
             configuration.httpRequestStaticBody());
 
-    return new ExternalFidoUafServerHttpRequestResult(executionResult);
+    return new ExternalSmsAuthenticationHttpRequestResult(executionResult);
   }
 
   private HttpRequestHeaders createHttpRequestHeaders(

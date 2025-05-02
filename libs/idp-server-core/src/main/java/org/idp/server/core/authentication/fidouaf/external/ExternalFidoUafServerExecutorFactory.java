@@ -1,9 +1,9 @@
 package org.idp.server.core.authentication.fidouaf.external;
 
-import org.idp.server.core.authentication.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.authentication.AuthenticationDependencyContainer;
+import org.idp.server.core.authentication.factory.AuthenticationDependencyContainer;
 import org.idp.server.core.authentication.fidouaf.FidoUafExecutor;
 import org.idp.server.core.authentication.fidouaf.FidoUafExecutorFactory;
+import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 
 public class ExternalFidoUafServerExecutorFactory implements FidoUafExecutorFactory {
 

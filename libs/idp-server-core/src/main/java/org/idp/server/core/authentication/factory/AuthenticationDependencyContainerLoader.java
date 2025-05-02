@@ -1,4 +1,4 @@
-package org.idp.server.core.authentication;
+package org.idp.server.core.authentication.factory;
 
 import java.util.ServiceLoader;
 import java.util.logging.Logger;

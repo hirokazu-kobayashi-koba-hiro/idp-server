@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.logging.Logger;
-import org.idp.server.core.authentication.AuthenticationDependencyContainer;
+import org.idp.server.core.authentication.factory.AuthenticationDependencyContainer;
 
 public class FidoUafExecutorLoader {
 

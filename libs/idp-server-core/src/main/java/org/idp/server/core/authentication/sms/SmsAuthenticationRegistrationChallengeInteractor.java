@@ -2,6 +2,7 @@ package org.idp.server.core.authentication.sms;
 
 import java.util.Map;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;

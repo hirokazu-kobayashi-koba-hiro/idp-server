@@ -6,12 +6,22 @@ import org.idp.server.core.authentication.sms.exception.SmsAuthenticationDetails
 
 public class SmsAuthenticationConfiguration implements JsonReadable {
   String type;
+  String transactionIdParam;
+  String verificationCodeParam;
   Map<String, Map<String, Object>> details;
 
   public SmsAuthenticationConfiguration() {}
 
   public SmsAuthenticationType type() {
     return new SmsAuthenticationType(type);
+  }
+
+  public String transactionIdParam() {
+    return transactionIdParam;
+  }
+
+  public String verificationCodeParam() {
+    return verificationCodeParam;
   }
 
   public Map<String, Map<String, Object>> details() {

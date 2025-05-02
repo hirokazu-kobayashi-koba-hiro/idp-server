@@ -1,4 +1,4 @@
-package org.idp.server.core.authentication;
+package org.idp.server.core.authentication.factory;
 
 import java.util.HashMap;
 import java.util.Map;

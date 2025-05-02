@@ -2,6 +2,7 @@ package org.idp.server.core.authentication.sms;
 
 import java.util.Map;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.exception.UserTooManyFoundResultException;
@@ -49,7 +50,7 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
       SmsAuthenticationExecutionRequest executionRequest =
           new SmsAuthenticationExecutionRequest(request.toMap());
       SmsAuthenticationExecutionResult executionResult =
-          executor.verify(tenant, authorizationIdentifier, executionRequest, configuration);
+          executor.challenge(tenant, authorizationIdentifier, executionRequest, configuration);
 
       if (executionResult.isClientError()) {
         return AuthenticationInteractionRequestResult.clientError(

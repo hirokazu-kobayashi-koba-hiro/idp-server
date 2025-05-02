@@ -8,6 +8,7 @@ import org.idp.server.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.basic.json.schema.JsonSchemaValidator;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.identity.IdPUserCreator;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;

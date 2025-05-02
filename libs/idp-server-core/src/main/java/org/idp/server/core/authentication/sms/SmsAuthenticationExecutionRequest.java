@@ -1,5 +1,6 @@
 package org.idp.server.core.authentication.sms;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -24,6 +25,12 @@ public class SmsAuthenticationExecutionRequest {
       return (String) values.get(key);
     }
     return defaultValue;
+  }
+
+  public SmsAuthenticationExecutionRequest add(String key, Object value) {
+    HashMap<String, Object> map = new HashMap<>(values);
+    map.put(key, value);
+    return new SmsAuthenticationExecutionRequest(map);
   }
 
   public String getValueAsString(String key) {

@@ -135,4 +135,77 @@ describe("ciba - mfa", () => {
 
   });
 
+  it("sms authentication", async () => {
+
+    let backchannelAuthenticationResponse =
+      await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        scope: "openid profile phone email" + clientSecretPostClient.scope,
+        bindingMessage: ciba.bindingMessage,
+        userCode: ciba.userCode,
+        loginHint: ciba.loginHint,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+    console.log(backchannelAuthenticationResponse.data);
+    expect(backchannelAuthenticationResponse.status).toBe(200);
+
+    const authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+      endpoint: serverConfig.authenticationDeviceEndpoint,
+      deviceId: serverConfig.ciba.authenticationDeviceId,
+      params: {},
+    });
+
+    console.log(authenticationTransactionResponse.data);
+    expect(authenticationTransactionResponse.status).toBe(200);
+
+    const failureResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransactionResponse.data.authorization_flow,
+      id: authenticationTransactionResponse.data.id,
+      interactionType: "password-authentication",
+      body: {
+        username: serverConfig.ciba.username,
+        password: "serverConfig.ciba.userCode",
+      }
+    });
+    console.log(failureResponse.data);
+    console.log(failureResponse.status);
+
+    let authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransactionResponse.data.authorization_flow,
+      id: authenticationTransactionResponse.data.id,
+      interactionType: "sms-authentication-challenge",
+      body: {
+        phone_number: "09012345678",
+        provider_id: "idp-server"
+      }
+    });
+    expect(authenticationResponse.status).toBe(200);
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransactionResponse.data.authorization_flow,
+      id: authenticationTransactionResponse.data.id,
+      interactionType: "sms-authentication",
+      body: {
+        "verification_code": "123456",
+      }
+    });
+    expect(authenticationResponse.status).toBe(200);
+
+
+    const tokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "urn:openid:params:grant-type:ciba",
+      authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    console.log(tokenResponse.data);
+    expect(tokenResponse.status).toBe(200);
+
+  });
+
 });
