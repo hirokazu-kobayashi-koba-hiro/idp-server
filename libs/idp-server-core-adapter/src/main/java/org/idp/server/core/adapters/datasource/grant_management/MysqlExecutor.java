@@ -13,7 +13,7 @@ import org.idp.server.core.oidc.grant.AuthorizationGrant;
 
 public class MysqlExecutor implements AuthorizationGrantedSqlExecutor {
 
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public void insert(AuthorizationGranted authorizationGranted) {

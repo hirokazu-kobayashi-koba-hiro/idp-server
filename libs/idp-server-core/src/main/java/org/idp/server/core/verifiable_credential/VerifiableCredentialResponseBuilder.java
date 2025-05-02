@@ -15,7 +15,7 @@ public class VerifiableCredentialResponseBuilder {
   CNonceExpiresIn cNonceExpiresIn = new CNonceExpiresIn();
   TransactionId transactionId = new TransactionId();
   Map<String, Object> values = new HashMap<>();
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   public VerifiableCredentialResponseBuilder() {}
 

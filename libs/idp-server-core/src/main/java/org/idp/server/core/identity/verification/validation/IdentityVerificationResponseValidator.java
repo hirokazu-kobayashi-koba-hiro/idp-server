@@ -16,7 +16,7 @@ public class IdentityVerificationResponseValidator {
       IdentityVerificationProcessConfiguration processConfiguration, JsonNodeWrapper response) {
     this.processConfiguration = processConfiguration;
     this.response = response;
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   public IdentityVerificationValidationResult validate() {

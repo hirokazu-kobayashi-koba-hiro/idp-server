@@ -15,7 +15,7 @@ public class AuthenticationConfigurationQueryDataSource
 
   public AuthenticationConfigurationQueryDataSource() {
     this.executors = new AuthenticationConfigSqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

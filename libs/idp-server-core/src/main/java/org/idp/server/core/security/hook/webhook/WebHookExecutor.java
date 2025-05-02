@@ -27,7 +27,7 @@ public class WebHookExecutor implements SecurityEventHookExecutor {
 
   public WebHookExecutor() {
     this.httpClient = HttpClientFactory.defaultClient();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

@@ -28,7 +28,7 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
       PasswordEncodeDelegation passwordEncodeDelegation) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

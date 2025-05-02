@@ -12,7 +12,7 @@ import org.idp.server.core.verifiable_credential.VerifiableCredentialTransaction
 
 class ModelConverter {
 
-  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static VerifiableCredentialTransaction convert(Map<String, String> stringMap) {
     TransactionId id = new TransactionId(stringMap.get("transaction_id"));

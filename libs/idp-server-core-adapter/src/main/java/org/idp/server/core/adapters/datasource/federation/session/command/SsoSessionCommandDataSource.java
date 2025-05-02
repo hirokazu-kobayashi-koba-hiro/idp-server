@@ -12,7 +12,7 @@ public class SsoSessionCommandDataSource implements SsoSessionCommandRepository 
 
   public SsoSessionCommandDataSource() {
     this.executors = new SsoSessionCommandSqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

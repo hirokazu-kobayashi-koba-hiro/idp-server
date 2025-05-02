@@ -24,7 +24,7 @@ public class SsfHookExecutor implements SecurityEventHookExecutor {
 
   public SsfHookExecutor() {
     this.httpClient = HttpClientFactory.defaultClient();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

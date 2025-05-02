@@ -22,7 +22,7 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
       AuthenticationConfigurationQueryRepository configurationRepository) {
     this.configurationRepository = configurationRepository;
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

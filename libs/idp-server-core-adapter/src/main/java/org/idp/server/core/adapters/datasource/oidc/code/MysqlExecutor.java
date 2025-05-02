@@ -10,7 +10,7 @@ import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 
 public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
 
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   MysqlExecutor() {}
 

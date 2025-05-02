@@ -20,7 +20,7 @@ public class HttpRequestExecutor {
 
   public HttpRequestExecutor(HttpClient httpClient) {
     this.httpClient = httpClient;
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   public HttpRequestResult execute(

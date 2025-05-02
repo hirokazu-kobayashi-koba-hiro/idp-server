@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FcmNotifier implements AuthenticationDeviceNotifier {
 
     LoggerWrapper log = LoggerWrapper.getLogger(FcmNotifier.class);
-    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
     Map<String, FirebaseMessaging> cache = new ConcurrentHashMap<>();
 
     @Override

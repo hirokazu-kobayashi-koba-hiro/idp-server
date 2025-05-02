@@ -9,7 +9,7 @@ import org.idp.server.core.multi_tenancy.tenant.*;
 
 public class PostgresqlExecutor implements TenantSqlExecutor {
 
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public void insert(Tenant tenant) {

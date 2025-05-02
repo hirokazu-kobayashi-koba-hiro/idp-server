@@ -15,7 +15,7 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
 
   public AuthorizationCodeGrantDataSource() {
     this.executors = new AuthorizationCodeGrantExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

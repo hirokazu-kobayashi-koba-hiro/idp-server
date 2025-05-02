@@ -32,7 +32,7 @@ import org.idp.server.core.token.OAuthTokenIdentifier;
 
 class ModelConverter {
 
-  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   // TODO refactor
   static OAuthToken convert(Map<String, String> stringMap, AesCipher aesCipher) {
@@ -133,7 +133,7 @@ class ModelConverter {
       return new AuthorizationDetails();
     }
     try {
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+      JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
       List list = jsonConverter.read(value, List.class);
       List<Map> details = (List<Map>) list;
       List<AuthorizationDetail> authorizationDetailsList =

@@ -13,7 +13,7 @@ import org.idp.server.basic.type.oidc.IdToken;
 public class ClientNotificationRequestBodyBuilder {
 
   Map<String, Object> values;
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   public ClientNotificationRequestBodyBuilder() {
     this.values = new HashMap<>();

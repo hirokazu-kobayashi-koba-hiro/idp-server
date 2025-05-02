@@ -50,7 +50,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     this.roleCommandRepository = roleCommandRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

@@ -19,7 +19,7 @@ public class UserDataSource implements UserRepository {
 
   public UserDataSource() {
     this.executors = new UserSqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

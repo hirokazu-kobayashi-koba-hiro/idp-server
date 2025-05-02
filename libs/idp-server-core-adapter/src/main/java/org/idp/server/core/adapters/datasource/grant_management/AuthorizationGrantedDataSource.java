@@ -15,7 +15,7 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
 
   public AuthorizationGrantedDataSource() {
     this.executors = new AuthorizationGrantedSqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

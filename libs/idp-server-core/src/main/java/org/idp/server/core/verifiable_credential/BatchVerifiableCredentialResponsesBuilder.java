@@ -12,7 +12,7 @@ public class BatchVerifiableCredentialResponsesBuilder {
   CNonce cNonce;
   CNonceExpiresIn cNonceExpiresIn;
   Map<String, Object> values = new HashMap<>();
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   public BatchVerifiableCredentialResponsesBuilder() {}
 

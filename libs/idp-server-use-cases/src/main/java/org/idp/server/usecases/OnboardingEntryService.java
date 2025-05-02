@@ -33,7 +33,7 @@ public class OnboardingEntryService implements OnboardingApi {
     this.organizationRepository = organizationRepository;
     this.userRegistrator = new UserRegistrator(userRepository);
     this.serverConfigurationRepository = serverConfigurationRepository;
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   // TODO improve logic

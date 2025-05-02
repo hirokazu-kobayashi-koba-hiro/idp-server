@@ -26,7 +26,7 @@ import org.idp.server.core.oidc.rar.AuthorizationDetails;
 
 class ModelConverter {
 
-  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static AuthorizationGranted convert(Map<String, String> stringMap) {
     AuthorizationGrantedIdentifier identifier =

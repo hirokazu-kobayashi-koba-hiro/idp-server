@@ -15,7 +15,7 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
   JsonConverter jsonConverter;
 
   public PostgresqlExecutor() {
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

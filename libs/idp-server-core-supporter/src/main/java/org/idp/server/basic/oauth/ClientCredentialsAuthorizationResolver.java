@@ -21,7 +21,7 @@ public class ClientCredentialsAuthorizationResolver implements OAuthAuthorizatio
 
   public ClientCredentialsAuthorizationResolver() {
     this.httpClient = HttpClientFactory.defaultClient();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

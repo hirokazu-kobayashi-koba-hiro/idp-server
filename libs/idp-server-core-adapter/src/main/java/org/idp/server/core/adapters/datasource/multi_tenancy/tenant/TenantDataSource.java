@@ -13,7 +13,7 @@ public class TenantDataSource implements TenantRepository {
 
   public TenantDataSource() {
     this.executors = new TenantSqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

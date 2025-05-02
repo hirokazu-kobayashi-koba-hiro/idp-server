@@ -13,7 +13,7 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
   JsonConverter jsonConverter;
 
   public MysqlExecutor() {
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

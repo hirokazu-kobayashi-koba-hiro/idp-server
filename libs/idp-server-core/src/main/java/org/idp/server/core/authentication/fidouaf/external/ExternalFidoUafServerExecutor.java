@@ -18,7 +18,7 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
       AuthenticationConfigurationQueryRepository configurationQueryRepository) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.httpClient = new ExternalFidoUafServerHttpClient();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

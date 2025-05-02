@@ -16,7 +16,7 @@ public class AuthenticationInteractionQueryDataSource
 
   public AuthenticationInteractionQueryDataSource() {
     this.executors = new AuthenticationInteractionQuerySqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

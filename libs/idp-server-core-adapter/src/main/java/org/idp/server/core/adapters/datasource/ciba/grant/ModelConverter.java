@@ -29,7 +29,7 @@ import org.idp.server.core.oidc.rar.AuthorizationDetails;
 
 class ModelConverter {
 
-  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static CibaGrant convert(Map<String, String> stringMap) {
     BackchannelAuthenticationRequestIdentifier id =

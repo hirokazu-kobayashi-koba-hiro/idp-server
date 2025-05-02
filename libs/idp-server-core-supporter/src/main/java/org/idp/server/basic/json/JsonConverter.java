@@ -13,20 +13,31 @@ import java.util.Map;
 
 public class JsonConverter {
 
-  ObjectMapper objectMapper;
+  private static final JsonConverter DEFAULT = create();
+  private static final JsonConverter SNAKE_CASE = createWithSnakeCaseStrategy();
 
-  JsonConverter(ObjectMapper objectMapper) {
+  public static JsonConverter defaultInstance() {
+    return DEFAULT;
+  }
+
+  public static JsonConverter snakeCaseInstance() {
+    return SNAKE_CASE;
+  }
+
+  private final ObjectMapper objectMapper;
+
+  private JsonConverter(ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
   }
 
-  public static JsonConverter create() {
+  private static JsonConverter create() {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
     objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
     return new JsonConverter(objectMapper);
   }
 
-  public static JsonConverter createWithSnakeCaseStrategy() {
+  private static JsonConverter createWithSnakeCaseStrategy() {
     JavaTimeModule javaTimeModule = new JavaTimeModule();
     javaTimeModule.addDeserializer(
         LocalDateTime.class,

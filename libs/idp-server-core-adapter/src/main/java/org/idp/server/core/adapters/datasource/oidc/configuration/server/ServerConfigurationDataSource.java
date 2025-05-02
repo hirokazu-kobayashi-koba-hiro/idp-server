@@ -15,7 +15,7 @@ public class ServerConfigurationDataSource implements ServerConfigurationReposit
 
   public ServerConfigurationDataSource() {
     this.executors = new ServerConfigSqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

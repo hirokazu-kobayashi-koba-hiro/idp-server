@@ -11,7 +11,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements IdentityVerificationApplicationCommandSqlExecutor {
 
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public void insert(Tenant tenant, IdentityVerificationApplication application) {

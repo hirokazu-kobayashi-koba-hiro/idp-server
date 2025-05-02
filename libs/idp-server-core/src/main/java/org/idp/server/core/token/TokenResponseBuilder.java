@@ -20,7 +20,7 @@ public class TokenResponseBuilder {
   CNonce cNonce = new CNonce();
   CNonceExpiresIn cNonceExpiresIn = new CNonceExpiresIn();
   Map<String, Object> values = new HashMap<>();
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   public TokenResponseBuilder() {}
 

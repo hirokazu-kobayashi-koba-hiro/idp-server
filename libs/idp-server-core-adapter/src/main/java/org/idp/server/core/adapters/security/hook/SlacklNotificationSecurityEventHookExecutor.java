@@ -25,7 +25,7 @@ public class SlacklNotificationSecurityEventHookExecutor implements SecurityEven
 
   public SlacklNotificationSecurityEventHookExecutor() {
     this.httpClient = HttpClientFactory.defaultClient();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

@@ -23,7 +23,7 @@ public class StandardOidcExecutor implements OidcSsoExecutor {
 
   public StandardOidcExecutor() {
     this.httpClient = HttpClientFactory.defaultClient();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

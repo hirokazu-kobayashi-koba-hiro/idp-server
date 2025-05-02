@@ -9,7 +9,7 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 
 public class InsertSqlCreator {
 
-  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static List<Object> createInsert(AuthorizationRequest authorizationRequest) {
     List<Object> params = new ArrayList<>();

@@ -18,7 +18,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
   public ClientConfigurationDataSource() {
     this.executors = new ClientConfigSqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

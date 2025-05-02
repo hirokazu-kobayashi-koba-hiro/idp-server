@@ -10,7 +10,7 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifi
 
 public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlExecutor {
 
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public void insert(BackchannelAuthenticationRequest request) {

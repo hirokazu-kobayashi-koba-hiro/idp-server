@@ -15,7 +15,7 @@ public class SsoSessionQueryDataSource implements SsoSessionQueryRepository {
 
   public SsoSessionQueryDataSource() {
     this.executors = new SsoSessionQuerySqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

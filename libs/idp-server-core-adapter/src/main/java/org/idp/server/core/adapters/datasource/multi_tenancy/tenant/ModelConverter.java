@@ -7,7 +7,7 @@ import org.idp.server.core.multi_tenancy.tenant.*;
 
 class ModelConverter {
 
-  private static final JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static Tenant convert(Map<String, String> result) {
 

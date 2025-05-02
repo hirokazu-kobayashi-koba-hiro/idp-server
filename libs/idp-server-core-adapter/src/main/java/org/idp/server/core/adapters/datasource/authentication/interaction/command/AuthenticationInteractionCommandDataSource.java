@@ -13,7 +13,7 @@ public class AuthenticationInteractionCommandDataSource
 
   public AuthenticationInteractionCommandDataSource() {
     this.executors = new AuthenticationInteractionCommandSqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

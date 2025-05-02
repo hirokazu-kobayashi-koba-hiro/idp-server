@@ -13,7 +13,7 @@ public class BackchannelAuthenticationResponseBuilder {
   ExpiresIn expiresIn;
   Interval interval;
   Map<String, Object> values = new HashMap<>();
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   public BackchannelAuthenticationResponseBuilder() {}
 

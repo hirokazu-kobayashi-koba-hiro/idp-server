@@ -7,7 +7,7 @@ import org.idp.server.core.verifiable_credential.VerifiableCredentialTransaction
 
 class InsertSqlParamsCreator {
 
-  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static List<Object> create(VerifiableCredentialTransaction verifiableCredentialTransaction) {
     List<Object> params = new ArrayList<>();
