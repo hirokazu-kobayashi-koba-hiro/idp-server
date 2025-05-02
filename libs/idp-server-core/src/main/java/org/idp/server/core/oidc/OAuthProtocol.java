@@ -1,10 +1,10 @@
 package org.idp.server.core.oidc;
 
 import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public interface OAuthProtocol {
 

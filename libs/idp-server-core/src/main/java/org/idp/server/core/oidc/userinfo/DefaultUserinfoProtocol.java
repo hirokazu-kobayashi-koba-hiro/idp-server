@@ -4,16 +4,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
-import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
-import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
+import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.oidc.userinfo.handler.UserinfoDelegate;
 import org.idp.server.core.oidc.userinfo.handler.UserinfoHandler;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequest;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestStatus;
+import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 public class DefaultUserinfoProtocol implements UserinfoProtocol {
 

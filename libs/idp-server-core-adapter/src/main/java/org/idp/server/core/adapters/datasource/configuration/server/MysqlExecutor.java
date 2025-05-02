@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
 
 public class MysqlExecutor implements ServerConfigSqlExecutor {
 

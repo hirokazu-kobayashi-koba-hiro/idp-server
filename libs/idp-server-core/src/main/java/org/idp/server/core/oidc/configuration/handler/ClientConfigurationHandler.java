@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.ClientConfigurationResponseCreator;
@@ -11,8 +13,6 @@ import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationMana
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementListStatus;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementStatus;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 
 public class ClientConfigurationHandler {
 

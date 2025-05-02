@@ -6,8 +6,8 @@ import org.idp.server.core.federation.FederationType;
 import org.idp.server.core.federation.SsoProvider;
 import org.idp.server.core.federation.SsoState;
 import org.idp.server.core.federation.SsoStateCoder;
-import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
 public class OidcSsoSessionCreator {
 

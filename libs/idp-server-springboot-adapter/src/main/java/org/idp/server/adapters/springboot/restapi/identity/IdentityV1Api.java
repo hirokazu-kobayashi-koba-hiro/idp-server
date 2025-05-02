@@ -4,14 +4,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.adapters.springboot.operation.ResourceOwnerPrincipal;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.verification.*;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationQueries;
 import org.idp.server.core.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -143,6 +143,31 @@ public class IdentityV1Api implements ParameterTransformable {
             tenantIdentifier,
             verificationType,
             new IdentityVerificationRequest(requestBody),
+            requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @DeleteMapping("/{verification-type}/{id}")
+  public ResponseEntity<?> delete(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") IdentityVerificationApplicationIdentifier identifier,
+      @PathVariable("verification-type") IdentityVerificationType verificationType,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    IdentityVerificationResponse response =
+        identityVerificationApi.delete(
+            tenantIdentifier,
+            resourceOwnerPrincipal.getUser(),
+            resourceOwnerPrincipal.getOAuthToken(),
+            identifier,
+            verificationType,
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

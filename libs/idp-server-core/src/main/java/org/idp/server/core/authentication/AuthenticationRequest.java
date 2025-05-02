@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public class AuthenticationRequest {
 

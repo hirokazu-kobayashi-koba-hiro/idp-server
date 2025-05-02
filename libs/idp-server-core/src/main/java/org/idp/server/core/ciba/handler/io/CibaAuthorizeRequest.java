@@ -2,10 +2,10 @@ package org.idp.server.core.ciba.handler.io;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.basic.type.extension.CustomProperties;
 
 public class CibaAuthorizeRequest {
   Tenant tenant;

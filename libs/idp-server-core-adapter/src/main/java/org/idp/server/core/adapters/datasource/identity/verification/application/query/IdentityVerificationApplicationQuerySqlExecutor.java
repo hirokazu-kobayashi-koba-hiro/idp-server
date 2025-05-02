@@ -10,7 +10,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public interface IdentityVerificationApplicationQuerySqlExecutor {
   Map<String, String> selectOne(
-      Tenant tenant, IdentityVerificationApplicationIdentifier identifier);
+      Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier);
 
   Map<String, String> selectOne(Tenant tenant, ExternalWorkflowApplicationIdentifier identifier);
 

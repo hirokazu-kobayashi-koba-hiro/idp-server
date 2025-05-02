@@ -1,13 +1,13 @@
 package org.idp.server.adapters.springboot.restapi.management;
 
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.admin.ClientManagementApi;
-import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementListResponse;
-import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementListResponse;
+import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementResponse;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

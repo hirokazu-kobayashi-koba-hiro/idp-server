@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.authentication.legacy.UserInfoMapper;
 import org.idp.server.core.authentication.legacy.UserInfoMappingRule;
-import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.address.Address;
 import org.junit.jupiter.api.Test;

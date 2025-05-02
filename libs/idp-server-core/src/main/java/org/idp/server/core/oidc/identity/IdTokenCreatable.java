@@ -5,15 +5,15 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.jose.*;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ConfigurationInvalidException;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.IdToken;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.oidc.authentication.Authentication;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.ConfigurationInvalidException;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.grant.AuthorizationGrant;
 
 public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashable {
 

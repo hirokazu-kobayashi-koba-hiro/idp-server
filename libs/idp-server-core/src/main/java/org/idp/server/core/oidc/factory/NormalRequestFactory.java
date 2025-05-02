@@ -2,14 +2,14 @@ package org.idp.server.core.oidc.factory;
 
 import java.util.Set;
 import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.type.oauth.Scopes;
+import org.idp.server.basic.type.oidc.MaxAge;
+import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
-import org.idp.server.basic.type.oauth.Scopes;
-import org.idp.server.basic.type.oidc.MaxAge;
 
 /** NormalRequestFactory */
 public class NormalRequestFactory implements AuthorizationRequestFactory {

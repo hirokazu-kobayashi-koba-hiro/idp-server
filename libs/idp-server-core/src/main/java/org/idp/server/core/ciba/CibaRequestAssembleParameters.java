@@ -5,7 +5,6 @@ import static org.idp.server.basic.type.OAuthRequestKey.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.basic.type.OAuthRequestKey;
 import org.idp.server.basic.type.ciba.*;
 import org.idp.server.basic.type.oauth.*;
@@ -13,6 +12,7 @@ import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.basic.type.oidc.IdTokenHint;
 import org.idp.server.basic.type.oidc.LoginHint;
 import org.idp.server.basic.type.oidc.RequestObject;
+import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
 
 public class CibaRequestAssembleParameters implements BackchannelRequestParameters {
   Map<String, Object> values;

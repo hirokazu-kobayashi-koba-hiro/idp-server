@@ -1,6 +1,5 @@
 package org.idp.server.basic.random;
 
-import org.idp.server.basic.random.RandomStringGenerator;
 import org.junit.jupiter.api.Test;
 
 public class RandomStringGeneratorTest {

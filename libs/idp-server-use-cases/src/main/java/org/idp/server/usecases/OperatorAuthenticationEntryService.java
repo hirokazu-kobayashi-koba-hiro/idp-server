@@ -1,8 +1,10 @@
 package org.idp.server.usecases;
 
+import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.basic.exception.UnauthorizedException;
+import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.core.admin.OperatorAuthenticationApi;
 import org.idp.server.core.admin.TokenIntrospectionCreator;
-import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
@@ -13,8 +15,6 @@ import org.idp.server.core.token.TokenProtocol;
 import org.idp.server.core.token.TokenProtocols;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
-import org.idp.server.basic.exception.UnauthorizedException;
-import org.idp.server.basic.type.extension.Pairs;
 
 @Transaction
 public class OperatorAuthenticationEntryService implements OperatorAuthenticationApi {

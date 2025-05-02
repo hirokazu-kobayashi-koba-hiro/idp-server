@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
+import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements IdentityVerificationApplicationCommandSqlExecutor {
@@ -91,5 +93,26 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     params.add(tenant.identifierValue());
 
     sqlExecutor.execute(sqlBuilder.toString(), params);
+  }
+
+  @Override
+  public void delete(
+      Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+            DELETE FROM identity_verification_applications
+            WHERE tenant_id = ?
+            AND user_id = ?
+            AND id = ?;
+            """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+    params.add(user.sub());
+    params.add(identifier.value());
+
+    sqlExecutor.execute(sqlTemplate, params);
   }
 }

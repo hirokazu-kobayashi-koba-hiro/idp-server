@@ -1,11 +1,11 @@
 package org.idp.server.core.token.verifier;
 
+import org.idp.server.basic.type.pkce.CodeChallenge;
+import org.idp.server.basic.type.pkce.CodeVerifier;
 import org.idp.server.core.oidc.pkce.CodeChallengeCalculator;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.token.TokenRequestContext;
 import org.idp.server.core.token.exception.TokenBadRequestException;
-import org.idp.server.basic.type.pkce.CodeChallenge;
-import org.idp.server.basic.type.pkce.CodeVerifier;
 
 public class PkceVerifier {
 

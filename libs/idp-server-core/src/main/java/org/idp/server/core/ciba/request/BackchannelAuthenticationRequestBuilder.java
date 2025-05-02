@@ -1,11 +1,11 @@
 package org.idp.server.core.ciba.request;
 
-import org.idp.server.core.ciba.CibaProfile;
-import org.idp.server.core.oidc.rar.AuthorizationDetails;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.basic.type.ciba.*;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.*;
+import org.idp.server.core.ciba.CibaProfile;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.oidc.rar.AuthorizationDetails;
 
 public class BackchannelAuthenticationRequestBuilder {
 

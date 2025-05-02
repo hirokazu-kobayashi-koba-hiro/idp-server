@@ -3,17 +3,17 @@ package org.idp.server.usecases;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.idp.server.core.admin.OnboardingApi;
 import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
+import org.idp.server.core.admin.OnboardingApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.multi_tenancy.organization.*;
 import org.idp.server.core.multi_tenancy.tenant.*;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 
 @Transaction
 public class OnboardingEntryService implements OnboardingApi {

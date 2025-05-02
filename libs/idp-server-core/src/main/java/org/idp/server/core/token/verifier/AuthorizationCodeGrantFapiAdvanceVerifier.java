@@ -1,11 +1,11 @@
 package org.idp.server.core.token.verifier;
 
+import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.token.TokenRequestContext;
 import org.idp.server.core.token.exception.TokenBadRequestException;
-import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 
 public class AuthorizationCodeGrantFapiAdvanceVerifier
     implements AuthorizationCodeGrantVerifierInterface {

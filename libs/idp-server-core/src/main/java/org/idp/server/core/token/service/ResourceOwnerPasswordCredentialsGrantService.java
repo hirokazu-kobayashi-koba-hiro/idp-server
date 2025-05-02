@@ -1,11 +1,15 @@
 package org.idp.server.core.token.service;
 
 import java.util.UUID;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.oauth.Scopes;
+import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.core.identity.User;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.oidc.identity.IdTokenCreatable;
@@ -16,14 +20,10 @@ import org.idp.server.core.oidc.token.AccessToken;
 import org.idp.server.core.oidc.token.AccessTokenCreatable;
 import org.idp.server.core.oidc.token.RefreshToken;
 import org.idp.server.core.oidc.token.RefreshTokenCreatable;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.ResourceOwnerPasswordGrantValidator;
 import org.idp.server.core.token.verifier.ResourceOwnerPasswordGrantVerifier;
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.oauth.Scopes;
-import org.idp.server.basic.type.oidc.IdToken;
 
 /**
  * ResourceOwnerPasswordCredentialsGrantService

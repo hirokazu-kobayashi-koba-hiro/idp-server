@@ -3,16 +3,16 @@ package org.idp.server.core.oidc.io;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.basic.type.oauth.Error;
+import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.OAuthSession;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.response.AuthorizationErrorResponse;
 import org.idp.server.core.oidc.response.AuthorizationResponse;
-import org.idp.server.basic.type.oauth.Error;
-import org.idp.server.basic.type.oauth.ErrorDescription;
 
 /** OAuthRequestResponse */
 public class OAuthRequestResponse {

@@ -1,10 +1,10 @@
 package org.idp.server.core.grant_management;
 
+import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.GrantIdTokenClaims;
 import org.idp.server.core.oidc.grant.GrantUserinfoClaims;
 import org.idp.server.core.oidc.grant.consent.ConsentClaims;
-import org.idp.server.basic.type.oauth.Scopes;
 
 public class AuthorizationGranted {
   AuthorizationGrantedIdentifier identifier;

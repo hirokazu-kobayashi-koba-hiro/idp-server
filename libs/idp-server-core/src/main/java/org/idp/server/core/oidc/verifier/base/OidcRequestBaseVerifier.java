@@ -1,11 +1,11 @@
 package org.idp.server.core.oidc.verifier.base;
 
+import org.idp.server.basic.type.OAuthRequestKey;
+import org.idp.server.basic.type.oidc.Prompts;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
-import org.idp.server.basic.type.OAuthRequestKey;
-import org.idp.server.basic.type.oidc.Prompts;
 
 /**
  * 3.1.2.2. Authentication Request Validation

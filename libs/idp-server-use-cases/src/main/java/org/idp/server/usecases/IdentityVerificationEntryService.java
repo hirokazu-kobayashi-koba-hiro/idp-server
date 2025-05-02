@@ -3,6 +3,7 @@ package org.idp.server.usecases;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.UserStatus;
@@ -20,13 +21,12 @@ import org.idp.server.core.identity.verification.result.IdentityVerificationResu
 import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.identity.verification.validation.IdentityVerificationRequestValidator;
 import org.idp.server.core.identity.verification.validation.IdentityVerificationValidationResult;
-import org.idp.server.core.security.event.DefaultSecurityEventType;
-import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
+import org.idp.server.core.security.event.DefaultSecurityEventType;
+import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.token.OAuthToken;
-import org.idp.server.basic.type.security.RequestAttributes;
 
 @Transaction
 public class IdentityVerificationEntryService implements IdentityVerificationApi {
@@ -152,7 +152,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     IdentityVerificationApplication application =
-        applicationQueryRepository.get(tenant, identifier);
+        applicationQueryRepository.get(tenant, user, identifier);
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
     IdentityVerificationApplications applications =
@@ -276,5 +276,23 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     Map<String, Object> response = new HashMap<>();
     return IdentityVerificationResponse.OK(response);
+  }
+
+  @Override
+  public IdentityVerificationResponse delete(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      IdentityVerificationApplicationIdentifier identifier,
+      IdentityVerificationType type,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    applicationQueryRepository.get(tenant, user, identifier);
+    applicationCommandRepository.delete(tenant, user, identifier);
+
+    eventPublisher.publish(tenant, oAuthToken, DefaultSecurityEventType.identity_verification_application_delete, requestAttributes);
+
+    return IdentityVerificationResponse.OK(Map.of());
   }
 }

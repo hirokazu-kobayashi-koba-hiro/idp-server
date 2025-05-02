@@ -1,5 +1,7 @@
 package org.idp.server.core.oidc.handler;
 
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
@@ -11,8 +13,6 @@ import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.response.*;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.basic.type.oauth.*;
 
 public class OAuthDenyHandler {
 

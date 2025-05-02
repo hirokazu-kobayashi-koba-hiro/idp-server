@@ -1,8 +1,8 @@
 package org.idp.server.core.oidc.repository;
 
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 /** AuthorizationRequestRepository */
 public interface AuthorizationRequestRepository {

@@ -4,15 +4,15 @@ import java.util.Date;
 import java.util.List;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
+import org.idp.server.basic.type.oauth.ClientAuthenticationType;
+import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oidc.verifier.base.AuthorizationRequestVerifier;
 import org.idp.server.core.oidc.verifier.base.OAuthRequestBaseVerifier;
 import org.idp.server.core.oidc.verifier.base.OidcRequestBaseVerifier;
-import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 
 public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
 

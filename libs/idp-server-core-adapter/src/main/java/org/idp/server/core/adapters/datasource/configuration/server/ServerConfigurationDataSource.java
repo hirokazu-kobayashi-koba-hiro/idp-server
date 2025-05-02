@@ -3,10 +3,10 @@ package org.idp.server.core.adapters.datasource.configuration.server;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class ServerConfigurationDataSource implements ServerConfigurationRepository {
 

@@ -2,12 +2,11 @@ package org.idp.server.core.authentication.fidouaf.external;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.authentication.fidouaf.FidoUafExecutionRequest;
 import org.idp.server.basic.http.*;
 import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.basic.oauth.OAuthAuthorizationResolver;
 import org.idp.server.basic.oauth.OAuthAuthorizationResolvers;
-import org.idp.server.basic.type.oauth.AccessTokenEntity;
+import org.idp.server.core.authentication.fidouaf.FidoUafExecutionRequest;
 
 public class ExternalFidoUafServerHttpClient {
 

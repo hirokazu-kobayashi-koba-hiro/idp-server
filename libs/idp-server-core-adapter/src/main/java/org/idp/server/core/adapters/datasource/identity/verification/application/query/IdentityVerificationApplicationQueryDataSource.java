@@ -19,10 +19,10 @@ public class IdentityVerificationApplicationQueryDataSource
 
   @Override
   public IdentityVerificationApplication get(
-      Tenant tenant, IdentityVerificationApplicationIdentifier identifier) {
+      Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier) {
     IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
 
-    Map<String, String> result = executor.selectOne(tenant, identifier);
+    Map<String, String> result = executor.selectOne(tenant, user, identifier);
 
     if (result == null || result.isEmpty()) {
       throw new IdentityVerificationApplicationNotFoundException(

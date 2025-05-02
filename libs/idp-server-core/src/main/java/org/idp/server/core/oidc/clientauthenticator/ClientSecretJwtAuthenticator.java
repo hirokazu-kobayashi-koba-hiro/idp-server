@@ -3,15 +3,15 @@ package org.idp.server.core.oidc.clientauthenticator;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JoseHandler;
 import org.idp.server.basic.jose.JoseInvalidException;
-import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.clientcredentials.ClientAssertionJwt;
-import org.idp.server.core.oidc.clientcredentials.ClientAuthenticationPublicKey;
-import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
-import org.idp.server.core.oidc.mtls.ClientCertification;
 import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 import org.idp.server.basic.type.oauth.ClientSecret;
 import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.oidc.clientcredentials.ClientAssertionJwt;
+import org.idp.server.core.oidc.clientcredentials.ClientAuthenticationPublicKey;
+import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
+import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.mtls.ClientCertification;
 
 class ClientSecretJwtAuthenticator
     implements ClientAuthenticator, ClientAuthenticationJwtValidatable {

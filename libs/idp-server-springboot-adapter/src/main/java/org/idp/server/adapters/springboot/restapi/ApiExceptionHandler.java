@@ -1,7 +1,6 @@
 package org.idp.server.adapters.springboot.restapi;
 
 import java.util.Map;
-
 import org.idp.server.basic.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

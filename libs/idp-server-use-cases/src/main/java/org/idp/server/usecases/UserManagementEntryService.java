@@ -1,8 +1,8 @@
 package org.idp.server.usecases;
 
 import java.util.List;
-import org.idp.server.core.admin.UserManagementApi;
 import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.core.admin.UserManagementApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;

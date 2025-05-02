@@ -2,12 +2,12 @@ package org.idp.server.core.oidc.token;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
-import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.basic.type.extension.CreatedAt;
 import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.*;
+import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
+import org.idp.server.core.oidc.rar.AuthorizationDetails;
 
 public class AccessTokenPayloadBuilder {
   Map<String, Object> values = new HashMap<>();
