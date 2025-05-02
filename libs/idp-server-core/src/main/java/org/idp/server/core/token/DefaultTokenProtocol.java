@@ -1,10 +1,9 @@
 package org.idp.server.core.token;
 
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
@@ -35,7 +34,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
   TokenRevocationHandler tokenRevocationHandler;
   TokenRequestErrorHandler errorHandler;
   PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
-  Logger log = Logger.getLogger(DefaultTokenProtocol.class.getName());
+  LoggerWrapper log = LoggerWrapper.getLogger(DefaultTokenProtocol.class);
 
   public DefaultTokenProtocol(
       AuthorizationRequestRepository authorizationRequestRepository,
@@ -87,7 +86,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
       return new TokenIntrospectionResponse(
           TokenIntrospectionRequestStatus.INVALID_TOKEN, contents);
     } catch (Exception exception) {
-      log.log(Level.SEVERE, exception.getMessage(), exception);
+      log.error(exception.getMessage(), exception);
       Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
       return new TokenIntrospectionResponse(TokenIntrospectionRequestStatus.SERVER_ERROR, contents);
     }
@@ -98,7 +97,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
 
       return tokenRevocationHandler.handle(request);
     } catch (Exception exception) {
-      log.log(Level.SEVERE, exception.getMessage(), exception);
+      log.error(exception.getMessage(), exception);
       return new TokenRevocationResponse(
           TokenRevocationRequestStatus.SERVER_ERROR, new OAuthToken(), Map.of());
     }

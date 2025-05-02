@@ -4,13 +4,13 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.logging.Logger;
 import org.idp.server.basic.http.HttpClientFactory;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.ciba.gateway.ClientNotificationGateway;
 
 public class NotificationClient implements ClientNotificationGateway {
 
-  Logger log = Logger.getLogger(NotificationClient.class.getName());
+  LoggerWrapper log = LoggerWrapper.getLogger(NotificationClient.class);
   HttpClient httpClient;
 
   public NotificationClient() {
@@ -33,7 +33,7 @@ public class NotificationClient implements ClientNotificationGateway {
       httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     } catch (Exception exception) {
       // TODO
-      log.severe(exception.getMessage());
+      log.error(exception.getMessage());
     }
   }
 }

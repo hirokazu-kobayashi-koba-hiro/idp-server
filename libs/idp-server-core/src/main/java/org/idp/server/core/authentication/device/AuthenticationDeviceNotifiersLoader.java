@@ -3,13 +3,13 @@ package org.idp.server.core.authentication.device;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.authentication.notification.device.NotificationChannel;
 
 public class AuthenticationDeviceNotifiersLoader {
 
-  private static final Logger log =
-      Logger.getLogger(AuthenticationDeviceNotifiersLoader.class.getName());
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(AuthenticationDeviceNotifiersLoader.class);
 
   public static AuthenticationDeviceNotifiers load() {
     Map<NotificationChannel, AuthenticationDeviceNotifier> notifiers = new HashMap<>();

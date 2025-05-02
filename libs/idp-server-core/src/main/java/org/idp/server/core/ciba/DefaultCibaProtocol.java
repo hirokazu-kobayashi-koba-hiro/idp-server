@@ -1,9 +1,8 @@
 package org.idp.server.core.ciba;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.ciba.clientnotification.NotificationClient;
 import org.idp.server.core.ciba.handler.CibaAuthorizeHandler;
 import org.idp.server.core.ciba.handler.CibaDenyHandler;
@@ -29,7 +28,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
   CibaRequestErrorHandler errorHandler;
   UserRepository userRepository;
   CibaGrantRepository cibaGrantRepository;
-  Logger log = Logger.getLogger(DefaultCibaProtocol.class.getName());
+  LoggerWrapper log = LoggerWrapper.getLogger(DefaultCibaProtocol.class);
 
   public DefaultCibaProtocol(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
@@ -116,7 +115,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
     try {
       return cibaAuthorizeHandler.handle(request);
     } catch (Exception exception) {
-      log.log(Level.SEVERE, exception.getMessage(), exception);
+      log.error(exception.getMessage(), exception);
       return new CibaAuthorizeResponse(CibaAuthorizeStatus.SERVER_ERROR);
     }
   }
@@ -125,7 +124,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
     try {
       return cibaDenyHandler.handle(request);
     } catch (Exception exception) {
-      log.log(Level.SEVERE, exception.getMessage(), exception);
+      log.error(exception.getMessage(), exception);
       return new CibaDenyResponse(CibaDenyStatus.SERVER_ERROR);
     }
   }

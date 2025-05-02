@@ -3,12 +3,12 @@ package org.idp.server.core.federation.oidc;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.federation.SsoProvider;
 
 public class OidcSsoExecutorLoader {
 
-  private static final Logger log = Logger.getLogger(OidcSsoExecutorLoader.class.getName());
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(OidcSsoExecutorLoader.class);
 
   public static OidcSsoExecutors load() {
     Map<SsoProvider, OidcSsoExecutor> executors = new HashMap<>();

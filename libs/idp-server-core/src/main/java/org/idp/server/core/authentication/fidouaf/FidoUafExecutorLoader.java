@@ -3,12 +3,12 @@ package org.idp.server.core.authentication.fidouaf;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.authentication.factory.AuthenticationDependencyContainer;
 
 public class FidoUafExecutorLoader {
 
-  private static final Logger log = Logger.getLogger(FidoUafExecutorLoader.class.getName());
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(FidoUafExecutorLoader.class);
 
   public static FidoUafExecutors load(AuthenticationDependencyContainer container) {
     Map<FidoUafExecutorType, FidoUafExecutor> executors = new HashMap<>();

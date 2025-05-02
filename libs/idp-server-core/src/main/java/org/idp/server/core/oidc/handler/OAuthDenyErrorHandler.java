@@ -1,7 +1,6 @@
 package org.idp.server.core.oidc.handler;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.configuration.ClientConfigurationNotFoundException;
@@ -14,27 +13,27 @@ import org.idp.server.core.oidc.response.AuthorizationErrorResponseCreator;
 
 public class OAuthDenyErrorHandler {
 
-  Logger log = Logger.getLogger(OAuthDenyErrorHandler.class.getName());
+  LoggerWrapper log = LoggerWrapper.getLogger(OAuthDenyErrorHandler.class);
 
   public OAuthDenyResponse handle(Exception exception) {
     if (exception instanceof OAuthRedirectableBadRequestException redirectableBadRequestException) {
       AuthorizationErrorResponseCreator authorizationErrorResponseCreator =
           new AuthorizationErrorResponseCreator(redirectableBadRequestException);
       AuthorizationErrorResponse errorResponse = authorizationErrorResponseCreator.create();
-      log.log(Level.WARNING, redirectableBadRequestException.getMessage(), exception);
+      log.warn(redirectableBadRequestException.getMessage(), exception);
       return new OAuthDenyResponse(OAuthDenyStatus.REDIRECABLE_BAD_REQUEST, errorResponse);
     }
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.log(Level.WARNING, "not found configuration");
-      log.log(Level.WARNING, exception.getMessage());
+      log.warn("not found configuration");
+      log.warn(exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new OAuthDenyResponse(
           OAuthDenyStatus.BAD_REQUEST, error.value(), errorDescription.value());
     }
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.log(Level.WARNING, "not found configuration");
-      log.log(Level.WARNING, exception.getMessage());
+      log.warn("not found configuration");
+      log.warn(exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new OAuthDenyResponse(
@@ -42,7 +41,7 @@ public class OAuthDenyErrorHandler {
     }
     Error error = new Error("server_error");
     ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
-    log.log(Level.SEVERE, exception.getMessage(), exception);
+    log.error(exception.getMessage(), exception);
     return new OAuthDenyResponse(
         OAuthDenyStatus.SERVER_ERROR, error.value(), errorDescription.value());
   }

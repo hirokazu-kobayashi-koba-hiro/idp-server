@@ -7,17 +7,16 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.idp.server.basic.exception.InvalidConfigurationException;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.log.LoggerWrapper;
 
 public class HttpRequestExecutor {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;
-  Logger log = Logger.getLogger(HttpRequestExecutor.class.getName());
+  LoggerWrapper log = LoggerWrapper.getLogger(HttpRequestExecutor.class);
 
   public HttpRequestExecutor(HttpClient httpClient) {
     this.httpClient = httpClient;
@@ -39,8 +38,8 @@ public class HttpRequestExecutor {
               httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
       Map<String, Object> requestBody = requestBodyCreator.create();
 
-      log.log(Level.FINE, "Request headers: {0}", httpRequestHeaders);
-      log.log(Level.FINE, "Request body: {0}", requestBody);
+      log.debug("Request headers: {}", httpRequestHeaders);
+      log.debug("Request body: {}", requestBody);
 
       HttpRequest.Builder httpRequestBuilder =
           HttpRequest.newBuilder()
@@ -55,8 +54,8 @@ public class HttpRequestExecutor {
       HttpResponse<String> httpResponse =
           httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-      log.log(Level.FINE, "Response status: {0}", httpResponse.statusCode());
-      log.log(Level.FINE, "Response body: {0}", httpResponse.body());
+      log.debug("Response status: {}", httpResponse.statusCode());
+      log.debug("Response body: {}", httpResponse.body());
 
       JsonNodeWrapper jsonResponse = resolveResponseBody(httpResponse);
 

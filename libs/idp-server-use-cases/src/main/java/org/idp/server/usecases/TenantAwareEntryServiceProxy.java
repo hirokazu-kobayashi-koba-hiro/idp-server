@@ -4,9 +4,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.idp.server.basic.datasource.*;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.multi_tenancy.tenant.DialectProvider;
 import org.idp.server.core.multi_tenancy.tenant.MissingRequiredTenantIdentifierException;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
@@ -15,7 +14,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
   private final Object target;
   private final OperationType operationType;
   private final DialectProvider dialectProvider;
-  Logger log = Logger.getLogger(TenantAwareEntryServiceProxy.class.getName());
+  LoggerWrapper log = LoggerWrapper.getLogger(TenantAwareEntryServiceProxy.class);
 
   public TenantAwareEntryServiceProxy(
       Object target, OperationType operationType, DialectProvider dialectProvider) {
@@ -41,8 +40,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
 
         TransactionManager.beginTransaction(databaseType);
 
-        log.log(
-            Level.FINE,
+        log.debug(
             databaseType.name()
                 + ": begin transaction: "
                 + target.getClass().getName()
@@ -51,8 +49,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
 
         Object result = method.invoke(target, args);
         TransactionManager.commitTransaction();
-        log.log(
-            Level.FINE,
+        log.debug(
             databaseType.name()
                 + ": commit transaction: "
                 + target.getClass().getName()
@@ -61,7 +58,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         return result;
       } catch (InvocationTargetException e) {
         TransactionManager.rollbackTransaction();
-        log.severe(
+        log.error(
             "rollback transaction (InvocationTargetException): "
                 + target.getClass().getName()
                 + ": "
@@ -71,7 +68,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         throw e.getTargetException();
       } catch (Throwable e) {
         TransactionManager.rollbackTransaction();
-        log.severe(
+        log.error(
             "rollback transaction: "
                 + target.getClass().getName()
                 + ": "

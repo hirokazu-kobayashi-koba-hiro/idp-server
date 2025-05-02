@@ -1,7 +1,6 @@
 package org.idp.server.core.oidc.handler;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.configuration.ClientConfigurationNotFoundException;
@@ -15,13 +14,13 @@ import org.idp.server.core.oidc.response.AuthorizationErrorResponseCreator;
 
 public class OAuthAuthorizeErrorHandler {
 
-  Logger log = Logger.getLogger(OAuthAuthorizeErrorHandler.class.getName());
+  LoggerWrapper log = LoggerWrapper.getLogger(OAuthAuthorizeErrorHandler.class);
 
   public OAuthAuthorizeResponse handle(Exception exception) {
 
     if (exception instanceof OAuthBadRequestException badRequestException) {
 
-      log.log(Level.WARNING, badRequestException.getMessage());
+      log.warn(badRequestException.getMessage());
       return new OAuthAuthorizeResponse(
           OAuthAuthorizeStatus.BAD_REQUEST,
           badRequestException.error().value(),
@@ -32,21 +31,21 @@ public class OAuthAuthorizeErrorHandler {
       AuthorizationErrorResponseCreator authorizationErrorResponseCreator =
           new AuthorizationErrorResponseCreator(redirectableBadRequestException);
       AuthorizationErrorResponse errorResponse = authorizationErrorResponseCreator.create();
-      log.log(Level.WARNING, redirectableBadRequestException.getMessage());
+      log.warn(redirectableBadRequestException.getMessage());
       return new OAuthAuthorizeResponse(
           OAuthAuthorizeStatus.REDIRECABLE_BAD_REQUEST, errorResponse);
     }
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.log(Level.WARNING, "not found configuration");
-      log.log(Level.WARNING, exception.getMessage());
+      log.warn("not found configuration");
+      log.warn(exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new OAuthAuthorizeResponse(
           OAuthAuthorizeStatus.BAD_REQUEST, error.value(), errorDescription.value());
     }
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.log(Level.WARNING, "not found configuration");
-      log.log(Level.WARNING, exception.getMessage());
+      log.warn("not found configuration");
+      log.warn(exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new OAuthAuthorizeResponse(
@@ -54,7 +53,7 @@ public class OAuthAuthorizeErrorHandler {
     }
     Error error = new Error("server_error");
     ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
-    log.log(Level.SEVERE, exception.getMessage(), exception);
+    log.error(exception.getMessage(), exception);
     return new OAuthAuthorizeResponse(
         OAuthAuthorizeStatus.SERVER_ERROR, error.value(), errorDescription.value());
   }

@@ -6,19 +6,18 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.idp.server.basic.http.HttpClientFactory;
 import org.idp.server.basic.http.HttpNetworkErrorException;
 import org.idp.server.basic.http.QueryParams;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.log.LoggerWrapper;
 
 public class ClientCredentialsAuthorizationResolver implements OAuthAuthorizationResolver {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;
-  Logger log = Logger.getLogger(ClientCredentialsAuthorizationResolver.class.getName());
+  LoggerWrapper log = LoggerWrapper.getLogger(ClientCredentialsAuthorizationResolver.class);
 
   public ClientCredentialsAuthorizationResolver() {
     this.httpClient = HttpClientFactory.defaultClient();
@@ -44,17 +43,17 @@ public class ClientCredentialsAuthorizationResolver implements OAuthAuthorizatio
 
       HttpRequest request = builder.build();
 
-      log.log(Level.FINE, "Request headers: {0}", request.headers());
+      log.debug("Request headers: {}", request.headers());
       if (request.bodyPublisher().isPresent()) {
-        log.log(Level.FINE, "Request body: {0}", request.bodyPublisher().get());
+        log.debug("Request body: {}", request.bodyPublisher().get());
       }
 
       HttpResponse<String> httpResponse =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String body = httpResponse.body();
 
-      log.log(Level.FINE, "Response status: {0}", httpResponse.statusCode());
-      log.log(Level.FINE, "Response body: {0}", httpResponse.body());
+      log.debug("Response status: {}", httpResponse.statusCode());
+      log.debug("Response body: {}", httpResponse.body());
 
       JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(body);
 
@@ -62,7 +61,7 @@ public class ClientCredentialsAuthorizationResolver implements OAuthAuthorizatio
 
       return accessToken;
     } catch (IOException | InterruptedException | URISyntaxException e) {
-      log.severe(e.getMessage());
+      log.error(e.getMessage(), e);
       throw new HttpNetworkErrorException("unexpected network error", e);
     }
   }

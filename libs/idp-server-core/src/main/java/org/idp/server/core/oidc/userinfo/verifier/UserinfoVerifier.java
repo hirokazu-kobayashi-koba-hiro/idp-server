@@ -11,7 +11,7 @@ import org.idp.server.core.oidc.mtls.ClientCertificationThumbprintCalculator;
 import org.idp.server.core.oidc.token.AccessToken;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.tokenintrospection.exception.TokenInvalidException;
-import org.idp.server.core.verifiablecredential.exception.VerifiableCredentialTokenInvalidException;
+import org.idp.server.core.verifiable_credential.exception.VerifiableCredentialTokenInvalidException;
 
 public class UserinfoVerifier {
 

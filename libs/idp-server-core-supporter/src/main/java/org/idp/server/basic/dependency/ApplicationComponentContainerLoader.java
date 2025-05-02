@@ -1,12 +1,12 @@
 package org.idp.server.basic.dependency;
 
 import java.util.ServiceLoader;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 
 public class ApplicationComponentContainerLoader {
 
-  private static final Logger log =
-      Logger.getLogger(ApplicationComponentContainerLoader.class.getName());
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(ApplicationComponentContainerLoader.class);
 
   public static ApplicationComponentContainer load(
       ApplicationComponentDependencyContainer dependencyContainer) {

@@ -3,12 +3,12 @@ package org.idp.server.core.authentication.webauthn;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.authentication.factory.AuthenticationDependencyContainer;
 
 public class WebAuthnExecutorLoader {
 
-  private static final Logger log = Logger.getLogger(WebAuthnExecutorLoader.class.getName());
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(WebAuthnExecutorLoader.class);
 
   public static WebAuthnExecutors load(AuthenticationDependencyContainer container) {
     Map<WebAuthnExecutorType, WebAuthnExecutor> executors = new HashMap<>();

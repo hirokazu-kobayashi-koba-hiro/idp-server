@@ -3,15 +3,15 @@ package org.idp.server.core.authentication.factory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.authentication.AuthenticationInteractionType;
 import org.idp.server.core.authentication.AuthenticationInteractor;
 import org.idp.server.core.authentication.AuthenticationInteractors;
 
 public class AuthenticationInteractorLoader {
 
-  private static final Logger log =
-      Logger.getLogger(AuthenticationInteractorLoader.class.getName());
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(AuthenticationInteractorLoader.class);
 
   public static AuthenticationInteractors load(AuthenticationDependencyContainer container) {
 
