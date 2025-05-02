@@ -3,6 +3,10 @@ package org.idp.server.core.authentication;
 public enum StandardAuthenticationInteraction {
   PASSWORD_REGISTRATION("password-registration"),
   PASSWORD_AUTHENTICATION("password-authentication"),
+  SMS_AUTHENTICATION_REGISTRATION_CHALLENGE("sms-authentication-registration-challenge"),
+  SMS_AUTHENTICATION_REGISTRATION("sms-authentication-registration"),
+  SMS_AUTHENTICATION_CHALLENGE("sms-authentication-challenge"),
+  SMS_AUTHENTICATION("sms-authentication"),
   EMAIL_VERIFICATION_CHALLENGE("email-verification-challenge"),
   EMAIL_VERIFICATION("email-verification"),
   FIDO_UAF_REGISTRATION_CHALLENGE("fido-uaf-registration-challenge"),

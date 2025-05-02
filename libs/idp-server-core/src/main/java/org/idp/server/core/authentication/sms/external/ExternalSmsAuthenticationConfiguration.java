@@ -4,9 +4,8 @@ import java.util.Map;
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.core.authentication.fidouaf.FidoUafExecutorType;
-import org.idp.server.core.authentication.fidouaf.external.ExternalFidoUafServerExecutionConfiguration;
 import org.idp.server.core.authentication.sms.SmsTemplate;
-import org.idp.server.core.identity.verification.exception.IdentityVerificationApplicationConfigurationNotFoundException;
+import org.idp.server.core.authentication.sms.exception.SmsAuthenticationExecutionConfigNotFoundException;
 
 public class ExternalSmsAuthenticationConfiguration implements JsonReadable {
   String type;
@@ -36,13 +35,13 @@ public class ExternalSmsAuthenticationConfiguration implements JsonReadable {
     return oauthAuthorization != null && oauthAuthorization.exists();
   }
 
-  public Map<String, ExternalFidoUafServerExecutionConfiguration> executions() {
+  public Map<String, ExternalSmsAuthenticationExecutionConfiguration> executions() {
     return executions;
   }
 
   public ExternalSmsAuthenticationExecutionConfiguration getExecutionConfig(String executionType) {
     if (!executions.containsKey(executionType)) {
-      throw new IdentityVerificationApplicationConfigurationNotFoundException(
+      throw new SmsAuthenticationExecutionConfigNotFoundException(
           "invalid configuration. type: " + executionType + " is unregistered.");
     }
     return executions.get(executionType);
