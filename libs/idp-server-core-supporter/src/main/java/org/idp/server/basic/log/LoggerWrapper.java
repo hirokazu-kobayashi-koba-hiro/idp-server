@@ -47,10 +47,6 @@ public class LoggerWrapper {
     logger.error(message);
   }
 
-  public void error(String message, Throwable throwable, Object... args) {
-    logger.error(message, args, throwable);
-  }
-
   public void error(String message, Throwable throwable) {
     logger.error(message, throwable);
   }
