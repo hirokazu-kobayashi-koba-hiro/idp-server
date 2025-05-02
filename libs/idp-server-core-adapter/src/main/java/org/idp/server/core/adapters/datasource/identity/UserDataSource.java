@@ -4,10 +4,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.idp.server.basic.datasource.SqlTooManyResultsException;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.exception.UserNotFoundException;
+import org.idp.server.core.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class UserDataSource implements UserRepository {
@@ -40,26 +42,36 @@ public class UserDataSource implements UserRepository {
 
   @Override
   public User findByEmail(Tenant tenant, String email, String providerId) {
-    UserSqlExecutor executor = executors.get(tenant.databaseType());
-    Map<String, String> result = executor.selectByEmail(tenant, email, providerId);
+    try {
+      UserSqlExecutor executor = executors.get(tenant.databaseType());
+      Map<String, String> result = executor.selectByEmail(tenant, email, providerId);
 
-    if (Objects.isNull(result) || result.isEmpty()) {
-      return new User();
+      if (Objects.isNull(result) || result.isEmpty()) {
+        return new User();
+      }
+
+      return ModelConverter.convert(result);
+    } catch (SqlTooManyResultsException exception) {
+
+      throw new UserTooManyFoundResultException(exception.getMessage());
     }
-
-    return ModelConverter.convert(result);
   }
 
   @Override
   public User findByPhone(Tenant tenant, String phone, String providerId) {
-    UserSqlExecutor executor = executors.get(tenant.databaseType());
-    Map<String, String> result = executor.selectByPhone(tenant, phone, providerId);
+    try {
+      UserSqlExecutor executor = executors.get(tenant.databaseType());
+      Map<String, String> result = executor.selectByPhone(tenant, phone, providerId);
 
-    if (Objects.isNull(result) || result.isEmpty()) {
-      return new User();
+      if (Objects.isNull(result) || result.isEmpty()) {
+        return new User();
+      }
+
+      return ModelConverter.convert(result);
+    } catch (SqlTooManyResultsException exception) {
+
+      throw new UserTooManyFoundResultException(exception.getMessage());
     }
-
-    return ModelConverter.convert(result);
   }
 
   @Override

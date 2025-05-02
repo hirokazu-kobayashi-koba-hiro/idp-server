@@ -1,7 +1,10 @@
 package org.idp.server.core.authentication.webauthn;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
@@ -40,11 +43,17 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
     Map<String, Object> response = new HashMap<>();
     response.put("registration", webAuthnVerificationResult.toMap());
 
+    Authentication authentication =
+        new Authentication()
+            .setTime(SystemDateTime.now())
+            .addMethods(new ArrayList<>(List.of("hwk")))
+            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
+
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
         transaction.user(),
-        new Authentication(),
+        authentication,
         response,
         DefaultSecurityEventType.webauthn_registration_success);
   }

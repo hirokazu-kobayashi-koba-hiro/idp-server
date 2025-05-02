@@ -1,4 +1,4 @@
-package org.idp.server.core.authentication.fidouaf;
+package org.idp.server.core.authentication.sms;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,20 +6,19 @@ import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
-import org.idp.server.core.identity.device.AuthenticationDevice;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 
-public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
+public class SmsAuthenticationRegistrationInteractor implements AuthenticationInteractor {
 
-  FidoUafExecutors fidoUafExecutors;
+  SmsAuthenticationExecutors executors;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
 
-  public FidoUafRegistrationInteractor(
-      FidoUafExecutors fidoUafExecutors,
+  public SmsAuthenticationRegistrationInteractor(
+      SmsAuthenticationExecutors executors,
       AuthenticationConfigurationQueryRepository configurationQueryRepository) {
-    this.fidoUafExecutors = fidoUafExecutors;
+    this.executors = executors;
     this.configurationQueryRepository = configurationQueryRepository;
   }
 
@@ -31,45 +30,40 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
       UserRepository userRepository) {
+    SmsAuthenticationConfiguration configuration =
+        configurationQueryRepository.get(tenant, "sms", SmsAuthenticationConfiguration.class);
+    SmsAuthenticationExecutor executor = executors.get(configuration.type());
 
-    FidoUafConfiguration fidoUafConfiguration =
-        configurationQueryRepository.get(tenant, "fido-uaf", FidoUafConfiguration.class);
-    FidoUafExecutor fidoUafExecutor = fidoUafExecutors.get(fidoUafConfiguration.type());
-
-    FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(request.toMap());
-    FidoUafExecutionResult executionResult =
-        fidoUafExecutor.verifyRegistration(
-            tenant, authorizationIdentifier, fidoUafExecutionRequest, fidoUafConfiguration);
+    SmsAuthenticationExecutionRequest executionRequest =
+        new SmsAuthenticationExecutionRequest(request.toMap());
+    SmsAuthenticationExecutionResult executionResult =
+        executor.verify(tenant, authorizationIdentifier, executionRequest, configuration);
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(
-          executionResult.contents(), type, DefaultSecurityEventType.fido_uaf_registration_failure);
+          executionResult.contents(), type, DefaultSecurityEventType.sms_verification_failure);
     }
 
     if (executionResult.isServerError()) {
       return AuthenticationInteractionRequestResult.serverError(
-          executionResult.contents(), type, DefaultSecurityEventType.fido_uaf_registration_failure);
+          executionResult.contents(), type, DefaultSecurityEventType.sms_verification_failure);
     }
 
-    String deviceId =
-        executionResult.getValueAsStringFromContents(fidoUafConfiguration.deviceIdParam());
     User user = transaction.user();
-    AuthenticationDevice authenticationDevice =
-        new AuthenticationDevice(deviceId, "", "", "", "", "", true);
-    User addedDeviceUser = user.addAuthenticationDevice(authenticationDevice);
+    User phoneNumberVerifiedUser = user.setPhoneNumberVerified(true);
 
     Authentication authentication =
         new Authentication()
             .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("hwk")))
+            .addMethods(new ArrayList<>(List.of("opt")))
             .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
-        addedDeviceUser,
+        phoneNumberVerifiedUser,
         authentication,
         executionResult.contents(),
-        DefaultSecurityEventType.fido_uaf_registration_success);
+        DefaultSecurityEventType.sms_verification_success);
   }
 }

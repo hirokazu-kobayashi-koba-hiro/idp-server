@@ -17,6 +17,8 @@ import org.idp.server.core.authentication.fidouaf.FidoUafExecutorLoader;
 import org.idp.server.core.authentication.fidouaf.FidoUafExecutors;
 import org.idp.server.core.authentication.notification.EmailSenderLoader;
 import org.idp.server.core.authentication.notification.EmailSenders;
+import org.idp.server.core.authentication.sms.SmsAuthenticationExecutorLoader;
+import org.idp.server.core.authentication.sms.SmsAuthenticationExecutors;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
 import org.idp.server.core.ciba.CibaFlowApi;
@@ -170,6 +172,11 @@ public class IdpServerApplication {
     FidoUafExecutors fidoUafExecutors =
         FidoUafExecutorLoader.load(authenticationDependencyContainer);
     authenticationDependencyContainer.register(FidoUafExecutors.class, fidoUafExecutors);
+
+    SmsAuthenticationExecutors smsAuthenticationExecutors =
+        SmsAuthenticationExecutorLoader.load(authenticationDependencyContainer);
+    authenticationDependencyContainer.register(
+        SmsAuthenticationExecutors.class, smsAuthenticationExecutors);
 
     AuthenticationInteractors authenticationInteractors =
         AuthenticationInteractorLoader.load(authenticationDependencyContainer);

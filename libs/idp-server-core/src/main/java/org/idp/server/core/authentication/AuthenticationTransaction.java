@@ -204,4 +204,8 @@ public class AuthenticationTransaction {
   public boolean hasInteractions() {
     return interactionResults != null && interactionResults.exists();
   }
+
+  public boolean hasUser() {
+    return request.hasUser();
+  }
 }

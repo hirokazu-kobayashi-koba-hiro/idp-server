@@ -32,7 +32,7 @@ public class SqlExecutor {
         return Map.of();
       }
       if (results.size() > 1) {
-        throw new RuntimeException(String.format("find results (%d)", results.size()));
+        throw new SqlTooManyResultsException(String.format("find results (%d)", results.size()));
       }
       return results.get(0);
     } catch (SQLException exception) {
