@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.idp.server.basic.datasource.*;
 import org.idp.server.core.multi_tenancy.tenant.DialectProvider;
@@ -40,7 +41,8 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
 
         TransactionManager.beginTransaction(databaseType);
 
-        log.info(
+        log.log(
+            Level.FINE,
             databaseType.name()
                 + ": begin transaction: "
                 + target.getClass().getName()
@@ -49,7 +51,8 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
 
         Object result = method.invoke(target, args);
         TransactionManager.commitTransaction();
-        log.info(
+        log.log(
+            Level.FINE,
             databaseType.name()
                 + ": commit transaction: "
                 + target.getClass().getName()

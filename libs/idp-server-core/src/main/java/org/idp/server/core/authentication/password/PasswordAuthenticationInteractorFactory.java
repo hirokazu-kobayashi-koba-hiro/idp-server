@@ -1,6 +1,8 @@
 package org.idp.server.core.authentication.password;
 
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.factory.AuthenticationDependencyContainer;
+import org.idp.server.core.authentication.factory.AuthenticationInteractorFactory;
 import org.idp.server.core.identity.authentication.PasswordVerificationDelegation;
 
 public class PasswordAuthenticationInteractorFactory implements AuthenticationInteractorFactory {

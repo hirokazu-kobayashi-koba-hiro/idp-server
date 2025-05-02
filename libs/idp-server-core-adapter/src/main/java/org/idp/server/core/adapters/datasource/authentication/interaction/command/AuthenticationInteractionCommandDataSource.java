@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.authentication.interaction.command;
 
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.authentication.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.authentication.AuthorizationIdentifier;
+import org.idp.server.core.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationInteractionCommandDataSource

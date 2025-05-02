@@ -8,6 +8,8 @@ import org.idp.server.basic.type.extension.OAuthDenyReason;
 import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.repository.AuthenticationTransactionCommandRepository;
+import org.idp.server.core.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.federation.io.FederationRequestResponse;

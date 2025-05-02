@@ -2,9 +2,9 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.query
 
 import java.util.Map;
 import org.idp.server.core.authentication.AuthenticationTransaction;
-import org.idp.server.core.authentication.AuthenticationTransactionNotFoundException;
-import org.idp.server.core.authentication.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.authentication.AuthorizationIdentifier;
+import org.idp.server.core.authentication.exception.AuthenticationTransactionNotFoundException;
+import org.idp.server.core.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 

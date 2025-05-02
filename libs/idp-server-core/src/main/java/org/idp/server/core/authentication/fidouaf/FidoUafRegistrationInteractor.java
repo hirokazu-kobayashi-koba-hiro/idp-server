@@ -1,6 +1,10 @@
 package org.idp.server.core.authentication.fidouaf;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.device.AuthenticationDevice;
@@ -48,17 +52,24 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
           executionResult.contents(), type, DefaultSecurityEventType.fido_uaf_registration_failure);
     }
 
-    String authenticationDeviceId = executionResult.getValueAsStringFromContents("user_id");
+    String deviceId =
+        executionResult.getValueAsStringFromContents(fidoUafConfiguration.deviceIdParam());
     User user = transaction.user();
     AuthenticationDevice authenticationDevice =
-        new AuthenticationDevice(authenticationDeviceId, "", "", "", "", "", true);
+        new AuthenticationDevice(deviceId, "", "", "", "", "", true);
     User addedDeviceUser = user.addAuthenticationDevice(authenticationDevice);
+
+    Authentication authentication =
+        new Authentication()
+            .setTime(SystemDateTime.now())
+            .addMethods(new ArrayList<>(List.of("hwk")))
+            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
         addedDeviceUser,
-        new Authentication(),
+        authentication,
         executionResult.contents(),
         DefaultSecurityEventType.fido_uaf_registration_success);
   }

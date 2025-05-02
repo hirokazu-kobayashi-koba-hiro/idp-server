@@ -291,7 +291,11 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     applicationQueryRepository.get(tenant, user, identifier);
     applicationCommandRepository.delete(tenant, user, identifier);
 
-    eventPublisher.publish(tenant, oAuthToken, DefaultSecurityEventType.identity_verification_application_delete, requestAttributes);
+    eventPublisher.publish(
+        tenant,
+        oAuthToken,
+        DefaultSecurityEventType.identity_verification_application_delete,
+        requestAttributes);
 
     return IdentityVerificationResponse.OK(Map.of());
   }

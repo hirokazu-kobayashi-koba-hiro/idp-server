@@ -1,6 +1,10 @@
 package org.idp.server.core.authentication.email;
 
 import org.idp.server.core.authentication.*;
+import org.idp.server.core.authentication.factory.AuthenticationDependencyContainer;
+import org.idp.server.core.authentication.factory.AuthenticationInteractorFactory;
+import org.idp.server.core.authentication.repository.AuthenticationInteractionCommandRepository;
+import org.idp.server.core.authentication.repository.AuthenticationInteractionQueryRepository;
 
 public class EmailAuthenticationInteractorFactory implements AuthenticationInteractorFactory {
 

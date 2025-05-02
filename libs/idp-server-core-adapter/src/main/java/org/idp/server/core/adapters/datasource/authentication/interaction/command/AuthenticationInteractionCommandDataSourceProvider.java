@@ -1,7 +1,7 @@
 package org.idp.server.core.adapters.datasource.authentication.interaction.command;
 
-import org.idp.server.core.authentication.AuthenticationDependencyProvider;
-import org.idp.server.core.authentication.AuthenticationInteractionCommandRepository;
+import org.idp.server.core.authentication.factory.AuthenticationDependencyProvider;
+import org.idp.server.core.authentication.repository.AuthenticationInteractionCommandRepository;
 
 public class AuthenticationInteractionCommandDataSourceProvider
     implements AuthenticationDependencyProvider<AuthenticationInteractionCommandRepository> {
