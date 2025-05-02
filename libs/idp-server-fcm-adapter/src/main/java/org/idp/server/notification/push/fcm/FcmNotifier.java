@@ -6,6 +6,7 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotificationConfiguration;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotifier;
 import org.idp.server.basic.json.JsonConverter;
@@ -18,12 +19,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 public class FcmNotifier implements AuthenticationDeviceNotifier {
 
-    Logger log = Logger.getLogger(FcmNotifier.class.getName());
-    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    LoggerWrapper log = LoggerWrapper.getLogger(FcmNotifier.class);
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
     Map<String, FirebaseMessaging> cache = new ConcurrentHashMap<>();
 
     @Override
@@ -57,7 +57,7 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
             log.info("fcm result: " + result);
         } catch (Exception e) {
 
-            log.severe("Fcm is failed: " + e.getMessage());
+            log.error("Fcm is failed: " + e.getMessage());
         }
     }
 

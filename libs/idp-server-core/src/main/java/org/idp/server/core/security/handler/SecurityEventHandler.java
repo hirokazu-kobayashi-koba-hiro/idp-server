@@ -1,6 +1,6 @@
 package org.idp.server.core.security.handler;
 
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.security.*;
 import org.idp.server.core.security.event.SecurityEventRepository;
@@ -12,7 +12,7 @@ public class SecurityEventHandler {
   SecurityEventHooks securityEventHooks;
   SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
 
-  Logger log = Logger.getLogger(SecurityEventHandler.class.getName());
+  LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHandler.class);
 
   public SecurityEventHandler(
       SecurityEventRepository securityEventRepository,

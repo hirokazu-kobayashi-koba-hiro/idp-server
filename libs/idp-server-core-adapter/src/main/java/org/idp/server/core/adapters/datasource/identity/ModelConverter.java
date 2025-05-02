@@ -12,7 +12,7 @@ import org.idp.server.core.identity.device.AuthenticationDevice;
 
 class ModelConverter {
 
-  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static User convert(Map<String, String> stringMap) {
     User user = new User();

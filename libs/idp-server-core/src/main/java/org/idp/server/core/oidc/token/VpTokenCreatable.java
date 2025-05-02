@@ -31,7 +31,7 @@ public interface VpTokenCreatable extends Base64Codeable {
               .addVerifiableCredential(user.verifiableCredentials());
 
       Map<String, Object> verifiablePresentation = builder.build();
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+      JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
       String encodeWithUrlSafe = encodeWithUrlSafe(jsonConverter.write(verifiablePresentation));
       return new VpToken(encodeWithUrlSafe);
     } catch (Exception exception) {

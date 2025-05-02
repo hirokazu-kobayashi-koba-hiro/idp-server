@@ -6,11 +6,11 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.logging.Logger;
 import org.idp.server.basic.http.HttpClientErrorException;
 import org.idp.server.basic.http.HttpClientFactory;
 import org.idp.server.basic.http.HttpNetworkErrorException;
 import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventHookExecutor;
@@ -18,13 +18,13 @@ import org.idp.server.core.security.hook.*;
 
 public class SsfHookExecutor implements SecurityEventHookExecutor {
 
-  Logger log = Logger.getLogger(SsfHookExecutor.class.getName());
+  LoggerWrapper log = LoggerWrapper.getLogger(SsfHookExecutor.class);
   HttpClient httpClient;
   JsonConverter jsonConverter;
 
   public SsfHookExecutor() {
     this.httpClient = HttpClientFactory.defaultClient();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
@@ -83,7 +83,7 @@ public class SsfHookExecutor implements SecurityEventHookExecutor {
       validateResponse(httpResponse);
 
     } catch (IOException | InterruptedException | URISyntaxException e) {
-      log.severe(e.getMessage());
+      log.error(e.getMessage());
       throw new HttpNetworkErrorException("unexpected network error", e);
     }
   }
@@ -92,12 +92,12 @@ public class SsfHookExecutor implements SecurityEventHookExecutor {
     String body = httpResponse.body();
     if (httpResponse.statusCode() >= 400 && httpResponse.statusCode() < 500) {
 
-      log.warning("ssf response:" + body);
+      log.warn("ssf response:" + body);
       throw new HttpClientErrorException(body, httpResponse.statusCode());
     }
 
     if (httpResponse.statusCode() >= 500) {
-      log.severe("ssf response:" + body);
+      log.error("ssf response:" + body);
       throw new HttpClientErrorException(body, httpResponse.statusCode());
     }
   }

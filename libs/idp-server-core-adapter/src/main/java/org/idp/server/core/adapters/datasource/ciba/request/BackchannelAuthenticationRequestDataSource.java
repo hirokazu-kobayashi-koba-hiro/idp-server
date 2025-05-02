@@ -17,7 +17,7 @@ public class BackchannelAuthenticationRequestDataSource
 
   public BackchannelAuthenticationRequestDataSource() {
     this.executors = new BackchannelAuthenticationRequestSqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

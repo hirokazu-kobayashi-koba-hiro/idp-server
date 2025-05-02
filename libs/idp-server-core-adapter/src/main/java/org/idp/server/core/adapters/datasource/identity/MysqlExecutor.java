@@ -10,7 +10,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class MysqlExecutor implements UserSqlExecutor {
 
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public void insert(Tenant tenant, User user) {

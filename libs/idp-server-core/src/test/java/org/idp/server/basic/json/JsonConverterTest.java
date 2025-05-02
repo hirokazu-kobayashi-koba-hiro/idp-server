@@ -21,7 +21,7 @@ public class JsonConverterTest {
                   "example_extension_parameter": "example_value"
                 }
                 """;
-    JsonConverter jsonConverter = JsonConverter.create();
+    JsonConverter jsonConverter = JsonConverter.defaultInstance();
     ClientConfiguration clientConfiguration = jsonConverter.read(json, ClientConfiguration.class);
     Assertions.assertEquals(List.of("read", "write"), clientConfiguration.scopes());
   }
@@ -93,7 +93,7 @@ public class JsonConverterTest {
                      ["en-US", "en-GB", "en-CA", "fr-FR", "fr-CA"]
                   }
                 """;
-    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
     ServerConfiguration serverConfiguration = jsonConverter.read(json, ServerConfiguration.class);
 
     Assertions.assertEquals(

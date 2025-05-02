@@ -19,7 +19,7 @@ public enum JoseType {
     try {
       String headerValue = jose.split("\\.")[0];
       Base64URL header = new Base64URL(headerValue);
-      JsonConverter jsonConverter = JsonConverter.create();
+      JsonConverter jsonConverter = JsonConverter.defaultInstance();
       Map<String, Object> headerPayload = jsonConverter.read(header.decodeToString(), Map.class);
       Algorithm alg = Header.parseAlgorithm(headerPayload);
 

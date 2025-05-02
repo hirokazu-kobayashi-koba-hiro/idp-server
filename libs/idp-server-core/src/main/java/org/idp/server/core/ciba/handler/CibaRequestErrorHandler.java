@@ -1,7 +1,6 @@
 package org.idp.server.core.ciba.handler;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.ciba.exception.BackchannelAuthenticationBadRequestException;
@@ -12,25 +11,25 @@ import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorized
 
 public class CibaRequestErrorHandler {
 
-  Logger log = Logger.getLogger(CibaRequestErrorHandler.class.getName());
+  LoggerWrapper log = LoggerWrapper.getLogger(CibaRequestErrorHandler.class);
 
   public CibaRequestResult handle(Exception exception) {
     if (exception instanceof BackchannelAuthenticationBadRequestException badRequest) {
-      log.log(Level.WARNING, exception.getMessage());
+      log.warn(exception.getMessage());
       return new CibaRequestResult(
           CibaRequestStatus.BAD_REQUEST,
           new BackchannelAuthenticationErrorResponse(
               badRequest.error(), badRequest.errorDescription()));
     }
     if (exception instanceof ClientUnAuthorizedException) {
-      log.log(Level.WARNING, exception.getMessage());
+      log.warn(exception.getMessage());
       return new CibaRequestResult(
           CibaRequestStatus.UNAUTHORIZE,
           new BackchannelAuthenticationErrorResponse(
               new Error("invalid_client"), new ErrorDescription(exception.getMessage())));
     }
 
-    log.log(Level.SEVERE, exception.getMessage(), exception);
+    log.error(exception.getMessage(), exception);
     return new CibaRequestResult(
         CibaRequestStatus.SERVER_ERROR,
         new BackchannelAuthenticationErrorResponse(

@@ -17,7 +17,7 @@ public class FederationConfigurationQueryDataSource
 
   public FederationConfigurationQueryDataSource() {
     this.executors = new FederationConfigurationQuerySqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

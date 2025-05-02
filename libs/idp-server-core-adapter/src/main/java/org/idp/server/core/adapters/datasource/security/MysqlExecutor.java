@@ -10,7 +10,7 @@ import org.idp.server.core.security.event.SecurityEventSearchCriteria;
 
 public class MysqlExecutor implements SecurityEventSqlExecutor {
 
-  JsonConverter converter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter converter = JsonConverter.snakeCaseInstance();
 
   @Override
   public void insert(SecurityEvent securityEvent) {

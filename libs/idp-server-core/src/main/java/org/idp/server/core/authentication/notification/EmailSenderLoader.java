@@ -3,11 +3,11 @@ package org.idp.server.core.authentication.notification;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 
 public class EmailSenderLoader {
 
-  private static final Logger log = Logger.getLogger(EmailSenderLoader.class.getName());
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(EmailSenderLoader.class);
 
   public static EmailSenders load() {
 

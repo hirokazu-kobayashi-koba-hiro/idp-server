@@ -8,7 +8,7 @@ import org.idp.server.core.federation.SsoSessionIdentifier;
 
 public class MysqlExecutor implements SsoSessionCommandSqlExecutor {
 
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public <T> void insert(SsoSessionIdentifier identifier, T payload) {

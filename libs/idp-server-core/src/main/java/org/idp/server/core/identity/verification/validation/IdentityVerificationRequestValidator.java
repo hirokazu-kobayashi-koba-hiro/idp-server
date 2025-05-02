@@ -18,7 +18,7 @@ public class IdentityVerificationRequestValidator {
       IdentityVerificationRequest request) {
     this.processConfiguration = processConfiguration;
     this.request = request;
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   public IdentityVerificationValidationResult validate() {

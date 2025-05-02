@@ -46,7 +46,7 @@ class ModelConverter {
       return new AuthorizationDetails();
     }
     try {
-      JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+      JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
       List list = jsonConverter.read(value, List.class);
       List<Map> details = (List<Map>) list;
       List<AuthorizationDetail> authorizationDetailsList =

@@ -38,7 +38,7 @@ public class CredentialHandlerTest {
                     "n": "ms7Cnct0_NIp0TNcjV5y3GN8DpCKq7T6vCIekucAAey46gPbXFIco4-x0Fq9UNKtJ517axIBRh9WFXXpAlABtfLfdKAhjqZTOp1NigRM65UMqcmEnY--3Ee5cNt1FqJuQGueutuJmNoN0_d7Wy64e3-dEkPa6JKrm-GM80Z8nrdB-AxX_K_5u2r-_nwMY3rXV28lxu__n-pw48cGKGw2dXSHmEEeRl282T1AS7bH0bMBqtrEUrSAhuUQB-og_KBuZp5c2_gWB1-1kmxkX3OV3BP2esePzMqaigiUc-oG7fhL2gANk2OSLws858Dh81qOiN5hJHDyJ1fjca5KBWi-pQ"
                 }
                 """;
-    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
     Map map = jsonConverter.read(vc, Map.class);
   }
 

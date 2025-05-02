@@ -11,7 +11,7 @@ import org.idp.server.core.token.OAuthToken;
 
 class InsertSqlParamsCreator {
 
-  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static List<Object> create(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher) {
     AuthorizationGrant authorizationGrant = oAuthToken.accessToken().authorizationGrant();

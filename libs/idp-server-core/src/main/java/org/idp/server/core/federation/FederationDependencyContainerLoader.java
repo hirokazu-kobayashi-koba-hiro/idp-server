@@ -1,12 +1,12 @@
 package org.idp.server.core.federation;
 
 import java.util.ServiceLoader;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 
 public class FederationDependencyContainerLoader {
 
-  private static final Logger log =
-      Logger.getLogger(FederationDependencyContainerLoader.class.getName());
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(FederationDependencyContainerLoader.class);
 
   public static FederationDependencyContainer load() {
     FederationDependencyContainer container = new FederationDependencyContainer();

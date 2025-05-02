@@ -17,7 +17,7 @@ public class IdentityVerificationConfigurationQueryDataSource
 
   public IdentityVerificationConfigurationQueryDataSource() {
     this.executors = new IdentityVerificationConfigSqlExecutors();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

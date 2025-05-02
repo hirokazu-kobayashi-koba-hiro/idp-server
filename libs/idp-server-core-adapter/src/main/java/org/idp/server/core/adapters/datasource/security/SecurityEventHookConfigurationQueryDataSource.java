@@ -13,7 +13,7 @@ import org.idp.server.core.security.hook.SecurityEventHookConfigurations;
 public class SecurityEventHookConfigurationQueryDataSource
     implements SecurityEventHookConfigurationQueryRepository {
 
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
   String selectSql =
       """
             SELECT id, payload FROM security_event_hook_configuration

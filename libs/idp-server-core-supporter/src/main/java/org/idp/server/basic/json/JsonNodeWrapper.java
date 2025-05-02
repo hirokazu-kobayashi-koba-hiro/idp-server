@@ -4,9 +4,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import java.util.*;
 
+/**
+ * A lightweight wrapper for Jackson's {@link JsonNode} providing convenient and safe access methods.
+ * Useful for parsing dynamic JSON (e.g., JSONB in PostgreSQL) with type handling and null safety.
+ */
 public class JsonNodeWrapper {
   JsonNode jsonNode;
 
+  /**
+   * Returns an empty JSON object wrapper.
+   *
+   * @return a wrapper around an empty object node
+   */
   public static JsonNodeWrapper empty() {
     return new JsonNodeWrapper(JsonNodeFactory.instance.objectNode());
   }
@@ -19,16 +28,22 @@ public class JsonNodeWrapper {
     if (map == null || map.isEmpty()) {
       return empty();
     }
-    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
     String json = jsonConverter.write(map);
     return jsonConverter.readTree(json);
   }
 
+  /**
+   * Creates a wrapper from a string-form JSON.
+   *
+   * @param json JSON string
+   * @return a {@link JsonNodeWrapper} instance
+   */
   public static JsonNodeWrapper fromString(String json) {
     if (json == null || json.isEmpty()) {
       return empty();
     }
-    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
     return jsonConverter.readTree(json);
   }
 
@@ -40,6 +55,12 @@ public class JsonNodeWrapper {
     return new JsonNodeWrapper(jsonNode.get(fieldName));
   }
 
+  /**
+   * Converts a field (expected to be a JSON array) to a list of {@link JsonNodeWrapper}.
+   *
+   * @param fieldName name of the array field
+   * @return list of wrapped elements
+   */
   public List<JsonNodeWrapper> getValueAsJsonNodeList(String fieldName) {
     List<JsonNodeWrapper> values = new ArrayList<>();
     Iterator<JsonNode> iterator = jsonNode.get(fieldName).elements();
@@ -73,6 +94,11 @@ public class JsonNodeWrapper {
     return jsonNode.has(fieldName);
   }
 
+  /**
+   * Returns the raw node value of this wrapper.
+   *
+   * @return the underlying {@link JsonNode}
+   */
   public Object node() {
     return jsonNode;
   }
@@ -81,6 +107,12 @@ public class JsonNodeWrapper {
     return jsonNode.get(fieldName);
   }
 
+  /**
+   * Retrieves the value for a field as a string. Returns an empty string if the field is absent.
+   *
+   * @param fieldName name of the JSON field
+   * @return string value or empty string
+   */
   public String getValueOrEmptyAsString(String fieldName) {
     if (!contains(fieldName)) {
       return "";
@@ -104,6 +136,11 @@ public class JsonNodeWrapper {
     return jsonNode.asText();
   }
 
+  /**
+   * Converts the entire JSON object into a Java {@link Map}, recursively extracting primitive values.
+   *
+   * @return map representing the JSON object
+   */
   public Map<String, Object> toMap() {
     Map<String, Object> results = new HashMap<>();
     jsonNode

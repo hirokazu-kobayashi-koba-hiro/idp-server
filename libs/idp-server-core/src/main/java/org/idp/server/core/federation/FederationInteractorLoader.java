@@ -3,11 +3,12 @@ package org.idp.server.core.federation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 
 public class FederationInteractorLoader {
 
-  private static final Logger log = Logger.getLogger(FederationInteractorLoader.class.getName());
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(FederationInteractorLoader.class);
 
   public static FederationInteractors load(FederationDependencyContainer container) {
     Map<FederationType, FederationInteractor> executors = new HashMap<>();

@@ -21,7 +21,7 @@ public class ClientConfigurationHandler {
 
   public ClientConfigurationHandler(ClientConfigurationRepository clientConfigurationRepository) {
     this.clientConfigurationRepository = clientConfigurationRepository;
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   // TODO

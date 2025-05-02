@@ -29,7 +29,7 @@ public class ClaimPayloadConverterTest {
                   }
                 """;
 
-    JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
     RequestedClaimsPayload requestedClaimsPayload =
         jsonConverter.read(claimsValue, RequestedClaimsPayload.class);
     System.out.println(requestedClaimsPayload);

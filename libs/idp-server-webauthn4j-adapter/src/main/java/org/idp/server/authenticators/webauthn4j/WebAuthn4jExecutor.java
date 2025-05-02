@@ -23,7 +23,7 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
     this.transactionCommandRepository = transactionCommandRepository;
     this.transactionQueryRepository = transactionQueryRepository;
     this.credentialRepository = credentialRepository;
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

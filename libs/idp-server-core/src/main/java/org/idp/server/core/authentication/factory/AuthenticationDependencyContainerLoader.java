@@ -1,12 +1,12 @@
 package org.idp.server.core.authentication.factory;
 
 import java.util.ServiceLoader;
-import java.util.logging.Logger;
+import org.idp.server.basic.log.LoggerWrapper;
 
 public class AuthenticationDependencyContainerLoader {
 
-  private static final Logger log =
-      Logger.getLogger(AuthenticationDependencyContainerLoader.class.getName());
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(AuthenticationDependencyContainerLoader.class);
 
   public static AuthenticationDependencyContainer load() {
     AuthenticationDependencyContainer container = new AuthenticationDependencyContainer();

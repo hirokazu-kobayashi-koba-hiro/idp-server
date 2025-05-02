@@ -9,7 +9,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class MysqlExecutor implements AuthenticationInteractionCommandSqlExecutor {
 
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public <T> void insert(

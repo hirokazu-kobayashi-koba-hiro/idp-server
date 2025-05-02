@@ -13,7 +13,7 @@ public class ServerConfigurationHandler {
 
   public ServerConfigurationHandler(ServerConfigurationRepository serverConfigurationRepository) {
     this.serverConfigurationRepository = serverConfigurationRepository;
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   // TODO

@@ -16,7 +16,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 public class UnmatchedPhoneIdentityVerificationApplicationVerifier
     implements IdentityVerificationRequestVerifier {
 
-  JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public boolean shouldVerify(

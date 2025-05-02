@@ -23,7 +23,7 @@ public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
     this.interactionCommandRepository = interactionCommandRepository;
     this.interactionQueryRepository = interactionQueryRepository;
     this.httpClient = new ExternalSmsAuthenticationHttpClient();
-    this.jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override

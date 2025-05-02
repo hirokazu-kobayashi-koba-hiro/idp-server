@@ -12,7 +12,7 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public class ModelConverter {
 
-  static JsonConverter jsonConverter = JsonConverter.createWithSnakeCaseStrategy();
+  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static AuthenticationTransaction convert(Map<String, String> map) {
     AuthorizationIdentifier identifier = new AuthorizationIdentifier(map.get("authorization_id"));

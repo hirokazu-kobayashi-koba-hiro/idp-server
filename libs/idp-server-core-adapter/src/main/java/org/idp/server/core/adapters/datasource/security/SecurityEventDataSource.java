@@ -14,7 +14,7 @@ public class SecurityEventDataSource implements SecurityEventRepository {
 
   public SecurityEventDataSource() {
     this.executors = new SecurityEventSqlExecutors();
-    this.converter = JsonConverter.createWithSnakeCaseStrategy();
+    this.converter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
