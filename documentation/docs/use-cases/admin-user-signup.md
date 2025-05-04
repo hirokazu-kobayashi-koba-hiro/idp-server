@@ -1,3 +1,8 @@
+# AdminUser Signup
+
+## 1. AdminUser Sign-Up
+
+```mermaid
 sequenceDiagram
     participant User
     participant AdminDashboard
@@ -32,3 +37,5 @@ sequenceDiagram
     IdPServer -->> AdminDashboard: (22) return success response
 
     AdminDashboard -->> User: (23) 🎉 show complete page！
+
+```

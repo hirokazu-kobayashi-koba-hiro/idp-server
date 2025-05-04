@@ -1,5 +1,4 @@
-# Overview
-## Contributing
+# Contributing
 
 We welcome contributions to **idp-server** — whether it's code, docs, feedback, or ideas.
 

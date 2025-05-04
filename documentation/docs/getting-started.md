@@ -1,6 +1,4 @@
-# Overview
-
-## Getting Started
+# Getting Started
 
 This guide walks you through setting up and running the **idp-server** for the first time.
 

@@ -114,7 +114,7 @@ This shows how every request is scoped and processed within the correct tenant c
 
 ## 📘 Related Topics
 
-- [Authorization Flow](./authorization-flow.md)
+- [Authorization Flow](authorization-flow.md)
 - [Authentication Interactors](./authentication-interactors.md)
-- [Federation Handling](./federation.md)
+- [Federation Handling](federation.md)
 - [Session Management](./session.md)

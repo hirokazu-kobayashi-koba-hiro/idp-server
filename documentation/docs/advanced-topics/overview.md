@@ -1,5 +1,4 @@
-# Overview
-## Advanced Topics
+# Advanced Topics Overview
 
 This section covers advanced usage, customization, and deployment scenarios for **idp-server**.
 

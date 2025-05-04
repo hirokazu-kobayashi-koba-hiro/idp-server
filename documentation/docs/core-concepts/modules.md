@@ -76,4 +76,4 @@ The idp-server is structured into multiple modules, each with a focused responsi
 
 ---
 
-👉 Next: [Authentication Flow](./authentication-flow.md) for detailed login and MFA handling.
+👉 Next: [Authentication Flow](authentication-flow.md) for detailed login and MFA handling.

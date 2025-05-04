@@ -1,4 +1,4 @@
-# Overview
+# Core Concepts Overview
 
 `idp-server` is a modern, multi-tenant Identity Provider (IdP) designed to support OAuth 2.0 / OIDC / FAPI / CIBA /
 Verifiable Credentials issuance / external integrations.

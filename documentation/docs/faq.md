@@ -1,6 +1,4 @@
-# Overview
-
-## FAQ
+# FAQ
 
 Frequently Asked Questions about **idp-server**
 

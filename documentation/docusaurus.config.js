@@ -87,14 +87,13 @@ const config = {
         },
         items: [
           {
-            type: 'docSidebar',
-            sidebarId: 'tutorialSidebar',
+            label: 'Docs',
             position: 'left',
-            label: 'Tutorial',
+            to: '/docs/introduction',
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
+          // {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://github.com/facebook/docusaurus',
+            href: 'https://github.com/hirokazu-kobayashi-koba-hiro/idp-server',
             label: 'GitHub',
             position: 'right',
           },
@@ -107,8 +106,8 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Tutorial',
-                to: '/docs/intro',
+                label: 'Documentation',
+                to: '/docs/introduction',
               },
             ],
           },
