@@ -10,8 +10,9 @@ org.idp.server.core.adapters.datasource.identity.UserDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.code.AuthorizationCodeGrantDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.request.AuthorizationRequestDataSourceProvider
 org.idp.server.core.adapters.datasource.multi_tenancy.organization.OrganizationDataSourceProvider
-org.idp.server.core.adapters.datasource.security.SecurityEventDataSourceProvider
-org.idp.server.core.adapters.datasource.security.SecurityEventHookConfigurationDataSourceProvider
+org.idp.server.core.adapters.datasource.security.event.SecurityEventDataSourceProvider
+org.idp.server.core.adapters.datasource.security.event.SecurityEventHookConfigurationDataSourceProvider
+org.idp.server.core.adapters.datasource.security.hook.SecurityEventHookResultCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.multi_tenancy.tenant.TenantDataSourceProvider
 org.idp.server.core.adapters.datasource.token.OAuthTokenDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.transaction.command.AuthenticationTransactionCommandDataSourceProvider

@@ -8,9 +8,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.exception.InvalidConfigurationException;
 import org.idp.server.basic.http.HttpClientFactory;
-import org.idp.server.basic.http.HttpNetworkErrorException;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.notification.NotificationTemplateInterpolator;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
@@ -43,7 +41,8 @@ public class SlacklNotificationSecurityEventHookExecutor implements SecurityEven
         jsonConverter.read(hookConfiguration.details(), SlackSecurityEventHookConfiguration.class);
     String incomingWebhookUrl = configuration.incomingWebhookUrl(securityEvent.type());
     if (incomingWebhookUrl == null) {
-      return new SecurityEventHookResult(Map.of("status", 500, "error", "invalid_configuration"));
+      return SecurityEventHookResult.failure(
+          type(), Map.of("status", 500, "error", "invalid_configuration"));
     }
 
     String template = configuration.messageTemplate(securityEvent.type());
@@ -72,13 +71,23 @@ public class SlacklNotificationSecurityEventHookExecutor implements SecurityEven
       result.put("status", httpResponse.statusCode());
       result.put("body", httpResponse.body());
 
-      return new SecurityEventHookResult(result);
+      return SecurityEventHookResult.success(type(), result);
     } catch (URISyntaxException e) {
 
-      throw new InvalidConfigurationException("SlackUrl is invalid.", e);
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "SlackUrl is invalid.");
+      return SecurityEventHookResult.failure(type(), response);
 
     } catch (IOException | InterruptedException e) {
-      throw new HttpNetworkErrorException("Slack request is failed.", e);
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Slack request is failed." + e.getMessage());
+      return SecurityEventHookResult.failure(type(), response);
+    } catch (Exception e) {
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Unexpected error. Slack request is failed." + e.getMessage());
+      return SecurityEventHookResult.failure(type(), response);
     }
   }
 

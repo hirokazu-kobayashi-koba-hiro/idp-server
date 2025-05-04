@@ -6,9 +6,10 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
 import org.idp.server.core.security.*;
 import org.idp.server.core.security.SecurityEventApi;
-import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.handler.SecurityEventHandler;
-import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
+import org.idp.server.core.security.repository.SecurityEventCommandRepository;
+import org.idp.server.core.security.repository.SecurityEventHookConfigurationQueryRepository;
+import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 
 @Transaction
 public class SecurityEventEntryService implements SecurityEventApi {
@@ -17,12 +18,17 @@ public class SecurityEventEntryService implements SecurityEventApi {
   TenantRepository tenantRepository;
 
   public SecurityEventEntryService(
-      SecurityEventRepository securityEventRepository,
       SecurityEventHooks securityEventHooks,
+      SecurityEventCommandRepository securityEventCommandRepository,
+      SecurityEventHookResultCommandRepository securityEventHookResultCommandRepository,
       SecurityEventHookConfigurationQueryRepository hookQueryRepository,
       TenantRepository tenantRepository) {
     this.securityEventHandler =
-        new SecurityEventHandler(securityEventRepository, securityEventHooks, hookQueryRepository);
+        new SecurityEventHandler(
+            securityEventHooks,
+            securityEventCommandRepository,
+            securityEventHookResultCommandRepository,
+            hookQueryRepository);
     this.tenantRepository = tenantRepository;
   }
 

@@ -37,7 +37,7 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     bulkRegisterRole(tenant, roles, sqlExecutor);
-    bulkRegisterPermission(roles, sqlExecutor);
+    bulkRegisterPermission(tenant, roles, sqlExecutor);
   }
 
   private void bulkRegisterRole(Tenant tenant, Roles roles, SqlExecutor sqlExecutor) {
@@ -65,11 +65,11 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
     sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
   }
 
-  private void bulkRegisterPermission(Roles roles, SqlExecutor sqlExecutor) {
+  private void bulkRegisterPermission(Tenant tenant, Roles roles, SqlExecutor sqlExecutor) {
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(
         """
-                        INSERT INTO role_permission (role_id, permission_id)
+                        INSERT INTO role_permission (tenant_id, role_id, permission_id)
                         VALUES
                         """);
 
@@ -80,7 +80,8 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
             role.permissions()
                 .forEach(
                     permission -> {
-                      sqlValues.add("(?, ?)");
+                      sqlValues.add("(?, ?, ?)");
+                      params.add(tenant.identifierValue());
                       params.add(role.id());
                       params.add(permission.id());
                     }));

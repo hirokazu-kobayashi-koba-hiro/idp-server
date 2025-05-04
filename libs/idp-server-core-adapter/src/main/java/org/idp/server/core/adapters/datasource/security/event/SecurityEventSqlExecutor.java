@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.security;
+package org.idp.server.core.adapters.datasource.security.event;
 
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEvents;

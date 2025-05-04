@@ -8,7 +8,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.exception.InvalidConfigurationException;
 import org.idp.server.basic.http.*;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
@@ -78,13 +77,23 @@ public class WebHookExecutor implements SecurityEventHookExecutor {
       result.put("status", httpResponse.statusCode());
       result.put("body", httpResponse.body());
 
-      return new SecurityEventHookResult(result);
+      return SecurityEventHookResult.success(type(), result);
     } catch (URISyntaxException e) {
 
-      throw new InvalidConfigurationException("WebhookUrl is invalid.", e);
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "WebhookUrl is invalid.");
+      return SecurityEventHookResult.failure(type(), response);
 
     } catch (IOException | InterruptedException e) {
-      throw new HttpNetworkErrorException("Webhook request is failed.", e);
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Webhook request is failed." + e.getMessage());
+      return SecurityEventHookResult.failure(type(), response);
+    } catch (Exception e) {
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Unexpected error. Webhook request is failed." + e.getMessage());
+      return SecurityEventHookResult.failure(type(), response);
     }
   }
 

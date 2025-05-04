@@ -67,10 +67,11 @@ import org.idp.server.core.security.SecurityEventHooks;
 import org.idp.server.core.security.SecurityEventPublisher;
 import org.idp.server.core.security.event.CibaFlowEventPublisher;
 import org.idp.server.core.security.event.OAuthFlowEventPublisher;
-import org.idp.server.core.security.event.SecurityEventRepository;
 import org.idp.server.core.security.event.TokenEventPublisher;
-import org.idp.server.core.security.hook.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.hook.SecurityEventHooksLoader;
+import org.idp.server.core.security.repository.SecurityEventCommandRepository;
+import org.idp.server.core.security.repository.SecurityEventHookConfigurationQueryRepository;
+import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.core.token.*;
 
 /** IdpServerApplication */
@@ -118,8 +119,10 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(ServerConfigurationRepository.class);
     ClientConfigurationRepository clientConfigurationRepository =
         applicationComponentContainer.resolve(ClientConfigurationRepository.class);
-    SecurityEventRepository securityEventRepository =
-        applicationComponentContainer.resolve(SecurityEventRepository.class);
+    SecurityEventCommandRepository securityEventCommandRepository =
+        applicationComponentContainer.resolve(SecurityEventCommandRepository.class);
+    SecurityEventHookResultCommandRepository securityEventHookResultCommandRepository =
+        applicationComponentContainer.resolve(SecurityEventHookResultCommandRepository.class);
     UserRepository userRepository = applicationComponentContainer.resolve(UserRepository.class);
     OrganizationRepository organizationRepository =
         applicationComponentContainer.resolve(OrganizationRepository.class);
@@ -313,7 +316,11 @@ public class IdpServerApplication {
     this.securityEventApi =
         TenantAwareEntryServiceProxy.createProxy(
             new SecurityEventEntryService(
-                securityEventRepository, securityEventHooks, hookQueryRepository, tenantRepository),
+                securityEventHooks,
+                securityEventCommandRepository,
+                securityEventHookResultCommandRepository,
+                hookQueryRepository,
+                tenantRepository),
             SecurityEventApi.class,
             OperationType.WRITE,
             tenantDialectProvider);

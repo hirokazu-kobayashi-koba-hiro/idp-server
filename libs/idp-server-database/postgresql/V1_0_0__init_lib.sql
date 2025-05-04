@@ -77,10 +77,12 @@ CREATE INDEX idx_role_tenant_name ON role (tenant_id, name);
 CREATE TABLE role_permission
 (
     id            CHAR(36)  DEFAULT gen_random_uuid(),
+    tenant_id     CHAR(36)                NOT NULL,
     role_id       CHAR(36)                NOT NULL,
     permission_id CHAR(36)                NOT NULL,
     created_at    TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE,
     FOREIGN KEY (permission_id) REFERENCES permission (id) ON DELETE CASCADE,
     UNIQUE (role_id, permission_id)
@@ -143,10 +145,12 @@ CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
 CREATE TABLE idp_user_roles
 (
     id          CHAR(36)  DEFAULT gen_random_uuid(),
+    tenant_id   CHAR(36)                NOT NULL,
     user_id     CHAR(36)                NOT NULL,
     role_id     CHAR(36)                NOT NULL,
     assigned_at TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
     FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE,
     UNIQUE (user_id, role_id)
@@ -157,11 +161,13 @@ CREATE INDEX idx_idp_user_roles_user_role ON idp_user_roles (user_id, role_id);
 CREATE TABLE user_permission_override
 (
     id            CHAR(36)  DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id     CHAR(36)                            NOT NULL,
     user_id       CHAR(36)                            NOT NULL,
     permission_id CHAR(36)                            NOT NULL,
     granted       BOOLEAN                             NOT NULL,
     created_at    TIMESTAMP DEFAULT now()             NOT NULL,
     PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     UNIQUE (user_id, permission_id),
     FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
     FOREIGN KEY (permission_id) REFERENCES permission (id) ON DELETE CASCADE
@@ -194,30 +200,6 @@ FROM user_permission_override ovr
          JOIN idp_user u ON ovr.user_id = u.id
          JOIN permission p ON ovr.permission_id = p.id
 WHERE ovr.granted = true;
-
-CREATE TABLE organization_members
-(
-    id              CHAR(36)  DEFAULT gen_random_uuid() NOT NULL,
-    idp_user_id     CHAR(36)                            NOT NULL,
-    organization_id VARCHAR(255)                        NOT NULL,
-    role            VARCHAR(100)                        NOT NULL,
-    joined_at       TIMESTAMP DEFAULT now()             NOT NULL,
-    PRIMARY KEY (id),
-    UNIQUE (idp_user_id, organization_id),
-    FOREIGN KEY (idp_user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
-    FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
-);
-
-CREATE TABLE idp_user_current_organization
-(
-    idp_user_id     CHAR(36)                NOT NULL,
-    organization_id CHAR(36)                NOT NULL,
-    created_at      TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at      TIMESTAMP DEFAULT now() NOT NULL,
-    PRIMARY KEY (idp_user_id),
-    FOREIGN KEY (idp_user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
-    FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
-);
 
 CREATE TABLE client_configuration
 (
@@ -437,8 +419,7 @@ CREATE TABLE security_event
     user_agent  TEXT,
     detail      JSONB        NOT NULL,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+    PRIMARY KEY (id)
 );
 
 CREATE INDEX idx_events_type ON security_event (type);
@@ -447,23 +428,6 @@ CREATE INDEX idx_events_client ON security_event (client_id);
 CREATE INDEX idx_events_user ON security_event (user_id);
 CREATE INDEX idx_events_created_at ON security_event (created_at);
 CREATE INDEX idx_events_detail_jsonb ON security_event USING GIN (detail);
-
-CREATE TABLE security_event_notifications
-(
-    id          CHAR(36),
-    tenant_id   CHAR(36)     NOT NULL,
-    event_id    CHAR(36)     NOT NULL,
-    alert_type  VARCHAR(100) NOT NULL,
-    channel     VARCHAR(50)  NOT NULL,
-    status      VARCHAR(50)  NOT NULL,
-    notified_at TIMESTAMP    NOT NULL,
-    PRIMARY KEY (id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
-    FOREIGN KEY (event_id) REFERENCES security_event (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_security_event_notifications_event_id ON security_event_notifications (event_id);
-CREATE INDEX idx_security_event_notifications_alert_type ON security_event_notifications (alert_type);
 
 CREATE TABLE security_event_hook_configuration
 (
@@ -480,6 +444,20 @@ CREATE TABLE security_event_hook_configuration
 
 CREATE INDEX idx_security_event_hook_configuration ON security_event_hook_configuration (tenant_id);
 CREATE INDEX idx_security_event_hook_configuration_order ON security_event_hook_configuration (tenant_id, execution_order);
+
+CREATE TABLE security_event_hook_results
+(
+    id CHAR(36) NOT NULL,
+    tenant_id CHAR(36) NOT NULL,
+    security_event_id CHAR(36) NOT NULL,
+    security_event_type  VARCHAR(255) NOT NULL,
+    security_event_hook VARCHAR(255) NOT NULL,
+    security_event_payload JSONB NOT NULL,
+    status VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id)
+);
 
 CREATE TABLE federation_configurations
 (

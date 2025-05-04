@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import java.util.*;
 
 /**
- * A lightweight wrapper for Jackson's {@link JsonNode} providing convenient and safe access methods.
- * Useful for parsing dynamic JSON (e.g., JSONB in PostgreSQL) with type handling and null safety.
+ * A lightweight wrapper for Jackson's {@link JsonNode} providing convenient and safe access
+ * methods. Useful for parsing dynamic JSON (e.g., JSONB in PostgreSQL) with type handling and null
+ * safety.
  */
 public class JsonNodeWrapper {
   JsonNode jsonNode;
@@ -137,7 +138,8 @@ public class JsonNodeWrapper {
   }
 
   /**
-   * Converts the entire JSON object into a Java {@link Map}, recursively extracting primitive values.
+   * Converts the entire JSON object into a Java {@link Map}, recursively extracting primitive
+   * values.
    *
    * @return map representing the JSON object
    */

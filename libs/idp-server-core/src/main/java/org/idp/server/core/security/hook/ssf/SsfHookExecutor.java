@@ -6,9 +6,9 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import org.idp.server.basic.http.HttpClientErrorException;
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.basic.http.HttpClientFactory;
-import org.idp.server.basic.http.HttpNetworkErrorException;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
@@ -54,16 +54,14 @@ public class SsfHookExecutor implements SecurityEventHookExecutor {
             securityEventTokenEntity, ssfConfiguration.privateKey(securityEvent.type()));
     SecurityEventToken securityEventToken = securityEventTokenCreator.create();
 
-    send(
+    return send(
         new SharedSignalEventRequest(
             ssfConfiguration.endpoint(securityEvent.type()),
             ssfConfiguration.headers(securityEvent.type()),
             securityEventToken));
-
-    return new SecurityEventHookResult();
   }
 
-  private void send(SharedSignalEventRequest sharedSignalEventRequest) {
+  private SecurityEventHookResult send(SharedSignalEventRequest sharedSignalEventRequest) {
     try {
 
       HttpRequest.Builder builder =
@@ -80,25 +78,31 @@ public class SsfHookExecutor implements SecurityEventHookExecutor {
       HttpResponse<String> httpResponse =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-      validateResponse(httpResponse);
+      String body = httpResponse.body();
+      if (httpResponse.statusCode() >= 400 && httpResponse.statusCode() < 500) {
+
+        log.warn("ssf response:" + body);
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", body);
+        return SecurityEventHookResult.failure(type(), response);
+      }
+
+      if (httpResponse.statusCode() >= 500) {
+        log.error("ssf response:" + body);
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", body);
+        return SecurityEventHookResult.failure(type(), response);
+      }
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", body);
+      return SecurityEventHookResult.success(type(), response);
 
     } catch (IOException | InterruptedException | URISyntaxException e) {
       log.error(e.getMessage());
-      throw new HttpNetworkErrorException("unexpected network error", e);
-    }
-  }
-
-  private void validateResponse(HttpResponse<String> httpResponse) {
-    String body = httpResponse.body();
-    if (httpResponse.statusCode() >= 400 && httpResponse.statusCode() < 500) {
-
-      log.warn("ssf response:" + body);
-      throw new HttpClientErrorException(body, httpResponse.statusCode());
-    }
-
-    if (httpResponse.statusCode() >= 500) {
-      log.error("ssf response:" + body);
-      throw new HttpClientErrorException(body, httpResponse.statusCode());
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", e.getMessage());
+      return SecurityEventHookResult.failure(type(), response);
     }
   }
 }

@@ -1,0 +1,10 @@
+package org.idp.server.core.security.repository;
+
+import java.util.List;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.security.SecurityEvent;
+import org.idp.server.core.security.hook.SecurityEventHookResult;
+
+public interface SecurityEventHookResultCommandRepository {
+  void register(Tenant tenant, SecurityEvent securityEvent, List<SecurityEventHookResult> results);
+}
