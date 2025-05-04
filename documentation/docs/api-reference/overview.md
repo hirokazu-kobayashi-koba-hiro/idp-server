@@ -1,4 +1,5 @@
-# API Reference
+# Overview
+## API Reference
 
 The **idp-server** provides a set of REST APIs and standard OpenID Connect endpoints.
 

@@ -1,4 +1,6 @@
-# Introduction
+# Overview
+
+## Introduction
 
 Welcome to **idp-server**, an open-source Identity Provider (IdP) engine designed for modern authentication and authorization needs.
 

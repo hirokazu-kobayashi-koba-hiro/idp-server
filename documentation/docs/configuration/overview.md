@@ -1,4 +1,5 @@
-# Configuration
+# Overview
+## Configuration
 
 This section describes how to configure key components of the **idp-server**, including tenants, clients, users, credentials, and MFA.
 

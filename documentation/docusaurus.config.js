@@ -13,6 +13,9 @@ const config = {
   title: 'IdP-Server Documentation',
   tagline: 'IdP-Server provides Java API for OAuth2.0 and OIDC.',
   favicon: 'img/favicon.ico',
+  markdown: {
+    mermaid: true,
+  },
   themes: ['@docusaurus/theme-mermaid'],
 
   // Set the production url of your site here
@@ -145,6 +148,9 @@ const config = {
       prism: {
         theme: prismThemes.github,
         darkTheme: prismThemes.dracula,
+      },
+      mermaid: {
+        theme: { light: 'default', dark: 'dark' },
       },
     }),
 };

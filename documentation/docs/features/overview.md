@@ -1,4 +1,6 @@
-# Features
+# Overview
+
+## Features
 
 The **idp-server** is built to be an extensible and standards-compliant identity provider.
 

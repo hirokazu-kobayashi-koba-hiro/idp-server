@@ -1,4 +1,5 @@
-# Deployment
+# Overview
+## Deployment
 
 This section describes how to deploy **idp-server** in different environments, including local, Docker, and production scenarios.
 
