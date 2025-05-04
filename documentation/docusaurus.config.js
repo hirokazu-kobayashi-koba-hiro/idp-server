@@ -13,6 +13,10 @@ const config = {
   title: 'IdP-Server Documentation',
   tagline: 'IdP-Server provides Java API for OAuth2.0 and OIDC.',
   favicon: 'img/favicon.ico',
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
 
   // Set the production url of your site here
   url: 'https://your-docusaurus-site.example.com',
@@ -83,14 +87,13 @@ const config = {
         },
         items: [
           {
-            type: 'docSidebar',
-            sidebarId: 'tutorialSidebar',
+            label: 'Docs',
             position: 'left',
-            label: 'Tutorial',
+            to: '/docs/introduction',
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
+          // {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://github.com/facebook/docusaurus',
+            href: 'https://github.com/hirokazu-kobayashi-koba-hiro/idp-server',
             label: 'GitHub',
             position: 'right',
           },
@@ -103,8 +106,8 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Tutorial',
-                to: '/docs/intro',
+                label: 'Documentation',
+                to: '/docs/introduction',
               },
             ],
           },
@@ -144,6 +147,9 @@ const config = {
       prism: {
         theme: prismThemes.github,
         darkTheme: prismThemes.dracula,
+      },
+      mermaid: {
+        theme: { light: 'default', dark: 'dark' },
       },
     }),
 };

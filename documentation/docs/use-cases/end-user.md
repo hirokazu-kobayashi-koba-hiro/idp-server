@@ -1,3 +1,8 @@
+# End User Use Cases
+
+## 1. Sign-Up
+
+```mermaid
 sequenceDiagram
     participant User
     participant App
@@ -50,3 +55,5 @@ sequenceDiagram
     SDK -->> App: Notify login success
 
     App ->> AppBackend: Call protected API
+
+```
