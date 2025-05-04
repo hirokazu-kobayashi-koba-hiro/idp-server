@@ -49,8 +49,8 @@ const sidebars = {
       type: 'category',
       label: 'Use Cases',
       items: [
-        'use-cases/end-user-signup',
-        'use-cases/admin-user-signup',
+        'use-cases/end-user',
+        'use-cases/admin-user',
       ],
     },
     {

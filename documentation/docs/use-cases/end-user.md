@@ -1,6 +1,6 @@
-# End User Signup 
+# End User Use Cases
 
-## 1. User Sign-Up
+## 1. Sign-Up
 
 ```mermaid
 sequenceDiagram

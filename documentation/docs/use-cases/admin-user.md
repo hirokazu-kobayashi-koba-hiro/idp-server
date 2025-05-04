@@ -1,6 +1,6 @@
-# AdminUser Signup
+# AdminUser Use Cases
 
-## 1. AdminUser Sign-Up
+## 1. Sign-Up
 
 ```mermaid
 sequenceDiagram
