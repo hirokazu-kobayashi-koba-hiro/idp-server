@@ -1,6 +1,6 @@
-package org.idp.server.core.identity.deletion;
+package org.idp.server.core.identity.event;
 
-public enum UserDeletionResultStatus {
+public enum UserLifecycleEventResultStatus {
   SUCCESS,
   FAILURE;
 

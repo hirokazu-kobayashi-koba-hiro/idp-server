@@ -1,16 +1,17 @@
-package org.idp.server.core.identity;
+package org.idp.server.core.identity.event;
 
+import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public class UserLifecycleEvent {
   Tenant tenant;
   User user;
-  UserLifecycleOperation lifecycleOperation;
+  UserLifecycleType lifecycleOperation;
 
   public UserLifecycleEvent() {}
 
-  public UserLifecycleEvent(Tenant tenant, User user, UserLifecycleOperation lifecycleOperation) {
+  public UserLifecycleEvent(Tenant tenant, User user, UserLifecycleType lifecycleOperation) {
     this.tenant = tenant;
     this.user = user;
     this.lifecycleOperation = lifecycleOperation;
@@ -24,7 +25,7 @@ public class UserLifecycleEvent {
     return user;
   }
 
-  public UserLifecycleOperation lifecycleOperation() {
+  public UserLifecycleType lifecycleType() {
     return lifecycleOperation;
   }
 

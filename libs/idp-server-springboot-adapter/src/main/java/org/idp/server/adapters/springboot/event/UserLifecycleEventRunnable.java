@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.event;
 
 import java.util.function.Consumer;
-import org.idp.server.core.identity.UserLifecycleEvent;
+import org.idp.server.core.identity.event.UserLifecycleEvent;
 
 public class UserLifecycleEventRunnable implements Runnable {
 

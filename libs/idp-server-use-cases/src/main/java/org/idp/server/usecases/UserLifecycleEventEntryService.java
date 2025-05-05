@@ -1,34 +1,37 @@
 package org.idp.server.usecases;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.log.LoggerWrapper;
-import org.idp.server.core.identity.UserLifecycleEvent;
-import org.idp.server.core.identity.UserLifecycleEventApi;
-import org.idp.server.core.identity.deletion.UserRelatedDataDeletionExecutor;
-import org.idp.server.core.identity.deletion.UserRelatedDataDeletionExecutors;
+import org.idp.server.core.identity.event.*;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 @Transaction
 public class UserLifecycleEventEntryService implements UserLifecycleEventApi {
 
-  UserRelatedDataDeletionExecutors userRelatedDataDeletionExecutors;
+  UserLifecycleEventExecutorsMap userLifecycleEventExecutorsMap;
   LoggerWrapper log = LoggerWrapper.getLogger(UserLifecycleEventEntryService.class);
 
   public UserLifecycleEventEntryService(
-      UserRelatedDataDeletionExecutors userRelatedDataDeletionExecutors) {
-    this.userRelatedDataDeletionExecutors = userRelatedDataDeletionExecutors;
+      UserLifecycleEventExecutorsMap userLifecycleEventExecutorsMap) {
+    this.userLifecycleEventExecutorsMap = userLifecycleEventExecutorsMap;
   }
 
   @Override
   public void handle(TenantIdentifier tenantIdentifier, UserLifecycleEvent userLifecycleEvent) {
-    log.info(
-        "UserLifecycleEventEntryService.handle: " + userLifecycleEvent.lifecycleOperation().name());
+    log.info("UserLifecycleEventEntryService.handle: " + userLifecycleEvent.lifecycleType().name());
 
-    for (UserRelatedDataDeletionExecutor executor : userRelatedDataDeletionExecutors) {
+    List<UserLifecycleEventResult> result = new ArrayList<>();
+    UserLifecycleEventExecutors userLifecycleEventExecutors =
+        userLifecycleEventExecutorsMap.find(userLifecycleEvent.lifecycleType());
+
+    for (UserLifecycleEventExecutor executor : userLifecycleEventExecutors) {
 
       if (executor.shouldExecute(userLifecycleEvent)) {
         log.info("UserLifecycleEventEntryService.execute: " + executor.name());
-        executor.execute(userLifecycleEvent);
+        UserLifecycleEventResult deletionResult = executor.execute(userLifecycleEvent);
+        result.add(deletionResult);
       }
     }
   }

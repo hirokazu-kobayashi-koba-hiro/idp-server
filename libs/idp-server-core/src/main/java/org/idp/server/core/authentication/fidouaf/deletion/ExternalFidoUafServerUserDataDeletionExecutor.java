@@ -2,20 +2,21 @@ package org.idp.server.core.authentication.fidouaf.deletion;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.authentication.fidouaf.*;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserLifecycleEvent;
-import org.idp.server.core.identity.UserLifecycleOperation;
-import org.idp.server.core.identity.deletion.UserDeletionResult;
-import org.idp.server.core.identity.deletion.UserRelatedDataDeletionExecutor;
+import org.idp.server.core.identity.event.UserLifecycleEvent;
+import org.idp.server.core.identity.event.UserLifecycleEventExecutor;
+import org.idp.server.core.identity.event.UserLifecycleEventResult;
+import org.idp.server.core.identity.event.UserLifecycleType;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class ExternalFidoUafServerUserDataDeletionExecutor
-    implements UserRelatedDataDeletionExecutor {
+public class ExternalFidoUafServerUserDataDeletionExecutor implements UserLifecycleEventExecutor {
 
   FidoUafExecutors fidoUafExecutors;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
+  LoggerWrapper log = LoggerWrapper.getLogger(ExternalFidoUafServerUserDataDeletionExecutor.class);
 
   public ExternalFidoUafServerUserDataDeletionExecutor(
       FidoUafExecutors fidoUafExecutors,
@@ -25,13 +26,18 @@ public class ExternalFidoUafServerUserDataDeletionExecutor
   }
 
   @Override
+  public UserLifecycleType lifecycleType() {
+    return UserLifecycleType.DELETE;
+  }
+
+  @Override
   public String name() {
     return "fido-uaf-deletion";
   }
 
   @Override
   public boolean shouldExecute(UserLifecycleEvent userLifecycleEvent) {
-    if (userLifecycleEvent.lifecycleOperation() == UserLifecycleOperation.DELETE) {
+    if (userLifecycleEvent.lifecycleType() == UserLifecycleType.DELETE) {
       User user = userLifecycleEvent.user();
       return user.enabledFidoUaf();
     }
@@ -39,7 +45,7 @@ public class ExternalFidoUafServerUserDataDeletionExecutor
   }
 
   @Override
-  public UserDeletionResult execute(UserLifecycleEvent userLifecycleEvent) {
+  public UserLifecycleEventResult execute(UserLifecycleEvent userLifecycleEvent) {
     try {
       Tenant tenant = userLifecycleEvent.tenant();
       FidoUafConfiguration fidoUafConfiguration =
@@ -57,14 +63,14 @@ public class ExternalFidoUafServerUserDataDeletionExecutor
         Map<String, Object> data = new HashMap<>();
         data.put("status", executionResult.status());
         data.put("contents", executionResult.contents());
-        return UserDeletionResult.failure(data);
+        return UserLifecycleEventResult.failure(data);
       }
 
-      return UserDeletionResult.success(executionResult.contents());
+      return UserLifecycleEventResult.success(executionResult.contents());
     } catch (Exception e) {
       Map<String, Object> data = new HashMap<>();
       data.put("message", e.getMessage());
-      return UserDeletionResult.failure(data);
+      return UserLifecycleEventResult.failure(data);
     }
   }
 }

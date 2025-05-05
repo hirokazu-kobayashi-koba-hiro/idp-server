@@ -3,6 +3,9 @@ package org.idp.server.usecases;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.*;
+import org.idp.server.core.identity.event.UserLifecycleEvent;
+import org.idp.server.core.identity.event.UserLifecycleEventPublisher;
+import org.idp.server.core.identity.event.UserLifecycleType;
 import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
@@ -41,7 +44,7 @@ public class UserEntryService implements UserApi {
     userCommandRepository.delete(tenant, user.userIdentifier());
 
     UserLifecycleEvent userLifecycleEvent =
-        new UserLifecycleEvent(tenant, user, UserLifecycleOperation.DELETE);
+        new UserLifecycleEvent(tenant, user, UserLifecycleType.DELETE);
     userLifecycleEventPublisher.publish(userLifecycleEvent);
     eventPublisher.publish(
         tenant, oAuthToken, DefaultSecurityEventType.user_delete, requestAttributes);

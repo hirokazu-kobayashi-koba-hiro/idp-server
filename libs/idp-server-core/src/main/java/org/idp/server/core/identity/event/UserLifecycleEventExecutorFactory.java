@@ -1,11 +1,11 @@
-package org.idp.server.core.identity.deletion;
+package org.idp.server.core.identity.event;
 
 import org.idp.server.basic.dependency.ApplicationComponentContainer;
 import org.idp.server.core.authentication.factory.AuthenticationDependencyContainer;
 
-public interface UserRelatedDataDeletionExecutorFactory {
+public interface UserLifecycleEventExecutorFactory {
 
-  UserRelatedDataDeletionExecutor create(
+  UserLifecycleEventExecutor create(
       ApplicationComponentContainer applicationComponentContainer,
       AuthenticationDependencyContainer authenticationDependencyContainer);
 }

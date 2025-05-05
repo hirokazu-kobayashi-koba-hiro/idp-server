@@ -1,8 +1,8 @@
 package org.idp.server.adapters.springboot.event;
 
 import org.idp.server.basic.log.LoggerWrapper;
-import org.idp.server.core.identity.UserLifecycleEvent;
-import org.idp.server.core.identity.UserLifecycleEventApi;
+import org.idp.server.core.identity.event.UserLifecycleEvent;
+import org.idp.server.core.identity.event.UserLifecycleEventApi;
 import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.EventListener;
@@ -27,7 +27,7 @@ public class UserLifecycleEventListerService {
   @Async
   @EventListener
   public void onEvent(UserLifecycleEvent userLifecycleEvent) {
-    log.info("onEvent: {}", userLifecycleEvent.lifecycleOperation().name());
+    log.info("onEvent: {}", userLifecycleEvent.lifecycleType().name());
 
     taskExecutor.execute(
         new UserLifecycleEventRunnable(

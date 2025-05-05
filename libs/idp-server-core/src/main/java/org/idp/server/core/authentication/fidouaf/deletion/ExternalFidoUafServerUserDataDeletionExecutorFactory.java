@@ -4,14 +4,14 @@ import org.idp.server.basic.dependency.ApplicationComponentContainer;
 import org.idp.server.core.authentication.factory.AuthenticationDependencyContainer;
 import org.idp.server.core.authentication.fidouaf.FidoUafExecutors;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.identity.deletion.UserRelatedDataDeletionExecutor;
-import org.idp.server.core.identity.deletion.UserRelatedDataDeletionExecutorFactory;
+import org.idp.server.core.identity.event.UserLifecycleEventExecutor;
+import org.idp.server.core.identity.event.UserLifecycleEventExecutorFactory;
 
 public class ExternalFidoUafServerUserDataDeletionExecutorFactory
-    implements UserRelatedDataDeletionExecutorFactory {
+    implements UserLifecycleEventExecutorFactory {
 
   @Override
-  public UserRelatedDataDeletionExecutor create(
+  public UserLifecycleEventExecutor create(
       ApplicationComponentContainer applicationComponentContainer,
       AuthenticationDependencyContainer authenticationDependencyContainer) {
 

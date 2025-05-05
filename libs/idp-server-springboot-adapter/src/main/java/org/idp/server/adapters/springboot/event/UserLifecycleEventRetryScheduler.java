@@ -2,10 +2,9 @@ package org.idp.server.adapters.springboot.event;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
 import org.idp.server.basic.log.LoggerWrapper;
-import org.idp.server.core.identity.UserLifecycleEvent;
-import org.idp.server.core.identity.UserLifecycleEventApi;
+import org.idp.server.core.identity.event.UserLifecycleEvent;
+import org.idp.server.core.identity.event.UserLifecycleEventApi;
 import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -32,10 +31,10 @@ public class UserLifecycleEventRetryScheduler {
     while (!retryQueue.isEmpty()) {
       UserLifecycleEvent userLifecycleEvent = retryQueue.poll();
       try {
-        log.info("retry event: {}", userLifecycleEvent.lifecycleOperation().name());
+        log.info("retry event: {}", userLifecycleEvent.lifecycleType().name());
         userLifecycleEventApi.handle(userLifecycleEvent.tenantIdentifier(), userLifecycleEvent);
       } catch (Exception e) {
-        log.error("retry event error: {}", userLifecycleEvent.lifecycleOperation().name());
+        log.error("retry event error: {}", userLifecycleEvent.lifecycleType().name());
         retryQueue.add(userLifecycleEvent);
       }
     }

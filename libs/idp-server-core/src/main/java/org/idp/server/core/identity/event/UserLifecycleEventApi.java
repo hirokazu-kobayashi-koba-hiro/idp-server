@@ -1,4 +1,4 @@
-package org.idp.server.core.identity;
+package org.idp.server.core.identity.event;
 
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
