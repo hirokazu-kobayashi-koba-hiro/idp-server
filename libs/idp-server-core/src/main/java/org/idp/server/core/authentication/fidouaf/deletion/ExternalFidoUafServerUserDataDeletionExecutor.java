@@ -63,14 +63,14 @@ public class ExternalFidoUafServerUserDataDeletionExecutor implements UserLifecy
         Map<String, Object> data = new HashMap<>();
         data.put("status", executionResult.status());
         data.put("contents", executionResult.contents());
-        return UserLifecycleEventResult.failure(data);
+        return UserLifecycleEventResult.failure(name(), data);
       }
 
-      return UserLifecycleEventResult.success(executionResult.contents());
+      return UserLifecycleEventResult.success(name(), executionResult.contents());
     } catch (Exception e) {
       Map<String, Object> data = new HashMap<>();
       data.put("message", e.getMessage());
-      return UserLifecycleEventResult.failure(data);
+      return UserLifecycleEventResult.failure(name(), data);
     }
   }
 }

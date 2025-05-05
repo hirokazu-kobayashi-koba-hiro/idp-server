@@ -11,18 +11,21 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 public class UserLifecycleEventEntryService implements UserLifecycleEventApi {
 
   UserLifecycleEventExecutorsMap userLifecycleEventExecutorsMap;
+  UserLifecycleEventResultCommandRepository resultCommandRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(UserLifecycleEventEntryService.class);
 
   public UserLifecycleEventEntryService(
-      UserLifecycleEventExecutorsMap userLifecycleEventExecutorsMap) {
+      UserLifecycleEventExecutorsMap userLifecycleEventExecutorsMap,
+      UserLifecycleEventResultCommandRepository resultCommandRepository) {
     this.userLifecycleEventExecutorsMap = userLifecycleEventExecutorsMap;
+    this.resultCommandRepository = resultCommandRepository;
   }
 
   @Override
   public void handle(TenantIdentifier tenantIdentifier, UserLifecycleEvent userLifecycleEvent) {
     log.info("UserLifecycleEventEntryService.handle: " + userLifecycleEvent.lifecycleType().name());
 
-    List<UserLifecycleEventResult> result = new ArrayList<>();
+    List<UserLifecycleEventResult> results = new ArrayList<>();
     UserLifecycleEventExecutors userLifecycleEventExecutors =
         userLifecycleEventExecutorsMap.find(userLifecycleEvent.lifecycleType());
 
@@ -31,8 +34,10 @@ public class UserLifecycleEventEntryService implements UserLifecycleEventApi {
       if (executor.shouldExecute(userLifecycleEvent)) {
         log.info("UserLifecycleEventEntryService.execute: " + executor.name());
         UserLifecycleEventResult deletionResult = executor.execute(userLifecycleEvent);
-        result.add(deletionResult);
+        results.add(deletionResult);
       }
     }
+
+    resultCommandRepository.register(userLifecycleEvent.tenant(), userLifecycleEvent, results);
   }
 }

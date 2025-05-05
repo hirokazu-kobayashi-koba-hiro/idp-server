@@ -160,6 +160,8 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(PermissionCommandRepository.class);
     SecurityEventHookConfigurationQueryRepository hookQueryRepository =
         applicationComponentContainer.resolve(SecurityEventHookConfigurationQueryRepository.class);
+    UserLifecycleEventResultCommandRepository userLifecycleEventResultCommandRepository =
+        applicationComponentContainer.resolve(UserLifecycleEventResultCommandRepository.class);
 
     applicationComponentContainer.register(
         PasswordCredentialsGrantDelegate.class,
@@ -351,7 +353,8 @@ public class IdpServerApplication {
 
     this.userLifecycleEventApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new UserLifecycleEventEntryService(userLifecycleEventExecutorsMap),
+            new UserLifecycleEventEntryService(
+                userLifecycleEventExecutorsMap, userLifecycleEventResultCommandRepository),
             UserLifecycleEventApi.class,
             OperationType.WRITE,
             tenantDialectProvider);
