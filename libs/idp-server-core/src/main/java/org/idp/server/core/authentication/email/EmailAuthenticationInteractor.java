@@ -6,7 +6,7 @@ import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
@@ -30,7 +30,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
-      UserRepository userRepository) {
+      UserQueryRepository userQueryRepository) {
 
     EmailVerificationChallenge emailVerificationChallenge =
         queryRepository.get(

@@ -3,7 +3,7 @@ package org.idp.server.usecases;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
@@ -23,17 +23,17 @@ public class TokenEntryService implements TokenApi {
 
   TokenProtocols tokenProtocols;
   TenantRepository tenantRepository;
-  UserRepository userRepository;
+  UserQueryRepository userQueryRepository;
   TokenEventPublisher eventPublisher;
 
   public TokenEntryService(
       TokenProtocols tokenProtocols,
-      UserRepository userRepository,
+      UserQueryRepository userQueryRepository,
       TenantRepository tenantRepository,
       TokenEventPublisher eventPublisher) {
     this.tokenProtocols = tokenProtocols;
     this.tenantRepository = tenantRepository;
-    this.userRepository = userRepository;
+    this.userQueryRepository = userQueryRepository;
     this.eventPublisher = eventPublisher;
   }
 

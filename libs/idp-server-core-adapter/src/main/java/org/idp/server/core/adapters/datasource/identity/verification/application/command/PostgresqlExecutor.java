@@ -27,7 +27,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     params.add(application.identifier().value());
     params.add(tenant.identifierValue());
     params.add(application.requestedClientId().value());
-    params.add(application.userId());
+    params.add(application.userIdentifier().value());
     params.add(application.identityVerificationType().name());
     params.add(jsonConverter.write(application.applicationDetails().toMap()));
 

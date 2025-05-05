@@ -3,6 +3,7 @@ package org.idp.server.adapters.springboot;
 import java.util.Map;
 import org.idp.server.adapters.springboot.authorization.OAuthSessionService;
 import org.idp.server.adapters.springboot.event.SecurityEventPublisherService;
+import org.idp.server.adapters.springboot.event.UserLifecycleEventPublisherService;
 import org.idp.server.basic.datasource.DatabaseConfig;
 import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.datasource.DbConfig;
@@ -47,7 +48,8 @@ public class IdPServerConfiguration {
   @Bean
   public IdpServerApplication idpServerApplication(
       OAuthSessionService oAuthSessionService,
-      SecurityEventPublisherService eventPublisherService) {
+      SecurityEventPublisherService eventPublisherService,
+      UserLifecycleEventPublisherService userLifecycleEventPublisherService) {
 
     Map<DatabaseType, DbConfig> writerConfigs =
         Map.of(
@@ -77,6 +79,7 @@ public class IdPServerConfiguration {
         oAuthSessionService,
         passwordEncoder,
         passwordVerification,
-        eventPublisherService);
+        eventPublisherService,
+        userLifecycleEventPublisherService);
   }
 }

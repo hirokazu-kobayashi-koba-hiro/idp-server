@@ -6,7 +6,8 @@ import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.core.admin.OperatorAuthenticationApi;
 import org.idp.server.core.admin.TokenIntrospectionCreator;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.UserIdentifier;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
@@ -21,15 +22,15 @@ public class OperatorAuthenticationEntryService implements OperatorAuthenticatio
 
   TokenProtocols tokenProtocols;
   TenantRepository tenantRepository;
-  UserRepository userRepository;
+  UserQueryRepository userQueryRepository;
 
   public OperatorAuthenticationEntryService(
       TokenProtocols tokenProtocols,
       TenantRepository tenantRepository,
-      UserRepository userRepository) {
+      UserQueryRepository userQueryRepository) {
     this.tokenProtocols = tokenProtocols;
     this.tenantRepository = tenantRepository;
-    this.userRepository = userRepository;
+    this.userQueryRepository = userQueryRepository;
   }
 
   public Pairs<User, OAuthToken> authenticate(
@@ -52,7 +53,8 @@ public class OperatorAuthenticationEntryService implements OperatorAuthenticatio
     if (!introspectionResponse.isActive()) {
       throw new UnauthorizedException("error=invalid_token error_description=token is undefined");
     }
-    User user = userRepository.get(adminTenant, introspectionResponse.subject());
+    UserIdentifier userIdentifier = new UserIdentifier(introspectionResponse.subject());
+    User user = userQueryRepository.get(adminTenant, userIdentifier);
 
     return new Pairs<>(user, introspectionResponse.oAuthToken());
   }

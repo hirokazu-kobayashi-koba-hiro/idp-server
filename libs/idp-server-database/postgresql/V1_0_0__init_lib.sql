@@ -447,15 +447,15 @@ CREATE INDEX idx_security_event_hook_configuration_order ON security_event_hook_
 
 CREATE TABLE security_event_hook_results
 (
-    id CHAR(36) NOT NULL,
-    tenant_id CHAR(36) NOT NULL,
-    security_event_id CHAR(36) NOT NULL,
-    security_event_type  VARCHAR(255) NOT NULL,
-    security_event_hook VARCHAR(255) NOT NULL,
-    security_event_payload JSONB NOT NULL,
-    status VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at TIMESTAMP DEFAULT now() NOT NULL,
+    id                     CHAR(36)                NOT NULL,
+    tenant_id              CHAR(36)                NOT NULL,
+    security_event_id      CHAR(36)                NOT NULL,
+    security_event_type    VARCHAR(255)            NOT NULL,
+    security_event_hook    VARCHAR(255)            NOT NULL,
+    security_event_payload JSONB                   NOT NULL,
+    status                 VARCHAR(255)            NOT NULL,
+    created_at             TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at             TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -595,4 +595,17 @@ CREATE TABLE identity_verification_results
     FOREIGN KEY (application_id) REFERENCES identity_verification_applications (id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE
+);
+
+CREATE TABLE idp_user_lifecycle_event_result
+(
+    id             CHAR(36)     NOT NULL,
+    tenant_id      CHAR(36)     NOT NULL,
+    user_id        CHAR(36)     NOT NULL,
+    lifecycle_type VARCHAR(32)  NOT NULL,
+    executor_name  VARCHAR(255) NOT NULL,
+    status         VARCHAR(16)  NOT NULL,
+    payload        JSONB,
+    created_at    TIMESTAMP DEFAULT now(),
+    PRIMARY KEY (id)
 );

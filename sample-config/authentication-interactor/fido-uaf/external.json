@@ -57,6 +57,15 @@
           },
           "dynamic_body_keys": [],
           "static_body": {}
+        },
+        "delete-key": {
+          "url": "https://run.mocky.io/v3/35e6b282-354e-4bc5-8a36-98c54de61796",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "dynamic_body_keys": [],
+          "static_body": {}
         }
       }
     }

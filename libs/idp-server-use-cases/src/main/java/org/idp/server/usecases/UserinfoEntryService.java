@@ -4,7 +4,8 @@ import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.oauth.Subject;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.UserIdentifier;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
@@ -21,24 +22,25 @@ import org.idp.server.core.security.event.TokenEventPublisher;
 public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
 
   UserinfoProtocols userinfoProtocols;
-  UserRepository userRepository;
+  UserQueryRepository userQueryRepository;
   TenantRepository tenantRepository;
   TokenEventPublisher eventPublisher;
 
   public UserinfoEntryService(
       UserinfoProtocols userinfoProtocols,
-      UserRepository userRepository,
+      UserQueryRepository userQueryRepository,
       TenantRepository tenantRepository,
       TokenEventPublisher eventPublisher) {
     this.userinfoProtocols = userinfoProtocols;
-    this.userRepository = userRepository;
+    this.userQueryRepository = userQueryRepository;
     this.tenantRepository = tenantRepository;
     this.eventPublisher = eventPublisher;
   }
 
   @Override
   public User findUser(Tenant tenant, Subject subject) {
-    return userRepository.get(tenant, subject.value());
+    UserIdentifier userIdentifier = new UserIdentifier(subject.value());
+    return userQueryRepository.get(tenant, userIdentifier);
   }
 
   public UserinfoRequestResponse request(

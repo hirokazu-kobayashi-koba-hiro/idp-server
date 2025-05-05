@@ -3,6 +3,7 @@ package org.idp.server.core.identity.verification.result;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.idp.server.basic.date.SystemDateTime;
+import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
@@ -16,7 +17,7 @@ public class IdentityVerificationResult {
 
   IdentityVerificationResultIdentifier identifier;
   TenantIdentifier tenantId;
-  String userId;
+  UserIdentifier userIdentifier;
   IdentityVerificationApplicationIdentifier applicationId;
   IdentityVerificationType identityVerificationType;
   ExternalWorkflowApplicationIdentifier externalApplicationId;
@@ -34,7 +35,7 @@ public class IdentityVerificationResult {
     IdentityVerificationResultIdentifier identifier =
         new IdentityVerificationResultIdentifier(UUID.randomUUID().toString());
     TenantIdentifier tenantId = application.tenantIdentifier();
-    String userId = application.userId();
+    UserIdentifier userIdentifier = application.userIdentifier();
     IdentityVerificationApplicationIdentifier applicationId = application.identifier();
     IdentityVerificationType identityVerificationType = application.identityVerificationType();
     ExternalWorkflowApplicationIdentifier externalApplicationId =
@@ -48,7 +49,7 @@ public class IdentityVerificationResult {
     return new IdentityVerificationResult(
         identifier,
         tenantId,
-        userId,
+        userIdentifier,
         applicationId,
         identityVerificationType,
         externalApplicationId,
@@ -63,7 +64,7 @@ public class IdentityVerificationResult {
   public IdentityVerificationResult(
       IdentityVerificationResultIdentifier identifier,
       TenantIdentifier tenantId,
-      String userId,
+      UserIdentifier userIdentifier,
       IdentityVerificationApplicationIdentifier applicationId,
       IdentityVerificationType identityVerificationType,
       ExternalWorkflowApplicationIdentifier externalApplicationId,
@@ -73,7 +74,7 @@ public class IdentityVerificationResult {
       IdentityVerificationSource source) {
     this.identifier = identifier;
     this.tenantId = tenantId;
-    this.userId = userId;
+    this.userIdentifier = userIdentifier;
     this.applicationId = applicationId;
     this.identityVerificationType = identityVerificationType;
     this.externalApplicationId = externalApplicationId;
@@ -91,8 +92,8 @@ public class IdentityVerificationResult {
     return tenantId;
   }
 
-  public String userId() {
-    return userId;
+  public UserIdentifier userIdentifier() {
+    return userIdentifier;
   }
 
   public IdentityVerificationApplicationIdentifier applicationId() {

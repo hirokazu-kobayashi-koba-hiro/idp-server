@@ -7,6 +7,7 @@ org.idp.server.core.adapters.datasource.grant_management.AuthorizationGrantedDat
 org.idp.server.core.adapters.datasource.identity.permission.PermissionCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.role.RoleCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.UserDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.command.UserCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.code.AuthorizationCodeGrantDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.request.AuthorizationRequestDataSourceProvider
 org.idp.server.core.adapters.datasource.multi_tenancy.organization.OrganizationDataSourceProvider
@@ -21,3 +22,4 @@ org.idp.server.core.adapters.datasource.identity.verification.config.IdentityVer
 org.idp.server.core.adapters.datasource.identity.verification.application.command.IdentityVerificationApplicationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.verification.application.query.IdentityVerificationApplicationQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.verification.result.command.IdentityVerificationResultCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.event.UserLifecycleEventResultCommandDataSourceProvider

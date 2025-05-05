@@ -9,7 +9,7 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.admin.OnboardingApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.organization.*;
 import org.idp.server.core.multi_tenancy.tenant.*;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
@@ -27,11 +27,11 @@ public class OnboardingEntryService implements OnboardingApi {
   public OnboardingEntryService(
       TenantRepository tenantRepository,
       OrganizationRepository organizationRepository,
-      UserRepository userRepository,
+      UserQueryRepository userQueryRepository,
       ServerConfigurationRepository serverConfigurationRepository) {
     this.tenantRepository = tenantRepository;
     this.organizationRepository = organizationRepository;
-    this.userRegistrator = new UserRegistrator(userRepository);
+    this.userRegistrator = new UserRegistrator(userQueryRepository);
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }

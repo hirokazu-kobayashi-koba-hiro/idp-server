@@ -9,7 +9,7 @@ import org.idp.server.core.authentication.notification.EmailSendingRequest;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
@@ -36,7 +36,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
-      UserRepository userRepository) {
+      UserQueryRepository userQueryRepository) {
 
     EmailAuthenticationConfiguration emailAuthenticationConfiguration =
         configurationQueryRepository.get(tenant, "email", EmailAuthenticationConfiguration.class);
@@ -88,7 +88,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
     transactionCommandRepository.register(
         tenant, authorizationIdentifier, "email", emailVerificationChallenge);
 
-    User user = userRepository.findByEmail(tenant, email, "idp-server");
+    User user = userQueryRepository.findByEmail(tenant, email, "idp-server");
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,

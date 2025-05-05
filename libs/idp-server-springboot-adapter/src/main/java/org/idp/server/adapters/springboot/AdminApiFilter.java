@@ -6,9 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.idp.server.basic.http.BasicAuth;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.admin.AdminCredentialConvertor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
@@ -19,7 +18,7 @@ public class AdminApiFilter extends OncePerRequestFilter {
 
   String apiKey;
   String apiSecret;
-  Logger logger = LoggerFactory.getLogger(AdminApiFilter.class);
+  LoggerWrapper logger = LoggerWrapper.getLogger(AdminApiFilter.class);
 
   public AdminApiFilter(
       @Value("${idp.configurations.apiKey}") String apiKey,

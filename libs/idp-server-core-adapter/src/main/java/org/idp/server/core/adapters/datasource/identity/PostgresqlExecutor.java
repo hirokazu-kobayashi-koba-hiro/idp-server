@@ -6,6 +6,7 @@ import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements UserSqlExecutor {
@@ -120,12 +121,14 @@ public class PostgresqlExecutor implements UserSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectOne(Tenant tenant, String userId) {
+  public Map<String, String> selectOne(Tenant tenant, UserIdentifier userIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate = String.format(selectSql, "WHERE idp_user.id = ?");
+    String sqlTemplate =
+        String.format(selectSql, "WHERE idp_user.tenant_id = ? AND idp_user.id = ?");
     List<Object> params = new ArrayList<>();
-    params.add(userId);
+    params.add(tenant.identifierValue());
+    params.add(userIdentifier.value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

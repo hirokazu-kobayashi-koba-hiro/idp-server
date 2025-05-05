@@ -16,7 +16,7 @@ import org.idp.server.core.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.ciba.user.UserHintResolver;
 import org.idp.server.core.ciba.user.UserHintResolvers;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
@@ -29,7 +29,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
   CibaProtocols cibaProtocols;
   UserHintResolvers userHintResolvers;
   AuthenticationInteractors authenticationInteractors;
-  UserRepository userRepository;
+  UserQueryRepository userQueryRepository;
   TenantRepository tenantRepository;
   AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
@@ -38,7 +38,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
   public CibaFlowEntryService(
       CibaProtocols cibaProtocols,
       AuthenticationInteractors authenticationInteractors,
-      UserRepository userRepository,
+      UserQueryRepository userQueryRepository,
       TenantRepository tenantRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
@@ -46,7 +46,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
     this.cibaProtocols = cibaProtocols;
     this.userHintResolvers = new UserHintResolvers();
     this.authenticationInteractors = authenticationInteractors;
-    this.userRepository = userRepository;
+    this.userQueryRepository = userQueryRepository;
     this.tenantRepository = tenantRepository;
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
@@ -78,7 +78,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
             tenant,
             requestResult.userhint(),
             requestResult.userHintRelatedParams(),
-            userRepository);
+            userQueryRepository);
 
     if (!user.exists()) {
       eventPublisher.publish(
@@ -122,7 +122,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
             authenticationInteractionType,
             new AuthenticationInteractionRequest(Map.of()),
             authenticationTransaction,
-            userRepository);
+            userQueryRepository);
 
     AuthenticationTransaction updatedTransaction =
         authenticationTransaction.update(interactionRequestResult);
@@ -164,7 +164,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
             type,
             request,
             authenticationTransaction,
-            userRepository);
+            userQueryRepository);
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.update(result);
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);

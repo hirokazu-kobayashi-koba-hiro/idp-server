@@ -14,7 +14,7 @@ import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
@@ -26,14 +26,14 @@ public class DefaultCibaProtocol implements CibaProtocol {
   CibaAuthorizeHandler cibaAuthorizeHandler;
   CibaDenyHandler cibaDenyHandler;
   CibaRequestErrorHandler errorHandler;
-  UserRepository userRepository;
+  UserQueryRepository userQueryRepository;
   CibaGrantRepository cibaGrantRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(DefaultCibaProtocol.class);
 
   public DefaultCibaProtocol(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
       CibaGrantRepository cibaGrantRepository,
-      UserRepository userRepository,
+      UserQueryRepository userQueryRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
       OAuthTokenRepository oAuthTokenRepository,
       ServerConfigurationRepository serverConfigurationRepository,
@@ -58,7 +58,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
             cibaGrantRepository, serverConfigurationRepository, clientConfigurationRepository);
     this.errorHandler = new CibaRequestErrorHandler();
     this.cibaGrantRepository = cibaGrantRepository;
-    this.userRepository = userRepository;
+    this.userQueryRepository = userQueryRepository;
   }
 
   @Override

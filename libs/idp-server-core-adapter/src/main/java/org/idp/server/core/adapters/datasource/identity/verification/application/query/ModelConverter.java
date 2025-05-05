@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.application.*;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationDetails;
@@ -24,7 +25,7 @@ public class ModelConverter {
     RequestedClientId requestedClientId = new RequestedClientId(map.get("client_id"));
     IdentityVerificationType verificationType =
         new IdentityVerificationType(map.get("verification_type"));
-    String sub = map.get("user_id");
+    UserIdentifier sub = new UserIdentifier(map.get("user_id"));
     IdentityVerificationApplicationDetails details =
         new IdentityVerificationApplicationDetails(
             JsonNodeWrapper.fromString(map.get("application_details")));

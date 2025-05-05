@@ -5,8 +5,8 @@ import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.UserStatus;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.identity.verification.*;
 import org.idp.server.core.identity.verification.application.*;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -37,7 +37,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   IdentityVerificationResultCommandRepository resultCommandRepository;
   IdentityVerificationHandler identityVerificationHandler;
   TenantRepository tenantRepository;
-  UserRepository userRepository;
+  UserQueryRepository userQueryRepository;
   TokenEventPublisher eventPublisher;
 
   public IdentityVerificationEntryService(
@@ -46,14 +46,14 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       IdentityVerificationApplicationQueryRepository applicationQueryRepository,
       IdentityVerificationResultCommandRepository resultCommandRepository,
       TenantRepository tenantRepository,
-      UserRepository userRepository,
+      UserQueryRepository userQueryRepository,
       TokenEventPublisher eventPublisher) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.applicationCommandRepository = applicationCommandRepository;
     this.applicationQueryRepository = applicationQueryRepository;
     this.tenantRepository = tenantRepository;
     this.resultCommandRepository = resultCommandRepository;
-    this.userRepository = userRepository;
+    this.userQueryRepository = userQueryRepository;
     this.identityVerificationHandler = new IdentityVerificationHandler();
     this.eventPublisher = eventPublisher;
   }
@@ -267,12 +267,12 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     resultCommandRepository.register(tenant, identityVerificationResult);
 
     // TODO dynamic lifecycle management
-    User user = userRepository.get(tenant, application.userId());
+    User user = userQueryRepository.get(tenant, application.userIdentifier());
     User verifiedUser =
         user.transitStatus(UserStatus.IDENTITY_VERIFIED)
             .setVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
 
-    userRepository.update(tenant, verifiedUser);
+    userQueryRepository.update(tenant, verifiedUser);
 
     Map<String, Object> response = new HashMap<>();
     return IdentityVerificationResponse.OK(response);

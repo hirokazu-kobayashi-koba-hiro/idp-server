@@ -8,7 +8,8 @@ import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.UserIdentifier;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
@@ -32,7 +33,7 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
-      UserRepository userRepository) {
+      UserQueryRepository userQueryRepository) {
 
     WebAuthnConfiguration configuration =
         configurationRepository.get(tenant, "webauthn", WebAuthnConfiguration.class);
@@ -42,7 +43,8 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
         webAuthnExecutor.verifyAuthentication(
             tenant, authorizationIdentifier, request, configuration);
 
-    User user = userRepository.get(tenant, webAuthnVerificationResult.getUserId());
+    UserIdentifier userIdentifier = new UserIdentifier(webAuthnVerificationResult.getUserId());
+    User user = userQueryRepository.get(tenant, userIdentifier);
 
     Authentication authentication =
         new Authentication()

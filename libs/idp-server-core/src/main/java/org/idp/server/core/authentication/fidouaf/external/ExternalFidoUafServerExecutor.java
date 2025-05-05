@@ -73,6 +73,12 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
     return execute("authentication", request, configuration);
   }
 
+  @Override
+  public FidoUafExecutionResult deleteKey(
+      Tenant tenant, FidoUafExecutionRequest request, FidoUafConfiguration fidoUafConfiguration) {
+    return execute("delete-key", request, fidoUafConfiguration);
+  }
+
   private FidoUafExecutionResult execute(
       String executionType, FidoUafExecutionRequest request, FidoUafConfiguration configuration) {
 

@@ -49,6 +49,13 @@ class ModelConverter {
       user.setAddress(address);
     }
 
+    if (stringMap.containsKey("multi_factor_authentication")
+        && !stringMap.get("multi_factor_authentication").isEmpty()) {
+      HashMap<String, Object> customProps =
+          jsonConverter.read(stringMap.get("multi_factor_authentication"), HashMap.class);
+      user.setMultiFactorAuthentication(customProps);
+    }
+
     if (stringMap.containsKey("custom_properties")
         && !stringMap.get("custom_properties").isEmpty()) {
       HashMap<String, Object> customProps =

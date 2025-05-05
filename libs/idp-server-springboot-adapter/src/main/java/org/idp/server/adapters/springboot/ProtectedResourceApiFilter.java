@@ -9,14 +9,13 @@ import org.idp.server.adapters.springboot.operation.IdPScope;
 import org.idp.server.adapters.springboot.operation.ResourceOwnerPrincipal;
 import org.idp.server.basic.exception.UnSupportedException;
 import org.idp.server.basic.exception.UnauthorizedException;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.core.admin.OperatorAuthenticationApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.usecases.IdpServerApplication;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -26,7 +25,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class ProtectedResourceApiFilter extends OncePerRequestFilter {
 
   OperatorAuthenticationApi operatorAuthenticationApi;
-  Logger logger = LoggerFactory.getLogger(ProtectedResourceApiFilter.class);
+  LoggerWrapper logger = LoggerWrapper.getLogger(ProtectedResourceApiFilter.class);
 
   public ProtectedResourceApiFilter(IdpServerApplication idpServerApplication) {
     this.operatorAuthenticationApi = idpServerApplication.operatorAuthenticationApi();
@@ -79,6 +78,9 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter {
   }
 
   protected boolean shouldNotFilter(HttpServletRequest request) {
-    return !request.getRequestURI().contains("/identity/");
+    String path = request.getRequestURI();
+    List<String> protectedPrefixes = List.of("/users", "/identity/");
+    boolean match = protectedPrefixes.stream().anyMatch(path::contains);
+    return !match;
   }
 }

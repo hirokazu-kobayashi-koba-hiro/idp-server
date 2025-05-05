@@ -7,8 +7,8 @@ import java.util.Map;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.authentication.PasswordVerificationDelegation;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
@@ -29,12 +29,12 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
-      UserRepository userRepository) {
+      UserQueryRepository userQueryRepository) {
 
     String username = request.optValueAsString("username", "");
     String password = request.optValueAsString("password", "");
 
-    User user = userRepository.findByEmail(tenant, username, "idp-server");
+    User user = userQueryRepository.findByEmail(tenant, username, "idp-server");
     if (!passwordVerificationDelegation.verify(password, user.hashedPassword())) {
 
       Map<String, Object> response = new HashMap<>();

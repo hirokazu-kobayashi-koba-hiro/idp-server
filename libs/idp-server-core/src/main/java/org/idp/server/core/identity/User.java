@@ -60,6 +60,10 @@ public class User implements JsonReadable, Serializable {
     return this;
   }
 
+  public UserIdentifier userIdentifier() {
+    return new UserIdentifier(sub);
+  }
+
   public String sub() {
     return sub;
   }
@@ -568,5 +572,15 @@ public class User implements JsonReadable, Serializable {
 
   public String rawPassword() {
     return rawPassword;
+  }
+
+  public boolean enabledFidoUaf() {
+    if (!hasMultiFactorAuthentication()) {
+      return false;
+    }
+    if (multiFactorAuthentication.containsKey("fido_uaf")) {
+      return (boolean) multiFactorAuthentication.get("fido_uaf");
+    }
+    return false;
   }
 }
