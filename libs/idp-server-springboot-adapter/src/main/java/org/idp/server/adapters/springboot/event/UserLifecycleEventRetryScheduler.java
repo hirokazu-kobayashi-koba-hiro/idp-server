@@ -2,18 +2,18 @@ package org.idp.server.adapters.springboot.event;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.identity.UserLifecycleEvent;
 import org.idp.server.core.identity.UserLifecycleEventApi;
 import org.idp.server.usecases.IdpServerApplication;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserLifecycleEventRetryScheduler {
 
-  Logger log = LoggerFactory.getLogger(UserLifecycleEventRetryScheduler.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(UserLifecycleEventRetryScheduler.class);
 
   Queue<UserLifecycleEvent> retryQueue = new ConcurrentLinkedQueue<>();
 

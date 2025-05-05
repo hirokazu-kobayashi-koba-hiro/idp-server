@@ -2,18 +2,18 @@ package org.idp.server.adapters.springboot.event;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventApi;
 import org.idp.server.usecases.IdpServerApplication;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SecurityEventRetryScheduler {
 
-  Logger log = LoggerFactory.getLogger(SecurityEventRetryScheduler.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventRetryScheduler.class);
 
   Queue<SecurityEvent> retryQueue = new ConcurrentLinkedQueue<>();
 

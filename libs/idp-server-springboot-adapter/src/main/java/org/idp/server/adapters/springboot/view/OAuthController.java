@@ -3,6 +3,7 @@ package org.idp.server.adapters.springboot.view;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
@@ -10,8 +11,6 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.usecases.IdpServerApplication;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.MultiValueMap;
@@ -22,7 +21,7 @@ import org.springframework.web.servlet.view.RedirectView;
 @RequestMapping("{tenant-id}/v1/authorizations")
 public class OAuthController implements ParameterTransformable {
 
-  Logger log = LoggerFactory.getLogger(OAuthController.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(OAuthController.class);
   OAuthFlowApi oAuthFlowApi;
 
   public OAuthController(IdpServerApplication idpServerApplication) {

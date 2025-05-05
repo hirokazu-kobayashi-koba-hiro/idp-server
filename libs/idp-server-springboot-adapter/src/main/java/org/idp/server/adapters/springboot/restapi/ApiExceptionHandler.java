@@ -2,8 +2,7 @@ package org.idp.server.adapters.springboot.restapi;
 
 import java.util.Map;
 import org.idp.server.basic.exception.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -12,7 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class ApiExceptionHandler {
 
-  Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(ApiExceptionHandler.class);
 
   @ExceptionHandler(BadRequestException.class)
   public ResponseEntity<?> handleException(BadRequestException exception) {
