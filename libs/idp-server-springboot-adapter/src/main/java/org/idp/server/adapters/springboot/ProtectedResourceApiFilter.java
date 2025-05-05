@@ -79,6 +79,9 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter {
   }
 
   protected boolean shouldNotFilter(HttpServletRequest request) {
-    return !request.getRequestURI().contains("/identity/");
+    String path = request.getRequestURI();
+    List<String> protectedPrefixes = List.of("/users", "/identity/");
+    boolean match = protectedPrefixes.stream().anyMatch(path::contains);
+    return !match;
   }
 }

@@ -7,7 +7,7 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
@@ -32,7 +32,7 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
-      UserRepository userRepository) {
+      UserQueryRepository userQueryRepository) {
 
     LegacyIdServiceAuthenticationConfiguration configuration =
         configurationRepository.get(
@@ -85,7 +85,8 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
     User user = userInfoMapper.toUser();
 
     User exsitingUser =
-        userRepository.findByProvider(tenant, configuration.providerName(), user.providerUserId());
+        userQueryRepository.findByProvider(
+            tenant, configuration.providerName(), user.providerUserId());
     if (exsitingUser.exists()) {
       user.setSub(exsitingUser.sub());
     } else {

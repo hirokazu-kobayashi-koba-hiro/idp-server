@@ -4,7 +4,8 @@ import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JoseHandler;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.UserIdentifier;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class IdTokenHintResolver implements UserHintResolver {
@@ -16,7 +17,7 @@ public class IdTokenHintResolver implements UserHintResolver {
       Tenant tenant,
       UserHint userHint,
       UserHintRelatedParams userHintRelatedParams,
-      UserRepository userRepository) {
+      UserQueryRepository userQueryRepository) {
 
     try {
       String idToken = userHint.value();
@@ -28,8 +29,9 @@ public class IdTokenHintResolver implements UserHintResolver {
 
       JsonWebTokenClaims claims = joseContext.claims();
       String sub = claims.getSub();
+      UserIdentifier userIdentifier = new UserIdentifier(sub);
 
-      return userRepository.get(tenant, sub);
+      return userQueryRepository.get(tenant, userIdentifier);
     } catch (Exception e) {
 
       return User.notFound();

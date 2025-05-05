@@ -2,6 +2,9 @@ package org.idp.server.adapters.springboot;
 
 import org.idp.server.adapters.springboot.event.SecurityEventRetryScheduler;
 import org.idp.server.adapters.springboot.event.SecurityEventRunnable;
+import org.idp.server.adapters.springboot.event.UserLifecycleEventRetryScheduler;
+import org.idp.server.adapters.springboot.event.UserLifecycleEventRunnable;
+import org.idp.server.core.identity.UserLifecycleEvent;
 import org.idp.server.core.security.SecurityEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,10 +17,14 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 public class AsyncConfig {
 
   Logger logger = LoggerFactory.getLogger(AsyncConfig.class);
-  SecurityEventRetryScheduler retryScheduler;
+  SecurityEventRetryScheduler securityEventRetryScheduler;
+  UserLifecycleEventRetryScheduler userLifecycleEventRetryScheduler;
 
-  public AsyncConfig(SecurityEventRetryScheduler retryScheduler) {
-    this.retryScheduler = retryScheduler;
+  public AsyncConfig(
+      SecurityEventRetryScheduler securityEventRetryScheduler,
+      UserLifecycleEventRetryScheduler userLifecycleEventRetryScheduler) {
+    this.securityEventRetryScheduler = securityEventRetryScheduler;
+    this.userLifecycleEventRetryScheduler = userLifecycleEventRetryScheduler;
   }
 
   @Bean("securityEventTaskExecutor")
@@ -34,7 +41,32 @@ public class AsyncConfig {
 
           if (r instanceof SecurityEventRunnable) {
             SecurityEvent securityEvent = ((SecurityEventRunnable) r).getEvent();
-            retryScheduler.enqueue(securityEvent);
+            securityEventRetryScheduler.enqueue(securityEvent);
+          } else {
+
+            logger.error("unknown EventRunnable" + r.getClass().getName());
+          }
+        });
+
+    executor.initialize();
+    return executor;
+  }
+
+  @Bean("userLifecycleEventTaskExecutor")
+  public TaskExecutor userLifecycleEventTaskExecutor() {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setCorePoolSize(5);
+    executor.setMaxPoolSize(10);
+    executor.setQueueCapacity(50);
+    executor.setThreadNamePrefix("UserLifecycleEvent-Async-");
+
+    executor.setRejectedExecutionHandler(
+        (r, executor1) -> {
+          logger.warn("Rejected Execution Handler");
+
+          if (r instanceof UserLifecycleEventRunnable) {
+            UserLifecycleEvent userLifecycleEvent = ((UserLifecycleEventRunnable) r).getEvent();
+            userLifecycleEventRetryScheduler.enqueue(userLifecycleEvent);
           } else {
 
             logger.error("unknown EventRunnable" + r.getClass().getName());

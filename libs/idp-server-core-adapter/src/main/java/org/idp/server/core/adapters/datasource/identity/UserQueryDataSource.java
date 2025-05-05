@@ -7,17 +7,18 @@ import java.util.stream.Collectors;
 import org.idp.server.basic.datasource.SqlTooManyResultsException;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.exception.UserNotFoundException;
 import org.idp.server.core.identity.exception.UserTooManyFoundResultException;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class UserDataSource implements UserRepository {
+public class UserQueryDataSource implements UserQueryRepository {
 
   JsonConverter jsonConverter;
   UserSqlExecutors executors;
 
-  public UserDataSource() {
+  public UserQueryDataSource() {
     this.executors = new UserSqlExecutors();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
@@ -29,12 +30,12 @@ public class UserDataSource implements UserRepository {
   }
 
   @Override
-  public User get(Tenant tenant, String userId) {
+  public User get(Tenant tenant, UserIdentifier userIdentifier) {
     UserSqlExecutor executor = executors.get(tenant.databaseType());
-    Map<String, String> result = executor.selectOne(tenant, userId);
+    Map<String, String> result = executor.selectOne(tenant, userIdentifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {
-      throw new UserNotFoundException(String.format("not found user (%s)", userId));
+      throw new UserNotFoundException(String.format("not found user (%s)", userIdentifier.value()));
     }
 
     return ModelConverter.convert(result);

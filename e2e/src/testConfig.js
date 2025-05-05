@@ -35,6 +35,7 @@ export const serverConfig = {
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration`,
   credentialEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials`,
   credentialBatchEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials/batch-requests`,
+  usersEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/users`,
   enabledSsr: false,
   ciba: {
     loginHint: "email:ito.ichiro@gmail.com,idp-server",

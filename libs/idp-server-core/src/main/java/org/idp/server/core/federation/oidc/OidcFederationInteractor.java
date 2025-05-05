@@ -6,7 +6,7 @@ import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.*;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
@@ -59,7 +59,7 @@ public class OidcFederationInteractor implements FederationInteractor {
       FederationType federationType,
       SsoProvider ssoProvider,
       FederationCallbackRequest federationCallbackRequest,
-      UserRepository userRepository) {
+      UserQueryRepository userQueryRepository) {
 
     SsoState ssoState = federationCallbackRequest.ssoState();
     FederationCallbackParameters parameters = federationCallbackRequest.parameters();
@@ -86,7 +86,7 @@ public class OidcFederationInteractor implements FederationInteractor {
     OidcUserinfoResponse userinfoResponse = oidcSsoExecutor.requestUserInfo(userinfoRequest);
 
     User existingUser =
-        userRepository.findByProvider(
+        userQueryRepository.findByProvider(
             tenant, oidcSsoConfiguration.issuerName(), userinfoResponse.sub());
 
     OidcUserinfoResponseConvertor convertor =

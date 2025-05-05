@@ -2,17 +2,17 @@ package org.idp.server.core.adapters.datasource.identity;
 
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 
-public class UserDataSourceProvider implements ApplicationComponentProvider<UserRepository> {
+public class UserDataSourceProvider implements ApplicationComponentProvider<UserQueryRepository> {
 
   @Override
-  public Class<UserRepository> type() {
-    return UserRepository.class;
+  public Class<UserQueryRepository> type() {
+    return UserQueryRepository.class;
   }
 
   @Override
-  public UserRepository provide(ApplicationComponentDependencyContainer container) {
-    return new UserDataSource();
+  public UserQueryRepository provide(ApplicationComponentDependencyContainer container) {
+    return new UserQueryDataSource();
   }
 }

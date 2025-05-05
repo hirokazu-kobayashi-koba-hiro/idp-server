@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
@@ -27,7 +28,7 @@ public class IdentityVerificationApplication {
   IdentityVerificationType identityVerificationType;
   TenantIdentifier tenantIdentifier;
   RequestedClientId requestedClientId;
-  String userId;
+  UserIdentifier userIdentifier;
   IdentityVerificationApplicationDetails applicationDetails;
   ExternalWorkflowDelegation externalWorkflowDelegation;
   ExternalWorkflowApplicationIdentifier externalApplicationId;
@@ -45,7 +46,7 @@ public class IdentityVerificationApplication {
       IdentityVerificationType identityVerificationType,
       TenantIdentifier tenantIdentifier,
       RequestedClientId requestedClientId,
-      String userId,
+      UserIdentifier userIdentifier,
       IdentityVerificationApplicationDetails applicationDetails,
       ExternalWorkflowDelegation externalWorkflowDelegation,
       ExternalWorkflowApplicationIdentifier externalApplicationId,
@@ -59,7 +60,7 @@ public class IdentityVerificationApplication {
     this.identityVerificationType = identityVerificationType;
     this.tenantIdentifier = tenantIdentifier;
     this.requestedClientId = requestedClientId;
-    this.userId = userId;
+    this.userIdentifier = userIdentifier;
     this.applicationDetails = applicationDetails;
     this.externalWorkflowDelegation = externalWorkflowDelegation;
     this.externalApplicationId = externalApplicationId;
@@ -85,7 +86,7 @@ public class IdentityVerificationApplication {
     IdentityVerificationApplicationIdentifier identifier =
         new IdentityVerificationApplicationIdentifier(UUID.randomUUID().toString());
     TenantIdentifier tenantIdentifier = tenant.identifier();
-    String sub = user.sub();
+    UserIdentifier userIdentifier = user.userIdentifier();
 
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(process);
@@ -110,7 +111,7 @@ public class IdentityVerificationApplication {
         verificationType,
         tenantIdentifier,
         requestedClientId,
-        sub,
+        userIdentifier,
         details,
         externalWorkflowDelegation,
         externalApplicationId,
@@ -146,7 +147,7 @@ public class IdentityVerificationApplication {
         identityVerificationType,
         tenantIdentifier,
         requestedClientId,
-        userId,
+        userIdentifier,
         mergedApplicationDetails,
         externalWorkflowDelegation,
         externalApplicationId,
@@ -184,7 +185,7 @@ public class IdentityVerificationApplication {
         identityVerificationType,
         tenantIdentifier,
         requestedClientId,
-        userId,
+        userIdentifier,
         applicationDetails,
         externalWorkflowDelegation,
         externalApplicationId,
@@ -219,7 +220,7 @@ public class IdentityVerificationApplication {
         identityVerificationType,
         tenantIdentifier,
         requestedClientId,
-        userId,
+        userIdentifier,
         applicationDetails,
         externalWorkflowDelegation,
         externalApplicationId,
@@ -251,8 +252,8 @@ public class IdentityVerificationApplication {
     return applicationDetails;
   }
 
-  public String userId() {
-    return userId;
+  public UserIdentifier userIdentifier() {
+    return userIdentifier;
   }
 
   public ExternalWorkflowDelegation externalWorkflowDelegation() {
@@ -322,7 +323,7 @@ public class IdentityVerificationApplication {
     map.put("type", identityVerificationType.name());
     map.put("tenant_id", tenantIdentifier.value());
     map.put("client_id", requestedClientId.value());
-    map.put("user_id", userId);
+    map.put("user_id", userIdentifier.value());
     map.put("application_details", applicationDetails.toMap());
     map.put("external_workflow_delegation", externalWorkflowDelegation.name());
     map.put("external_application_id", externalApplicationId.value());

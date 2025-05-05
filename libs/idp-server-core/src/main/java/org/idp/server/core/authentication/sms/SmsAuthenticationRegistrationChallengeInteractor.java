@@ -3,7 +3,7 @@ package org.idp.server.core.authentication.sms;
 import java.util.Map;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
@@ -27,7 +27,7 @@ public class SmsAuthenticationRegistrationChallengeInteractor implements Authent
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
-      UserRepository userRepository) {
+      UserQueryRepository userQueryRepository) {
     SmsAuthenticationConfiguration configuration =
         configurationQueryRepository.get(tenant, "sms", SmsAuthenticationConfiguration.class);
     SmsAuthenticationExecutor executor = executors.get(configuration.type());

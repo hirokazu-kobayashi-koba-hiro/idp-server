@@ -30,7 +30,6 @@ public class SecurityEventListerService {
   public void onEvent(SecurityEvent securityEvent) {
     log.info("onEvent: {}", securityEvent.toMap());
 
-    securityEventApi.handle(securityEvent.tenantIdentifier(), securityEvent);
     taskExecutor.execute(
         new SecurityEventRunnable(
             securityEvent,

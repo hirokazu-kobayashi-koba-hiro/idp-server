@@ -5,7 +5,7 @@ import org.idp.server.basic.dependency.protocol.ProtocolProvider;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
@@ -30,12 +30,12 @@ public class DefaultCibaProtocolProvider implements ProtocolProvider<CibaProtoco
     AuthorizationGrantedRepository authorizationGrantedRepository =
         container.resolve(AuthorizationGrantedRepository.class);
     OAuthTokenRepository oAuthTokenRepository = container.resolve(OAuthTokenRepository.class);
-    UserRepository userRepository = container.resolve(UserRepository.class);
+    UserQueryRepository userQueryRepository = container.resolve(UserQueryRepository.class);
 
     return new DefaultCibaProtocol(
         backchannelAuthenticationRequestRepository,
         cibaGrantRepository,
-        userRepository,
+        userQueryRepository,
         authorizationGrantedRepository,
         oAuthTokenRepository,
         serverConfigurationRepository,

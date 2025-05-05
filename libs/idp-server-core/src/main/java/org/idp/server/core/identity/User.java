@@ -60,6 +60,10 @@ public class User implements JsonReadable, Serializable {
     return this;
   }
 
+  public UserIdentifier userIdentifier() {
+    return new UserIdentifier(sub);
+  }
+
   public String sub() {
     return sub;
   }

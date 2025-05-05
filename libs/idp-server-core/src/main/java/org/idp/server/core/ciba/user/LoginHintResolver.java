@@ -3,7 +3,8 @@ package org.idp.server.core.ciba.user;
 import java.util.List;
 import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.UserIdentifier;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class LoginHintResolver implements UserHintResolver {
@@ -13,18 +14,25 @@ public class LoginHintResolver implements UserHintResolver {
       Tenant tenant,
       UserHint userHint,
       UserHintRelatedParams userHintRelatedParams,
-      UserRepository userRepository) {
+      UserQueryRepository userQueryRepository) {
     String loginHint = userHint.value();
 
     List<LoginHintMatcher> matchers =
         List.of(
-            new PrefixMatcher("sub:", hints -> userRepository.get(tenant, hints.getLeft())),
+            new PrefixMatcher(
+                "sub:",
+                hints -> {
+                  UserIdentifier userIdentifier = new UserIdentifier(hints.getLeft());
+                  return userQueryRepository.get(tenant, userIdentifier);
+                }),
             new PrefixMatcher(
                 "phone:",
-                hints -> userRepository.findByPhone(tenant, hints.getLeft(), hints.getRight())),
+                hints ->
+                    userQueryRepository.findByPhone(tenant, hints.getLeft(), hints.getRight())),
             new PrefixMatcher(
                 "email:",
-                hints -> userRepository.findByEmail(tenant, hints.getLeft(), hints.getRight())));
+                hints ->
+                    userQueryRepository.findByEmail(tenant, hints.getLeft(), hints.getRight())));
 
     return matchers.stream()
         .filter(matcher -> matcher.matches(loginHint))

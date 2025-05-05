@@ -4,7 +4,8 @@ import java.util.List;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.admin.UserManagementApi;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.UserIdentifier;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
@@ -14,43 +15,43 @@ import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
 public class UserManagementEntryService implements UserManagementApi {
 
   TenantRepository tenantRepository;
-  UserRepository userRepository;
+  UserQueryRepository userQueryRepository;
 
   public UserManagementEntryService(
-      TenantRepository tenantRepository, UserRepository userRepository) {
+      TenantRepository tenantRepository, UserQueryRepository userQueryRepository) {
     this.tenantRepository = tenantRepository;
-    this.userRepository = userRepository;
+    this.userQueryRepository = userQueryRepository;
   }
 
   @Override
   public void register(TenantIdentifier tenantIdentifier, User user) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    userRepository.register(tenant, user);
+    userQueryRepository.register(tenant, user);
   }
 
   @Override
-  public User get(TenantIdentifier tenantIdentifier, String userId) {
+  public User get(TenantIdentifier tenantIdentifier, UserIdentifier userIdentifier) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    return userRepository.get(tenant, userId);
+    return userQueryRepository.get(tenant, userIdentifier);
   }
 
   @Override
   public User findBy(TenantIdentifier tenantIdentifier, String email, String providerId) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    return userRepository.findByEmail(tenant, email, providerId);
+    return userQueryRepository.findByEmail(tenant, email, providerId);
   }
 
   @Override
   public void update(TenantIdentifier tenantIdentifier, User user) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    userRepository.update(tenant, user);
+    userQueryRepository.update(tenant, user);
   }
 
   @Override
   public List<User> find(TenantIdentifier tenantIdentifier, int limit, int offset) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    return userRepository.findList(tenant, limit, offset);
+    return userQueryRepository.findList(tenant, limit, offset);
   }
 }

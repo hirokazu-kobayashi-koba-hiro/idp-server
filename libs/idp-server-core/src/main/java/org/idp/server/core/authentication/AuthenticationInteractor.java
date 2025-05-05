@@ -1,6 +1,6 @@
 package org.idp.server.core.authentication;
 
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationInteractor {
@@ -11,5 +11,5 @@ public interface AuthenticationInteractor {
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
-      UserRepository userRepository);
+      UserQueryRepository userQueryRepository);
 }

@@ -15,7 +15,7 @@ import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.federation.io.FederationRequestResponse;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
@@ -33,7 +33,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
   OAuthProtocols oAuthProtocols;
   OAuthSessionDelegate oAuthSessionDelegate;
-  UserRepository userRepository;
+  UserQueryRepository userQueryRepository;
   AuthenticationInteractors authenticationInteractors;
   FederationInteractors federationInteractors;
   UserRegistrator userRegistrator;
@@ -47,7 +47,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       OAuthSessionDelegate oAuthSessiondelegate,
       AuthenticationInteractors authenticationInteractors,
       FederationInteractors federationInteractors,
-      UserRepository userRepository,
+      UserQueryRepository userQueryRepository,
       TenantRepository tenantRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
@@ -56,8 +56,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     this.oAuthSessionDelegate = oAuthSessiondelegate;
     this.authenticationInteractors = authenticationInteractors;
     this.federationInteractors = federationInteractors;
-    this.userRepository = userRepository;
-    this.userRegistrator = new UserRegistrator(userRepository);
+    this.userQueryRepository = userQueryRepository;
+    this.userRegistrator = new UserRegistrator(userQueryRepository);
     this.tenantRepository = tenantRepository;
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
@@ -128,7 +128,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
             type,
             request,
             authenticationTransaction,
-            userRepository);
+            userQueryRepository);
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.update(result);
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
@@ -188,7 +188,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     FederationInteractionResult result =
         federationInteractor.callback(
-            tenant, federationType, ssoProvider, callbackRequest, userRepository);
+            tenant, federationType, ssoProvider, callbackRequest, userQueryRepository);
 
     if (result.isError()) {
       return result;

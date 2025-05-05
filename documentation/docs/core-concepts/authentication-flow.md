@@ -72,7 +72,7 @@ AuthenticationInteractionRequestResult result =
         type,
         request,
         authenticationTransaction,
-        userRepository);
+        userQueryRepository);
 ```
 - Each interactor implements one type of authentication step.
 - After performing the interaction (e.g. send email OTP, verify password), returns a result.

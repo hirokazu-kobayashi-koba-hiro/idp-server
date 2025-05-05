@@ -10,11 +10,11 @@ import org.idp.server.core.admin.io.PermissionRegistrationRequestConvertor;
 import org.idp.server.core.admin.io.RoleRegistrationRequestConvertor;
 import org.idp.server.core.admin.io.TenantRegistrationRequest;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
 import org.idp.server.core.identity.UserStatus;
 import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.identity.permission.Permissions;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.identity.role.RoleCommandRepository;
 import org.idp.server.core.identity.role.Roles;
 import org.idp.server.core.multi_tenancy.organization.Organization;
@@ -28,7 +28,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
 
   OrganizationRepository organizationRepository;
   TenantRepository tenantRepository;
-  UserRepository userRepository;
+  UserQueryRepository userQueryRepository;
   PermissionCommandRepository permissionCommandRepository;
   RoleCommandRepository roleCommandRepository;
   ServerConfigurationRepository serverConfigurationRepository;
@@ -38,14 +38,14 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
   public IdpServerStarterEntryService(
       OrganizationRepository organizationRepository,
       TenantRepository tenantRepository,
-      UserRepository userRepository,
+      UserQueryRepository userQueryRepository,
       PermissionCommandRepository permissionCommandRepository,
       RoleCommandRepository roleCommandRepository,
       ServerConfigurationRepository serverConfigurationRepository,
       PasswordEncodeDelegation passwordEncodeDelegation) {
     this.organizationRepository = organizationRepository;
     this.tenantRepository = tenantRepository;
-    this.userRepository = userRepository;
+    this.userQueryRepository = userQueryRepository;
     this.permissionCommandRepository = permissionCommandRepository;
     this.roleCommandRepository = roleCommandRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
@@ -91,7 +91,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     organizationRepository.register(tenant, organization);
     permissionCommandRepository.bulkRegister(tenant, permissions);
     roleCommandRepository.bulkRegister(tenant, roles);
-    userRepository.register(tenant, updatedUser);
+    userQueryRepository.register(tenant, updatedUser);
 
     return Map.of("organization", organization.toMap(), "tenant", tenant.toMap());
   }

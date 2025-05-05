@@ -3,12 +3,13 @@ package org.idp.server.core.adapters.datasource.identity;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public interface UserSqlExecutor {
   void insert(Tenant tenant, User user);
 
-  Map<String, String> selectOne(Tenant tenant, String userId);
+  Map<String, String> selectOne(Tenant tenant, UserIdentifier userIdentifier);
 
   Map<String, String> selectByEmail(Tenant tenant, String email, String providerId);
 

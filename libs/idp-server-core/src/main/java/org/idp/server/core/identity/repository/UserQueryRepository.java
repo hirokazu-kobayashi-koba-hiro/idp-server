@@ -1,12 +1,14 @@
-package org.idp.server.core.identity;
+package org.idp.server.core.identity.repository;
 
 import java.util.List;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public interface UserRepository {
+public interface UserQueryRepository {
   void register(Tenant tenant, User user);
 
-  User get(Tenant tenant, String userId);
+  User get(Tenant tenant, UserIdentifier userIdentifier);
 
   User findByEmail(Tenant tenant, String hint, String providerId);
 

@@ -1,7 +1,7 @@
 package org.idp.server.core.ciba.user;
 
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRepository;
+import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public interface UserHintResolver {
@@ -10,5 +10,5 @@ public interface UserHintResolver {
       Tenant tenant,
       UserHint userHint,
       UserHintRelatedParams userHintRelatedParams,
-      UserRepository userRepository);
+      UserQueryRepository userQueryRepository);
 }
