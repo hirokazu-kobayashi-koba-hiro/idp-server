@@ -40,6 +40,8 @@ import org.idp.server.core.identity.*;
 import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.identity.authentication.UserPasswordAuthenticator;
+import org.idp.server.core.identity.deletion.UserRelatedDataDeletionExecutorLoader;
+import org.idp.server.core.identity.deletion.UserRelatedDataDeletionExecutors;
 import org.idp.server.core.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.repository.UserQueryRepository;
@@ -198,6 +200,10 @@ public class IdpServerApplication {
     AuthenticationInteractors authenticationInteractors =
         AuthenticationInteractorLoader.load(authenticationDependencyContainer);
 
+    UserRelatedDataDeletionExecutors userRelatedDataDeletionExecutors =
+        UserRelatedDataDeletionExecutorLoader.load(
+            applicationComponentContainer, authenticationDependencyContainer);
+
     TenantDialectProvider tenantDialectProvider = new TenantDialectProvider(tenantRepository);
 
     this.idpServerStarterApi =
@@ -346,7 +352,7 @@ public class IdpServerApplication {
 
     this.userLifecycleEventApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new UserLifecycleEventEntryService(),
+            new UserLifecycleEventEntryService(userRelatedDataDeletionExecutors),
             UserLifecycleEventApi.class,
             OperationType.WRITE,
             tenantDialectProvider);

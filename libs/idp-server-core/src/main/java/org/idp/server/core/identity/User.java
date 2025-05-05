@@ -573,4 +573,14 @@ public class User implements JsonReadable, Serializable {
   public String rawPassword() {
     return rawPassword;
   }
+
+  public boolean enabledFidoUaf() {
+    if (!hasMultiFactorAuthentication()) {
+      return false;
+    }
+    if (multiFactorAuthentication.containsKey("fido_uaf")) {
+      return (boolean) multiFactorAuthentication.get("fido_uaf");
+    }
+    return false;
+  }
 }

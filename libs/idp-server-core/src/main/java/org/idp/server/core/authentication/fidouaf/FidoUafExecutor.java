@@ -32,4 +32,7 @@ public interface FidoUafExecutor {
       AuthorizationIdentifier authorizationIdentifier,
       FidoUafExecutionRequest request,
       FidoUafConfiguration configuration);
+
+  FidoUafExecutionResult deleteKey(
+      Tenant tenant, FidoUafExecutionRequest request, FidoUafConfiguration fidoUafConfiguration);
 }
