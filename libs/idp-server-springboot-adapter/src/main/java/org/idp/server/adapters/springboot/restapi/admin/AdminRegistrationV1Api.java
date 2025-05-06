@@ -5,7 +5,7 @@ import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.control.plane.IdpServerStarterApi;
 import org.idp.server.core.multi_tenancy.tenant.AdminTenantContext;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package org.idp.server.usecases;
+package org.idp.server.usecases.control.plane;
 
 import java.util.List;
 import org.idp.server.basic.datasource.Transaction;

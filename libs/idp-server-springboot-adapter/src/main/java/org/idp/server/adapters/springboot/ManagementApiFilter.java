@@ -9,12 +9,12 @@ import org.idp.server.adapters.springboot.operation.Operator;
 import org.idp.server.basic.exception.UnauthorizedException;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.extension.Pairs;
-import org.idp.server.control.plane.OperatorAuthenticationApi;
+import org.idp.server.core.identity.UserAuthenticationApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.AdminTenantContext;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -23,11 +23,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class ManagementApiFilter extends OncePerRequestFilter {
 
-  OperatorAuthenticationApi operatorAuthenticationApi;
+  UserAuthenticationApi userAuthenticationApi;
   LoggerWrapper logger = LoggerWrapper.getLogger(ManagementApiFilter.class);
 
   public ManagementApiFilter(IdpServerApplication idpServerApplication) {
-    this.operatorAuthenticationApi = idpServerApplication.operatorAuthenticationApi();
+    this.userAuthenticationApi = idpServerApplication.operatorAuthenticationApi();
   }
 
   @Override
@@ -39,7 +39,7 @@ public class ManagementApiFilter extends OncePerRequestFilter {
     try {
       TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
       Pairs<User, OAuthToken> result =
-          operatorAuthenticationApi.authenticate(adminTenantIdentifier, authorization);
+          userAuthenticationApi.authenticate(adminTenantIdentifier, authorization);
 
       Operator operator =
           new Operator(

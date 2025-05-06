@@ -10,7 +10,7 @@ import org.idp.server.core.authentication.AuthenticationInteractionType;
 import org.idp.server.core.ciba.CibaFlowApi;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

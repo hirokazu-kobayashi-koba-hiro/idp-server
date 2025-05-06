@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot.event;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventApi;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.IdpServerApplication;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.task.TaskExecutor;

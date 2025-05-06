@@ -1,4 +1,4 @@
-package org.idp.server.usecases;
+package org.idp.server.usecases.control.plane;
 
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.oauth.RequestedClientId;

@@ -1,4 +1,4 @@
-package org.idp.server.usecases;
+package org.idp.server.usecases.application;
 
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;

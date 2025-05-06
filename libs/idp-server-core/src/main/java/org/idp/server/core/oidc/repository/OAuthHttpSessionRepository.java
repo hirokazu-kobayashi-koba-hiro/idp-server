@@ -1,4 +1,4 @@
-package org.idp.server.control.plane;
+package org.idp.server.core.oidc.repository;
 
 import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.OAuthSessionKey;

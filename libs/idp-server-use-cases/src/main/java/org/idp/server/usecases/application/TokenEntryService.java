@@ -1,4 +1,4 @@
-package org.idp.server.usecases;
+package org.idp.server.usecases.application;
 
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;

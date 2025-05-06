@@ -1,4 +1,4 @@
-package org.idp.server.usecases;
+package org.idp.server;
 
 import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.HmacHasher;
@@ -76,6 +76,8 @@ import org.idp.server.core.security.repository.SecurityEventCommandRepository;
 import org.idp.server.core.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.core.token.*;
+import org.idp.server.usecases.application.*;
+import org.idp.server.usecases.control.plane.*;
 
 /** IdpServerApplication */
 public class IdpServerApplication {
@@ -96,7 +98,7 @@ public class IdpServerApplication {
   ServerManagementApi serverManagementApi;
   ClientManagementApi clientManagementApi;
   UserManagementApi userManagementApi;
-  OperatorAuthenticationApi operatorAuthenticationApi;
+  UserAuthenticationApi userAuthenticationApi;
 
   public IdpServerApplication(
       String adminTenantId,
@@ -392,13 +394,13 @@ public class IdpServerApplication {
             OperationType.WRITE,
             tenantDialectProvider);
 
-    this.operatorAuthenticationApi =
+    this.userAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new OperatorAuthenticationEntryService(
+            new UserAuthenticationEntryService(
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 tenantRepository,
                 userQueryRepository),
-            OperatorAuthenticationApi.class,
+            UserAuthenticationApi.class,
             OperationType.WRITE,
             tenantDialectProvider);
   }
@@ -463,8 +465,8 @@ public class IdpServerApplication {
     return userManagementApi;
   }
 
-  public OperatorAuthenticationApi operatorAuthenticationApi() {
-    return operatorAuthenticationApi;
+  public UserAuthenticationApi operatorAuthenticationApi() {
+    return userAuthenticationApi;
   }
 
   public IdpServerStarterApi idpServerStarterApi() {
