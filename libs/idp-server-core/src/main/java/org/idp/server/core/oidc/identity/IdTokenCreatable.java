@@ -10,9 +10,9 @@ import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ConfigurationInvalidException;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.exception.ConfigurationInvalidException;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 
 public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashable {
@@ -23,7 +23,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       AuthorizationGrant authorizationGrant,
       IdTokenCustomClaims customClaims,
       RequestedClaimsPayload requestedClaimsPayload,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
 
@@ -34,14 +34,17 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
               customClaims,
               authorizationGrant,
               requestedClaimsPayload,
-              serverConfiguration.tokenIssuer(),
-              serverConfiguration.idTokenDuration(),
-              serverConfiguration.isIdTokenStrictMode());
+              authorizationServerConfiguration.tokenIssuer(),
+              authorizationServerConfiguration.idTokenDuration(),
+              authorizationServerConfiguration.isIdTokenStrictMode());
 
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
       JsonWebSignature jsonWebSignature =
           jsonWebSignatureFactory.createWithAsymmetricKey(
-              claims, Map.of(), serverConfiguration.jwks(), serverConfiguration.tokenSignedKeyId());
+              claims,
+              Map.of(),
+              authorizationServerConfiguration.jwks(),
+              authorizationServerConfiguration.tokenSignedKeyId());
 
       if (clientConfiguration.hasEncryptedIdTokenMeta()) {
 

@@ -4,8 +4,8 @@ import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 import org.idp.server.basic.type.oauth.ClientSecretBasic;
 import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 public interface BackchannelRequestContext {
 
@@ -17,7 +17,7 @@ public interface BackchannelRequestContext {
 
   boolean hasClientSecretBasic();
 
-  ServerConfiguration serverConfiguration();
+  AuthorizationServerConfiguration serverConfiguration();
 
   ClientConfiguration clientConfiguration();
 

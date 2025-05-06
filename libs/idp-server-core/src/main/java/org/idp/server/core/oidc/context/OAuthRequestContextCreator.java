@@ -8,8 +8,8 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.OAuthRequestPattern;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.factory.AuthorizationRequestFactory;
 import org.idp.server.core.oidc.factory.FapiAdvanceRequestObjectPatternFactory;
 import org.idp.server.core.oidc.factory.RequestObjectPatternFactory;
@@ -21,16 +21,17 @@ public interface OAuthRequestContextCreator {
   OAuthRequestContext create(
       Tenant tenant,
       OAuthRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration);
 
   default AuthorizationProfile analyze(
-      Set<String> filteredScopes, ServerConfiguration serverConfiguration) {
+      Set<String> filteredScopes,
+      AuthorizationServerConfiguration authorizationServerConfiguration) {
 
-    if (serverConfiguration.hasFapiAdvanceScope(filteredScopes)) {
+    if (authorizationServerConfiguration.hasFapiAdvanceScope(filteredScopes)) {
       return AuthorizationProfile.FAPI_ADVANCE;
     }
-    if (serverConfiguration.hasFapiBaselineScope(filteredScopes)) {
+    if (authorizationServerConfiguration.hasFapiBaselineScope(filteredScopes)) {
       return AuthorizationProfile.FAPI_BASELINE;
     }
     if (filteredScopes.contains("openid")) {
@@ -56,7 +57,7 @@ public interface OAuthRequestContextCreator {
 
   default AuthorizationRequestFactory selectAuthorizationRequestFactory(
       AuthorizationProfile profile,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     if (profile.isFapiAdvance()) {
       return new FapiAdvanceRequestObjectPatternFactory();

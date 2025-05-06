@@ -2,7 +2,7 @@ package org.idp.server.core.oidc.configuration.handler;
 
 import java.util.Map;
 import org.idp.server.basic.log.LoggerWrapper;
-import org.idp.server.core.oidc.configuration.ClientConfigurationNotFoundException;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementResponse;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementStatus;
 

@@ -37,8 +37,7 @@ public class ModelConverter {
             expiredAt);
 
     AuthenticationInteractionResults interactionResults = toAuthenticationInteractionResults(map);
-    return new AuthenticationTransaction(
-        identifier, request, interactionResults);
+    return new AuthenticationTransaction(identifier, request, interactionResults);
   }
 
   static User toUser(Map<String, String> map) {
@@ -63,17 +62,18 @@ public class ModelConverter {
       HashMap<String, AuthenticationInteractionResult> results = new HashMap<>();
       JsonNodeWrapper interactions = JsonNodeWrapper.fromString(map.get("interactions"));
 
-        for (Iterator<String> it = interactions.fieldNames(); it.hasNext(); ) {
-            String interaction = it.next();
-            JsonNodeWrapper node = interactions.getValueAsJsonNode(interaction);
-            int callCount = node.getValueAsInt("call_count");
-            int successCount = node.getValueAsInt("success_count");
-            int failureCount = node.getValueAsInt("failure_count");
-          AuthenticationInteractionResult authenticationInteractionResult = new AuthenticationInteractionResult(callCount, successCount, failureCount);
-          results.put(interaction, authenticationInteractionResult);
-        }
+      for (Iterator<String> it = interactions.fieldNames(); it.hasNext(); ) {
+        String interaction = it.next();
+        JsonNodeWrapper node = interactions.getValueAsJsonNode(interaction);
+        int callCount = node.getValueAsInt("call_count");
+        int successCount = node.getValueAsInt("success_count");
+        int failureCount = node.getValueAsInt("failure_count");
+        AuthenticationInteractionResult authenticationInteractionResult =
+            new AuthenticationInteractionResult(callCount, successCount, failureCount);
+        results.put(interaction, authenticationInteractionResult);
+      }
 
-        return new AuthenticationInteractionResults(results);
+      return new AuthenticationInteractionResults(results);
     }
 
     return new AuthenticationInteractionResults();

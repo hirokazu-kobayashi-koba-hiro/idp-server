@@ -7,8 +7,8 @@ import org.idp.server.basic.type.oauth.ClientSecretBasic;
 import org.idp.server.core.ciba.*;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.NormalRequestFactory;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 /** NormalPatternContextService */
 public class NormalPatternContextCreator implements CibaRequestContextCreator {
@@ -20,14 +20,14 @@ public class NormalPatternContextCreator implements CibaRequestContextCreator {
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
       CibaRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
 
     JoseContext joseContext = new JoseContext();
     CibaRequestPattern pattern = CibaRequestPattern.NORMAL;
     Set<String> filteredScopes =
         filterScopes(pattern, parameters, joseContext, clientConfiguration);
-    CibaProfile profile = analyze(filteredScopes, serverConfiguration);
+    CibaProfile profile = analyze(filteredScopes, authorizationServerConfiguration);
 
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
         normalRequestFactory.create(
@@ -36,7 +36,7 @@ public class NormalPatternContextCreator implements CibaRequestContextCreator {
             parameters,
             joseContext,
             filteredScopes,
-            serverConfiguration,
+            authorizationServerConfiguration,
             clientConfiguration);
 
     return new CibaRequestContext(
@@ -47,7 +47,7 @@ public class NormalPatternContextCreator implements CibaRequestContextCreator {
         new CibaRequestObjectParameters(),
         joseContext,
         backchannelAuthenticationRequest,
-        serverConfiguration,
+        authorizationServerConfiguration,
         clientConfiguration);
   }
 }

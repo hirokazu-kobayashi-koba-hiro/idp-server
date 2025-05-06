@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.oauth.ExpiresIn;
@@ -115,18 +114,15 @@ public class AuthenticationTransaction {
       resultMap.put(interactionRequestResult.interactionTypeName(), result);
     }
 
-    AuthenticationInteractionResults updatedResults = new AuthenticationInteractionResults(resultMap);
-    return new AuthenticationTransaction(
-        identifier, updatedRequest, updatedResults);
+    AuthenticationInteractionResults updatedResults =
+        new AuthenticationInteractionResults(resultMap);
+    return new AuthenticationTransaction(identifier, updatedRequest, updatedResults);
   }
 
   public AuthenticationTransaction() {}
 
   AuthenticationTransaction(AuthorizationIdentifier identifier, AuthenticationRequest request) {
-    this(
-        identifier,
-        request,
-        new AuthenticationInteractionResults());
+    this(identifier, request, new AuthenticationInteractionResults());
   }
 
   public AuthenticationTransaction(
@@ -160,7 +156,6 @@ public class AuthenticationTransaction {
   public Map<String, AuthenticationInteractionResult> interactionResultsAsMap() {
     return interactionResults.toMap();
   }
-
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();

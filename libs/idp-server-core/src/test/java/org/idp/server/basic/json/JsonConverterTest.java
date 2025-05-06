@@ -1,8 +1,8 @@
 package org.idp.server.basic.json;
 
 import java.util.List;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -94,9 +94,10 @@ public class JsonConverterTest {
                   }
                 """;
     JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-    ServerConfiguration serverConfiguration = jsonConverter.read(json, ServerConfiguration.class);
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        jsonConverter.read(json, AuthorizationServerConfiguration.class);
 
     Assertions.assertEquals(
-        "https://server.example.com", serverConfiguration.tokenIssuer().value());
+        "https://server.example.com", authorizationServerConfiguration.tokenIssuer().value());
   }
 }

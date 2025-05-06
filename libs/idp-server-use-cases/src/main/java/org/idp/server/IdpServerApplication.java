@@ -58,8 +58,8 @@ import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.OAuthProtocol;
 import org.idp.server.core.oidc.OAuthProtocols;
 import org.idp.server.core.oidc.OAuthSessionDelegate;
-import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
 import org.idp.server.core.oidc.configuration.handler.ClientConfigurationHandler;
 import org.idp.server.core.oidc.discovery.*;
 import org.idp.server.core.oidc.userinfo.UserinfoApi;
@@ -123,8 +123,8 @@ public class IdpServerApplication {
         ApplicationComponentContainerLoader.load(dependencyContainer);
     applicationComponentContainer.register(OAuthSessionDelegate.class, oAuthSessionDelegate);
 
-    ServerConfigurationRepository serverConfigurationRepository =
-        applicationComponentContainer.resolve(ServerConfigurationRepository.class);
+    AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository =
+        applicationComponentContainer.resolve(AuthorizationServerConfigurationRepository.class);
     ClientConfigurationRepository clientConfigurationRepository =
         applicationComponentContainer.resolve(ClientConfigurationRepository.class);
     SecurityEventCommandRepository securityEventCommandRepository =
@@ -217,7 +217,7 @@ public class IdpServerApplication {
                 userQueryRepository,
                 permissionCommandRepository,
                 roleCommandRepository,
-                serverConfigurationRepository,
+                authorizationServerConfigurationRepository,
                 passwordEncodeDelegation),
             IdpServerStarterApi.class,
             OperationType.WRITE,
@@ -367,14 +367,15 @@ public class IdpServerApplication {
                 tenantRepository,
                 organizationRepository,
                 userQueryRepository,
-                serverConfigurationRepository),
+                authorizationServerConfigurationRepository),
             OnboardingApi.class,
             OperationType.WRITE,
             tenantDialectProvider);
 
     this.serverManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new ServerManagementEntryService(tenantRepository, serverConfigurationRepository),
+            new ServerManagementEntryService(
+                tenantRepository, authorizationServerConfigurationRepository),
             ServerManagementApi.class,
             OperationType.WRITE,
             tenantDialectProvider);

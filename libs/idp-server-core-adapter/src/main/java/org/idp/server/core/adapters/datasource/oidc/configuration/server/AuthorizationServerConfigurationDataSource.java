@@ -4,28 +4,30 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfigurationNotFoundException;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
 
-public class ServerConfigurationDataSource implements ServerConfigurationRepository {
+public class AuthorizationServerConfigurationDataSource
+    implements AuthorizationServerConfigurationRepository {
 
   ServerConfigSqlExecutors executors;
   JsonConverter jsonConverter;
 
-  public ServerConfigurationDataSource() {
+  public AuthorizationServerConfigurationDataSource() {
     this.executors = new ServerConfigSqlExecutors();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
-  public void register(Tenant tenant, ServerConfiguration serverConfiguration) {
+  public void register(
+      Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration) {
     ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.insert(serverConfiguration);
+    executor.insert(authorizationServerConfiguration);
   }
 
   @Override
-  public ServerConfiguration get(Tenant tenant) {
+  public AuthorizationServerConfiguration get(Tenant tenant) {
     ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> stringMap = executor.selectOne(tenant.identifier());

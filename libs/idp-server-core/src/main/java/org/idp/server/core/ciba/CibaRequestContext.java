@@ -16,8 +16,8 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 public class CibaRequestContext implements BackchannelRequestContext {
 
@@ -29,7 +29,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
   CibaRequestAssembleParameters assembleParameters;
   JoseContext joseContext;
   BackchannelAuthenticationRequest backchannelAuthenticationRequest;
-  ServerConfiguration serverConfiguration;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
 
   public CibaRequestContext() {}
@@ -42,7 +42,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
       CibaRequestObjectParameters requestObjectParameters,
       JoseContext joseContext,
       BackchannelAuthenticationRequest backchannelAuthenticationRequest,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.pattern = pattern;
     this.clientSecretBasic = clientSecretBasic;
@@ -53,7 +53,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
         new CibaRequestAssembleParameters(parameters, requestObjectParameters);
     this.joseContext = joseContext;
     this.backchannelAuthenticationRequest = backchannelAuthenticationRequest;
-    this.serverConfiguration = serverConfiguration;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
   }
 
@@ -62,7 +62,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
   }
 
   public TokenIssuer tokenIssuer() {
-    return serverConfiguration.tokenIssuer();
+    return authorizationServerConfiguration.tokenIssuer();
   }
 
   @Override
@@ -102,8 +102,8 @@ public class CibaRequestContext implements BackchannelRequestContext {
   }
 
   @Override
-  public ServerConfiguration serverConfiguration() {
-    return serverConfiguration;
+  public AuthorizationServerConfiguration serverConfiguration() {
+    return authorizationServerConfiguration;
   }
 
   @Override
@@ -121,14 +121,14 @@ public class CibaRequestContext implements BackchannelRequestContext {
   }
 
   public Interval interval() {
-    return new Interval(serverConfiguration.backchannelAuthPollingInterval());
+    return new Interval(authorizationServerConfiguration.backchannelAuthPollingInterval());
   }
 
   public ExpiresIn expiresIn() {
     if (backchannelAuthenticationRequest.hasRequestedExpiry()) {
       return new ExpiresIn(backchannelAuthenticationRequest.requestedExpiry().toIntValue());
     }
-    return new ExpiresIn(serverConfiguration.backchannelAuthRequestExpiresIn());
+    return new ExpiresIn(authorizationServerConfiguration.backchannelAuthRequestExpiresIn());
   }
 
   public boolean hasUserCode() {
@@ -168,7 +168,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
   }
 
   public boolean isSupportedGrantTypeWithServer(GrantType grantType) {
-    return serverConfiguration.isSupportedGrantType(grantType);
+    return authorizationServerConfiguration.isSupportedGrantType(grantType);
   }
 
   public boolean isSupportedGrantTypeWithClient(GrantType grantType) {
@@ -176,11 +176,11 @@ public class CibaRequestContext implements BackchannelRequestContext {
   }
 
   public TenantIdentifier tenantIdentifier() {
-    return serverConfiguration.tenantIdentifier();
+    return authorizationServerConfiguration.tenantIdentifier();
   }
 
   public List<String> availableAuthenticationMethods() {
-    return serverConfiguration.availableAuthenticationMethods();
+    return authorizationServerConfiguration.availableAuthenticationMethods();
   }
 
   public boolean isFapiProfile() {
@@ -197,7 +197,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   public UserHintRelatedParams userHintRelatedParams() {
     HashMap<String, Object> map = new HashMap<>();
-    map.put("serverJwks", serverConfiguration.jwks());
+    map.put("serverJwks", authorizationServerConfiguration.jwks());
 
     if (clientConfiguration.hasJwks()) {
       map.put("clientJwks", clientConfiguration.jwks());

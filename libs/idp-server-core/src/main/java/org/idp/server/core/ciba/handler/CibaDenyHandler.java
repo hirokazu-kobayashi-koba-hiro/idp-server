@@ -8,21 +8,21 @@ import org.idp.server.core.ciba.handler.io.CibaDenyStatus;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
 
 public class CibaDenyHandler {
 
   CibaGrantRepository cibaGrantRepository;
-  ServerConfigurationRepository serverConfigurationRepository;
+  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
   public CibaDenyHandler(
       CibaGrantRepository cibaGrantRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
+      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
     this.cibaGrantRepository = cibaGrantRepository;
-    this.serverConfigurationRepository = serverConfigurationRepository;
+    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
@@ -30,7 +30,7 @@ public class CibaDenyHandler {
     BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier =
         request.backchannelAuthenticationRequestIdentifier();
     Tenant tenant = request.tenant();
-    serverConfigurationRepository.get(tenant);
+    authorizationServerConfigurationRepository.get(tenant);
 
     CibaGrant cibaGrant =
         cibaGrantRepository.get(tenant, backchannelAuthenticationRequestIdentifier);

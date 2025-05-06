@@ -1,7 +1,7 @@
 package org.idp.server.core.verifiable_credential.verifier;
 
 import org.idp.server.basic.type.mtls.ClientCert;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.verifiable_credential.exception.VerifiableCredentialBadRequestException;
 import org.idp.server.core.verifiable_credential.exception.VerifiableCredentialRequestInvalidException;
@@ -14,32 +14,33 @@ public class VerifiableCredentialVerifier implements VerifiableCredentialRequest
   OAuthToken oAuthToken;
   ClientCert clientCert;
   CredentialRequestParameters parameters;
-  ServerConfiguration serverConfiguration;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
 
   public VerifiableCredentialVerifier(
       OAuthToken oAuthToken,
       ClientCert clientCert,
       CredentialRequestParameters parameters,
-      ServerConfiguration serverConfiguration) {
+      AuthorizationServerConfiguration authorizationServerConfiguration) {
     this.oAuthToken = oAuthToken;
     this.clientCert = clientCert;
     this.parameters = parameters;
-    this.serverConfiguration = serverConfiguration;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
   }
 
   public void verify() {
     throwExceptionIfUnSupportedVerifiableCredential();
     VerifiableCredentialOAuthTokenVerifier oAuthTokenVerifier =
-        new VerifiableCredentialOAuthTokenVerifier(oAuthToken, clientCert, serverConfiguration);
+        new VerifiableCredentialOAuthTokenVerifier(
+            oAuthToken, clientCert, authorizationServerConfiguration);
     oAuthTokenVerifier.verify();
     VerifiableCredentialRequest request = transformAndVerify();
     VerifiableCredentialRequestVerifier requestVerifier =
-        new VerifiableCredentialRequestVerifier(request, serverConfiguration);
+        new VerifiableCredentialRequestVerifier(request, authorizationServerConfiguration);
     requestVerifier.verify();
   }
 
   void throwExceptionIfUnSupportedVerifiableCredential() {
-    if (!serverConfiguration.hasCredentialIssuerMetadata()) {
+    if (!authorizationServerConfiguration.hasCredentialIssuerMetadata()) {
       throw new VerifiableCredentialBadRequestException(
           "invalid_request", "unsupported verifiable credential");
     }

@@ -10,8 +10,8 @@ import org.idp.server.core.ciba.*;
 import org.idp.server.core.ciba.exception.BackchannelAuthenticationBadRequestException;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.RequestObjectPatternFactory;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 /** RequestObjectPatternContextService */
 public class RequestObjectPatternContextCreator implements CibaRequestContextCreator {
@@ -24,7 +24,7 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
       CibaRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
 
@@ -32,14 +32,14 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
           joseHandler.handle(
               parameters.request().value(),
               clientConfiguration.jwks(),
-              serverConfiguration.jwks(),
+              authorizationServerConfiguration.jwks(),
               clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
 
       CibaRequestPattern pattern = CibaRequestPattern.REQUEST_OBJECT;
       Set<String> filteredScopes =
           filterScopes(pattern, parameters, joseContext, clientConfiguration);
-      CibaProfile profile = analyze(filteredScopes, serverConfiguration);
+      CibaProfile profile = analyze(filteredScopes, authorizationServerConfiguration);
 
       BackchannelAuthenticationRequest backchannelAuthenticationRequest =
           requestObjectPatternFactory.create(
@@ -48,7 +48,7 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
               parameters,
               joseContext,
               filteredScopes,
-              serverConfiguration,
+              authorizationServerConfiguration,
               clientConfiguration);
 
       return new CibaRequestContext(
@@ -59,7 +59,7 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
           new CibaRequestObjectParameters(joseContext.claims().payload()),
           joseContext,
           backchannelAuthenticationRequest,
-          serverConfiguration,
+          authorizationServerConfiguration,
           clientConfiguration);
     } catch (JoseInvalidException exception) {
       throw new BackchannelAuthenticationBadRequestException(

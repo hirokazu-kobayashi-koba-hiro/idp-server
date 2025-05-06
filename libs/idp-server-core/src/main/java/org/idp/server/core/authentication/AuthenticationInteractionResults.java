@@ -1,8 +1,6 @@
 package org.idp.server.core.authentication;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import org.idp.server.basic.exception.NotFoundException;
 import org.idp.server.basic.json.JsonReadable;
 
 public class AuthenticationInteractionResults implements JsonReadable {
@@ -16,7 +14,6 @@ public class AuthenticationInteractionResults implements JsonReadable {
   public AuthenticationInteractionResults(Map<String, AuthenticationInteractionResult> values) {
     this.values = values;
   }
-
 
   public boolean containsSuccessful(String type) {
     if (!values.containsKey(type)) {

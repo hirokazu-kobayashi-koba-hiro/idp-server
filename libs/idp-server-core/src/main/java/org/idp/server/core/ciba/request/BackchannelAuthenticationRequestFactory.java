@@ -6,8 +6,8 @@ import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.type.oauth.ClientSecretBasic;
 import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.ciba.CibaRequestParameters;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 public interface BackchannelAuthenticationRequestFactory {
   BackchannelAuthenticationRequest create(
@@ -16,7 +16,7 @@ public interface BackchannelAuthenticationRequestFactory {
       CibaRequestParameters parameters,
       JoseContext joseContext,
       Set<String> filteredScopes,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration);
 
   default BackchannelAuthenticationRequestIdentifier createIdentifier() {

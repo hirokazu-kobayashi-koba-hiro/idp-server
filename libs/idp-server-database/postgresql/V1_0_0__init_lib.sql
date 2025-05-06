@@ -35,7 +35,7 @@ CREATE TABLE organization_tenants
 );
 
 
-CREATE TABLE server_configuration
+CREATE TABLE authorization_server_configuration
 (
     tenant_id    CHAR(36)                NOT NULL,
     token_issuer TEXT                    NOT NULL,

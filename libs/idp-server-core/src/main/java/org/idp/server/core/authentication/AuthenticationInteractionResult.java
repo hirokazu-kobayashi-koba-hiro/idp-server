@@ -1,6 +1,5 @@
 package org.idp.server.core.authentication;
 
-
 public class AuthenticationInteractionResult {
 
   int callCount;
@@ -33,9 +32,6 @@ public class AuthenticationInteractionResult {
     int increaseFailureCount = interactionRequestResult.isSuccess() ? 0 : 1;
 
     return new AuthenticationInteractionResult(
-        callCount + 1,
-        successCount + increaseSuccessCount,
-        failureCount + increaseFailureCount);
+        callCount + 1, successCount + increaseSuccessCount, failureCount + increaseFailureCount);
   }
-
 }

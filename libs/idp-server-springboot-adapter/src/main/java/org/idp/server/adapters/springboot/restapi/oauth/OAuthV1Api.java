@@ -4,6 +4,7 @@ import static org.idp.server.core.oidc.io.OAuthRequestStatus.OK_ACCOUNT_CREATION
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.basic.type.security.RequestAttributes;
@@ -21,7 +22,6 @@ import org.idp.server.core.oidc.io.OAuthDenyResponse;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.core.oidc.io.OAuthViewDataResponse;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
-import org.idp.server.IdpServerApplication;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

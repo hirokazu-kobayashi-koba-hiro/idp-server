@@ -5,8 +5,8 @@ import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.MaxAge;
 import org.idp.server.core.oidc.AuthorizationProfile;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
@@ -20,12 +20,12 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
       OAuthRequestParameters parameters,
       JoseContext joseContext,
       Set<String> filteredScopes,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());
-    builder.add(serverConfiguration.tenantIdentifier());
+    builder.add(authorizationServerConfiguration.tenantIdentifier());
     builder.add(profile);
     builder.add(new Scopes(filteredScopes));
     builder.add(parameters.responseType());
@@ -40,7 +40,7 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
     if (parameters.hasMaxAge()) {
       builder.add(parameters.maxAge());
     } else {
-      builder.add(new MaxAge(serverConfiguration.defaultMaxAge()));
+      builder.add(new MaxAge(authorizationServerConfiguration.defaultMaxAge()));
     }
     builder.add(parameters.uiLocales());
     builder.add(parameters.idTokenHint());

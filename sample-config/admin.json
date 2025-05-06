@@ -9,7 +9,7 @@
     "name": "admin-tenant",
     "database": "postgresql"
   },
-  "server_configuration": {
+  "authorization_server_configuration": {
     "tenant_id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
     "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
     "authorization_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations",
@@ -190,18 +190,20 @@
         ]
       }
     },
-    "token_signed_key_id": "id_token_nextauth",
-    "id_token_signed_key_id": "id_token_nextauth",
-    "access_token_duration": 3600,
-    "id_token_duration": 3600,
-    "id_token_strict_mode": true,
-    "default_max_age": 86400,
-    "fapi_baseline_scopes": [
-      "read"
-    ],
-    "fapi_advance_scopes": [
-      "write"
-    ],
+    "extension": {
+      "token_signed_key_id": "id_token_nextauth",
+      "id_token_signed_key_id": "id_token_nextauth",
+      "access_token_duration": 3600,
+      "id_token_duration": 3600,
+      "id_token_strict_mode": true,
+      "default_max_age": 86400,
+      "fapi_baseline_scopes": [
+        "read"
+      ],
+      "fapi_advance_scopes": [
+        "write"
+      ]
+    },
     "credential_issuer_metadata": {
       "credential_issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
       "authorization_server": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",

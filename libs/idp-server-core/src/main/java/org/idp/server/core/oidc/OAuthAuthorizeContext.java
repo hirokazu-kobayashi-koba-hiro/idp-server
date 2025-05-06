@@ -13,8 +13,8 @@ import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.Client;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.GrantIdTokenClaims;
 import org.idp.server.core.oidc.grant.GrantUserinfoClaims;
@@ -32,7 +32,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
   User user;
   Authentication authentication;
   CustomProperties customProperties;
-  ServerConfiguration serverConfiguration;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
 
   public OAuthAuthorizeContext() {}
@@ -42,14 +42,14 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
       User user,
       Authentication authentication,
       CustomProperties customProperties,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.authorizationRequest = authorizationRequest;
     this.user = user;
     this.authentication = authentication;
     this.customProperties = customProperties;
     this.clientConfiguration = clientConfiguration;
-    this.serverConfiguration = serverConfiguration;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
   }
 
   public AuthorizationRequest authorizationRequest() {
@@ -80,7 +80,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
 
     Scopes scopes = authorizationRequest.scopes();
     ResponseType responseType = authorizationRequest.responseType();
-    List<String> supportedClaims = serverConfiguration.claimsSupported();
+    List<String> supportedClaims = authorizationServerConfiguration.claimsSupported();
     RequestedClaimsPayload requestedClaimsPayload = authorizationRequest.requestedClaimsPayload();
     boolean idTokenStrictMode = serverConfiguration().isIdTokenStrictMode();
 
@@ -131,8 +131,8 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     return customProperties;
   }
 
-  public ServerConfiguration serverConfiguration() {
-    return serverConfiguration;
+  public AuthorizationServerConfiguration serverConfiguration() {
+    return authorizationServerConfiguration;
   }
 
   public ClientConfiguration clientConfiguration() {
@@ -140,7 +140,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
   }
 
   public TokenIssuer tokenIssuer() {
-    return serverConfiguration.tokenIssuer();
+    return authorizationServerConfiguration.tokenIssuer();
   }
 
   public ResponseType responseType() {
@@ -157,7 +157,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
 
   public ExpiredAt authorizationCodeGrantExpiresDateTime() {
     LocalDateTime localDateTime = SystemDateTime.now();
-    int duration = serverConfiguration.authorizationCodeValidDuration();
+    int duration = authorizationServerConfiguration.authorizationCodeValidDuration();
     return new ExpiredAt(localDateTime.plusMinutes(duration));
   }
 

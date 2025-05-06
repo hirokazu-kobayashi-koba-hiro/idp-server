@@ -15,8 +15,8 @@ import org.idp.server.basic.type.oidc.ResponseMode;
 import org.idp.server.core.grant_management.AuthorizationGranted;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oidc.grant.GrantIdTokenClaims;
 import org.idp.server.core.oidc.grant.GrantUserinfoClaims;
@@ -38,7 +38,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   OAuthRequestParameters parameters;
   JoseContext joseContext;
   AuthorizationRequest authorizationRequest;
-  ServerConfiguration serverConfiguration;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
   OAuthSession session;
   AuthorizationGranted authorizationGranted;
@@ -51,14 +51,14 @@ public class OAuthRequestContext implements ResponseModeDecidable {
       OAuthRequestParameters parameters,
       JoseContext joseContext,
       AuthorizationRequest authorizationRequest,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.tenant = tenant;
     this.pattern = pattern;
     this.parameters = parameters;
     this.joseContext = joseContext;
     this.authorizationRequest = authorizationRequest;
-    this.serverConfiguration = serverConfiguration;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
   }
 
@@ -154,15 +154,15 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     return GrantIdTokenClaims.create(
         authorizationRequest.scopes(),
         authorizationRequest.responseType(),
-        serverConfiguration.claimsSupported(),
+        authorizationServerConfiguration.claimsSupported(),
         authorizationRequest.requestedIdTokenClaims(),
-        serverConfiguration.isIdTokenStrictMode());
+        authorizationServerConfiguration.isIdTokenStrictMode());
   }
 
   private GrantUserinfoClaims createGrantUserinfoClaims() {
     return GrantUserinfoClaims.create(
         authorizationRequest.scopes(),
-        serverConfiguration.claimsSupported(),
+        authorizationServerConfiguration.claimsSupported(),
         authorizationRequest.requestedUserinfoClaims());
   }
 
@@ -225,8 +225,8 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     return authorizationRequest.identifier();
   }
 
-  public ServerConfiguration serverConfiguration() {
-    return serverConfiguration;
+  public AuthorizationServerConfiguration serverConfiguration() {
+    return authorizationServerConfiguration;
   }
 
   public ClientConfiguration clientConfiguration() {
@@ -267,7 +267,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
 
   public boolean isSupportedResponseTypeWithServer() {
     ResponseType responseType = responseType();
-    return serverConfiguration.isSupportedResponseType(responseType);
+    return authorizationServerConfiguration.isSupportedResponseType(responseType);
   }
 
   public boolean isSupportedResponseTypeWithClient() {
@@ -292,7 +292,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   }
 
   public TokenIssuer tokenIssuer() {
-    return serverConfiguration.tokenIssuer();
+    return authorizationServerConfiguration.tokenIssuer();
   }
 
   public State state() {

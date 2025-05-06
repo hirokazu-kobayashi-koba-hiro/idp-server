@@ -5,10 +5,10 @@ import java.util.List;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.vc.Credential;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
 import org.idp.server.core.oidc.token.AccessToken;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
@@ -26,7 +26,7 @@ import org.idp.server.core.verifiable_credential.verifier.VerifiableCredentialVe
 public class CredentialHandler {
 
   OAuthTokenRepository oAuthTokenRepository;
-  ServerConfigurationRepository serverConfigurationRepository;
+  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
   VerifiableCredentialTransactionRepository verifiableCredentialTransactionRepository;
   VerifiableCredentialCreators creators;
@@ -34,12 +34,12 @@ public class CredentialHandler {
   public CredentialHandler(
       OAuthTokenRepository oAuthTokenRepository,
       VerifiableCredentialTransactionRepository verifiableCredentialTransactionRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
+      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository,
       VerifiableCredentialCreators creators) {
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.verifiableCredentialTransactionRepository = verifiableCredentialTransactionRepository;
-    this.serverConfigurationRepository = serverConfigurationRepository;
+    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
     this.creators = creators;
   }
@@ -48,13 +48,14 @@ public class CredentialHandler {
       CredentialRequest request, VerifiableCredentialDelegate delegate) {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
     Tenant tenant = request.tenant();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        authorizationServerConfigurationRepository.get(tenant);
     OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     CredentialRequestParameters parameters = request.toParameters();
 
     VerifiableCredentialVerifier verifier =
         new VerifiableCredentialVerifier(
-            oAuthToken, request.toClientCert(), parameters, serverConfiguration);
+            oAuthToken, request.toClientCert(), parameters, authorizationServerConfiguration);
     verifier.verify();
 
     AccessToken accessToken = oAuthToken.accessToken();
@@ -70,7 +71,9 @@ public class CredentialHandler {
 
     VerifiableCredentialTransactionCreator verifiableCredentialTransactionCreator =
         new VerifiableCredentialTransactionCreator(
-            credentialDelegateResponse, oAuthToken, serverConfiguration.credentialIssuerMetadata());
+            credentialDelegateResponse,
+            oAuthToken,
+            authorizationServerConfiguration.credentialIssuerMetadata());
     VerifiableCredentialTransaction verifiableCredentialTransaction =
         verifiableCredentialTransactionCreator.create();
     verifiableCredentialTransactionRepository.register(tenant, verifiableCredentialTransaction);
@@ -79,7 +82,8 @@ public class CredentialHandler {
       VerifiableCredentialCreator verifiableCredentialCreator = creators.get(parameters.format());
       Credential credential = credentialDelegateResponse.credential();
       VerifiableCredential verifiableCredential =
-          verifiableCredentialCreator.create(credential, serverConfiguration, clientConfiguration);
+          verifiableCredentialCreator.create(
+              credential, authorizationServerConfiguration, clientConfiguration);
       builder.add(verifiableCredential);
     }
     if (credentialDelegateResponse.isPending()) {
@@ -94,13 +98,14 @@ public class CredentialHandler {
       BatchCredentialRequest request, VerifiableCredentialDelegate delegate) {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
     Tenant tenant = request.tenant();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        authorizationServerConfigurationRepository.get(tenant);
     OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     BatchCredentialRequestParameters parameters = request.toParameters();
 
     BatchVerifiableCredentialVerifier verifier =
         new BatchVerifiableCredentialVerifier(
-            oAuthToken, request.toClientCert(), parameters, serverConfiguration);
+            oAuthToken, request.toClientCert(), parameters, authorizationServerConfiguration);
     verifier.verify();
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
@@ -122,7 +127,7 @@ public class CredentialHandler {
           new VerifiableCredentialTransactionCreator(
               credentialDelegateResponse,
               oAuthToken,
-              serverConfiguration.credentialIssuerMetadata());
+              authorizationServerConfiguration.credentialIssuerMetadata());
       VerifiableCredentialTransaction verifiableCredentialTransaction =
           verifiableCredentialTransactionCreator.create();
       verifiableCredentialTransactionRepository.register(tenant, verifiableCredentialTransaction);
@@ -132,7 +137,9 @@ public class CredentialHandler {
             creators.get(batchCredentialRequest.format());
         VerifiableCredential verifiableCredential =
             verifiableCredentialCreator.create(
-                credentialDelegateResponse.credential(), serverConfiguration, clientConfiguration);
+                credentialDelegateResponse.credential(),
+                authorizationServerConfiguration,
+                clientConfiguration);
         responsesList.add(
             new BatchVerifiableCredentialResponse(
                 batchCredentialRequest.format(), verifiableCredential));
@@ -155,7 +162,8 @@ public class CredentialHandler {
       DeferredCredentialRequest request, VerifiableCredentialDelegate delegate) {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
     Tenant tenant = request.tenant();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        authorizationServerConfigurationRepository.get(tenant);
     OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     DeferredCredentialRequestParameters parameters = request.toParameters();
 
@@ -167,7 +175,7 @@ public class CredentialHandler {
             request.toClientCert(),
             request.toParameters(),
             verifiableCredentialTransaction,
-            serverConfiguration);
+            authorizationServerConfiguration);
     verifier.verify();
 
     AccessToken accessToken = oAuthToken.accessToken();
@@ -186,7 +194,9 @@ public class CredentialHandler {
     VerifiableCredentialCreator verifiableCredentialCreator = creators.get(parameters.format());
     VerifiableCredential verifiableCredential =
         verifiableCredentialCreator.create(
-            credentialDelegateResponse.credential(), serverConfiguration, clientConfiguration);
+            credentialDelegateResponse.credential(),
+            authorizationServerConfiguration,
+            clientConfiguration);
 
     VerifiableCredentialResponse verifiableCredentialResponse =
         new VerifiableCredentialResponseBuilder()

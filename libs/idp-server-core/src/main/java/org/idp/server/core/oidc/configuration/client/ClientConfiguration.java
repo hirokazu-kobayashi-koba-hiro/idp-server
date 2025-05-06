@@ -1,4 +1,4 @@
-package org.idp.server.core.oidc.configuration;
+package org.idp.server.core.oidc.configuration.client;
 
 import java.util.*;
 import java.util.stream.Collectors;

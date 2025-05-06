@@ -8,9 +8,9 @@ import org.idp.server.basic.type.verifiablecredential.VerifiableCredentialType;
 import org.idp.server.basic.type.verifiablepresentation.VpToken;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ConfigurationInvalidException;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.exception.ConfigurationInvalidException;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.vp.response.VerifiablePresentationBuilder;
 
@@ -19,7 +19,7 @@ public interface VpTokenCreatable extends Base64Codeable {
   default VpToken createVpToken(
       User user,
       AuthorizationGrant authorizationGrant,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
       ClientCredentials clientCredentials) {
     try {

@@ -4,24 +4,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.OAuthSession;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 
 public class OAuthViewDataCreator {
 
   AuthorizationRequest authorizationRequest;
-  ServerConfiguration serverConfiguration;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
   OAuthSession session;
 
   public OAuthViewDataCreator(
       AuthorizationRequest authorizationRequest,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
       OAuthSession session) {
     this.authorizationRequest = authorizationRequest;
-    this.serverConfiguration = serverConfiguration;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
     this.session = session;
   }

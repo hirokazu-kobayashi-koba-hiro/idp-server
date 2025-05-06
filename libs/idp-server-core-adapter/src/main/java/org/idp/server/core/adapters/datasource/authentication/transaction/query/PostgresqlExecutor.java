@@ -14,8 +14,10 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
   public Map<String, String> selectOne(Tenant tenant, AuthorizationIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate = selectSql + " " +
-        """
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
             WHERE authorization_id = ?
             AND tenant_id = ?
             """;
@@ -31,8 +33,10 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
       Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate = selectSql + " " +
-        """
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
                 WHERE authentication_device_id = ?
                 AND tenant_id = ?
                 ORDER BY created_at DESC
@@ -45,7 +49,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
-  String selectSql = """
+  String selectSql =
+      """
           SELECT
           authorization_id,
           tenant_id,

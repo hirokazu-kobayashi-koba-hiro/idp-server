@@ -6,9 +6,10 @@ import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.ResponseType;
 import org.idp.server.basic.type.oauth.TokenIssuer;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.oidc.configuration.vc.VerifiableCredentialConfiguration;
 
 /** ServerConfiguration */
-public class ServerConfiguration implements JsonReadable {
+public class AuthorizationServerConfiguration implements JsonReadable {
   String tenantId;
   String issuer;
   String authorizationEndpoint;
@@ -61,24 +62,10 @@ public class ServerConfiguration implements JsonReadable {
   List<String> authorizationDetailsTypesSupported = new ArrayList<>();
   VerifiableCredentialConfiguration credentialIssuerMetadata =
       new VerifiableCredentialConfiguration();
-  // extension
-  List<String> fapiBaselineScopes = new ArrayList<>();
-  List<String> fapiAdvanceScopes = new ArrayList<>();
-  int authorizationCodeValidDuration = 600;
-  String tokenSignedKeyId = "";
-  String idTokenSignedKeyId = "";
-  long accessTokenDuration = 1800;
-  long refreshTokenDuration = 3600;
-  long idTokenDuration = 3600;
-  boolean idTokenStrictMode = false;
-  long defaultMaxAge = 86400;
-  long authorizationResponseDuration = 60;
-  int backchannelAuthRequestExpiresIn = 300;
-  int backchannelAuthPollingInterval = 5;
-  int oauthAuthorizationRequestExpiresIn = 1800;
-  List<String> availableAuthenticationMethods = new ArrayList<>(List.of("password"));
 
-  public ServerConfiguration() {}
+  AuthorizationServerExtensionConfiguration extension;
+
+  public AuthorizationServerConfiguration() {}
 
   public String tenantId() {
     return tenantId;
@@ -287,39 +274,39 @@ public class ServerConfiguration implements JsonReadable {
   }
 
   public boolean hasFapiBaselineScope(Set<String> scopes) {
-    return scopes.stream().anyMatch(scope -> fapiBaselineScopes.contains(scope));
+    return scopes.stream().anyMatch(scope -> extension.fapiBaselineScopes().contains(scope));
   }
 
   public boolean hasFapiAdvanceScope(Set<String> scopes) {
-    return scopes.stream().anyMatch(scope -> fapiAdvanceScopes.contains(scope));
+    return scopes.stream().anyMatch(scope -> extension.fapiAdvanceScopes().contains(scope));
   }
 
   public int authorizationCodeValidDuration() {
-    return authorizationCodeValidDuration;
+    return extension.authorizationCodeValidDuration();
   }
 
   public String tokenSignedKeyId() {
-    return tokenSignedKeyId;
+    return extension.tokenSignedKeyId();
   }
 
   public String idTokenSignedKeyId() {
-    return idTokenSignedKeyId;
+    return extension.idTokenSignedKeyId();
   }
 
   public long accessTokenDuration() {
-    return accessTokenDuration;
+    return extension.accessTokenDuration();
   }
 
   public long refreshTokenDuration() {
-    return refreshTokenDuration;
+    return extension.refreshTokenDuration();
   }
 
   public long idTokenDuration() {
-    return idTokenDuration;
+    return extension.idTokenDuration();
   }
 
   public boolean isIdTokenStrictMode() {
-    return idTokenStrictMode;
+    return extension.idTokenStrictMode();
   }
 
   public boolean hasTokenEndpoint() {
@@ -496,7 +483,7 @@ public class ServerConfiguration implements JsonReadable {
   }
 
   public long defaultMaxAge() {
-    return defaultMaxAge;
+    return extension.defaultMaxAge();
   }
 
   public List<String> authorizationDetailsTypesSupported() {
@@ -508,7 +495,7 @@ public class ServerConfiguration implements JsonReadable {
   }
 
   public long authorizationResponseDuration() {
-    return authorizationResponseDuration;
+    return extension.authorizationResponseDuration();
   }
 
   public boolean hasKey(String algorithm) {
@@ -524,18 +511,18 @@ public class ServerConfiguration implements JsonReadable {
   }
 
   public int backchannelAuthRequestExpiresIn() {
-    return backchannelAuthRequestExpiresIn;
+    return extension.backchannelAuthRequestExpiresIn();
   }
 
   public int backchannelAuthPollingInterval() {
-    return backchannelAuthPollingInterval;
+    return extension.backchannelAuthPollingInterval();
   }
 
   public int oauthAuthorizationRequestExpiresIn() {
-    return oauthAuthorizationRequestExpiresIn;
+    return extension.oauthAuthorizationRequestExpiresIn();
   }
 
   public List<String> availableAuthenticationMethods() {
-    return availableAuthenticationMethods;
+    return extension.availableAuthenticationMethods();
   }
 }

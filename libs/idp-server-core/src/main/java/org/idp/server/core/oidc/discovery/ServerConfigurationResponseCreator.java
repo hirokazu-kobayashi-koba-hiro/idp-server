@@ -2,128 +2,139 @@ package org.idp.server.core.oidc.discovery;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 
 public class ServerConfigurationResponseCreator {
-  ServerConfiguration serverConfiguration;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
 
-  public ServerConfigurationResponseCreator(ServerConfiguration serverConfiguration) {
-    this.serverConfiguration = serverConfiguration;
+  public ServerConfigurationResponseCreator(
+      AuthorizationServerConfiguration authorizationServerConfiguration) {
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
   }
 
   public Map<String, Object> create() {
     Map<String, Object> map = new HashMap<>();
-    map.put("issuer", serverConfiguration.issuer());
-    map.put("authorization_endpoint", serverConfiguration.authorizationEndpoint());
-    if (serverConfiguration.hasTokenEndpoint()) {
-      map.put("token_endpoint", serverConfiguration.tokenEndpoint());
+    map.put("issuer", authorizationServerConfiguration.issuer());
+    map.put("authorization_endpoint", authorizationServerConfiguration.authorizationEndpoint());
+    if (authorizationServerConfiguration.hasTokenEndpoint()) {
+      map.put("token_endpoint", authorizationServerConfiguration.tokenEndpoint());
     }
-    if (serverConfiguration.hasUserinfoEndpoint()) {
-      map.put("userinfo_endpoint", serverConfiguration.userinfoEndpoint());
+    if (authorizationServerConfiguration.hasUserinfoEndpoint()) {
+      map.put("userinfo_endpoint", authorizationServerConfiguration.userinfoEndpoint());
     }
-    if (serverConfiguration.hasRegistrationEndpoint()) {
-      map.put("registration_endpoint", serverConfiguration.registrationEndpoint());
+    if (authorizationServerConfiguration.hasRegistrationEndpoint()) {
+      map.put("registration_endpoint", authorizationServerConfiguration.registrationEndpoint());
     }
-    map.put("jwks_uri", serverConfiguration.jwksUri());
-    if (serverConfiguration.hasScopesSupported()) {
-      map.put("scopes_supported", serverConfiguration.scopesSupported());
+    map.put("jwks_uri", authorizationServerConfiguration.jwksUri());
+    if (authorizationServerConfiguration.hasScopesSupported()) {
+      map.put("scopes_supported", authorizationServerConfiguration.scopesSupported());
     }
-    map.put("response_types_supported", serverConfiguration.responseTypesSupported());
-    if (serverConfiguration.hasResponseModesSupported()) {
-      map.put("response_modes_supported", serverConfiguration.responseModesSupported());
+    map.put("response_types_supported", authorizationServerConfiguration.responseTypesSupported());
+    if (authorizationServerConfiguration.hasResponseModesSupported()) {
+      map.put(
+          "response_modes_supported", authorizationServerConfiguration.responseModesSupported());
     }
-    if (serverConfiguration.hasGrantTypesSupported()) {
-      map.put("grant_types_supported", serverConfiguration.grantTypesSupported());
+    if (authorizationServerConfiguration.hasGrantTypesSupported()) {
+      map.put("grant_types_supported", authorizationServerConfiguration.grantTypesSupported());
     }
-    if (serverConfiguration.hasAcrValuesSupported()) {
-      map.put("acr_values_supported", serverConfiguration.acrValuesSupported());
+    if (authorizationServerConfiguration.hasAcrValuesSupported()) {
+      map.put("acr_values_supported", authorizationServerConfiguration.acrValuesSupported());
     }
-    map.put("subject_types_supported", serverConfiguration.subjectTypesSupported());
+    map.put("subject_types_supported", authorizationServerConfiguration.subjectTypesSupported());
     map.put(
         "id_token_signing_alg_values_supported",
-        serverConfiguration.idTokenSigningAlgValuesSupported());
-    if (serverConfiguration.hasIdTokenEncryptionEncValuesSupported()) {
+        authorizationServerConfiguration.idTokenSigningAlgValuesSupported());
+    if (authorizationServerConfiguration.hasIdTokenEncryptionEncValuesSupported()) {
       map.put(
           "id_token_encryption_alg_values_supported",
-          serverConfiguration.idTokenEncryptionEncValuesSupported());
+          authorizationServerConfiguration.idTokenEncryptionEncValuesSupported());
     }
-    if (serverConfiguration.hasIdTokenEncryptionEncValuesSupported()) {
+    if (authorizationServerConfiguration.hasIdTokenEncryptionEncValuesSupported()) {
       map.put(
           "id_token_encryption_enc_values_supported",
-          serverConfiguration.idTokenEncryptionEncValuesSupported());
+          authorizationServerConfiguration.idTokenEncryptionEncValuesSupported());
     }
-    if (serverConfiguration.hasUserinfoSigningAlgValuesSupported()) {
+    if (authorizationServerConfiguration.hasUserinfoSigningAlgValuesSupported()) {
       map.put(
           "userinfo_signing_alg_values_supported",
-          serverConfiguration.userinfoSigningAlgValuesSupported());
+          authorizationServerConfiguration.userinfoSigningAlgValuesSupported());
     }
-    if (serverConfiguration.hasUserinfoEncryptionAlgValuesSupported()) {
+    if (authorizationServerConfiguration.hasUserinfoEncryptionAlgValuesSupported()) {
       map.put(
           "userinfo_encryption_alg_values_supported",
-          serverConfiguration.userinfoEncryptionAlgValuesSupported());
+          authorizationServerConfiguration.userinfoEncryptionAlgValuesSupported());
     }
-    if (serverConfiguration.hasUserinfoEncryptionEncValuesSupported()) {
+    if (authorizationServerConfiguration.hasUserinfoEncryptionEncValuesSupported()) {
       map.put(
           "userinfo_encryption_enc_values_supported",
-          serverConfiguration.userinfoEncryptionEncValuesSupported());
+          authorizationServerConfiguration.userinfoEncryptionEncValuesSupported());
     }
-    if (serverConfiguration.hasRequestObjectSigningAlgValuesSupported()) {
+    if (authorizationServerConfiguration.hasRequestObjectSigningAlgValuesSupported()) {
       map.put(
           "request_object_signing_alg_values_supported",
-          serverConfiguration.requestObjectSigningAlgValuesSupported());
+          authorizationServerConfiguration.requestObjectSigningAlgValuesSupported());
     }
-    if (serverConfiguration.hasRequestObjectEncryptionAlgValuesSupported()) {
+    if (authorizationServerConfiguration.hasRequestObjectEncryptionAlgValuesSupported()) {
       map.put(
           "request_object_encryption_alg_values_supported",
-          serverConfiguration.requestObjectEncryptionAlgValuesSupported());
+          authorizationServerConfiguration.requestObjectEncryptionAlgValuesSupported());
     }
-    if (serverConfiguration.hasRequestObjectEncryptionEncValuesSupported()) {
-      map.put("", serverConfiguration.requestObjectEncryptionEncValuesSupported());
+    if (authorizationServerConfiguration.hasRequestObjectEncryptionEncValuesSupported()) {
+      map.put("", authorizationServerConfiguration.requestObjectEncryptionEncValuesSupported());
     }
-    if (serverConfiguration.hasTokenEndpointAuthMethodsSupported()) {
+    if (authorizationServerConfiguration.hasTokenEndpointAuthMethodsSupported()) {
       map.put(
           "token_endpoint_auth_methods_supported",
-          serverConfiguration.tokenEndpointAuthMethodsSupported());
+          authorizationServerConfiguration.tokenEndpointAuthMethodsSupported());
     }
-    if (serverConfiguration.hasTokenEndpointAuthSigningAlgValuesSupported()) {
+    if (authorizationServerConfiguration.hasTokenEndpointAuthSigningAlgValuesSupported()) {
       map.put(
           "token_endpoint_auth_signing_alg_values_supported",
-          serverConfiguration.tokenEndpointAuthMethodsSupported());
+          authorizationServerConfiguration.tokenEndpointAuthMethodsSupported());
     }
-    if (serverConfiguration.hasDisplayValuesSupported()) {
-      map.put("display_values_supported", serverConfiguration.displayValuesSupported());
+    if (authorizationServerConfiguration.hasDisplayValuesSupported()) {
+      map.put(
+          "display_values_supported", authorizationServerConfiguration.displayValuesSupported());
     }
-    if (serverConfiguration.hasClaimTypesSupported()) {
-      map.put("claim_types_supported", serverConfiguration.claimTypesSupported());
+    if (authorizationServerConfiguration.hasClaimTypesSupported()) {
+      map.put("claim_types_supported", authorizationServerConfiguration.claimTypesSupported());
     }
-    if (serverConfiguration.hasClaimsSupported()) {
-      map.put("claims_supported", serverConfiguration.claimsSupported());
+    if (authorizationServerConfiguration.hasClaimsSupported()) {
+      map.put("claims_supported", authorizationServerConfiguration.claimsSupported());
     }
-    map.put("claims_parameter_supported", serverConfiguration.claimsParameterSupported());
-    map.put("request_parameter_supported", serverConfiguration.requestParameterSupported());
-    map.put("request_uri_parameter_supported", serverConfiguration.requestUriParameterSupported());
     map.put(
-        "require_request_uri_registration", serverConfiguration.requireRequestUriRegistration());
+        "claims_parameter_supported", authorizationServerConfiguration.claimsParameterSupported());
+    map.put(
+        "request_parameter_supported",
+        authorizationServerConfiguration.requestParameterSupported());
+    map.put(
+        "request_uri_parameter_supported",
+        authorizationServerConfiguration.requestUriParameterSupported());
+    map.put(
+        "require_request_uri_registration",
+        authorizationServerConfiguration.requireRequestUriRegistration());
 
-    if (serverConfiguration.hasBackchannelTokenDeliveryModesSupported()) {
+    if (authorizationServerConfiguration.hasBackchannelTokenDeliveryModesSupported()) {
       map.put(
           "backchannel_token_delivery_modes_supported",
-          serverConfiguration.backchannelTokenDeliveryModesSupported());
+          authorizationServerConfiguration.backchannelTokenDeliveryModesSupported());
     }
-    if (serverConfiguration.hasBackchannelAuthenticationEndpoint()) {
+    if (authorizationServerConfiguration.hasBackchannelAuthenticationEndpoint()) {
       map.put(
           "backchannel_authentication_endpoint",
-          serverConfiguration.hasBackchannelAuthenticationEndpoint());
+          authorizationServerConfiguration.hasBackchannelAuthenticationEndpoint());
     }
-    if (serverConfiguration.hasBackchannelAuthenticationRequestSigningAlgValuesSupported()) {
+    if (authorizationServerConfiguration
+        .hasBackchannelAuthenticationRequestSigningAlgValuesSupported()) {
       map.put(
           "backchannel_authentication_request_signing_alg_values_supported",
-          serverConfiguration.backchannelAuthenticationRequestSigningAlgValuesSupported());
+          authorizationServerConfiguration
+              .backchannelAuthenticationRequestSigningAlgValuesSupported());
     }
-    if (serverConfiguration.hasBackchannelUserCodeParameterSupported()) {
+    if (authorizationServerConfiguration.hasBackchannelUserCodeParameterSupported()) {
       map.put(
           "backchannel_user_code_parameter_supported",
-          serverConfiguration.backchannelUserCodeParameterSupported());
+          authorizationServerConfiguration.backchannelUserCodeParameterSupported());
     }
     return map;
   }

@@ -11,20 +11,21 @@ import org.idp.server.basic.jose.JsonWebSignatureFactory;
 import org.idp.server.basic.type.extension.CreatedAt;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.extension.JarmPayload;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ConfigurationInvalidException;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.exception.ConfigurationInvalidException;
 
 public interface JarmCreatable {
 
   default JarmPayload createResponse(
       AuthorizationResponse authorizationResponse,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
-      long authorizationResponseDuration = serverConfiguration.authorizationResponseDuration();
+      long authorizationResponseDuration =
+          authorizationServerConfiguration.authorizationResponseDuration();
       ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(authorizationResponseDuration));
 
       Map<String, Object> payload = new HashMap<>();
@@ -53,7 +54,7 @@ public interface JarmCreatable {
           jsonWebSignatureFactory.createWithAsymmetricKeyByAlgorithm(
               payload,
               Map.of(),
-              serverConfiguration.jwks(),
+              authorizationServerConfiguration.jwks(),
               clientConfiguration.authorizationSignedResponseAlg());
 
       return new JarmPayload(jsonWebSignature.serialize());
@@ -64,12 +65,13 @@ public interface JarmCreatable {
 
   default JarmPayload createResponse(
       AuthorizationErrorResponse errorResponse,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
-      long authorizationResponseDuration = serverConfiguration.authorizationResponseDuration();
+      long authorizationResponseDuration =
+          authorizationServerConfiguration.authorizationResponseDuration();
       ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(authorizationResponseDuration));
 
       Map<String, Object> payload = new HashMap<>();
@@ -84,7 +86,7 @@ public interface JarmCreatable {
           jsonWebSignatureFactory.createWithAsymmetricKeyByAlgorithm(
               payload,
               Map.of(),
-              serverConfiguration.jwks(),
+              authorizationServerConfiguration.jwks(),
               clientConfiguration.authorizationSignedResponseAlg());
 
       return new JarmPayload(jsonWebSignature.serialize());

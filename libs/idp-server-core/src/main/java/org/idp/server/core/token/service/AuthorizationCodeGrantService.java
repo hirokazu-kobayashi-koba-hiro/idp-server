@@ -10,8 +10,8 @@ import org.idp.server.core.grant_management.AuthorizationGrantedIdentifier;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.identity.IdTokenCreatable;
@@ -119,14 +119,19 @@ public class AuthorizationCodeGrantService
             tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);
     verifier.verify();
 
-    ServerConfiguration serverConfiguration = tokenRequestContext.serverConfiguration();
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        tokenRequestContext.serverConfiguration();
     ClientConfiguration clientConfiguration = tokenRequestContext.clientConfiguration();
 
     AuthorizationGrant authorizationGrant = authorizationCodeGrant.authorizationGrant();
     AccessToken accessToken =
         createAccessToken(
-            authorizationGrant, serverConfiguration, clientConfiguration, clientCredentials);
-    RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
+            authorizationGrant,
+            authorizationServerConfiguration,
+            clientConfiguration,
+            clientCredentials);
+    RefreshToken refreshToken =
+        createRefreshToken(authorizationServerConfiguration, clientConfiguration);
     OAuthTokenBuilder oAuthTokenBuilder =
         new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))
             .add(accessToken)
@@ -147,7 +152,7 @@ public class AuthorizationCodeGrantService
               authorizationGrant,
               idTokenCustomClaims,
               authorizationRequest.requestedClaimsPayload(),
-              serverConfiguration,
+              authorizationServerConfiguration,
               clientConfiguration);
       oAuthTokenBuilder.add(idToken);
     }

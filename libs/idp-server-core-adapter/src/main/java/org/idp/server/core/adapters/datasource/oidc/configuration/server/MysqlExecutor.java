@@ -6,7 +6,7 @@ import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 
 public class MysqlExecutor implements ServerConfigSqlExecutor {
 
@@ -17,18 +17,18 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
   }
 
   @Override
-  public void insert(ServerConfiguration serverConfiguration) {
+  public void insert(AuthorizationServerConfiguration authorizationServerConfiguration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
-                    INSERT INTO server_configuration (tenant_id, token_issuer, payload)
+                    INSERT INTO authorization_server_configuration (tenant_id, token_issuer, payload)
                     VALUES (?, ?, ?);
                     """;
-    String payload = jsonConverter.write(serverConfiguration);
+    String payload = jsonConverter.write(authorizationServerConfiguration);
     List<Object> params = new ArrayList<>();
-    params.add(serverConfiguration.tenantId());
-    params.add(serverConfiguration.tokenIssuer().value());
+    params.add(authorizationServerConfiguration.tenantId());
+    params.add(authorizationServerConfiguration.tokenIssuer().value());
     params.add(payload);
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -40,7 +40,7 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
     String sqlTemplate =
         """
                     SELECT tenant_id, token_issuer, payload
-                    FROM server_configuration
+                    FROM authorization_server_configuration
                     WHERE tenant_id = ?;
                     """;
     return sqlExecutor.selectOne(sqlTemplate, List.of(tenantIdentifier.value()));

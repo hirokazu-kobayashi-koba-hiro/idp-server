@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.authentication.AuthenticationInteractionType;
 import org.idp.server.core.authentication.AuthenticationTransaction;
 import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.identity.User;
@@ -36,19 +35,19 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
             created_at,
             expired_at
             )
-            VALUES 
+            VALUES
             (
-            ?, 
-            ?, 
-            ?, 
-            ?, 
-            ?, 
-            ?::jsonb, 
-            ?, 
-            ?::jsonb, 
-            ?::jsonb, 
-            ?::jsonb, 
-            ?, 
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?::jsonb,
+            ?,
+            ?::jsonb,
+            ?::jsonb,
+            ?::jsonb,
+            ?,
             ?
             )
             ON CONFLICT DO NOTHING;

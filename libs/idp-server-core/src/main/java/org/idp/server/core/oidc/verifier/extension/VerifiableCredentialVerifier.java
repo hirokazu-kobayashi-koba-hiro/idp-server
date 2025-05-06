@@ -1,22 +1,22 @@
 package org.idp.server.core.oidc.verifier.extension;
 
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.rar.AuthorizationDetailsInvalidException;
 import org.idp.server.core.oidc.vc.VerifiableCredentialInvalidException;
 
 public class VerifiableCredentialVerifier {
   AuthorizationDetails authorizationDetails;
-  ServerConfiguration serverConfiguration;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
 
   public VerifiableCredentialVerifier(
       AuthorizationDetails authorizationDetails,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.authorizationDetails = authorizationDetails;
-    this.serverConfiguration = serverConfiguration;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
   }
 
@@ -41,7 +41,7 @@ public class VerifiableCredentialVerifier {
   void throwExceptionIfUnSupportedType() {
     authorizationDetails.forEach(
         authorizationDetail -> {
-          if (!serverConfiguration.isSupportedAuthorizationDetailsType(
+          if (!authorizationServerConfiguration.isSupportedAuthorizationDetailsType(
               authorizationDetail.type())) {
             throw new AuthorizationDetailsInvalidException(
                 "invalid_authorization_details",
@@ -65,7 +65,7 @@ public class VerifiableCredentialVerifier {
   }
 
   void throwIfUnSupportedVerifiableCredential() {
-    if (!serverConfiguration.hasCredentialIssuerMetadata()) {
+    if (!authorizationServerConfiguration.hasCredentialIssuerMetadata()) {
       throw new VerifiableCredentialInvalidException(
           "invalid_request", "unsupported verifiable credential");
     }
