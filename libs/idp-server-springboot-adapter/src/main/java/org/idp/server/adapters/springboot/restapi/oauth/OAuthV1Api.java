@@ -21,7 +21,7 @@ import org.idp.server.core.oidc.io.OAuthDenyResponse;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.core.oidc.io.OAuthViewDataResponse;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.IdpServerApplication;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

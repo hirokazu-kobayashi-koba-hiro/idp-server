@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventApi;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.IdpServerApplication;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 

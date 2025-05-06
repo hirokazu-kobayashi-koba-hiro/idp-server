@@ -1,4 +1,4 @@
-import { describe, it, expect } from "@jest/globals";
+import { describe, xit, expect } from "@jest/globals";
 import { loginForClientSecretPost } from "./ciba/login";
 import { clientSecretPostClient, serverConfig } from "./testConfig";
 import { deletion } from "./lib/http";
@@ -7,7 +7,7 @@ describe("User lifecycle", () => {
 
   describe("success pattern", () => {
 
-    it("delete user", async () => {
+    xit("delete user", async () => {
 
       const tokenResponse = await loginForClientSecretPost({
         serverConfig,

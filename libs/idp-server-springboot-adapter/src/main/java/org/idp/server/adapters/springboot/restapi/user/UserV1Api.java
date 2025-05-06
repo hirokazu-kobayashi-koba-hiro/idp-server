@@ -9,7 +9,7 @@ import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserApi;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

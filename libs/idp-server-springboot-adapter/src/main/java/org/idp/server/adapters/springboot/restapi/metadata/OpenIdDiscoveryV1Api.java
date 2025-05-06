@@ -4,7 +4,7 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.discovery.OidcMetaDataApi;
 import org.idp.server.core.oidc.discovery.handler.io.JwksRequestResponse;
 import org.idp.server.core.oidc.discovery.handler.io.ServerConfigurationRequestResponse;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.IdpServerApplication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -8,7 +8,7 @@ import org.idp.server.core.token.TokenApi;
 import org.idp.server.core.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationResponse;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

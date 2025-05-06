@@ -8,7 +8,7 @@ import org.idp.server.basic.datasource.DatabaseConfig;
 import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.datasource.DbConfig;
 import org.idp.server.core.adapters.datasource.config.HikariConnectionProvider;
-import org.idp.server.usecases.IdpServerApplication;
+import org.idp.server.IdpServerApplication;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
