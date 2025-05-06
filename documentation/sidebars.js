@@ -34,7 +34,6 @@ const sidebars = {
         'core-concepts/identity-verification',
         'core-concepts/multi-tenancy',
         'core-concepts/caching',
-        'core-concepts/events',
         'core-concepts/security-event-hooks',
         'core-concepts/user-lifecycle-event',
         'core-concepts/id-token-structure',
@@ -54,6 +53,11 @@ const sidebars = {
         'use-cases/end-user',
         'use-cases/admin-user',
       ],
+    },
+    {
+      type: 'category',
+      label: 'Developer Guide',
+      items: ['developer-guide/design-principles-guidelines'],
     },
     {
       type: 'category',
