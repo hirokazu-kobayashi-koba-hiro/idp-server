@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.admin.OnboardingApi;
+import org.idp.server.control.plane.OnboardingApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
 import org.idp.server.core.identity.repository.UserQueryRepository;

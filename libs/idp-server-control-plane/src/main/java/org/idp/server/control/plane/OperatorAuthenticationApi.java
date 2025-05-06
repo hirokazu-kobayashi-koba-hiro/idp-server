@@ -1,4 +1,4 @@
-package org.idp.server.core.admin;
+package org.idp.server.control.plane;
 
 import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.core.identity.User;

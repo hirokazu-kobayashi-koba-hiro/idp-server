@@ -2,7 +2,7 @@ package org.idp.server.usecases;
 
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.core.admin.ClientManagementApi;
+import org.idp.server.control.plane.ClientManagementApi;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantRepository;

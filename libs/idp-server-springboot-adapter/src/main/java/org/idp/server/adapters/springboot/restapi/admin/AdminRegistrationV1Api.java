@@ -2,7 +2,7 @@ package org.idp.server.adapters.springboot.restapi.admin;
 
 import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.core.admin.IdpServerStarterApi;
+import org.idp.server.control.plane.IdpServerStarterApi;
 import org.idp.server.core.multi_tenancy.tenant.AdminTenantContext;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.usecases.IdpServerApplication;

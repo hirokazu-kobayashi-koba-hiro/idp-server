@@ -2,7 +2,7 @@ package org.idp.server.adapters.springboot.restapi.management;
 
 import java.util.Map;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.core.admin.OnboardingApi;
+import org.idp.server.control.plane.OnboardingApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.AdminTenantContext;
 import org.idp.server.core.multi_tenancy.tenant.ServerDomain;

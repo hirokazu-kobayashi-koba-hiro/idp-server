@@ -1,4 +1,4 @@
-package org.idp.server.core.admin.io;
+package org.idp.server.control.plane.io;
 
 import java.util.List;
 import java.util.Map;

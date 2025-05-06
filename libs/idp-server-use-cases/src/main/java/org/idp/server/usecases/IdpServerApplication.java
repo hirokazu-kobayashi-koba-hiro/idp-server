@@ -8,7 +8,7 @@ import org.idp.server.basic.dependency.ApplicationComponentContainerLoader;
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolContainerLoader;
-import org.idp.server.core.admin.*;
+import org.idp.server.control.plane.*;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiers;

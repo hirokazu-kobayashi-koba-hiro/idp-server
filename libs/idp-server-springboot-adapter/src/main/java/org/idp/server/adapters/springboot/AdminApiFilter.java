@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.idp.server.basic.http.BasicAuth;
 import org.idp.server.basic.log.LoggerWrapper;
-import org.idp.server.core.admin.AdminCredentialConvertor;
+import org.idp.server.control.plane.AdminCredentialConvertor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;

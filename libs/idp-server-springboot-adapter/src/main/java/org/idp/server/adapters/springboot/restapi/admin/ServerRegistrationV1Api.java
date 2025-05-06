@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.restapi.admin;
 
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.core.admin.ServerManagementApi;
+import org.idp.server.control.plane.ServerManagementApi;
 import org.idp.server.core.multi_tenancy.tenant.*;
 import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.beans.factory.annotation.Value;

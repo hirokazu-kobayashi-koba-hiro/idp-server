@@ -1,4 +1,4 @@
-package org.idp.server.core.admin;
+package org.idp.server.control.plane;
 
 import java.util.Map;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;

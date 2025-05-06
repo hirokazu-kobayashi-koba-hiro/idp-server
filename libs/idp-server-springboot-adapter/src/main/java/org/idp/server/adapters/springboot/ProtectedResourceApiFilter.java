@@ -11,7 +11,7 @@ import org.idp.server.basic.exception.UnSupportedException;
 import org.idp.server.basic.exception.UnauthorizedException;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.extension.Pairs;
-import org.idp.server.core.admin.OperatorAuthenticationApi;
+import org.idp.server.control.plane.OperatorAuthenticationApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;

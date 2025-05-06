@@ -1,4 +1,4 @@
-package org.idp.server.core.admin.io;
+package org.idp.server.control.plane.io;
 
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
