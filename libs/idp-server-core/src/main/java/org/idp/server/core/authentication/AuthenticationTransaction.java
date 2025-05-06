@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.oauth.ExpiresIn;
@@ -20,7 +20,6 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 public class AuthenticationTransaction {
   AuthorizationIdentifier identifier;
   AuthenticationRequest request;
-  AuthenticationInteractionType lastInteractionType;
   AuthenticationInteractionResults interactionResults;
 
   public static AuthenticationTransaction createOnOAuthFlow(
@@ -90,9 +89,9 @@ public class AuthenticationTransaction {
         expiredAt);
   }
 
-  public AuthenticationTransaction update(
+  public AuthenticationTransaction updateWith(
       AuthenticationInteractionRequestResult interactionRequestResult) {
-    Set<AuthenticationInteractionResult> set = interactionResults.toSet();
+    Map<String, AuthenticationInteractionResult> resultMap = interactionResults.toMap();
 
     AuthenticationRequest updatedRequest =
         interactionRequestResult.isIdentifyUserEventType()
@@ -103,24 +102,22 @@ public class AuthenticationTransaction {
       AuthenticationInteractionResult foundResult =
           interactionResults.get(interactionRequestResult.interactionTypeName());
       AuthenticationInteractionResult updatedInteraction =
-          foundResult.update(interactionRequestResult);
-      set.remove(foundResult);
-      set.add(updatedInteraction);
+          foundResult.updateWith(interactionRequestResult);
+      resultMap.remove(interactionRequestResult.interactionTypeName());
+      resultMap.put(interactionRequestResult.interactionTypeName(), updatedInteraction);
 
     } else {
 
       int successCount = interactionRequestResult.isSuccess() ? 1 : 0;
       int failureCount = interactionRequestResult.isSuccess() ? 0 : 1;
       AuthenticationInteractionResult result =
-          new AuthenticationInteractionResult(
-              interactionRequestResult.interactionTypeName(), 1, successCount, failureCount);
-      set.add(result);
+          new AuthenticationInteractionResult(1, successCount, failureCount);
+      resultMap.put(interactionRequestResult.interactionTypeName(), result);
     }
 
-    AuthenticationInteractionType lastInteractionType = interactionRequestResult.type();
-    AuthenticationInteractionResults updatedResults = new AuthenticationInteractionResults(set);
+    AuthenticationInteractionResults updatedResults = new AuthenticationInteractionResults(resultMap);
     return new AuthenticationTransaction(
-        identifier, updatedRequest, lastInteractionType, updatedResults);
+        identifier, updatedRequest, updatedResults);
   }
 
   public AuthenticationTransaction() {}
@@ -129,18 +126,15 @@ public class AuthenticationTransaction {
     this(
         identifier,
         request,
-        new AuthenticationInteractionType(),
         new AuthenticationInteractionResults());
   }
 
   public AuthenticationTransaction(
       AuthorizationIdentifier identifier,
       AuthenticationRequest request,
-      AuthenticationInteractionType lastInteractionType,
       AuthenticationInteractionResults interactionResults) {
     this.identifier = identifier;
     this.request = request;
-    this.lastInteractionType = lastInteractionType;
     this.interactionResults = interactionResults;
   }
 
@@ -163,17 +157,10 @@ public class AuthenticationTransaction {
     return interactionResults;
   }
 
-  public Set<AuthenticationInteractionResult> interactionResultsAsSet() {
-    return interactionResults.toSet();
+  public Map<String, AuthenticationInteractionResult> interactionResultsAsMap() {
+    return interactionResults.toMap();
   }
 
-  public AuthenticationInteractionType lastInteractionType() {
-    return lastInteractionType;
-  }
-
-  public AuthenticationInteractionResult lastInteraction() {
-    return interactionResults.get(lastInteractionType.name());
-  }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();

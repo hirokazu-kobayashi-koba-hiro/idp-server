@@ -130,7 +130,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
             authenticationTransaction,
             userQueryRepository);
 
-    AuthenticationTransaction updatedTransaction = authenticationTransaction.update(result);
+    AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     if (result.isSuccess()) {
