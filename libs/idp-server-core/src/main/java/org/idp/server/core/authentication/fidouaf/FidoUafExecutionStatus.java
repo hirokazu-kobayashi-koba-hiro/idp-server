@@ -1,9 +1,7 @@
 package org.idp.server.core.authentication.fidouaf;
 
 public enum FidoUafExecutionStatus {
-  OK(200),
-  CLIENT_ERROR(400),
-  SERVER_ERROR(500);
+  OK(200), CLIENT_ERROR(400), SERVER_ERROR(500);
 
   int statusCode;
 

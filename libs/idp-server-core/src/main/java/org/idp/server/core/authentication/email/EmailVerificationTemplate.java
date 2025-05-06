@@ -23,8 +23,7 @@ public class EmailVerificationTemplate implements JsonReadable {
   }
 
   public String interpolateBody(String verificationCode, int expireSeconds) {
-    return body.replace("{VERIFICATION_CODE}", verificationCode)
-        .replace("{EXPIRE_SECONDS}", String.valueOf(expireSeconds));
+    return body.replace("{VERIFICATION_CODE}", verificationCode).replace("{EXPIRE_SECONDS}", String.valueOf(expireSeconds));
   }
 
   public boolean exists() {

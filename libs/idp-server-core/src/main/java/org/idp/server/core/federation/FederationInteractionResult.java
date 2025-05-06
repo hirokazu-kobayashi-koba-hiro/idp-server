@@ -19,14 +19,7 @@ public class FederationInteractionResult {
   Map<String, Object> response;
   DefaultSecurityEventType eventType;
 
-  private FederationInteractionResult(
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      TenantIdentifier tenantIdentifier,
-      FederationInteractionStatus status,
-      User user,
-      Authentication authentication,
-      Map<String, Object> response,
-      DefaultSecurityEventType eventType) {
+  private FederationInteractionResult(AuthorizationRequestIdentifier authorizationRequestIdentifier, TenantIdentifier tenantIdentifier, FederationInteractionStatus status, User user, Authentication authentication, Map<String, Object> response, DefaultSecurityEventType eventType) {
     this.authorizationRequestIdentifier = authorizationRequestIdentifier;
     this.tenantIdentifier = tenantIdentifier;
     this.status = status;
@@ -37,23 +30,14 @@ public class FederationInteractionResult {
   }
 
   public static FederationInteractionResult success(OidcSsoSession session, User user) {
-    AuthorizationRequestIdentifier authorizationRequestIdentifier =
-        new AuthorizationRequestIdentifier(session.authorizationRequestId());
+    AuthorizationRequestIdentifier authorizationRequestIdentifier = new AuthorizationRequestIdentifier(session.authorizationRequestId());
     FederationInteractionStatus status = FederationInteractionStatus.SUCCESS;
     Authentication authentication = new Authentication();
-    Map<String, Object> response =
-        Map.of("id", session.authorizationRequestId(), "tenant_id", session.tenantId());
+    Map<String, Object> response = Map.of("id", session.authorizationRequestId(), "tenant_id", session.tenantId());
 
     TenantIdentifier tenantIdentifier = new TenantIdentifier(session.tenantId());
     DefaultSecurityEventType eventType = DefaultSecurityEventType.federation_success;
-    return new FederationInteractionResult(
-        authorizationRequestIdentifier,
-        tenantIdentifier,
-        status,
-        user,
-        authentication,
-        response,
-        eventType);
+    return new FederationInteractionResult(authorizationRequestIdentifier, tenantIdentifier, status, user, authentication, response, eventType);
   }
 
   public FederationInteractionStatus status() {

@@ -18,10 +18,11 @@ public class BackchannelAuthenticationRequestIdentifier {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    BackchannelAuthenticationRequestIdentifier that =
-        (BackchannelAuthenticationRequestIdentifier) o;
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    BackchannelAuthenticationRequestIdentifier that = (BackchannelAuthenticationRequestIdentifier) o;
     return Objects.equals(value, that.value);
   }
 

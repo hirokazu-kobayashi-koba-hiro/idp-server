@@ -8,8 +8,7 @@ public class SmsAuthenticationExecutionResult {
   SmsAuthenticationExecutionStatus status;
   Map<String, Object> contents;
 
-  private SmsAuthenticationExecutionResult(
-      SmsAuthenticationExecutionStatus status, Map<String, Object> contents) {
+  private SmsAuthenticationExecutionResult(SmsAuthenticationExecutionStatus status, Map<String, Object> contents) {
     this.status = status;
     this.contents = contents;
   }
@@ -19,13 +18,11 @@ public class SmsAuthenticationExecutionResult {
   }
 
   public static SmsAuthenticationExecutionResult clientError(Map<String, Object> contents) {
-    return new SmsAuthenticationExecutionResult(
-        SmsAuthenticationExecutionStatus.CLIENT_ERROR, contents);
+    return new SmsAuthenticationExecutionResult(SmsAuthenticationExecutionStatus.CLIENT_ERROR, contents);
   }
 
   public static SmsAuthenticationExecutionResult serverError(Map<String, Object> contents) {
-    return new SmsAuthenticationExecutionResult(
-        SmsAuthenticationExecutionStatus.SERVER_ERROR, contents);
+    return new SmsAuthenticationExecutionResult(SmsAuthenticationExecutionStatus.SERVER_ERROR, contents);
   }
 
   public SmsAuthenticationExecutionStatus status() {

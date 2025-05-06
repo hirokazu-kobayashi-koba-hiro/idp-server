@@ -325,10 +325,7 @@ public class User implements JsonReadable, Serializable {
   }
 
   public AuthenticationDevice getPrimaryAuthenticationDevice() {
-    return authenticationDevices.stream()
-        .filter(AuthenticationDevice::isPreferredForNotification)
-        .findFirst()
-        .orElseThrow(() -> new RuntimeException("Primary authentication device not found"));
+    return authenticationDevices.stream().filter(AuthenticationDevice::isPreferredForNotification).findFirst().orElseThrow(() -> new RuntimeException("Primary authentication device not found"));
   }
 
   public List<AuthenticationDevice> authenticationDevicesAsList() {
@@ -336,10 +333,7 @@ public class User implements JsonReadable, Serializable {
   }
 
   public AuthenticationDevice findPreferredForNotification() {
-    return authenticationDevices.stream()
-        .filter(AuthenticationDevice::isPreferredForNotification)
-        .findFirst()
-        .orElse(new AuthenticationDevice());
+    return authenticationDevices.stream().filter(AuthenticationDevice::isPreferredForNotification).findFirst().orElse(new AuthenticationDevice());
   }
 
   public User setAuthenticationDevices(List<AuthenticationDevice> authenticationDevices) {
@@ -529,38 +523,68 @@ public class User implements JsonReadable, Serializable {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
 
-    if (exists()) map.put("sub", sub);
-    if (exists()) map.put("provider_id", providerId);
-    if (exists()) map.put("provider_user_id", providerUserId);
-    if (hasProviderOriginalPayload()) map.put("provider_original_payload", providerOriginalPayload);
-    if (hasName()) map.put("name", name);
-    if (hasGivenName()) map.put("given_name", givenName);
-    if (hasFamilyName()) map.put("family_name", familyName);
-    if (hasMiddleName()) map.put("middle_name", middleName);
-    if (hasNickname()) map.put("nickname", nickname);
-    if (hasPreferredUsername()) map.put("preferred_username", preferredUsername);
-    if (hasProfile()) map.put("profile", profile);
-    if (hasPicture()) map.put("picture", picture);
-    if (hasWebsite()) map.put("website", website);
-    if (hasEmail()) map.put("email", email);
-    if (hasEmailVerified()) map.put("email_verified", emailVerified);
-    if (hasGender()) map.put("gender", gender);
-    if (hasBirthdate()) map.put("birthdate", birthdate);
-    if (hasZoneinfo()) map.put("zoneinfo", zoneinfo);
-    if (hasLocale()) map.put("locale", locale);
-    if (hasPhoneNumber()) map.put("phone_number", phoneNumber);
-    if (hasPhoneNumberVerified()) map.put("phone_number_verified", phoneNumberVerified);
-    if (hasUpdatedAt()) map.put("updated_at", updatedAt.toString());
-    if (hasAddress()) map.put("address", address.toMap());
-    if (hasCustomProperties()) map.put("custom_properties", new HashMap<>(customProperties));
-    if (hasHashedPassword()) map.put("hashed_password", "****");
+    if (exists())
+      map.put("sub", sub);
+    if (exists())
+      map.put("provider_id", providerId);
+    if (exists())
+      map.put("provider_user_id", providerUserId);
+    if (hasProviderOriginalPayload())
+      map.put("provider_original_payload", providerOriginalPayload);
+    if (hasName())
+      map.put("name", name);
+    if (hasGivenName())
+      map.put("given_name", givenName);
+    if (hasFamilyName())
+      map.put("family_name", familyName);
+    if (hasMiddleName())
+      map.put("middle_name", middleName);
+    if (hasNickname())
+      map.put("nickname", nickname);
+    if (hasPreferredUsername())
+      map.put("preferred_username", preferredUsername);
+    if (hasProfile())
+      map.put("profile", profile);
+    if (hasPicture())
+      map.put("picture", picture);
+    if (hasWebsite())
+      map.put("website", website);
+    if (hasEmail())
+      map.put("email", email);
+    if (hasEmailVerified())
+      map.put("email_verified", emailVerified);
+    if (hasGender())
+      map.put("gender", gender);
+    if (hasBirthdate())
+      map.put("birthdate", birthdate);
+    if (hasZoneinfo())
+      map.put("zoneinfo", zoneinfo);
+    if (hasLocale())
+      map.put("locale", locale);
+    if (hasPhoneNumber())
+      map.put("phone_number", phoneNumber);
+    if (hasPhoneNumberVerified())
+      map.put("phone_number_verified", phoneNumberVerified);
+    if (hasUpdatedAt())
+      map.put("updated_at", updatedAt.toString());
+    if (hasAddress())
+      map.put("address", address.toMap());
+    if (hasCustomProperties())
+      map.put("custom_properties", new HashMap<>(customProperties));
+    if (hasHashedPassword())
+      map.put("hashed_password", "****");
     if (hasMultiFactorAuthentication())
       map.put("multi_factor_authentication", multiFactorAuthentication);
-    if (hasRoles()) map.put("roles", roles);
-    if (hasPermissions()) map.put("permissions", permissions);
-    if (hasAuthenticationDevices()) map.put("authentication_devices", authenticationDevices);
-    if (hasVerifiedClaims()) map.put("verified_claims", verifiedClaims);
-    if (exists()) map.put("status", status.name());
+    if (hasRoles())
+      map.put("roles", roles);
+    if (hasPermissions())
+      map.put("permissions", permissions);
+    if (hasAuthenticationDevices())
+      map.put("authentication_devices", authenticationDevices);
+    if (hasVerifiedClaims())
+      map.put("verified_claims", verifiedClaims);
+    if (exists())
+      map.put("status", status.name());
 
     return map;
   }

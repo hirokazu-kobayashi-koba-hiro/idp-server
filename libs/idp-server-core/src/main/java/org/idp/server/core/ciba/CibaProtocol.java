@@ -14,9 +14,7 @@ public interface CibaProtocol {
 
   CibaIssueResponse issueResponse(CibaIssueRequest cibaIssueRequest);
 
-  BackchannelAuthenticationRequest get(
-      Tenant tenant,
-      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier);
+  BackchannelAuthenticationRequest get(Tenant tenant, BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier);
 
   CibaAuthorizeResponse authorize(CibaAuthorizeRequest request);
 

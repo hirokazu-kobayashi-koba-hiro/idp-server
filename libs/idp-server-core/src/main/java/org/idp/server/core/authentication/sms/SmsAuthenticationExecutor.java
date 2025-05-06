@@ -7,15 +7,7 @@ public interface SmsAuthenticationExecutor {
 
   SmsAuthenticationType type();
 
-  SmsAuthenticationExecutionResult challenge(
-      Tenant tenant,
-      AuthorizationIdentifier identifier,
-      SmsAuthenticationExecutionRequest request,
-      SmsAuthenticationConfiguration configuration);
+  SmsAuthenticationExecutionResult challenge(Tenant tenant, AuthorizationIdentifier identifier, SmsAuthenticationExecutionRequest request, SmsAuthenticationConfiguration configuration);
 
-  SmsAuthenticationExecutionResult verify(
-      Tenant tenant,
-      AuthorizationIdentifier identifier,
-      SmsAuthenticationExecutionRequest request,
-      SmsAuthenticationConfiguration configuration);
+  SmsAuthenticationExecutionResult verify(Tenant tenant, AuthorizationIdentifier identifier, SmsAuthenticationExecutionRequest request, SmsAuthenticationConfiguration configuration);
 }

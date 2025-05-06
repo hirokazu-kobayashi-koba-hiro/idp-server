@@ -24,11 +24,7 @@ public class OnboardingEntryService implements OnboardingApi {
   ServerConfigurationRepository serverConfigurationRepository;
   JsonConverter jsonConverter;
 
-  public OnboardingEntryService(
-      TenantRepository tenantRepository,
-      OrganizationRepository organizationRepository,
-      UserQueryRepository userQueryRepository,
-      ServerConfigurationRepository serverConfigurationRepository) {
+  public OnboardingEntryService(TenantRepository tenantRepository, OrganizationRepository organizationRepository, UserQueryRepository userQueryRepository, ServerConfigurationRepository serverConfigurationRepository) {
     this.tenantRepository = tenantRepository;
     this.organizationRepository = organizationRepository;
     this.userRegistrator = new UserRegistrator(userQueryRepository);
@@ -37,8 +33,7 @@ public class OnboardingEntryService implements OnboardingApi {
   }
 
   // TODO improve logic
-  public Map<String, Object> initialize(
-      TenantIdentifier adminTenantIdentifier, User operator, Map<String, Object> request) {
+  public Map<String, Object> initialize(TenantIdentifier adminTenantIdentifier, User operator, Map<String, Object> request) {
 
     String organizationName = (String) request.getOrDefault("organization_name", "");
     String tenantName = (String) request.getOrDefault("tenant_name", "");
@@ -49,22 +44,13 @@ public class OnboardingEntryService implements OnboardingApi {
     TenantDomain tenantDomain = new TenantDomain(serverDomain + "/" + tenantIdentifier.value());
     Map<String, Object> tenantAttributes = Map.of("database", DatabaseType.of(databaseString));
 
-    String replacedConfig =
-        serverConfig
-            .replace("ISSUER", tenantDomain.value())
-            .replace("TENANT_ID", tenantIdentifier.value());
+    String replacedConfig = serverConfig.replace("ISSUER", tenantDomain.value()).replace("TENANT_ID", tenantIdentifier.value());
 
-    ServerConfiguration serverConfiguration =
-        jsonConverter.read(replacedConfig, ServerConfiguration.class);
+    ServerConfiguration serverConfiguration = jsonConverter.read(replacedConfig, ServerConfiguration.class);
 
-    Organization organization =
-        new Organization(
-            new OrganizationIdentifier(UUID.randomUUID().toString()),
-            new OrganizationName(organizationName),
-            new OrganizationDescription(""));
+    Organization organization = new Organization(new OrganizationIdentifier(UUID.randomUUID().toString()), new OrganizationName(organizationName), new OrganizationDescription(""));
 
-    Tenant tenant =
-        new Tenant(tenantIdentifier, new TenantName(tenantName), TenantType.PUBLIC, tenantDomain);
+    Tenant tenant = new Tenant(tenantIdentifier, new TenantName(tenantName), TenantType.PUBLIC, tenantDomain);
     organization.assign(tenant);
 
     tenantRepository.register(tenant);

@@ -6,6 +6,5 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public interface OnboardingApi {
 
-  Map<String, Object> initialize(
-      TenantIdentifier adminTenantIdentifier, User operator, Map<String, Object> request);
+  Map<String, Object> initialize(TenantIdentifier adminTenantIdentifier, User operator, Map<String, Object> request);
 }

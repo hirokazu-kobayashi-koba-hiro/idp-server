@@ -27,16 +27,7 @@ public class AccessToken {
 
   public AccessToken() {}
 
-  public AccessToken(
-      TenantIdentifier tenantIdentifier,
-      TokenIssuer tokenIssuer,
-      TokenType tokenType,
-      AccessTokenEntity accessTokenEntity,
-      AuthorizationGrant authorizationGrant,
-      ClientCertificationThumbprint clientCertificationThumbprint,
-      CreatedAt createdAt,
-      ExpiresIn expiresIn,
-      ExpiredAt expiredAt) {
+  public AccessToken(TenantIdentifier tenantIdentifier, TokenIssuer tokenIssuer, TokenType tokenType, AccessTokenEntity accessTokenEntity, AuthorizationGrant authorizationGrant, ClientCertificationThumbprint clientCertificationThumbprint, CreatedAt createdAt, ExpiresIn expiresIn, ExpiredAt expiredAt) {
     this.tenantIdentifier = tenantIdentifier;
     this.tokenIssuer = tokenIssuer;
     this.tokenType = tokenType;

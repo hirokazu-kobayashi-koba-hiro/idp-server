@@ -22,11 +22,10 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
   public void insert(Tenant tenant, ClientConfiguration clientConfiguration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-            INSERT INTO client_configuration (id, id_alias, tenant_id, payload)
-            VALUES (?, ?, ?, ?)
-            """;
+    String sqlTemplate = """
+        INSERT INTO client_configuration (id, id_alias, tenant_id, payload)
+        VALUES (?, ?, ?, ?)
+        """;
 
     String payload = jsonConverter.write(clientConfiguration);
     List<Object> params = new ArrayList<>();
@@ -42,12 +41,11 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
   public Map<String, String> selectByAlias(Tenant tenant, RequestedClientId requestedClientId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplateClientIdAlias =
-        """
-                        SELECT id, id_alias, tenant_id, payload
-                        FROM client_configuration
-                        WHERE tenant_id = ? AND id_alias = ?;
-                        """;
+    String sqlTemplateClientIdAlias = """
+        SELECT id, id_alias, tenant_id, payload
+        FROM client_configuration
+        WHERE tenant_id = ? AND id_alias = ?;
+        """;
     List<Object> paramsClientIdAlias = List.of(tenant.identifierValue(), requestedClientId.value());
     return sqlExecutor.selectOne(sqlTemplateClientIdAlias, paramsClientIdAlias);
   }
@@ -55,12 +53,11 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
   @Override
   public Map<String, String> selectById(Tenant tenant, ClientIdentifier clientIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                        SELECT id, id_alias, tenant_id, payload
-                        FROM client_configuration
-                        WHERE tenant_id = ? AND id = ?;
-                        """;
+    String sqlTemplate = """
+        SELECT id, id_alias, tenant_id, payload
+        FROM client_configuration
+        WHERE tenant_id = ? AND id = ?;
+        """;
     List<Object> params = List.of(tenant.identifierValue(), clientIdentifier.value());
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -68,12 +65,11 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
   @Override
   public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                        SELECT id, id_alias, tenant_id, payload
-                        FROM client_configuration
-                        WHERE tenant_id = ? limit ? offset ?;
-                        """;
+    String sqlTemplate = """
+        SELECT id, id_alias, tenant_id, payload
+        FROM client_configuration
+        WHERE tenant_id = ? limit ? offset ?;
+        """;
     List<Object> params = List.of(tenant.identifierValue(), limit, offset);
     return sqlExecutor.selectList(sqlTemplate, params);
   }
@@ -82,14 +78,13 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
   public void update(Tenant tenant, ClientConfiguration clientConfiguration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                UPDATE client_configuration
-                SET id_alias = ?,
-                payload = ?
-                WHERE tenant_id = ?
-                AND id = ?
-                """;
+    String sqlTemplate = """
+        UPDATE client_configuration
+        SET id_alias = ?,
+        payload = ?
+        WHERE tenant_id = ?
+        AND id = ?
+        """;
 
     String payload = jsonConverter.write(clientConfiguration);
     List<Object> params = new ArrayList<>();
@@ -105,12 +100,11 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
   public void delete(Tenant tenant, RequestedClientId requestedClientId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                DELETE FROM client_configuration
-                WHERE tenant_id = ?
-                AND id = ?
-                """;
+    String sqlTemplate = """
+        DELETE FROM client_configuration
+        WHERE tenant_id = ?
+        AND id = ?
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());

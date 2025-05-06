@@ -12,21 +12,12 @@ import org.idp.server.core.identity.verification.configuration.IdentityVerificat
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class UnmatchedEmailIdentityVerificationApplicationVerifier
-    implements IdentityVerificationRequestVerifier {
+public class UnmatchedEmailIdentityVerificationApplicationVerifier implements IdentityVerificationRequestVerifier {
 
   @Override
-  public boolean shouldVerify(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplications applications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public boolean shouldVerify(Tenant tenant, User user, IdentityVerificationApplications applications, IdentityVerificationType type, IdentityVerificationProcess processes, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(processes);
+    IdentityVerificationProcessConfiguration processConfig = verificationConfiguration.getProcessConfig(processes);
     Map<String, Object> verificationSchema = processConfig.requestVerificationSchema();
 
     if (verificationSchema == null || verificationSchema.isEmpty()) {
@@ -38,21 +29,12 @@ public class UnmatchedEmailIdentityVerificationApplicationVerifier
   }
 
   @Override
-  public IdentityVerificationRequestVerificationResult verify(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplications applications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public IdentityVerificationRequestVerificationResult verify(Tenant tenant, User user, IdentityVerificationApplications applications, IdentityVerificationType type, IdentityVerificationProcess processes, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(processes);
+    IdentityVerificationProcessConfiguration processConfig = verificationConfiguration.getProcessConfig(processes);
     Map<String, Object> verificationSchema = processConfig.requestVerificationSchema();
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(verificationSchema);
-    JsonNodeWrapper unmatchedUserClaims =
-        jsonNodeWrapper.getValueAsJsonNode("unmatched_user_claims_email");
+    JsonNodeWrapper unmatchedUserClaims = jsonNodeWrapper.getValueAsJsonNode("unmatched_user_claims_email");
 
     String property = unmatchedUserClaims.getValueOrEmptyAsString("property");
     String requestValue = request.optValueAsString(property, "");

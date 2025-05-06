@@ -15,16 +15,11 @@ public class UserInfoMapperTest {
 
   @Test
   public void testBasicUserMapping() throws Exception {
-    String json =
-        "{\"email\": \"test@example.com\", \"name\": \"Test User\", \"email_verified\": true}";
+    String json = "{\"email\": \"test@example.com\", \"name\": \"Test User\", \"email_verified\": true}";
     ObjectMapper mapper = new ObjectMapper();
     JsonNodeWrapper body = new JsonNodeWrapper(mapper.readTree(json));
 
-    List<UserInfoMappingRule> rules =
-        List.of(
-            new UserInfoMappingRule("email", "email", "string"),
-            new UserInfoMappingRule("name", "name", "string"),
-            new UserInfoMappingRule("email_verified", "email_verified", "boolean"));
+    List<UserInfoMappingRule> rules = List.of(new UserInfoMappingRule("email", "email", "string"), new UserInfoMappingRule("name", "name", "string"), new UserInfoMappingRule("email_verified", "email_verified", "boolean"));
 
     UserInfoMapper userInfoMapper = new UserInfoMapper("test", body, rules);
     User user = userInfoMapper.toUser();
@@ -36,13 +31,11 @@ public class UserInfoMapperTest {
 
   @Test
   public void testAddressMapping() throws Exception {
-    String json =
-        "{\"address\": {\"formatted\": \"123 Main St\", \"street_address\": \"123 Main St\", \"locality\": \"Springfield\", \"region\": \"IL\", \"postal_code\": \"62704\", \"country\": \"USA\"}}";
+    String json = "{\"address\": {\"formatted\": \"123 Main St\", \"street_address\": \"123 Main St\", \"locality\": \"Springfield\", \"region\": \"IL\", \"postal_code\": \"62704\", \"country\": \"USA\"}}";
     ObjectMapper mapper = new ObjectMapper();
     JsonNodeWrapper body = new JsonNodeWrapper(mapper.readTree(json));
 
-    List<UserInfoMappingRule> rules =
-        List.of(new UserInfoMappingRule("address", "address", "address"));
+    List<UserInfoMappingRule> rules = List.of(new UserInfoMappingRule("address", "address", "address"));
 
     UserInfoMapper userInfoMapper = new UserInfoMapper("test", body, rules);
     User user = userInfoMapper.toUser();

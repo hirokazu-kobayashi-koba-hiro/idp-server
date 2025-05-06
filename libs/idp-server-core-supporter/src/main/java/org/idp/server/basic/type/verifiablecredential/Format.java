@@ -3,12 +3,7 @@ package org.idp.server.basic.type.verifiablecredential;
 import java.util.Objects;
 
 public enum Format {
-  jwt_vc_json("jwt_vc_json"),
-  jwt_vc_json_ld("jwt_vc_json-ld"),
-  ldp_vc("ldp_vc"),
-  ldp_vp("ldp_vp"),
-  unknown(""),
-  undefined("");
+  jwt_vc_json("jwt_vc_json"), jwt_vc_json_ld("jwt_vc_json-ld"), ldp_vc("ldp_vc"), ldp_vp("ldp_vp"), unknown(""), undefined("");
 
   String value;
 

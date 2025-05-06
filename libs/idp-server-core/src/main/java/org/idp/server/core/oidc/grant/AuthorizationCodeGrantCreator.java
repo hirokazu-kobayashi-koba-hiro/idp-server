@@ -8,16 +8,13 @@ import org.idp.server.core.oidc.response.AuthorizationResponse;
 
 public class AuthorizationCodeGrantCreator {
 
-  public static AuthorizationCodeGrant create(
-      OAuthAuthorizeContext oAuthAuthorizeContext, AuthorizationResponse authorizationResponse) {
-    AuthorizationRequestIdentifier authorizationRequestIdentifier =
-        oAuthAuthorizeContext.authorizationRequest().identifier();
+  public static AuthorizationCodeGrant create(OAuthAuthorizeContext oAuthAuthorizeContext, AuthorizationResponse authorizationResponse) {
+    AuthorizationRequestIdentifier authorizationRequestIdentifier = oAuthAuthorizeContext.authorizationRequest().identifier();
 
     AuthorizationGrant authorizationGrant = oAuthAuthorizeContext.authorize();
     AuthorizationCode authorizationCode = authorizationResponse.authorizationCode();
     ExpiredAt expiredAt = oAuthAuthorizeContext.authorizationCodeGrantExpiresDateTime();
 
-    return new AuthorizationCodeGrant(
-        authorizationRequestIdentifier, authorizationGrant, authorizationCode, expiredAt);
+    return new AuthorizationCodeGrant(authorizationRequestIdentifier, authorizationGrant, authorizationCode, expiredAt);
   }
 }

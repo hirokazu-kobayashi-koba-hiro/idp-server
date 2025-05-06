@@ -9,8 +9,7 @@ public class SharedSignalEventRequest {
 
   public SharedSignalEventRequest() {}
 
-  public SharedSignalEventRequest(
-      String endpoint, Map<String, String> headers, SecurityEventToken securityEventToken) {
+  public SharedSignalEventRequest(String endpoint, Map<String, String> headers, SecurityEventToken securityEventToken) {
     this.endpoint = endpoint;
     this.headers = headers;
     this.securityEventToken = securityEventToken;

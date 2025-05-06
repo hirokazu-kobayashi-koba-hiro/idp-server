@@ -65,9 +65,7 @@ public class JsonWebSignature {
       return false;
     }
     JWSAlgorithm algorithm = value.getHeader().getAlgorithm();
-    return algorithm.equals(JWSAlgorithm.HS256)
-        || algorithm.equals(JWSAlgorithm.HS384)
-        || algorithm.equals(JWSAlgorithm.HS512);
+    return algorithm.equals(JWSAlgorithm.HS256) || algorithm.equals(JWSAlgorithm.HS384) || algorithm.equals(JWSAlgorithm.HS512);
   }
 
   public boolean hasKeyId() {

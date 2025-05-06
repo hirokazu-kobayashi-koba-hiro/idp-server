@@ -42,16 +42,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
   OAuthFlowEventPublisher eventPublisher;
 
-  public OAuthFlowEntryService(
-      OAuthProtocols oAuthProtocols,
-      OAuthSessionDelegate oAuthSessiondelegate,
-      AuthenticationInteractors authenticationInteractors,
-      FederationInteractors federationInteractors,
-      UserQueryRepository userQueryRepository,
-      TenantRepository tenantRepository,
-      AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
-      AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
-      OAuthFlowEventPublisher eventPublisher) {
+  public OAuthFlowEntryService(OAuthProtocols oAuthProtocols, OAuthSessionDelegate oAuthSessiondelegate, AuthenticationInteractors authenticationInteractors, FederationInteractors federationInteractors, UserQueryRepository userQueryRepository, TenantRepository tenantRepository, AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository, AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository, OAuthFlowEventPublisher eventPublisher) {
     this.oAuthProtocols = oAuthProtocols;
     this.oAuthSessionDelegate = oAuthSessiondelegate;
     this.authenticationInteractors = authenticationInteractors;
@@ -64,10 +55,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     this.eventPublisher = eventPublisher;
   }
 
-  public Pairs<Tenant, OAuthRequestResponse> request(
-      TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      RequestAttributes requestAttributes) {
+  public Pairs<Tenant, OAuthRequestResponse> request(TenantIdentifier tenantIdentifier, Map<String, String[]> params, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthRequest oAuthRequest = new OAuthRequest(tenant, params);
@@ -76,22 +64,17 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     OAuthRequestResponse requestResponse = oAuthProtocol.request(oAuthRequest);
 
     if (requestResponse.isOK()) {
-      AuthenticationTransaction authenticationTransaction =
-          AuthenticationTransaction.createOnOAuthFlow(tenant, requestResponse);
+      AuthenticationTransaction authenticationTransaction = AuthenticationTransaction.createOnOAuthFlow(tenant, requestResponse);
       authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
     }
 
     return new Pairs<>(tenant, requestResponse);
   }
 
-  public OAuthViewDataResponse getViewData(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      RequestAttributes requestAttributes) {
+  public OAuthViewDataResponse getViewData(TenantIdentifier tenantIdentifier, AuthorizationRequestIdentifier authorizationRequestIdentifier, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    OAuthViewDataRequest oAuthViewDataRequest =
-        new OAuthViewDataRequest(tenant, authorizationRequestIdentifier.value());
+    OAuthViewDataRequest oAuthViewDataRequest = new OAuthViewDataRequest(tenant, authorizationRequestIdentifier.value());
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
 
@@ -99,36 +82,20 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   }
 
   @Override
-  public AuthenticationInteractionRequestResult interact(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      RequestAttributes requestAttributes) {
+  public AuthenticationInteractionRequestResult interact(TenantIdentifier tenantIdentifier, AuthorizationRequestIdentifier authorizationRequestIdentifier, AuthenticationInteractionType type, AuthenticationInteractionRequest request, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
-    AuthorizationRequest authorizationRequest =
-        oAuthProtocol.get(tenant, authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest = oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
-    OAuthSession oAuthSession =
-        oAuthSessionDelegate.findOrInitialize(authorizationRequest.sessionKey());
+    OAuthSession oAuthSession = oAuthSessionDelegate.findOrInitialize(authorizationRequest.sessionKey());
 
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
-    AuthorizationIdentifier authorizationIdentifier =
-        authorizationRequestIdentifier.toAuthorizationIdentifier();
-    AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(tenant, authorizationIdentifier);
+    AuthorizationIdentifier authorizationIdentifier = authorizationRequestIdentifier.toAuthorizationIdentifier();
+    AuthenticationTransaction authenticationTransaction = authenticationTransactionQueryRepository.get(tenant, authorizationIdentifier);
 
-    AuthenticationInteractionRequestResult result =
-        authenticationInteractor.interact(
-            tenant,
-            authorizationIdentifier,
-            type,
-            request,
-            authenticationTransaction,
-            userQueryRepository);
+    AuthenticationInteractionRequestResult result = authenticationInteractor.interact(tenant, authorizationIdentifier, type, request, authenticationTransaction, userQueryRepository);
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.update(result);
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
@@ -138,198 +105,116 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       oAuthSessionDelegate.updateSession(updated);
     }
 
-    eventPublisher.publish(
-        tenant, authorizationRequest, result.user(), result.eventType(), requestAttributes);
+    eventPublisher.publish(tenant, authorizationRequest, result.user(), result.eventType(), requestAttributes);
 
     return result;
   }
 
-  public FederationRequestResponse requestFederation(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      FederationType federationType,
-      SsoProvider ssoProvider,
-      RequestAttributes requestAttributes) {
+  public FederationRequestResponse requestFederation(TenantIdentifier tenantIdentifier, AuthorizationRequestIdentifier authorizationRequestIdentifier, FederationType federationType, SsoProvider ssoProvider, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
-    AuthorizationRequest authorizationRequest =
-        oAuthProtocol.get(tenant, authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest = oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
     FederationInteractor federationInteractor = federationInteractors.get(federationType);
 
-    FederationRequestResponse response =
-        federationInteractor.request(
-            tenant, authorizationRequestIdentifier, federationType, ssoProvider);
+    FederationRequestResponse response = federationInteractor.request(tenant, authorizationRequestIdentifier, federationType, ssoProvider);
 
-    OAuthSession oAuthSession =
-        oAuthSessionDelegate.findOrInitialize(authorizationRequest.sessionKey());
+    OAuthSession oAuthSession = oAuthSessionDelegate.findOrInitialize(authorizationRequest.sessionKey());
 
-    eventPublisher.publish(
-        tenant,
-        authorizationRequest,
-        oAuthSession.user(),
-        DefaultSecurityEventType.federation_request,
-        requestAttributes);
+    eventPublisher.publish(tenant, authorizationRequest, oAuthSession.user(), DefaultSecurityEventType.federation_request, requestAttributes);
 
     return response;
   }
 
-  public FederationInteractionResult callbackFederation(
-      TenantIdentifier tenantIdentifier,
-      FederationType federationType,
-      SsoProvider ssoProvider,
-      FederationCallbackRequest callbackRequest,
-      RequestAttributes requestAttributes) {
+  public FederationInteractionResult callbackFederation(TenantIdentifier tenantIdentifier, FederationType federationType, SsoProvider ssoProvider, FederationCallbackRequest callbackRequest, RequestAttributes requestAttributes) {
 
     FederationInteractor federationInteractor = federationInteractors.get(federationType);
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    FederationInteractionResult result =
-        federationInteractor.callback(
-            tenant, federationType, ssoProvider, callbackRequest, userQueryRepository);
+    FederationInteractionResult result = federationInteractor.callback(tenant, federationType, ssoProvider, callbackRequest, userQueryRepository);
 
     if (result.isError()) {
       return result;
     }
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
-    AuthorizationRequest authorizationRequest =
-        oAuthProtocol.get(tenant, result.authorizationRequestIdentifier());
+    AuthorizationRequest authorizationRequest = oAuthProtocol.get(tenant, result.authorizationRequestIdentifier());
 
-    OAuthSession oAuthSession =
-        OAuthSession.create(
-            authorizationRequest.sessionKey(),
-            result.user(),
-            result.authentication(),
-            authorizationRequest.maxAge());
+    OAuthSession oAuthSession = OAuthSession.create(authorizationRequest.sessionKey(), result.user(), result.authentication(), authorizationRequest.maxAge());
 
     oAuthSessionDelegate.updateSession(oAuthSession);
 
-    eventPublisher.publish(
-        tenant, authorizationRequest, result.user(), result.eventType(), requestAttributes);
+    eventPublisher.publish(tenant, authorizationRequest, result.user(), result.eventType(), requestAttributes);
 
     return result;
   }
 
-  public OAuthAuthorizeResponse authorize(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      RequestAttributes requestAttributes) {
+  public OAuthAuthorizeResponse authorize(TenantIdentifier tenantIdentifier, AuthorizationRequestIdentifier authorizationRequestIdentifier, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
-    AuthorizationRequest authorizationRequest =
-        oAuthProtocol.get(tenant, authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest = oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
-    AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(
-            tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
+    AuthenticationTransaction authenticationTransaction = authenticationTransactionQueryRepository.get(tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
 
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
 
     User user = session.user();
-    OAuthAuthorizeRequest oAuthAuthorizeRequest =
-        new OAuthAuthorizeRequest(
-            tenant,
-            authorizationRequestIdentifier.value(),
-            user,
-            authenticationTransaction.isComplete()
-                ? session.authentication()
-                : new Authentication());
+    OAuthAuthorizeRequest oAuthAuthorizeRequest = new OAuthAuthorizeRequest(tenant, authorizationRequestIdentifier.value(), user, authenticationTransaction.isComplete() ? session.authentication() : new Authentication());
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 
     if (authorize.isOk()) {
       userRegistrator.registerOrUpdate(tenant, user);
-      eventPublisher.publish(
-          tenant,
-          authorizationRequest,
-          user,
-          DefaultSecurityEventType.oauth_authorize,
-          requestAttributes);
+      eventPublisher.publish(tenant, authorizationRequest, user, DefaultSecurityEventType.oauth_authorize, requestAttributes);
     } else {
-      eventPublisher.publish(
-          tenant,
-          authorizationRequest,
-          user,
-          DefaultSecurityEventType.authorize_failure,
-          requestAttributes);
+      eventPublisher.publish(tenant, authorizationRequest, user, DefaultSecurityEventType.authorize_failure, requestAttributes);
     }
 
     return authorize;
   }
 
-  public OAuthAuthorizeResponse authorizeWithSession(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      RequestAttributes requestAttributes) {
+  public OAuthAuthorizeResponse authorizeWithSession(TenantIdentifier tenantIdentifier, AuthorizationRequestIdentifier authorizationRequestIdentifier, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
-    AuthorizationRequest authorizationRequest =
-        oAuthProtocol.get(tenant, authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest = oAuthProtocol.get(tenant, authorizationRequestIdentifier);
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
 
-    if (Objects.isNull(session)
-        || session.isExpire(SystemDateTime.now())
-        || Objects.isNull(session.user())) {
+    if (Objects.isNull(session) || session.isExpire(SystemDateTime.now()) || Objects.isNull(session.user())) {
       throw new OAuthBadRequestException("invalid_request", "session expired");
     }
 
-    OAuthAuthorizeRequest authAuthorizeRequest =
-        new OAuthAuthorizeRequest(
-            tenant,
-            authorizationRequestIdentifier.value(),
-            session.user(),
-            session.authentication());
+    OAuthAuthorizeRequest authAuthorizeRequest = new OAuthAuthorizeRequest(tenant, authorizationRequestIdentifier.value(), session.user(), session.authentication());
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(authAuthorizeRequest);
 
-    eventPublisher.publish(
-        tenant,
-        authorizationRequest,
-        session.user(),
-        DefaultSecurityEventType.oauth_authorize_with_session,
-        requestAttributes);
+    eventPublisher.publish(tenant, authorizationRequest, session.user(), DefaultSecurityEventType.oauth_authorize_with_session, requestAttributes);
 
     return authorize;
   }
 
-  public OAuthDenyResponse deny(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      RequestAttributes requestAttributes) {
+  public OAuthDenyResponse deny(TenantIdentifier tenantIdentifier, AuthorizationRequestIdentifier authorizationRequestIdentifier, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
 
-    AuthorizationRequest authorizationRequest =
-        oAuthProtocol.get(tenant, authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest = oAuthProtocol.get(tenant, authorizationRequestIdentifier);
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
 
-    OAuthDenyRequest denyRequest =
-        new OAuthDenyRequest(
-            tenant, authorizationRequestIdentifier.value(), OAuthDenyReason.access_denied);
+    OAuthDenyRequest denyRequest = new OAuthDenyRequest(tenant, authorizationRequestIdentifier.value(), OAuthDenyReason.access_denied);
 
     OAuthDenyResponse denyResponse = oAuthProtocol.deny(denyRequest);
 
-    eventPublisher.publish(
-        tenant,
-        authorizationRequest,
-        session.user(),
-        DefaultSecurityEventType.oauth_deny,
-        requestAttributes);
+    eventPublisher.publish(tenant, authorizationRequest, session.user(), DefaultSecurityEventType.oauth_deny, requestAttributes);
 
     return denyResponse;
   }
 
-  public OAuthLogoutResponse logout(
-      TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      RequestAttributes requestAttributes) {
+  public OAuthLogoutResponse logout(TenantIdentifier tenantIdentifier, Map<String, String[]> params, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     OAuthLogoutRequest oAuthLogoutRequest = new OAuthLogoutRequest(tenant, params);

@@ -22,15 +22,7 @@ public class AuthenticationRequest {
 
   public AuthenticationRequest() {}
 
-  public AuthenticationRequest(
-      AuthorizationFlow authorizationFlow,
-      TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
-      User user,
-      List<String> availableAuthenticationTypes,
-      List<String> requiredAnyOfAuthenticationTypes,
-      LocalDateTime createdAt,
-      LocalDateTime expiredAt) {
+  public AuthenticationRequest(AuthorizationFlow authorizationFlow, TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, User user, List<String> availableAuthenticationTypes, List<String> requiredAnyOfAuthenticationTypes, LocalDateTime createdAt, LocalDateTime expiredAt) {
     this.authorizationFlow = authorizationFlow;
     this.tenantIdentifier = tenantIdentifier;
     this.requestedClientId = requestedClientId;
@@ -90,17 +82,8 @@ public class AuthenticationRequest {
     return map;
   }
 
-  public AuthenticationRequest updateUser(
-      AuthenticationInteractionRequestResult interactionRequestResult) {
+  public AuthenticationRequest updateUser(AuthenticationInteractionRequestResult interactionRequestResult) {
     User user = interactionRequestResult.user();
-    return new AuthenticationRequest(
-        authorizationFlow,
-        tenantIdentifier,
-        requestedClientId,
-        user,
-        availableAuthenticationTypes,
-        requiredAnyOfAuthenticationTypes,
-        createdAt,
-        expiredAt);
+    return new AuthenticationRequest(authorizationFlow, tenantIdentifier, requestedClientId, user, availableAuthenticationTypes, requiredAnyOfAuthenticationTypes, createdAt, expiredAt);
   }
 }

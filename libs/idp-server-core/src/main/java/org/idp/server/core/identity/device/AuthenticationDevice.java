@@ -16,14 +16,7 @@ public class AuthenticationDevice implements Serializable, JsonReadable {
 
   public AuthenticationDevice() {}
 
-  public AuthenticationDevice(
-      String id,
-      String platform,
-      String os,
-      String model,
-      String notificationChannel,
-      String notificationToken,
-      boolean preferredForNotification) {
+  public AuthenticationDevice(String id, String platform, String os, String model, String notificationChannel, String notificationToken, boolean preferredForNotification) {
     this.id = id;
     this.platform = platform;
     this.os = os;

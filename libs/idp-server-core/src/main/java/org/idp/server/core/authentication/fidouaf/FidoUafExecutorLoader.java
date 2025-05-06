@@ -17,8 +17,7 @@ public class FidoUafExecutorLoader {
     for (FidoUafExecutorFactory factory : loader) {
       FidoUafExecutor fidoUafExecutor = factory.create(container);
       executors.put(fidoUafExecutor.type(), fidoUafExecutor);
-      log.info(
-          String.format("Dynamic Registered FidoUafExecutor %s", fidoUafExecutor.type().name()));
+      log.info(String.format("Dynamic Registered FidoUafExecutor %s", fidoUafExecutor.type().name()));
     }
 
     return new FidoUafExecutors(executors);

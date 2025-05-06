@@ -66,15 +66,6 @@ public class AccessTokenBuilder {
   }
 
   public AccessToken build() {
-    return new AccessToken(
-        tenantIdentifier,
-        tokenIssuer,
-        tokenType,
-        accessTokenEntity,
-        authorizationGrant,
-        clientCertificationThumbprint,
-        createdAt,
-        expiresIn,
-        expiredAt);
+    return new AccessToken(tenantIdentifier, tokenIssuer, tokenType, accessTokenEntity, authorizationGrant, clientCertificationThumbprint, createdAt, expiresIn, expiredAt);
   }
 }

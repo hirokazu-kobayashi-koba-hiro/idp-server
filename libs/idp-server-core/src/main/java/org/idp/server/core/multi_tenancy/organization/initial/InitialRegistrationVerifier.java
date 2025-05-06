@@ -12,12 +12,7 @@ public class InitialRegistrationVerifier {
   TenantName tenantName;
   String serverConfig;
 
-  public InitialRegistrationVerifier(
-      Tenant tenant,
-      OrganizationName organizationName,
-      ServerDomain serverDomain,
-      TenantName tenantName,
-      String serverConfig) {
+  public InitialRegistrationVerifier(Tenant tenant, OrganizationName organizationName, ServerDomain serverDomain, TenantName tenantName, String serverConfig) {
     this.tenant = tenant;
     this.organizationName = organizationName;
     this.serverDomain = serverDomain;
@@ -27,8 +22,7 @@ public class InitialRegistrationVerifier {
 
   public void verify() {
     if (!tenant.isAdmin()) {
-      throw new InitialRegistrationForbiddenException(
-          "tenant is not admin. admin tenant only allowed initial registration request");
+      throw new InitialRegistrationForbiddenException("tenant is not admin. admin tenant only allowed initial registration request");
     }
   }
 }

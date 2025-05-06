@@ -8,9 +8,7 @@ import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 public interface AuthorizationRequestRepository {
   void register(Tenant tenant, AuthorizationRequest authorizationRequest);
 
-  AuthorizationRequest get(
-      Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier);
+  AuthorizationRequest get(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier);
 
-  AuthorizationRequest find(
-      Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier);
+  AuthorizationRequest find(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier);
 }

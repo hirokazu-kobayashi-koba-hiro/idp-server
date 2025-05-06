@@ -22,8 +22,7 @@ public class DiscoveryHandler {
   public ServerConfigurationRequestResponse getConfiguration(Tenant tenant) {
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
 
-    ServerConfigurationResponseCreator serverConfigurationResponseCreator =
-        new ServerConfigurationResponseCreator(serverConfiguration);
+    ServerConfigurationResponseCreator serverConfigurationResponseCreator = new ServerConfigurationResponseCreator(serverConfiguration);
     Map<String, Object> content = serverConfigurationResponseCreator.create();
 
     return new ServerConfigurationRequestResponse(ServerConfigurationRequestStatus.OK, content);

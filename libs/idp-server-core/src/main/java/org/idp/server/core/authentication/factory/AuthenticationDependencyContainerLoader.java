@@ -5,13 +5,11 @@ import org.idp.server.basic.log.LoggerWrapper;
 
 public class AuthenticationDependencyContainerLoader {
 
-  private static final LoggerWrapper log =
-      LoggerWrapper.getLogger(AuthenticationDependencyContainerLoader.class);
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(AuthenticationDependencyContainerLoader.class);
 
   public static AuthenticationDependencyContainer load() {
     AuthenticationDependencyContainer container = new AuthenticationDependencyContainer();
-    ServiceLoader<AuthenticationDependencyProvider> loader =
-        ServiceLoader.load(AuthenticationDependencyProvider.class);
+    ServiceLoader<AuthenticationDependencyProvider> loader = ServiceLoader.load(AuthenticationDependencyProvider.class);
 
     for (AuthenticationDependencyProvider<?> provider : loader) {
       container.register(provider.type(), provider.provide());

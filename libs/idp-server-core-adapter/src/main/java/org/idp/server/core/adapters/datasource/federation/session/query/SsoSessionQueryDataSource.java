@@ -25,8 +25,7 @@ public class SsoSessionQueryDataSource implements SsoSessionQueryRepository {
     Map<String, String> result = executor.selectOne(ssoSessionIdentifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {
-      throw new SsoSessionNotFoundException(
-          String.format("federation sso session is not found (%s)", ssoSessionIdentifier.value()));
+      throw new SsoSessionNotFoundException(String.format("federation sso session is not found (%s)", ssoSessionIdentifier.value()));
     }
 
     return jsonConverter.read(result.get("payload"), clazz);

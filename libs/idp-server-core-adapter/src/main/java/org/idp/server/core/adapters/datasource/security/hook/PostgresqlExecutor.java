@@ -13,24 +13,21 @@ public class PostgresqlExecutor implements SecurityEventHoolResultSqlExecutor {
   JsonConverter converter = JsonConverter.snakeCaseInstance();
 
   @Override
-  public void insert(
-      Tenant tenant, SecurityEvent securityEvent, List<SecurityEventHookResult> results) {
+  public void insert(Tenant tenant, SecurityEvent securityEvent, List<SecurityEventHookResult> results) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    StringBuilder sql =
-        new StringBuilder(
-            """
-      INSERT INTO security_event_hook_results
-      (
-       id,
-       tenant_id,
-       security_event_id,
-       security_event_type,
-       security_event_hook,
-       security_event_payload,
-       status
-      )
-      VALUES
-  """);
+    StringBuilder sql = new StringBuilder("""
+            INSERT INTO security_event_hook_results
+            (
+             id,
+             tenant_id,
+             security_event_id,
+             security_event_type,
+             security_event_hook,
+             security_event_payload,
+             status
+            )
+            VALUES
+        """);
 
     String eventPayload = converter.write(securityEvent.detail().toMap());
 

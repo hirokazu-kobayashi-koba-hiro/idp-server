@@ -17,7 +17,8 @@ public class IdentityVerificationApplicationIdentifier {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     IdentityVerificationApplicationIdentifier that = (IdentityVerificationApplicationIdentifier) o;
     return Objects.equals(value, that.value);
   }

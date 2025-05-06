@@ -16,12 +16,7 @@ public class OAuthFlowEventCreator {
   SecurityEventDescription securityEventDescription;
   RequestAttributes requestAttributes;
 
-  public OAuthFlowEventCreator(
-      Tenant tenant,
-      AuthorizationRequest authorizationRequest,
-      User user,
-      DefaultSecurityEventType defaultSecurityEventType,
-      RequestAttributes requestAttributes) {
+  public OAuthFlowEventCreator(Tenant tenant, AuthorizationRequest authorizationRequest, User user, DefaultSecurityEventType defaultSecurityEventType, RequestAttributes requestAttributes) {
     this.tenant = tenant;
     this.authorizationRequest = authorizationRequest;
     this.user = user;
@@ -30,12 +25,7 @@ public class OAuthFlowEventCreator {
     this.requestAttributes = requestAttributes;
   }
 
-  public OAuthFlowEventCreator(
-      AuthorizationRequest authorizationRequest,
-      User user,
-      SecurityEventType securityEventType,
-      SecurityEventDescription securityEventDescription,
-      RequestAttributes requestAttributes) {
+  public OAuthFlowEventCreator(AuthorizationRequest authorizationRequest, User user, SecurityEventType securityEventType, SecurityEventDescription securityEventDescription, RequestAttributes requestAttributes) {
     this.authorizationRequest = authorizationRequest;
     this.user = user;
     this.securityEventType = securityEventType;
@@ -49,15 +39,10 @@ public class OAuthFlowEventCreator {
     builder.add(securityEventType);
     builder.add(securityEventDescription);
 
-    SecurityEventTenant securityEventTenant =
-        new SecurityEventTenant(
-            tenant.identifier().value(), tenant.tokenIssuer().value(), tenant.name().value());
+    SecurityEventTenant securityEventTenant = new SecurityEventTenant(tenant.identifier().value(), tenant.tokenIssuer().value(), tenant.name().value());
     builder.add(securityEventTenant);
 
-    SecurityEventClient securityEventClient =
-        new SecurityEventClient(
-            authorizationRequest.retrieveClientId().value(),
-            authorizationRequest.clientNameValue());
+    SecurityEventClient securityEventClient = new SecurityEventClient(authorizationRequest.retrieveClientId().value(), authorizationRequest.clientNameValue());
     builder.add(securityEventClient);
 
     if (user != null) {

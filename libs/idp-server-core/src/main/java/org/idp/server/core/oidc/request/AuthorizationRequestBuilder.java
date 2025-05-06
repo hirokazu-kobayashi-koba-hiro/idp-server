@@ -173,32 +173,6 @@ public class AuthorizationRequestBuilder {
   }
 
   public AuthorizationRequest build() {
-    return new AuthorizationRequest(
-        identifier,
-        tenantIdentifier,
-        profile,
-        scopes,
-        responseType,
-        requestedClientId,
-        client,
-        redirectUri,
-        state,
-        responseMode,
-        nonce,
-        display,
-        prompts,
-        maxAge,
-        uiLocales,
-        idTokenHint,
-        loginHint,
-        acrValues,
-        claimsValue,
-        requestObject,
-        requestUri,
-        requestedClaimsPayload,
-        codeChallenge,
-        codeChallengeMethod,
-        authorizationDetails,
-        customParams);
+    return new AuthorizationRequest(identifier, tenantIdentifier, profile, scopes, responseType, requestedClientId, client, redirectUri, state, responseMode, nonce, display, prompts, maxAge, uiLocales, idTokenHint, loginHint, acrValues, claimsValue, requestObject, requestUri, requestedClaimsPayload, codeChallenge, codeChallengeMethod, authorizationDetails, customParams);
   }
 }

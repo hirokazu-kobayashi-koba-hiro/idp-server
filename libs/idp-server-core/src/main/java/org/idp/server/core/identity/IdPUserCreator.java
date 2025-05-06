@@ -11,10 +11,7 @@ public class IdPUserCreator {
   AuthenticationInteractionRequest request;
   PasswordEncodeDelegation passwordEncodeDelegation;
 
-  public IdPUserCreator(
-      JsonSchemaDefinition definition,
-      AuthenticationInteractionRequest request,
-      PasswordEncodeDelegation passwordEncodeDelegation) {
+  public IdPUserCreator(JsonSchemaDefinition definition, AuthenticationInteractionRequest request, PasswordEncodeDelegation passwordEncodeDelegation) {
     this.definition = definition;
     this.request = request;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
@@ -90,8 +87,7 @@ public class IdPUserCreator {
       user.setPhoneNumber(request.getValueAsString("phone_number"));
     }
 
-    if (definition.hasProperty("phone_number_verified")
-        && request.containsKey("phone_number_verified")) {
+    if (definition.hasProperty("phone_number_verified") && request.containsKey("phone_number_verified")) {
       user.setPhoneNumberVerified(request.getValueAsBoolean("phone_number_verified"));
     }
 

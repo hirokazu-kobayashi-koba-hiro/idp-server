@@ -9,8 +9,7 @@ import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.token.VpTokenCreatable;
 
-public class AuthorizationResponseVpTokenCreator
-    implements AuthorizationResponseCreator, VpTokenCreatable, RedirectUriDecidable, JarmCreatable {
+public class AuthorizationResponseVpTokenCreator implements AuthorizationResponseCreator, VpTokenCreatable, RedirectUriDecidable, JarmCreatable {
 
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
@@ -18,21 +17,8 @@ public class AuthorizationResponseVpTokenCreator
 
     AuthorizationGrant authorizationGrant = context.authorize();
 
-    VpToken vpToken =
-        createVpToken(
-            context.user(),
-            authorizationGrant,
-            context.serverConfiguration(),
-            context.clientConfiguration(),
-            new ClientCredentials());
-    AuthorizationResponseBuilder authorizationResponseBuilder =
-        new AuthorizationResponseBuilder(
-                decideRedirectUri(authorizationRequest, context.clientConfiguration()),
-                context.responseMode(),
-                ResponseModeValue.fragment(),
-                context.tokenIssuer())
-            .add(vpToken)
-            .add(authorizationGrant.scopes());
+    VpToken vpToken = createVpToken(context.user(), authorizationGrant, context.serverConfiguration(), context.clientConfiguration(), new ClientCredentials());
+    AuthorizationResponseBuilder authorizationResponseBuilder = new AuthorizationResponseBuilder(decideRedirectUri(authorizationRequest, context.clientConfiguration()), context.responseMode(), ResponseModeValue.fragment(), context.tokenIssuer()).add(vpToken).add(authorizationGrant.scopes());
 
     if (context.hasState()) {
       authorizationResponseBuilder.add(authorizationRequest.state());
@@ -40,9 +26,7 @@ public class AuthorizationResponseVpTokenCreator
 
     if (context.isJwtMode()) {
       AuthorizationResponse authorizationResponse = authorizationResponseBuilder.build();
-      JarmPayload jarmPayload =
-          createResponse(
-              authorizationResponse, context.serverConfiguration(), context.clientConfiguration());
+      JarmPayload jarmPayload = createResponse(authorizationResponse, context.serverConfiguration(), context.clientConfiguration());
       authorizationResponseBuilder.add(jarmPayload);
     }
 

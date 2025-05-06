@@ -9,11 +9,7 @@ public class NestedJsonWebEncryptionCreator {
   String encryptionMethod;
   String publicKeys;
 
-  public NestedJsonWebEncryptionCreator(
-      JsonWebSignature jsonWebSignature,
-      String jweAlgorithm,
-      String encryptionMethod,
-      String publicKeys) {
+  public NestedJsonWebEncryptionCreator(JsonWebSignature jsonWebSignature, String jweAlgorithm, String encryptionMethod, String publicKeys) {
     this.jsonWebSignature = jsonWebSignature;
     this.jweAlgorithm = jweAlgorithm;
     this.encryptionMethod = encryptionMethod;
@@ -27,10 +23,7 @@ public class NestedJsonWebEncryptionCreator {
       JsonWebKeys jsonWebKeys = JwkParser.parseKeys(publicKeys);
       JsonWebKey jsonWebKey = jsonWebKeys.findByAlgorithm(jweAlgorithm);
       JWEEncrypter jweEncrypter = new JsonWebEncrypterFactory(jsonWebKey).create();
-      JWEObject jweObject =
-          new JWEObject(
-              new JWEHeader.Builder(algorithm, method).contentType("JWT").build(),
-              new Payload(jsonWebSignature.value()));
+      JWEObject jweObject = new JWEObject(new JWEHeader.Builder(algorithm, method).contentType("JWT").build(), new Payload(jsonWebSignature.value()));
       jweObject.encrypt(jweEncrypter);
       return jweObject.serialize();
     } catch (JsonWebKeyInvalidException | JOSEException e) {

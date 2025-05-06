@@ -13,12 +13,7 @@ public class IdTokenCustomClaims {
   Nonce nonce;
   CustomProperties customProperties;
 
-  IdTokenCustomClaims(
-      AuthorizationCode authorizationCode,
-      AccessTokenEntity accessTokenEntity,
-      State state,
-      Nonce nonce,
-      CustomProperties customProperties) {
+  IdTokenCustomClaims(AuthorizationCode authorizationCode, AccessTokenEntity accessTokenEntity, State state, Nonce nonce, CustomProperties customProperties) {
     this.authorizationCode = authorizationCode;
     this.accessTokenEntity = accessTokenEntity;
     this.state = state;

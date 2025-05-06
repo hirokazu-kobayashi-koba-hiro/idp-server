@@ -204,14 +204,11 @@ public class OAuthRequestParameters {
 
   public CustomParams customParams() {
     Map<String, String> params = new HashMap<>();
-    values
-        .singleValueMap()
-        .forEach(
-            (key, value) -> {
-              if (!OAuthRequestKey.contains(key)) {
-                params.put(key, value);
-              }
-            });
+    values.singleValueMap().forEach((key, value) -> {
+      if (!OAuthRequestKey.contains(key)) {
+        params.put(key, value);
+      }
+    });
     return new CustomParams(params);
   }
 

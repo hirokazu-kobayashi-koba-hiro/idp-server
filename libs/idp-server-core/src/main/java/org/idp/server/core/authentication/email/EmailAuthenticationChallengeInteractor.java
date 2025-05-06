@@ -20,26 +20,16 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
   AuthenticationInteractionCommandRepository transactionCommandRepository;
   EmailSenders emailSenders;
 
-  public EmailAuthenticationChallengeInteractor(
-      AuthenticationConfigurationQueryRepository configurationQueryRepository,
-      AuthenticationInteractionCommandRepository transactionCommandRepository,
-      EmailSenders emailSenders) {
+  public EmailAuthenticationChallengeInteractor(AuthenticationConfigurationQueryRepository configurationQueryRepository, AuthenticationInteractionCommandRepository transactionCommandRepository, EmailSenders emailSenders) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.transactionCommandRepository = transactionCommandRepository;
     this.emailSenders = emailSenders;
   }
 
   @Override
-  public AuthenticationInteractionRequestResult interact(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
-      UserQueryRepository userQueryRepository) {
+  public AuthenticationInteractionRequestResult interact(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, AuthenticationInteractionType type, AuthenticationInteractionRequest request, AuthenticationTransaction transaction, UserQueryRepository userQueryRepository) {
 
-    EmailAuthenticationConfiguration emailAuthenticationConfiguration =
-        configurationQueryRepository.get(tenant, "email", EmailAuthenticationConfiguration.class);
+    EmailAuthenticationConfiguration emailAuthenticationConfiguration = configurationQueryRepository.get(tenant, "email", EmailAuthenticationConfiguration.class);
 
     String email = request.optValueAsString("email", "");
 
@@ -48,11 +38,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       response.put("error", "invalid_request");
       response.put("error_description", "email is required.");
 
-      return new AuthenticationInteractionRequestResult(
-          AuthenticationInteractionStatus.CLIENT_ERROR,
-          type,
-          response,
-          DefaultSecurityEventType.email_verification_failure);
+      return new AuthenticationInteractionRequestResult(AuthenticationInteractionStatus.CLIENT_ERROR, type, response, DefaultSecurityEventType.email_verification_failure);
     }
 
     if (!request.containsKey("email_template")) {
@@ -60,17 +46,12 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       response.put("error", "invalid_request");
       response.put("error_description", "session is invalid. email is not specified");
 
-      return new AuthenticationInteractionRequestResult(
-          AuthenticationInteractionStatus.CLIENT_ERROR,
-          type,
-          response,
-          DefaultSecurityEventType.email_verification_failure);
+      return new AuthenticationInteractionRequestResult(AuthenticationInteractionStatus.CLIENT_ERROR, type, response, DefaultSecurityEventType.email_verification_failure);
     }
 
     OneTimePassword oneTimePassword = OneTimePasswordGenerator.generate();
     String sender = emailAuthenticationConfiguration.sender();
-    EmailVerificationTemplate emailVerificationTemplate =
-        emailAuthenticationConfiguration.findTemplate(request.getValueAsString("email_template"));
+    EmailVerificationTemplate emailVerificationTemplate = emailAuthenticationConfiguration.findTemplate(request.getValueAsString("email_template"));
     String subject = emailVerificationTemplate.subject();
     int retryCountLimitation = emailAuthenticationConfiguration.retryCountLimitation();
     int expireSeconds = emailAuthenticationConfiguration.expireSeconds();
@@ -82,20 +63,12 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
     EmailSender emailSender = emailSenders.get(emailAuthenticationConfiguration.senderType());
     emailSender.send(emailSendingRequest, emailAuthenticationConfiguration.setting());
 
-    EmailVerificationChallenge emailVerificationChallenge =
-        EmailVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
+    EmailVerificationChallenge emailVerificationChallenge = EmailVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
 
-    transactionCommandRepository.register(
-        tenant, authorizationIdentifier, "email", emailVerificationChallenge);
+    transactionCommandRepository.register(tenant, authorizationIdentifier, "email", emailVerificationChallenge);
 
     User user = userQueryRepository.findByEmail(tenant, email, "idp-server");
 
-    return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.SUCCESS,
-        type,
-        user,
-        new Authentication(),
-        Map.of(),
-        DefaultSecurityEventType.email_verification_request);
+    return new AuthenticationInteractionRequestResult(AuthenticationInteractionStatus.SUCCESS, type, user, new Authentication(), Map.of(), DefaultSecurityEventType.email_verification_request);
   }
 }

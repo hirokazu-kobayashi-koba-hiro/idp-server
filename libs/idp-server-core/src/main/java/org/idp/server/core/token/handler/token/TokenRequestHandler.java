@@ -35,32 +35,16 @@ public class TokenRequestHandler {
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
-  public TokenRequestHandler(
-      AuthorizationRequestRepository authorizationRequestRepository,
-      AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
-      AuthorizationGrantedRepository authorizationGrantedRepository,
-      BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
-      CibaGrantRepository cibaGrantRepository,
-      OAuthTokenRepository oAuthTokenRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
+  public TokenRequestHandler(AuthorizationRequestRepository authorizationRequestRepository, AuthorizationCodeGrantRepository authorizationCodeGrantRepository, AuthorizationGrantedRepository authorizationGrantedRepository, BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository, CibaGrantRepository cibaGrantRepository, OAuthTokenRepository oAuthTokenRepository, ServerConfigurationRepository serverConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
-    this.oAuthTokenCreationServices =
-        new OAuthTokenCreationServices(
-            authorizationRequestRepository,
-            authorizationCodeGrantRepository,
-            authorizationGrantedRepository,
-            backchannelAuthenticationRequestRepository,
-            cibaGrantRepository,
-            oAuthTokenRepository);
+    this.oAuthTokenCreationServices = new OAuthTokenCreationServices(authorizationRequestRepository, authorizationCodeGrantRepository, authorizationGrantedRepository, backchannelAuthenticationRequestRepository, cibaGrantRepository, oAuthTokenRepository);
     this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
-  public TokenRequestResponse handle(
-      TokenRequest tokenRequest,
-      PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
+  public TokenRequestResponse handle(TokenRequest tokenRequest, PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
     Tenant tenant = tokenRequest.tenant();
     TokenRequestParameters parameters = tokenRequest.toParameters();
     TokenRequestValidator baseValidator = new TokenRequestValidator(parameters);
@@ -71,28 +55,15 @@ public class TokenRequestHandler {
     RequestedClientId requestedClientId = tokenRequest.clientId();
     CustomProperties customProperties = tokenRequest.toCustomProperties();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, requestedClientId);
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, requestedClientId);
 
-    TokenRequestContext tokenRequestContext =
-        new TokenRequestContext(
-            tenant,
-            clientSecretBasic,
-            clientCert,
-            parameters,
-            customProperties,
-            passwordCredentialsGrantDelegate,
-            serverConfiguration,
-            clientConfiguration);
+    TokenRequestContext tokenRequestContext = new TokenRequestContext(tenant, clientSecretBasic, clientCert, parameters, customProperties, passwordCredentialsGrantDelegate, serverConfiguration, clientConfiguration);
 
-    ClientCredentials clientCredentials =
-        clientAuthenticatorHandler.authenticate(tokenRequestContext);
+    ClientCredentials clientCredentials = clientAuthenticatorHandler.authenticate(tokenRequestContext);
 
-    OAuthTokenCreationService oAuthTokenCreationService =
-        oAuthTokenCreationServices.get(tokenRequestContext.grantType());
+    OAuthTokenCreationService oAuthTokenCreationService = oAuthTokenCreationServices.get(tokenRequestContext.grantType());
 
-    OAuthToken oAuthToken =
-        oAuthTokenCreationService.create(tokenRequestContext, clientCredentials);
+    OAuthToken oAuthToken = oAuthTokenCreationService.create(tokenRequestContext, clientCredentials);
 
     return new TokenRequestResponse(TokenRequestStatus.OK, oAuthToken);
   }

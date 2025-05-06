@@ -7,19 +7,13 @@ import org.idp.server.core.authentication.repository.AuthenticationConfiguration
 import org.idp.server.core.identity.event.UserLifecycleEventExecutor;
 import org.idp.server.core.identity.event.UserLifecycleEventExecutorFactory;
 
-public class ExternalFidoUafServerUserDataDeletionExecutorFactory
-    implements UserLifecycleEventExecutorFactory {
+public class ExternalFidoUafServerUserDataDeletionExecutorFactory implements UserLifecycleEventExecutorFactory {
 
   @Override
-  public UserLifecycleEventExecutor create(
-      ApplicationComponentContainer applicationComponentContainer,
-      AuthenticationDependencyContainer authenticationDependencyContainer) {
+  public UserLifecycleEventExecutor create(ApplicationComponentContainer applicationComponentContainer, AuthenticationDependencyContainer authenticationDependencyContainer) {
 
-    FidoUafExecutors fidoUafExecutors =
-        authenticationDependencyContainer.resolve(FidoUafExecutors.class);
-    AuthenticationConfigurationQueryRepository configurationQueryRepository =
-        authenticationDependencyContainer.resolve(AuthenticationConfigurationQueryRepository.class);
-    return new ExternalFidoUafServerUserDataDeletionExecutor(
-        fidoUafExecutors, configurationQueryRepository);
+    FidoUafExecutors fidoUafExecutors = authenticationDependencyContainer.resolve(FidoUafExecutors.class);
+    AuthenticationConfigurationQueryRepository configurationQueryRepository = authenticationDependencyContainer.resolve(AuthenticationConfigurationQueryRepository.class);
+    return new ExternalFidoUafServerUserDataDeletionExecutor(fidoUafExecutors, configurationQueryRepository);
   }
 }

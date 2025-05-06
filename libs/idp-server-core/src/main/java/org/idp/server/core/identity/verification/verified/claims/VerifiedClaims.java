@@ -17,11 +17,9 @@ public class VerifiedClaims {
     this.json = json;
   }
 
-  public static VerifiedClaims create(
-      IdentityVerificationRequest request, JsonSchemaDefinition jsonSchemaDefinition) {
+  public static VerifiedClaims create(IdentityVerificationRequest request, JsonSchemaDefinition jsonSchemaDefinition) {
 
-    Map<String, Object> mappingResult =
-        IdentityVerificationMapper.mapping(request.toMap(), jsonSchemaDefinition);
+    Map<String, Object> mappingResult = IdentityVerificationMapper.mapping(request.toMap(), jsonSchemaDefinition);
 
     return new VerifiedClaims(JsonNodeWrapper.fromObject(mappingResult));
   }

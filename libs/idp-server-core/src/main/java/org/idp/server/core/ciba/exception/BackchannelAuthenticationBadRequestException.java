@@ -13,8 +13,7 @@ public class BackchannelAuthenticationBadRequestException extends RuntimeExcepti
     this.errorDescription = errorDescription;
   }
 
-  public BackchannelAuthenticationBadRequestException(
-      String error, String errorDescription, Throwable throwable) {
+  public BackchannelAuthenticationBadRequestException(String error, String errorDescription, Throwable throwable) {
     super(errorDescription, throwable);
     this.error = error;
     this.errorDescription = errorDescription;

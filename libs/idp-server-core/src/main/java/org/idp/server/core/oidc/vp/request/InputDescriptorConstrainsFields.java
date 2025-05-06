@@ -9,8 +9,7 @@ public class InputDescriptorConstrainsFields implements JsonReadable {
 
   public InputDescriptorConstrainsFields() {}
 
-  public InputDescriptorConstrainsFields(
-      List<String> path, InputDescriptorConstrainsFiledFilter filter) {
+  public InputDescriptorConstrainsFields(List<String> path, InputDescriptorConstrainsFiledFilter filter) {
     this.path = path;
     this.filter = filter;
   }

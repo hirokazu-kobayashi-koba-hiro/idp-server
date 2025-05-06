@@ -8,8 +8,7 @@ import org.idp.server.core.identity.verification.delegation.ExternalWorkflowAppl
 import org.idp.server.core.identity.verification.exception.IdentityVerificationApplicationNotFoundException;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class IdentityVerificationApplicationQueryDataSource
-    implements IdentityVerificationApplicationQueryRepository {
+public class IdentityVerificationApplicationQueryDataSource implements IdentityVerificationApplicationQueryRepository {
 
   IdentityVerificationApplicationQuerySqlExecutors executors;
 
@@ -18,30 +17,26 @@ public class IdentityVerificationApplicationQueryDataSource
   }
 
   @Override
-  public IdentityVerificationApplication get(
-      Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier) {
+  public IdentityVerificationApplication get(Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier) {
     IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> result = executor.selectOne(tenant, user, identifier);
 
     if (result == null || result.isEmpty()) {
-      throw new IdentityVerificationApplicationNotFoundException(
-          String.format("IdentityVerificationApplication not found (%s)", identifier.value()));
+      throw new IdentityVerificationApplicationNotFoundException(String.format("IdentityVerificationApplication not found (%s)", identifier.value()));
     }
 
     return ModelConverter.convert(result);
   }
 
   @Override
-  public IdentityVerificationApplication get(
-      Tenant tenant, ExternalWorkflowApplicationIdentifier identifier) {
+  public IdentityVerificationApplication get(Tenant tenant, ExternalWorkflowApplicationIdentifier identifier) {
     IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {
-      throw new IdentityVerificationApplicationNotFoundException(
-          String.format("IdentityVerificationApplication not found (%s)", identifier.value()));
+      throw new IdentityVerificationApplicationNotFoundException(String.format("IdentityVerificationApplication not found (%s)", identifier.value()));
     }
 
     return ModelConverter.convert(result);
@@ -58,14 +53,12 @@ public class IdentityVerificationApplicationQueryDataSource
       return new IdentityVerificationApplications();
     }
 
-    List<IdentityVerificationApplication> applicationList =
-        result.stream().map(ModelConverter::convert).toList();
+    List<IdentityVerificationApplication> applicationList = result.stream().map(ModelConverter::convert).toList();
     return new IdentityVerificationApplications(applicationList);
   }
 
   @Override
-  public IdentityVerificationApplications findList(
-      Tenant tenant, User user, IdentityVerificationApplicationQueries queries) {
+  public IdentityVerificationApplications findList(Tenant tenant, User user, IdentityVerificationApplicationQueries queries) {
     IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
 
     List<Map<String, String>> result = executor.selectList(tenant, user, queries);
@@ -74,8 +67,7 @@ public class IdentityVerificationApplicationQueryDataSource
       return new IdentityVerificationApplications();
     }
 
-    List<IdentityVerificationApplication> applicationList =
-        result.stream().map(ModelConverter::convert).toList();
+    List<IdentityVerificationApplication> applicationList = result.stream().map(ModelConverter::convert).toList();
     return new IdentityVerificationApplications(applicationList);
   }
 }

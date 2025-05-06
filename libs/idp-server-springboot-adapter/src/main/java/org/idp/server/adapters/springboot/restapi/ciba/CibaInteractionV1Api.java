@@ -27,28 +27,15 @@ public class CibaInteractionV1Api implements ParameterTransformable {
   }
 
   @PostMapping
-  public ResponseEntity<?> request(
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("id")
-          BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier,
-      @PathVariable("interaction-type") AuthenticationInteractionType type,
-      @RequestBody(required = false) Map<String, Object> requestBody,
-      HttpServletRequest httpServletRequest) {
+  public ResponseEntity<?> request(@PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @PathVariable("id") BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier, @PathVariable("interaction-type") AuthenticationInteractionType type, @RequestBody(required = false) Map<String, Object> requestBody, HttpServletRequest httpServletRequest) {
 
     AuthenticationInteractionRequest request = new AuthenticationInteractionRequest(requestBody);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    AuthenticationInteractionRequestResult result =
-        cibaFlowApi.interact(
-            tenantIdentifier,
-            backchannelAuthenticationRequestIdentifier,
-            type,
-            request,
-            requestAttributes);
+    AuthenticationInteractionRequestResult result = cibaFlowApi.interact(tenantIdentifier, backchannelAuthenticationRequestIdentifier, type, request, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
-    return new ResponseEntity<>(
-        result.response(), httpHeaders, HttpStatus.valueOf(result.statusCode()));
+    return new ResponseEntity<>(result.response(), httpHeaders, HttpStatus.valueOf(result.statusCode()));
   }
 }

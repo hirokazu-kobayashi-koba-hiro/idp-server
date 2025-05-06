@@ -3,9 +3,7 @@ package org.idp.server.basic.type.oauth;
 import java.util.Objects;
 
 public enum ClientAssertionType {
-  jwt_bearer("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
-  unknown(""),
-  undefined("");
+  jwt_bearer("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), unknown(""), undefined("");
 
   String value;
 

@@ -4,8 +4,7 @@ import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.identity.repository.UserCommandRepository;
 
-public class UserCommandDataSourceProvider
-    implements ApplicationComponentProvider<UserCommandRepository> {
+public class UserCommandDataSourceProvider implements ApplicationComponentProvider<UserCommandRepository> {
 
   @Override
   public Class<UserCommandRepository> type() {

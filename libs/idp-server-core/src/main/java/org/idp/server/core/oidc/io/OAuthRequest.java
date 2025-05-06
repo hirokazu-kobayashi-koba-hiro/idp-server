@@ -19,10 +19,9 @@ public class OAuthRequest {
 
   public static OAuthRequest singleMap(Tenant tenant, Map<String, String> params) {
     HashMap<String, String[]> map = new HashMap<>();
-    params.forEach(
-        (key, value) -> {
-          map.put(key, new String[] {value});
-        });
+    params.forEach((key, value) -> {
+      map.put(key, new String[] {value});
+    });
     return new OAuthRequest(tenant, map);
   }
 

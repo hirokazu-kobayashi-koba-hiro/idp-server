@@ -17,12 +17,7 @@ public class OidcSsoSessionCreator {
   FederationType federationType;
   SsoProvider ssoProvider;
 
-  public OidcSsoSessionCreator(
-      OidcSsoConfiguration oidcSsoConfiguration,
-      Tenant tenant,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      FederationType federationType,
-      SsoProvider ssoProvider) {
+  public OidcSsoSessionCreator(OidcSsoConfiguration oidcSsoConfiguration, Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier, FederationType federationType, SsoProvider ssoProvider) {
     this.configuration = oidcSsoConfiguration;
     this.tenant = tenant;
     this.authorizationRequestIdentifier = authorizationRequestIdentifier;
@@ -46,19 +41,8 @@ public class OidcSsoSessionCreator {
     queryParams.add("nonce", nonce);
     queryParams.add("scope", configuration.scopeAsString());
 
-    String authorizationRequestUri =
-        String.format("%s?%s", authorizationEndpoint, queryParams.params());
+    String authorizationRequestUri = String.format("%s?%s", authorizationEndpoint, queryParams.params());
 
-    return new OidcSsoSession(
-        sessionId,
-        authorizationRequestIdentifier.value(),
-        tenant.identifierValue(),
-        tenant.tokenIssuerValue(),
-        state,
-        nonce,
-        configuration.type(),
-        configuration.clientId(),
-        configuration.redirectUri(),
-        authorizationRequestUri);
+    return new OidcSsoSession(sessionId, authorizationRequestIdentifier.value(), tenant.identifierValue(), tenant.tokenIssuerValue(), state, nonce, configuration.type(), configuration.clientId(), configuration.redirectUri(), authorizationRequestUri);
   }
 }

@@ -9,10 +9,7 @@ public class HttpRequestBodyCreator {
   HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys;
   HttpRequestStaticBody httpRequestStaticBody;
 
-  public HttpRequestBodyCreator(
-      HttpRequestBaseParams baseParams,
-      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys,
-      HttpRequestStaticBody httpRequestStaticBody) {
+  public HttpRequestBodyCreator(HttpRequestBaseParams baseParams, HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys, HttpRequestStaticBody httpRequestStaticBody) {
     this.baseParams = baseParams;
     this.httpRequestDynamicBodyKeys = httpRequestDynamicBodyKeys;
     this.httpRequestStaticBody = httpRequestStaticBody;

@@ -8,10 +8,7 @@ public class OidcTokenRequestCreator {
   OidcSsoSession session;
   OidcSsoConfiguration configuration;
 
-  public OidcTokenRequestCreator(
-      FederationCallbackParameters parameters,
-      OidcSsoSession session,
-      OidcSsoConfiguration configuration) {
+  public OidcTokenRequestCreator(FederationCallbackParameters parameters, OidcSsoSession session, OidcSsoConfiguration configuration) {
     this.parameters = parameters;
     this.session = session;
     this.configuration = configuration;
@@ -25,7 +22,6 @@ public class OidcTokenRequestCreator {
     String redirectUri = session.redirectUri();
     String grantType = "authorization_code";
     String clientAuthenticationType = configuration.clientAuthenticationType();
-    return new OidcTokenRequest(
-        endpoint, code, clientId, clientSecret, redirectUri, grantType, clientAuthenticationType);
+    return new OidcTokenRequest(endpoint, code, clientId, clientSecret, redirectUri, grantType, clientAuthenticationType);
   }
 }

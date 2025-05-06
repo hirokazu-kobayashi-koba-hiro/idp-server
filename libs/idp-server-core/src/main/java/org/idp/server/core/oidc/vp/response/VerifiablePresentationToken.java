@@ -1,3 +1,4 @@
 package org.idp.server.core.oidc.vp.response;
 
-public class VerifiablePresentationToken {}
+public class VerifiablePresentationToken {
+}

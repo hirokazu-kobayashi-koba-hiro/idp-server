@@ -14,39 +14,22 @@ public class WebAuthnAuthenticationChallengeInteractor implements Authentication
   AuthenticationConfigurationQueryRepository configurationRepository;
   WebAuthnExecutors webAuthnExecutors;
 
-  public WebAuthnAuthenticationChallengeInteractor(
-      AuthenticationConfigurationQueryRepository configurationRepository,
-      WebAuthnExecutors webAuthnExecutors) {
+  public WebAuthnAuthenticationChallengeInteractor(AuthenticationConfigurationQueryRepository configurationRepository, WebAuthnExecutors webAuthnExecutors) {
     this.configurationRepository = configurationRepository;
     this.webAuthnExecutors = webAuthnExecutors;
   }
 
   @Override
-  public AuthenticationInteractionRequestResult interact(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
-      UserQueryRepository userQueryRepository) {
+  public AuthenticationInteractionRequestResult interact(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, AuthenticationInteractionType type, AuthenticationInteractionRequest request, AuthenticationTransaction transaction, UserQueryRepository userQueryRepository) {
 
-    WebAuthnConfiguration configuration =
-        configurationRepository.get(tenant, "webauthn", WebAuthnConfiguration.class);
+    WebAuthnConfiguration configuration = configurationRepository.get(tenant, "webauthn", WebAuthnConfiguration.class);
 
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
-    WebAuthnChallenge webAuthnChallenge =
-        webAuthnExecutor.challengeAuthentication(
-            tenant, authorizationIdentifier, request, configuration);
+    WebAuthnChallenge webAuthnChallenge = webAuthnExecutor.challengeAuthentication(tenant, authorizationIdentifier, request, configuration);
 
     Map<String, Object> response = new HashMap<>();
     response.put("challenge", webAuthnChallenge.challenge());
 
-    return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.SUCCESS,
-        type,
-        transaction.user(),
-        new Authentication(),
-        response,
-        DefaultSecurityEventType.webauthn_authentication_challenge);
+    return new AuthenticationInteractionRequestResult(AuthenticationInteractionStatus.SUCCESS, type, transaction.user(), new Authentication(), response, DefaultSecurityEventType.webauthn_authentication_challenge);
   }
 }

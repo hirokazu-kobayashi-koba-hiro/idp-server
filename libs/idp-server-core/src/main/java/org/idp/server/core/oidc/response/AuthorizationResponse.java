@@ -23,20 +23,7 @@ public class AuthorizationResponse {
   JarmPayload jarmPayload;
   QueryParams queryParams;
 
-  AuthorizationResponse(
-      RedirectUri redirectUri,
-      ResponseMode responseMode,
-      ResponseModeValue responseModeValue,
-      AuthorizationCode authorizationCode,
-      State state,
-      AccessToken accessToken,
-      TokenType tokenType,
-      ExpiresIn expiresIn,
-      Scopes scopes,
-      IdToken idToken,
-      TokenIssuer tokenIssuer,
-      JarmPayload jarmPayload,
-      QueryParams queryParams) {
+  AuthorizationResponse(RedirectUri redirectUri, ResponseMode responseMode, ResponseModeValue responseModeValue, AuthorizationCode authorizationCode, State state, AccessToken accessToken, TokenType tokenType, ExpiresIn expiresIn, Scopes scopes, IdToken idToken, TokenIssuer tokenIssuer, JarmPayload jarmPayload, QueryParams queryParams) {
     this.redirectUri = redirectUri;
     this.responseMode = responseMode;
     this.responseModeValue = responseModeValue;
@@ -125,7 +112,6 @@ public class AuthorizationResponse {
   }
 
   public String redirectUriValue() {
-    return String.format(
-        "%s%s%s", redirectUri.value(), responseModeValue.value(), queryParams.params());
+    return String.format("%s%s%s", redirectUri.value(), responseModeValue.value(), queryParams.params());
   }
 }

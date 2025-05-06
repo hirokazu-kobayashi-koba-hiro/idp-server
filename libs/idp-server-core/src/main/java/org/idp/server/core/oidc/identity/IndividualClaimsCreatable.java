@@ -9,11 +9,7 @@ import org.idp.server.core.oidc.grant.GrantUserinfoClaims;
 
 public interface IndividualClaimsCreatable extends ClaimHashable {
 
-  default Map<String, Object> createIndividualClaims(
-      User user,
-      GrantIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode,
-      RequestedIdTokenClaims requestedIdTokenClaims) {
+  default Map<String, Object> createIndividualClaims(User user, GrantIdTokenClaims idTokenClaims, boolean idTokenStrictMode, RequestedIdTokenClaims requestedIdTokenClaims) {
 
     HashMap<String, Object> claims = new HashMap<>();
 
@@ -96,10 +92,8 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       JsonNodeWrapper verificationNodeWrapper = verifiedClaimsObject.verificationNodeWrapper();
       Map<String, Object> verification = new HashMap<>();
       JsonNodeWrapper verificationClaim = userVerifiedClaims.getValueAsJsonNode("verification");
-      if (verificationNodeWrapper.contains("trust_framework")
-          && verificationClaim.contains("trust_framework")) {
-        verification.put(
-            "trust_framework", verificationClaim.getValueOrEmptyAsString("trust_framework"));
+      if (verificationNodeWrapper.contains("trust_framework") && verificationClaim.contains("trust_framework")) {
+        verification.put("trust_framework", verificationClaim.getValueOrEmptyAsString("trust_framework"));
       }
       if (verificationNodeWrapper.contains("evidence") && verificationClaim.contains("evidence")) {
         verification.put("evidence", verificationClaim.getValueAsJsonNodeListAsMap("evidence"));
@@ -135,17 +129,14 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       if (claimsNodeWrapper.contains("phone_number") && userClaims.contains("phone_number")) {
         verifiedClaims.put("phone_number", userClaims.getValueOrEmptyAsString("phone_number"));
       }
-      if (claimsNodeWrapper.contains("phone_number_verified")
-          && userClaims.contains("phone_number_verified")) {
-        verifiedClaims.put(
-            "phone_number_verified", userClaims.getValueAsBoolean("phone_number_verified"));
+      if (claimsNodeWrapper.contains("phone_number_verified") && userClaims.contains("phone_number_verified")) {
+        verifiedClaims.put("phone_number_verified", userClaims.getValueAsBoolean("phone_number_verified"));
       }
       if (claimsNodeWrapper.contains("email") && userClaims.contains("email")) {
         verifiedClaims.put("email", userClaims.getValueOrEmptyAsString("email"));
       }
       if (claimsNodeWrapper.contains("email_verified") && userClaims.contains("email_verified")) {
-        verifiedClaims.put(
-            "email_verified", userVerifiedClaims.getValueAsBoolean("email_verified"));
+        verifiedClaims.put("email_verified", userVerifiedClaims.getValueAsBoolean("email_verified"));
       }
       verified.put("verification", verification);
       verified.put("claims", verifiedClaims);
@@ -155,8 +146,7 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     return claims;
   }
 
-  default Map<String, Object> createIndividualClaims(
-      User user, GrantUserinfoClaims userinfoClaims) {
+  default Map<String, Object> createIndividualClaims(User user, GrantUserinfoClaims userinfoClaims) {
 
     HashMap<String, Object> claims = new HashMap<>();
 

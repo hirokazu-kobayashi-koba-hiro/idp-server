@@ -8,8 +8,7 @@ import org.idp.server.core.authentication.repository.AuthenticationTransactionQu
 import org.idp.server.core.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class AuthenticationTransactionQueryDataSource
-    implements AuthenticationTransactionQueryRepository {
+public class AuthenticationTransactionQueryDataSource implements AuthenticationTransactionQueryRepository {
 
   AuthenticationTransactionQuerySqlExecutors executors;
 
@@ -23,20 +22,17 @@ public class AuthenticationTransactionQueryDataSource
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {
-      throw new AuthenticationTransactionNotFoundException(
-          "Authentication transaction not found for identifier: " + identifier.value());
+      throw new AuthenticationTransactionNotFoundException("Authentication transaction not found for identifier: " + identifier.value());
     }
 
     return ModelConverter.convert(result);
   }
 
   @Override
-  public AuthenticationTransaction findLatest(
-      Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier) {
+  public AuthenticationTransaction findLatest(Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier) {
 
     AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
-    Map<String, String> result =
-        executor.selectOneByDeviceId(tenant, authenticationDeviceIdentifier);
+    Map<String, String> result = executor.selectOneByDeviceId(tenant, authenticationDeviceIdentifier);
 
     if (result == null || result.isEmpty()) {
       return new AuthenticationTransaction();

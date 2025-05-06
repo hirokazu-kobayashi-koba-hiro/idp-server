@@ -22,11 +22,7 @@ public class UserEntryService implements UserApi {
   TokenEventPublisher eventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
 
-  public UserEntryService(
-      UserCommandRepository userCommandRepository,
-      TenantRepository tenantRepository,
-      TokenEventPublisher eventPublisher,
-      UserLifecycleEventPublisher userLifecycleEventPublisher) {
+  public UserEntryService(UserCommandRepository userCommandRepository, TenantRepository tenantRepository, TokenEventPublisher eventPublisher, UserLifecycleEventPublisher userLifecycleEventPublisher) {
     this.userCommandRepository = userCommandRepository;
     this.tenantRepository = tenantRepository;
     this.eventPublisher = eventPublisher;
@@ -34,19 +30,13 @@ public class UserEntryService implements UserApi {
   }
 
   @Override
-  public void delete(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      RequestAttributes requestAttributes) {
+  public void delete(TenantIdentifier tenantIdentifier, User user, OAuthToken oAuthToken, RequestAttributes requestAttributes) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
     userCommandRepository.delete(tenant, user.userIdentifier());
 
-    UserLifecycleEvent userLifecycleEvent =
-        new UserLifecycleEvent(tenant, user, UserLifecycleType.DELETE);
+    UserLifecycleEvent userLifecycleEvent = new UserLifecycleEvent(tenant, user, UserLifecycleType.DELETE);
     userLifecycleEventPublisher.publish(userLifecycleEvent);
-    eventPublisher.publish(
-        tenant, oAuthToken, DefaultSecurityEventType.user_delete, requestAttributes);
+    eventPublisher.publish(tenant, oAuthToken, DefaultSecurityEventType.user_delete, requestAttributes);
   }
 }

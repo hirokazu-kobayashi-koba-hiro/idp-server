@@ -36,31 +36,12 @@ public class DefaultTokenProtocol implements TokenProtocol {
   PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
   LoggerWrapper log = LoggerWrapper.getLogger(DefaultTokenProtocol.class);
 
-  public DefaultTokenProtocol(
-      AuthorizationRequestRepository authorizationRequestRepository,
-      AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
-      AuthorizationGrantedRepository authorizationGrantedRepository,
-      BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
-      CibaGrantRepository cibaGrantRepository,
-      OAuthTokenRepository oAuthTokenRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository,
-      PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
-    this.tokenRequestHandler =
-        new TokenRequestHandler(
-            authorizationRequestRepository,
-            authorizationCodeGrantRepository,
-            authorizationGrantedRepository,
-            backchannelAuthenticationRequestRepository,
-            cibaGrantRepository,
-            oAuthTokenRepository,
-            serverConfigurationRepository,
-            clientConfigurationRepository);
+  public DefaultTokenProtocol(AuthorizationRequestRepository authorizationRequestRepository, AuthorizationCodeGrantRepository authorizationCodeGrantRepository, AuthorizationGrantedRepository authorizationGrantedRepository, BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository, CibaGrantRepository cibaGrantRepository, OAuthTokenRepository oAuthTokenRepository, ServerConfigurationRepository serverConfigurationRepository,
+      ClientConfigurationRepository clientConfigurationRepository, PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
+    this.tokenRequestHandler = new TokenRequestHandler(authorizationRequestRepository, authorizationCodeGrantRepository, authorizationGrantedRepository, backchannelAuthenticationRequestRepository, cibaGrantRepository, oAuthTokenRepository, serverConfigurationRepository, clientConfigurationRepository);
     this.errorHandler = new TokenRequestErrorHandler();
     this.tokenIntrospectionHandler = new TokenIntrospectionHandler(oAuthTokenRepository);
-    this.tokenRevocationHandler =
-        new TokenRevocationHandler(
-            oAuthTokenRepository, serverConfigurationRepository, clientConfigurationRepository);
+    this.tokenRevocationHandler = new TokenRevocationHandler(oAuthTokenRepository, serverConfigurationRepository, clientConfigurationRepository);
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
   }
 
@@ -83,8 +64,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
       return tokenIntrospectionHandler.handle(request);
     } catch (TokenInvalidException exception) {
       Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
-      return new TokenIntrospectionResponse(
-          TokenIntrospectionRequestStatus.INVALID_TOKEN, contents);
+      return new TokenIntrospectionResponse(TokenIntrospectionRequestStatus.INVALID_TOKEN, contents);
     } catch (Exception exception) {
       log.error(exception.getMessage(), exception);
       Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
@@ -98,8 +78,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
       return tokenRevocationHandler.handle(request);
     } catch (Exception exception) {
       log.error(exception.getMessage(), exception);
-      return new TokenRevocationResponse(
-          TokenRevocationRequestStatus.SERVER_ERROR, new OAuthToken(), Map.of());
+      return new TokenRevocationResponse(TokenRevocationRequestStatus.SERVER_ERROR, new OAuthToken(), Map.of());
     }
   }
 }

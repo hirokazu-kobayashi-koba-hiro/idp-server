@@ -22,10 +22,7 @@ public class UserinfoHandler {
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
-  public UserinfoHandler(
-      OAuthTokenRepository oAuthTokenRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+  public UserinfoHandler(OAuthTokenRepository oAuthTokenRepository, ServerConfigurationRepository serverConfigurationRepository, ClientConfigurationRepository clientConfigurationRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
@@ -45,8 +42,7 @@ public class UserinfoHandler {
     UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken, request.toClientCert(), user);
     verifier.verify();
 
-    UserinfoClaimsCreator claimsCreator =
-        new UserinfoClaimsCreator(user, oAuthToken.authorizationGrant());
+    UserinfoClaimsCreator claimsCreator = new UserinfoClaimsCreator(user, oAuthToken.authorizationGrant());
     Map<String, Object> claims = claimsCreator.createClaims();
     UserinfoResponse userinfoResponse = new UserinfoResponse(user, claims);
     return new UserinfoRequestResponse(UserinfoRequestStatus.OK, oAuthToken, userinfoResponse);

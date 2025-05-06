@@ -17,80 +17,47 @@ public class OidcFederationInteractor implements FederationInteractor {
   SsoSessionQueryRepository sessionQueryRepository;
   OidcSsoExecutors oidcSsoExecutors;
 
-  public OidcFederationInteractor(
-      OidcSsoExecutors oidcSsoExecutors,
-      FederationConfigurationQueryRepository configurationQueryRepository,
-      SsoSessionCommandRepository sessionCommandRepository,
-      SsoSessionQueryRepository sessionQueryRepository) {
+  public OidcFederationInteractor(OidcSsoExecutors oidcSsoExecutors, FederationConfigurationQueryRepository configurationQueryRepository, SsoSessionCommandRepository sessionCommandRepository, SsoSessionQueryRepository sessionQueryRepository) {
     this.oidcSsoExecutors = oidcSsoExecutors;
     this.configurationQueryRepository = configurationQueryRepository;
     this.sessionCommandRepository = sessionCommandRepository;
     this.sessionQueryRepository = sessionQueryRepository;
   }
 
-  public FederationRequestResponse request(
-      Tenant tenant,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      FederationType federationType,
-      SsoProvider ssoProvider) {
+  public FederationRequestResponse request(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier, FederationType federationType, SsoProvider ssoProvider) {
 
-    OidcSsoConfiguration oidcSsoConfiguration =
-        configurationQueryRepository.get(
-            tenant, federationType, ssoProvider, OidcSsoConfiguration.class);
+    OidcSsoConfiguration oidcSsoConfiguration = configurationQueryRepository.get(tenant, federationType, ssoProvider, OidcSsoConfiguration.class);
 
-    OidcSsoSessionCreator authorizationRequestCreator =
-        new OidcSsoSessionCreator(
-            oidcSsoConfiguration,
-            tenant,
-            authorizationRequestIdentifier,
-            federationType,
-            ssoProvider);
+    OidcSsoSessionCreator authorizationRequestCreator = new OidcSsoSessionCreator(oidcSsoConfiguration, tenant, authorizationRequestIdentifier, federationType, ssoProvider);
     OidcSsoSession oidcSsoSession = authorizationRequestCreator.create();
 
-    sessionCommandRepository.register(
-        tenant, oidcSsoSession.ssoSessionIdentifier(), oidcSsoSession);
+    sessionCommandRepository.register(tenant, oidcSsoSession.ssoSessionIdentifier(), oidcSsoSession);
 
-    return new FederationRequestResponse(
-        FederationRequestStatus.REDIRECABLE_OK, oidcSsoSession, oidcSsoConfiguration);
+    return new FederationRequestResponse(FederationRequestStatus.REDIRECABLE_OK, oidcSsoSession, oidcSsoConfiguration);
   }
 
-  public FederationInteractionResult callback(
-      Tenant tenant,
-      FederationType federationType,
-      SsoProvider ssoProvider,
-      FederationCallbackRequest federationCallbackRequest,
-      UserQueryRepository userQueryRepository) {
+  public FederationInteractionResult callback(Tenant tenant, FederationType federationType, SsoProvider ssoProvider, FederationCallbackRequest federationCallbackRequest, UserQueryRepository userQueryRepository) {
 
     SsoState ssoState = federationCallbackRequest.ssoState();
     FederationCallbackParameters parameters = federationCallbackRequest.parameters();
-    OidcSsoSession session =
-        sessionQueryRepository.get(tenant, ssoState.ssoSessionIdentifier(), OidcSsoSession.class);
+    OidcSsoSession session = sessionQueryRepository.get(tenant, ssoState.ssoSessionIdentifier(), OidcSsoSession.class);
 
-    OidcSsoConfiguration oidcSsoConfiguration =
-        configurationQueryRepository.get(
-            tenant, federationType, ssoProvider, OidcSsoConfiguration.class);
+    OidcSsoConfiguration oidcSsoConfiguration = configurationQueryRepository.get(tenant, federationType, ssoProvider, OidcSsoConfiguration.class);
 
     OidcSsoExecutor oidcSsoExecutor = oidcSsoExecutors.get(oidcSsoConfiguration.ssoProvider());
 
-    OidcTokenRequestCreator tokenRequestCreator =
-        new OidcTokenRequestCreator(parameters, session, oidcSsoConfiguration);
+    OidcTokenRequestCreator tokenRequestCreator = new OidcTokenRequestCreator(parameters, session, oidcSsoConfiguration);
     OidcTokenRequest tokenRequest = tokenRequestCreator.create();
     OidcTokenResponse tokenResponse = oidcSsoExecutor.requestToken(tokenRequest);
 
-    JoseContext joseContext =
-        verifyAndParseIdToken(oidcSsoExecutor, oidcSsoConfiguration, tokenResponse);
+    JoseContext joseContext = verifyAndParseIdToken(oidcSsoExecutor, oidcSsoConfiguration, tokenResponse);
 
-    OidcUserinfoRequest userinfoRequest =
-        new OidcUserinfoRequest(
-            oidcSsoConfiguration.userinfoEndpoint(), tokenResponse.accessToken());
+    OidcUserinfoRequest userinfoRequest = new OidcUserinfoRequest(oidcSsoConfiguration.userinfoEndpoint(), tokenResponse.accessToken());
     OidcUserinfoResponse userinfoResponse = oidcSsoExecutor.requestUserInfo(userinfoRequest);
 
-    User existingUser =
-        userQueryRepository.findByProvider(
-            tenant, oidcSsoConfiguration.issuerName(), userinfoResponse.sub());
+    User existingUser = userQueryRepository.findByProvider(tenant, oidcSsoConfiguration.issuerName(), userinfoResponse.sub());
 
-    OidcUserinfoResponseConvertor convertor =
-        new OidcUserinfoResponseConvertor(existingUser, userinfoResponse, oidcSsoConfiguration);
+    OidcUserinfoResponseConvertor convertor = new OidcUserinfoResponseConvertor(existingUser, userinfoResponse, oidcSsoConfiguration);
     User user = convertor.convert();
 
     sessionCommandRepository.delete(tenant, session.ssoSessionIdentifier());
@@ -98,17 +65,12 @@ public class OidcFederationInteractor implements FederationInteractor {
     return FederationInteractionResult.success(session, user);
   }
 
-  private JoseContext verifyAndParseIdToken(
-      OidcSsoExecutor oidcSsoExecutor,
-      OidcSsoConfiguration configuration,
-      OidcTokenResponse tokenResponse) {
+  private JoseContext verifyAndParseIdToken(OidcSsoExecutor oidcSsoExecutor, OidcSsoConfiguration configuration, OidcTokenResponse tokenResponse) {
     try {
-      OidcJwksResponse jwksResponse =
-          oidcSsoExecutor.getJwks(new OidcJwksRequest(configuration.jwksUri()));
+      OidcJwksResponse jwksResponse = oidcSsoExecutor.getJwks(new OidcJwksRequest(configuration.jwksUri()));
 
       JoseHandler joseHandler = new JoseHandler();
-      JoseContext joseContext =
-          joseHandler.handle(tokenResponse.idToken(), jwksResponse.value(), "", "");
+      JoseContext joseContext = joseHandler.handle(tokenResponse.idToken(), jwksResponse.value(), "", "");
 
       joseContext.verifySignature();
 

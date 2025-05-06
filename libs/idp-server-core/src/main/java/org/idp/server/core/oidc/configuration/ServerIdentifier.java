@@ -17,7 +17,8 @@ public class ServerIdentifier {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     ServerIdentifier that = (ServerIdentifier) o;
     return Objects.equals(value, that.value);
   }

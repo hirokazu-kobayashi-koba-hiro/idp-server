@@ -17,7 +17,8 @@ public class FederationType {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     FederationType federationType = (FederationType) o;
     return Objects.equals(name, federationType.name);
   }

@@ -39,12 +39,7 @@ public class AesCipher implements Base64Codeable {
       byte[] cipherText = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
 
       return new EncryptedData(encoder.encodeToString(cipherText), encoder.encodeToString((iv)));
-    } catch (InvalidAlgorithmParameterException
-        | InvalidKeyException
-        | IllegalBlockSizeException
-        | BadPaddingException
-        | NoSuchPaddingException
-        | NoSuchAlgorithmException exception) {
+    } catch (InvalidAlgorithmParameterException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException | NoSuchAlgorithmException exception) {
 
       throw new AesCryptoRuntimeException("Error while encrypting data: " + plainText, exception);
     }
@@ -53,20 +48,12 @@ public class AesCipher implements Base64Codeable {
   public String decrypt(EncryptedData data) {
     try {
       Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-      cipher.init(
-          Cipher.DECRYPT_MODE,
-          secretKey,
-          new GCMParameterSpec(TAG_LENGTH, decoder.decode(data.iv())));
+      cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(TAG_LENGTH, decoder.decode(data.iv())));
 
       byte[] decrypted = cipher.doFinal(decoder.decode(data.cipherText()));
 
       return new String(decrypted, StandardCharsets.UTF_8);
-    } catch (InvalidAlgorithmParameterException
-        | InvalidKeyException
-        | IllegalBlockSizeException
-        | BadPaddingException
-        | NoSuchPaddingException
-        | NoSuchAlgorithmException exception) {
+    } catch (InvalidAlgorithmParameterException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException | NoSuchAlgorithmException exception) {
 
       throw new AesCryptoRuntimeException("Error while decrypting data: " + data, exception);
     }

@@ -31,18 +31,7 @@ public class AuthorizationGrant {
 
   public AuthorizationGrant() {}
 
-  public AuthorizationGrant(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      Authentication authentication,
-      RequestedClientId requestedClientId,
-      Client client,
-      Scopes scopes,
-      GrantIdTokenClaims idTokenClaims,
-      GrantUserinfoClaims userinfoClaims,
-      CustomProperties customProperties,
-      AuthorizationDetails authorizationDetails,
-      ConsentClaims consentClaims) {
+  public AuthorizationGrant(TenantIdentifier tenantIdentifier, User user, Authentication authentication, RequestedClientId requestedClientId, Client client, Scopes scopes, GrantIdTokenClaims idTokenClaims, GrantUserinfoClaims userinfoClaims, CustomProperties customProperties, AuthorizationDetails authorizationDetails, ConsentClaims consentClaims) {
     this.tenantIdentifier = tenantIdentifier;
     this.user = user;
     this.authentication = authentication;
@@ -180,18 +169,7 @@ public class AuthorizationGrant {
 
     ConsentClaims newConsentClaims = consentClaims.merge(newAuthorizationGrant.consentClaims());
 
-    return new AuthorizationGrant(
-        tenantIdentifier,
-        newUser,
-        newAuthentication,
-        newRequestClientId,
-        newClient,
-        newScopes,
-        newGrantIdToken,
-        newGrantUserinfo,
-        newCustomProperties,
-        newAuthorizationDetails,
-        newConsentClaims);
+    return new AuthorizationGrant(tenantIdentifier, newUser, newAuthentication, newRequestClientId, newClient, newScopes, newGrantIdToken, newGrantUserinfo, newCustomProperties, newAuthorizationDetails, newConsentClaims);
   }
 
   public boolean isGrantedScopes(Scopes requestedScopes) {
@@ -245,8 +223,7 @@ public class AuthorizationGrant {
     return true;
   }
 
-  public GrantUserinfoClaims unauthorizedUserinfoClaims(
-      GrantUserinfoClaims requestedUserinfoClaims) {
+  public GrantUserinfoClaims unauthorizedUserinfoClaims(GrantUserinfoClaims requestedUserinfoClaims) {
     Set<String> unauthorizedClaims = new HashSet<>();
 
     for (String claims : requestedUserinfoClaims) {

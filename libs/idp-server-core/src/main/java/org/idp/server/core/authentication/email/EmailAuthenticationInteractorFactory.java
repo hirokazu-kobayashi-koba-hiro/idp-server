@@ -16,10 +16,8 @@ public class EmailAuthenticationInteractorFactory implements AuthenticationInter
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
-    AuthenticationInteractionCommandRepository commandRepository =
-        container.resolve(AuthenticationInteractionCommandRepository.class);
-    AuthenticationInteractionQueryRepository queryRepository =
-        container.resolve(AuthenticationInteractionQueryRepository.class);
+    AuthenticationInteractionCommandRepository commandRepository = container.resolve(AuthenticationInteractionCommandRepository.class);
+    AuthenticationInteractionQueryRepository queryRepository = container.resolve(AuthenticationInteractionQueryRepository.class);
     return new EmailAuthenticationInteractor(commandRepository, queryRepository);
   }
 }

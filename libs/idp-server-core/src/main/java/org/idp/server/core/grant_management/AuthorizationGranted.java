@@ -12,8 +12,7 @@ public class AuthorizationGranted {
 
   public AuthorizationGranted() {}
 
-  public AuthorizationGranted(
-      AuthorizationGrantedIdentifier identifier, AuthorizationGrant authorizationGrant) {
+  public AuthorizationGranted(AuthorizationGrantedIdentifier identifier, AuthorizationGrant authorizationGrant) {
     this.identifier = identifier;
     this.authorizationGrant = authorizationGrant;
   }

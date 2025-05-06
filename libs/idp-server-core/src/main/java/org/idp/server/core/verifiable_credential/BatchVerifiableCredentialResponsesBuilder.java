@@ -16,8 +16,7 @@ public class BatchVerifiableCredentialResponsesBuilder {
 
   public BatchVerifiableCredentialResponsesBuilder() {}
 
-  public BatchVerifiableCredentialResponsesBuilder add(
-      List<BatchVerifiableCredentialResponse> responses) {
+  public BatchVerifiableCredentialResponsesBuilder add(List<BatchVerifiableCredentialResponse> responses) {
     this.responses = responses;
     values.put("credential_responses", toResponses(responses));
     return this;

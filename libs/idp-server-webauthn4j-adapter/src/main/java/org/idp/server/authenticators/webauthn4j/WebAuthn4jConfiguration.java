@@ -20,16 +20,7 @@ public class WebAuthn4jConfiguration {
 
   public WebAuthn4jConfiguration() {}
 
-  public WebAuthn4jConfiguration(
-      String rpId,
-      String rpName,
-      String origin,
-      byte[] tokenBindingId,
-      String attestationPreference,
-      String authenticatorAttachment,
-      boolean requireResidentKey,
-      boolean userVerificationRequired,
-      boolean userPresenceRequired) {
+  public WebAuthn4jConfiguration(String rpId, String rpName, String origin, byte[] tokenBindingId, String attestationPreference, String authenticatorAttachment, boolean requireResidentKey, boolean userVerificationRequired, boolean userPresenceRequired) {
     this.rpId = rpId;
     this.rpName = rpName;
     this.origin = origin;
@@ -46,14 +37,12 @@ public class WebAuthn4jConfiguration {
 
     // Server properties
     Origin origin = Origin.create(this.origin);
-    ServerProperty serverProperty =
-        new ServerProperty(origin, rpId, webAuthn4jChallenge, tokenBindingId);
+    ServerProperty serverProperty = new ServerProperty(origin, rpId, webAuthn4jChallenge, tokenBindingId);
 
     // expectations
     List<PublicKeyCredentialParameters> pubKeyCredParams = null;
 
-    return new RegistrationParameters(
-        serverProperty, pubKeyCredParams, userVerificationRequired, userPresenceRequired);
+    return new RegistrationParameters(serverProperty, pubKeyCredParams, userVerificationRequired, userPresenceRequired);
   }
 
   public String rpId() {

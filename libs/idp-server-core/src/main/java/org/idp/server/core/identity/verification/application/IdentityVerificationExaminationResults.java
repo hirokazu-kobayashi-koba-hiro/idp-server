@@ -5,8 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class IdentityVerificationExaminationResults
-    implements Iterable<IdentityVerificationExaminationResult> {
+public class IdentityVerificationExaminationResults implements Iterable<IdentityVerificationExaminationResult> {
 
   List<IdentityVerificationExaminationResult> values;
 
@@ -14,8 +13,7 @@ public class IdentityVerificationExaminationResults
     this.values = new ArrayList<>();
   }
 
-  public IdentityVerificationExaminationResults(
-      List<IdentityVerificationExaminationResult> values) {
+  public IdentityVerificationExaminationResults(List<IdentityVerificationExaminationResult> values) {
     this.values = values;
   }
 
@@ -28,8 +26,7 @@ public class IdentityVerificationExaminationResults
     return values.stream().map(IdentityVerificationExaminationResult::toMap).toList();
   }
 
-  public IdentityVerificationExaminationResults add(
-      IdentityVerificationExaminationResult identityVerificationExaminationResult) {
+  public IdentityVerificationExaminationResults add(IdentityVerificationExaminationResult identityVerificationExaminationResult) {
     List<IdentityVerificationExaminationResult> added = new ArrayList<>(values);
     added.add(identityVerificationExaminationResult);
     return new IdentityVerificationExaminationResults(added);

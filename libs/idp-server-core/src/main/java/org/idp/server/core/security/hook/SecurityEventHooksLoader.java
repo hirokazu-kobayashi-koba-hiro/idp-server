@@ -13,8 +13,7 @@ public class SecurityEventHooksLoader {
 
   public static SecurityEventHooks load() {
     Map<SecurityEventHookType, SecurityEventHookExecutor> hookExecutors = new HashMap<>();
-    ServiceLoader<SecurityEventHookExecutor> loader =
-        ServiceLoader.load(SecurityEventHookExecutor.class);
+    ServiceLoader<SecurityEventHookExecutor> loader = ServiceLoader.load(SecurityEventHookExecutor.class);
 
     for (SecurityEventHookExecutor executor : loader) {
       hookExecutors.put(executor.type(), executor);

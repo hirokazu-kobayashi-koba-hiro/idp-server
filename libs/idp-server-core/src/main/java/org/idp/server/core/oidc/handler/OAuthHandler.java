@@ -23,57 +23,43 @@ public class OAuthHandler {
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
-  public OAuthHandler(
-      AuthorizationRequestRepository authorizationRequestRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+  public OAuthHandler(AuthorizationRequestRepository authorizationRequestRepository, ServerConfigurationRepository serverConfigurationRepository, ClientConfigurationRepository clientConfigurationRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
-  public OAuthViewDataResponse handleViewData(
-      OAuthViewDataRequest request, OAuthSessionDelegate oAuthSessionDelegate) {
+  public OAuthViewDataResponse handleViewData(OAuthViewDataRequest request, OAuthSessionDelegate oAuthSessionDelegate) {
     Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
 
-    AuthorizationRequest authorizationRequest =
-        authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest = authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
     RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, requestedClientId);
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, requestedClientId);
 
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
 
-    OAuthViewDataCreator creator =
-        new OAuthViewDataCreator(
-            authorizationRequest, serverConfiguration, clientConfiguration, session);
+    OAuthViewDataCreator creator = new OAuthViewDataCreator(authorizationRequest, serverConfiguration, clientConfiguration, session);
     OAuthViewData oAuthViewData = creator.create();
 
     return new OAuthViewDataResponse(OAuthViewDataStatus.OK, oAuthViewData);
   }
 
-  public AuthorizationRequest handleGettingData(
-      Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+  public AuthorizationRequest handleGettingData(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
     return authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
   }
 
-  public OAuthLogoutResponse handleLogout(
-      OAuthLogoutRequest request, OAuthSessionDelegate delegate) {
+  public OAuthLogoutResponse handleLogout(OAuthLogoutRequest request, OAuthSessionDelegate delegate) {
 
     OAuthLogoutParameters parameters = request.toParameters();
     Tenant tenant = request.tenant();
 
-    OAuthSessionKey oAuthSessionKey =
-        new OAuthSessionKey(tenant.identifierValue(), parameters.clientId().value());
+    OAuthSessionKey oAuthSessionKey = new OAuthSessionKey(tenant.identifierValue(), parameters.clientId().value());
     OAuthSession session = delegate.find(oAuthSessionKey);
     delegate.deleteSession(oAuthSessionKey);
 
-    String redirectUri =
-        parameters.hasPostLogoutRedirectUri()
-            ? parameters.postLogoutRedirectUri().value()
-            : tenant.tokenIssuer().value();
+    String redirectUri = parameters.hasPostLogoutRedirectUri() ? parameters.postLogoutRedirectUri().value() : tenant.tokenIssuer().value();
 
     if (parameters.hasPostLogoutRedirectUri()) {
       return new OAuthLogoutResponse(OAuthLogoutStatus.REDIRECABLE_FOUND, redirectUri);

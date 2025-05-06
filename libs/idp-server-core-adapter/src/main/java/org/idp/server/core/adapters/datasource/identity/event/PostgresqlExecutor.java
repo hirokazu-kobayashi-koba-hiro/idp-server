@@ -15,26 +15,21 @@ public class PostgresqlExecutor implements UserLifecycleEventResultSqlExecutor {
   JsonConverter converter = JsonConverter.snakeCaseInstance();
 
   @Override
-  public void insert(
-      Tenant tenant,
-      UserLifecycleEvent userLifecycleEvent,
-      List<UserLifecycleEventResult> results) {
+  public void insert(Tenant tenant, UserLifecycleEvent userLifecycleEvent, List<UserLifecycleEventResult> results) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    StringBuilder sql =
-        new StringBuilder(
-            """
-                INSERT INTO idp_user_lifecycle_event_result
-                (
-                id,
-                tenant_id,
-                user_id,
-                lifecycle_type,
-                executor_name,
-                payload,
-                status
-                )
-                VALUES
-                """);
+    StringBuilder sql = new StringBuilder("""
+        INSERT INTO idp_user_lifecycle_event_result
+        (
+        id,
+        tenant_id,
+        user_id,
+        lifecycle_type,
+        executor_name,
+        payload,
+        status
+        )
+        VALUES
+        """);
 
     User user = userLifecycleEvent.user();
     UserLifecycleType userLifecycleType = userLifecycleEvent.lifecycleType();

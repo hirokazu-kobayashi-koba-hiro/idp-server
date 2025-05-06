@@ -12,8 +12,7 @@ public class OidcSsoExecutorLoader {
 
   public static OidcSsoExecutors load() {
     Map<SsoProvider, OidcSsoExecutor> executors = new HashMap<>();
-    ServiceLoader<OidcSsoExecutor> ssoExecutorServiceLoaders =
-        ServiceLoader.load(OidcSsoExecutor.class);
+    ServiceLoader<OidcSsoExecutor> ssoExecutorServiceLoaders = ServiceLoader.load(OidcSsoExecutor.class);
 
     for (OidcSsoExecutor executor : ssoExecutorServiceLoaders) {
       SsoProvider provider = executor.type();

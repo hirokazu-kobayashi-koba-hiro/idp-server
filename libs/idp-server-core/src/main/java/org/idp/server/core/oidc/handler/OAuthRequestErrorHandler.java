@@ -19,14 +19,10 @@ public class OAuthRequestErrorHandler {
   public OAuthRequestResponse handle(Exception exception) {
     if (exception instanceof OAuthBadRequestException badRequestException) {
       log.warn(exception.getMessage());
-      return new OAuthRequestResponse(
-          OAuthRequestStatus.BAD_REQUEST,
-          badRequestException.error(),
-          badRequestException.errorDescription());
+      return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST, badRequestException.error(), badRequestException.errorDescription());
     }
     if (exception instanceof OAuthRedirectableBadRequestException redirectableBadRequestException) {
-      AuthorizationErrorResponseCreator authorizationErrorResponseCreator =
-          new AuthorizationErrorResponseCreator(redirectableBadRequestException);
+      AuthorizationErrorResponseCreator authorizationErrorResponseCreator = new AuthorizationErrorResponseCreator(redirectableBadRequestException);
       AuthorizationErrorResponse errorResponse = authorizationErrorResponseCreator.create();
       log.warn(redirectableBadRequestException.getMessage());
       return new OAuthRequestResponse(OAuthRequestStatus.REDIRECABLE_BAD_REQUEST, errorResponse);

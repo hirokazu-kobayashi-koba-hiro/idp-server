@@ -90,16 +90,6 @@ public class TokenResponseBuilder {
 
   public TokenResponse build() {
     String contents = jsonConverter.write(values);
-    return new TokenResponse(
-        accessTokenEntity,
-        tokenType,
-        expiresIn,
-        refreshTokenEntity,
-        scopes,
-        idToken,
-        authorizationDetails,
-        cNonce,
-        cNonceExpiresIn,
-        contents);
+    return new TokenResponse(accessTokenEntity, tokenType, expiresIn, refreshTokenEntity, scopes, idToken, authorizationDetails, cNonce, cNonceExpiresIn, contents);
   }
 }

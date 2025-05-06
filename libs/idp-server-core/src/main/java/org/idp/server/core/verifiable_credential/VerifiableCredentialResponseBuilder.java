@@ -51,7 +51,6 @@ public class VerifiableCredentialResponseBuilder {
 
   public VerifiableCredentialResponse build() {
     String contents = jsonConverter.write(values);
-    return new VerifiableCredentialResponse(
-        format, credentialJwt, cNonce, cNonceExpiresIn, contents);
+    return new VerifiableCredentialResponse(format, credentialJwt, cNonce, cNonceExpiresIn, contents);
   }
 }

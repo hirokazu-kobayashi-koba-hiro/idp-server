@@ -4,11 +4,7 @@ import com.nimbusds.jose.jwk.KeyType;
 
 /** KeyType */
 public enum JsonWebKeyType {
-  RSA,
-  EC,
-  OCT,
-  OKP,
-  UNKNOWN;
+  RSA, EC, OCT, OKP, UNKNOWN;
 
   public static JsonWebKeyType of(KeyType keyType) {
     String keyTypeValue = keyType.getValue();

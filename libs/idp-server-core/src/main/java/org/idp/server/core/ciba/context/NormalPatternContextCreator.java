@@ -16,38 +16,15 @@ public class NormalPatternContextCreator implements CibaRequestContextCreator {
   NormalRequestFactory normalRequestFactory = new NormalRequestFactory();
 
   @Override
-  public CibaRequestContext create(
-      ClientSecretBasic clientSecretBasic,
-      ClientCert clientCert,
-      CibaRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public CibaRequestContext create(ClientSecretBasic clientSecretBasic, ClientCert clientCert, CibaRequestParameters parameters, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
 
     JoseContext joseContext = new JoseContext();
     CibaRequestPattern pattern = CibaRequestPattern.NORMAL;
-    Set<String> filteredScopes =
-        filterScopes(pattern, parameters, joseContext, clientConfiguration);
+    Set<String> filteredScopes = filterScopes(pattern, parameters, joseContext, clientConfiguration);
     CibaProfile profile = analyze(filteredScopes, serverConfiguration);
 
-    BackchannelAuthenticationRequest backchannelAuthenticationRequest =
-        normalRequestFactory.create(
-            profile,
-            clientSecretBasic,
-            parameters,
-            joseContext,
-            filteredScopes,
-            serverConfiguration,
-            clientConfiguration);
+    BackchannelAuthenticationRequest backchannelAuthenticationRequest = normalRequestFactory.create(profile, clientSecretBasic, parameters, joseContext, filteredScopes, serverConfiguration, clientConfiguration);
 
-    return new CibaRequestContext(
-        pattern,
-        clientSecretBasic,
-        clientCert,
-        parameters,
-        new CibaRequestObjectParameters(),
-        joseContext,
-        backchannelAuthenticationRequest,
-        serverConfiguration,
-        clientConfiguration);
+    return new CibaRequestContext(pattern, clientSecretBasic, clientCert, parameters, new CibaRequestObjectParameters(), joseContext, backchannelAuthenticationRequest, serverConfiguration, clientConfiguration);
   }
 }

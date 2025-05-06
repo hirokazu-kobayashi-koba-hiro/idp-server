@@ -9,8 +9,7 @@ import org.idp.server.core.federation.FederationType;
 import org.idp.server.core.federation.SsoProvider;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class FederationConfigurationQueryDataSource
-    implements FederationConfigurationQueryRepository {
+public class FederationConfigurationQueryDataSource implements FederationConfigurationQueryRepository {
 
   FederationConfigurationQuerySqlExecutors executors;
   JsonConverter jsonConverter;
@@ -21,17 +20,13 @@ public class FederationConfigurationQueryDataSource
   }
 
   @Override
-  public <T> T get(
-      Tenant tenant, FederationType federationType, SsoProvider ssoProvider, Class<T> clazz) {
+  public <T> T get(Tenant tenant, FederationType federationType, SsoProvider ssoProvider, Class<T> clazz) {
     FederationConfigurationQuerySqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> result = executor.selectOne(tenant, federationType, ssoProvider);
 
     if (Objects.isNull(result) || result.isEmpty()) {
-      throw new FederationConfigurationNotFoundException(
-          String.format(
-              "federation configuration is not found (%s) (%s) (%s)",
-              tenant.identifierValue(), federationType.name(), ssoProvider.name()));
+      throw new FederationConfigurationNotFoundException(String.format("federation configuration is not found (%s) (%s) (%s)", tenant.identifierValue(), federationType.name(), ssoProvider.name()));
     }
 
     return jsonConverter.read(result.get("payload"), clazz);

@@ -15,13 +15,7 @@ import org.idp.server.core.oidc.request.OAuthRequestParameters;
 public class NormalRequestFactory implements AuthorizationRequestFactory {
 
   @Override
-  public AuthorizationRequest create(
-      AuthorizationProfile profile,
-      OAuthRequestParameters parameters,
-      JoseContext joseContext,
-      Set<String> filteredScopes,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public AuthorizationRequest create(AuthorizationProfile profile, OAuthRequestParameters parameters, JoseContext joseContext, Set<String> filteredScopes, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());

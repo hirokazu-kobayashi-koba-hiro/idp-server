@@ -9,6 +9,5 @@ public interface AuthenticationTransactionQuerySqlExecutor {
 
   Map<String, String> selectOne(Tenant tenant, AuthorizationIdentifier identifier);
 
-  Map<String, String> selectOneByDeviceId(
-      Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier);
+  Map<String, String> selectOneByDeviceId(Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier);
 }

@@ -8,16 +8,7 @@ import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
 public interface FederationInteractor {
 
-  FederationRequestResponse request(
-      Tenant tenant,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      FederationType federationType,
-      SsoProvider ssoProvider);
+  FederationRequestResponse request(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier, FederationType federationType, SsoProvider ssoProvider);
 
-  FederationInteractionResult callback(
-      Tenant tenant,
-      FederationType federationType,
-      SsoProvider ssoProvider,
-      FederationCallbackRequest callbackRequest,
-      UserQueryRepository userQueryRepository);
+  FederationInteractionResult callback(Tenant tenant, FederationType federationType, SsoProvider ssoProvider, FederationCallbackRequest callbackRequest, UserQueryRepository userQueryRepository);
 }

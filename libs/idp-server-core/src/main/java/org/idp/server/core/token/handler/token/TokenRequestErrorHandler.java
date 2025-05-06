@@ -19,29 +19,19 @@ public class TokenRequestErrorHandler {
   public TokenRequestResponse handle(Exception exception) {
     if (exception instanceof TokenBadRequestException badRequest) {
       log.warn(exception.getMessage());
-      return new TokenRequestResponse(
-          BAD_REQUEST, new TokenErrorResponse(badRequest.error(), badRequest.errorDescription()));
+      return new TokenRequestResponse(BAD_REQUEST, new TokenErrorResponse(badRequest.error(), badRequest.errorDescription()));
     }
     if (exception instanceof ClientUnAuthorizedException) {
       log.warn(exception.getMessage());
-      return new TokenRequestResponse(
-          UNAUTHORIZE,
-          new TokenErrorResponse(
-              new Error("invalid_client"), new ErrorDescription(exception.getLocalizedMessage())));
+      return new TokenRequestResponse(UNAUTHORIZE, new TokenErrorResponse(new Error("invalid_client"), new ErrorDescription(exception.getLocalizedMessage())));
     }
     if (exception instanceof ClientConfigurationNotFoundException) {
       log.warn(exception.getMessage());
-      return new TokenRequestResponse(
-          UNAUTHORIZE,
-          new TokenErrorResponse(
-              new Error("invalid_client"), new ErrorDescription(exception.getMessage())));
+      return new TokenRequestResponse(UNAUTHORIZE, new TokenErrorResponse(new Error("invalid_client"), new ErrorDescription(exception.getMessage())));
     }
     if (exception instanceof ServerConfigurationNotFoundException) {
       log.warn(exception.getMessage());
-      return new TokenRequestResponse(
-          BAD_REQUEST,
-          new TokenErrorResponse(
-              new Error("invalid_request"), new ErrorDescription(exception.getMessage())));
+      return new TokenRequestResponse(BAD_REQUEST, new TokenErrorResponse(new Error("invalid_request"), new ErrorDescription(exception.getMessage())));
     }
     log.error(exception.getMessage(), exception);
     Error error = new Error("server_error");

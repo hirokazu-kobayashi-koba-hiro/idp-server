@@ -14,13 +14,12 @@ public class PostgresqlExecutor implements SsoSessionCommandSqlExecutor {
   public <T> void insert(SsoSessionIdentifier identifier, T payload) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                INSERT INTO federation_sso_session (id, payload)
-                VALUES (?, ?::jsonb)
-                ON CONFLICT (id) DO
-                UPDATE SET payload = ?::jsonb, updated_at = now();
-                """;
+    String sqlTemplate = """
+        INSERT INTO federation_sso_session (id, payload)
+        VALUES (?, ?::jsonb)
+        ON CONFLICT (id) DO
+        UPDATE SET payload = ?::jsonb, updated_at = now();
+        """;
 
     String json = jsonConverter.write(payload);
     List<Object> params = new ArrayList<>();
@@ -35,11 +34,10 @@ public class PostgresqlExecutor implements SsoSessionCommandSqlExecutor {
   public void delete(SsoSessionIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                DELETE FROM federation_sso_session
-                WHERE id = ?;
-                """;
+    String sqlTemplate = """
+        DELETE FROM federation_sso_session
+        WHERE id = ?;
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());

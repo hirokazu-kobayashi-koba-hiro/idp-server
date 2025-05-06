@@ -10,17 +10,15 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 public class MysqlExecutor implements AuthenticationInteractionQuerySqlExecutor {
 
   @Override
-  public Map<String, String> selectOne(
-      Tenant tenant, AuthorizationIdentifier identifier, String type) {
+  public Map<String, String> selectOne(Tenant tenant, AuthorizationIdentifier identifier, String type) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-            SELECT authorization_id, payload
-            FROM authentication_interactions
-            WHERE authorization_id = ?
-            AND tenant_id = ?
-            AND interaction_type = ?
-            """;
+    String sqlTemplate = """
+        SELECT authorization_id, payload
+        FROM authentication_interactions
+        WHERE authorization_id = ?
+        AND tenant_id = ?
+        AND interaction_type = ?
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());

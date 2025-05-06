@@ -8,8 +8,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.verifiable_credential.VerifiableCredentialTransaction;
 import org.idp.server.core.verifiable_credential.repository.VerifiableCredentialTransactionRepository;
 
-public class VerifiableCredentialTransactionDataSource
-    implements VerifiableCredentialTransactionRepository {
+public class VerifiableCredentialTransactionDataSource implements VerifiableCredentialTransactionRepository {
 
   VerifiableCredentialTransactionSqlExecutors executors;
 
@@ -18,8 +17,7 @@ public class VerifiableCredentialTransactionDataSource
   }
 
   @Override
-  public void register(
-      Tenant tenant, VerifiableCredentialTransaction verifiableCredentialTransaction) {
+  public void register(Tenant tenant, VerifiableCredentialTransaction verifiableCredentialTransaction) {
     VerifiableCredentialTransactionSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(verifiableCredentialTransaction);
   }
@@ -31,8 +29,7 @@ public class VerifiableCredentialTransactionDataSource
     Map<String, String> stringMap = executor.selectOne(transactionId);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
-      throw new NotFoundException(
-          String.format("not found verifiable credential transaction (%s)", transactionId.value()));
+      throw new NotFoundException(String.format("not found verifiable credential transaction (%s)", transactionId.value()));
     }
 
     return ModelConverter.convert(stringMap);

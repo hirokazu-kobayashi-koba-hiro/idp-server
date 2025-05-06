@@ -14,13 +14,12 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
   public Map<String, String> selectOne(Tenant tenant, AuthorizationIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-            SELECT  authorization_id, tenant_id, authorization_flow, client_id, user_id, user_payload, authentication_device_id, available_authentication_types, required_any_of_authentication_types, last_interaction_type, interactions, created_at, expired_at
-            FROM authentication_transaction
-            WHERE authorization_id = ?
-            AND tenant_id = ?
-            """;
+    String sqlTemplate = """
+        SELECT  authorization_id, tenant_id, authorization_flow, client_id, user_id, user_payload, authentication_device_id, available_authentication_types, required_any_of_authentication_types, last_interaction_type, interactions, created_at, expired_at
+        FROM authentication_transaction
+        WHERE authorization_id = ?
+        AND tenant_id = ?
+        """;
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
     params.add(tenant.identifierValue());
@@ -29,19 +28,17 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
   }
 
   @Override
-  public Map<String, String> selectOneByDeviceId(
-      Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier) {
+  public Map<String, String> selectOneByDeviceId(Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                SELECT  authorization_id, tenant_id, authorization_flow, client_id, user_id, user_payload, authentication_device_id, available_authentication_types, required_any_of_authentication_types, last_interaction_type, interactions, created_at, expired_at
-                FROM authentication_transaction
-                WHERE authentication_device_id = ?
-                AND tenant_id = ?
-                ORDER BY created_at DESC
-                limit 1
-                """;
+    String sqlTemplate = """
+        SELECT  authorization_id, tenant_id, authorization_flow, client_id, user_id, user_payload, authentication_device_id, available_authentication_types, required_any_of_authentication_types, last_interaction_type, interactions, created_at, expired_at
+        FROM authentication_transaction
+        WHERE authentication_device_id = ?
+        AND tenant_id = ?
+        ORDER BY created_at DESC
+        limit 1
+        """;
     List<Object> params = new ArrayList<>();
     params.add(authenticationDeviceIdentifier.value());
     params.add(tenant.identifierValue());

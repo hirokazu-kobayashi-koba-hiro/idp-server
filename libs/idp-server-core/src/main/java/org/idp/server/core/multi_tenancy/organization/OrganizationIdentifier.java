@@ -19,7 +19,8 @@ public class OrganizationIdentifier {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     OrganizationIdentifier that = (OrganizationIdentifier) o;
     return Objects.equals(value, that.value);
   }

@@ -30,8 +30,7 @@ public class Permissions implements Iterable<Permission> {
   }
 
   public Permissions filter(List<String> permissionNames) {
-    return new Permissions(
-        values.stream().filter(permission -> permissionNames.contains(permission.name())).toList());
+    return new Permissions(values.stream().filter(permission -> permissionNames.contains(permission.name())).toList());
   }
 
   public List<Permission> toList() {

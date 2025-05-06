@@ -3,8 +3,7 @@ package org.idp.server.core.adapters.datasource.authentication.config;
 import org.idp.server.core.authentication.factory.AuthenticationDependencyProvider;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 
-public class AuthenticationConfigurationDataSourceProvider
-    implements AuthenticationDependencyProvider<AuthenticationConfigurationQueryRepository> {
+public class AuthenticationConfigurationDataSourceProvider implements AuthenticationDependencyProvider<AuthenticationConfigurationQueryRepository> {
 
   @Override
   public Class<AuthenticationConfigurationQueryRepository> type() {

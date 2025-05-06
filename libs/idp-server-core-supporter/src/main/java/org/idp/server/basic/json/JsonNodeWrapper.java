@@ -138,22 +138,18 @@ public class JsonNodeWrapper {
   }
 
   /**
-   * Converts the entire JSON object into a Java {@link Map}, recursively extracting primitive
-   * values.
+   * Converts the entire JSON object into a Java {@link Map}, recursively extracting primitive values.
    *
    * @return map representing the JSON object
    */
   public Map<String, Object> toMap() {
     Map<String, Object> results = new HashMap<>();
-    jsonNode
-        .fieldNames()
-        .forEachRemaining(
-            fieldName -> {
-              JsonNodeWrapper valueWrapper = getValueAsJsonNode(fieldName);
-              JsonNode valueNode = (JsonNode) valueWrapper.node();
-              Object value = toPrimitive(valueNode);
-              results.put(fieldName, value);
-            });
+    jsonNode.fieldNames().forEachRemaining(fieldName -> {
+      JsonNodeWrapper valueWrapper = getValueAsJsonNode(fieldName);
+      JsonNode valueNode = (JsonNode) valueWrapper.node();
+      Object value = toPrimitive(valueNode);
+      results.put(fieldName, value);
+    });
     return results;
   }
 
@@ -213,12 +209,10 @@ public class JsonNodeWrapper {
   private Object toPrimitive(JsonNode node) {
     if (node.isObject()) {
       Map<String, Object> map = new HashMap<>();
-      node.fieldNames()
-          .forEachRemaining(
-              fieldName -> {
-                JsonNode childNode = node.get(fieldName);
-                map.put(fieldName, toPrimitive(childNode));
-              });
+      node.fieldNames().forEachRemaining(fieldName -> {
+        JsonNode childNode = node.get(fieldName);
+        map.put(fieldName, toPrimitive(childNode));
+      });
       return map;
     } else if (node.isArray()) {
       List<Object> list = new ArrayList<>();

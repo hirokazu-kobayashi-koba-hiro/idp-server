@@ -17,10 +17,7 @@ import org.idp.server.core.oidc.configuration.ServerConfiguration;
 
 public interface JarmCreatable {
 
-  default JarmPayload createResponse(
-      AuthorizationResponse authorizationResponse,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  default JarmPayload createResponse(AuthorizationResponse authorizationResponse, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     try {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
@@ -39,8 +36,7 @@ public interface JarmCreatable {
         payload.put("code", authorizationResponse.authorizationCode().value());
       }
       if (authorizationResponse.hasAccessToken()) {
-        payload.put(
-            "access_token", authorizationResponse.accessToken().accessTokenEntity().value());
+        payload.put("access_token", authorizationResponse.accessToken().accessTokenEntity().value());
         payload.put("token_type", authorizationResponse.tokenType().name());
         payload.put("expires_in", authorizationResponse.expiresIn().toStringValue());
         payload.put("scope", authorizationResponse.scopes().toStringValues());
@@ -49,12 +45,7 @@ public interface JarmCreatable {
         payload.put("id_token", authorizationResponse.idToken().value());
       }
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
-      JsonWebSignature jsonWebSignature =
-          jsonWebSignatureFactory.createWithAsymmetricKeyByAlgorithm(
-              payload,
-              Map.of(),
-              serverConfiguration.jwks(),
-              clientConfiguration.authorizationSignedResponseAlg());
+      JsonWebSignature jsonWebSignature = jsonWebSignatureFactory.createWithAsymmetricKeyByAlgorithm(payload, Map.of(), serverConfiguration.jwks(), clientConfiguration.authorizationSignedResponseAlg());
 
       return new JarmPayload(jsonWebSignature.serialize());
     } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
@@ -62,10 +53,7 @@ public interface JarmCreatable {
     }
   }
 
-  default JarmPayload createResponse(
-      AuthorizationErrorResponse errorResponse,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  default JarmPayload createResponse(AuthorizationErrorResponse errorResponse, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     try {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
@@ -80,12 +68,7 @@ public interface JarmCreatable {
       payload.put("error", errorResponse.error().value());
       payload.put("error_description", errorResponse.errorDescription().value());
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
-      JsonWebSignature jsonWebSignature =
-          jsonWebSignatureFactory.createWithAsymmetricKeyByAlgorithm(
-              payload,
-              Map.of(),
-              serverConfiguration.jwks(),
-              clientConfiguration.authorizationSignedResponseAlg());
+      JsonWebSignature jsonWebSignature = jsonWebSignatureFactory.createWithAsymmetricKeyByAlgorithm(payload, Map.of(), serverConfiguration.jwks(), clientConfiguration.authorizationSignedResponseAlg());
 
       return new JarmPayload(jsonWebSignature.serialize());
     } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {

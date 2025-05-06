@@ -11,12 +11,11 @@ public class MysqlExecutor implements VerifiableCredentialTransactionSqlExecutor
   @Override
   public void insert(VerifiableCredentialTransaction verifiableCredentialTransaction) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                    INSERT INTO verifiable_credential_transaction
-                    (transaction_id, credential_issuer, client_id, user_id, verifiable_credential, status)
-                    VALUES (?, ?, ?, ?, ?, ?);
-                    """;
+    String sqlTemplate = """
+        INSERT INTO verifiable_credential_transaction
+        (transaction_id, credential_issuer, client_id, user_id, verifiable_credential, status)
+        VALUES (?, ?, ?, ?, ?, ?);
+        """;
     List<Object> params = InsertSqlParamsCreator.create(verifiableCredentialTransaction);
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -26,12 +25,11 @@ public class MysqlExecutor implements VerifiableCredentialTransactionSqlExecutor
   public Map<String, String> selectOne(TransactionId transactionId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-            SELECT transaction_id, credential_issuer, client_id, user_id, verifiable_credential, status
-            FROM verifiable_credential_transaction
-            WHERE transaction_id = ?;
-            """;
+    String sqlTemplate = """
+        SELECT transaction_id, credential_issuer, client_id, user_id, verifiable_credential, status
+        FROM verifiable_credential_transaction
+        WHERE transaction_id = ?;
+        """;
     List<Object> params = List.of(transactionId.value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);

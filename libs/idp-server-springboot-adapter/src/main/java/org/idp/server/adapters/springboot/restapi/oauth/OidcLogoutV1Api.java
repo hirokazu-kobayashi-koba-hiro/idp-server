@@ -25,10 +25,7 @@ public class OidcLogoutV1Api implements ParameterTransformable {
   }
 
   @GetMapping
-  public ResponseEntity<?> logout(
-      @RequestParam(required = false) MultiValueMap<String, String> request,
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
-      HttpServletRequest httpServletRequest) {
+  public ResponseEntity<?> logout(@RequestParam(required = false) MultiValueMap<String, String> request, @PathVariable("tenant-id") TenantIdentifier tenantId, HttpServletRequest httpServletRequest) {
 
     Map<String, String[]> params = transform(request);
     RequestAttributes requestAttributes = transform(httpServletRequest);

@@ -20,26 +20,14 @@ public class ModelConverter {
     TenantIdentifier tenantIdentifier = new TenantIdentifier(map.get("tenant_id"));
     RequestedClientId requestedClientId = new RequestedClientId(map.get("client_id"));
     User user = toUser(map);
-    List<String> availableAuthenticationTypes =
-        jsonConverter.read(map.get("available_authentication_types"), List.class);
+    List<String> availableAuthenticationTypes = jsonConverter.read(map.get("available_authentication_types"), List.class);
     List<String> requiredAnyOfAuthenticationTypes = toRequiredAnyOfAuthenticationTypes(map);
     LocalDateTime createdAt = LocalDateTime.parse(map.get("created_at"));
     LocalDateTime expiredAt = LocalDateTime.parse(map.get("expired_at"));
-    AuthenticationRequest request =
-        new AuthenticationRequest(
-            authorizationFlow,
-            tenantIdentifier,
-            requestedClientId,
-            user,
-            availableAuthenticationTypes,
-            requiredAnyOfAuthenticationTypes,
-            createdAt,
-            expiredAt);
-    AuthenticationInteractionType lastInteractionType =
-        new AuthenticationInteractionType(map.get("last_interaction_type"));
+    AuthenticationRequest request = new AuthenticationRequest(authorizationFlow, tenantIdentifier, requestedClientId, user, availableAuthenticationTypes, requiredAnyOfAuthenticationTypes, createdAt, expiredAt);
+    AuthenticationInteractionType lastInteractionType = new AuthenticationInteractionType(map.get("last_interaction_type"));
     AuthenticationInteractionResults interactionResults = toAuthenticationInteractionResults(map);
-    return new AuthenticationTransaction(
-        identifier, request, lastInteractionType, interactionResults);
+    return new AuthenticationTransaction(identifier, request, lastInteractionType, interactionResults);
   }
 
   static User toUser(Map<String, String> map) {
@@ -50,15 +38,13 @@ public class ModelConverter {
   }
 
   static List<String> toRequiredAnyOfAuthenticationTypes(Map<String, String> map) {
-    if (map.containsKey("required_any_of_authentication_types")
-        && map.get("required_any_of_authentication_types") != null) {
+    if (map.containsKey("required_any_of_authentication_types") && map.get("required_any_of_authentication_types") != null) {
       return jsonConverter.read(map.get("required_any_of_authentication_types"), List.class);
     }
     return List.of();
   }
 
-  static AuthenticationInteractionResults toAuthenticationInteractionResults(
-      Map<String, String> map) {
+  static AuthenticationInteractionResults toAuthenticationInteractionResults(Map<String, String> map) {
     if (map.containsKey("interactions") && map.get("interactions") != null) {
 
       JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(map.get("interactions"));
@@ -68,8 +54,7 @@ public class ModelConverter {
         int callCount = wrapper.getValueAsInt("call_count");
         int successCount = wrapper.getValueAsInt("success_count");
         int failureCount = wrapper.getValueAsInt("failure_count");
-        results.add(
-            new AuthenticationInteractionResult(type, callCount, successCount, failureCount));
+        results.add(new AuthenticationInteractionResult(type, callCount, successCount, failureCount));
       }
       return new AuthenticationInteractionResults(results);
     }

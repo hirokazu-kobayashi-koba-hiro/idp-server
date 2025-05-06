@@ -26,55 +26,36 @@ public class TokenV1Api implements ParameterTransformable {
   }
 
   @PostMapping
-  public ResponseEntity<?> request(
-      @RequestBody(required = false) MultiValueMap<String, String> body,
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      HttpServletRequest httpServletRequest) {
+  public ResponseEntity<?> request(@RequestBody(required = false) MultiValueMap<String, String> body, @RequestHeader(required = false, value = "Authorization") String authorizationHeader, @RequestHeader(required = false, value = "x-ssl-cert") String clientCert, @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, HttpServletRequest httpServletRequest) {
 
     Map<String, String[]> request = transform(body);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    TokenRequestResponse response =
-        tokenApi.request(
-            tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
+    TokenRequestResponse response = tokenApi.request(tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.setAll(response.responseHeaders());
-    return new ResponseEntity<>(
-        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+    return new ResponseEntity<>(response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @PostMapping("/introspection")
-  public ResponseEntity<?> inspect(
-      @RequestBody(required = false) MultiValueMap<String, String> body,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      HttpServletRequest httpServletRequest) {
+  public ResponseEntity<?> inspect(@RequestBody(required = false) MultiValueMap<String, String> body, @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, HttpServletRequest httpServletRequest) {
 
     Map<String, String[]> request = transform(body);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    TokenIntrospectionResponse response =
-        tokenApi.inspect(tenantIdentifier, request, requestAttributes);
+    TokenIntrospectionResponse response = tokenApi.inspect(tenantIdentifier, request, requestAttributes);
 
     return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
   }
 
   @PostMapping("/revocation")
-  public ResponseEntity<?> revoke(
-      @RequestBody(required = false) MultiValueMap<String, String> body,
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      HttpServletRequest httpServletRequest) {
+  public ResponseEntity<?> revoke(@RequestBody(required = false) MultiValueMap<String, String> body, @RequestHeader(required = false, value = "Authorization") String authorizationHeader, @RequestHeader(required = false, value = "x-ssl-cert") String clientCert, @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, HttpServletRequest httpServletRequest) {
 
     Map<String, String[]> request = transform(body);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    TokenRevocationResponse response =
-        tokenApi.revoke(
-            tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
+    TokenRevocationResponse response = tokenApi.revoke(tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
 
     return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
   }

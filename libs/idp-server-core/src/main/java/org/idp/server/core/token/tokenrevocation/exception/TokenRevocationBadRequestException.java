@@ -13,8 +13,7 @@ public class TokenRevocationBadRequestException extends RuntimeException {
     this.errorDescription = errorDescription;
   }
 
-  public TokenRevocationBadRequestException(
-      String error, String errorDescription, Throwable throwable) {
+  public TokenRevocationBadRequestException(String error, String errorDescription, Throwable throwable) {
     super(errorDescription, throwable);
     this.error = error;
     this.errorDescription = errorDescription;

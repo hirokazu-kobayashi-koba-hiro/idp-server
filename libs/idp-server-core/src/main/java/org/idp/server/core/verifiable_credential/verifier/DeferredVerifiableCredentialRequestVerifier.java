@@ -8,8 +8,7 @@ import org.idp.server.core.verifiable_credential.exception.VerifiableCredentialB
 import org.idp.server.core.verifiable_credential.request.DeferredCredentialRequestParameters;
 import org.idp.server.core.verifiable_credential.request.VerifiableCredentialRequestTransformable;
 
-public class DeferredVerifiableCredentialRequestVerifier
-    implements VerifiableCredentialRequestTransformable {
+public class DeferredVerifiableCredentialRequestVerifier implements VerifiableCredentialRequestTransformable {
 
   OAuthToken oAuthToken;
   ClientCert clientCert;
@@ -17,12 +16,7 @@ public class DeferredVerifiableCredentialRequestVerifier
   VerifiableCredentialTransaction transaction;
   ServerConfiguration serverConfiguration;
 
-  public DeferredVerifiableCredentialRequestVerifier(
-      OAuthToken oAuthToken,
-      ClientCert clientCert,
-      DeferredCredentialRequestParameters parameters,
-      VerifiableCredentialTransaction transaction,
-      ServerConfiguration serverConfiguration) {
+  public DeferredVerifiableCredentialRequestVerifier(OAuthToken oAuthToken, ClientCert clientCert, DeferredCredentialRequestParameters parameters, VerifiableCredentialTransaction transaction, ServerConfiguration serverConfiguration) {
     this.oAuthToken = oAuthToken;
     this.clientCert = clientCert;
     this.parameters = parameters;
@@ -32,8 +26,7 @@ public class DeferredVerifiableCredentialRequestVerifier
 
   public void verify() {
     throwExceptionIfUnSupportedVerifiableCredential();
-    VerifiableCredentialOAuthTokenVerifier oAuthTokenVerifier =
-        new VerifiableCredentialOAuthTokenVerifier(oAuthToken, clientCert, serverConfiguration);
+    VerifiableCredentialOAuthTokenVerifier oAuthTokenVerifier = new VerifiableCredentialOAuthTokenVerifier(oAuthToken, clientCert, serverConfiguration);
     oAuthTokenVerifier.verify();
     throwExceptionIfNotContainsTransactionId();
     throwExceptionIfNotFoundTransaction();
@@ -41,26 +34,19 @@ public class DeferredVerifiableCredentialRequestVerifier
 
   void throwExceptionIfUnSupportedVerifiableCredential() {
     if (!serverConfiguration.hasCredentialIssuerMetadata()) {
-      throw new VerifiableCredentialBadRequestException(
-          "invalid_request", "unsupported verifiable credential");
+      throw new VerifiableCredentialBadRequestException("invalid_request", "unsupported verifiable credential");
     }
   }
 
   void throwExceptionIfNotContainsTransactionId() {
     if (!parameters.hasTransactionId()) {
-      throw new VerifiableCredentialBadRequestException(
-          "invalid_request",
-          "transaction_id does not contains, deferred credential request must contain transaction_id");
+      throw new VerifiableCredentialBadRequestException("invalid_request", "transaction_id does not contains, deferred credential request must contain transaction_id");
     }
   }
 
   void throwExceptionIfNotFoundTransaction() {
     if (!transaction.exists()) {
-      throw new VerifiableCredentialBadRequestException(
-          "invalid_transaction_id",
-          String.format(
-              "not found verifiable credential transaction (%s)",
-              parameters.transactionId().value()));
+      throw new VerifiableCredentialBadRequestException("invalid_transaction_id", String.format("not found verifiable credential transaction (%s)", parameters.transactionId().value()));
     }
   }
 }

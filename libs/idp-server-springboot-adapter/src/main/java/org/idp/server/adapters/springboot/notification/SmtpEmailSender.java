@@ -24,16 +24,12 @@ public class SmtpEmailSender implements EmailSender {
     props.put("mail.smtp.host", setting.getValueAsString("host"));
     props.put("mail.smtp.port", setting.getValueAsInt("port"));
 
-    Session session =
-        Session.getInstance(
-            props,
-            new Authenticator() {
-              @Override
-              protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(
-                    setting.getValueAsString("username"), setting.getValueAsString("password"));
-              }
-            });
+    Session session = Session.getInstance(props, new Authenticator() {
+      @Override
+      protected PasswordAuthentication getPasswordAuthentication() {
+        return new PasswordAuthentication(setting.getValueAsString("username"), setting.getValueAsString("password"));
+      }
+    });
 
     try {
       Message message = new MimeMessage(session);

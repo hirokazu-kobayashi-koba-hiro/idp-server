@@ -32,13 +32,7 @@ public class SecurityConfig {
   String serverUrl;
   List<String> additionalAuthViewUrls;
 
-  public SecurityConfig(
-      ManagementApiFilter managementApiFilter,
-      ProtectedResourceApiFilter protectedResourceApiFilter,
-      @Value("${idp.configurations.adminAuthViewUrl}") String adminAuthViewUrl,
-      @Value("${idp.configurations.authViewUrl}") String authViewUrl,
-      @Value("${idp.configurations.serverUrl}") String serverUrl,
-      @Value("${idp.configurations.additionalAuthViewUrls}") String additionalAuthViewUrls) {
+  public SecurityConfig(ManagementApiFilter managementApiFilter, ProtectedResourceApiFilter protectedResourceApiFilter, @Value("${idp.configurations.adminAuthViewUrl}") String adminAuthViewUrl, @Value("${idp.configurations.authViewUrl}") String authViewUrl, @Value("${idp.configurations.serverUrl}") String serverUrl, @Value("${idp.configurations.additionalAuthViewUrls}") String additionalAuthViewUrls) {
     this.managementApiFilter = managementApiFilter;
     this.protectedResourceApiFilter = protectedResourceApiFilter;
     this.adminAuthViewUrl = adminAuthViewUrl;
@@ -49,34 +43,13 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain web(HttpSecurity http) throws Exception {
-    http.sessionManagement(
-        httpSecuritySessionManagementConfigurer ->
-            httpSecuritySessionManagementConfigurer.sessionCreationPolicy(
-                SessionCreationPolicy.STATELESS));
+    http.sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
     http.csrf(AbstractHttpConfigurer::disable);
 
     http.cors((cors) -> cors.configurationSource(corsConfigurationSource()));
 
-    http.authorizeHttpRequests(
-        (authorize) ->
-            authorize
-                .requestMatchers(
-                    "/{tenant-id}/api/v1/management/management/tenants",
-                    "/{tenant-id}/api/v1/management/management/tenants/**")
-                .hasAuthority(IdPScope.tenant_management.name())
-                .requestMatchers(
-                    "/{tenant-id}/api/v1/management/management/clients",
-                    "/{tenant-id}/api/v1/management/management/clients/**")
-                .hasAuthority(IdPScope.client_management.name())
-                .requestMatchers(
-                    "/{tenant-id}/api/v1/management/management/users",
-                    "/{tenant-id}/api/v1/management/management/users/**")
-                .hasAuthority(IdPScope.user_management.name())
-                .requestMatchers(
-                    "/{tenant-id}/api/v1/identity/{verification-type}/{verification-process}")
-                .hasAuthority(IdPScope.identity_verification_application.name())
-                .anyRequest()
-                .permitAll());
+    http.authorizeHttpRequests((authorize) -> authorize.requestMatchers("/{tenant-id}/api/v1/management/management/tenants", "/{tenant-id}/api/v1/management/management/tenants/**").hasAuthority(IdPScope.tenant_management.name()).requestMatchers("/{tenant-id}/api/v1/management/management/clients", "/{tenant-id}/api/v1/management/management/clients/**").hasAuthority(IdPScope.client_management.name())
+        .requestMatchers("/{tenant-id}/api/v1/management/management/users", "/{tenant-id}/api/v1/management/management/users/**").hasAuthority(IdPScope.user_management.name()).requestMatchers("/{tenant-id}/api/v1/identity/{verification-type}/{verification-process}").hasAuthority(IdPScope.identity_verification_application.name()).anyRequest().permitAll());
 
     http.addFilterBefore(managementApiFilter, BasicAuthenticationFilter.class);
     http.addFilterBefore(protectedResourceApiFilter, ManagementApiFilter.class);

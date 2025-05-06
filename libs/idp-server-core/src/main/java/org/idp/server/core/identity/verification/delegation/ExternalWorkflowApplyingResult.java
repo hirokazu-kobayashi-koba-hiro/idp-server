@@ -15,45 +15,19 @@ public class ExternalWorkflowApplyingResult {
 
   public ExternalWorkflowApplyingResult() {}
 
-  public static ExternalWorkflowApplyingResult requestError(
-      IdentityVerificationValidationResult requestIdValidationResult) {
-    return new ExternalWorkflowApplyingResult(
-        new ExternalWorkflowApplicationIdParam(),
-        requestIdValidationResult,
-        IdentityVerificationRequestVerificationResult.empty(),
-        new ExternalWorkflowApplyingExecutionResult(),
-        new IdentityVerificationValidationResult());
+  public static ExternalWorkflowApplyingResult requestError(IdentityVerificationValidationResult requestIdValidationResult) {
+    return new ExternalWorkflowApplyingResult(new ExternalWorkflowApplicationIdParam(), requestIdValidationResult, IdentityVerificationRequestVerificationResult.empty(), new ExternalWorkflowApplyingExecutionResult(), new IdentityVerificationValidationResult());
   }
 
-  public static ExternalWorkflowApplyingResult requestVerificationError(
-      IdentityVerificationValidationResult requestIdValidationResult,
-      IdentityVerificationRequestVerificationResult verifyResult) {
-    return new ExternalWorkflowApplyingResult(
-        new ExternalWorkflowApplicationIdParam(),
-        requestIdValidationResult,
-        verifyResult,
-        new ExternalWorkflowApplyingExecutionResult(),
-        new IdentityVerificationValidationResult());
+  public static ExternalWorkflowApplyingResult requestVerificationError(IdentityVerificationValidationResult requestIdValidationResult, IdentityVerificationRequestVerificationResult verifyResult) {
+    return new ExternalWorkflowApplyingResult(new ExternalWorkflowApplicationIdParam(), requestIdValidationResult, verifyResult, new ExternalWorkflowApplyingExecutionResult(), new IdentityVerificationValidationResult());
   }
 
-  public static ExternalWorkflowApplyingResult executionError(
-      IdentityVerificationValidationResult requestIdValidationResult,
-      IdentityVerificationRequestVerificationResult verifyResult,
-      ExternalWorkflowApplyingExecutionResult executionResult) {
-    return new ExternalWorkflowApplyingResult(
-        new ExternalWorkflowApplicationIdParam(),
-        requestIdValidationResult,
-        verifyResult,
-        executionResult,
-        new IdentityVerificationValidationResult());
+  public static ExternalWorkflowApplyingResult executionError(IdentityVerificationValidationResult requestIdValidationResult, IdentityVerificationRequestVerificationResult verifyResult, ExternalWorkflowApplyingExecutionResult executionResult) {
+    return new ExternalWorkflowApplyingResult(new ExternalWorkflowApplicationIdParam(), requestIdValidationResult, verifyResult, executionResult, new IdentityVerificationValidationResult());
   }
 
-  public ExternalWorkflowApplyingResult(
-      ExternalWorkflowApplicationIdParam externalApplicationIdParam,
-      IdentityVerificationValidationResult requestIdValidationResult,
-      IdentityVerificationRequestVerificationResult verifyResult,
-      ExternalWorkflowApplyingExecutionResult executionResult,
-      IdentityVerificationValidationResult responseValidationResult) {
+  public ExternalWorkflowApplyingResult(ExternalWorkflowApplicationIdParam externalApplicationIdParam, IdentityVerificationValidationResult requestIdValidationResult, IdentityVerificationRequestVerificationResult verifyResult, ExternalWorkflowApplyingExecutionResult executionResult, IdentityVerificationValidationResult responseValidationResult) {
     this.externalApplicationIdParam = externalApplicationIdParam;
     this.requestIdValidationResult = requestIdValidationResult;
     this.verifyResult = verifyResult;
@@ -62,15 +36,11 @@ public class ExternalWorkflowApplyingResult {
   }
 
   public boolean isError() {
-    return requestIdValidationResult.isError()
-        || verifyResult.isError()
-        || executionResult.isClientError()
-        || responseValidationResult.isError();
+    return requestIdValidationResult.isError() || verifyResult.isError() || executionResult.isClientError() || responseValidationResult.isError();
   }
 
   public ExternalWorkflowApplicationIdentifier extractApplicationIdentifierFromBody() {
-    return new ExternalWorkflowApplicationIdentifier(
-        executionResult.extractValueFromBody(externalApplicationIdParam.value()));
+    return new ExternalWorkflowApplicationIdentifier(executionResult.extractValueFromBody(externalApplicationIdParam.value()));
   }
 
   public IdentityVerificationResponse errorResponse() {

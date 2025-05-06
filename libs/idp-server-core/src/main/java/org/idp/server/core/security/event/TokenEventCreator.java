@@ -15,11 +15,7 @@ public class TokenEventCreator {
   SecurityEventDescription securityEventDescription;
   RequestAttributes requestAttributes;
 
-  public TokenEventCreator(
-      Tenant tenant,
-      OAuthToken oAuthToken,
-      DefaultSecurityEventType defaultSecurityEventType,
-      RequestAttributes requestAttributes) {
+  public TokenEventCreator(Tenant tenant, OAuthToken oAuthToken, DefaultSecurityEventType defaultSecurityEventType, RequestAttributes requestAttributes) {
     this.tenant = tenant;
     this.oAuthToken = oAuthToken;
     this.securityEventType = defaultSecurityEventType.toEventType();
@@ -27,12 +23,7 @@ public class TokenEventCreator {
     this.requestAttributes = requestAttributes;
   }
 
-  public TokenEventCreator(
-      Tenant tenant,
-      OAuthToken oAuthToken,
-      SecurityEventType securityEventType,
-      SecurityEventDescription securityEventDescription,
-      RequestAttributes requestAttributes) {
+  public TokenEventCreator(Tenant tenant, OAuthToken oAuthToken, SecurityEventType securityEventType, SecurityEventDescription securityEventDescription, RequestAttributes requestAttributes) {
     this.tenant = tenant;
     this.oAuthToken = oAuthToken;
     this.securityEventType = securityEventType;
@@ -46,14 +37,10 @@ public class TokenEventCreator {
     builder.add(securityEventType);
     builder.add(securityEventDescription);
 
-    SecurityEventTenant securityEventTenant =
-        new SecurityEventTenant(
-            tenant.identifier().value(), tenant.tokenIssuer().value(), tenant.name().value());
+    SecurityEventTenant securityEventTenant = new SecurityEventTenant(tenant.identifier().value(), tenant.tokenIssuer().value(), tenant.name().value());
     builder.add(securityEventTenant);
 
-    SecurityEventClient securityEventClient =
-        new SecurityEventClient(
-            oAuthToken.requestedClientId().value(), oAuthToken.client().nameValue());
+    SecurityEventClient securityEventClient = new SecurityEventClient(oAuthToken.requestedClientId().value(), oAuthToken.client().nameValue());
     builder.add(securityEventClient);
     User user = oAuthToken.user();
 

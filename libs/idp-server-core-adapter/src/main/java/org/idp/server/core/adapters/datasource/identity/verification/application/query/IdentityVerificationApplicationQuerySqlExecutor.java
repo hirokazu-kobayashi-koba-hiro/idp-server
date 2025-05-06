@@ -9,13 +9,11 @@ import org.idp.server.core.identity.verification.delegation.ExternalWorkflowAppl
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public interface IdentityVerificationApplicationQuerySqlExecutor {
-  Map<String, String> selectOne(
-      Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier);
+  Map<String, String> selectOne(Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier);
 
   Map<String, String> selectOne(Tenant tenant, ExternalWorkflowApplicationIdentifier identifier);
 
   List<Map<String, String>> selectList(Tenant tenant, User user);
 
-  List<Map<String, String>> selectList(
-      Tenant tenant, User user, IdentityVerificationApplicationQueries queries);
+  List<Map<String, String>> selectList(Tenant tenant, User user, IdentityVerificationApplicationQueries queries);
 }

@@ -19,13 +19,8 @@ public class DefaultUserinfoProtocol implements UserinfoProtocol {
   UserinfoHandler userinfoHandler;
   LoggerWrapper log = LoggerWrapper.getLogger(UserinfoProtocol.class);
 
-  public DefaultUserinfoProtocol(
-      OAuthTokenRepository oAuthTokenRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
-    this.userinfoHandler =
-        new UserinfoHandler(
-            oAuthTokenRepository, serverConfigurationRepository, clientConfigurationRepository);
+  public DefaultUserinfoProtocol(OAuthTokenRepository oAuthTokenRepository, ServerConfigurationRepository serverConfigurationRepository, ClientConfigurationRepository clientConfigurationRepository) {
+    this.userinfoHandler = new UserinfoHandler(oAuthTokenRepository, serverConfigurationRepository, clientConfigurationRepository);
   }
 
   @Override
@@ -40,8 +35,7 @@ public class DefaultUserinfoProtocol implements UserinfoProtocol {
       Error error = new Error("server_error");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       log.error(exception.getMessage(), exception);
-      return new UserinfoRequestResponse(
-          UserinfoRequestStatus.SERVER_ERROR, new UserinfoErrorResponse(error, errorDescription));
+      return new UserinfoRequestResponse(UserinfoRequestStatus.SERVER_ERROR, new UserinfoErrorResponse(error, errorDescription));
     }
   }
 }

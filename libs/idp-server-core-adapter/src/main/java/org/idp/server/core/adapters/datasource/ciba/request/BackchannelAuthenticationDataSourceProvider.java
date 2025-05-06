@@ -4,8 +4,7 @@ import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 
-public class BackchannelAuthenticationDataSourceProvider
-    implements ApplicationComponentProvider<BackchannelAuthenticationRequestRepository> {
+public class BackchannelAuthenticationDataSourceProvider implements ApplicationComponentProvider<BackchannelAuthenticationRequestRepository> {
 
   @Override
   public Class<BackchannelAuthenticationRequestRepository> type() {
@@ -13,8 +12,7 @@ public class BackchannelAuthenticationDataSourceProvider
   }
 
   @Override
-  public BackchannelAuthenticationRequestRepository provide(
-      ApplicationComponentDependencyContainer container) {
+  public BackchannelAuthenticationRequestRepository provide(ApplicationComponentDependencyContainer container) {
     return new BackchannelAuthenticationRequestDataSource();
   }
 }

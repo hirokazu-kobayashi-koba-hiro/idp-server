@@ -4,8 +4,7 @@ import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 
-public class AuthorizationCodeGrantDataSourceProvider
-    implements ApplicationComponentProvider<AuthorizationCodeGrantRepository> {
+public class AuthorizationCodeGrantDataSourceProvider implements ApplicationComponentProvider<AuthorizationCodeGrantRepository> {
 
   @Override
   public Class<AuthorizationCodeGrantRepository> type() {
@@ -13,8 +12,7 @@ public class AuthorizationCodeGrantDataSourceProvider
   }
 
   @Override
-  public AuthorizationCodeGrantRepository provide(
-      ApplicationComponentDependencyContainer container) {
+  public AuthorizationCodeGrantRepository provide(ApplicationComponentDependencyContainer container) {
     return new AuthorizationCodeGrantDataSource();
   }
 }

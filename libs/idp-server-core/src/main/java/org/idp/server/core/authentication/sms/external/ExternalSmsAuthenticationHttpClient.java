@@ -18,34 +18,20 @@ public class ExternalSmsAuthenticationHttpClient {
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
   }
 
-  public ExternalSmsAuthenticationHttpRequestResult execute(
-      SmsAuthenticationExecutionRequest request,
-      ExternalSmsAuthenticationExecutionConfiguration configuration,
-      OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
+  public ExternalSmsAuthenticationHttpRequestResult execute(SmsAuthenticationExecutionRequest request, ExternalSmsAuthenticationExecutionConfiguration configuration, OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
 
-    HttpRequestHeaders httpRequestHeaders =
-        createHttpRequestHeaders(configuration.httpRequestHeaders(), oAuthAuthorizationConfig);
+    HttpRequestHeaders httpRequestHeaders = createHttpRequestHeaders(configuration.httpRequestHeaders(), oAuthAuthorizationConfig);
 
-    HttpRequestResult executionResult =
-        httpRequestExecutor.execute(
-            configuration.httpRequestUrl(),
-            configuration.httpMethod(),
-            httpRequestHeaders,
-            new HttpRequestBaseParams(request.toMap()),
-            configuration.httpRequestDynamicBodyKeys(),
-            configuration.httpRequestStaticBody());
+    HttpRequestResult executionResult = httpRequestExecutor.execute(configuration.httpRequestUrl(), configuration.httpMethod(), httpRequestHeaders, new HttpRequestBaseParams(request.toMap()), configuration.httpRequestDynamicBodyKeys(), configuration.httpRequestStaticBody());
 
     return new ExternalSmsAuthenticationHttpRequestResult(executionResult);
   }
 
-  private HttpRequestHeaders createHttpRequestHeaders(
-      HttpRequestHeaders httpRequestHeaders,
-      OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
+  private HttpRequestHeaders createHttpRequestHeaders(HttpRequestHeaders httpRequestHeaders, OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
     Map<String, String> values = new HashMap<>(httpRequestHeaders.toMap());
 
     if (oAuthAuthorizationConfig.exists()) {
-      OAuthAuthorizationResolver resolver =
-          authorizationResolvers.get(oAuthAuthorizationConfig.type());
+      OAuthAuthorizationResolver resolver = authorizationResolvers.get(oAuthAuthorizationConfig.type());
       String accessToken = resolver.resolve(oAuthAuthorizationConfig);
       values.put("Authorization", "Bearer " + accessToken);
     }

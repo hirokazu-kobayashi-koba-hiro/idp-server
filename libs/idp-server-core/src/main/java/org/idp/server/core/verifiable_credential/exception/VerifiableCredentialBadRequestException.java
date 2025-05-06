@@ -14,8 +14,7 @@ public class VerifiableCredentialBadRequestException extends RuntimeException {
     this.errorDescription = errorDescription;
   }
 
-  public VerifiableCredentialBadRequestException(
-      String error, String errorDescription, Throwable throwable) {
+  public VerifiableCredentialBadRequestException(String error, String errorDescription, Throwable throwable) {
     super(errorDescription, throwable);
     this.error = error;
     this.errorDescription = errorDescription;

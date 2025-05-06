@@ -29,109 +29,71 @@ public class OAuthController implements ParameterTransformable {
   }
 
   @GetMapping
-  public Object get(
-      @RequestParam(required = false) MultiValueMap<String, String> request,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      HttpServletRequest httpServletRequest,
-      Model model) {
+  public Object get(@RequestParam(required = false) MultiValueMap<String, String> request, @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, HttpServletRequest httpServletRequest, Model model) {
 
     Map<String, String[]> params = transform(request);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    Pairs<Tenant, OAuthRequestResponse> result =
-        oAuthFlowApi.request(tenantIdentifier, params, requestAttributes);
+    Pairs<Tenant, OAuthRequestResponse> result = oAuthFlowApi.request(tenantIdentifier, params, requestAttributes);
     Tenant tenant = result.getLeft();
     OAuthRequestResponse response = result.getRight();
 
     switch (response.status()) {
       case OK -> {
         log.info("sessionEnable: false");
-        return new RedirectView(
-            String.format(
-                "/signin/index.html?id=%s&tenant_id=%s",
-                response.authorizationRequestId(), tenant.identifierValue()));
+        return new RedirectView(String.format("/signin/index.html?id=%s&tenant_id=%s", response.authorizationRequestId(), tenant.identifierValue()));
       }
       case OK_SESSION_ENABLE -> {
         log.info("sessionEnable: true");
-        return new RedirectView(
-            String.format(
-                "/signin/index.html?id=%s&tenant_id=%s",
-                response.authorizationRequestId(), tenant.identifierValue()));
+        return new RedirectView(String.format("/signin/index.html?id=%s&tenant_id=%s", response.authorizationRequestId(), tenant.identifierValue()));
       }
       case OK_ACCOUNT_CREATION -> {
         log.info("request creation account");
-        return new RedirectView(
-            String.format(
-                "/signup/index.html?id=%s&tenant_id=%s",
-                response.authorizationRequestId(), tenant.identifierValue()));
+        return new RedirectView(String.format("/signup/index.html?id=%s&tenant_id=%s", response.authorizationRequestId(), tenant.identifierValue()));
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
         log.info("redirect");
         return "redirect:" + response.redirectUri();
       }
       default -> {
-        log.warn(
-            String.format(
-                "error: %s, description: %s", response.error(), response.errorDescription()));
+        log.warn(String.format("error: %s, description: %s", response.error(), response.errorDescription()));
 
-        return new RedirectView(
-            String.format(
-                "/error/index.html?error=%s&error_description=%s",
-                response.error(), response.errorDescription()));
+        return new RedirectView(String.format("/error/index.html?error=%s&error_description=%s", response.error(), response.errorDescription()));
       }
     }
   }
 
   @PostMapping
-  public Object post(
-      @RequestParam(required = false) MultiValueMap<String, String> request,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      HttpServletRequest httpServletRequest,
-      Model model) {
+  public Object post(@RequestParam(required = false) MultiValueMap<String, String> request, @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, HttpServletRequest httpServletRequest, Model model) {
 
     Map<String, String[]> params = transform(request);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    Pairs<Tenant, OAuthRequestResponse> result =
-        oAuthFlowApi.request(tenantIdentifier, params, requestAttributes);
+    Pairs<Tenant, OAuthRequestResponse> result = oAuthFlowApi.request(tenantIdentifier, params, requestAttributes);
     Tenant tenant = result.getLeft();
     OAuthRequestResponse response = result.getRight();
 
     switch (response.status()) {
       case OK -> {
         log.info("sessionEnable: false");
-        return new RedirectView(
-            String.format(
-                "/signin/index.html?id=%s&tenant_id=%s",
-                response.authorizationRequestId(), tenant.identifierValue()));
+        return new RedirectView(String.format("/signin/index.html?id=%s&tenant_id=%s", response.authorizationRequestId(), tenant.identifierValue()));
       }
       case OK_SESSION_ENABLE -> {
         log.info("sessionEnable: true");
-        return new RedirectView(
-            String.format(
-                "/signin/index.html?id=%s&tenant_id=%s",
-                response.authorizationRequestId(), tenant.identifierValue()));
+        return new RedirectView(String.format("/signin/index.html?id=%s&tenant_id=%s", response.authorizationRequestId(), tenant.identifierValue()));
       }
       case OK_ACCOUNT_CREATION -> {
         log.info("request creation account");
-        return new RedirectView(
-            String.format(
-                "/signup/index.html?id=%s&tenant_id=%s",
-                response.authorizationRequestId(), tenant.identifierValue()));
+        return new RedirectView(String.format("/signup/index.html?id=%s&tenant_id=%s", response.authorizationRequestId(), tenant.identifierValue()));
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
         log.info("redirect");
         return "redirect:" + response.redirectUri();
       }
       default -> {
-        log.warn(
-            String.format(
-                "error: %s, description: %s", response.error(), response.errorDescription()));
+        log.warn(String.format("error: %s, description: %s", response.error(), response.errorDescription()));
 
-        return new RedirectView(
-            String.format(
-                "/error/index.html?error=%s&error_description=%s",
-                response.error(), response.errorDescription()));
+        return new RedirectView(String.format("/error/index.html?error=%s&error_description=%s", response.error(), response.errorDescription()));
       }
     }
   }

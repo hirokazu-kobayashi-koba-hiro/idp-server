@@ -31,8 +31,7 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
   @Override
   public OAuthToken find(Tenant tenant, AccessTokenEntity accessTokenEntity) {
     OAuthTokenSqlExecutor executor = executors.get(tenant.databaseType());
-    Map<String, String> stringMap =
-        executor.selectOneByAccessToken(tenant, accessTokenEntity, aesCipher, hmacHasher);
+    Map<String, String> stringMap = executor.selectOneByAccessToken(tenant, accessTokenEntity, aesCipher, hmacHasher);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
       return new OAuthToken();
@@ -44,8 +43,7 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
   @Override
   public OAuthToken find(Tenant tenant, RefreshTokenEntity refreshTokenEntity) {
     OAuthTokenSqlExecutor executor = executors.get(tenant.databaseType());
-    Map<String, String> stringMap =
-        executor.selectOneByRefreshToken(tenant, refreshTokenEntity, aesCipher, hmacHasher);
+    Map<String, String> stringMap = executor.selectOneByRefreshToken(tenant, refreshTokenEntity, aesCipher, hmacHasher);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
       return new OAuthToken();

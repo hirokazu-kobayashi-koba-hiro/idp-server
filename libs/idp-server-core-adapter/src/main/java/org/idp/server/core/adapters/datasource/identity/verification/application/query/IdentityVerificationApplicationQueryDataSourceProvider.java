@@ -4,8 +4,7 @@ import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationQueryRepository;
 
-public class IdentityVerificationApplicationQueryDataSourceProvider
-    implements ApplicationComponentProvider<IdentityVerificationApplicationQueryRepository> {
+public class IdentityVerificationApplicationQueryDataSourceProvider implements ApplicationComponentProvider<IdentityVerificationApplicationQueryRepository> {
 
   @Override
   public Class<IdentityVerificationApplicationQueryRepository> type() {
@@ -13,8 +12,7 @@ public class IdentityVerificationApplicationQueryDataSourceProvider
   }
 
   @Override
-  public IdentityVerificationApplicationQueryRepository provide(
-      ApplicationComponentDependencyContainer container) {
+  public IdentityVerificationApplicationQueryRepository provide(ApplicationComponentDependencyContainer container) {
     return new IdentityVerificationApplicationQueryDataSource();
   }
 }

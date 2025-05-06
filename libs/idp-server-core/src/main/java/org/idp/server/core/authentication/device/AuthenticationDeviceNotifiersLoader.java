@@ -8,19 +8,15 @@ import org.idp.server.core.authentication.notification.device.NotificationChanne
 
 public class AuthenticationDeviceNotifiersLoader {
 
-  private static final LoggerWrapper log =
-      LoggerWrapper.getLogger(AuthenticationDeviceNotifiersLoader.class);
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(AuthenticationDeviceNotifiersLoader.class);
 
   public static AuthenticationDeviceNotifiers load() {
     Map<NotificationChannel, AuthenticationDeviceNotifier> notifiers = new HashMap<>();
-    ServiceLoader<AuthenticationDeviceNotifier> loader =
-        ServiceLoader.load(AuthenticationDeviceNotifier.class);
+    ServiceLoader<AuthenticationDeviceNotifier> loader = ServiceLoader.load(AuthenticationDeviceNotifier.class);
 
     for (AuthenticationDeviceNotifier notifier : loader) {
       notifiers.put(notifier.chanel(), notifier);
-      log.info(
-          String.format(
-              "Dynamic Registered AuthenticationDeviceNotifier %s", notifier.chanel().name()));
+      log.info(String.format("Dynamic Registered AuthenticationDeviceNotifier %s", notifier.chanel().name()));
     }
 
     return new AuthenticationDeviceNotifiers(notifiers);

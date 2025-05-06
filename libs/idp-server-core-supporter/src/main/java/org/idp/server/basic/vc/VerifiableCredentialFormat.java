@@ -1,9 +1,8 @@
 package org.idp.server.basic.vc;
 
 public enum VerifiableCredentialFormat {
-  json("json"),
-  json_ld("json-ld"),
-  ldp("ldp");
+  json("json"), json_ld("json-ld"), ldp("ldp");
+
   String value;
 
   VerifiableCredentialFormat(String value) {
@@ -16,8 +15,7 @@ public enum VerifiableCredentialFormat {
         return format;
       }
     }
-    throw new VerifiableCredentialFormatInvalidException(
-        String.format("invalid verifiable credential format (%s)", value));
+    throw new VerifiableCredentialFormatInvalidException(String.format("invalid verifiable credential format (%s)", value));
   }
 
   public String value() {

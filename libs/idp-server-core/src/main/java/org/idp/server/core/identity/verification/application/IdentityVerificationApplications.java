@@ -24,23 +24,16 @@ public class IdentityVerificationApplications implements Iterable<IdentityVerifi
   }
 
   public boolean containsRunningState(IdentityVerificationType type) {
-    return values.stream()
-        .anyMatch(
-            application ->
-                application.identityVerificationType().equals(type) && application.isRunning());
+    return values.stream().anyMatch(application -> application.identityVerificationType().equals(type) && application.isRunning());
   }
 
   public IdentityVerificationApplications filterApproved(List<String> targeTypes) {
-    List<IdentityVerificationApplication> filtered =
-        values.stream()
-            .filter(application -> targeTypes.contains(application.identityVerificationType.name()))
-            .toList();
+    List<IdentityVerificationApplication> filtered = values.stream().filter(application -> targeTypes.contains(application.identityVerificationType.name())).toList();
     return new IdentityVerificationApplications(filtered);
   }
 
   public boolean containsApproved(List<String> targeTypes) {
-    return values.stream()
-        .anyMatch(application -> targeTypes.contains(application.identityVerificationType.name()));
+    return values.stream().anyMatch(application -> targeTypes.contains(application.identityVerificationType.name()));
   }
 
   public List<Map<String, Object>> toList() {

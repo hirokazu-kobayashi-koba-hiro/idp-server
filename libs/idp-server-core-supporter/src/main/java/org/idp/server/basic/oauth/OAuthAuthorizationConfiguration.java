@@ -19,15 +19,7 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
 
   public OAuthAuthorizationConfiguration() {}
 
-  public OAuthAuthorizationConfiguration(
-      String type,
-      String tokenEndpoint,
-      String clientAuthenticationType,
-      String clientId,
-      String clientSecret,
-      String scope,
-      String username,
-      String password) {
+  public OAuthAuthorizationConfiguration(String type, String tokenEndpoint, String clientAuthenticationType, String clientId, String clientSecret, String scope, String username, String password) {
     this.type = type;
     this.tokenEndpoint = tokenEndpoint;
     this.clientAuthenticationType = clientAuthenticationType;
@@ -75,13 +67,11 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
   }
 
   public boolean isClientSecretBasic() {
-    return clientAuthenticationType != null
-        && clientAuthenticationType.equals("client_secret_basic");
+    return clientAuthenticationType != null && clientAuthenticationType.equals("client_secret_basic");
   }
 
   public boolean isClientSecretPost() {
-    return clientAuthenticationType != null
-        && clientAuthenticationType.equals("client_secret_post");
+    return clientAuthenticationType != null && clientAuthenticationType.equals("client_secret_post");
   }
 
   public boolean isClientCredentials() {

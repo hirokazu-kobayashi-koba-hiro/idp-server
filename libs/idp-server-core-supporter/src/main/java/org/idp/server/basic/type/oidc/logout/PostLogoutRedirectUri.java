@@ -7,8 +7,9 @@ import java.util.Objects;
 /**
  * post_logout_redirect_uri OPTIONAL
  *
- * <p>URI to which the RP is requesting that the End-User's User Agent be redirected after a logout
- * has been performed. This URI SHOULD use the https scheme and MAY contain port, path, and query
+ * <p>
+ * URI to which the RP is requesting that the End-User's User Agent be redirected after a logout has
+ * been performed. This URI SHOULD use the https scheme and MAY contain port, path, and query
  * parameter components; however, it MAY use the http scheme, provided that the Client Type is
  * confidential, as defined in Section 2.1 of OAuth 2.0 [RFC6749], and provided the OP allows the
  * use of http RP URIs. The URI MAY use an alternate scheme, such as one that is intended to
@@ -17,7 +18,7 @@ import java.util.Objects;
  * mechanism. An id_token_hint is also RECOMMENDED when this parameter is included. state
  *
  * @see <a href="https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout">RP-Initiated
- *     Logout</a>
+ *      Logout</a>
  */
 public class PostLogoutRedirectUri {
   String value;
@@ -38,8 +39,10 @@ public class PostLogoutRedirectUri {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
     PostLogoutRedirectUri that = (PostLogoutRedirectUri) o;
     return Objects.equals(value, that.value);
   }

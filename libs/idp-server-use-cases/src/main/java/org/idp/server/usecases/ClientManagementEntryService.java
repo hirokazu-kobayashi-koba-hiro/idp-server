@@ -18,8 +18,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
   ClientConfigurationHandler clientConfigurationHandler;
   ClientConfigurationErrorHandler errorHandler;
 
-  public ClientManagementEntryService(
-      TenantRepository tenantRepository, ClientConfigurationHandler clientConfigurationHandler) {
+  public ClientManagementEntryService(TenantRepository tenantRepository, ClientConfigurationHandler clientConfigurationHandler) {
     this.tenantRepository = tenantRepository;
     this.clientConfigurationHandler = clientConfigurationHandler;
     this.errorHandler = new ClientConfigurationErrorHandler();
@@ -37,15 +36,13 @@ public class ClientManagementEntryService implements ClientManagementApi {
     return clientConfigurationHandler.handleUpdating(tenant, body);
   }
 
-  public ClientConfigurationManagementListResponse find(
-      TenantIdentifier tenantIdentifier, int limit, int offset) {
+  public ClientConfigurationManagementListResponse find(TenantIdentifier tenantIdentifier, int limit, int offset) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
     return clientConfigurationHandler.handleFinding(tenant, limit, offset);
   }
 
-  public ClientConfigurationManagementResponse get(
-      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId) {
+  public ClientConfigurationManagementResponse get(TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId) {
     try {
       Tenant tenant = tenantRepository.get(tenantIdentifier);
 
@@ -56,8 +53,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
     }
   }
 
-  public ClientConfigurationManagementResponse delete(
-      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId) {
+  public ClientConfigurationManagementResponse delete(TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId) {
     try {
       Tenant tenant = tenantRepository.get(tenantIdentifier);
 

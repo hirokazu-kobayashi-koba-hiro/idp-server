@@ -64,16 +64,6 @@ public class SecurityEventBuilder {
   }
 
   public SecurityEvent build() {
-    return new SecurityEvent(
-        identifier,
-        type,
-        description,
-        server,
-        client,
-        user,
-        ipAddress,
-        userAgent,
-        detail,
-        createdAt);
+    return new SecurityEvent(identifier, type, description, server, client, user, ipAddress, userAgent, detail, createdAt);
   }
 }

@@ -1,8 +1,7 @@
 package org.idp.server.core.federation;
 
 public enum SupportedFederationType {
-  OIDC("oidc"),
-  SAML("saml");
+  OIDC("oidc"), SAML("saml");
 
   String type;
 

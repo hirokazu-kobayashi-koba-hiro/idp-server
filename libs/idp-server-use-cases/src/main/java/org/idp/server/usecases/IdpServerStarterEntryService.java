@@ -35,14 +35,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
   PasswordEncodeDelegation passwordEncodeDelegation;
   JsonConverter jsonConverter;
 
-  public IdpServerStarterEntryService(
-      OrganizationRepository organizationRepository,
-      TenantRepository tenantRepository,
-      UserQueryRepository userQueryRepository,
-      PermissionCommandRepository permissionCommandRepository,
-      RoleCommandRepository roleCommandRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      PasswordEncodeDelegation passwordEncodeDelegation) {
+  public IdpServerStarterEntryService(OrganizationRepository organizationRepository, TenantRepository tenantRepository, UserQueryRepository userQueryRepository, PermissionCommandRepository permissionCommandRepository, RoleCommandRepository roleCommandRepository, ServerConfigurationRepository serverConfigurationRepository, PasswordEncodeDelegation passwordEncodeDelegation) {
     this.organizationRepository = organizationRepository;
     this.tenantRepository = tenantRepository;
     this.userQueryRepository = userQueryRepository;
@@ -54,21 +47,15 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
   }
 
   @Override
-  public Map<String, Object> initialize(
-      TenantIdentifier adminTenantIdentifier, Map<String, Object> request) {
+  public Map<String, Object> initialize(TenantIdentifier adminTenantIdentifier, Map<String, Object> request) {
 
-    OrganizationRegistrationRequest organizationRequest =
-        jsonConverter.read(request.get("organization"), OrganizationRegistrationRequest.class);
-    TenantRegistrationRequest tenantRequest =
-        jsonConverter.read(request.get("tenant"), TenantRegistrationRequest.class);
-    ServerConfiguration serverConfiguration =
-        jsonConverter.read(request.get("server_configuration"), ServerConfiguration.class);
+    OrganizationRegistrationRequest organizationRequest = jsonConverter.read(request.get("organization"), OrganizationRegistrationRequest.class);
+    TenantRegistrationRequest tenantRequest = jsonConverter.read(request.get("tenant"), TenantRegistrationRequest.class);
+    ServerConfiguration serverConfiguration = jsonConverter.read(request.get("server_configuration"), ServerConfiguration.class);
 
     List<Map> rolesRequest = (List<Map>) jsonConverter.read(request.get("roles"), List.class);
-    List<Map> permissionsRequest =
-        (List<Map>) jsonConverter.read(request.get("permissions"), List.class);
-    Permissions permissions =
-        new PermissionRegistrationRequestConvertor(permissionsRequest).toPermissions();
+    List<Map> permissionsRequest = (List<Map>) jsonConverter.read(request.get("permissions"), List.class);
+    Permissions permissions = new PermissionRegistrationRequestConvertor(permissionsRequest).toPermissions();
     Roles roles = new RoleRegistrationRequestConvertor(rolesRequest, permissions).toRoles();
 
     User user = jsonConverter.read(request.get("user"), User.class);
@@ -77,13 +64,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     User updatedUser = user.transitStatus(UserStatus.REGISTERED);
 
     Organization organization = organizationRequest.toOrganization();
-    Tenant tenant =
-        new Tenant(
-            tenantRequest.tenantIdentifier(),
-            tenantRequest.tenantName(),
-            TenantType.ADMIN,
-            new TenantDomain(serverConfiguration.tokenIssuer().value()),
-            TenantAttributes.createDefaultType());
+    Tenant tenant = new Tenant(tenantRequest.tenantIdentifier(), tenantRequest.tenantName(), TenantType.ADMIN, new TenantDomain(serverConfiguration.tokenIssuer().value()), TenantAttributes.createDefaultType());
     organization.assign(tenant);
 
     tenantRepository.register(tenant);

@@ -18,14 +18,7 @@ public class OidcTokenRequest {
 
   public OidcTokenRequest() {}
 
-  public OidcTokenRequest(
-      String endpoint,
-      String code,
-      String clientId,
-      String clientSecret,
-      String redirectUri,
-      String grantType,
-      String clientAuthenticationType) {
+  public OidcTokenRequest(String endpoint, String code, String clientId, String clientSecret, String redirectUri, String grantType, String clientAuthenticationType) {
     this.endpoint = endpoint;
     this.code = code;
     this.clientId = clientId;
@@ -40,8 +33,7 @@ public class OidcTokenRequest {
   }
 
   public boolean isClientSecretBasic() {
-    return Objects.nonNull(clientAuthenticationType)
-        && clientAuthenticationType.equals("client_secret_basic");
+    return Objects.nonNull(clientAuthenticationType) && clientAuthenticationType.equals("client_secret_basic");
   }
 
   public String basicAuthenticationValue() {

@@ -33,50 +33,28 @@ public class SsfHookExecutor implements SecurityEventHookExecutor {
   }
 
   @Override
-  public SecurityEventHookResult execute(
-      Tenant tenant,
-      SecurityEvent securityEvent,
-      SecurityEventHookConfiguration hookConfiguration) {
+  public SecurityEventHookResult execute(Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration hookConfiguration) {
 
-    SecurityEventTokenEntityConvertor convertor =
-        new SecurityEventTokenEntityConvertor(securityEvent);
+    SecurityEventTokenEntityConvertor convertor = new SecurityEventTokenEntityConvertor(securityEvent);
     SecurityEventTokenEntity securityEventTokenEntity = convertor.convert();
 
-    SharedSignalFrameworkConfiguration ssfConfiguration =
-        jsonConverter.read(hookConfiguration.details(), SharedSignalFrameworkConfiguration.class);
+    SharedSignalFrameworkConfiguration ssfConfiguration = jsonConverter.read(hookConfiguration.details(), SharedSignalFrameworkConfiguration.class);
 
-    log.info(
-        String.format(
-            "notify shared signal (%s) to (%s)",
-            securityEventTokenEntity.securityEventAsString(), ssfConfiguration.issuer()));
-    SecurityEventTokenCreator securityEventTokenCreator =
-        new SecurityEventTokenCreator(
-            securityEventTokenEntity, ssfConfiguration.privateKey(securityEvent.type()));
+    log.info(String.format("notify shared signal (%s) to (%s)", securityEventTokenEntity.securityEventAsString(), ssfConfiguration.issuer()));
+    SecurityEventTokenCreator securityEventTokenCreator = new SecurityEventTokenCreator(securityEventTokenEntity, ssfConfiguration.privateKey(securityEvent.type()));
     SecurityEventToken securityEventToken = securityEventTokenCreator.create();
 
-    return send(
-        new SharedSignalEventRequest(
-            ssfConfiguration.endpoint(securityEvent.type()),
-            ssfConfiguration.headers(securityEvent.type()),
-            securityEventToken));
+    return send(new SharedSignalEventRequest(ssfConfiguration.endpoint(securityEvent.type()), ssfConfiguration.headers(securityEvent.type()), securityEventToken));
   }
 
   private SecurityEventHookResult send(SharedSignalEventRequest sharedSignalEventRequest) {
     try {
 
-      HttpRequest.Builder builder =
-          HttpRequest.newBuilder()
-              .uri(new URI(sharedSignalEventRequest.endpoint()))
-              .header("Content-Type", "application/secevent+jwt")
-              .header("Accept", "application/json")
-              .POST(
-                  HttpRequest.BodyPublishers.ofString(
-                      sharedSignalEventRequest.securityEventTokenValue()));
+      HttpRequest.Builder builder = HttpRequest.newBuilder().uri(new URI(sharedSignalEventRequest.endpoint())).header("Content-Type", "application/secevent+jwt").header("Accept", "application/json").POST(HttpRequest.BodyPublishers.ofString(sharedSignalEventRequest.securityEventTokenValue()));
 
       HttpRequest request = builder.build();
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpResponse<String> httpResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
       String body = httpResponse.body();
       if (httpResponse.statusCode() >= 400 && httpResponse.statusCode() < 500) {

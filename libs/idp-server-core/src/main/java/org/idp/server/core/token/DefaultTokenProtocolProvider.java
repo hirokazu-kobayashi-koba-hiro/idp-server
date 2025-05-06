@@ -21,32 +21,16 @@ public class DefaultTokenProtocolProvider implements ProtocolProvider<TokenProto
   @Override
   public TokenProtocol provide(ApplicationComponentContainer container) {
 
-    AuthorizationRequestRepository authorizationRequestRepository =
-        container.resolve(AuthorizationRequestRepository.class);
-    ServerConfigurationRepository serverConfigurationRepository =
-        container.resolve(ServerConfigurationRepository.class);
-    ClientConfigurationRepository clientConfigurationRepository =
-        container.resolve(ClientConfigurationRepository.class);
-    AuthorizationGrantedRepository authorizationGrantedRepository =
-        container.resolve(AuthorizationGrantedRepository.class);
-    AuthorizationCodeGrantRepository authorizationCodeGrantRepository =
-        container.resolve(AuthorizationCodeGrantRepository.class);
+    AuthorizationRequestRepository authorizationRequestRepository = container.resolve(AuthorizationRequestRepository.class);
+    ServerConfigurationRepository serverConfigurationRepository = container.resolve(ServerConfigurationRepository.class);
+    ClientConfigurationRepository clientConfigurationRepository = container.resolve(ClientConfigurationRepository.class);
+    AuthorizationGrantedRepository authorizationGrantedRepository = container.resolve(AuthorizationGrantedRepository.class);
+    AuthorizationCodeGrantRepository authorizationCodeGrantRepository = container.resolve(AuthorizationCodeGrantRepository.class);
     OAuthTokenRepository oAuthTokenRepository = container.resolve(OAuthTokenRepository.class);
-    BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository =
-        container.resolve(BackchannelAuthenticationRequestRepository.class);
+    BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository = container.resolve(BackchannelAuthenticationRequestRepository.class);
     CibaGrantRepository cibaGrantRepository = container.resolve(CibaGrantRepository.class);
-    PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate =
-        container.resolve(PasswordCredentialsGrantDelegate.class);
+    PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate = container.resolve(PasswordCredentialsGrantDelegate.class);
 
-    return new DefaultTokenProtocol(
-        authorizationRequestRepository,
-        authorizationCodeGrantRepository,
-        authorizationGrantedRepository,
-        backchannelAuthenticationRequestRepository,
-        cibaGrantRepository,
-        oAuthTokenRepository,
-        serverConfigurationRepository,
-        clientConfigurationRepository,
-        passwordCredentialsGrantDelegate);
+    return new DefaultTokenProtocol(authorizationRequestRepository, authorizationCodeGrantRepository, authorizationGrantedRepository, backchannelAuthenticationRequestRepository, cibaGrantRepository, oAuthTokenRepository, serverConfigurationRepository, clientConfigurationRepository, passwordCredentialsGrantDelegate);
   }
 }

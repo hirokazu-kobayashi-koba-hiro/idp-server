@@ -25,13 +25,7 @@ public class OAuthToken {
 
   public OAuthToken() {}
 
-  OAuthToken(
-      OAuthTokenIdentifier identifier,
-      AccessToken accessToken,
-      RefreshToken refreshToken,
-      IdToken idToken,
-      CNonce cNonce,
-      CNonceExpiresIn cNonceExpiresIn) {
+  OAuthToken(OAuthTokenIdentifier identifier, AccessToken accessToken, RefreshToken refreshToken, IdToken idToken, CNonce cNonce, CNonceExpiresIn cNonceExpiresIn) {
     this.identifier = identifier;
     this.accessToken = accessToken;
     this.refreshToken = refreshToken;

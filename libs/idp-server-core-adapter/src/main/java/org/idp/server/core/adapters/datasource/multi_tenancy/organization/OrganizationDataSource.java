@@ -34,8 +34,7 @@ public class OrganizationDataSource implements OrganizationRepository {
     }
 
     OrganizationName name = new OrganizationName(result.getOrDefault("name", ""));
-    OrganizationDescription description =
-        new OrganizationDescription(result.getOrDefault("description", ""));
+    OrganizationDescription description = new OrganizationDescription(result.getOrDefault("description", ""));
 
     // TODO
     return new Organization(identifier, name, description, new AssignedTenants());

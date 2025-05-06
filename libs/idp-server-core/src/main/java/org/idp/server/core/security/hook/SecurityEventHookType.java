@@ -17,7 +17,8 @@ public class SecurityEventHookType {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     SecurityEventHookType hookType = (SecurityEventHookType) o;
     return Objects.equals(name, hookType.name);
   }

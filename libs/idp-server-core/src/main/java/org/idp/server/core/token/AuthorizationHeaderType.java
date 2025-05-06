@@ -3,11 +3,7 @@ package org.idp.server.core.token;
 import java.util.Objects;
 
 public enum AuthorizationHeaderType {
-  Basic("Basic "),
-  Bearer("Bearer "),
-  DPoP("DPoP "),
-  Unknown(""),
-  Undefined("");
+  Basic("Basic "), Bearer("Bearer "), DPoP("DPoP "), Unknown(""), Undefined("");
 
   String value;
 

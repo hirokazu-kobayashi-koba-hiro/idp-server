@@ -13,11 +13,7 @@ public class IdTokenHintResolver implements UserHintResolver {
   JoseHandler joseHandler = new JoseHandler();
 
   @Override
-  public User resolve(
-      Tenant tenant,
-      UserHint userHint,
-      UserHintRelatedParams userHintRelatedParams,
-      UserQueryRepository userQueryRepository) {
+  public User resolve(Tenant tenant, UserHint userHint, UserHintRelatedParams userHintRelatedParams, UserQueryRepository userQueryRepository) {
 
     try {
       String idToken = userHint.value();

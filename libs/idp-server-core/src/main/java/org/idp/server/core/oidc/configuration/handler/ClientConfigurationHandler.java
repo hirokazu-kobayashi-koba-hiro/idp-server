@@ -33,13 +33,8 @@ public class ClientConfigurationHandler {
 
   public String handleRegistrationFor(Tenant tenant, String json) {
     // FIXME
-    String replacedJson =
-        json.replace("${ISSUER}", tenant.tokenIssuerValue())
-            .replace("${ISSUER_DOMAIN}", tenant.domain().value())
-            .replace("${CLIENT_ID}", UUID.randomUUID().toString())
-            .replace("${CLIENT_SECRET}", UUID.randomUUID().toString());
-    ClientConfiguration clientConfiguration =
-        jsonConverter.read(replacedJson, ClientConfiguration.class);
+    String replacedJson = json.replace("${ISSUER}", tenant.tokenIssuerValue()).replace("${ISSUER_DOMAIN}", tenant.domain().value()).replace("${CLIENT_ID}", UUID.randomUUID().toString()).replace("${CLIENT_SECRET}", UUID.randomUUID().toString());
+    ClientConfiguration clientConfiguration = jsonConverter.read(replacedJson, ClientConfiguration.class);
 
     clientConfigurationRepository.register(tenant, clientConfiguration);
     return replacedJson;
@@ -53,32 +48,24 @@ public class ClientConfigurationHandler {
     return json;
   }
 
-  public ClientConfigurationManagementListResponse handleFinding(
-      Tenant tenant, int limit, int offset) {
+  public ClientConfigurationManagementListResponse handleFinding(Tenant tenant, int limit, int offset) {
 
-    List<ClientConfiguration> clientConfigurations =
-        clientConfigurationRepository.find(tenant, limit, offset);
+    List<ClientConfiguration> clientConfigurations = clientConfigurationRepository.find(tenant, limit, offset);
     Map<String, Object> content = ClientConfigurationResponseCreator.create(clientConfigurations);
-    return new ClientConfigurationManagementListResponse(
-        ClientConfigurationManagementListStatus.OK, content);
+    return new ClientConfigurationManagementListResponse(ClientConfigurationManagementListStatus.OK, content);
   }
 
-  public ClientConfigurationManagementResponse handleGetting(
-      Tenant tenant, RequestedClientId requestedClientId) {
+  public ClientConfigurationManagementResponse handleGetting(Tenant tenant, RequestedClientId requestedClientId) {
 
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, requestedClientId);
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, requestedClientId);
     Map<String, Object> content = ClientConfigurationResponseCreator.create(clientConfiguration);
-    return new ClientConfigurationManagementResponse(
-        ClientConfigurationManagementStatus.OK, content);
+    return new ClientConfigurationManagementResponse(ClientConfigurationManagementStatus.OK, content);
   }
 
-  public ClientConfigurationManagementResponse handleDeletion(
-      Tenant tenant, RequestedClientId requestedClientId) {
+  public ClientConfigurationManagementResponse handleDeletion(Tenant tenant, RequestedClientId requestedClientId) {
 
     clientConfigurationRepository.delete(tenant, requestedClientId);
 
-    return new ClientConfigurationManagementResponse(
-        ClientConfigurationManagementStatus.OK, Map.of());
+    return new ClientConfigurationManagementResponse(ClientConfigurationManagementStatus.OK, Map.of());
   }
 }

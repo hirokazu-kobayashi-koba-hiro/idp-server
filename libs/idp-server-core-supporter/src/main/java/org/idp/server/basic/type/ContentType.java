@@ -1,8 +1,7 @@
 package org.idp.server.basic.type;
 
 public enum ContentType {
-  application_json("application/json"),
-  application_token_introspection_jwt("application/token-introspection+jwt");
+  application_json("application/json"), application_token_introspection_jwt("application/token-introspection+jwt");
 
   String value;
 

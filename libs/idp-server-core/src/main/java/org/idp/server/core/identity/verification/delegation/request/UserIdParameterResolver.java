@@ -14,18 +14,9 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class UserIdParameterResolver implements AdditionalRequestParameterResolver {
 
-  public boolean shouldResolve(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplications applications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(processes);
-    Map<String, Object> additionalParameterSchema =
-        processConfig.requestAdditionalParameterSchema();
+  public boolean shouldResolve(Tenant tenant, User user, IdentityVerificationApplications applications, IdentityVerificationType type, IdentityVerificationProcess processes, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
+    IdentityVerificationProcessConfiguration processConfig = verificationConfiguration.getProcessConfig(processes);
+    Map<String, Object> additionalParameterSchema = processConfig.requestAdditionalParameterSchema();
 
     if (additionalParameterSchema == null || additionalParameterSchema.isEmpty()) {
       return false;
@@ -36,14 +27,7 @@ public class UserIdParameterResolver implements AdditionalRequestParameterResolv
   }
 
   @Override
-  public Map<String, Object> resolve(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplications applications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public Map<String, Object> resolve(Tenant tenant, User user, IdentityVerificationApplications applications, IdentityVerificationType type, IdentityVerificationProcess processes, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
     Map<String, Object> additionalParameters = new HashMap<>();
     additionalParameters.put("user_id", user.sub());
     String providerUserId = user.providerUserId();

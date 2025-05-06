@@ -20,50 +20,21 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
   JoseHandler joseHandler = new JoseHandler();
 
   @Override
-  public CibaRequestContext create(
-      ClientSecretBasic clientSecretBasic,
-      ClientCert clientCert,
-      CibaRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public CibaRequestContext create(ClientSecretBasic clientSecretBasic, ClientCert clientCert, CibaRequestParameters parameters, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     try {
 
-      JoseContext joseContext =
-          joseHandler.handle(
-              parameters.request().value(),
-              clientConfiguration.jwks(),
-              serverConfiguration.jwks(),
-              clientConfiguration.clientSecretValue());
+      JoseContext joseContext = joseHandler.handle(parameters.request().value(), clientConfiguration.jwks(), serverConfiguration.jwks(), clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
 
       CibaRequestPattern pattern = CibaRequestPattern.REQUEST_OBJECT;
-      Set<String> filteredScopes =
-          filterScopes(pattern, parameters, joseContext, clientConfiguration);
+      Set<String> filteredScopes = filterScopes(pattern, parameters, joseContext, clientConfiguration);
       CibaProfile profile = analyze(filteredScopes, serverConfiguration);
 
-      BackchannelAuthenticationRequest backchannelAuthenticationRequest =
-          requestObjectPatternFactory.create(
-              profile,
-              clientSecretBasic,
-              parameters,
-              joseContext,
-              filteredScopes,
-              serverConfiguration,
-              clientConfiguration);
+      BackchannelAuthenticationRequest backchannelAuthenticationRequest = requestObjectPatternFactory.create(profile, clientSecretBasic, parameters, joseContext, filteredScopes, serverConfiguration, clientConfiguration);
 
-      return new CibaRequestContext(
-          pattern,
-          clientSecretBasic,
-          clientCert,
-          parameters,
-          new CibaRequestObjectParameters(joseContext.claims().payload()),
-          joseContext,
-          backchannelAuthenticationRequest,
-          serverConfiguration,
-          clientConfiguration);
+      return new CibaRequestContext(pattern, clientSecretBasic, clientCert, parameters, new CibaRequestObjectParameters(joseContext.claims().payload()), joseContext, backchannelAuthenticationRequest, serverConfiguration, clientConfiguration);
     } catch (JoseInvalidException exception) {
-      throw new BackchannelAuthenticationBadRequestException(
-          "invalid_request_object", exception.getMessage(), exception);
+      throw new BackchannelAuthenticationBadRequestException("invalid_request_object", exception.getMessage(), exception);
     }
   }
 }

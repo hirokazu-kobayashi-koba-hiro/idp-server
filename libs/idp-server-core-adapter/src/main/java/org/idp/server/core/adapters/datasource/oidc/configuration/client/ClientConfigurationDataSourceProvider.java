@@ -4,8 +4,7 @@ import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
 
-public class ClientConfigurationDataSourceProvider
-    implements ApplicationComponentProvider<ClientConfigurationRepository> {
+public class ClientConfigurationDataSourceProvider implements ApplicationComponentProvider<ClientConfigurationRepository> {
 
   @Override
   public Class<ClientConfigurationRepository> type() {

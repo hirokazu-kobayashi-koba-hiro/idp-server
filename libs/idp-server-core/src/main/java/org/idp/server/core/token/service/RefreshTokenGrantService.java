@@ -13,8 +13,7 @@ import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.RefreshTokenGrantValidator;
 import org.idp.server.core.token.verifier.RefreshTokenVerifier;
 
-public class RefreshTokenGrantService
-    implements OAuthTokenCreationService, AccessTokenCreatable, RefreshTokenCreatable {
+public class RefreshTokenGrantService implements OAuthTokenCreationService, AccessTokenCreatable, RefreshTokenCreatable {
 
   OAuthTokenRepository oAuthTokenRepository;
 
@@ -36,14 +35,9 @@ public class RefreshTokenGrantService
     RefreshTokenVerifier verifier = new RefreshTokenVerifier(context, oAuthToken);
     verifier.verify();
     AuthorizationGrant authorizationGrant = oAuthToken.authorizationGrant();
-    AccessToken accessToken =
-        createAccessToken(
-            authorizationGrant, serverConfiguration, clientConfiguration, clientCredentials);
+    AccessToken accessToken = createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration, clientCredentials);
     RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
-    OAuthTokenBuilder oAuthTokenBuilder =
-        new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))
-            .add(accessToken)
-            .add(refreshToken);
+    OAuthTokenBuilder oAuthTokenBuilder = new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString())).add(accessToken).add(refreshToken);
 
     oAuthTokenRepository.delete(tenant, oAuthToken);
 

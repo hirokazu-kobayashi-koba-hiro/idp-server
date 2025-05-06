@@ -9,8 +9,7 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestBuilder;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class BackchannelAuthenticationRequestDataSource
-    implements BackchannelAuthenticationRequestRepository {
+public class BackchannelAuthenticationRequestDataSource implements BackchannelAuthenticationRequestRepository {
 
   BackchannelAuthenticationRequestSqlExecutors executors;
   JsonConverter jsonConverter;
@@ -27,8 +26,7 @@ public class BackchannelAuthenticationRequestDataSource
   }
 
   @Override
-  public BackchannelAuthenticationRequest find(
-      Tenant tenant, BackchannelAuthenticationRequestIdentifier identifier) {
+  public BackchannelAuthenticationRequest find(Tenant tenant, BackchannelAuthenticationRequestIdentifier identifier) {
     BackchannelAuthenticationRequestSqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> stringMap = executor.selectOne(identifier);

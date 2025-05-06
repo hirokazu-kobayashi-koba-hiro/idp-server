@@ -25,8 +25,7 @@ public class FidoUafConfiguration implements JsonReadable {
 
   public Map<String, Object> getDetail(FidoUafExecutorType type) {
     if (!details.containsKey(type.name())) {
-      throw new WebAuthnCredentialNotFoundException(
-          "invalid configuration. key: " + type.name() + " is unregistered.");
+      throw new WebAuthnCredentialNotFoundException("invalid configuration. key: " + type.name() + " is unregistered.");
     }
     return details.get(type.name());
   }

@@ -10,9 +10,11 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 /**
  * 3.1.2.2. Authentication Request Validation
  *
- * <p>The Authorization Server MUST validate the request received as follows:
+ * <p>
+ * The Authorization Server MUST validate the request received as follows:
  *
- * <p>The Authorization Server MUST validate all the OAuth 2.0 parameters according to the OAuth 2.0
+ * <p>
+ * The Authorization Server MUST validate all the OAuth 2.0 parameters according to the OAuth 2.0
  * specification. Verify that a scope parameter is present and contains the openid scope value. (If
  * no openid scope value is present, the request may still be a valid OAuth 2.0 request, but is not
  * an OpenID Connect request.) The Authorization Server MUST verify that all the REQUIRED parameters
@@ -26,12 +28,13 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
  * the claims parameter is supported by the implementation. As specified in OAuth 2.0 [RFC6749],
  * Authorization Servers SHOULD ignore unrecognized request parameters.
  *
- * <p>If the Authorization Server encounters any error, it MUST return an error response, per
- * Section 3.1.2.6.
+ * <p>
+ * If the Authorization Server encounters any error, it MUST return an error response, per Section
+ * 3.1.2.6.
  *
- * @see <a
- *     href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequestValidation">3.1.2.2.
- *     Authentication Request Validation</a>
+ * @see <a href=
+ *      "https://openid.net/specs/openid-connect-core-1_0.html#AuthRequestValidation">3.1.2.2.
+ *      Authentication Request Validation</a>
  */
 public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
 
@@ -53,33 +56,30 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
   /**
    * redirect_uri REQUIRED.
    *
-   * <p>Redirection URI to which the response will be sent.
+   * <p>
+   * Redirection URI to which the response will be sent.
    *
    * @param context
    */
   void throwExceptionIfNotContainsRedirectUri(OAuthRequestContext context) {
     if (!context.hasRedirectUriInRequest()) {
-      throw new OAuthBadRequestException(
-          "invalid_request", "oidc profile authorization request must contains redirect_uri param");
+      throw new OAuthBadRequestException("invalid_request", "oidc profile authorization request must contains redirect_uri param");
     }
   }
 
   /**
    * redirect_uri Simple String Comparison
    *
-   * <p>This URI MUST exactly match one of the Redirection URI values for the Client pre-registered
-   * at the OpenID Provider, with the matching performed as described in Section 6.2.1 of [RFC3986]
+   * <p>
+   * This URI MUST exactly match one of the Redirection URI values for the Client pre-registered at
+   * the OpenID Provider, with the matching performed as described in Section 6.2.1 of [RFC3986]
    * (Simple String Comparison).
    *
    * @param context
    */
   void throwExceptionIfUnRegisteredRedirectUri(OAuthRequestContext context) {
     if (!context.isRegisteredRedirectUri()) {
-      throw new OAuthBadRequestException(
-          "invalid_request",
-          String.format(
-              "authorization request redirect_uri does not register in client configuration (%s)",
-              context.redirectUri().value()));
+      throw new OAuthBadRequestException("invalid_request", String.format("authorization request redirect_uri does not register in client configuration (%s)", context.redirectUri().value()));
     }
   }
 
@@ -91,12 +91,7 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
       return;
     }
     if (context.redirectUri().isHttp()) {
-      throw new OAuthRedirectableBadRequestException(
-          "invalid_request",
-          String.format(
-              "When using this flow and client application is web application, the Redirection URI MUST NOT use the http scheme (%s)",
-              context.redirectUri().value()),
-          context);
+      throw new OAuthRedirectableBadRequestException("invalid_request", String.format("When using this flow and client application is web application, the Redirection URI MUST NOT use the http scheme (%s)", context.redirectUri().value()), context);
     }
   }
 
@@ -105,34 +100,37 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
       return;
     }
     if (!context.authorizationRequest().hasNonce()) {
-      throw new OAuthRedirectableBadRequestException(
-          "invalid_request",
-          "When using implicit flow or hybrid flow, authorization request must contains nonce.",
-          context);
+      throw new OAuthRedirectableBadRequestException("invalid_request", "When using implicit flow or hybrid flow, authorization request must contains nonce.", context);
     }
   }
 
   /**
    * display OPTIONAL.
    *
-   * <p>ASCII string value that specifies how the Authorization Server displays the authentication
-   * and consent user interface pages to the End-User. The defined values are:
+   * <p>
+   * ASCII string value that specifies how the Authorization Server displays the authentication and
+   * consent user interface pages to the End-User. The defined values are:
    *
-   * <p>page The Authorization Server SHOULD display the authentication and consent UI consistent
-   * with a full User Agent page view. If the display parameter is not specified, this is the
-   * default display mode.
+   * <p>
+   * page The Authorization Server SHOULD display the authentication and consent UI consistent with a
+   * full User Agent page view. If the display parameter is not specified, this is the default display
+   * mode.
    *
-   * <p>popup The Authorization Server SHOULD display the authentication and consent UI consistent
-   * with a popup User Agent window. The popup User Agent window should be of an appropriate size
-   * for a login-focused dialog and should not obscure the entire window that it is popping up over.
+   * <p>
+   * popup The Authorization Server SHOULD display the authentication and consent UI consistent with a
+   * popup User Agent window. The popup User Agent window should be of an appropriate size for a
+   * login-focused dialog and should not obscure the entire window that it is popping up over.
    *
-   * <p>touch The Authorization Server SHOULD display the authentication and consent UI consistent
-   * with a device that leverages a touch interface.
+   * <p>
+   * touch The Authorization Server SHOULD display the authentication and consent UI consistent with a
+   * device that leverages a touch interface.
    *
-   * <p>wap The Authorization Server SHOULD display the authentication and consent UI consistent
-   * with a "feature phone" type display.
+   * <p>
+   * wap The Authorization Server SHOULD display the authentication and consent UI consistent with a
+   * "feature phone" type display.
    *
-   * <p>The Authorization Server MAY also attempt to detect the capabilities of the User Agent and
+   * <p>
+   * The Authorization Server MAY also attempt to detect the capabilities of the User Agent and
    * present an appropriate display.
    *
    * @param context
@@ -140,24 +138,14 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
   void throwExceptionIfInvalidDisplay(OAuthRequestContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     if (authorizationRequest.isInvalidDisplay()) {
-      throw new OAuthRedirectableBadRequestException(
-          "invalid_request",
-          String.format(
-              "authorization request display is defined that page, popup, touch, wap, but request display is (%s)",
-              context.getParams(OAuthRequestKey.display)),
-          context);
+      throw new OAuthRedirectableBadRequestException("invalid_request", String.format("authorization request display is defined that page, popup, touch, wap, but request display is (%s)", context.getParams(OAuthRequestKey.display)), context);
     }
   }
 
   void throwExceptionIfInvalidPrompt(OAuthRequestContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     if (authorizationRequest.isInvalidPrompt()) {
-      throw new OAuthRedirectableBadRequestException(
-          "invalid_request",
-          String.format(
-              "authorization request prompt is defined that none, login, consent, select_account, but request prompt is (%s)",
-              context.getParams(OAuthRequestKey.prompt)),
-          context);
+      throw new OAuthRedirectableBadRequestException("invalid_request", String.format("authorization request prompt is defined that none, login, consent, select_account, but request prompt is (%s)", context.getParams(OAuthRequestKey.prompt)), context);
     }
   }
 
@@ -172,24 +160,14 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     Prompts prompts = authorizationRequest.prompts();
     if (prompts.hasNone() && prompts.isMultiValue()) {
-      throw new OAuthRedirectableBadRequestException(
-          "invalid_request",
-          String.format(
-              "authorization request must not contains none with any other (%s)",
-              context.getParams(OAuthRequestKey.prompt)),
-          context);
+      throw new OAuthRedirectableBadRequestException("invalid_request", String.format("authorization request must not contains none with any other (%s)", context.getParams(OAuthRequestKey.prompt)), context);
     }
   }
 
   void throwExceptionIfInvalidMaxAge(OAuthRequestContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     if (authorizationRequest.isInvalidMaxAge()) {
-      throw new OAuthRedirectableBadRequestException(
-          "invalid_request",
-          String.format(
-              "authorization request max_age is invalid (%s)",
-              context.getParams(OAuthRequestKey.max_age)),
-          context);
+      throw new OAuthRedirectableBadRequestException("invalid_request", String.format("authorization request max_age is invalid (%s)", context.getParams(OAuthRequestKey.max_age)), context);
     }
   }
 }

@@ -28,16 +28,14 @@ public class OAuthRequestVerifier {
   public void verify(OAuthRequestContext context) {
     AuthorizationRequestVerifier baseRequestVerifier = baseVerifiers.get(context.profile());
     if (Objects.isNull(baseRequestVerifier)) {
-      throw new UnSupportedException(
-          String.format("idp server unsupported profile (%s)", context.profile().name()));
+      throw new UnSupportedException(String.format("idp server unsupported profile (%s)", context.profile().name()));
     }
     baseRequestVerifier.verify(context);
-    extensionVerifiers.forEach(
-        verifier -> {
-          if (verifier.shouldNotVerify(context)) {
-            return;
-          }
-          verifier.verify(context);
-        });
+    extensionVerifiers.forEach(verifier -> {
+      if (verifier.shouldNotVerify(context)) {
+        return;
+      }
+      verifier.verify(context);
+    });
   }
 }

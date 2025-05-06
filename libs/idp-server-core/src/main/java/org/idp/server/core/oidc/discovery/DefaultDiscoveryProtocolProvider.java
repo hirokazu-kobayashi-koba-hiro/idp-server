@@ -14,8 +14,7 @@ public class DefaultDiscoveryProtocolProvider implements ProtocolProvider<Discov
   @Override
   public DiscoveryProtocol provide(ApplicationComponentContainer container) {
 
-    ServerConfigurationRepository serverConfigurationRepository =
-        container.resolve(ServerConfigurationRepository.class);
+    ServerConfigurationRepository serverConfigurationRepository = container.resolve(ServerConfigurationRepository.class);
     return new DefaultDiscoveryProtocol(serverConfigurationRepository);
   }
 }

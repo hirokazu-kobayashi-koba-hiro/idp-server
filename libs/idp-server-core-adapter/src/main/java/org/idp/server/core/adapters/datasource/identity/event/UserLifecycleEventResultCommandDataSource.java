@@ -6,8 +6,7 @@ import org.idp.server.core.identity.event.UserLifecycleEventResult;
 import org.idp.server.core.identity.event.UserLifecycleEventResultCommandRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class UserLifecycleEventResultCommandDataSource
-    implements UserLifecycleEventResultCommandRepository {
+public class UserLifecycleEventResultCommandDataSource implements UserLifecycleEventResultCommandRepository {
 
   UserLifecycleEventResultSqlExecutors executors;
 
@@ -16,10 +15,7 @@ public class UserLifecycleEventResultCommandDataSource
   }
 
   @Override
-  public void register(
-      Tenant tenant,
-      UserLifecycleEvent userLifecycleEvent,
-      List<UserLifecycleEventResult> userLifecycleEventResults) {
+  public void register(Tenant tenant, UserLifecycleEvent userLifecycleEvent, List<UserLifecycleEventResult> userLifecycleEventResults) {
     UserLifecycleEventResultSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, userLifecycleEvent, userLifecycleEventResults);
   }

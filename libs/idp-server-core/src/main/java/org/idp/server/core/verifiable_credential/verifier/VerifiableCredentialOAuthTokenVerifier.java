@@ -19,8 +19,7 @@ public class VerifiableCredentialOAuthTokenVerifier {
   ClientCert clientCert;
   ServerConfiguration serverConfiguration;
 
-  public VerifiableCredentialOAuthTokenVerifier(
-      OAuthToken oAuthToken, ClientCert clientCert, ServerConfiguration serverConfiguration) {
+  public VerifiableCredentialOAuthTokenVerifier(OAuthToken oAuthToken, ClientCert clientCert, ServerConfiguration serverConfiguration) {
     this.oAuthToken = oAuthToken;
     this.clientCert = clientCert;
     this.serverConfiguration = serverConfiguration;
@@ -47,35 +46,29 @@ public class VerifiableCredentialOAuthTokenVerifier {
       return;
     }
     if (!clientCert.exists()) {
-      throw new VerifiableCredentialTokenInvalidException(
-          "access token is sender constrained, but mtls client cert does not exists");
+      throw new VerifiableCredentialTokenInvalidException("access token is sender constrained, but mtls client cert does not exists");
     }
     try {
       ClientCertification clientCertification = ClientCertification.parse(clientCert.plainValue());
-      ClientCertificationThumbprintCalculator calculator =
-          new ClientCertificationThumbprintCalculator(clientCertification);
+      ClientCertificationThumbprintCalculator calculator = new ClientCertificationThumbprintCalculator(clientCertification);
       ClientCertificationThumbprint thumbprint = calculator.calculate();
       AccessToken accessToken = oAuthToken.accessToken();
       if (!accessToken.matchThumbprint(thumbprint)) {
-        throw new VerifiableCredentialTokenInvalidException(
-            "access token and mtls client cert is unmatch");
+        throw new VerifiableCredentialTokenInvalidException("access token and mtls client cert is unmatch");
       }
     } catch (X509CertInvalidException e) {
-      throw new VerifiableCredentialTokenInvalidException(
-          "access token is sender constrained, but mtls client cert is invalid format", e);
+      throw new VerifiableCredentialTokenInvalidException("access token is sender constrained, but mtls client cert is invalid format", e);
     }
   }
 
   void throwExceptionIfNotGranted() {
     AccessToken accessToken = oAuthToken.accessToken();
     if (!accessToken.hasAuthorizationDetails()) {
-      throw new VerifiableCredentialTokenInvalidException(
-          "access token have to contain authorization details at credential endpoint");
+      throw new VerifiableCredentialTokenInvalidException("access token have to contain authorization details at credential endpoint");
     }
     AuthorizationDetails authorizationDetails = accessToken.authorizationDetails();
     if (!authorizationDetails.hasVerifiableCredential()) {
-      throw new VerifiableCredentialTokenInvalidException(
-          "access token have to contain authorization details at credential endpoint");
+      throw new VerifiableCredentialTokenInvalidException("access token have to contain authorization details at credential endpoint");
     }
   }
 }

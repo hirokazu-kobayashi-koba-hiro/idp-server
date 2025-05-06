@@ -11,8 +11,7 @@ public class SharedSignalFrameworkConfig implements JsonReadable {
 
   public SharedSignalFrameworkConfig() {}
 
-  public SharedSignalFrameworkConfig(
-      String privateKey, String endpoint, Map<String, String> headers) {
+  public SharedSignalFrameworkConfig(String privateKey, String endpoint, Map<String, String> headers) {
     this.privateKey = privateKey;
     this.endpoint = endpoint;
     this.headers = headers;

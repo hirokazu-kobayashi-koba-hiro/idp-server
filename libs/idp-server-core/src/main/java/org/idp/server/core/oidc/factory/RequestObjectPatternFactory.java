@@ -19,9 +19,11 @@ import org.idp.server.core.oidc.request.RequestObjectParameters;
 /**
  * RequestObjectPatternFactory
  *
- * <p>6.3.3. Request Parameter Assembly and Validation
+ * <p>
+ * 6.3.3. Request Parameter Assembly and Validation
  *
- * <p>The Authorization Server MUST assemble the set of Authorization Request parameters to be used
+ * <p>
+ * The Authorization Server MUST assemble the set of Authorization Request parameters to be used
  * from the Request Object value and the OAuth 2.0 Authorization Request parameters (minus the
  * request or request_uri parameters). If the same parameter exists both in the Request Object and
  * the OAuth Authorization Request parameters, the parameter in the Request Object is used. Using
@@ -32,83 +34,29 @@ import org.idp.server.core.oidc.request.RequestObjectParameters;
 public class RequestObjectPatternFactory implements AuthorizationRequestFactory {
 
   @Override
-  public AuthorizationRequest create(
-      AuthorizationProfile profile,
-      OAuthRequestParameters parameters,
-      JoseContext joseContext,
-      Set<String> filteredScopes,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public AuthorizationRequest create(AuthorizationProfile profile, OAuthRequestParameters parameters, JoseContext joseContext, Set<String> filteredScopes, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     JsonWebTokenClaims jsonWebTokenClaims = joseContext.claims();
-    RequestObjectParameters requestObjectParameters =
-        new RequestObjectParameters(jsonWebTokenClaims.payload());
+    RequestObjectParameters requestObjectParameters = new RequestObjectParameters(jsonWebTokenClaims.payload());
     Scopes scopes = new Scopes(filteredScopes);
-    ResponseType responseType =
-        requestObjectParameters.hasResponseType()
-            ? requestObjectParameters.responseType()
-            : parameters.responseType();
-    RequestedClientId requestedClientId =
-        requestObjectParameters.hasClientId()
-            ? requestObjectParameters.clientId()
-            : parameters.clientId();
-    RedirectUri redirectUri =
-        requestObjectParameters.hasRedirectUri()
-            ? requestObjectParameters.redirectUri()
-            : parameters.redirectUri();
-    State state =
-        requestObjectParameters.hasState() ? requestObjectParameters.state() : parameters.state();
-    ResponseMode responseMode =
-        requestObjectParameters.hasResponseMode()
-            ? requestObjectParameters.responseMode()
-            : parameters.responseMode();
-    Nonce nonce =
-        requestObjectParameters.hasNonce() ? requestObjectParameters.nonce() : parameters.nonce();
-    Display display =
-        requestObjectParameters.hasDisplay()
-            ? requestObjectParameters.display()
-            : parameters.display();
-    Prompts prompts =
-        requestObjectParameters.hasPrompt()
-            ? requestObjectParameters.prompts()
-            : parameters.prompts();
-    MaxAge maxAge =
-        requestObjectParameters.hasMaxAge()
-            ? requestObjectParameters.maxAge()
-            : parameters.maxAge();
-    UiLocales uiLocales =
-        requestObjectParameters.hasUiLocales()
-            ? requestObjectParameters.uiLocales()
-            : parameters.uiLocales();
-    IdTokenHint idTokenHint =
-        requestObjectParameters.hasIdTokenHint()
-            ? requestObjectParameters.idTokenHint()
-            : parameters.idTokenHint();
-    LoginHint loginHint =
-        requestObjectParameters.hasLoginHint()
-            ? requestObjectParameters.loginHint()
-            : parameters.loginHint();
-    AcrValues acrValues =
-        requestObjectParameters.hasAcrValues()
-            ? requestObjectParameters.acrValues()
-            : parameters.acrValues();
-    ClaimsValue claimsValue =
-        requestObjectParameters.hasClaims()
-            ? requestObjectParameters.claims()
-            : parameters.claims();
+    ResponseType responseType = requestObjectParameters.hasResponseType() ? requestObjectParameters.responseType() : parameters.responseType();
+    RequestedClientId requestedClientId = requestObjectParameters.hasClientId() ? requestObjectParameters.clientId() : parameters.clientId();
+    RedirectUri redirectUri = requestObjectParameters.hasRedirectUri() ? requestObjectParameters.redirectUri() : parameters.redirectUri();
+    State state = requestObjectParameters.hasState() ? requestObjectParameters.state() : parameters.state();
+    ResponseMode responseMode = requestObjectParameters.hasResponseMode() ? requestObjectParameters.responseMode() : parameters.responseMode();
+    Nonce nonce = requestObjectParameters.hasNonce() ? requestObjectParameters.nonce() : parameters.nonce();
+    Display display = requestObjectParameters.hasDisplay() ? requestObjectParameters.display() : parameters.display();
+    Prompts prompts = requestObjectParameters.hasPrompt() ? requestObjectParameters.prompts() : parameters.prompts();
+    MaxAge maxAge = requestObjectParameters.hasMaxAge() ? requestObjectParameters.maxAge() : parameters.maxAge();
+    UiLocales uiLocales = requestObjectParameters.hasUiLocales() ? requestObjectParameters.uiLocales() : parameters.uiLocales();
+    IdTokenHint idTokenHint = requestObjectParameters.hasIdTokenHint() ? requestObjectParameters.idTokenHint() : parameters.idTokenHint();
+    LoginHint loginHint = requestObjectParameters.hasLoginHint() ? requestObjectParameters.loginHint() : parameters.loginHint();
+    AcrValues acrValues = requestObjectParameters.hasAcrValues() ? requestObjectParameters.acrValues() : parameters.acrValues();
+    ClaimsValue claimsValue = requestObjectParameters.hasClaims() ? requestObjectParameters.claims() : parameters.claims();
     RequestObject requestObject = parameters.request();
     RequestUri requestUri = parameters.requestUri();
-    CodeChallenge codeChallenge =
-        requestObjectParameters.hasCodeChallenge()
-            ? requestObjectParameters.codeChallenge()
-            : parameters.codeChallenge();
-    CodeChallengeMethod codeChallengeMethod =
-        requestObjectParameters.hasCodeChallengeMethod()
-            ? requestObjectParameters.codeChallengeMethod()
-            : parameters.codeChallengeMethod();
-    AuthorizationDetailsEntity authorizationDetailsEntity =
-        requestObjectParameters.hasAuthorizationDetailsValue()
-            ? requestObjectParameters.authorizationDetailsEntity()
-            : parameters.authorizationDetailsValue();
+    CodeChallenge codeChallenge = requestObjectParameters.hasCodeChallenge() ? requestObjectParameters.codeChallenge() : parameters.codeChallenge();
+    CodeChallengeMethod codeChallengeMethod = requestObjectParameters.hasCodeChallengeMethod() ? requestObjectParameters.codeChallengeMethod() : parameters.codeChallengeMethod();
+    AuthorizationDetailsEntity authorizationDetailsEntity = requestObjectParameters.hasAuthorizationDetailsValue() ? requestObjectParameters.authorizationDetailsEntity() : parameters.authorizationDetailsValue();
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());

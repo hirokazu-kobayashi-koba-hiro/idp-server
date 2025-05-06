@@ -16,8 +16,7 @@ public class CredentialDelegateResponse {
   }
 
   public static CredentialDelegateResponse pending() {
-    return new CredentialDelegateResponse(
-        VerifiableCredentialTransactionStatus.pending, new Credential());
+    return new CredentialDelegateResponse(VerifiableCredentialTransactionStatus.pending, new Credential());
   }
 
   public VerifiableCredentialTransactionStatus status() {

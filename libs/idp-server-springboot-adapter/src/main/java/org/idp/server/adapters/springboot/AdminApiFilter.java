@@ -20,20 +20,15 @@ public class AdminApiFilter extends OncePerRequestFilter {
   String apiSecret;
   LoggerWrapper logger = LoggerWrapper.getLogger(AdminApiFilter.class);
 
-  public AdminApiFilter(
-      @Value("${idp.configurations.apiKey}") String apiKey,
-      @Value("${idp.configurations.apiSecret}") String apiSecret) {
+  public AdminApiFilter(@Value("${idp.configurations.apiKey}") String apiKey, @Value("${idp.configurations.apiSecret}") String apiSecret) {
     this.apiKey = apiKey;
     this.apiSecret = apiSecret;
   }
 
   @Override
-  protected void doFilterInternal(
-      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-      throws ServletException, IOException {
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
     String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-    AdminCredentialConvertor adminCredentialConvertor =
-        new AdminCredentialConvertor(authorizationHeader);
+    AdminCredentialConvertor adminCredentialConvertor = new AdminCredentialConvertor(authorizationHeader);
     BasicAuth basicAuth = adminCredentialConvertor.toBasicAuth();
 
     if (!basicAuth.exists()) {

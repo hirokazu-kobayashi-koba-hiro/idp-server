@@ -18,8 +18,7 @@ public class AuthenticationDependencyContainer {
 
   public <T> T resolve(Class<T> type) {
     if (!dependencies.containsKey(type)) {
-      throw new AuthenticationDependencyMissionException(
-          "Missing dependency for type: " + type.getName());
+      throw new AuthenticationDependencyMissionException("Missing dependency for type: " + type.getName());
     }
     return type.cast(dependencies.get(type));
   }

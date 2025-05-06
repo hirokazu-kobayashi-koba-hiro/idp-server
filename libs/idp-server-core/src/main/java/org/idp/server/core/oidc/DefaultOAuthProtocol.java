@@ -27,38 +27,11 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
   OAuthHandler oAuthHandler;
   OAuthSessionDelegate oAuthSessionDelegate;
 
-  public DefaultOAuthProtocol(
-      AuthorizationRequestRepository authorizationRequestRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository,
-      AuthorizationGrantedRepository authorizationGrantedRepository,
-      AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
-      OAuthTokenRepository oAuthTokenRepository,
-      OAuthSessionDelegate oAuthSessionDelegate) {
-    this.requestHandler =
-        new OAuthRequestHandler(
-            authorizationRequestRepository,
-            serverConfigurationRepository,
-            clientConfigurationRepository,
-            new RequestObjectHttpClient(),
-            authorizationGrantedRepository);
-    this.authorizeHandler =
-        new OAuthAuthorizeHandler(
-            authorizationRequestRepository,
-            authorizationCodeGrantRepository,
-            oAuthTokenRepository,
-            serverConfigurationRepository,
-            clientConfigurationRepository);
-    this.oAuthDenyHandler =
-        new OAuthDenyHandler(
-            authorizationRequestRepository,
-            serverConfigurationRepository,
-            clientConfigurationRepository);
-    this.oAuthHandler =
-        new OAuthHandler(
-            authorizationRequestRepository,
-            serverConfigurationRepository,
-            clientConfigurationRepository);
+  public DefaultOAuthProtocol(AuthorizationRequestRepository authorizationRequestRepository, ServerConfigurationRepository serverConfigurationRepository, ClientConfigurationRepository clientConfigurationRepository, AuthorizationGrantedRepository authorizationGrantedRepository, AuthorizationCodeGrantRepository authorizationCodeGrantRepository, OAuthTokenRepository oAuthTokenRepository, OAuthSessionDelegate oAuthSessionDelegate) {
+    this.requestHandler = new OAuthRequestHandler(authorizationRequestRepository, serverConfigurationRepository, clientConfigurationRepository, new RequestObjectHttpClient(), authorizationGrantedRepository);
+    this.authorizeHandler = new OAuthAuthorizeHandler(authorizationRequestRepository, authorizationCodeGrantRepository, oAuthTokenRepository, serverConfigurationRepository, clientConfigurationRepository);
+    this.oAuthDenyHandler = new OAuthDenyHandler(authorizationRequestRepository, serverConfigurationRepository, clientConfigurationRepository);
+    this.oAuthHandler = new OAuthHandler(authorizationRequestRepository, serverConfigurationRepository, clientConfigurationRepository);
     this.oAuthRequestErrorHandler = new OAuthRequestErrorHandler();
     this.authAuthorizeErrorHandler = new OAuthAuthorizeErrorHandler();
     this.denyErrorHandler = new OAuthDenyErrorHandler();
@@ -73,10 +46,11 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
   /**
    * request
    *
-   * <p>The authorization endpoint is used to interact with the resource owner and obtain an
+   * <p>
+   * The authorization endpoint is used to interact with the resource owner and obtain an
    * authorization grant. The authorization server MUST first verify the identity of the resource
-   * owner. The way in which the authorization server authenticates the resource owner (e.g.,
-   * username and password login, session cookies) is beyond the scope of this specification.
+   * owner. The way in which the authorization server authenticates the resource owner (e.g., username
+   * and password login, session cookies) is beyond the scope of this specification.
    */
   public OAuthRequestResponse request(OAuthRequest oAuthRequest) {
 
@@ -87,8 +61,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
       if (context.canAutomaticallyAuthorize()) {
 
         OAuthAuthorizeRequest oAuthAuthorizeRequest = context.createOAuthAuthorizeRequest();
-        AuthorizationResponse response =
-            authorizeHandler.handle(oAuthAuthorizeRequest, oAuthSessionDelegate);
+        AuthorizationResponse response = authorizeHandler.handle(oAuthAuthorizeRequest, oAuthSessionDelegate);
         return new OAuthRequestResponse(OAuthRequestStatus.NO_INTERACTION_OK, response);
       }
 

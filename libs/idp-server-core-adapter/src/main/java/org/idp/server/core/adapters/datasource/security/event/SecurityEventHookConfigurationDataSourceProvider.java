@@ -4,8 +4,7 @@ import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.security.repository.SecurityEventHookConfigurationQueryRepository;
 
-public class SecurityEventHookConfigurationDataSourceProvider
-    implements ApplicationComponentProvider<SecurityEventHookConfigurationQueryRepository> {
+public class SecurityEventHookConfigurationDataSourceProvider implements ApplicationComponentProvider<SecurityEventHookConfigurationQueryRepository> {
 
   @Override
   public Class<SecurityEventHookConfigurationQueryRepository> type() {
@@ -13,8 +12,7 @@ public class SecurityEventHookConfigurationDataSourceProvider
   }
 
   @Override
-  public SecurityEventHookConfigurationQueryRepository provide(
-      ApplicationComponentDependencyContainer container) {
+  public SecurityEventHookConfigurationQueryRepository provide(ApplicationComponentDependencyContainer container) {
     return new SecurityEventHookConfigurationQueryDataSource();
   }
 }

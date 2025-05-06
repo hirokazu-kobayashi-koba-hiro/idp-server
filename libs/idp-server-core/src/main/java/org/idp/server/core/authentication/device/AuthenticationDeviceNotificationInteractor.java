@@ -15,25 +15,15 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
   AuthenticationDeviceNotifiers authenticationDeviceNotifiers;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
 
-  public AuthenticationDeviceNotificationInteractor(
-      AuthenticationDeviceNotifiers authenticationDeviceNotifiers,
-      AuthenticationConfigurationQueryRepository configurationQueryRepository) {
+  public AuthenticationDeviceNotificationInteractor(AuthenticationDeviceNotifiers authenticationDeviceNotifiers, AuthenticationConfigurationQueryRepository configurationQueryRepository) {
     this.authenticationDeviceNotifiers = authenticationDeviceNotifiers;
     this.configurationQueryRepository = configurationQueryRepository;
   }
 
   @Override
-  public AuthenticationInteractionRequestResult interact(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
-      UserQueryRepository userQueryRepository) {
+  public AuthenticationInteractionRequestResult interact(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, AuthenticationInteractionType type, AuthenticationInteractionRequest request, AuthenticationTransaction transaction, UserQueryRepository userQueryRepository) {
 
-    AuthenticationDeviceNotificationConfiguration configuration =
-        configurationQueryRepository.get(
-            tenant, "authentication-device", AuthenticationDeviceNotificationConfiguration.class);
+    AuthenticationDeviceNotificationConfiguration configuration = configurationQueryRepository.get(tenant, "authentication-device", AuthenticationDeviceNotificationConfiguration.class);
 
     // TODO
     User user = transaction.user();
@@ -46,8 +36,7 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
 
     AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
     Map<String, Object> response = Map.of();
-    DefaultSecurityEventType eventType =
-        DefaultSecurityEventType.authentication_device_notification_success;
+    DefaultSecurityEventType eventType = DefaultSecurityEventType.authentication_device_notification_success;
     return new AuthenticationInteractionRequestResult(status, type, response, eventType);
   }
 }

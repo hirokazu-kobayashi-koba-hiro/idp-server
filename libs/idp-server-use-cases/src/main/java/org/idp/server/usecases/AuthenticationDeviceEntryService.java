@@ -17,21 +17,15 @@ public class AuthenticationDeviceEntryService implements AuthenticationDeviceApi
   TenantRepository tenantRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
 
-  public AuthenticationDeviceEntryService(
-      TenantRepository tenantRepository,
-      AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository) {
+  public AuthenticationDeviceEntryService(TenantRepository tenantRepository, AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository) {
     this.tenantRepository = tenantRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
   }
 
-  public AuthenticationTransactionFindingResponse findLatest(
-      TenantIdentifier tenantIdentifier,
-      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
-      RequestAttributes requestAttributes) {
+  public AuthenticationTransactionFindingResponse findLatest(TenantIdentifier tenantIdentifier, AuthenticationDeviceIdentifier authenticationDeviceIdentifier, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.findLatest(tenant, authenticationDeviceIdentifier);
+    AuthenticationTransaction authenticationTransaction = authenticationTransactionQueryRepository.findLatest(tenant, authenticationDeviceIdentifier);
 
     if (!authenticationTransaction.exists()) {
       return AuthenticationTransactionFindingResponse.notFound();

@@ -17,9 +17,7 @@ public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
   ExternalSmsAuthenticationHttpClient httpClient;
   JsonConverter jsonConverter;
 
-  public ExternalSmsAuthenticationExecutor(
-      AuthenticationInteractionCommandRepository interactionCommandRepository,
-      AuthenticationInteractionQueryRepository interactionQueryRepository) {
+  public ExternalSmsAuthenticationExecutor(AuthenticationInteractionCommandRepository interactionCommandRepository, AuthenticationInteractionQueryRepository interactionQueryRepository) {
     this.interactionCommandRepository = interactionCommandRepository;
     this.interactionQueryRepository = interactionQueryRepository;
     this.httpClient = new ExternalSmsAuthenticationHttpClient();
@@ -32,18 +30,12 @@ public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
   }
 
   @Override
-  public SmsAuthenticationExecutionResult challenge(
-      Tenant tenant,
-      AuthorizationIdentifier identifier,
-      SmsAuthenticationExecutionRequest request,
-      SmsAuthenticationConfiguration configuration) {
+  public SmsAuthenticationExecutionResult challenge(Tenant tenant, AuthorizationIdentifier identifier, SmsAuthenticationExecutionRequest request, SmsAuthenticationConfiguration configuration) {
 
     SmsAuthenticationExecutionResult challengeResult = execute("challenge", request, configuration);
 
     if (challengeResult.isSuccess()) {
-      ExternalSmsAuthenticationTransaction transaction =
-          new ExternalSmsAuthenticationTransaction(
-              challengeResult.getValueAsStringFromContents(configuration.transactionIdParam()));
+      ExternalSmsAuthenticationTransaction transaction = new ExternalSmsAuthenticationTransaction(challengeResult.getValueAsStringFromContents(configuration.transactionIdParam()));
       interactionCommandRepository.register(tenant, identifier, "sms", transaction);
     }
 
@@ -51,43 +43,28 @@ public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
   }
 
   @Override
-  public SmsAuthenticationExecutionResult verify(
-      Tenant tenant,
-      AuthorizationIdentifier identifier,
-      SmsAuthenticationExecutionRequest request,
-      SmsAuthenticationConfiguration configuration) {
+  public SmsAuthenticationExecutionResult verify(Tenant tenant, AuthorizationIdentifier identifier, SmsAuthenticationExecutionRequest request, SmsAuthenticationConfiguration configuration) {
 
-    ExternalSmsAuthenticationTransaction transaction =
-        interactionQueryRepository.get(
-            tenant, identifier, "sms", ExternalSmsAuthenticationTransaction.class);
+    ExternalSmsAuthenticationTransaction transaction = interactionQueryRepository.get(tenant, identifier, "sms", ExternalSmsAuthenticationTransaction.class);
 
     HashMap<String, Object> map = new HashMap<>();
     map.put(configuration.transactionIdParam(), transaction.id());
-    map.put(
-        configuration.verificationCodeParam(),
-        request.getValueAsString(configuration.verificationCodeParam()));
+    map.put(configuration.verificationCodeParam(), request.getValueAsString(configuration.verificationCodeParam()));
 
     SmsAuthenticationExecutionRequest externalRequest = new SmsAuthenticationExecutionRequest(map);
 
     return execute("verify", externalRequest, configuration);
   }
 
-  private SmsAuthenticationExecutionResult execute(
-      String executionType,
-      SmsAuthenticationExecutionRequest request,
-      SmsAuthenticationConfiguration configuration) {
+  private SmsAuthenticationExecutionResult execute(String executionType, SmsAuthenticationExecutionRequest request, SmsAuthenticationConfiguration configuration) {
 
     Map<String, Object> detail = configuration.getDetail(type());
-    ExternalSmsAuthenticationConfiguration externalFidoUafServerConfiguration =
-        jsonConverter.read(detail, ExternalSmsAuthenticationConfiguration.class);
+    ExternalSmsAuthenticationConfiguration externalFidoUafServerConfiguration = jsonConverter.read(detail, ExternalSmsAuthenticationConfiguration.class);
 
-    ExternalSmsAuthenticationExecutionConfiguration executionConfiguration =
-        externalFidoUafServerConfiguration.getExecutionConfig(executionType);
-    OAuthAuthorizationConfiguration oAuthAuthorizationConfiguration =
-        externalFidoUafServerConfiguration.oauthAuthorization();
+    ExternalSmsAuthenticationExecutionConfiguration executionConfiguration = externalFidoUafServerConfiguration.getExecutionConfig(executionType);
+    OAuthAuthorizationConfiguration oAuthAuthorizationConfiguration = externalFidoUafServerConfiguration.oauthAuthorization();
 
-    ExternalSmsAuthenticationHttpRequestResult httpRequestResult =
-        httpClient.execute(request, executionConfiguration, oAuthAuthorizationConfiguration);
+    ExternalSmsAuthenticationHttpRequestResult httpRequestResult = httpClient.execute(request, executionConfiguration, oAuthAuthorizationConfiguration);
 
     if (httpRequestResult.isClientError()) {
       return SmsAuthenticationExecutionResult.clientError(httpRequestResult.responseBody());

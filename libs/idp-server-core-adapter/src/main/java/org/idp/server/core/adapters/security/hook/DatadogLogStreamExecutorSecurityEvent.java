@@ -32,44 +32,26 @@ public class DatadogLogStreamExecutorSecurityEvent implements SecurityEventHookE
   }
 
   @Override
-  public SecurityEventHookResult execute(
-      Tenant tenant,
-      SecurityEvent securityEvent,
-      SecurityEventHookConfiguration hookConfiguration) {
+  public SecurityEventHookResult execute(Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration hookConfiguration) {
 
     try {
-      WebHookConfiguration configuration =
-          jsonConverter.read(hookConfiguration, WebHookConfiguration.class);
+      WebHookConfiguration configuration = jsonConverter.read(hookConfiguration, WebHookConfiguration.class);
       HttpRequestUrl httpRequestUrl = configuration.httpRequestUrl(securityEvent.type());
-      HttpRequestHeaders httpRequestHeaders =
-          configuration.httpRequestHeaders(securityEvent.type());
-      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys =
-          configuration.httpRequestDynamicBodyKeys(securityEvent.type());
-      HttpRequestStaticBody httpRequestStaticBody =
-          configuration.httpRequestStaticBody(securityEvent.type());
+      HttpRequestHeaders httpRequestHeaders = configuration.httpRequestHeaders(securityEvent.type());
+      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys = configuration.httpRequestDynamicBodyKeys(securityEvent.type());
+      HttpRequestStaticBody httpRequestStaticBody = configuration.httpRequestStaticBody(securityEvent.type());
 
       validate(httpRequestHeaders);
       validate(httpRequestStaticBody);
 
-      HttpRequestBodyCreator requestBodyCreator =
-          new HttpRequestBodyCreator(
-              new HttpRequestBaseParams(securityEvent.toMap()),
-              httpRequestDynamicBodyKeys,
-              httpRequestStaticBody);
+      HttpRequestBodyCreator requestBodyCreator = new HttpRequestBodyCreator(new HttpRequestBaseParams(securityEvent.toMap()), httpRequestDynamicBodyKeys, httpRequestStaticBody);
       Map<String, Object> requestBodyMap = requestBodyCreator.create();
 
       String body = jsonConverter.write(requestBodyMap);
 
-      HttpRequest request =
-          HttpRequest.newBuilder()
-              .uri(new URI(httpRequestUrl.value()))
-              .header("Content-Type", "application/json")
-              .header("DD-API-KEY", httpRequestHeaders.getValueAsString("DD-API-KEY"))
-              .POST(HttpRequest.BodyPublishers.ofString(body))
-              .build();
+      HttpRequest request = HttpRequest.newBuilder().uri(new URI(httpRequestUrl.value())).header("Content-Type", "application/json").header("DD-API-KEY", httpRequestHeaders.getValueAsString("DD-API-KEY")).POST(HttpRequest.BodyPublishers.ofString(body)).build();
 
-      HttpResponse<String> response =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
       Map<String, Object> result = new HashMap<>();
       result.put("status", response.statusCode());

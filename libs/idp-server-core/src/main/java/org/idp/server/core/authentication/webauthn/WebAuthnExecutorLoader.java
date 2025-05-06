@@ -12,14 +12,12 @@ public class WebAuthnExecutorLoader {
 
   public static WebAuthnExecutors load(AuthenticationDependencyContainer container) {
     Map<WebAuthnExecutorType, WebAuthnExecutor> executors = new HashMap<>();
-    ServiceLoader<WebAuthnExecutorFactory> loader =
-        ServiceLoader.load(WebAuthnExecutorFactory.class);
+    ServiceLoader<WebAuthnExecutorFactory> loader = ServiceLoader.load(WebAuthnExecutorFactory.class);
 
     for (WebAuthnExecutorFactory factory : loader) {
       WebAuthnExecutor webAuthnExecutor = factory.create(container);
       executors.put(webAuthnExecutor.type(), webAuthnExecutor);
-      log.info(
-          String.format("Dynamic Registered WebAuthnExecutor %s", webAuthnExecutor.type().value()));
+      log.info(String.format("Dynamic Registered WebAuthnExecutor %s", webAuthnExecutor.type().value()));
     }
 
     return new WebAuthnExecutors(executors);

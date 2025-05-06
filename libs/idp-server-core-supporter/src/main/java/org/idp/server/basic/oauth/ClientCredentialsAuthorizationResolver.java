@@ -30,12 +30,7 @@ public class ClientCredentialsAuthorizationResolver implements OAuthAuthorizatio
 
       QueryParams queryParams = new QueryParams(config.toMap());
 
-      HttpRequest.Builder builder =
-          HttpRequest.newBuilder()
-              .uri(new URI(config.tokenEndpoint()))
-              .header("Content-Type", "application/x-www-form-urlencoded")
-              .header("Accept", "application/json")
-              .POST(HttpRequest.BodyPublishers.ofString(queryParams.params()));
+      HttpRequest.Builder builder = HttpRequest.newBuilder().uri(new URI(config.tokenEndpoint())).header("Content-Type", "application/x-www-form-urlencoded").header("Accept", "application/json").POST(HttpRequest.BodyPublishers.ofString(queryParams.params()));
 
       if (config.isClientSecretBasic()) {
         builder.header("Authorization", config.basicAuthenticationValue());
@@ -48,8 +43,7 @@ public class ClientCredentialsAuthorizationResolver implements OAuthAuthorizatio
         log.debug("Request body: {}", request.bodyPublisher().get());
       }
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpResponse<String> httpResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String body = httpResponse.body();
 
       log.debug("Response status: {}", httpResponse.statusCode());

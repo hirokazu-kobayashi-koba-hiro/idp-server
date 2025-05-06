@@ -26,15 +26,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
 
-  public TokenRequestContext(
-      Tenant tenant,
-      ClientSecretBasic clientSecretBasic,
-      ClientCert clientCert,
-      TokenRequestParameters parameters,
-      CustomProperties customProperties,
-      PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public TokenRequestContext(Tenant tenant, ClientSecretBasic clientSecretBasic, ClientCert clientCert, TokenRequestParameters parameters, CustomProperties customProperties, PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     this.tenant = tenant;
     this.clientSecretBasic = clientSecretBasic;
     this.clientCert = clientCert;

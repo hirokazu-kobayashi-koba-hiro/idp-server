@@ -11,16 +11,14 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 public class PostgresqlExecutor implements FederationConfigurationQuerySqlExecutor {
 
   @Override
-  public Map<String, String> selectOne(
-      Tenant tenant, FederationType federationType, SsoProvider ssoProvider) {
+  public Map<String, String> selectOne(Tenant tenant, FederationType federationType, SsoProvider ssoProvider) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                SELECT id, payload FROM federation_configurations
-                WHERE tenant_id = ?
-                AND type = ?
-                AND sso_provider_name = ?
-                """;
+    String sqlTemplate = """
+        SELECT id, payload FROM federation_configurations
+        WHERE tenant_id = ?
+        AND type = ?
+        AND sso_provider_name = ?
+        """;
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(federationType.name());

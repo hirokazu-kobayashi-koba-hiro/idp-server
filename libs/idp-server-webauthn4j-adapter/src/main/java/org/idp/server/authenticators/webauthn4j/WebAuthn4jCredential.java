@@ -18,13 +18,7 @@ public class WebAuthn4jCredential {
 
   public WebAuthn4jCredential() {}
 
-  public WebAuthn4jCredential(
-      byte[] id,
-      String userId,
-      String rpId,
-      byte[] publicKey,
-      byte[] attestationObject,
-      long signCount) {
+  public WebAuthn4jCredential(byte[] id, String userId, String rpId, byte[] publicKey, byte[] attestationObject, long signCount) {
     this.id = id;
     this.userId = userId;
     this.rpId = rpId;

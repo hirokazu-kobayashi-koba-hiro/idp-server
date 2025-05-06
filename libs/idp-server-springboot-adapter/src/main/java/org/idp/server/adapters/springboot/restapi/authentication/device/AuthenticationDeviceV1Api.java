@@ -14,8 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(
-    "{tenant-id}/api/v1/authentication-devices/{authentication-device-id}/authentications")
+@RequestMapping("{tenant-id}/api/v1/authentication-devices/{authentication-device-id}/authentications")
 public class AuthenticationDeviceV1Api implements ParameterTransformable {
 
   AuthenticationDeviceApi authenticationDeviceApi;
@@ -25,21 +24,14 @@ public class AuthenticationDeviceV1Api implements ParameterTransformable {
   }
 
   @GetMapping("/latest")
-  public ResponseEntity<?> get(
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("authentication-device-id")
-          AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
-      HttpServletRequest httpServletRequest) {
+  public ResponseEntity<?> get(@PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @PathVariable("authentication-device-id") AuthenticationDeviceIdentifier authenticationDeviceIdentifier, HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    AuthenticationTransactionFindingResponse response =
-        authenticationDeviceApi.findLatest(
-            tenantIdentifier, authenticationDeviceIdentifier, requestAttributes);
+    AuthenticationTransactionFindingResponse response = authenticationDeviceApi.findLatest(tenantIdentifier, authenticationDeviceIdentifier, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
-    return new ResponseEntity<>(
-        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+    return new ResponseEntity<>(response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }

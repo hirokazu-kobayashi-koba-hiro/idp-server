@@ -22,7 +22,8 @@ public class UserLifecycleEventResultIdentifier {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     UserLifecycleEventResultIdentifier that = (UserLifecycleEventResultIdentifier) o;
     return Objects.equals(value, that.value);
   }

@@ -1,8 +1,7 @@
 package org.idp.server.basic.datasource;
 
 public class OperationContext {
-  private static final ThreadLocal<OperationType> context =
-      ThreadLocal.withInitial(() -> OperationType.WRITE);
+  private static final ThreadLocal<OperationType> context = ThreadLocal.withInitial(() -> OperationType.WRITE);
 
   public static void set(OperationType type) {
     context.set(type);

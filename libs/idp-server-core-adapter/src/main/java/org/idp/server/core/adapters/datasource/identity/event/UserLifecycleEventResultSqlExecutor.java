@@ -7,8 +7,5 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public interface UserLifecycleEventResultSqlExecutor {
 
-  void insert(
-      Tenant tenant,
-      UserLifecycleEvent userLifecycleEvent,
-      List<UserLifecycleEventResult> userLifecycleEventResults);
+  void insert(Tenant tenant, UserLifecycleEvent userLifecycleEvent, List<UserLifecycleEventResult> userLifecycleEventResults);
 }

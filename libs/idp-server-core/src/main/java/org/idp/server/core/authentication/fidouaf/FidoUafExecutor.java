@@ -9,30 +9,13 @@ public interface FidoUafExecutor {
 
   FidoUafExecutionResult getFidoUafFacets(Tenant tenant, FidoUafConfiguration fidoUafConfiguration);
 
-  FidoUafExecutionResult challengeRegistration(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      FidoUafExecutionRequest request,
-      FidoUafConfiguration configuration);
+  FidoUafExecutionResult challengeRegistration(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, FidoUafExecutionRequest request, FidoUafConfiguration configuration);
 
-  FidoUafExecutionResult verifyRegistration(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      FidoUafExecutionRequest request,
-      FidoUafConfiguration configuration);
+  FidoUafExecutionResult verifyRegistration(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, FidoUafExecutionRequest request, FidoUafConfiguration configuration);
 
-  FidoUafExecutionResult challengeAuthentication(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      FidoUafExecutionRequest request,
-      FidoUafConfiguration configuration);
+  FidoUafExecutionResult challengeAuthentication(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, FidoUafExecutionRequest request, FidoUafConfiguration configuration);
 
-  FidoUafExecutionResult verifyAuthentication(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      FidoUafExecutionRequest request,
-      FidoUafConfiguration configuration);
+  FidoUafExecutionResult verifyAuthentication(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, FidoUafExecutionRequest request, FidoUafConfiguration configuration);
 
-  FidoUafExecutionResult deleteKey(
-      Tenant tenant, FidoUafExecutionRequest request, FidoUafConfiguration fidoUafConfiguration);
+  FidoUafExecutionResult deleteKey(Tenant tenant, FidoUafExecutionRequest request, FidoUafConfiguration fidoUafConfiguration);
 }

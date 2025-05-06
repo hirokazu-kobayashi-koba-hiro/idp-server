@@ -15,10 +15,7 @@ public class AuthenticationMetaDataEntryService implements AuthenticationMetaDat
   FidoUafExecutors fidoUafExecutors;
   TenantRepository tenantRepository;
 
-  public AuthenticationMetaDataEntryService(
-      AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository,
-      FidoUafExecutors fidoUafExecutors,
-      TenantRepository tenantRepository) {
+  public AuthenticationMetaDataEntryService(AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository, FidoUafExecutors fidoUafExecutors, TenantRepository tenantRepository) {
     this.authenticationConfigurationQueryRepository = authenticationConfigurationQueryRepository;
     this.fidoUafExecutors = fidoUafExecutors;
     this.tenantRepository = tenantRepository;
@@ -27,9 +24,7 @@ public class AuthenticationMetaDataEntryService implements AuthenticationMetaDat
   @Override
   public FidoUafExecutionResult getFidoUafFacets(TenantIdentifier tenantIdentifier) {
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    FidoUafConfiguration fidoUafConfiguration =
-        authenticationConfigurationQueryRepository.get(
-            tenant, "fido-uaf", FidoUafConfiguration.class);
+    FidoUafConfiguration fidoUafConfiguration = authenticationConfigurationQueryRepository.get(tenant, "fido-uaf", FidoUafConfiguration.class);
 
     FidoUafExecutor fidoUafExecutor = fidoUafExecutors.get(fidoUafConfiguration.type());
 

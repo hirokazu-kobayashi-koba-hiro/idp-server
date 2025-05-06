@@ -23,10 +23,6 @@ public class WebAuthn4jCredentials implements Iterable<WebAuthn4jCredential> {
   }
 
   public WebAuthn4jCredential get(String rpId) {
-    return values.stream()
-        .filter(item -> item.rpId().equals(rpId))
-        .findFirst()
-        .orElseThrow(
-            () -> new WebAuthnCredentialNotFoundException("No credential found for " + rpId));
+    return values.stream().filter(item -> item.rpId().equals(rpId)).findFirst().orElseThrow(() -> new WebAuthnCredentialNotFoundException("No credential found for " + rpId));
   }
 }

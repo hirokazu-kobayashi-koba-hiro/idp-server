@@ -32,17 +32,12 @@ public class SlacklNotificationSecurityEventHookExecutor implements SecurityEven
   }
 
   @Override
-  public SecurityEventHookResult execute(
-      Tenant tenant,
-      SecurityEvent securityEvent,
-      SecurityEventHookConfiguration hookConfiguration) {
+  public SecurityEventHookResult execute(Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration hookConfiguration) {
 
-    SlackSecurityEventHookConfiguration configuration =
-        jsonConverter.read(hookConfiguration.details(), SlackSecurityEventHookConfiguration.class);
+    SlackSecurityEventHookConfiguration configuration = jsonConverter.read(hookConfiguration.details(), SlackSecurityEventHookConfiguration.class);
     String incomingWebhookUrl = configuration.incomingWebhookUrl(securityEvent.type());
     if (incomingWebhookUrl == null) {
-      return SecurityEventHookResult.failure(
-          type(), Map.of("status", 500, "error", "invalid_configuration"));
+      return SecurityEventHookResult.failure(type(), Map.of("status", 500, "error", "invalid_configuration"));
     }
 
     String template = configuration.messageTemplate(securityEvent.type());
@@ -50,22 +45,15 @@ public class SlacklNotificationSecurityEventHookExecutor implements SecurityEven
     Map<String, Object> context = new HashMap<>(securityEvent.toMap());
     context.put("trigger", securityEvent.type().value());
 
-    NotificationTemplateInterpolator notificationTemplateInterpolator =
-        new NotificationTemplateInterpolator(template, context);
+    NotificationTemplateInterpolator notificationTemplateInterpolator = new NotificationTemplateInterpolator(template, context);
     String message = notificationTemplateInterpolator.interpolate();
 
     String jsonBody = "{\"text\": \"" + escapeJson(message) + "\"}";
 
     try {
-      HttpRequest httpRequest =
-          HttpRequest.newBuilder()
-              .uri(new URI(incomingWebhookUrl))
-              .header("Content-Type", "application/json")
-              .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-              .build();
+      HttpRequest httpRequest = HttpRequest.newBuilder().uri(new URI(incomingWebhookUrl)).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(jsonBody)).build();
 
-      HttpResponse<Void> httpResponse =
-          httpClient.send(httpRequest, HttpResponse.BodyHandlers.discarding());
+      HttpResponse<Void> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.discarding());
 
       Map<String, Object> result = new HashMap<>();
       result.put("status", httpResponse.statusCode());

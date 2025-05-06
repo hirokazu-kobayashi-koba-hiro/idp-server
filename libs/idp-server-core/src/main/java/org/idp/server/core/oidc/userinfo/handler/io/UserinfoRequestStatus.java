@@ -1,10 +1,7 @@
 package org.idp.server.core.oidc.userinfo.handler.io;
 
 public enum UserinfoRequestStatus {
-  OK(200),
-  BAD_REQUEST(400),
-  UNAUTHORIZE(401),
-  SERVER_ERROR(500);
+  OK(200), BAD_REQUEST(400), UNAUTHORIZE(401), SERVER_ERROR(500);
 
   int statusCode;
 

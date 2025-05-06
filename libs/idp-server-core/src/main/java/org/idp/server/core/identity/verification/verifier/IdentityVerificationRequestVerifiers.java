@@ -22,25 +22,15 @@ public class IdentityVerificationRequestVerifiers {
     this.verifiers.add(new ContinuousCustomerDueDiligenceIdentityVerificationVerifier());
   }
 
-  public IdentityVerificationRequestVerificationResult verify(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplications applications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public IdentityVerificationRequestVerificationResult verify(Tenant tenant, User user, IdentityVerificationApplications applications, IdentityVerificationType type, IdentityVerificationProcess processes, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
 
     for (IdentityVerificationRequestVerifier verifier : verifiers) {
 
-      if (!verifier.shouldVerify(
-          tenant, user, applications, type, processes, request, verificationConfiguration)) {
+      if (!verifier.shouldVerify(tenant, user, applications, type, processes, request, verificationConfiguration)) {
         continue;
       }
 
-      IdentityVerificationRequestVerificationResult verifyResult =
-          verifier.verify(
-              tenant, user, applications, type, processes, request, verificationConfiguration);
+      IdentityVerificationRequestVerificationResult verifyResult = verifier.verify(tenant, user, applications, type, processes, request, verificationConfiguration);
 
       if (verifyResult.isError()) {
         return verifyResult;

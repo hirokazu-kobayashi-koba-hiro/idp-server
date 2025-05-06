@@ -13,10 +13,7 @@ public class FederationRequestResponse {
     this.status = status;
   }
 
-  public FederationRequestResponse(
-      FederationRequestStatus status,
-      OidcSsoSession oidcSsoSession,
-      OidcSsoConfiguration oidcSsoConfiguration) {
+  public FederationRequestResponse(FederationRequestStatus status, OidcSsoSession oidcSsoSession, OidcSsoConfiguration oidcSsoConfiguration) {
     this.status = status;
     this.oidcSsoSession = oidcSsoSession;
     this.oidcSsoConfiguration = oidcSsoConfiguration;

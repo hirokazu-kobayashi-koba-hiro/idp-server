@@ -7,15 +7,12 @@ import org.idp.server.core.oidc.AuthorizationProfile;
 
 public interface ResponseModeDecidable {
 
-  default ResponseModeValue decideResponseModeValue(
-      ResponseType responseType, ResponseMode responseMode) {
+  default ResponseModeValue decideResponseModeValue(ResponseType responseType, ResponseMode responseMode) {
 
     if (responseMode.isDefinedResponseModeValue()) {
 
       return new ResponseModeValue(responseMode.responseModeValue());
-    } else if (responseType.isAuthorizationCodeFlow()
-        || responseType.isUndefined()
-        || responseType.isUnknown()) {
+    } else if (responseType.isAuthorizationCodeFlow() || responseType.isUndefined() || responseType.isUnknown()) {
 
       return ResponseModeValue.query();
     } else {
@@ -24,8 +21,7 @@ public interface ResponseModeDecidable {
     }
   }
 
-  default boolean isJwtMode(
-      AuthorizationProfile profile, ResponseType responseType, ResponseMode responseMode) {
+  default boolean isJwtMode(AuthorizationProfile profile, ResponseType responseType, ResponseMode responseMode) {
     if (responseMode.isJwtMode()) {
       return true;
     }

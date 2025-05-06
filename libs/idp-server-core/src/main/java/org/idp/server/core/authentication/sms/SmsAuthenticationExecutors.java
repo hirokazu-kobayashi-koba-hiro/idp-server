@@ -7,8 +7,7 @@ public class SmsAuthenticationExecutors {
 
   Map<SmsAuthenticationType, SmsAuthenticationExecutor> executors;
 
-  public SmsAuthenticationExecutors(
-      Map<SmsAuthenticationType, SmsAuthenticationExecutor> executors) {
+  public SmsAuthenticationExecutors(Map<SmsAuthenticationType, SmsAuthenticationExecutor> executors) {
     this.executors = executors;
   }
 
@@ -16,8 +15,7 @@ public class SmsAuthenticationExecutors {
     SmsAuthenticationExecutor executor = executors.get(type);
 
     if (executor == null) {
-      throw new UnSupportedException(
-          "No sms authentication executor found for type: " + type.name());
+      throw new UnSupportedException("No sms authentication executor found for type: " + type.name());
     }
 
     return executor;

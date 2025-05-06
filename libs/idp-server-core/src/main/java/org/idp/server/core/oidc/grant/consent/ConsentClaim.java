@@ -35,7 +35,8 @@ public class ConsentClaim implements JsonReadable {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     ConsentClaim that = (ConsentClaim) o;
     return Objects.equals(name, that.name) && Objects.equals(value, that.value);
   }

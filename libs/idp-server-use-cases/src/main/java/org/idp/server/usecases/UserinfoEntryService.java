@@ -26,11 +26,7 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
   TenantRepository tenantRepository;
   TokenEventPublisher eventPublisher;
 
-  public UserinfoEntryService(
-      UserinfoProtocols userinfoProtocols,
-      UserQueryRepository userQueryRepository,
-      TenantRepository tenantRepository,
-      TokenEventPublisher eventPublisher) {
+  public UserinfoEntryService(UserinfoProtocols userinfoProtocols, UserQueryRepository userQueryRepository, TenantRepository tenantRepository, TokenEventPublisher eventPublisher) {
     this.userinfoProtocols = userinfoProtocols;
     this.userQueryRepository = userQueryRepository;
     this.tenantRepository = tenantRepository;
@@ -43,27 +39,18 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
     return userQueryRepository.get(tenant, userIdentifier);
   }
 
-  public UserinfoRequestResponse request(
-      TenantIdentifier tenantIdentifier,
-      String authorizationHeader,
-      String clientCert,
-      RequestAttributes requestAttributes) {
+  public UserinfoRequestResponse request(TenantIdentifier tenantIdentifier, String authorizationHeader, String clientCert, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
     userinfoRequest.setClientCert(clientCert);
 
-    UserinfoProtocol userinfoProtocol =
-        userinfoProtocols.get(tenant.authorizationProtocolProvider());
+    UserinfoProtocol userinfoProtocol = userinfoProtocols.get(tenant.authorizationProtocolProvider());
 
     UserinfoRequestResponse result = userinfoProtocol.request(userinfoRequest, this);
 
     if (result.isOK()) {
-      eventPublisher.publish(
-          tenant,
-          result.oAuthToken(),
-          DefaultSecurityEventType.userinfo_success,
-          requestAttributes);
+      eventPublisher.publish(tenant, result.oAuthToken(), DefaultSecurityEventType.userinfo_success, requestAttributes);
     }
 
     return result;

@@ -12,17 +12,9 @@ public interface OAuthTokenSqlExecutor {
 
   void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
 
-  Map<String, String> selectOneByAccessToken(
-      Tenant tenant,
-      AccessTokenEntity accessTokenEntity,
-      AesCipher aesCipher,
-      HmacHasher hmacHasher);
+  Map<String, String> selectOneByAccessToken(Tenant tenant, AccessTokenEntity accessTokenEntity, AesCipher aesCipher, HmacHasher hmacHasher);
 
-  Map<String, String> selectOneByRefreshToken(
-      Tenant tenant,
-      RefreshTokenEntity refreshTokenEntity,
-      AesCipher aesCipher,
-      HmacHasher hmacHasher);
+  Map<String, String> selectOneByRefreshToken(Tenant tenant, RefreshTokenEntity refreshTokenEntity, AesCipher aesCipher, HmacHasher hmacHasher);
 
   void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
 }

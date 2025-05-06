@@ -260,8 +260,7 @@ public class ClientConfiguration implements JsonReadable {
   }
 
   public boolean hasEncryptedIdTokenMeta() {
-    return Objects.nonNull(idTokenEncryptedResponseAlg)
-        && Objects.nonNull(idTokenEncryptedResponseEnc);
+    return Objects.nonNull(idTokenEncryptedResponseAlg) && Objects.nonNull(idTokenEncryptedResponseEnc);
   }
 
   public List<String> authorizationDetailsTypes() {
@@ -313,8 +312,7 @@ public class ClientConfiguration implements JsonReadable {
   }
 
   public boolean hasEncryptedAuthorizationResponseMeta() {
-    return Objects.nonNull(idTokenEncryptedResponseAlg)
-        && Objects.nonNull(idTokenEncryptedResponseEnc);
+    return Objects.nonNull(idTokenEncryptedResponseAlg) && Objects.nonNull(idTokenEncryptedResponseEnc);
   }
 
   public String tenantId() {

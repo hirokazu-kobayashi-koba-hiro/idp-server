@@ -14,19 +14,14 @@ import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 /** AuthorizationCodeGrant */
 public class AuthorizationCodeGrant {
 
-  AuthorizationRequestIdentifier authorizationRequestIdentifier =
-      new AuthorizationRequestIdentifier("");
+  AuthorizationRequestIdentifier authorizationRequestIdentifier = new AuthorizationRequestIdentifier("");
   AuthorizationGrant authorizationGrant;
   AuthorizationCode authorizationCode;
   ExpiredAt expiredAt;
 
   public AuthorizationCodeGrant() {}
 
-  public AuthorizationCodeGrant(
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      AuthorizationGrant authorizationGrant,
-      AuthorizationCode authorizationCode,
-      ExpiredAt expiredAt) {
+  public AuthorizationCodeGrant(AuthorizationRequestIdentifier authorizationRequestIdentifier, AuthorizationGrant authorizationGrant, AuthorizationCode authorizationCode, ExpiredAt expiredAt) {
     this.authorizationRequestIdentifier = authorizationRequestIdentifier;
     this.authorizationGrant = authorizationGrant;
     this.authorizationCode = authorizationCode;

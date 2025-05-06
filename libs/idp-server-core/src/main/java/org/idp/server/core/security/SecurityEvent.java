@@ -25,17 +25,7 @@ public class SecurityEvent {
 
   public SecurityEvent() {}
 
-  public SecurityEvent(
-      SecurityEventIdentifier identifier,
-      SecurityEventType type,
-      SecurityEventDescription description,
-      SecurityEventTenant tenant,
-      SecurityEventClient client,
-      SecurityEventUser user,
-      IpAddress ipAddress,
-      UserAgent userAgent,
-      SecurityEventDetail detail,
-      SecurityEventDatetime createdAt) {
+  public SecurityEvent(SecurityEventIdentifier identifier, SecurityEventType type, SecurityEventDescription description, SecurityEventTenant tenant, SecurityEventClient client, SecurityEventUser user, IpAddress ipAddress, UserAgent userAgent, SecurityEventDetail detail, SecurityEventDatetime createdAt) {
     this.identifier = identifier;
     this.type = type;
     this.description = description;

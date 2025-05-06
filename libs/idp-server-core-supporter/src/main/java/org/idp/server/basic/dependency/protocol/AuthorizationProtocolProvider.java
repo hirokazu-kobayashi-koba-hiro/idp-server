@@ -18,7 +18,8 @@ public class AuthorizationProtocolProvider {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     AuthorizationProtocolProvider that = (AuthorizationProtocolProvider) o;
     return Objects.equals(name, that.name);
   }

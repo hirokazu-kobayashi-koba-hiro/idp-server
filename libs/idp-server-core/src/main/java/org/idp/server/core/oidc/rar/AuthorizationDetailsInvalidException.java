@@ -11,8 +11,7 @@ public class AuthorizationDetailsInvalidException extends RuntimeException {
     this.errorDescription = errorDescription;
   }
 
-  public AuthorizationDetailsInvalidException(
-      String error, String errorDescription, Throwable throwable) {
+  public AuthorizationDetailsInvalidException(String error, String errorDescription, Throwable throwable) {
     super(errorDescription, throwable);
     this.error = error;
     this.errorDescription = errorDescription;

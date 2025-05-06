@@ -15,8 +15,7 @@ public class JoseHandler {
     creators.put(JoseType.encryption, new JweContextCreator());
   }
 
-  public JoseContext handle(String jose, String publicJwks, String privateJwks, String secret)
-      throws JoseInvalidException {
+  public JoseContext handle(String jose, String publicJwks, String privateJwks, String secret) throws JoseInvalidException {
     JoseType joseType = JoseType.parse(jose);
     JoseContextCreator joseContextCreator = creators.get(joseType);
     return joseContextCreator.create(jose, publicJwks, privateJwks, secret);

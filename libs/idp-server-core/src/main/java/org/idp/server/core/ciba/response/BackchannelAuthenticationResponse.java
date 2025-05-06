@@ -13,8 +13,7 @@ public class BackchannelAuthenticationResponse {
 
   public BackchannelAuthenticationResponse() {}
 
-  public BackchannelAuthenticationResponse(
-      AuthReqId authReqId, ExpiresIn expiresIn, Interval interval, String contents) {
+  public BackchannelAuthenticationResponse(AuthReqId authReqId, ExpiresIn expiresIn, Interval interval, String contents) {
     this.authReqId = authReqId;
     this.expiresIn = expiresIn;
     this.interval = interval;

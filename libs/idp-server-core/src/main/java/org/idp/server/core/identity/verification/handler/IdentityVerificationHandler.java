@@ -36,108 +36,56 @@ public class IdentityVerificationHandler {
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
   }
 
-  public ExternalWorkflowApplyingResult handleRequest(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplications applications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public ExternalWorkflowApplyingResult handleRequest(Tenant tenant, User user, IdentityVerificationApplications applications, IdentityVerificationType type, IdentityVerificationProcess processes, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(processes);
+    IdentityVerificationProcessConfiguration processConfig = verificationConfiguration.getProcessConfig(processes);
 
-    IdentityVerificationRequestValidator applicationValidator =
-        new IdentityVerificationRequestValidator(processConfig, request);
+    IdentityVerificationRequestValidator applicationValidator = new IdentityVerificationRequestValidator(processConfig, request);
     IdentityVerificationValidationResult requestValidationResult = applicationValidator.validate();
 
     if (requestValidationResult.isError()) {
       return ExternalWorkflowApplyingResult.requestError(requestValidationResult);
     }
 
-    IdentityVerificationRequestVerificationResult verifyResult =
-        requestVerifiers.verify(
-            tenant, user, applications, type, processes, request, verificationConfiguration);
+    IdentityVerificationRequestVerificationResult verifyResult = requestVerifiers.verify(tenant, user, applications, type, processes, request, verificationConfiguration);
 
     if (verifyResult.isError()) {
 
-      return ExternalWorkflowApplyingResult.requestVerificationError(
-          requestValidationResult, verifyResult);
+      return ExternalWorkflowApplyingResult.requestVerificationError(requestValidationResult, verifyResult);
     }
 
-    OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
-        verificationConfiguration.oauthAuthorization();
-    HttpRequestHeaders httpRequestHeaders =
-        createHttpRequestHeaders(processConfig.httpRequestHeaders(), oAuthAuthorizationConfig);
+    OAuthAuthorizationConfiguration oAuthAuthorizationConfig = verificationConfiguration.oauthAuthorization();
+    HttpRequestHeaders httpRequestHeaders = createHttpRequestHeaders(processConfig.httpRequestHeaders(), oAuthAuthorizationConfig);
 
-    HttpRequestStaticBody httpRequestStaticBody =
-        resolveStaticBody(
-            processConfig.httpRequestStaticBody(),
-            tenant,
-            user,
-            applications,
-            type,
-            processes,
-            request,
-            verificationConfiguration);
+    HttpRequestStaticBody httpRequestStaticBody = resolveStaticBody(processConfig.httpRequestStaticBody(), tenant, user, applications, type, processes, request, verificationConfiguration);
 
-    HttpRequestResult executionResult =
-        httpRequestExecutor.execute(
-            processConfig.httpRequestUrl(),
-            processConfig.httpMethod(),
-            httpRequestHeaders,
-            new HttpRequestBaseParams(request.toMap()),
-            processConfig.httpRequestDynamicBodyKeys(),
-            httpRequestStaticBody);
+    HttpRequestResult executionResult = httpRequestExecutor.execute(processConfig.httpRequestUrl(), processConfig.httpMethod(), httpRequestHeaders, new HttpRequestBaseParams(request.toMap()), processConfig.httpRequestDynamicBodyKeys(), httpRequestStaticBody);
 
-    ExternalWorkflowApplyingExecutionResult externalWorkflowApplyingExecutionResult =
-        new ExternalWorkflowApplyingExecutionResult(executionResult);
+    ExternalWorkflowApplyingExecutionResult externalWorkflowApplyingExecutionResult = new ExternalWorkflowApplyingExecutionResult(executionResult);
     if (!executionResult.isSuccess()) {
-      return ExternalWorkflowApplyingResult.executionError(
-          requestValidationResult, verifyResult, externalWorkflowApplyingExecutionResult);
+      return ExternalWorkflowApplyingResult.executionError(requestValidationResult, verifyResult, externalWorkflowApplyingExecutionResult);
     }
 
-    IdentityVerificationResponseValidator responseValidator =
-        new IdentityVerificationResponseValidator(processConfig, executionResult.body());
+    IdentityVerificationResponseValidator responseValidator = new IdentityVerificationResponseValidator(processConfig, executionResult.body());
     IdentityVerificationValidationResult responseValidationResult = responseValidator.validate();
 
-    ExternalWorkflowApplicationIdParam externalWorkflowApplicationIdParam =
-        verificationConfiguration.externalWorkflowApplicationIdParam();
+    ExternalWorkflowApplicationIdParam externalWorkflowApplicationIdParam = verificationConfiguration.externalWorkflowApplicationIdParam();
 
-    return new ExternalWorkflowApplyingResult(
-        externalWorkflowApplicationIdParam,
-        responseValidationResult,
-        verifyResult,
-        externalWorkflowApplyingExecutionResult,
-        responseValidationResult);
+    return new ExternalWorkflowApplyingResult(externalWorkflowApplicationIdParam, responseValidationResult, verifyResult, externalWorkflowApplyingExecutionResult, responseValidationResult);
   }
 
-  private HttpRequestStaticBody resolveStaticBody(
-      HttpRequestStaticBody staticBody,
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplications applications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  private HttpRequestStaticBody resolveStaticBody(HttpRequestStaticBody staticBody, Tenant tenant, User user, IdentityVerificationApplications applications, IdentityVerificationType type, IdentityVerificationProcess processes, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
     Map<String, Object> parameters = new HashMap<>(staticBody.toMap());
-    Map<String, Object> additionalParameters =
-        additionalRequestParameterResolvers.resolve(
-            tenant, user, applications, type, processes, request, verificationConfiguration);
+    Map<String, Object> additionalParameters = additionalRequestParameterResolvers.resolve(tenant, user, applications, type, processes, request, verificationConfiguration);
     parameters.putAll(additionalParameters);
     return new HttpRequestStaticBody(parameters);
   }
 
-  private HttpRequestHeaders createHttpRequestHeaders(
-      HttpRequestHeaders httpRequestHeaders,
-      OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
+  private HttpRequestHeaders createHttpRequestHeaders(HttpRequestHeaders httpRequestHeaders, OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
     Map<String, String> values = new HashMap<>(httpRequestHeaders.toMap());
 
     if (oAuthAuthorizationConfig.exists()) {
-      OAuthAuthorizationResolver resolver =
-          authorizationResolvers.get(oAuthAuthorizationConfig.type());
+      OAuthAuthorizationResolver resolver = authorizationResolvers.get(oAuthAuthorizationConfig.type());
       String accessToken = resolver.resolve(oAuthAuthorizationConfig);
       values.put("Authorization", "Bearer " + accessToken);
     }

@@ -1,8 +1,7 @@
 package org.idp.server.core.ciba;
 
 public enum CibaProfile {
-  CIBA,
-  FAPI_CIBA;
+  CIBA, FAPI_CIBA;
 
   public boolean isCiba() {
     return this == CIBA;

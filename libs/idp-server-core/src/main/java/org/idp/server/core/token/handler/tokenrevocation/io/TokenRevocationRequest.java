@@ -16,8 +16,7 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
   Map<String, String[]> params;
   String clientCert;
 
-  public TokenRevocationRequest(
-      Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
+  public TokenRevocationRequest(Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
     this.tenant = tenant;
     this.authorizationHeaders = authorizationHeaders;
     this.params = params;

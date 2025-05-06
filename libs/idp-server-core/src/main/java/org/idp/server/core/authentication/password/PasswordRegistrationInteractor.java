@@ -23,22 +23,14 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
   PasswordEncodeDelegation passwordEncodeDelegation;
   JsonConverter jsonConverter;
 
-  public PasswordRegistrationInteractor(
-      AuthenticationConfigurationQueryRepository configurationQueryRepository,
-      PasswordEncodeDelegation passwordEncodeDelegation) {
+  public PasswordRegistrationInteractor(AuthenticationConfigurationQueryRepository configurationQueryRepository, PasswordEncodeDelegation passwordEncodeDelegation) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
-  public AuthenticationInteractionRequestResult interact(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
-      UserQueryRepository userQueryRepository) {
+  public AuthenticationInteractionRequestResult interact(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, AuthenticationInteractionType type, AuthenticationInteractionRequest request, AuthenticationTransaction transaction, UserQueryRepository userQueryRepository) {
 
     Map json = configurationQueryRepository.get(tenant, "signup", Map.class);
     JsonNodeWrapper definition = jsonConverter.readTree(json);
@@ -53,13 +45,10 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
       response.put("error_description", "invalid request.");
       response.put("error_details", validationResult.errors());
 
-      return AuthenticationInteractionRequestResult.clientError(
-          response, type, DefaultSecurityEventType.user_signup_failure);
+      return AuthenticationInteractionRequestResult.clientError(response, type, DefaultSecurityEventType.user_signup_failure);
     }
 
-    User existingUser =
-        userQueryRepository.findByEmail(
-            tenant, request.optValueAsString("email", ""), "idp-server");
+    User existingUser = userQueryRepository.findByEmail(tenant, request.optValueAsString("email", ""), "idp-server");
 
     if (existingUser.exists()) {
 
@@ -67,17 +56,10 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
       response.put("error", "invalid_request");
       response.put("error_description", "user is conflict with username and password");
 
-      return new AuthenticationInteractionRequestResult(
-          AuthenticationInteractionStatus.CLIENT_ERROR,
-          type,
-          existingUser,
-          new Authentication(),
-          response,
-          DefaultSecurityEventType.user_signup_conflict);
+      return new AuthenticationInteractionRequestResult(AuthenticationInteractionStatus.CLIENT_ERROR, type, existingUser, new Authentication(), response, DefaultSecurityEventType.user_signup_conflict);
     }
 
-    IdPUserCreator idPUserCreator =
-        new IdPUserCreator(jsonSchemaDefinition, request, passwordEncodeDelegation);
+    IdPUserCreator idPUserCreator = new IdPUserCreator(jsonSchemaDefinition, request, passwordEncodeDelegation);
     User user = idPUserCreator.create();
 
     Authentication authentication = new Authentication();
@@ -86,12 +68,6 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
     response.put("user", user.toMap());
     response.put("authentication", authentication.toMap());
 
-    return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.SUCCESS,
-        type,
-        user,
-        authentication,
-        response,
-        DefaultSecurityEventType.user_signup);
+    return new AuthenticationInteractionRequestResult(AuthenticationInteractionStatus.SUCCESS, type, user, authentication, response, DefaultSecurityEventType.user_signup);
   }
 }

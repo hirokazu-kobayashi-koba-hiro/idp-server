@@ -19,12 +19,11 @@ public class MysqlExecutor implements AuthorizationGrantedSqlExecutor {
   public void insert(AuthorizationGranted authorizationGranted) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                        INSERT INTO authorization_granted
-                        (id, tenant_id, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                        """;
+    String sqlTemplate = """
+        INSERT INTO authorization_granted
+        (id, tenant_id, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """;
     List<Object> params = new ArrayList<>();
 
     AuthorizationGrant authorizationGrant = authorizationGranted.authorizationGrant();
@@ -71,19 +70,17 @@ public class MysqlExecutor implements AuthorizationGrantedSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectOne(
-      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, User user) {
+  public Map<String, String> selectOne(TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-              SELECT id, tenant_id, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
-                FROM authorization_granted
-              WHERE tenant_id = ?
-              AND client_id = ?
-              AND user_id = ?
-              limit 1;
-              """;
+    String sqlTemplate = """
+        SELECT id, tenant_id, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
+          FROM authorization_granted
+        WHERE tenant_id = ?
+        AND client_id = ?
+        AND user_id = ?
+        limit 1;
+        """;
     List<Object> params = new ArrayList<>();
     params.add(tenantIdentifier.value());
     params.add(requestedClientId.value());
@@ -96,21 +93,20 @@ public class MysqlExecutor implements AuthorizationGrantedSqlExecutor {
   public void update(AuthorizationGranted authorizationGranted) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                UPDATE authorization_granted
-                SET user_payload = ?,
-                authentication = ?,
-                client_payload = ?,
-                scopes = ?,
-                id_token_claims = ?,
-                userinfo_claims = ?,
-                custom_properties = ?,
-                authorization_details = ?,
-                consent_claims = ?,
-                updated_at = now()
-                WHERE id = ?;
-                """;
+    String sqlTemplate = """
+        UPDATE authorization_granted
+        SET user_payload = ?,
+        authentication = ?,
+        client_payload = ?,
+        scopes = ?,
+        id_token_claims = ?,
+        userinfo_claims = ?,
+        custom_properties = ?,
+        authorization_details = ?,
+        consent_claims = ?,
+        updated_at = now()
+        WHERE id = ?;
+        """;
 
     List<Object> params = new ArrayList<>();
     AuthorizationGrant authorizationGrant = authorizationGranted.authorizationGrant();

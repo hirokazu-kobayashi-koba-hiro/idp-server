@@ -30,8 +30,7 @@ public class JwkParser {
   }
 
   // FIXME consider where should is implementing
-  public static Map<String, Object> parsePublicKeys(String value)
-      throws JsonWebKeyInvalidException {
+  public static Map<String, Object> parsePublicKeys(String value) throws JsonWebKeyInvalidException {
     try {
       JWKSet jwkSet = JWKSet.parse(value);
       JWKSet publicJWKSet = jwkSet.toPublicJWKSet();

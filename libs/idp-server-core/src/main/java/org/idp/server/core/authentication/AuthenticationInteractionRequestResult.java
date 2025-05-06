@@ -15,40 +15,22 @@ public class AuthenticationInteractionRequestResult {
   Map<String, Object> response;
   DefaultSecurityEventType eventType;
 
-  public static AuthenticationInteractionRequestResult clientError(
-      Map<String, Object> response,
-      AuthenticationInteractionType type,
-      DefaultSecurityEventType eventType) {
-    return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.CLIENT_ERROR, type, response, eventType);
+  public static AuthenticationInteractionRequestResult clientError(Map<String, Object> response, AuthenticationInteractionType type, DefaultSecurityEventType eventType) {
+    return new AuthenticationInteractionRequestResult(AuthenticationInteractionStatus.CLIENT_ERROR, type, response, eventType);
   }
 
-  public static AuthenticationInteractionRequestResult serverError(
-      Map<String, Object> response,
-      AuthenticationInteractionType type,
-      DefaultSecurityEventType eventType) {
-    return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.SERVER_ERROR, type, response, eventType);
+  public static AuthenticationInteractionRequestResult serverError(Map<String, Object> response, AuthenticationInteractionType type, DefaultSecurityEventType eventType) {
+    return new AuthenticationInteractionRequestResult(AuthenticationInteractionStatus.SERVER_ERROR, type, response, eventType);
   }
 
-  public AuthenticationInteractionRequestResult(
-      AuthenticationInteractionStatus status,
-      AuthenticationInteractionType type,
-      Map<String, Object> response,
-      DefaultSecurityEventType eventType) {
+  public AuthenticationInteractionRequestResult(AuthenticationInteractionStatus status, AuthenticationInteractionType type, Map<String, Object> response, DefaultSecurityEventType eventType) {
     this.status = status;
     this.type = type;
     this.response = response;
     this.eventType = eventType;
   }
 
-  public AuthenticationInteractionRequestResult(
-      AuthenticationInteractionStatus status,
-      AuthenticationInteractionType type,
-      User user,
-      Authentication authentication,
-      Map<String, Object> response,
-      DefaultSecurityEventType eventType) {
+  public AuthenticationInteractionRequestResult(AuthenticationInteractionStatus status, AuthenticationInteractionType type, User user, Authentication authentication, Map<String, Object> response, DefaultSecurityEventType eventType) {
     this.status = status;
     this.type = type;
     this.user = user;

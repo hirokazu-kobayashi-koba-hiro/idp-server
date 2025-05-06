@@ -15,17 +15,7 @@ public class OAuthViewData {
   Map<String, String> customParams;
   Map<String, Object> contents;
 
-  public OAuthViewData(
-      String clientId,
-      String clientName,
-      String clientUri,
-      String logoUri,
-      String contacts,
-      String tosUri,
-      String policyUri,
-      List<String> scopes,
-      Map<String, String> customParams,
-      Map<String, Object> contents) {
+  public OAuthViewData(String clientId, String clientName, String clientUri, String logoUri, String contacts, String tosUri, String policyUri, List<String> scopes, Map<String, String> customParams, Map<String, Object> contents) {
     this.clientId = clientId;
     this.clientName = clientName;
     this.clientUri = clientUri;

@@ -11,10 +11,7 @@ public class OidcUserinfoResponseConvertor {
   OidcUserinfoResponse userinfoResponse;
   OidcSsoConfiguration configuration;
 
-  public OidcUserinfoResponseConvertor(
-      User exsistingUser,
-      OidcUserinfoResponse userinfoResponse,
-      OidcSsoConfiguration configuration) {
+  public OidcUserinfoResponseConvertor(User exsistingUser, OidcUserinfoResponse userinfoResponse, OidcSsoConfiguration configuration) {
     this.exsistingUser = exsistingUser;
     this.userinfoResponse = userinfoResponse;
     this.configuration = configuration;

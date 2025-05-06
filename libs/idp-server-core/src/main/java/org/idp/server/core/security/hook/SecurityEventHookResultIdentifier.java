@@ -22,7 +22,8 @@ public class SecurityEventHookResultIdentifier {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     SecurityEventHookResultIdentifier that = (SecurityEventHookResultIdentifier) o;
     return Objects.equals(value, that.value);
   }

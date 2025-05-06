@@ -14,15 +14,13 @@ public class OAuthRequestContextCreators {
     values = new HashMap<>();
     values.put(OAuthRequestPattern.NORMAL, new NormalPatternContextCreator());
     values.put(OAuthRequestPattern.REQUEST_OBJECT, new RequestObjectPatternContextCreator());
-    values.put(
-        OAuthRequestPattern.REQUEST_URI, new RequestUriPatternContextCreator(requestObjectGateway));
+    values.put(OAuthRequestPattern.REQUEST_URI, new RequestUriPatternContextCreator(requestObjectGateway));
   }
 
   public OAuthRequestContextCreator get(OAuthRequestPattern pattern) {
     OAuthRequestContextCreator oAuthRequestContextCreator = values.get(pattern);
     if (Objects.isNull(oAuthRequestContextCreator)) {
-      throw new UnSupportedException(
-          String.format("not support request pattern (%s)", pattern.name()));
+      throw new UnSupportedException(String.format("not support request pattern (%s)", pattern.name()));
     }
     return oAuthRequestContextCreator;
   }

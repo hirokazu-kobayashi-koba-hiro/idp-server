@@ -13,23 +13,14 @@ import org.idp.server.core.identity.verification.configuration.IdentityVerificat
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class UnmatchedPhoneIdentityVerificationApplicationVerifier
-    implements IdentityVerificationRequestVerifier {
+public class UnmatchedPhoneIdentityVerificationApplicationVerifier implements IdentityVerificationRequestVerifier {
 
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
-  public boolean shouldVerify(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplications applications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public boolean shouldVerify(Tenant tenant, User user, IdentityVerificationApplications applications, IdentityVerificationType type, IdentityVerificationProcess processes, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(processes);
+    IdentityVerificationProcessConfiguration processConfig = verificationConfiguration.getProcessConfig(processes);
     Map<String, Object> verificationSchema = processConfig.requestVerificationSchema();
 
     if (verificationSchema == null || verificationSchema.isEmpty()) {
@@ -41,28 +32,18 @@ public class UnmatchedPhoneIdentityVerificationApplicationVerifier
   }
 
   @Override
-  public IdentityVerificationRequestVerificationResult verify(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplications applications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public IdentityVerificationRequestVerificationResult verify(Tenant tenant, User user, IdentityVerificationApplications applications, IdentityVerificationType type, IdentityVerificationProcess processes, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(processes);
+    IdentityVerificationProcessConfiguration processConfig = verificationConfiguration.getProcessConfig(processes);
     Map<String, Object> verificationSchema = processConfig.requestVerificationSchema();
     JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(verificationSchema);
-    JsonNodeWrapper unmatchedUserClaims =
-        jsonNodeWrapper.getValueAsJsonNode("unmatched_user_claims_phone");
+    JsonNodeWrapper unmatchedUserClaims = jsonNodeWrapper.getValueAsJsonNode("unmatched_user_claims_phone");
 
     String property = unmatchedUserClaims.getValueOrEmptyAsString("property");
     String requestValue = request.optValueAsString(property, "");
 
     if (!requestValue.equals(user.phoneNumber())) {
-      return IdentityVerificationRequestVerificationResult.failure(
-          List.of("PhoneNumber does not match"));
+      return IdentityVerificationRequestVerificationResult.failure(List.of("PhoneNumber does not match"));
     }
 
     return IdentityVerificationRequestVerificationResult.success();

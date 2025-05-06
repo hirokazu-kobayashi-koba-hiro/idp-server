@@ -25,11 +25,7 @@ public class AuthorizationResponseBuilder {
   JarmPayload jarmPayload = new JarmPayload();
   QueryParams queryParams;
 
-  public AuthorizationResponseBuilder(
-      RedirectUri redirectUri,
-      ResponseMode responseMode,
-      ResponseModeValue responseModeValue,
-      TokenIssuer tokenIssuer) {
+  public AuthorizationResponseBuilder(RedirectUri redirectUri, ResponseMode responseMode, ResponseModeValue responseModeValue, TokenIssuer tokenIssuer) {
     this.redirectUri = redirectUri;
     this.responseMode = responseMode;
     this.responseModeValue = responseModeValue;
@@ -99,19 +95,6 @@ public class AuthorizationResponseBuilder {
       this.queryParams = new QueryParams();
       this.queryParams.add("response", jarmPayload.value());
     }
-    return new AuthorizationResponse(
-        redirectUri,
-        responseMode,
-        responseModeValue,
-        authorizationCode,
-        state,
-        accessToken,
-        tokenType,
-        expiresIn,
-        scopes,
-        idToken,
-        tokenIssuer,
-        jarmPayload,
-        queryParams);
+    return new AuthorizationResponse(redirectUri, responseMode, responseModeValue, authorizationCode, state, accessToken, tokenType, expiresIn, scopes, idToken, tokenIssuer, jarmPayload, queryParams);
   }
 }

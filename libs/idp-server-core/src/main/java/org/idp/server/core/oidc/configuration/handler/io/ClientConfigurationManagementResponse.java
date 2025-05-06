@@ -8,8 +8,7 @@ public class ClientConfigurationManagementResponse {
 
   Map<String, Object> content;
 
-  public ClientConfigurationManagementResponse(
-      ClientConfigurationManagementStatus status, Map<String, Object> content) {
+  public ClientConfigurationManagementResponse(ClientConfigurationManagementStatus status, Map<String, Object> content) {
     this.status = status;
     this.content = content;
   }

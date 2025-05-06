@@ -10,8 +10,7 @@ public class UserInfoMapper {
   JsonNodeWrapper body;
   List<UserInfoMappingRule> mappingRules;
 
-  public UserInfoMapper(
-      String providerName, JsonNodeWrapper body, List<UserInfoMappingRule> mappingRules) {
+  public UserInfoMapper(String providerName, JsonNodeWrapper body, List<UserInfoMappingRule> mappingRules) {
     this.providerName = providerName;
     this.body = body;
     this.mappingRules = mappingRules;
@@ -71,7 +70,8 @@ public class UserInfoMapper {
         default -> mappedValue = null;
       }
 
-      if (mappedValue == null) continue;
+      if (mappedValue == null)
+        continue;
 
       switch (rule.getTo()) {
         case "provider_user_id" -> user.setProviderUserId(mappedValue.toString());

@@ -5,8 +5,7 @@ import org.idp.server.core.authentication.factory.AuthenticationDependencyContai
 import org.idp.server.core.authentication.factory.AuthenticationInteractorFactory;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 
-public class LegacyIdServiceAuthenticationInteractorFactory
-    implements AuthenticationInteractorFactory {
+public class LegacyIdServiceAuthenticationInteractorFactory implements AuthenticationInteractorFactory {
 
   @Override
   public AuthenticationInteractionType type() {
@@ -16,8 +15,7 @@ public class LegacyIdServiceAuthenticationInteractorFactory
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
-    AuthenticationConfigurationQueryRepository configurationRepository =
-        container.resolve(AuthenticationConfigurationQueryRepository.class);
+    AuthenticationConfigurationQueryRepository configurationRepository = container.resolve(AuthenticationConfigurationQueryRepository.class);
     return new LegacyIdServiceAuthenticationInteractor(configurationRepository);
   }
 }

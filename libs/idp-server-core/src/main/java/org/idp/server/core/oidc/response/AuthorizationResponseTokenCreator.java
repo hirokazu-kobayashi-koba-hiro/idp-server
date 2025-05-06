@@ -10,11 +10,7 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.token.AccessToken;
 import org.idp.server.core.oidc.token.AccessTokenCreatable;
 
-public class AuthorizationResponseTokenCreator
-    implements AuthorizationResponseCreator,
-        AccessTokenCreatable,
-        RedirectUriDecidable,
-        JarmCreatable {
+public class AuthorizationResponseTokenCreator implements AuthorizationResponseCreator, AccessTokenCreatable, RedirectUriDecidable, JarmCreatable {
 
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
@@ -22,22 +18,8 @@ public class AuthorizationResponseTokenCreator
 
     AuthorizationGrant authorizationGrant = context.authorize();
 
-    AccessToken accessToken =
-        createAccessToken(
-            authorizationGrant,
-            context.serverConfiguration(),
-            context.clientConfiguration(),
-            new ClientCredentials());
-    AuthorizationResponseBuilder authorizationResponseBuilder =
-        new AuthorizationResponseBuilder(
-                decideRedirectUri(authorizationRequest, context.clientConfiguration()),
-                context.responseMode(),
-                ResponseModeValue.fragment(),
-                context.tokenIssuer())
-            .add(TokenType.Bearer)
-            .add(new ExpiresIn(context.serverConfiguration().accessTokenDuration()))
-            .add(accessToken)
-            .add(authorizationGrant.scopes());
+    AccessToken accessToken = createAccessToken(authorizationGrant, context.serverConfiguration(), context.clientConfiguration(), new ClientCredentials());
+    AuthorizationResponseBuilder authorizationResponseBuilder = new AuthorizationResponseBuilder(decideRedirectUri(authorizationRequest, context.clientConfiguration()), context.responseMode(), ResponseModeValue.fragment(), context.tokenIssuer()).add(TokenType.Bearer).add(new ExpiresIn(context.serverConfiguration().accessTokenDuration())).add(accessToken).add(authorizationGrant.scopes());
 
     if (context.hasState()) {
       authorizationResponseBuilder.add(authorizationRequest.state());
@@ -45,9 +27,7 @@ public class AuthorizationResponseTokenCreator
 
     if (context.isJwtMode()) {
       AuthorizationResponse authorizationResponse = authorizationResponseBuilder.build();
-      JarmPayload jarmPayload =
-          createResponse(
-              authorizationResponse, context.serverConfiguration(), context.clientConfiguration());
+      JarmPayload jarmPayload = createResponse(authorizationResponse, context.serverConfiguration(), context.clientConfiguration());
       authorizationResponseBuilder.add(jarmPayload);
     }
 

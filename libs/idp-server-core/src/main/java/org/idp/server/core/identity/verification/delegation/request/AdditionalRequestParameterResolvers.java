@@ -22,23 +22,13 @@ public class AdditionalRequestParameterResolvers {
     this.resolvers.add(new ContinuousCustomerDueDiligenceParameterResolver());
   }
 
-  public Map<String, Object> resolve(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplications applications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public Map<String, Object> resolve(Tenant tenant, User user, IdentityVerificationApplications applications, IdentityVerificationType type, IdentityVerificationProcess processes, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
 
     Map<String, Object> additionalParameters = new HashMap<>();
 
     for (AdditionalRequestParameterResolver resolver : resolvers) {
-      if (resolver.shouldResolve(
-          tenant, user, applications, type, processes, request, verificationConfiguration)) {
-        additionalParameters.putAll(
-            resolver.resolve(
-                tenant, user, applications, type, processes, request, verificationConfiguration));
+      if (resolver.shouldResolve(tenant, user, applications, type, processes, request, verificationConfiguration)) {
+        additionalParameters.putAll(resolver.resolve(tenant, user, applications, type, processes, request, verificationConfiguration));
       }
     }
 

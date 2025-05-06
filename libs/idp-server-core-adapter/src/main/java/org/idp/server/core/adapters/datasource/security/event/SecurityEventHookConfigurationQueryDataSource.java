@@ -10,26 +10,22 @@ import org.idp.server.core.security.hook.SecurityEventHookConfiguration;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurations;
 import org.idp.server.core.security.repository.SecurityEventHookConfigurationQueryRepository;
 
-public class SecurityEventHookConfigurationQueryDataSource
-    implements SecurityEventHookConfigurationQueryRepository {
+public class SecurityEventHookConfigurationQueryDataSource implements SecurityEventHookConfigurationQueryRepository {
 
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-  String selectSql =
-      """
-            SELECT id, payload FROM security_event_hook_configuration
-            """;
+  String selectSql = """
+      SELECT id, payload FROM security_event_hook_configuration
+      """;
 
   @Override
   public SecurityEventHookConfigurations find(Tenant tenant) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        selectSql
-            + """
-                WHERE tenant_id = ?
-                AND enabled = true
-                ORDER BY execution_order;
-                """;
+    String sqlTemplate = selectSql + """
+        WHERE tenant_id = ?
+        AND enabled = true
+        ORDER BY execution_order;
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
@@ -40,12 +36,7 @@ public class SecurityEventHookConfigurationQueryDataSource
       return new SecurityEventHookConfigurations();
     }
 
-    List<SecurityEventHookConfiguration> list =
-        results.stream()
-            .map(
-                result ->
-                    jsonConverter.read(result.get("payload"), SecurityEventHookConfiguration.class))
-            .toList();
+    List<SecurityEventHookConfiguration> list = results.stream().map(result -> jsonConverter.read(result.get("payload"), SecurityEventHookConfiguration.class)).toList();
 
     return new SecurityEventHookConfigurations(list);
   }

@@ -8,8 +8,5 @@ public interface AuthenticationDeviceNotifier {
 
   NotificationChannel chanel();
 
-  void notify(
-      Tenant tenant,
-      AuthenticationDevice device,
-      AuthenticationDeviceNotificationConfiguration configuration);
+  void notify(Tenant tenant, AuthenticationDevice device, AuthenticationDeviceNotificationConfiguration configuration);
 }

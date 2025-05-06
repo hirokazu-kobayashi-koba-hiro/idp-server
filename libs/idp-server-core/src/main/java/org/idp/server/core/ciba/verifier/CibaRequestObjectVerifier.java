@@ -16,8 +16,7 @@ public class CibaRequestObjectVerifier implements CibaExtensionVerifier, Request
     try {
       verify(context.joseContext(), context.serverConfiguration(), context.clientConfiguration());
     } catch (RequestObjectInvalidException exception) {
-      throw new BackchannelAuthenticationBadRequestException(
-          "invalid_request_object", exception.getMessage());
+      throw new BackchannelAuthenticationBadRequestException("invalid_request_object", exception.getMessage());
     }
   }
 }

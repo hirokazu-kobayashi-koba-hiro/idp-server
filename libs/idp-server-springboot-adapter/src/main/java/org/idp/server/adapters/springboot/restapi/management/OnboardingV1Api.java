@@ -22,20 +22,16 @@ public class OnboardingV1Api implements ParameterTransformable {
   ServerDomain serverDomain;
   OnboardingApi onboardingApi;
 
-  public OnboardingV1Api(
-      IdpServerApplication idpServerApplication,
-      @Value("${idp.configurations.serverUrl}") String idpServerDomainDomain) {
+  public OnboardingV1Api(IdpServerApplication idpServerApplication, @Value("${idp.configurations.serverUrl}") String idpServerDomainDomain) {
     this.onboardingApi = idpServerApplication.onboardingApi();
     this.serverDomain = new ServerDomain(idpServerDomainDomain);
   }
 
   @PostMapping
-  public ResponseEntity<?> post(
-      @AuthenticationPrincipal User operator, @RequestBody Map<String, Object> request) {
+  public ResponseEntity<?> post(@AuthenticationPrincipal User operator, @RequestBody Map<String, Object> request) {
 
     TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
-    Map<String, Object> response =
-        onboardingApi.initialize(adminTenantIdentifier, operator, request);
+    Map<String, Object> response = onboardingApi.initialize(adminTenantIdentifier, operator, request);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

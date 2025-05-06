@@ -3,8 +3,7 @@ package org.idp.server.core.authentication.notification;
 import org.idp.server.basic.exception.UnSupportedException;
 
 public enum EmailSenderType {
-  SMTP("smtp"),
-  EXTERNAL_API_SERVICE("external_api_service");
+  SMTP("smtp"), EXTERNAL_API_SERVICE("external_api_service");
 
   String typeName;
 

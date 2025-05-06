@@ -13,8 +13,7 @@ public class TokenIntrospectionBadRequestException extends RuntimeException {
     this.errorDescription = errorDescription;
   }
 
-  public TokenIntrospectionBadRequestException(
-      String error, String errorDescription, Throwable throwable) {
+  public TokenIntrospectionBadRequestException(String error, String errorDescription, Throwable throwable) {
     super(errorDescription, throwable);
     this.error = error;
     this.errorDescription = errorDescription;

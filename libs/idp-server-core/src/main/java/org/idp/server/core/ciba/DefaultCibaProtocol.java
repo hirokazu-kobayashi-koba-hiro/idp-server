@@ -30,32 +30,10 @@ public class DefaultCibaProtocol implements CibaProtocol {
   CibaGrantRepository cibaGrantRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(DefaultCibaProtocol.class);
 
-  public DefaultCibaProtocol(
-      BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
-      CibaGrantRepository cibaGrantRepository,
-      UserQueryRepository userQueryRepository,
-      AuthorizationGrantedRepository authorizationGrantedRepository,
-      OAuthTokenRepository oAuthTokenRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
-    this.cibaRequestHandler =
-        new CibaRequestHandler(
-            backchannelAuthenticationRequestRepository,
-            cibaGrantRepository,
-            serverConfigurationRepository,
-            clientConfigurationRepository);
-    this.cibaAuthorizeHandler =
-        new CibaAuthorizeHandler(
-            backchannelAuthenticationRequestRepository,
-            cibaGrantRepository,
-            authorizationGrantedRepository,
-            oAuthTokenRepository,
-            new NotificationClient(),
-            serverConfigurationRepository,
-            clientConfigurationRepository);
-    this.cibaDenyHandler =
-        new CibaDenyHandler(
-            cibaGrantRepository, serverConfigurationRepository, clientConfigurationRepository);
+  public DefaultCibaProtocol(BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository, CibaGrantRepository cibaGrantRepository, UserQueryRepository userQueryRepository, AuthorizationGrantedRepository authorizationGrantedRepository, OAuthTokenRepository oAuthTokenRepository, ServerConfigurationRepository serverConfigurationRepository, ClientConfigurationRepository clientConfigurationRepository) {
+    this.cibaRequestHandler = new CibaRequestHandler(backchannelAuthenticationRequestRepository, cibaGrantRepository, serverConfigurationRepository, clientConfigurationRepository);
+    this.cibaAuthorizeHandler = new CibaAuthorizeHandler(backchannelAuthenticationRequestRepository, cibaGrantRepository, authorizationGrantedRepository, oAuthTokenRepository, new NotificationClient(), serverConfigurationRepository, clientConfigurationRepository);
+    this.cibaDenyHandler = new CibaDenyHandler(cibaGrantRepository, serverConfigurationRepository, clientConfigurationRepository);
     this.errorHandler = new CibaRequestErrorHandler();
     this.cibaGrantRepository = cibaGrantRepository;
     this.userQueryRepository = userQueryRepository;
@@ -70,22 +48,23 @@ public class DefaultCibaProtocol implements CibaProtocol {
    * Handles a CIBA request by processing the request parameters, verifying the client and server
    * configurations, authenticating the client, and initiating the user authentication process.
    *
-   * <p>This method performs the following steps:
+   * <p>
+   * This method performs the following steps:
    *
    * <ul>
-   *   <li>Converts the incoming request into a set of parameters and identifies the token issuer.
-   *   <li>Retrieves the server and client configurations based on the token issuer and client ID.
-   *   <li>Analyzes the request parameters to determine the appropriate CIBA request pattern.
-   *   <li>Creates a CIBA request context using the server and client configurations and request
-   *       parameters.
-   *   <li>Verifies the request using the CIBA request verifier and authenticates the client.
-   *   <li>Initiates user authentication and notifies the user.
-   *   <li>Generates a backchannel authentication response and registers the request and CIBA grant.
+   * <li>Converts the incoming request into a set of parameters and identifies the token issuer.
+   * <li>Retrieves the server and client configurations based on the token issuer and client ID.
+   * <li>Analyzes the request parameters to determine the appropriate CIBA request pattern.
+   * <li>Creates a CIBA request context using the server and client configurations and request
+   * parameters.
+   * <li>Verifies the request using the CIBA request verifier and authenticates the client.
+   * <li>Initiates user authentication and notifies the user.
+   * <li>Generates a backchannel authentication response and registers the request and CIBA grant.
    * </ul>
    *
    * @param request the CIBA request containing client authentication data and parameters
    * @return a {@link CibaRequestResult} containing the status and the backchannel authentication
-   *     response
+   *         response
    */
   public CibaRequestResult request(CibaRequest request) {
     try {
@@ -103,12 +82,9 @@ public class DefaultCibaProtocol implements CibaProtocol {
     return cibaRequestHandler.handleIssueResponse(issueRequest);
   }
 
-  public BackchannelAuthenticationRequest get(
-      Tenant tenant,
-      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
+  public BackchannelAuthenticationRequest get(Tenant tenant, BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
 
-    return cibaRequestHandler.handleGettingRequest(
-        tenant, backchannelAuthenticationRequestIdentifier);
+    return cibaRequestHandler.handleGettingRequest(tenant, backchannelAuthenticationRequestIdentifier);
   }
 
   public CibaAuthorizeResponse authorize(CibaAuthorizeRequest request) {

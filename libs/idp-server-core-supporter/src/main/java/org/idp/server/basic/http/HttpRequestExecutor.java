@@ -23,44 +23,31 @@ public class HttpRequestExecutor {
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
-  public HttpRequestResult execute(
-      HttpRequestUrl httpRequestUrl,
-      HttpMethod httpMethod,
-      HttpRequestHeaders httpRequestHeaders,
-      HttpRequestBaseParams httpRequestBaseParams,
-      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys,
-      HttpRequestStaticBody httpRequestStaticBody) {
+  public HttpRequestResult execute(HttpRequestUrl httpRequestUrl, HttpMethod httpMethod, HttpRequestHeaders httpRequestHeaders, HttpRequestBaseParams httpRequestBaseParams, HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys, HttpRequestStaticBody httpRequestStaticBody) {
 
     try {
 
-      HttpRequestBodyCreator requestBodyCreator =
-          new HttpRequestBodyCreator(
-              httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
+      HttpRequestBodyCreator requestBodyCreator = new HttpRequestBodyCreator(httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
       Map<String, Object> requestBody = requestBodyCreator.create();
 
       log.debug("Request headers: {}", httpRequestHeaders);
       log.debug("Request body: {}", requestBody);
 
-      HttpRequest.Builder httpRequestBuilder =
-          HttpRequest.newBuilder()
-              .uri(new URI(httpRequestUrl.value()))
-              .header("Content-Type", "application/json");
+      HttpRequest.Builder httpRequestBuilder = HttpRequest.newBuilder().uri(new URI(httpRequestUrl.value())).header("Content-Type", "application/json");
 
       setHeaders(httpRequestBuilder, httpRequestHeaders);
       setParams(httpRequestBuilder, httpMethod, requestBody);
 
       HttpRequest httpRequest = httpRequestBuilder.build();
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+      HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
       log.debug("Response status: {}", httpResponse.statusCode());
       log.debug("Response body: {}", httpResponse.body());
 
       JsonNodeWrapper jsonResponse = resolveResponseBody(httpResponse);
 
-      return new HttpRequestResult(
-          httpResponse.statusCode(), httpResponse.headers().map(), jsonResponse);
+      return new HttpRequestResult(httpResponse.statusCode(), httpResponse.headers().map(), jsonResponse);
     } catch (URISyntaxException e) {
 
       throw new InvalidConfigurationException("HttpRequestUrl is invalid.", e);
@@ -78,33 +65,28 @@ public class HttpRequestExecutor {
     return jsonConverter.readTree(httpResponse.body());
   }
 
-  private void setHeaders(
-      HttpRequest.Builder httpRequestBuilder, HttpRequestHeaders httpRequestHeaders) {
+  private void setHeaders(HttpRequest.Builder httpRequestBuilder, HttpRequestHeaders httpRequestHeaders) {
     httpRequestHeaders.forEach(httpRequestBuilder::header);
   }
 
-  private void setParams(
-      HttpRequest.Builder builder, HttpMethod httpMethod, Map<String, Object> requestBody) {
+  private void setParams(HttpRequest.Builder builder, HttpMethod httpMethod, Map<String, Object> requestBody) {
 
     switch (httpMethod) {
       case GET:
         builder.GET();
         break;
-      case POST:
-        {
-          builder.POST(HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
-          break;
-        }
-      case PUT:
-        {
-          builder.PUT(HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
-          break;
-        }
-      case DELETE:
-        {
-          builder.DELETE();
-          break;
-        }
+      case POST: {
+        builder.POST(HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
+        break;
+      }
+      case PUT: {
+        builder.PUT(HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
+        break;
+      }
+      case DELETE: {
+        builder.DELETE();
+        break;
+      }
     }
   }
 }

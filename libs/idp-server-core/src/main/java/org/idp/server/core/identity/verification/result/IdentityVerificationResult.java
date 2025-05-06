@@ -24,54 +24,26 @@ public class IdentityVerificationResult {
   VerifiedClaims verifiedClaims;
   LocalDateTime verifiedAt;
   LocalDateTime verifiedUntil;
-  IdentityVerificationSource source;
-  ;
+  IdentityVerificationSource source;;
 
-  public static IdentityVerificationResult create(
-      IdentityVerificationApplication application,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public static IdentityVerificationResult create(IdentityVerificationApplication application, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
 
-    IdentityVerificationResultIdentifier identifier =
-        new IdentityVerificationResultIdentifier(UUID.randomUUID().toString());
+    IdentityVerificationResultIdentifier identifier = new IdentityVerificationResultIdentifier(UUID.randomUUID().toString());
     TenantIdentifier tenantId = application.tenantIdentifier();
     UserIdentifier userIdentifier = application.userIdentifier();
     IdentityVerificationApplicationIdentifier applicationId = application.identifier();
     IdentityVerificationType identityVerificationType = application.identityVerificationType();
-    ExternalWorkflowApplicationIdentifier externalApplicationId =
-        application.externalApplicationId();
-    VerifiedClaims verifiedClaims =
-        VerifiedClaims.create(
-            request, verificationConfiguration.verifiedClaimsSchemaAsDefinition());
+    ExternalWorkflowApplicationIdentifier externalApplicationId = application.externalApplicationId();
+    VerifiedClaims verifiedClaims = VerifiedClaims.create(request, verificationConfiguration.verifiedClaimsSchemaAsDefinition());
     LocalDateTime verifiedAt = SystemDateTime.now();
     IdentityVerificationSource source = IdentityVerificationSource.APPLICATION;
 
-    return new IdentityVerificationResult(
-        identifier,
-        tenantId,
-        userIdentifier,
-        applicationId,
-        identityVerificationType,
-        externalApplicationId,
-        verifiedClaims,
-        verifiedAt,
-        null,
-        source);
+    return new IdentityVerificationResult(identifier, tenantId, userIdentifier, applicationId, identityVerificationType, externalApplicationId, verifiedClaims, verifiedAt, null, source);
   }
 
   public IdentityVerificationResult() {}
 
-  public IdentityVerificationResult(
-      IdentityVerificationResultIdentifier identifier,
-      TenantIdentifier tenantId,
-      UserIdentifier userIdentifier,
-      IdentityVerificationApplicationIdentifier applicationId,
-      IdentityVerificationType identityVerificationType,
-      ExternalWorkflowApplicationIdentifier externalApplicationId,
-      VerifiedClaims verifiedClaims,
-      LocalDateTime verifiedAt,
-      LocalDateTime verifiedUntil,
-      IdentityVerificationSource source) {
+  public IdentityVerificationResult(IdentityVerificationResultIdentifier identifier, TenantIdentifier tenantId, UserIdentifier userIdentifier, IdentityVerificationApplicationIdentifier applicationId, IdentityVerificationType identityVerificationType, ExternalWorkflowApplicationIdentifier externalApplicationId, VerifiedClaims verifiedClaims, LocalDateTime verifiedAt, LocalDateTime verifiedUntil, IdentityVerificationSource source) {
     this.identifier = identifier;
     this.tenantId = tenantId;
     this.userIdentifier = userIdentifier;

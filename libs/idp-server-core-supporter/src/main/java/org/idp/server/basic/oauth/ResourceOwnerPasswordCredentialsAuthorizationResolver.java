@@ -13,13 +13,11 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.basic.log.LoggerWrapper;
 
-public class ResourceOwnerPasswordCredentialsAuthorizationResolver
-    implements OAuthAuthorizationResolver {
+public class ResourceOwnerPasswordCredentialsAuthorizationResolver implements OAuthAuthorizationResolver {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;
-  LoggerWrapper log =
-      LoggerWrapper.getLogger(ResourceOwnerPasswordCredentialsAuthorizationResolver.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(ResourceOwnerPasswordCredentialsAuthorizationResolver.class);
 
   public ResourceOwnerPasswordCredentialsAuthorizationResolver() {
     this.httpClient = HttpClientFactory.defaultClient();
@@ -32,12 +30,7 @@ public class ResourceOwnerPasswordCredentialsAuthorizationResolver
 
       QueryParams queryParams = new QueryParams(config.toMap());
 
-      HttpRequest.Builder builder =
-          HttpRequest.newBuilder()
-              .uri(new URI(config.tokenEndpoint()))
-              .header("Content-Type", "application/x-www-form-urlencoded")
-              .header("Accept", "application/json")
-              .POST(HttpRequest.BodyPublishers.ofString(queryParams.params()));
+      HttpRequest.Builder builder = HttpRequest.newBuilder().uri(new URI(config.tokenEndpoint())).header("Content-Type", "application/x-www-form-urlencoded").header("Accept", "application/json").POST(HttpRequest.BodyPublishers.ofString(queryParams.params()));
 
       HttpRequest request = builder.build();
 
@@ -46,8 +39,7 @@ public class ResourceOwnerPasswordCredentialsAuthorizationResolver
         log.debug("Request body: {}", request.bodyPublisher().get());
       }
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpResponse<String> httpResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String body = httpResponse.body();
 
       log.debug("Response status: {}", httpResponse.statusCode());

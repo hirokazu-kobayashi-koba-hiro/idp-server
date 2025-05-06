@@ -16,17 +16,12 @@ public class JsonWebSignatureVerifier {
     this.verifier = verifier;
   }
 
-  public JsonWebSignatureVerifier(
-      JsonWebSignatureHeader jsonWebSignatureHeader, PublicKey publicKey)
-      throws JoseInvalidException {
+  public JsonWebSignatureVerifier(JsonWebSignatureHeader jsonWebSignatureHeader, PublicKey publicKey) throws JoseInvalidException {
     try {
       DefaultJWSVerifierFactory defaultJWSVerifierFactory = new DefaultJWSVerifierFactory();
-      this.verifier =
-          defaultJWSVerifierFactory.createJWSVerifier(jsonWebSignatureHeader.jwsHeader, publicKey);
+      this.verifier = defaultJWSVerifierFactory.createJWSVerifier(jsonWebSignatureHeader.jwsHeader, publicKey);
     } catch (JOSEException exception) {
-      throw new JoseInvalidException(
-          "failed create JsonWebSignatureVerifier ,invalid json web signature header and public key",
-          exception);
+      throw new JoseInvalidException("failed create JsonWebSignatureVerifier ,invalid json web signature header and public key", exception);
     }
   }
 

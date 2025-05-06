@@ -17,23 +17,18 @@ public class CibaDenyHandler {
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
-  public CibaDenyHandler(
-      CibaGrantRepository cibaGrantRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+  public CibaDenyHandler(CibaGrantRepository cibaGrantRepository, ServerConfigurationRepository serverConfigurationRepository, ClientConfigurationRepository clientConfigurationRepository) {
     this.cibaGrantRepository = cibaGrantRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
   public CibaDenyResponse handle(CibaDenyRequest request) {
-    BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier =
-        request.backchannelAuthenticationRequestIdentifier();
+    BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier = request.backchannelAuthenticationRequestIdentifier();
     Tenant tenant = request.tenant();
     serverConfigurationRepository.get(tenant);
 
-    CibaGrant cibaGrant =
-        cibaGrantRepository.get(tenant, backchannelAuthenticationRequestIdentifier);
+    CibaGrant cibaGrant = cibaGrantRepository.get(tenant, backchannelAuthenticationRequestIdentifier);
     CibaGrant updated = cibaGrant.update(CibaGrantStatus.access_denied);
     cibaGrantRepository.update(tenant, updated);
 

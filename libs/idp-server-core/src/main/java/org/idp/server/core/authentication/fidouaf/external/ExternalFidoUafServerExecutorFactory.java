@@ -9,8 +9,7 @@ public class ExternalFidoUafServerExecutorFactory implements FidoUafExecutorFact
 
   @Override
   public FidoUafExecutor create(AuthenticationDependencyContainer container) {
-    AuthenticationConfigurationQueryRepository configurationQueryRepository =
-        container.resolve(AuthenticationConfigurationQueryRepository.class);
+    AuthenticationConfigurationQueryRepository configurationQueryRepository = container.resolve(AuthenticationConfigurationQueryRepository.class);
     return new ExternalFidoUafServerExecutor(configurationQueryRepository);
   }
 }

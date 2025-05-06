@@ -17,8 +17,7 @@ public class UserManagementEntryService implements UserManagementApi {
   TenantRepository tenantRepository;
   UserQueryRepository userQueryRepository;
 
-  public UserManagementEntryService(
-      TenantRepository tenantRepository, UserQueryRepository userQueryRepository) {
+  public UserManagementEntryService(TenantRepository tenantRepository, UserQueryRepository userQueryRepository) {
     this.tenantRepository = tenantRepository;
     this.userQueryRepository = userQueryRepository;
   }

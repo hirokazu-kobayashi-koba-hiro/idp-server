@@ -17,9 +17,7 @@ public class SmsTemplate implements JsonReadable {
   }
 
   public String interpolate(String verificationCode, int expireSeconds) {
-    return message
-        .replace("{VERIFICATION_CODE}", verificationCode)
-        .replace("{EXPIRE_SECONDS}", String.valueOf(expireSeconds));
+    return message.replace("{VERIFICATION_CODE}", verificationCode).replace("{EXPIRE_SECONDS}", String.valueOf(expireSeconds));
   }
 
   public boolean exists() {

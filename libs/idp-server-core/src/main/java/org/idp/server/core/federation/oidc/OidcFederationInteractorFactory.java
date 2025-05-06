@@ -12,16 +12,9 @@ public class OidcFederationInteractorFactory implements FederationInteractorFact
   @Override
   public FederationInteractor create(FederationDependencyContainer container) {
     OidcSsoExecutors oidcSsoExecutors = container.resolve(OidcSsoExecutors.class);
-    FederationConfigurationQueryRepository configurationQueryRepository =
-        container.resolve(FederationConfigurationQueryRepository.class);
-    SsoSessionCommandRepository sessionCommandRepository =
-        container.resolve(SsoSessionCommandRepository.class);
-    SsoSessionQueryRepository sessionQueryRepository =
-        container.resolve(SsoSessionQueryRepository.class);
-    return new OidcFederationInteractor(
-        oidcSsoExecutors,
-        configurationQueryRepository,
-        sessionCommandRepository,
-        sessionQueryRepository);
+    FederationConfigurationQueryRepository configurationQueryRepository = container.resolve(FederationConfigurationQueryRepository.class);
+    SsoSessionCommandRepository sessionCommandRepository = container.resolve(SsoSessionCommandRepository.class);
+    SsoSessionQueryRepository sessionQueryRepository = container.resolve(SsoSessionQueryRepository.class);
+    return new OidcFederationInteractor(oidcSsoExecutors, configurationQueryRepository, sessionCommandRepository, sessionQueryRepository);
   }
 }

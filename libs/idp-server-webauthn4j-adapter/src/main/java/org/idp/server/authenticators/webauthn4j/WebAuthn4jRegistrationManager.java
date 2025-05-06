@@ -15,11 +15,7 @@ public class WebAuthn4jRegistrationManager {
   String request;
   String userId;
 
-  public WebAuthn4jRegistrationManager(
-      WebAuthn4jConfiguration configuration,
-      WebAuthn4jChallenge webAuthn4jChallenge,
-      String request,
-      String userId) {
+  public WebAuthn4jRegistrationManager(WebAuthn4jConfiguration configuration, WebAuthn4jChallenge webAuthn4jChallenge, String request, String userId) {
     this.webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
     this.configuration = configuration;
     this.webAuthn4jChallenge = webAuthn4jChallenge;
@@ -30,42 +26,29 @@ public class WebAuthn4jRegistrationManager {
   public WebAuthn4jCredential verifyAndCreateCredential() {
 
     RegistrationData registrationData = parseRequest();
-    RegistrationParameters registrationParameters =
-        configuration.toRegistrationParameters(webAuthn4jChallenge);
+    RegistrationParameters registrationParameters = configuration.toRegistrationParameters(webAuthn4jChallenge);
 
     RegistrationData verified = verifyAndCreateCredential(registrationData, registrationParameters);
     byte[] credentialId = credentialId(verified);
 
     ObjectConverter objectConverter = new ObjectConverter();
-    AttestedCredentialDataConverter attestedCredentialDataConverter =
-        new AttestedCredentialDataConverter(objectConverter);
-    byte[] attestedCredentialData =
-        attestedCredentialDataConverter.convert(
-            Objects.requireNonNull(
-                Objects.requireNonNull(verified.getAttestationObject())
-                    .getAuthenticatorData()
-                    .getAttestedCredentialData()));
+    AttestedCredentialDataConverter attestedCredentialDataConverter = new AttestedCredentialDataConverter(objectConverter);
+    byte[] attestedCredentialData = attestedCredentialDataConverter.convert(Objects.requireNonNull(Objects.requireNonNull(verified.getAttestationObject()).getAuthenticatorData().getAttestedCredentialData()));
 
-    return new WebAuthn4jCredential(
-        credentialId, userId, configuration.rpId(), new byte[0], attestedCredentialData, 0);
+    return new WebAuthn4jCredential(credentialId, userId, configuration.rpId(), new byte[0], attestedCredentialData, 0);
   }
 
   private byte[] credentialId(RegistrationData verified) {
     try {
 
-      return Objects.requireNonNull(
-              Objects.requireNonNull(verified.getAttestationObject())
-                  .getAuthenticatorData()
-                  .getAttestedCredentialData())
-          .getCredentialId();
+      return Objects.requireNonNull(Objects.requireNonNull(verified.getAttestationObject()).getAuthenticatorData().getAttestedCredentialData()).getCredentialId();
     } catch (Exception e) {
 
       throw new RuntimeException(e);
     }
   }
 
-  private RegistrationData verifyAndCreateCredential(
-      RegistrationData registrationData, RegistrationParameters registrationParameters) {
+  private RegistrationData verifyAndCreateCredential(RegistrationData registrationData, RegistrationParameters registrationParameters) {
     try {
       return webAuthnManager.verify(registrationData, registrationParameters);
     } catch (Exception e) {

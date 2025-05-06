@@ -1,9 +1,7 @@
 package org.idp.server.core.authentication;
 
 public enum AuthenticationInteractionStatus {
-  SUCCESS(200),
-  CLIENT_ERROR(400),
-  SERVER_ERROR(500);
+  SUCCESS(200), CLIENT_ERROR(400), SERVER_ERROR(500);
 
   int statusCode;
 

@@ -16,33 +16,17 @@ public class TokenEventPublisher {
     this.securityEventPublisher = securityEventPublisher;
   }
 
-  public void publish(
-      Tenant tenant,
-      OAuthToken oAuthToken,
-      DefaultSecurityEventType type,
-      RequestAttributes requestAttributes) {
-    TokenEventCreator eventCreator =
-        new TokenEventCreator(tenant, oAuthToken, type, requestAttributes);
+  public void publish(Tenant tenant, OAuthToken oAuthToken, DefaultSecurityEventType type, RequestAttributes requestAttributes) {
+    TokenEventCreator eventCreator = new TokenEventCreator(tenant, oAuthToken, type, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }
 
-  public void publish(
-      Tenant tenant,
-      OAuthToken oAuthToken,
-      IdentityVerificationType type,
-      IdentityVerificationProcess identityVerificationProcess,
-      boolean result,
-      RequestAttributes requestAttributes) {
+  public void publish(Tenant tenant, OAuthToken oAuthToken, IdentityVerificationType type, IdentityVerificationProcess identityVerificationProcess, boolean result, RequestAttributes requestAttributes) {
     String resultString = result ? "success" : "failure";
-    SecurityEventType securityEventType =
-        new SecurityEventType(
-            type.name() + "_" + identityVerificationProcess.name() + "_" + resultString);
-    SecurityEventDescription securityEventDescription =
-        new SecurityEventDescription(securityEventType.value());
-    TokenEventCreator eventCreator =
-        new TokenEventCreator(
-            tenant, oAuthToken, securityEventType, securityEventDescription, requestAttributes);
+    SecurityEventType securityEventType = new SecurityEventType(type.name() + "_" + identityVerificationProcess.name() + "_" + resultString);
+    SecurityEventDescription securityEventDescription = new SecurityEventDescription(securityEventType.value());
+    TokenEventCreator eventCreator = new TokenEventCreator(tenant, oAuthToken, securityEventType, securityEventDescription, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }

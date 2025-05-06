@@ -20,13 +20,7 @@ import org.idp.server.core.oidc.request.OAuthRequestParameters;
 
 /** AuthorizationRequestFactory */
 public interface AuthorizationRequestFactory {
-  AuthorizationRequest create(
-      AuthorizationProfile profile,
-      OAuthRequestParameters parameters,
-      JoseContext joseContext,
-      Set<String> filteredScopes,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration);
+  AuthorizationRequest create(AuthorizationProfile profile, OAuthRequestParameters parameters, JoseContext joseContext, Set<String> filteredScopes, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration);
 
   default AuthorizationRequestIdentifier createIdentifier() {
     return new AuthorizationRequestIdentifier(UUID.randomUUID().toString());
@@ -35,16 +29,13 @@ public interface AuthorizationRequestFactory {
   default RequestedClaimsPayload convertClaimsPayload(ClaimsValue claimsValue) {
     try {
       JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-      return claimsValue.exists()
-          ? jsonConverter.read(claimsValue.value(), RequestedClaimsPayload.class)
-          : new RequestedClaimsPayload();
+      return claimsValue.exists() ? jsonConverter.read(claimsValue.value(), RequestedClaimsPayload.class) : new RequestedClaimsPayload();
     } catch (Exception exception) {
       return new RequestedClaimsPayload();
     }
   }
 
-  default AuthorizationDetails convertAuthorizationDetails(
-      AuthorizationDetailsEntity authorizationDetailsEntity) {
+  default AuthorizationDetails convertAuthorizationDetails(AuthorizationDetailsEntity authorizationDetailsEntity) {
     if (!authorizationDetailsEntity.exists()) {
       return new AuthorizationDetails();
     }
@@ -54,13 +45,11 @@ public interface AuthorizationRequestFactory {
         JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
         List list = jsonConverter.read(string, List.class);
         List<Map> details = (List<Map>) list;
-        List<AuthorizationDetail> authorizationDetailsList =
-            details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
+        List<AuthorizationDetail> authorizationDetailsList = details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
         return new AuthorizationDetails(authorizationDetailsList);
       }
       List<Map> details = (List<Map>) authorizationDetailsEntity.value();
-      List<AuthorizationDetail> authorizationDetailsList =
-          details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
+      List<AuthorizationDetail> authorizationDetailsList = details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
       return new AuthorizationDetails(authorizationDetailsList);
     } catch (Exception exception) {
       return new AuthorizationDetails();

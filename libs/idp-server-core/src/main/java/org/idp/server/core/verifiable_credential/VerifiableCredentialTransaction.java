@@ -17,13 +17,7 @@ public class VerifiableCredentialTransaction {
 
   public VerifiableCredentialTransaction() {}
 
-  public VerifiableCredentialTransaction(
-      TransactionId transactionId,
-      CredentialIssuer credentialIssuer,
-      RequestedClientId requestedClientId,
-      Subject subject,
-      Credential credential,
-      VerifiableCredentialTransactionStatus status) {
+  public VerifiableCredentialTransaction(TransactionId transactionId, CredentialIssuer credentialIssuer, RequestedClientId requestedClientId, Subject subject, Credential credential, VerifiableCredentialTransactionStatus status) {
     this.transactionId = transactionId;
     this.credentialIssuer = credentialIssuer;
     this.requestedClientId = requestedClientId;

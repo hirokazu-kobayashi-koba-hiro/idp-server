@@ -5,7 +5,8 @@ import java.util.Objects;
 /**
  * id_token_hint OPTIONAL.
  *
- * <p>ID Token previously issued by the Authorization Server being passed as a hint about the
+ * <p>
+ * ID Token previously issued by the Authorization Server being passed as a hint about the
  * End-User's current or past authenticated session with the Client. If the End-User identified by
  * the ID Token is logged in or is logged in by the request, then the Authorization Server returns a
  * positive response; otherwise, it SHOULD return an error, such as login_required. When possible,
@@ -19,7 +20,7 @@ import java.util.Objects;
  * re-encrypted ID token as the id_token_hint value.
  *
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">3.1.2.1.
- *     Authentication Request</a>
+ *      Authentication Request</a>
  */
 public class IdTokenHint {
   String value;
@@ -40,8 +41,10 @@ public class IdTokenHint {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
     IdTokenHint that = (IdTokenHint) o;
     return Objects.equals(value, that.value);
   }

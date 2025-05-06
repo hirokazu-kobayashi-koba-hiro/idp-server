@@ -12,16 +12,14 @@ public class IdentityVerificationResponseValidator {
   JsonNodeWrapper response;
   JsonConverter jsonConverter;
 
-  public IdentityVerificationResponseValidator(
-      IdentityVerificationProcessConfiguration processConfiguration, JsonNodeWrapper response) {
+  public IdentityVerificationResponseValidator(IdentityVerificationProcessConfiguration processConfiguration, JsonNodeWrapper response) {
     this.processConfiguration = processConfiguration;
     this.response = response;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   public IdentityVerificationValidationResult validate() {
-    JsonSchemaDefinition jsonSchemaDefinition =
-        processConfiguration.responseValidationSchemaAsDefinition();
+    JsonSchemaDefinition jsonSchemaDefinition = processConfiguration.responseValidationSchemaAsDefinition();
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);
 
     JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(response);

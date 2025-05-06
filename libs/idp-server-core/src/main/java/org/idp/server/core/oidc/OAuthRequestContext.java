@@ -45,14 +45,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
 
   public OAuthRequestContext() {}
 
-  public OAuthRequestContext(
-      Tenant tenant,
-      OAuthRequestPattern pattern,
-      OAuthRequestParameters parameters,
-      JoseContext joseContext,
-      AuthorizationRequest authorizationRequest,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public OAuthRequestContext(Tenant tenant, OAuthRequestPattern pattern, OAuthRequestParameters parameters, JoseContext joseContext, AuthorizationRequest authorizationRequest, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     this.tenant = tenant;
     this.pattern = pattern;
     this.parameters = parameters;
@@ -76,58 +69,36 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     }
 
     if (session == null || !session.exists()) {
-      throw new OAuthRedirectableBadRequestException(
-          "login_required", "invalid session, session is not registered", this);
+      throw new OAuthRedirectableBadRequestException("login_required", "invalid session, session is not registered", this);
     }
     if (!session.isValid(authorizationRequest())) {
-      throw new OAuthRedirectableBadRequestException(
-          "login_required", "invalid session, session is invalid", this);
+      throw new OAuthRedirectableBadRequestException("login_required", "invalid session, session is invalid", this);
     }
 
     if (authorizationGranted == null || !authorizationGranted.exists()) {
-      throw new OAuthRedirectableBadRequestException(
-          "interaction_required", "authorization granted is nothing", this);
+      throw new OAuthRedirectableBadRequestException("interaction_required", "authorization granted is nothing", this);
     }
     if (!authorizationGranted.isGrantedScopes(authorizationRequest.scopes())) {
-      Scopes unauthorizedScopes =
-          authorizationGranted.unauthorizedScopes(authorizationRequest.scopes());
-      throw new OAuthRedirectableBadRequestException(
-          "interaction_required",
-          String.format(
-              "authorization request contains unauthorized scopes (%s)",
-              unauthorizedScopes.toStringValues()),
-          this);
+      Scopes unauthorizedScopes = authorizationGranted.unauthorizedScopes(authorizationRequest.scopes());
+      throw new OAuthRedirectableBadRequestException("interaction_required", String.format("authorization request contains unauthorized scopes (%s)", unauthorizedScopes.toStringValues()), this);
     }
 
     GrantIdTokenClaims grantIdTokenClaims = createGrantIdTokenClaims();
     if (!authorizationGranted.isGrantedClaims(grantIdTokenClaims)) {
-      GrantIdTokenClaims unauthorizedIdTokenClaims =
-          authorizationGranted.unauthorizedIdTokenClaims(grantIdTokenClaims);
-      throw new OAuthRedirectableBadRequestException(
-          "interaction_required",
-          String.format(
-              "authorization request contains unauthorized id_token claims (%s)",
-              unauthorizedIdTokenClaims.toStringValues()),
-          this);
+      GrantIdTokenClaims unauthorizedIdTokenClaims = authorizationGranted.unauthorizedIdTokenClaims(grantIdTokenClaims);
+      throw new OAuthRedirectableBadRequestException("interaction_required", String.format("authorization request contains unauthorized id_token claims (%s)", unauthorizedIdTokenClaims.toStringValues()), this);
     }
 
     GrantUserinfoClaims grantUserinfoClaims = createGrantUserinfoClaims();
     if (!authorizationGranted.isGrantedClaims(grantUserinfoClaims)) {
-      GrantUserinfoClaims unauthorizedIdTokenClaims =
-          authorizationGranted.unauthorizedIdTokenClaims(grantUserinfoClaims);
-      throw new OAuthRedirectableBadRequestException(
-          "interaction_required",
-          String.format(
-              "authorization request contains unauthorized userinfo claims (%s)",
-              unauthorizedIdTokenClaims.toStringValues()),
-          this);
+      GrantUserinfoClaims unauthorizedIdTokenClaims = authorizationGranted.unauthorizedIdTokenClaims(grantUserinfoClaims);
+      throw new OAuthRedirectableBadRequestException("interaction_required", String.format("authorization request contains unauthorized userinfo claims (%s)", unauthorizedIdTokenClaims.toStringValues()), this);
     }
 
     ConsentClaims consentClaims = createConsentClaims();
 
     if (!authorizationGranted.isConsentedClaims(consentClaims)) {
-      throw new OAuthRedirectableBadRequestException(
-          "interaction_required", "authorization request contains unauthorized consent", this);
+      throw new OAuthRedirectableBadRequestException("interaction_required", "authorization request contains unauthorized consent", this);
     }
 
     return true;
@@ -138,42 +109,27 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     LocalDateTime now = SystemDateTime.now();
 
     if (clientConfiguration.hasTosUri()) {
-      contents.put(
-          "terms", List.of(new ConsentClaim("tos_uri", clientConfiguration.tosUri(), now)));
+      contents.put("terms", List.of(new ConsentClaim("tos_uri", clientConfiguration.tosUri(), now)));
     }
 
     if (clientConfiguration.hasPolicyUri()) {
-      contents.put(
-          "privacy", List.of(new ConsentClaim("policy_uri", clientConfiguration.policyUri(), now)));
+      contents.put("privacy", List.of(new ConsentClaim("policy_uri", clientConfiguration.policyUri(), now)));
     }
 
     return new ConsentClaims(contents);
   }
 
   private GrantIdTokenClaims createGrantIdTokenClaims() {
-    return GrantIdTokenClaims.create(
-        authorizationRequest.scopes(),
-        authorizationRequest.responseType(),
-        serverConfiguration.claimsSupported(),
-        authorizationRequest.requestedIdTokenClaims(),
-        serverConfiguration.isIdTokenStrictMode());
+    return GrantIdTokenClaims.create(authorizationRequest.scopes(), authorizationRequest.responseType(), serverConfiguration.claimsSupported(), authorizationRequest.requestedIdTokenClaims(), serverConfiguration.isIdTokenStrictMode());
   }
 
   private GrantUserinfoClaims createGrantUserinfoClaims() {
-    return GrantUserinfoClaims.create(
-        authorizationRequest.scopes(),
-        serverConfiguration.claimsSupported(),
-        authorizationRequest.requestedUserinfoClaims());
+    return GrantUserinfoClaims.create(authorizationRequest.scopes(), serverConfiguration.claimsSupported(), authorizationRequest.requestedUserinfoClaims());
   }
 
   public OAuthAuthorizeRequest createOAuthAuthorizeRequest() {
 
-    return new OAuthAuthorizeRequest(
-            tenant,
-            authorizationRequestIdentifier().value(),
-            session.user(),
-            session.authentication())
-        .setCustomProperties(session.customProperties());
+    return new OAuthAuthorizeRequest(tenant, authorizationRequestIdentifier().value(), session.user(), session.authentication()).setCustomProperties(session.customProperties());
   }
 
   public OAuthRequestResponse createResponse() {

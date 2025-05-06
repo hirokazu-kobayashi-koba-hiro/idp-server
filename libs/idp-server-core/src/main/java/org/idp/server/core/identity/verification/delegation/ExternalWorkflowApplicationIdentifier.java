@@ -18,7 +18,8 @@ public class ExternalWorkflowApplicationIdentifier {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     ExternalWorkflowApplicationIdentifier that = (ExternalWorkflowApplicationIdentifier) o;
     return Objects.equals(value, that.value);
   }

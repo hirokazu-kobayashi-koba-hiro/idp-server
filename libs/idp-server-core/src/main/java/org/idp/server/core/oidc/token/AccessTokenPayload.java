@@ -18,15 +18,7 @@ public class AccessTokenPayload {
 
   public AccessTokenPayload() {}
 
-  AccessTokenPayload(
-      TokenIssuer tokenIssuer,
-      Subject subject,
-      RequestedClientId requestedClientId,
-      Scopes scopes,
-      CustomProperties customProperties,
-      CreatedAt createdAt,
-      ExpiredAt expiredAt,
-      Map<String, Object> values) {
+  AccessTokenPayload(TokenIssuer tokenIssuer, Subject subject, RequestedClientId requestedClientId, Scopes scopes, CustomProperties customProperties, CreatedAt createdAt, ExpiredAt expiredAt, Map<String, Object> values) {
     this.tokenIssuer = tokenIssuer;
     this.subject = subject;
     this.requestedClientId = requestedClientId;

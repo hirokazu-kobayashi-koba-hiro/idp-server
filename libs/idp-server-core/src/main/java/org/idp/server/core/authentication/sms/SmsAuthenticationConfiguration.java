@@ -30,8 +30,7 @@ public class SmsAuthenticationConfiguration implements JsonReadable {
 
   public Map<String, Object> getDetail(SmsAuthenticationType type) {
     if (!details.containsKey(type.name())) {
-      throw new SmsAuthenticationDetailsConfigNotFoundException(
-          "invalid configuration. key: " + type.name() + " is unregistered.");
+      throw new SmsAuthenticationDetailsConfigNotFoundException("invalid configuration. key: " + type.name() + " is unregistered.");
     }
     return details.get(type.name());
   }

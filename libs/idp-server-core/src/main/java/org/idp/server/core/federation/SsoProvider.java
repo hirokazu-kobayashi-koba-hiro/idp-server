@@ -17,7 +17,8 @@ public class SsoProvider {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     SsoProvider federationType = (SsoProvider) o;
     return Objects.equals(name, federationType.name);
   }

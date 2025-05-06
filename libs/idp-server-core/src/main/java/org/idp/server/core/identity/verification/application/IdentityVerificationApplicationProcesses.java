@@ -5,8 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class IdentityVerificationApplicationProcesses
-    implements Iterable<IdentityVerificationApplicationProcess> {
+public class IdentityVerificationApplicationProcesses implements Iterable<IdentityVerificationApplicationProcess> {
 
   List<IdentityVerificationApplicationProcess> values;
 
@@ -14,13 +13,11 @@ public class IdentityVerificationApplicationProcesses
     this.values = new ArrayList<>();
   }
 
-  public IdentityVerificationApplicationProcesses(
-      List<IdentityVerificationApplicationProcess> values) {
+  public IdentityVerificationApplicationProcesses(List<IdentityVerificationApplicationProcess> values) {
     this.values = values;
   }
 
-  public IdentityVerificationApplicationProcesses add(
-      IdentityVerificationApplicationProcess process) {
+  public IdentityVerificationApplicationProcesses add(IdentityVerificationApplicationProcess process) {
     ArrayList<IdentityVerificationApplicationProcess> added = new ArrayList<>(values);
     added.add(process);
     return new IdentityVerificationApplicationProcesses(added);

@@ -37,12 +37,7 @@ public class StandardOidcExecutor implements OidcSsoExecutor {
 
       QueryParams queryParams = new QueryParams(oidcTokenRequest.toMap());
 
-      HttpRequest.Builder builder =
-          HttpRequest.newBuilder()
-              .uri(new URI(oidcTokenRequest.endpoint()))
-              .header("Content-Type", "application/x-www-form-urlencoded")
-              .header("Accept", "application/json")
-              .POST(HttpRequest.BodyPublishers.ofString(queryParams.params()));
+      HttpRequest.Builder builder = HttpRequest.newBuilder().uri(new URI(oidcTokenRequest.endpoint())).header("Content-Type", "application/x-www-form-urlencoded").header("Accept", "application/json").POST(HttpRequest.BodyPublishers.ofString(queryParams.params()));
 
       if (oidcTokenRequest.isClientSecretBasic()) {
         builder.header("Authorization", oidcTokenRequest.basicAuthenticationValue());
@@ -50,8 +45,7 @@ public class StandardOidcExecutor implements OidcSsoExecutor {
 
       HttpRequest request = builder.build();
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpResponse<String> httpResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String body = httpResponse.body();
 
       validateResponse(httpResponse, body);
@@ -70,16 +64,9 @@ public class StandardOidcExecutor implements OidcSsoExecutor {
 
     try {
 
-      HttpRequest request =
-          HttpRequest.newBuilder()
-              .uri(new URI(oidcJwksRequest.endpoint()))
-              .header("Content-Type", "application/json")
-              .header("Accept", "application/json")
-              .GET()
-              .build();
+      HttpRequest request = HttpRequest.newBuilder().uri(new URI(oidcJwksRequest.endpoint())).header("Content-Type", "application/json").header("Accept", "application/json").GET().build();
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpResponse<String> httpResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
       String body = httpResponse.body();
       log.info("jwks response:" + body);
@@ -97,18 +84,9 @@ public class StandardOidcExecutor implements OidcSsoExecutor {
   public OidcUserinfoResponse requestUserInfo(OidcUserinfoRequest oidcUserinfoRequest) {
     try {
 
-      HttpRequest request =
-          HttpRequest.newBuilder()
-              .uri(new URI(oidcUserinfoRequest.endpoint()))
-              .header("Content-Type", "application/json")
-              .header("Accept", "application/json")
-              .header(
-                  "Authorization", String.format("Bearer %s", oidcUserinfoRequest.accessToken()))
-              .GET()
-              .build();
+      HttpRequest request = HttpRequest.newBuilder().uri(new URI(oidcUserinfoRequest.endpoint())).header("Content-Type", "application/json").header("Accept", "application/json").header("Authorization", String.format("Bearer %s", oidcUserinfoRequest.accessToken())).GET().build();
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpResponse<String> httpResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
       String body = httpResponse.body();
 

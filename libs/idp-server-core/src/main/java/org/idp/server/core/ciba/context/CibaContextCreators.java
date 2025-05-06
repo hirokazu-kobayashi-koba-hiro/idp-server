@@ -19,8 +19,7 @@ public class CibaContextCreators {
   public CibaRequestContextCreator get(CibaRequestPattern pattern) {
     CibaRequestContextCreator cibaRequestContextCreator = values.get(pattern);
     if (Objects.isNull(cibaRequestContextCreator)) {
-      throw new UnSupportedException(
-          String.format("unsupported ciba request pattern (%s)", pattern.name()));
+      throw new UnSupportedException(String.format("unsupported ciba request pattern (%s)", pattern.name()));
     }
     return cibaRequestContextCreator;
   }

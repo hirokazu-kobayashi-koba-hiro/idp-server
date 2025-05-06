@@ -15,10 +15,7 @@ public class VerifiableCredentialTransactionCreator {
   OAuthToken oAuthToken;
   VerifiableCredentialConfiguration verifiableCredentialConfiguration;
 
-  public VerifiableCredentialTransactionCreator(
-      CredentialDelegateResponse delegateResponse,
-      OAuthToken oAuthToken,
-      VerifiableCredentialConfiguration verifiableCredentialConfiguration) {
+  public VerifiableCredentialTransactionCreator(CredentialDelegateResponse delegateResponse, OAuthToken oAuthToken, VerifiableCredentialConfiguration verifiableCredentialConfiguration) {
     this.delegateResponse = delegateResponse;
     this.oAuthToken = oAuthToken;
     this.verifiableCredentialConfiguration = verifiableCredentialConfiguration;
@@ -33,7 +30,6 @@ public class VerifiableCredentialTransactionCreator {
     Credential credential = delegateResponse.credential();
     VerifiableCredentialTransactionStatus status = delegateResponse.status();
 
-    return new VerifiableCredentialTransaction(
-        transactionId, credentialIssuer, requestedClientId, subject, credential, status);
+    return new VerifiableCredentialTransaction(transactionId, credentialIssuer, requestedClientId, subject, credential, status);
   }
 }

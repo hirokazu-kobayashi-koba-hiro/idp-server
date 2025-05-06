@@ -46,8 +46,6 @@ public class ApiExceptionHandler {
   @ExceptionHandler
   public ResponseEntity<?> handleException(Exception exception) {
     log.error(exception.getMessage(), exception);
-    return new ResponseEntity<>(
-        Map.of("error", "server_error", "error_description", "unexpected error is occurred"),
-        HttpStatus.INTERNAL_SERVER_ERROR);
+    return new ResponseEntity<>(Map.of("error", "server_error", "error_description", "unexpected error is occurred"), HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }

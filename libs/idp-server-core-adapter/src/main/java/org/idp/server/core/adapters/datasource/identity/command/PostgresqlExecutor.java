@@ -15,74 +15,73 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
   @Override
   public void insert(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                INSERT INTO idp_user
-                (
-                id,
-                tenant_id,
-                provider_id,
-                provider_user_id,
-                provider_user_original_payload,
-                name,
-                given_name,
-                family_name,
-                middle_name,
-                nickname,
-                preferred_username,
-                profile,
-                picture,
-                website,
-                email,
-                email_verified,
-                gender,
-                birthdate,
-                zoneinfo,
-                locale,
-                phone_number,
-                phone_number_verified,
-                address,
-                custom_properties,
-                credentials,
-                hashed_password,
-                multi_factor_authentication,
-                authentication_devices,
-                verified_claims,
-                status)
-                VALUES
-                (
-                ?,
-                ?,
-                ?,
-                ?,
-                ?::jsonb,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?::jsonb,
-                ?::jsonb,
-                ?::jsonb,
-                ?,
-                ?::jsonb,
-                ?::jsonb,
-                ?::jsonb,
-                ?
-                );
-                """;
+    String sqlTemplate = """
+        INSERT INTO idp_user
+        (
+        id,
+        tenant_id,
+        provider_id,
+        provider_user_id,
+        provider_user_original_payload,
+        name,
+        given_name,
+        family_name,
+        middle_name,
+        nickname,
+        preferred_username,
+        profile,
+        picture,
+        website,
+        email,
+        email_verified,
+        gender,
+        birthdate,
+        zoneinfo,
+        locale,
+        phone_number,
+        phone_number_verified,
+        address,
+        custom_properties,
+        credentials,
+        hashed_password,
+        multi_factor_authentication,
+        authentication_devices,
+        verified_claims,
+        status)
+        VALUES
+        (
+        ?,
+        ?,
+        ?,
+        ?,
+        ?::jsonb,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?::jsonb,
+        ?::jsonb,
+        ?::jsonb,
+        ?,
+        ?::jsonb,
+        ?::jsonb,
+        ?::jsonb,
+        ?
+        );
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(user.sub());
@@ -122,35 +121,34 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
   @Override
   public void update(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                 UPDATE idp_user
-                 SET name = ?,
-                 given_name = ?,
-                 family_name = ?,
-                 middle_name = ?,
-                 nickname = ?,
-                 preferred_username = ?,
-                 profile = ?,
-                 picture = ?,
-                 website = ?,
-                 email = ?,
-                 email_verified = ?,
-                 gender = ?,
-                 birthdate = ?,
-                 zoneinfo = ?,
-                 locale = ?,
-                 phone_number = ?,
-                 phone_number_verified = ?,
-                 address = ?::jsonb,
-                 custom_properties = ?::jsonb,
-                 multi_factor_authentication = ?::jsonb,
-                 authentication_devices = ?::jsonb,
-                 verified_claims = ?::jsonb,
-                 status = ?,
-                 updated_at = now()
-                 WHERE id = ?;
-                 """;
+    String sqlTemplate = """
+        UPDATE idp_user
+        SET name = ?,
+        given_name = ?,
+        family_name = ?,
+        middle_name = ?,
+        nickname = ?,
+        preferred_username = ?,
+        profile = ?,
+        picture = ?,
+        website = ?,
+        email = ?,
+        email_verified = ?,
+        gender = ?,
+        birthdate = ?,
+        zoneinfo = ?,
+        locale = ?,
+        phone_number = ?,
+        phone_number_verified = ?,
+        address = ?::jsonb,
+        custom_properties = ?::jsonb,
+        multi_factor_authentication = ?::jsonb,
+        authentication_devices = ?::jsonb,
+        verified_claims = ?::jsonb,
+        status = ?,
+        updated_at = now()
+        WHERE id = ?;
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(user.name());
@@ -184,10 +182,9 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
   @Override
   public void delete(Tenant tenant, UserIdentifier userIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-            DELETE FROM idp_user WHERE idp_user.tenant_id = ? AND idp_user.id = ?;
-            """;
+    String sqlTemplate = """
+        DELETE FROM idp_user WHERE idp_user.tenant_id = ? AND idp_user.id = ?;
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());

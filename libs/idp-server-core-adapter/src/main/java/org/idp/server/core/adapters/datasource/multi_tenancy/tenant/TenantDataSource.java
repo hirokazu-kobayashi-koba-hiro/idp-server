@@ -29,8 +29,7 @@ public class TenantDataSource implements TenantRepository {
     Map<String, String> result = executor.selectOne(tenantIdentifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {
-      throw new TenantNotFoundException(
-          String.format("Tenant is not found (%s)", tenantIdentifier.value()));
+      throw new TenantNotFoundException(String.format("Tenant is not found (%s)", tenantIdentifier.value()));
     }
 
     return ModelConverter.convert(result);

@@ -15,8 +15,7 @@ public class WebAuthnRegistrationInteractorFactory implements AuthenticationInte
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
-    AuthenticationConfigurationQueryRepository configurationRepository =
-        container.resolve(AuthenticationConfigurationQueryRepository.class);
+    AuthenticationConfigurationQueryRepository configurationRepository = container.resolve(AuthenticationConfigurationQueryRepository.class);
     WebAuthnExecutors webAuthnExecutors = container.resolve(WebAuthnExecutors.class);
 
     return new WebAuthnRegistrationInteractor(configurationRepository, webAuthnExecutors);

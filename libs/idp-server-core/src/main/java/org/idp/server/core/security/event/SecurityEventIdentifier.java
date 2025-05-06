@@ -21,7 +21,8 @@ public class SecurityEventIdentifier {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     SecurityEventIdentifier that = (SecurityEventIdentifier) o;
     return Objects.equals(value, that.value);
   }

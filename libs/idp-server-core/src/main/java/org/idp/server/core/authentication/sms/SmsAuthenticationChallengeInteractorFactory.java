@@ -5,8 +5,7 @@ import org.idp.server.core.authentication.factory.AuthenticationDependencyContai
 import org.idp.server.core.authentication.factory.AuthenticationInteractorFactory;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 
-public class SmsAuthenticationChallengeInteractorFactory
-    implements AuthenticationInteractorFactory {
+public class SmsAuthenticationChallengeInteractorFactory implements AuthenticationInteractorFactory {
 
   @Override
   public AuthenticationInteractionType type() {
@@ -17,8 +16,7 @@ public class SmsAuthenticationChallengeInteractorFactory
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
     SmsAuthenticationExecutors executors = container.resolve(SmsAuthenticationExecutors.class);
-    AuthenticationConfigurationQueryRepository configurationQueryRepository =
-        container.resolve(AuthenticationConfigurationQueryRepository.class);
+    AuthenticationConfigurationQueryRepository configurationQueryRepository = container.resolve(AuthenticationConfigurationQueryRepository.class);
     return new SmsAuthenticationChallengeInteractor(executors, configurationQueryRepository);
   }
 }

@@ -12,25 +12,21 @@ public class JsonWebEncDecrypterFactory {
   String secret;
   DefaultJWEDecrypterFactory defaultJWEDecrypterFactory;
 
-  public JsonWebEncDecrypterFactory(
-      JsonWebEncryption jsonWebEncryption, String privateJwks, String secret) {
+  public JsonWebEncDecrypterFactory(JsonWebEncryption jsonWebEncryption, String privateJwks, String secret) {
     this.jsonWebEncryption = jsonWebEncryption;
     this.privateJwks = privateJwks;
     this.secret = secret;
     this.defaultJWEDecrypterFactory = new DefaultJWEDecrypterFactory();
   }
 
-  public JsonWebEncryptionDecrypter create()
-      throws JsonWebKeyInvalidException, JoseInvalidException {
+  public JsonWebEncryptionDecrypter create() throws JsonWebKeyInvalidException, JoseInvalidException {
     try {
 
       String keyId = jsonWebEncryption.keyId();
       JsonWebKeys publicKeys = JwkParser.parseKeys(privateJwks);
       JsonWebKey privateKey = publicKeys.findBy(keyId);
       EncryptedJWT encryptedJWT = jsonWebEncryption.value();
-      JWEDecrypter decrypter =
-          defaultJWEDecrypterFactory.createJWEDecrypter(
-              encryptedJWT.getHeader(), privateKey.toPrivateKey());
+      JWEDecrypter decrypter = defaultJWEDecrypterFactory.createJWEDecrypter(encryptedJWT.getHeader(), privateKey.toPrivateKey());
       return new JsonWebEncryptionDecrypter(decrypter);
     } catch (JOSEException e) {
       throw new JoseInvalidException(e.getMessage(), e);

@@ -14,12 +14,7 @@ public class TokenRevocationRequestContext implements BackchannelRequestContext 
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
 
-  public TokenRevocationRequestContext(
-      ClientSecretBasic clientSecretBasic,
-      ClientCert clientCert,
-      TokenRevocationRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public TokenRevocationRequestContext(ClientSecretBasic clientSecretBasic, ClientCert clientCert, TokenRevocationRequestParameters parameters, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     this.clientSecretBasic = clientSecretBasic;
     this.clientCert = clientCert;
     this.parameters = parameters;

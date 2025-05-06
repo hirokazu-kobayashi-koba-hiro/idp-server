@@ -12,16 +12,14 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
-  public <T> void insert(
-      Tenant tenant, AuthorizationIdentifier identifier, String type, T payload) {
+  public <T> void insert(Tenant tenant, AuthorizationIdentifier identifier, String type, T payload) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-            INSERT INTO authentication_interactions (authorization_id, tenant_id, interaction_type, payload)
-            VALUES (?, ?, ?, ?::jsonb)
-            ON CONFLICT (authorization_id, interaction_type) DO UPDATE SET payload = ?::jsonb, updated_at = now()
-            """;
+    String sqlTemplate = """
+        INSERT INTO authentication_interactions (authorization_id, tenant_id, interaction_type, payload)
+        VALUES (?, ?, ?, ?::jsonb)
+        ON CONFLICT (authorization_id, interaction_type) DO UPDATE SET payload = ?::jsonb, updated_at = now()
+        """;
 
     String json = jsonConverter.write(payload);
 
@@ -36,19 +34,17 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
   }
 
   @Override
-  public <T> void update(
-      Tenant tenant, AuthorizationIdentifier identifier, String type, T payload) {
+  public <T> void update(Tenant tenant, AuthorizationIdentifier identifier, String type, T payload) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                UPDATE authentication_interactions
-                SET payload = ?::jsonb,
-                updated_at = now()
-                WHERE authorization_id = ?
-                AND tenant_id = ?
-                AND interaction_type = ?
-                """;
+    String sqlTemplate = """
+        UPDATE authentication_interactions
+        SET payload = ?::jsonb,
+        updated_at = now()
+        WHERE authorization_id = ?
+        AND tenant_id = ?
+        AND interaction_type = ?
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(payload));

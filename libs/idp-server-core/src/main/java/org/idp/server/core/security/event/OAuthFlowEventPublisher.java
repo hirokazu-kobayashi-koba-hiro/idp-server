@@ -15,14 +15,8 @@ public class OAuthFlowEventPublisher {
     this.securityEventPublisher = securityEventPublisher;
   }
 
-  public void publish(
-      Tenant tenant,
-      AuthorizationRequest authorizationRequest,
-      User user,
-      DefaultSecurityEventType type,
-      RequestAttributes requestAttributes) {
-    OAuthFlowEventCreator eventCreator =
-        new OAuthFlowEventCreator(tenant, authorizationRequest, user, type, requestAttributes);
+  public void publish(Tenant tenant, AuthorizationRequest authorizationRequest, User user, DefaultSecurityEventType type, RequestAttributes requestAttributes) {
+    OAuthFlowEventCreator eventCreator = new OAuthFlowEventCreator(tenant, authorizationRequest, user, type, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }

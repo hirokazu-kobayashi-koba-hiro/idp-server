@@ -11,14 +11,13 @@ public class PostgresqlExecutor implements IdentityVerificationConfigSqlExecutor
   @Override
   public Map<String, String> selectOne(Tenant tenant, String type) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-            SELECT id, payload
-            FROM identity_verification_configurations
-            WHERE tenant_id = ?
-            AND type = ?
-            AND enabled = true
-            """;
+    String sqlTemplate = """
+        SELECT id, payload
+        FROM identity_verification_configurations
+        WHERE tenant_id = ?
+        AND type = ?
+        AND enabled = true
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());

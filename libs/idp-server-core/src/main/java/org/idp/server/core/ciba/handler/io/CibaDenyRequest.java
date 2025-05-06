@@ -7,9 +7,7 @@ public class CibaDenyRequest {
   Tenant tenant;
   BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier;
 
-  public CibaDenyRequest(
-      Tenant tenant,
-      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
+  public CibaDenyRequest(Tenant tenant, BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
     this.tenant = tenant;
     this.backchannelAuthenticationRequestIdentifier = backchannelAuthenticationRequestIdentifier;
   }

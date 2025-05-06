@@ -9,22 +9,9 @@ import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationRespo
 
 public interface TokenApi {
 
-  TokenRequestResponse request(
-      TenantIdentifier tenantId,
-      Map<String, String[]> params,
-      String authorizationHeader,
-      String clientCert,
-      RequestAttributes requestAttributes);
+  TokenRequestResponse request(TenantIdentifier tenantId, Map<String, String[]> params, String authorizationHeader, String clientCert, RequestAttributes requestAttributes);
 
-  TokenIntrospectionResponse inspect(
-      TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      RequestAttributes requestAttributes);
+  TokenIntrospectionResponse inspect(TenantIdentifier tenantIdentifier, Map<String, String[]> params, RequestAttributes requestAttributes);
 
-  TokenRevocationResponse revoke(
-      TenantIdentifier tenantId,
-      Map<String, String[]> request,
-      String authorizationHeader,
-      String clientCert,
-      RequestAttributes requestAttributes);
+  TokenRevocationResponse revoke(TenantIdentifier tenantId, Map<String, String[]> request, String authorizationHeader, String clientCert, RequestAttributes requestAttributes);
 }

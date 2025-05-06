@@ -18,23 +18,18 @@ public class IdentityVerificationExaminationResult {
     this.json = json;
   }
 
-  public static IdentityVerificationExaminationResult create(
-      IdentityVerificationRequest request, IdentityVerificationProcessConfiguration processConfig) {
+  public static IdentityVerificationExaminationResult create(IdentityVerificationRequest request, IdentityVerificationProcessConfiguration processConfig) {
 
     JsonSchemaDefinition jsonSchemaDefinition = processConfig.requestValidationSchemaAsDefinition();
-    Map<String, Object> mappingResult =
-        IdentityVerificationMapper.mapping(request.toMap(), jsonSchemaDefinition);
+    Map<String, Object> mappingResult = IdentityVerificationMapper.mapping(request.toMap(), jsonSchemaDefinition);
 
     return new IdentityVerificationExaminationResult(JsonNodeWrapper.fromObject(mappingResult));
   }
 
-  public IdentityVerificationExaminationResult merge(
-      IdentityVerificationRequest request, IdentityVerificationProcessConfiguration processConfig) {
+  public IdentityVerificationExaminationResult merge(IdentityVerificationRequest request, IdentityVerificationProcessConfiguration processConfig) {
     JsonSchemaDefinition jsonSchemaDefinition = processConfig.requestValidationSchemaAsDefinition();
-    Map<String, Object> mappingResult =
-        IdentityVerificationMapper.mapping(request.toMap(), jsonSchemaDefinition);
-    Map<String, Object> mergedResult = new HashMap<>(json.toMap());
-    ;
+    Map<String, Object> mappingResult = IdentityVerificationMapper.mapping(request.toMap(), jsonSchemaDefinition);
+    Map<String, Object> mergedResult = new HashMap<>(json.toMap());;
     mergedResult.putAll(mappingResult);
 
     return new IdentityVerificationExaminationResult(JsonNodeWrapper.fromObject(mergedResult));

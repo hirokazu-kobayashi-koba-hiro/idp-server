@@ -3,9 +3,7 @@ package org.idp.server.basic.datasource;
 import org.idp.server.basic.exception.UnSupportedException;
 
 public enum DatabaseType {
-  POSTGRESQL,
-  SPANNER,
-  MYSQL;
+  POSTGRESQL, SPANNER, MYSQL;
 
   public static DatabaseType of(String databaseType) {
 

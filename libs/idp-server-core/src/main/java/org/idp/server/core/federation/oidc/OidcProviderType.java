@@ -17,7 +17,8 @@ public class OidcProviderType {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     OidcProviderType federationType = (OidcProviderType) o;
     return Objects.equals(name, federationType.name);
   }

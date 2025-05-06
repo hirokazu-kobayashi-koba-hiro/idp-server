@@ -34,16 +34,12 @@ public class ConsentClaims implements JsonReadable {
       List<ConsentClaim> existingList = merged.getOrDefault(key, new ArrayList<>());
 
       for (ConsentClaim incoming : incomingList) {
-        Optional<ConsentClaim> match =
-            existingList.stream().filter(existing -> existing.equals(incoming)).findFirst();
+        Optional<ConsentClaim> match = existingList.stream().filter(existing -> existing.equals(incoming)).findFirst();
 
         if (match.isPresent()) {
           ConsentClaim existing = match.get();
           // consentedAt is old
-          LocalDateTime oldestTime =
-              existing.consentedAt().isBefore(incoming.consentedAt())
-                  ? existing.consentedAt()
-                  : incoming.consentedAt();
+          LocalDateTime oldestTime = existing.consentedAt().isBefore(incoming.consentedAt()) ? existing.consentedAt() : incoming.consentedAt();
           existingList.remove(existing);
           existingList.add(new ConsentClaim(incoming.name(), incoming.value(), oldestTime));
         } else {
@@ -59,16 +55,15 @@ public class ConsentClaims implements JsonReadable {
 
   public boolean isAllConsented(ConsentClaims requested) {
 
-    return requested.toEntry().stream()
-        .allMatch(
-            entry -> {
-              String key = entry.getKey();
-              List<ConsentClaim> requestedClaims = entry.getValue();
-              List<ConsentClaim> existingClaims = claims.get(key);
-              if (existingClaims == null) return false;
+    return requested.toEntry().stream().allMatch(entry -> {
+      String key = entry.getKey();
+      List<ConsentClaim> requestedClaims = entry.getValue();
+      List<ConsentClaim> existingClaims = claims.get(key);
+      if (existingClaims == null)
+        return false;
 
-              return requestedClaims.stream().allMatch(existingClaims::contains);
-            });
+      return requestedClaims.stream().allMatch(existingClaims::contains);
+    });
   }
 
   public Set<Map.Entry<String, List<ConsentClaim>>> toEntry() {

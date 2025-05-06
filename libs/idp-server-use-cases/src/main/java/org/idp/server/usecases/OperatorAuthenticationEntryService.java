@@ -24,21 +24,16 @@ public class OperatorAuthenticationEntryService implements OperatorAuthenticatio
   TenantRepository tenantRepository;
   UserQueryRepository userQueryRepository;
 
-  public OperatorAuthenticationEntryService(
-      TokenProtocols tokenProtocols,
-      TenantRepository tenantRepository,
-      UserQueryRepository userQueryRepository) {
+  public OperatorAuthenticationEntryService(TokenProtocols tokenProtocols, TenantRepository tenantRepository, UserQueryRepository userQueryRepository) {
     this.tokenProtocols = tokenProtocols;
     this.tenantRepository = tenantRepository;
     this.userQueryRepository = userQueryRepository;
   }
 
-  public Pairs<User, OAuthToken> authenticate(
-      TenantIdentifier tenantIdentifier, String authorizationHeader) {
+  public Pairs<User, OAuthToken> authenticate(TenantIdentifier tenantIdentifier, String authorizationHeader) {
     Tenant adminTenant = tenantRepository.get(tenantIdentifier);
 
-    TokenIntrospectionCreator tokenIntrospectionCreator =
-        new TokenIntrospectionCreator(adminTenant, authorizationHeader);
+    TokenIntrospectionCreator tokenIntrospectionCreator = new TokenIntrospectionCreator(adminTenant, authorizationHeader);
     TokenIntrospectionRequest tokenIntrospectionRequest = tokenIntrospectionCreator.create();
 
     if (!tokenIntrospectionRequest.hasToken()) {
@@ -47,8 +42,7 @@ public class OperatorAuthenticationEntryService implements OperatorAuthenticatio
 
     TokenProtocol tokenProtocol = tokenProtocols.get(adminTenant.authorizationProtocolProvider());
 
-    TokenIntrospectionResponse introspectionResponse =
-        tokenProtocol.inspect(tokenIntrospectionRequest);
+    TokenIntrospectionResponse introspectionResponse = tokenProtocol.inspect(tokenIntrospectionRequest);
 
     if (!introspectionResponse.isActive()) {
       throw new UnauthorizedException("error=invalid_token error_description=token is undefined");

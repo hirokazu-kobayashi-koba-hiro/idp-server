@@ -15,8 +15,7 @@ public class SharedSecurityEvent {
     this.subject = subject;
   }
 
-  public SharedSecurityEvent(
-      SecurityEventType type, SecurityEventSubject subject, SecurityEventPayload payload) {
+  public SharedSecurityEvent(SecurityEventType type, SecurityEventSubject subject, SecurityEventPayload payload) {
     this.type = type;
     this.subject = subject;
     this.payload = payload;

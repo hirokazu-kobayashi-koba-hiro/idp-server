@@ -1,9 +1,7 @@
 package org.idp.server.core.verifiable_credential;
 
 public enum VerifiableCredentialTransactionStatus {
-  pending,
-  issued,
-  expired;
+  pending, issued, expired;
 
   public boolean isPending() {
     return this == pending;

@@ -13,15 +13,10 @@ public class OAuthAuthorizationDetailsVerifier implements AuthorizationRequestEx
   @Override
   public void verify(OAuthRequestContext context) {
     try {
-      AuthorizationDetailsVerifier authorizationDetailsVerifier =
-          new AuthorizationDetailsVerifier(
-              context.authorizationRequest().authorizationDetails(),
-              context.serverConfiguration(),
-              context.clientConfiguration());
+      AuthorizationDetailsVerifier authorizationDetailsVerifier = new AuthorizationDetailsVerifier(context.authorizationRequest().authorizationDetails(), context.serverConfiguration(), context.clientConfiguration());
       authorizationDetailsVerifier.verify();
     } catch (AuthorizationDetailsInvalidException exception) {
-      throw new OAuthRedirectableBadRequestException(
-          exception.error(), exception.errorDescription(), context);
+      throw new OAuthRedirectableBadRequestException(exception.error(), exception.errorDescription(), context);
     }
   }
 }

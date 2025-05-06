@@ -15,8 +15,7 @@ public class PasswordAuthenticationInteractorFactory implements AuthenticationIn
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
-    PasswordVerificationDelegation passwordVerificationDelegation =
-        container.resolve(PasswordVerificationDelegation.class);
+    PasswordVerificationDelegation passwordVerificationDelegation = container.resolve(PasswordVerificationDelegation.class);
     return new PasswordAuthenticationInteractor(passwordVerificationDelegation);
   }
 }

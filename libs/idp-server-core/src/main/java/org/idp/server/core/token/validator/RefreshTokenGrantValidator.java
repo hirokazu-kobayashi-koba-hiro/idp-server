@@ -21,24 +21,19 @@ public class RefreshTokenGrantValidator {
 
   void throwExceptionIfUnSupportedGrantTypeWithClient() {
     if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.refresh_token)) {
-      throw new TokenBadRequestException(
-          "unauthorized_client",
-          "this request grant_type is refresh_token, but client does not support");
+      throw new TokenBadRequestException("unauthorized_client", "this request grant_type is refresh_token, but client does not support");
     }
   }
 
   void throwExceptionIfUnSupportedGrantTypeWithServer() {
     if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.refresh_token)) {
-      throw new TokenBadRequestException(
-          "unsupported_grant_type",
-          "this request grant_type is refresh_token, but authorization server does not support");
+      throw new TokenBadRequestException("unsupported_grant_type", "this request grant_type is refresh_token, but authorization server does not support");
     }
   }
 
   void throwExceptionIfNotContainsRefreshToken() {
     if (!tokenRequestContext.hasRefreshToken()) {
-      throw new TokenBadRequestException(
-          "token request does not contains refresh_token, refresh_token grant must contains refresh_token");
+      throw new TokenBadRequestException("token request does not contains refresh_token, refresh_token grant must contains refresh_token");
     }
   }
 
@@ -47,8 +42,7 @@ public class RefreshTokenGrantValidator {
       return;
     }
     if (!tokenRequestContext.hasClientId()) {
-      throw new TokenBadRequestException(
-          "token request does not contains client_id, password must contains client_id");
+      throw new TokenBadRequestException("token request does not contains client_id, password must contains client_id");
     }
   }
 }

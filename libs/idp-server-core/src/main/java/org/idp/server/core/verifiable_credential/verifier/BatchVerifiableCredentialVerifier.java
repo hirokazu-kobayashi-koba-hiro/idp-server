@@ -16,11 +16,7 @@ public class BatchVerifiableCredentialVerifier implements VerifiableCredentialRe
   BatchCredentialRequestParameters parameters;
   ServerConfiguration serverConfiguration;
 
-  public BatchVerifiableCredentialVerifier(
-      OAuthToken oAuthToken,
-      ClientCert clientCert,
-      BatchCredentialRequestParameters parameters,
-      ServerConfiguration serverConfiguration) {
+  public BatchVerifiableCredentialVerifier(OAuthToken oAuthToken, ClientCert clientCert, BatchCredentialRequestParameters parameters, ServerConfiguration serverConfiguration) {
     this.oAuthToken = oAuthToken;
     this.clientCert = clientCert;
     this.parameters = parameters;
@@ -29,22 +25,18 @@ public class BatchVerifiableCredentialVerifier implements VerifiableCredentialRe
 
   public void verify() {
     throwExceptionIfUnSupportedVerifiableCredential();
-    VerifiableCredentialOAuthTokenVerifier oAuthTokenVerifier =
-        new VerifiableCredentialOAuthTokenVerifier(oAuthToken, clientCert, serverConfiguration);
+    VerifiableCredentialOAuthTokenVerifier oAuthTokenVerifier = new VerifiableCredentialOAuthTokenVerifier(oAuthToken, clientCert, serverConfiguration);
     oAuthTokenVerifier.verify();
     BatchCredentialRequests verifiableCredentialRequests = transformAndVerify();
-    verifiableCredentialRequests.forEach(
-        request -> {
-          VerifiableCredentialRequestVerifier requestVerifier =
-              new VerifiableCredentialRequestVerifier(request, serverConfiguration);
-          requestVerifier.verify();
-        });
+    verifiableCredentialRequests.forEach(request -> {
+      VerifiableCredentialRequestVerifier requestVerifier = new VerifiableCredentialRequestVerifier(request, serverConfiguration);
+      requestVerifier.verify();
+    });
   }
 
   void throwExceptionIfUnSupportedVerifiableCredential() {
     if (!serverConfiguration.hasCredentialIssuerMetadata()) {
-      throw new VerifiableCredentialBadRequestException(
-          "invalid_request", "unsupported verifiable credential");
+      throw new VerifiableCredentialBadRequestException("invalid_request", "unsupported verifiable credential");
     }
   }
 

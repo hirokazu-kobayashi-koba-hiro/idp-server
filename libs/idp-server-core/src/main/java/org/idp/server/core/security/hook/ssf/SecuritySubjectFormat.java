@@ -1,6 +1,5 @@
 package org.idp.server.core.security.hook.ssf;
 
 public enum SecuritySubjectFormat {
-  iss_sub,
-  email;
+  iss_sub, email;
 }

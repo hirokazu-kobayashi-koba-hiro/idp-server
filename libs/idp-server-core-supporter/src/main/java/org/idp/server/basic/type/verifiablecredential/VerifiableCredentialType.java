@@ -3,8 +3,7 @@ package org.idp.server.basic.type.verifiablecredential;
 import java.util.List;
 
 public enum VerifiableCredentialType {
-  vc(List.of("VerifiableCredential")),
-  vp(List.of("VerifiablePresentation"));
+  vc(List.of("VerifiableCredential")), vp(List.of("VerifiablePresentation"));
 
   List<String> types;
 

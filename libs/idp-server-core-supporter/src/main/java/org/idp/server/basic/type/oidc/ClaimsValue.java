@@ -6,7 +6,7 @@ import java.util.Objects;
  * Claims
  *
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">3.1.2.1.
- *     Authentication Request</a>
+ *      Authentication Request</a>
  */
 public class ClaimsValue {
   String value;
@@ -27,8 +27,10 @@ public class ClaimsValue {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
     ClaimsValue that = (ClaimsValue) o;
     return Objects.equals(value, that.value);
   }

@@ -5,12 +5,10 @@ import org.idp.server.basic.type.extension.Pairs;
 /** JwsContextCreator */
 public class JwsContextCreator implements JoseContextCreator {
   @Override
-  public JoseContext create(String jose, String publicJwks, String privateJwks, String secret)
-      throws JoseInvalidException {
+  public JoseContext create(String jose, String publicJwks, String privateJwks, String secret) throws JoseInvalidException {
     try {
       JsonWebSignature jsonWebSignature = JsonWebSignature.parse(jose);
-      JsonWebSignatureVerifierFactory factory =
-          new JsonWebSignatureVerifierFactory(jsonWebSignature, publicJwks, secret);
+      JsonWebSignatureVerifierFactory factory = new JsonWebSignatureVerifierFactory(jsonWebSignature, publicJwks, secret);
       Pairs<JsonWebSignatureVerifier, JsonWebKey> pairs = factory.create();
       JsonWebTokenClaims claims = jsonWebSignature.claims();
       return new JoseContext(jsonWebSignature, claims, pairs.getLeft(), pairs.getRight());

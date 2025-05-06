@@ -6,7 +6,8 @@ import java.util.stream.Collectors;
 /**
  * prompt OPTIONAL. Space delimited,
  *
- * <p>case sensitive list of ASCII string values that specifies whether the Authorization Server
+ * <p>
+ * case sensitive list of ASCII string values that specifies whether the Authorization Server
  * prompts the End-User for reauthentication and consent.
  */
 public class Prompts implements Iterable<Prompt> {

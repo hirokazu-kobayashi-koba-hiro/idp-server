@@ -20,10 +20,7 @@ public class OAuthDenyHandler {
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
-  public OAuthDenyHandler(
-      AuthorizationRequestRepository authorizationRequestRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+  public OAuthDenyHandler(AuthorizationRequestRepository authorizationRequestRepository, ServerConfigurationRepository serverConfigurationRepository, ClientConfigurationRepository clientConfigurationRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
@@ -33,15 +30,11 @@ public class OAuthDenyHandler {
     Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
 
-    AuthorizationRequest authorizationRequest =
-        authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest = authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
     RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, requestedClientId);
-    AuthorizationDenyErrorResponseCreator authorizationDenyErrorResponseCreator =
-        new AuthorizationDenyErrorResponseCreator(
-            authorizationRequest, request.denyReason(), serverConfiguration, clientConfiguration);
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, requestedClientId);
+    AuthorizationDenyErrorResponseCreator authorizationDenyErrorResponseCreator = new AuthorizationDenyErrorResponseCreator(authorizationRequest, request.denyReason(), serverConfiguration, clientConfiguration);
 
     AuthorizationErrorResponse errorResponse = authorizationDenyErrorResponseCreator.create();
 

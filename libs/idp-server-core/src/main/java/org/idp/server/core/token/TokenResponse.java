@@ -18,17 +18,7 @@ public class TokenResponse {
   CNonceExpiresIn cNonceExpiresIn;
   String contents;
 
-  TokenResponse(
-      AccessTokenEntity accessTokenEntity,
-      TokenType tokenType,
-      ExpiresIn expiresIn,
-      RefreshTokenEntity refreshTokenEntity,
-      Scopes scopes,
-      IdToken idToken,
-      AuthorizationDetails authorizationDetails,
-      CNonce cNonce,
-      CNonceExpiresIn cNonceExpiresIn,
-      String contents) {
+  TokenResponse(AccessTokenEntity accessTokenEntity, TokenType tokenType, ExpiresIn expiresIn, RefreshTokenEntity refreshTokenEntity, Scopes scopes, IdToken idToken, AuthorizationDetails authorizationDetails, CNonce cNonce, CNonceExpiresIn cNonceExpiresIn, String contents) {
     this.accessTokenEntity = accessTokenEntity;
     this.tokenType = tokenType;
     this.expiresIn = expiresIn;

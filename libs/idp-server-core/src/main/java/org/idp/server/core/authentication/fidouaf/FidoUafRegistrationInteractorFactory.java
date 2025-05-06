@@ -16,8 +16,7 @@ public class FidoUafRegistrationInteractorFactory implements AuthenticationInter
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
     FidoUafExecutors fidoUafExecutors = container.resolve(FidoUafExecutors.class);
-    AuthenticationConfigurationQueryRepository configurationQueryRepository =
-        container.resolve(AuthenticationConfigurationQueryRepository.class);
+    AuthenticationConfigurationQueryRepository configurationQueryRepository = container.resolve(AuthenticationConfigurationQueryRepository.class);
     return new FidoUafRegistrationInteractor(fidoUafExecutors, configurationQueryRepository);
   }
 }

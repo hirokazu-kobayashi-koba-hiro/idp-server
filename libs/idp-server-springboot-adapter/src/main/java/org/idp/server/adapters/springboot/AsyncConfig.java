@@ -19,9 +19,7 @@ public class AsyncConfig {
   SecurityEventRetryScheduler securityEventRetryScheduler;
   UserLifecycleEventRetryScheduler userLifecycleEventRetryScheduler;
 
-  public AsyncConfig(
-      SecurityEventRetryScheduler securityEventRetryScheduler,
-      UserLifecycleEventRetryScheduler userLifecycleEventRetryScheduler) {
+  public AsyncConfig(SecurityEventRetryScheduler securityEventRetryScheduler, UserLifecycleEventRetryScheduler userLifecycleEventRetryScheduler) {
     this.securityEventRetryScheduler = securityEventRetryScheduler;
     this.userLifecycleEventRetryScheduler = userLifecycleEventRetryScheduler;
   }
@@ -34,18 +32,17 @@ public class AsyncConfig {
     executor.setQueueCapacity(50);
     executor.setThreadNamePrefix("SecurityEvent-Async-");
 
-    executor.setRejectedExecutionHandler(
-        (r, executor1) -> {
-          logger.warn("Rejected Execution Handler");
+    executor.setRejectedExecutionHandler((r, executor1) -> {
+      logger.warn("Rejected Execution Handler");
 
-          if (r instanceof SecurityEventRunnable) {
-            SecurityEvent securityEvent = ((SecurityEventRunnable) r).getEvent();
-            securityEventRetryScheduler.enqueue(securityEvent);
-          } else {
+      if (r instanceof SecurityEventRunnable) {
+        SecurityEvent securityEvent = ((SecurityEventRunnable) r).getEvent();
+        securityEventRetryScheduler.enqueue(securityEvent);
+      } else {
 
-            logger.error("unknown EventRunnable" + r.getClass().getName());
-          }
-        });
+        logger.error("unknown EventRunnable" + r.getClass().getName());
+      }
+    });
 
     executor.initialize();
     return executor;
@@ -59,18 +56,17 @@ public class AsyncConfig {
     executor.setQueueCapacity(50);
     executor.setThreadNamePrefix("UserLifecycleEvent-Async-");
 
-    executor.setRejectedExecutionHandler(
-        (r, executor1) -> {
-          logger.warn("Rejected Execution Handler");
+    executor.setRejectedExecutionHandler((r, executor1) -> {
+      logger.warn("Rejected Execution Handler");
 
-          if (r instanceof UserLifecycleEventRunnable) {
-            UserLifecycleEvent userLifecycleEvent = ((UserLifecycleEventRunnable) r).getEvent();
-            userLifecycleEventRetryScheduler.enqueue(userLifecycleEvent);
-          } else {
+      if (r instanceof UserLifecycleEventRunnable) {
+        UserLifecycleEvent userLifecycleEvent = ((UserLifecycleEventRunnable) r).getEvent();
+        userLifecycleEventRetryScheduler.enqueue(userLifecycleEvent);
+      } else {
 
-            logger.error("unknown EventRunnable" + r.getClass().getName());
-          }
-        });
+        logger.error("unknown EventRunnable" + r.getClass().getName());
+      }
+    });
 
     executor.initialize();
     return executor;

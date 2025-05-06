@@ -65,10 +65,10 @@ public class UserResponse {
   @JsonProperty("password")
   String password;
 
-  //    @JsonProperty("")
-  //    Map<String, Object> customProperties;
-  //    @JsonProperty("")
-  //    List<Map<String, Object>> credentials;
+  // @JsonProperty("")
+  // Map<String, Object> customProperties;
+  // @JsonProperty("")
+  // List<Map<String, Object>> credentials;
 
   public UserResponse(User user) {
     this.sub = user.sub();

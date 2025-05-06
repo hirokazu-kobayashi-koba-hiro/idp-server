@@ -12,17 +12,14 @@ public class IdentityVerificationResponse {
   }
 
   public static IdentityVerificationResponse CLIENT_ERROR(Map<String, Object> response) {
-    return new IdentityVerificationResponse(
-        IdentityVerificationApplicationStatus.CLIENT_ERROR, response);
+    return new IdentityVerificationResponse(IdentityVerificationApplicationStatus.CLIENT_ERROR, response);
   }
 
   public static IdentityVerificationResponse SERVER_ERROR(Map<String, Object> response) {
-    return new IdentityVerificationResponse(
-        IdentityVerificationApplicationStatus.SERVER_ERROR, response);
+    return new IdentityVerificationResponse(IdentityVerificationApplicationStatus.SERVER_ERROR, response);
   }
 
-  private IdentityVerificationResponse(
-      IdentityVerificationApplicationStatus status, Map<String, Object> response) {
+  private IdentityVerificationResponse(IdentityVerificationApplicationStatus status, Map<String, Object> response) {
     this.status = status;
     this.response = response;
   }

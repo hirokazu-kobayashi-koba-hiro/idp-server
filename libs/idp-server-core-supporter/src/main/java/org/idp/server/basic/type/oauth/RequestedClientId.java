@@ -5,12 +5,14 @@ import java.util.Objects;
 /**
  * ClientIdentifier
  *
- * <p>The authorization server issues the registered client a client identifier -- a unique string
+ * <p>
+ * The authorization server issues the registered client a client identifier -- a unique string
  * representing the registration information provided by the client. The client identifier is not a
  * secret; it is exposed to the resource owner and MUST NOT be used alone for client authentication.
  * The client identifier is unique to the authorization server.
  *
- * <p>The client identifier string size is left undefined by this specification. The client should
+ * <p>
+ * The client identifier string size is left undefined by this specification. The client should
  * avoid making assumptions about the identifier size. The authorization server SHOULD document the
  * size of any identifier it issues.
  *
@@ -35,8 +37,10 @@ public class RequestedClientId {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
     RequestedClientId requestedClientId = (RequestedClientId) o;
     return Objects.equals(value, requestedClientId.value);
   }

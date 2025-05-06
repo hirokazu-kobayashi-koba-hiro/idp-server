@@ -20,12 +20,11 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
   public void insert(Tenant tenant, AuthenticationTransaction authenticationTransaction) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-            INSERT INTO authentication_transaction (authorization_id, tenant_id, authorization_flow, client_id, user_id, user_payload, authentication_device_id, available_authentication_types, required_any_of_authentication_types, last_interaction_type, interactions, created_at, expired_at)
-            VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?)
-            ON CONFLICT DO NOTHING;
-            """;
+    String sqlTemplate = """
+        INSERT INTO authentication_transaction (authorization_id, tenant_id, authorization_flow, client_id, user_id, user_payload, authentication_device_id, available_authentication_types, required_any_of_authentication_types, last_interaction_type, interactions, created_at, expired_at)
+        VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?)
+        ON CONFLICT DO NOTHING;
+        """;
 
     User user = authenticationTransaction.user();
     List<Object> params = new ArrayList<>();
@@ -41,14 +40,10 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
     } else {
       params.add(null);
     }
-    params.add(
-        jsonConverter.write(authenticationTransaction.request().availableAuthenticationTypes()));
-    params.add(
-        jsonConverter.write(
-            authenticationTransaction.request().requiredAnyOfAuthenticationTypes()));
+    params.add(jsonConverter.write(authenticationTransaction.request().availableAuthenticationTypes()));
+    params.add(jsonConverter.write(authenticationTransaction.request().requiredAnyOfAuthenticationTypes()));
     if (authenticationTransaction.hasInteractions()) {
-      AuthenticationInteractionType lastInteractionType =
-          authenticationTransaction.lastInteractionType();
+      AuthenticationInteractionType lastInteractionType = authenticationTransaction.lastInteractionType();
       params.add(lastInteractionType.name());
       params.add(jsonConverter.write(authenticationTransaction.interactionResultsAsSet()));
     } else {
@@ -66,17 +61,16 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
   public void update(Tenant tenant, AuthenticationTransaction authenticationTransaction) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                UPDATE authentication_transaction
-                SET user_id = ?,
-                user_payload = ?::jsonb,
-                authentication_device_id = ?,
-                last_interaction_type = ?,
-                interactions = ?::jsonb
-                WHERE authorization_id = ?
-                AND tenant_id = ?
-                """;
+    String sqlTemplate = """
+        UPDATE authentication_transaction
+        SET user_id = ?,
+        user_payload = ?::jsonb,
+        authentication_device_id = ?,
+        last_interaction_type = ?,
+        interactions = ?::jsonb
+        WHERE authorization_id = ?
+        AND tenant_id = ?
+        """;
 
     User user = authenticationTransaction.user();
     List<Object> params = new ArrayList<>();

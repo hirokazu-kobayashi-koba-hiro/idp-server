@@ -59,8 +59,7 @@ public class ServerConfiguration implements JsonReadable {
   List<String> backchannelAuthenticationRequestSigningAlgValuesSupported = new ArrayList<>();
   Boolean backchannelUserCodeParameterSupported;
   List<String> authorizationDetailsTypesSupported = new ArrayList<>();
-  VerifiableCredentialConfiguration credentialIssuerMetadata =
-      new VerifiableCredentialConfiguration();
+  VerifiableCredentialConfiguration credentialIssuerMetadata = new VerifiableCredentialConfiguration();
   // extension
   List<String> fapiBaselineScopes = new ArrayList<>();
   List<String> fapiAdvanceScopes = new ArrayList<>();
@@ -471,8 +470,7 @@ public class ServerConfiguration implements JsonReadable {
   }
 
   public boolean hasBackchannelAuthenticationEndpoint() {
-    return Objects.nonNull(backchannelAuthenticationEndpoint)
-        && !backchannelAuthenticationEndpoint.isEmpty();
+    return Objects.nonNull(backchannelAuthenticationEndpoint) && !backchannelAuthenticationEndpoint.isEmpty();
   }
 
   public List<String> backchannelAuthenticationRequestSigningAlgValuesSupported() {

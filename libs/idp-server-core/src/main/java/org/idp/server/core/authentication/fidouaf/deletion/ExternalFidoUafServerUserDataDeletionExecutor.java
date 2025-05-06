@@ -18,9 +18,7 @@ public class ExternalFidoUafServerUserDataDeletionExecutor implements UserLifecy
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(ExternalFidoUafServerUserDataDeletionExecutor.class);
 
-  public ExternalFidoUafServerUserDataDeletionExecutor(
-      FidoUafExecutors fidoUafExecutors,
-      AuthenticationConfigurationQueryRepository configurationQueryRepository) {
+  public ExternalFidoUafServerUserDataDeletionExecutor(FidoUafExecutors fidoUafExecutors, AuthenticationConfigurationQueryRepository configurationQueryRepository) {
     this.fidoUafExecutors = fidoUafExecutors;
     this.configurationQueryRepository = configurationQueryRepository;
   }
@@ -48,16 +46,14 @@ public class ExternalFidoUafServerUserDataDeletionExecutor implements UserLifecy
   public UserLifecycleEventResult execute(UserLifecycleEvent userLifecycleEvent) {
     try {
       Tenant tenant = userLifecycleEvent.tenant();
-      FidoUafConfiguration fidoUafConfiguration =
-          configurationQueryRepository.get(tenant, "fido-uaf", FidoUafConfiguration.class);
+      FidoUafConfiguration fidoUafConfiguration = configurationQueryRepository.get(tenant, "fido-uaf", FidoUafConfiguration.class);
 
       FidoUafExecutor fidoUafExecutor = fidoUafExecutors.get(fidoUafConfiguration.type());
 
       Map<String, Object> request = new HashMap<>();
       // TODO dynamic mapping request
       FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(request);
-      FidoUafExecutionResult executionResult =
-          fidoUafExecutor.deleteKey(tenant, fidoUafExecutionRequest, fidoUafConfiguration);
+      FidoUafExecutionResult executionResult = fidoUafExecutor.deleteKey(tenant, fidoUafExecutionRequest, fidoUafConfiguration);
 
       if (!executionResult.isSuccess()) {
         Map<String, Object> data = new HashMap<>();

@@ -18,25 +18,13 @@ public class DefaultOAuthProtocolProvider implements ProtocolProvider<OAuthProto
 
   @Override
   public OAuthProtocol provide(ApplicationComponentContainer container) {
-    AuthorizationRequestRepository authorizationRequestRepository =
-        container.resolve(AuthorizationRequestRepository.class);
-    ServerConfigurationRepository serverConfigurationRepository =
-        container.resolve(ServerConfigurationRepository.class);
-    ClientConfigurationRepository clientConfigurationRepository =
-        container.resolve(ClientConfigurationRepository.class);
-    AuthorizationGrantedRepository authorizationGrantedRepository =
-        container.resolve(AuthorizationGrantedRepository.class);
-    AuthorizationCodeGrantRepository authorizationCodeGrantRepository =
-        container.resolve(AuthorizationCodeGrantRepository.class);
+    AuthorizationRequestRepository authorizationRequestRepository = container.resolve(AuthorizationRequestRepository.class);
+    ServerConfigurationRepository serverConfigurationRepository = container.resolve(ServerConfigurationRepository.class);
+    ClientConfigurationRepository clientConfigurationRepository = container.resolve(ClientConfigurationRepository.class);
+    AuthorizationGrantedRepository authorizationGrantedRepository = container.resolve(AuthorizationGrantedRepository.class);
+    AuthorizationCodeGrantRepository authorizationCodeGrantRepository = container.resolve(AuthorizationCodeGrantRepository.class);
     OAuthTokenRepository oAuthTokenRepository = container.resolve(OAuthTokenRepository.class);
     OAuthSessionDelegate oAuthSessionDelegate = container.resolve(OAuthSessionDelegate.class);
-    return new DefaultOAuthProtocol(
-        authorizationRequestRepository,
-        serverConfigurationRepository,
-        clientConfigurationRepository,
-        authorizationGrantedRepository,
-        authorizationCodeGrantRepository,
-        oAuthTokenRepository,
-        oAuthSessionDelegate);
+    return new DefaultOAuthProtocol(authorizationRequestRepository, serverConfigurationRepository, clientConfigurationRepository, authorizationGrantedRepository, authorizationCodeGrantRepository, oAuthTokenRepository, oAuthSessionDelegate);
   }
 }

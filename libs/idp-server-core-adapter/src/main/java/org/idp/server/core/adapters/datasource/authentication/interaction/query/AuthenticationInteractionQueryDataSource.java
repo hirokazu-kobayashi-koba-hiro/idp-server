@@ -8,8 +8,7 @@ import org.idp.server.core.authentication.exception.MfaTransactionNotFoundExcept
 import org.idp.server.core.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class AuthenticationInteractionQueryDataSource
-    implements AuthenticationInteractionQueryRepository {
+public class AuthenticationInteractionQueryDataSource implements AuthenticationInteractionQueryRepository {
 
   AuthenticationInteractionQuerySqlExecutors executors;
   JsonConverter jsonConverter;
@@ -26,8 +25,7 @@ public class AuthenticationInteractionQueryDataSource
     Map<String, String> result = executor.selectOne(tenant, identifier, type);
 
     if (Objects.isNull(result) || result.isEmpty()) {
-      throw new MfaTransactionNotFoundException(
-          String.format("Mfa transaction is Not Found (%s) (%s)", identifier.value(), type));
+      throw new MfaTransactionNotFoundException(String.format("Mfa transaction is Not Found (%s) (%s)", identifier.value(), type));
     }
 
     return jsonConverter.read(result.get("payload"), clazz);

@@ -14,24 +14,17 @@ public class AuthorizationCodeGrantVerifier {
   AuthorizationCodeGrant authorizationCodeGrant;
   ClientCredentials clientCredentials;
   PkceVerifier pkceVerifier;
-  static Map<AuthorizationProfile, AuthorizationCodeGrantVerifierInterface> baseVerifiers =
-      new HashMap<>();
+  static Map<AuthorizationProfile, AuthorizationCodeGrantVerifierInterface> baseVerifiers = new HashMap<>();
 
   static {
     baseVerifiers.put(AuthorizationProfile.OAUTH2, new AuthorizationCodeGrantBaseVerifier());
     baseVerifiers.put(AuthorizationProfile.OIDC, new AuthorizationCodeGrantBaseVerifier());
-    baseVerifiers.put(
-        AuthorizationProfile.FAPI_BASELINE, new AuthorizationCodeGrantFapiBaselineVerifier());
-    baseVerifiers.put(
-        AuthorizationProfile.FAPI_ADVANCE, new AuthorizationCodeGrantFapiAdvanceVerifier());
+    baseVerifiers.put(AuthorizationProfile.FAPI_BASELINE, new AuthorizationCodeGrantFapiBaselineVerifier());
+    baseVerifiers.put(AuthorizationProfile.FAPI_ADVANCE, new AuthorizationCodeGrantFapiAdvanceVerifier());
     baseVerifiers.put(AuthorizationProfile.UNDEFINED, new AuthorizationCodeGrantBaseVerifier());
   }
 
-  public AuthorizationCodeGrantVerifier(
-      TokenRequestContext tokenRequestContext,
-      AuthorizationRequest authorizationRequest,
-      AuthorizationCodeGrant authorizationCodeGrant,
-      ClientCredentials clientCredentials) {
+  public AuthorizationCodeGrantVerifier(TokenRequestContext tokenRequestContext, AuthorizationRequest authorizationRequest, AuthorizationCodeGrant authorizationCodeGrant, ClientCredentials clientCredentials) {
     this.tokenRequestContext = tokenRequestContext;
     this.authorizationRequest = authorizationRequest;
     this.authorizationCodeGrant = authorizationCodeGrant;
@@ -40,15 +33,11 @@ public class AuthorizationCodeGrantVerifier {
   }
 
   public void verify() {
-    AuthorizationCodeGrantVerifierInterface baseVerifier =
-        baseVerifiers.get(authorizationRequest.profile());
+    AuthorizationCodeGrantVerifierInterface baseVerifier = baseVerifiers.get(authorizationRequest.profile());
     if (Objects.isNull(baseVerifier)) {
-      throw new UnSupportedException(
-          String.format(
-              "idp server does not supported profile (%s)", authorizationRequest.profile().name()));
+      throw new UnSupportedException(String.format("idp server does not supported profile (%s)", authorizationRequest.profile().name()));
     }
-    baseVerifier.verify(
-        tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);
+    baseVerifier.verify(tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);
     pkceVerifier.verify();
   }
 }

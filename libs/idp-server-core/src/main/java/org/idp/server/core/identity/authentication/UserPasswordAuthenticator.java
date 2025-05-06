@@ -12,9 +12,7 @@ public class UserPasswordAuthenticator implements PasswordCredentialsGrantDelega
   UserQueryRepository userQueryRepository;
   PasswordVerificationDelegation passwordVerificationDelegation;
 
-  public UserPasswordAuthenticator(
-      UserQueryRepository userQueryRepository,
-      PasswordVerificationDelegation passwordVerificationDelegation) {
+  public UserPasswordAuthenticator(UserQueryRepository userQueryRepository, PasswordVerificationDelegation passwordVerificationDelegation) {
     this.userQueryRepository = userQueryRepository;
     this.passwordVerificationDelegation = passwordVerificationDelegation;
   }

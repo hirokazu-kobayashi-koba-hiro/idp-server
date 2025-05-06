@@ -18,8 +18,7 @@ public class ReaderTransactionManager {
 
   private static Connection createConnection() {
     if (dbUrl == null || dbUsername == null || dbPassword == null) {
-      throw new SqlRuntimeException(
-          "Database connection is not configured. Call setConnectionConfig() first.");
+      throw new SqlRuntimeException("Database connection is not configured. Call setConnectionConfig() first.");
     }
     try {
       Connection connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);

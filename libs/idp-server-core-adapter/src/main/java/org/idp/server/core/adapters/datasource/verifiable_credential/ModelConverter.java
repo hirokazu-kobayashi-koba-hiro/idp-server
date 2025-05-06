@@ -20,10 +20,8 @@ class ModelConverter {
     RequestedClientId requestedClientId = new RequestedClientId(stringMap.get("client_id"));
     Subject subject = new Subject(stringMap.get("user_id"));
     Credential credential = toVerifiableCredential(stringMap);
-    VerifiableCredentialTransactionStatus status =
-        VerifiableCredentialTransactionStatus.valueOf(stringMap.get("status"));
-    return new VerifiableCredentialTransaction(
-        id, credentialIssuer, requestedClientId, subject, credential, status);
+    VerifiableCredentialTransactionStatus status = VerifiableCredentialTransactionStatus.valueOf(stringMap.get("status"));
+    return new VerifiableCredentialTransaction(id, credentialIssuer, requestedClientId, subject, credential, status);
   }
 
   private static Credential toVerifiableCredential(Map<String, String> stringMap) {

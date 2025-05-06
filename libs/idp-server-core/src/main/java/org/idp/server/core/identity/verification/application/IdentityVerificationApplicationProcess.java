@@ -12,8 +12,7 @@ public class IdentityVerificationApplicationProcess implements JsonReadable {
 
   public IdentityVerificationApplicationProcess() {}
 
-  public IdentityVerificationApplicationProcess(
-      IdentityVerificationProcess process, LocalDateTime requestedAt) {
+  public IdentityVerificationApplicationProcess(IdentityVerificationProcess process, LocalDateTime requestedAt) {
     this.process = process.name();
     this.requestedAt = requestedAt.toString();
   }

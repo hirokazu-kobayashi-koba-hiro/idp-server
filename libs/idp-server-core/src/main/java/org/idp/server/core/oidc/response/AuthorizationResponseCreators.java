@@ -29,8 +29,7 @@ public class AuthorizationResponseCreators {
   public AuthorizationResponseCreator get(ResponseType responseType) {
     AuthorizationResponseCreator authorizationResponseCreator = values.get(responseType);
     if (Objects.isNull(authorizationResponseCreator)) {
-      throw new UnSupportedException(
-          String.format("not support request type (%s)", responseType.value()));
+      throw new UnSupportedException(String.format("not support request type (%s)", responseType.value()));
     }
     return authorizationResponseCreator;
   }

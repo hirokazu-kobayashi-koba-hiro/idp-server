@@ -34,21 +34,19 @@ public class ArrayValueMap {
 
   public List<String> multiValueKeys() {
     List<String> keys = new ArrayList<>();
-    values.forEach(
-        (key, value) -> {
-          if (value.length > 1) {
-            keys.add(key);
-          }
-        });
+    values.forEach((key, value) -> {
+      if (value.length > 1) {
+        keys.add(key);
+      }
+    });
     return keys;
   }
 
   public Map<String, String> singleValueMap() {
     Map<String, String> map = new HashMap<>();
-    values.forEach(
-        (key, value) -> {
-          map.put(key, value[0]);
-        });
+    values.forEach((key, value) -> {
+      map.put(key, value[0]);
+    });
     return map;
   }
 }

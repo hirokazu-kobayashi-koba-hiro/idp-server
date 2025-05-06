@@ -2,11 +2,7 @@ package org.idp.server.core.oidc;
 
 /** AuthorizationProfile */
 public enum AuthorizationProfile {
-  OAUTH2,
-  OIDC,
-  FAPI_BASELINE,
-  FAPI_ADVANCE,
-  UNDEFINED;
+  OAUTH2, OIDC, FAPI_BASELINE, FAPI_ADVANCE, UNDEFINED;
 
   public boolean isOAuth2() {
     return this == OAUTH2;

@@ -12,22 +12,15 @@ import org.idp.server.core.identity.verification.configuration.IdentityVerificat
 
 public class IdentityVerificationDynamicResponseMapper {
 
-  public static Map<String, Object> buildDynamicResponse(
-      IdentityVerificationApplication application,
-      JsonNodeWrapper externalResponse,
-      IdentityVerificationProcess process,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public static Map<String, Object> buildDynamicResponse(IdentityVerificationApplication application, JsonNodeWrapper externalResponse, IdentityVerificationProcess process, IdentityVerificationConfiguration verificationConfiguration) {
 
     Map<String, Object> userResponse = new HashMap<>();
     userResponse.put("id", application.identifier().value());
-    userResponse.put(
-        "external_workflow_application_id", application.externalApplicationId().value());
+    userResponse.put("external_workflow_application_id", application.externalApplicationId().value());
     userResponse.put("status", application.status().value());
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(process);
-    JsonSchemaDefinition responseSchemaDefinition =
-        processConfig.responseValidationSchemaAsDefinition();
+    IdentityVerificationProcessConfiguration processConfig = verificationConfiguration.getProcessConfig(process);
+    JsonSchemaDefinition responseSchemaDefinition = processConfig.responseValidationSchemaAsDefinition();
     Map<String, JsonSchemaProperty> properties = responseSchemaDefinition.getProperties();
 
     for (Map.Entry<String, JsonSchemaProperty> entry : properties.entrySet()) {

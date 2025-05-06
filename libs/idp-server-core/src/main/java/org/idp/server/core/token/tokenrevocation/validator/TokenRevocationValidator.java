@@ -13,8 +13,7 @@ public class TokenRevocationValidator {
 
   public void validate() {
     if (!parameters.hasToken()) {
-      throw new TokenRevocationBadRequestException(
-          "invalid_request", "token revocation request must contains token parameters");
+      throw new TokenRevocationBadRequestException("invalid_request", "token revocation request must contains token parameters");
     }
   }
 }

@@ -21,17 +21,7 @@ public class OidcSsoSession implements Serializable, JsonReadable {
 
   public OidcSsoSession() {}
 
-  public OidcSsoSession(
-      String ssoSessionId,
-      String authorizationRequestId,
-      String tenantId,
-      String tokenIssuer,
-      String state,
-      String nonce,
-      String idpId,
-      String clientId,
-      String redirectUri,
-      String authorizationRequestUri) {
+  public OidcSsoSession(String ssoSessionId, String authorizationRequestId, String tenantId, String tokenIssuer, String state, String nonce, String idpId, String clientId, String redirectUri, String authorizationRequestUri) {
     this.ssoSessionId = ssoSessionId;
     this.authorizationRequestId = authorizationRequestId;
     this.tenantId = tenantId;

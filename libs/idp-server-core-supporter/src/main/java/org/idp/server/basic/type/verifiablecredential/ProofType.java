@@ -3,10 +3,7 @@ package org.idp.server.basic.type.verifiablecredential;
 import java.util.Objects;
 
 public enum ProofType {
-  jwt,
-  cwt,
-  unknown,
-  undefined;
+  jwt, cwt, unknown, undefined;
 
   public static ProofType of(String value) {
     if (Objects.isNull(value) || value.isEmpty()) {

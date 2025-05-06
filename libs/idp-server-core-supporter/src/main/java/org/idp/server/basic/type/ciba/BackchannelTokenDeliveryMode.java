@@ -3,11 +3,7 @@ package org.idp.server.basic.type.ciba;
 import java.util.Objects;
 
 public enum BackchannelTokenDeliveryMode {
-  poll,
-  ping,
-  push,
-  undefined,
-  unknown;
+  poll, ping, push, undefined, unknown;
 
   public static BackchannelTokenDeliveryMode of(String value) {
     if (Objects.isNull(value) || value.isEmpty()) {

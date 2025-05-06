@@ -17,17 +17,11 @@ public class Tenant implements JsonReadable {
 
   public Tenant() {}
 
-  public Tenant(
-      TenantIdentifier identifier, TenantName name, TenantType type, TenantDomain domain) {
+  public Tenant(TenantIdentifier identifier, TenantName name, TenantType type, TenantDomain domain) {
     this(identifier, name, type, domain, new TenantAttributes(Map.of()));
   }
 
-  public Tenant(
-      TenantIdentifier identifier,
-      TenantName name,
-      TenantType type,
-      TenantDomain domain,
-      TenantAttributes attributes) {
+  public Tenant(TenantIdentifier identifier, TenantName name, TenantType type, TenantDomain domain, TenantAttributes attributes) {
     this.identifier = identifier;
     this.name = name;
     this.type = type;

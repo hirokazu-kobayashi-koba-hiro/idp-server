@@ -11,8 +11,7 @@ public class VerifiableCredentialInvalidException extends RuntimeException {
     this.errorDescription = errorDescription;
   }
 
-  public VerifiableCredentialInvalidException(
-      String error, String errorDescription, Throwable throwable) {
+  public VerifiableCredentialInvalidException(String error, String errorDescription, Throwable throwable) {
     super(errorDescription, throwable);
     this.error = error;
     this.errorDescription = errorDescription;

@@ -26,23 +26,14 @@ public class TokenEntryService implements TokenApi {
   UserQueryRepository userQueryRepository;
   TokenEventPublisher eventPublisher;
 
-  public TokenEntryService(
-      TokenProtocols tokenProtocols,
-      UserQueryRepository userQueryRepository,
-      TenantRepository tenantRepository,
-      TokenEventPublisher eventPublisher) {
+  public TokenEntryService(TokenProtocols tokenProtocols, UserQueryRepository userQueryRepository, TenantRepository tenantRepository, TokenEventPublisher eventPublisher) {
     this.tokenProtocols = tokenProtocols;
     this.tenantRepository = tenantRepository;
     this.userQueryRepository = userQueryRepository;
     this.eventPublisher = eventPublisher;
   }
 
-  public TokenRequestResponse request(
-      TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      String authorizationHeader,
-      String clientCert,
-      RequestAttributes requestAttributes) {
+  public TokenRequestResponse request(TenantIdentifier tenantIdentifier, Map<String, String[]> params, String authorizationHeader, String clientCert, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     TokenRequest tokenRequest = new TokenRequest(tenant, authorizationHeader, params);
@@ -53,47 +44,32 @@ public class TokenEntryService implements TokenApi {
     TokenRequestResponse requestResponse = tokenProtocol.request(tokenRequest);
 
     if (requestResponse.isOK()) {
-      eventPublisher.publish(
-          tenant,
-          requestResponse.oAuthToken(),
-          requestResponse.securityEventType(tokenRequest),
-          requestAttributes);
+      eventPublisher.publish(tenant, requestResponse.oAuthToken(), requestResponse.securityEventType(tokenRequest), requestAttributes);
     }
 
     return requestResponse;
   }
 
-  public TokenIntrospectionResponse inspect(
-      TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      RequestAttributes requestAttributes) {
+  public TokenIntrospectionResponse inspect(TenantIdentifier tenantIdentifier, Map<String, String[]> params, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    TokenIntrospectionRequest tokenIntrospectionRequest =
-        new TokenIntrospectionRequest(tenant, params);
+    TokenIntrospectionRequest tokenIntrospectionRequest = new TokenIntrospectionRequest(tenant, params);
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProtocolProvider());
 
     TokenIntrospectionResponse result = tokenProtocol.inspect(tokenIntrospectionRequest);
 
     if (result.hasOAuthToken()) {
-      eventPublisher.publish(
-          tenant, result.oAuthToken(), result.securityEventType(), requestAttributes);
+      eventPublisher.publish(tenant, result.oAuthToken(), result.securityEventType(), requestAttributes);
     }
 
     return result;
   }
 
-  public TokenRevocationResponse revoke(
-      TenantIdentifier tenantIdentifier,
-      Map<String, String[]> request,
-      String authorizationHeader,
-      String clientCert,
-      RequestAttributes requestAttributes) {
+  public TokenRevocationResponse revoke(TenantIdentifier tenantIdentifier, Map<String, String[]> request, String authorizationHeader, String clientCert, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    TokenRevocationRequest revocationRequest =
-        new TokenRevocationRequest(tenant, authorizationHeader, request);
+    TokenRevocationRequest revocationRequest = new TokenRevocationRequest(tenant, authorizationHeader, request);
     revocationRequest.setClientCert(clientCert);
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProtocolProvider());
@@ -101,8 +77,7 @@ public class TokenEntryService implements TokenApi {
     TokenRevocationResponse result = tokenProtocol.revoke(revocationRequest);
 
     if (result.hasOAuthToken()) {
-      eventPublisher.publish(
-          tenant, result.oAuthToken(), result.securityEventType(), requestAttributes);
+      eventPublisher.publish(tenant, result.oAuthToken(), result.securityEventType(), requestAttributes);
     }
 
     return result;

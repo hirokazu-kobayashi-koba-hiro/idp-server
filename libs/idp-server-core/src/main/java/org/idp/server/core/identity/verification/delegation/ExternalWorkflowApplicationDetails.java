@@ -19,21 +19,15 @@ public class ExternalWorkflowApplicationDetails {
     this.json = json;
   }
 
-  public static ExternalWorkflowApplicationDetails create(
-      JsonNodeWrapper body, IdentityVerificationProcessConfiguration processConfig) {
-    JsonSchemaDefinition jsonSchemaDefinition =
-        processConfig.responseValidationSchemaAsDefinition();
-    Map<String, Object> mappingResult =
-        IdentityVerificationMapper.mapping(body.toMap(), jsonSchemaDefinition);
+  public static ExternalWorkflowApplicationDetails create(JsonNodeWrapper body, IdentityVerificationProcessConfiguration processConfig) {
+    JsonSchemaDefinition jsonSchemaDefinition = processConfig.responseValidationSchemaAsDefinition();
+    Map<String, Object> mappingResult = IdentityVerificationMapper.mapping(body.toMap(), jsonSchemaDefinition);
     return new ExternalWorkflowApplicationDetails(JsonNodeWrapper.fromObject(mappingResult));
   }
 
-  public ExternalWorkflowApplicationDetails merge(
-      JsonNodeWrapper body, IdentityVerificationProcessConfiguration processConfig) {
-    JsonSchemaDefinition jsonSchemaDefinition =
-        processConfig.responseValidationSchemaAsDefinition();
-    Map<String, Object> mappingResult =
-        IdentityVerificationMapper.mapping(body.toMap(), jsonSchemaDefinition);
+  public ExternalWorkflowApplicationDetails merge(JsonNodeWrapper body, IdentityVerificationProcessConfiguration processConfig) {
+    JsonSchemaDefinition jsonSchemaDefinition = processConfig.responseValidationSchemaAsDefinition();
+    Map<String, Object> mappingResult = IdentityVerificationMapper.mapping(body.toMap(), jsonSchemaDefinition);
     Map<String, Object> merged = new HashMap<>(json.toMap());
     merged.putAll(mappingResult);
     return new ExternalWorkflowApplicationDetails(JsonNodeWrapper.fromObject(merged));

@@ -12,11 +12,7 @@ public class BatchVerifiableCredentialResponses {
 
   public BatchVerifiableCredentialResponses() {}
 
-  public BatchVerifiableCredentialResponses(
-      List<BatchVerifiableCredentialResponse> responses,
-      CNonce cNonce,
-      CNonceExpiresIn cNonceExpiresIn,
-      String contents) {
+  public BatchVerifiableCredentialResponses(List<BatchVerifiableCredentialResponse> responses, CNonce cNonce, CNonceExpiresIn cNonceExpiresIn, String contents) {
     this.responses = responses;
     this.cNonce = cNonce;
     this.cNonceExpiresIn = cNonceExpiresIn;

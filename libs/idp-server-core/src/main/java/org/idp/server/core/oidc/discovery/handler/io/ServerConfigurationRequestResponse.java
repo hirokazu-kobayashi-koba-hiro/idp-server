@@ -7,8 +7,7 @@ public class ServerConfigurationRequestResponse {
   ServerConfigurationRequestStatus status;
   Map<String, Object> content;
 
-  public ServerConfigurationRequestResponse(
-      ServerConfigurationRequestStatus status, Map<String, Object> content) {
+  public ServerConfigurationRequestResponse(ServerConfigurationRequestStatus status, Map<String, Object> content) {
     this.status = status;
     this.content = content;
   }

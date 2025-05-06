@@ -10,8 +10,7 @@ public interface AuthorizationGrantedSqlExecutor {
 
   void insert(AuthorizationGranted authorizationGranted);
 
-  Map<String, String> selectOne(
-      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, User user);
+  Map<String, String> selectOne(TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, User user);
 
   void update(AuthorizationGranted authorizationGranted);
 }

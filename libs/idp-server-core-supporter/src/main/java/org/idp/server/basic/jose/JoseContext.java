@@ -12,11 +12,7 @@ public class JoseContext {
 
   public JoseContext() {}
 
-  public JoseContext(
-      JsonWebSignature jsonWebSignature,
-      JsonWebTokenClaims claims,
-      JsonWebSignatureVerifier jwsVerifier,
-      JsonWebKey jsonWebKey) {
+  public JoseContext(JsonWebSignature jsonWebSignature, JsonWebTokenClaims claims, JsonWebSignatureVerifier jwsVerifier, JsonWebKey jsonWebKey) {
     this.jsonWebSignature = jsonWebSignature;
     this.claims = claims;
     this.jwsVerifier = jwsVerifier;

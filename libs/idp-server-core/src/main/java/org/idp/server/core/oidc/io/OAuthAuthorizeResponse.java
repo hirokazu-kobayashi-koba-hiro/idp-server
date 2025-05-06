@@ -15,20 +15,17 @@ public class OAuthAuthorizeResponse {
 
   public OAuthAuthorizeResponse() {}
 
-  public OAuthAuthorizeResponse(
-      OAuthAuthorizeStatus status, AuthorizationResponse authorizationResponse) {
+  public OAuthAuthorizeResponse(OAuthAuthorizeStatus status, AuthorizationResponse authorizationResponse) {
     this.status = status;
     this.authorizationResponse = authorizationResponse;
   }
 
-  public OAuthAuthorizeResponse(
-      OAuthAuthorizeStatus status, AuthorizationErrorResponse errorResponse) {
+  public OAuthAuthorizeResponse(OAuthAuthorizeStatus status, AuthorizationErrorResponse errorResponse) {
     this.status = status;
     this.errorResponse = errorResponse;
   }
 
-  public OAuthAuthorizeResponse(
-      OAuthAuthorizeStatus status, String error, String errorDescription) {
+  public OAuthAuthorizeResponse(OAuthAuthorizeStatus status, String error, String errorDescription) {
     this.status = status;
     this.error = error;
     this.errorDescription = errorDescription;

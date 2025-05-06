@@ -2,10 +2,7 @@ package org.idp.server.core.oidc.io;
 
 /** OAuthAuthorizeStatus */
 public enum OAuthViewDataStatus {
-  OK,
-  BAD_REQUEST,
-  REDIRECABLE_BAD_REQUEST,
-  SERVER_ERROR;
+  OK, BAD_REQUEST, REDIRECABLE_BAD_REQUEST, SERVER_ERROR;
 
   public boolean isOK() {
     return this == OK;

@@ -15,12 +15,7 @@ import org.idp.server.core.oidc.configuration.ServerConfiguration;
 
 public interface CibaRequestContextCreator {
 
-  CibaRequestContext create(
-      ClientSecretBasic clientSecretBasic,
-      ClientCert clientCert,
-      CibaRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration);
+  CibaRequestContext create(ClientSecretBasic clientSecretBasic, ClientCert clientCert, CibaRequestParameters parameters, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration);
 
   default CibaProfile analyze(Set<String> filteredScopes, ServerConfiguration serverConfiguration) {
 
@@ -33,17 +28,12 @@ public interface CibaRequestContextCreator {
     return CibaProfile.CIBA;
   }
 
-  default Set<String> filterScopes(
-      CibaRequestPattern pattern,
-      CibaRequestParameters parameters,
-      JoseContext joseContext,
-      ClientConfiguration clientConfiguration) {
+  default Set<String> filterScopes(CibaRequestPattern pattern, CibaRequestParameters parameters, JoseContext joseContext, ClientConfiguration clientConfiguration) {
 
     String scope = parameters.getValueOrEmpty(OAuthRequestKey.scope);
     JsonWebTokenClaims claims = joseContext.claims();
     String joseScope = claims.getValue("scope");
-    String targetScope =
-        (pattern.isRequestParameter() || clientConfiguration.isSupportedJar()) ? joseScope : scope;
+    String targetScope = (pattern.isRequestParameter() || clientConfiguration.isSupportedJar()) ? joseScope : scope;
 
     return clientConfiguration.filteredScope(targetScope);
   }

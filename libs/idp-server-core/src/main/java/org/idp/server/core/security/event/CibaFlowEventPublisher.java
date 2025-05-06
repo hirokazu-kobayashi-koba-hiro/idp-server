@@ -15,14 +15,8 @@ public class CibaFlowEventPublisher {
     this.securityEventPublisher = securityEventPublisher;
   }
 
-  public void publish(
-      Tenant tenant,
-      BackchannelAuthenticationRequest request,
-      User user,
-      DefaultSecurityEventType type,
-      RequestAttributes requestAttributes) {
-    CibaFlowEventCreator eventCreator =
-        new CibaFlowEventCreator(tenant, request, user, type, requestAttributes);
+  public void publish(Tenant tenant, BackchannelAuthenticationRequest request, User user, DefaultSecurityEventType type, RequestAttributes requestAttributes) {
+    CibaFlowEventCreator eventCreator = new CibaFlowEventCreator(tenant, request, user, type, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }

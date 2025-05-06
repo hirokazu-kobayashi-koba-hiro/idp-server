@@ -25,10 +25,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
   }
 
   @PostMapping
-  public ResponseEntity<?> post(
-      @AuthenticationPrincipal User operator,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestBody(required = false) String body) {
+  public ResponseEntity<?> post(@AuthenticationPrincipal User operator, @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @RequestBody(required = false) String body) {
 
     String client = clientManagementApi.register(tenantIdentifier, body);
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -37,42 +34,27 @@ public class ClientManagementV1Api implements ParameterTransformable {
   }
 
   @GetMapping
-  public ResponseEntity<?> getList(
-      @AuthenticationPrincipal User operator,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestParam(value = "limit", defaultValue = "20") String limitValue,
-      @RequestParam(value = "offset", defaultValue = "0") String offsetValue) {
+  public ResponseEntity<?> getList(@AuthenticationPrincipal User operator, @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @RequestParam(value = "limit", defaultValue = "20") String limitValue, @RequestParam(value = "offset", defaultValue = "0") String offsetValue) {
 
-    ClientConfigurationManagementListResponse response =
-        clientManagementApi.find(
-            tenantIdentifier, Integer.parseInt(limitValue), Integer.parseInt(offsetValue));
+    ClientConfigurationManagementListResponse response = clientManagementApi.find(tenantIdentifier, Integer.parseInt(limitValue), Integer.parseInt(offsetValue));
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
-    return new ResponseEntity<>(
-        response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+    return new ResponseEntity<>(response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @GetMapping("/{client-id}")
-  public ResponseEntity<?> get(
-      @AuthenticationPrincipal User operator,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("client-id") String clientId) {
+  public ResponseEntity<?> get(@AuthenticationPrincipal User operator, @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @PathVariable("client-id") String clientId) {
 
-    ClientConfigurationManagementResponse response =
-        clientManagementApi.get(tenantIdentifier, new RequestedClientId(clientId));
+    ClientConfigurationManagementResponse response = clientManagementApi.get(tenantIdentifier, new RequestedClientId(clientId));
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
-    return new ResponseEntity<>(
-        response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+    return new ResponseEntity<>(response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @PutMapping("/{client-id}")
-  public ResponseEntity<?> put(
-      @AuthenticationPrincipal User operator,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestBody(required = false) String body) {
+  public ResponseEntity<?> put(@AuthenticationPrincipal User operator, @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @RequestBody(required = false) String body) {
 
     String client = clientManagementApi.update(tenantIdentifier, body);
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -81,17 +63,12 @@ public class ClientManagementV1Api implements ParameterTransformable {
   }
 
   @DeleteMapping("/{client-id}")
-  public ResponseEntity<?> delete(
-      @AuthenticationPrincipal User operator,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("client-id") String clientId) {
+  public ResponseEntity<?> delete(@AuthenticationPrincipal User operator, @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @PathVariable("client-id") String clientId) {
 
-    ClientConfigurationManagementResponse response =
-        clientManagementApi.delete(tenantIdentifier, new RequestedClientId(clientId));
+    ClientConfigurationManagementResponse response = clientManagementApi.delete(tenantIdentifier, new RequestedClientId(clientId));
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
-    return new ResponseEntity<>(
-        response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+    return new ResponseEntity<>(response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }

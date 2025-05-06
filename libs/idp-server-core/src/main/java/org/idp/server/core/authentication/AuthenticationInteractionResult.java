@@ -11,8 +11,7 @@ public class AuthenticationInteractionResult {
 
   public AuthenticationInteractionResult() {}
 
-  public AuthenticationInteractionResult(
-      String type, int callCount, int successCount, int failureCount) {
+  public AuthenticationInteractionResult(String type, int callCount, int successCount, int failureCount) {
     this.type = type;
     this.callCount = callCount;
     this.successCount = successCount;
@@ -35,16 +34,11 @@ public class AuthenticationInteractionResult {
     return failureCount;
   }
 
-  public AuthenticationInteractionResult update(
-      AuthenticationInteractionRequestResult interactionRequestResult) {
+  public AuthenticationInteractionResult update(AuthenticationInteractionRequestResult interactionRequestResult) {
     int increaseSuccessCount = interactionRequestResult.isSuccess() ? 1 : 0;
     int increaseFailureCount = interactionRequestResult.isSuccess() ? 0 : 1;
 
-    return new AuthenticationInteractionResult(
-        type,
-        callCount + 1,
-        successCount + increaseSuccessCount,
-        failureCount + increaseFailureCount);
+    return new AuthenticationInteractionResult(type, callCount + 1, successCount + increaseSuccessCount, failureCount + increaseFailureCount);
   }
 
   public boolean exists() {
@@ -53,7 +47,8 @@ public class AuthenticationInteractionResult {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     AuthenticationInteractionResult that = (AuthenticationInteractionResult) o;
     return Objects.equals(type, that.type);
   }

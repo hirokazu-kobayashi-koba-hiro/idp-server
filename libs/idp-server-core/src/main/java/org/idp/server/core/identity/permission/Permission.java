@@ -32,7 +32,8 @@ public class Permission implements Serializable {
   }
 
   public boolean match(Permission permission) {
-    if (!exists()) return false;
+    if (!exists())
+      return false;
 
     return this.name.equals(permission.name());
   }

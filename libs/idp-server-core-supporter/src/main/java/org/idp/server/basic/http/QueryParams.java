@@ -26,17 +26,16 @@ public class QueryParams {
   public String params() {
     StringBuilder stringBuilder = new StringBuilder();
     Set<Map.Entry<String, String>> entries = values.entrySet();
-    entries.forEach(
-        entry -> {
-          if (Objects.nonNull(entry.getValue()) && !entry.getValue().isEmpty()) {
-            if (!stringBuilder.toString().isEmpty()) {
-              stringBuilder.append("&");
-            }
-            stringBuilder.append(entry.getKey());
-            stringBuilder.append("=");
-            stringBuilder.append(entry.getValue());
-          }
-        });
+    entries.forEach(entry -> {
+      if (Objects.nonNull(entry.getValue()) && !entry.getValue().isEmpty()) {
+        if (!stringBuilder.toString().isEmpty()) {
+          stringBuilder.append("&");
+        }
+        stringBuilder.append(entry.getKey());
+        stringBuilder.append("=");
+        stringBuilder.append(entry.getValue());
+      }
+    });
     return stringBuilder.toString();
   }
 }

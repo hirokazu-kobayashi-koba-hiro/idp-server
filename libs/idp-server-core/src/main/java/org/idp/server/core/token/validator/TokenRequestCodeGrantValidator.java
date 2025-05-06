@@ -16,8 +16,7 @@ public class TokenRequestCodeGrantValidator {
 
   void throwExceptionIfNotContainsAuthorizationCode() {
     if (!parameters.hasCode()) {
-      throw new TokenBadRequestException(
-          "token request does not contains code, authorization_code grant must contains code");
+      throw new TokenBadRequestException("token request does not contains code, authorization_code grant must contains code");
     }
   }
 }

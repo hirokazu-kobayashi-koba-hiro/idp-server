@@ -1,9 +1,7 @@
 package org.idp.server.core.identity.verification.result;
 
 public enum IdentityVerificationSource {
-  APPLICATION("application"),
-  MANUAL("manual"),
-  IMPORT("import");
+  APPLICATION("application"), MANUAL("manual"), IMPORT("import");
 
   String value;
 

@@ -1,9 +1,7 @@
 package org.idp.server.core.oidc.discovery.handler.io;
 
 public enum ServerConfigurationRequestStatus {
-  OK(200),
-  BAD_REQUEST(400),
-  SERVER_ERROR(500);
+  OK(200), BAD_REQUEST(400), SERVER_ERROR(500);
 
   int statusCode;
 

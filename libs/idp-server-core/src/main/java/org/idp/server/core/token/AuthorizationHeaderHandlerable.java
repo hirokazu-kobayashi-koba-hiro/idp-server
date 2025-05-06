@@ -41,13 +41,11 @@ public interface AuthorizationHeaderHandlerable {
 
   default AccessTokenEntity extractAccessToken(String authorizationHeader) {
     if (isBearer(authorizationHeader)) {
-      String accessTokenValue =
-          authorizationHeader.substring(AuthorizationHeaderType.Bearer.length());
+      String accessTokenValue = authorizationHeader.substring(AuthorizationHeaderType.Bearer.length());
       return new AccessTokenEntity(accessTokenValue);
     }
     if (isDPop(authorizationHeader)) {
-      String accessTokenValue =
-          authorizationHeader.substring(AuthorizationHeaderType.DPoP.length());
+      String accessTokenValue = authorizationHeader.substring(AuthorizationHeaderType.DPoP.length());
       return new AccessTokenEntity(accessTokenValue);
     }
     return new AccessTokenEntity();

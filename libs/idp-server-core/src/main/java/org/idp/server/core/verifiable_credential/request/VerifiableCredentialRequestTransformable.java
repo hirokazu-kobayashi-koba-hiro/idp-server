@@ -17,30 +17,23 @@ import org.idp.server.core.verifiable_credential.exception.VerifiableCredentialR
 
 public interface VerifiableCredentialRequestTransformable {
 
-  default BatchCredentialRequests transformBatchRequest(Object object)
-      throws VerifiableCredentialRequestInvalidException {
+  default BatchCredentialRequests transformBatchRequest(Object object) throws VerifiableCredentialRequestInvalidException {
     try {
       List<Object> list = (List<Object>) object;
-      List<VerifiableCredentialRequest> verifiableCredentialRequests =
-          list.stream()
-              .map(
-                  value -> {
-                    try {
-                      return transformRequest(value);
-                    } catch (VerifiableCredentialRequestInvalidException e) {
-                      throw new RuntimeException(e);
-                    }
-                  })
-              .toList();
+      List<VerifiableCredentialRequest> verifiableCredentialRequests = list.stream().map(value -> {
+        try {
+          return transformRequest(value);
+        } catch (VerifiableCredentialRequestInvalidException e) {
+          throw new RuntimeException(e);
+        }
+      }).toList();
       return new BatchCredentialRequests(verifiableCredentialRequests);
     } catch (Exception e) {
-      throw new VerifiableCredentialRequestInvalidException(
-          "invalid batch credential request, can not pared", e);
+      throw new VerifiableCredentialRequestInvalidException("invalid batch credential request, can not pared", e);
     }
   }
 
-  default VerifiableCredentialRequest transformRequest(Object object)
-      throws VerifiableCredentialRequestInvalidException {
+  default VerifiableCredentialRequest transformRequest(Object object) throws VerifiableCredentialRequestInvalidException {
     try {
       if (Objects.isNull(object)) {
         return new VerifiableCredentialRequest();
@@ -48,18 +41,15 @@ public interface VerifiableCredentialRequestTransformable {
       Map<String, Object> map = (Map<String, Object>) object;
       Format format = Format.of((String) map.get("format"));
       DocType docType = new DocType((String) map.get("doc_type"));
-      CredentialDefinition credentialDefinition =
-          new CredentialDefinition((Map<String, Object>) map.get("credential_definition"));
+      CredentialDefinition credentialDefinition = new CredentialDefinition((Map<String, Object>) map.get("credential_definition"));
       VerifiableCredentialProof proof = transformProof(map.get("proof"));
       return new VerifiableCredentialRequest(format, docType, credentialDefinition, proof);
     } catch (Exception e) {
-      throw new VerifiableCredentialRequestInvalidException(
-          "invalid verifiable credential request, can not parsed", e);
+      throw new VerifiableCredentialRequestInvalidException("invalid verifiable credential request, can not parsed", e);
     }
   }
 
-  default VerifiableCredentialProof transformProof(Object proofEntity)
-      throws VerifiableCredentialRequestInvalidException {
+  default VerifiableCredentialProof transformProof(Object proofEntity) throws VerifiableCredentialRequestInvalidException {
     try {
       if (Objects.isNull(proofEntity)) {
         return new VerifiableCredentialProof();
@@ -74,8 +64,7 @@ public interface VerifiableCredentialRequestTransformable {
     }
   }
 
-  default PublicKey transformPublicKey(JsonWebSignatureHeader header)
-      throws VerifiableCredentialRequestInvalidException {
+  default PublicKey transformPublicKey(JsonWebSignatureHeader header) throws VerifiableCredentialRequestInvalidException {
     try {
       if (header.hasJwk()) {
         JsonWebKey jwk = header.jwk();

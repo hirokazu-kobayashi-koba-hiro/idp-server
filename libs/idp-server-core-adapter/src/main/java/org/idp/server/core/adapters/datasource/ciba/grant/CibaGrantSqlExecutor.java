@@ -13,8 +13,7 @@ public interface CibaGrantSqlExecutor {
 
   Map<String, String> selectOne(AuthReqId authReqId);
 
-  Map<String, String> selectOne(
-      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier);
+  Map<String, String> selectOne(BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier);
 
   void delete(CibaGrant cibaGrant);
 }

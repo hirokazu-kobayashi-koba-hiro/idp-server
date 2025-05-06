@@ -15,11 +15,7 @@ public class OAuthViewDataCreator {
   ClientConfiguration clientConfiguration;
   OAuthSession session;
 
-  public OAuthViewDataCreator(
-      AuthorizationRequest authorizationRequest,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration,
-      OAuthSession session) {
+  public OAuthViewDataCreator(AuthorizationRequest authorizationRequest, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration, OAuthSession session) {
     this.authorizationRequest = authorizationRequest;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
@@ -51,16 +47,6 @@ public class OAuthViewDataCreator {
       contents.put("session_enabled", session.isValid(authorizationRequest));
     }
     contents.put("custom_params", customParams);
-    return new OAuthViewData(
-        clientId,
-        clientName,
-        clientUri,
-        logoUri,
-        contacts,
-        tosUri,
-        policyUri,
-        scopes,
-        customParams,
-        contents);
+    return new OAuthViewData(clientId, clientName, clientUri, logoUri, contacts, tosUri, policyUri, scopes, customParams, contents);
   }
 }

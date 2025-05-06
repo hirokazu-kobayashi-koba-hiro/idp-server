@@ -17,40 +17,17 @@ import org.idp.server.core.oidc.grant.AuthorizationGrant;
 
 public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashable {
 
-  default IdToken createIdToken(
-      User user,
-      Authentication authentication,
-      AuthorizationGrant authorizationGrant,
-      IdTokenCustomClaims customClaims,
-      RequestedClaimsPayload requestedClaimsPayload,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  default IdToken createIdToken(User user, Authentication authentication, AuthorizationGrant authorizationGrant, IdTokenCustomClaims customClaims, RequestedClaimsPayload requestedClaimsPayload, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     try {
 
-      Map<String, Object> claims =
-          createClaims(
-              user,
-              authentication,
-              customClaims,
-              authorizationGrant,
-              requestedClaimsPayload,
-              serverConfiguration.tokenIssuer(),
-              serverConfiguration.idTokenDuration(),
-              serverConfiguration.isIdTokenStrictMode());
+      Map<String, Object> claims = createClaims(user, authentication, customClaims, authorizationGrant, requestedClaimsPayload, serverConfiguration.tokenIssuer(), serverConfiguration.idTokenDuration(), serverConfiguration.isIdTokenStrictMode());
 
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
-      JsonWebSignature jsonWebSignature =
-          jsonWebSignatureFactory.createWithAsymmetricKey(
-              claims, Map.of(), serverConfiguration.jwks(), serverConfiguration.tokenSignedKeyId());
+      JsonWebSignature jsonWebSignature = jsonWebSignatureFactory.createWithAsymmetricKey(claims, Map.of(), serverConfiguration.jwks(), serverConfiguration.tokenSignedKeyId());
 
       if (clientConfiguration.hasEncryptedIdTokenMeta()) {
 
-        NestedJsonWebEncryptionCreator nestedJsonWebEncryptionCreator =
-            new NestedJsonWebEncryptionCreator(
-                jsonWebSignature,
-                clientConfiguration.idTokenEncryptedResponseAlg(),
-                clientConfiguration.idTokenEncryptedResponseEnc(),
-                clientConfiguration.jwks());
+        NestedJsonWebEncryptionCreator nestedJsonWebEncryptionCreator = new NestedJsonWebEncryptionCreator(jsonWebSignature, clientConfiguration.idTokenEncryptedResponseAlg(), clientConfiguration.idTokenEncryptedResponseEnc(), clientConfiguration.jwks());
         String jwe = nestedJsonWebEncryptionCreator.create();
         return new IdToken(jwe);
       }
@@ -61,15 +38,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
     }
   }
 
-  private Map<String, Object> createClaims(
-      User user,
-      Authentication authentication,
-      IdTokenCustomClaims idTokenCustomClaims,
-      AuthorizationGrant authorizationGrant,
-      RequestedClaimsPayload requestedClaimsPayload,
-      TokenIssuer tokenIssuer,
-      long idTokenDuration,
-      boolean idTokenStrictMode) {
+  private Map<String, Object> createClaims(User user, Authentication authentication, IdTokenCustomClaims idTokenCustomClaims, AuthorizationGrant authorizationGrant, RequestedClaimsPayload requestedClaimsPayload, TokenIssuer tokenIssuer, long idTokenDuration, boolean idTokenStrictMode) {
 
     LocalDateTime now = SystemDateTime.now();
     ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(idTokenDuration));
@@ -102,12 +71,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
       claims.put("acr", authentication.toAcr());
     }
 
-    Map<String, Object> individualClaims =
-        createIndividualClaims(
-            user,
-            authorizationGrant.idTokenClaims(),
-            idTokenStrictMode,
-            requestedClaimsPayload.idToken());
+    Map<String, Object> individualClaims = createIndividualClaims(user, authorizationGrant.idTokenClaims(), idTokenStrictMode, requestedClaimsPayload.idToken());
     claims.putAll(individualClaims);
     return claims;
   }

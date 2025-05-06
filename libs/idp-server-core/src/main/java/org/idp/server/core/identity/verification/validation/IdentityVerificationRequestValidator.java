@@ -13,9 +13,7 @@ public class IdentityVerificationRequestValidator {
   IdentityVerificationRequest request;
   JsonConverter jsonConverter;
 
-  public IdentityVerificationRequestValidator(
-      IdentityVerificationProcessConfiguration processConfiguration,
-      IdentityVerificationRequest request) {
+  public IdentityVerificationRequestValidator(IdentityVerificationProcessConfiguration processConfiguration, IdentityVerificationRequest request) {
     this.processConfiguration = processConfiguration;
     this.request = request;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
@@ -23,8 +21,7 @@ public class IdentityVerificationRequestValidator {
 
   public IdentityVerificationValidationResult validate() {
 
-    JsonSchemaDefinition jsonSchemaDefinition =
-        processConfiguration.requestValidationSchemaAsDefinition();
+    JsonSchemaDefinition jsonSchemaDefinition = processConfiguration.requestValidationSchemaAsDefinition();
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);
 
     JsonNodeWrapper requestJson = jsonConverter.readTree(request.toMap());

@@ -14,21 +14,20 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
   @Override
   public void insert(Tenant tenant, IdentityVerificationResult result) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                    INSERT INTO public.identity_verification_results
-                    (id,
-                    tenant_id,
-                    user_id,
-                    application_id,
-                    verification_type,
-                    external_application_id,
-                    verified_claims,
-                    verified_at,
-                    valid_until,
-                    source)
-                    VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?);
-                """;
+    String sqlTemplate = """
+            INSERT INTO public.identity_verification_results
+            (id,
+            tenant_id,
+            user_id,
+            application_id,
+            verification_type,
+            external_application_id,
+            verified_claims,
+            verified_at,
+            valid_until,
+            source)
+            VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?);
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(result.identifier().value());

@@ -13,14 +13,17 @@ import org.idp.server.core.oidc.mtls.ClientCertification;
 /**
  * client secret post
  *
- * <p>Alternatively, the authorization server MAY support including the client credentials in the
+ * <p>
+ * Alternatively, the authorization server MAY support including the client credentials in the
  * request-body using the following parameters:
  *
- * <p>client_id REQUIRED. The client identifier issued to the client during the registration process
+ * <p>
+ * client_id REQUIRED. The client identifier issued to the client during the registration process
  * described by Section 2.2.
  *
- * <p>client_secret REQUIRED. The client secret. The client MAY omit the parameter if the client
- * secret is an empty string.
+ * <p>
+ * client_secret REQUIRED. The client secret. The client MAY omit the parameter if the client secret
+ * is an empty string.
  */
 class ClientSecretPostAuthenticator implements ClientAuthenticator {
 
@@ -30,13 +33,7 @@ class ClientSecretPostAuthenticator implements ClientAuthenticator {
     throwExceptionIfUnMatchClientSecret(context);
     RequestedClientId requestedClientId = context.requestedClientId();
     ClientSecret clientSecret = context.parameters().clientSecret();
-    return new ClientCredentials(
-        requestedClientId,
-        ClientAuthenticationType.client_secret_post,
-        clientSecret,
-        new ClientAuthenticationPublicKey(),
-        new ClientAssertionJwt(),
-        new ClientCertification());
+    return new ClientCredentials(requestedClientId, ClientAuthenticationType.client_secret_post, clientSecret, new ClientAuthenticationPublicKey(), new ClientAssertionJwt(), new ClientCertification());
   }
 
   void throwExceptionIfUnMatchClientSecret(BackchannelRequestContext context) {
@@ -44,16 +41,14 @@ class ClientSecretPostAuthenticator implements ClientAuthenticator {
     ClientSecret clientSecret = parameters.clientSecret();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
     if (!clientConfiguration.matchClientSecret(clientSecret.value())) {
-      throw new ClientUnAuthorizedException(
-          "client authentication type is client_secret_post, but request client_secret does not match client_secret");
+      throw new ClientUnAuthorizedException("client authentication type is client_secret_post, but request client_secret does not match client_secret");
     }
   }
 
   void throwExceptionIfNotContainsClientSecretPost(BackchannelRequestContext context) {
     BackchannelRequestParameters parameters = context.parameters();
     if (!parameters.hasClientSecret()) {
-      throw new ClientUnAuthorizedException(
-          "client authentication type is client_secret_post, but request does not contains client_secret_post");
+      throw new ClientUnAuthorizedException("client authentication type is client_secret_post, but request does not contains client_secret_post");
     }
   }
 }

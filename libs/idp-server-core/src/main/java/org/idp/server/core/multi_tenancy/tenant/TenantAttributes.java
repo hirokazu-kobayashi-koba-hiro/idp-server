@@ -11,8 +11,7 @@ public class TenantAttributes {
   Map<String, Object> values;
 
   public static TenantAttributes createDefaultType() {
-    return new TenantAttributes(
-        Map.of("authorization_protocol_provider", "idp_server", "database_type", "postgresql"));
+    return new TenantAttributes(Map.of("authorization_protocol_provider", "idp_server", "database_type", "postgresql"));
   }
 
   public TenantAttributes() {

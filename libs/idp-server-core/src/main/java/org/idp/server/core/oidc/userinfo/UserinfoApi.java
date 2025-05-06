@@ -6,9 +6,5 @@ import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
 
 public interface UserinfoApi {
 
-  UserinfoRequestResponse request(
-      TenantIdentifier tenantId,
-      String authorizationHeader,
-      String clientCert,
-      RequestAttributes requestAttributes);
+  UserinfoRequestResponse request(TenantIdentifier tenantId, String authorizationHeader, String clientCert, RequestAttributes requestAttributes);
 }

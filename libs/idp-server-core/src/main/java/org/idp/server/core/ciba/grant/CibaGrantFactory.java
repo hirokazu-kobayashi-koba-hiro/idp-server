@@ -24,11 +24,7 @@ public class CibaGrantFactory {
   User user;
   Authentication authentication;
 
-  public CibaGrantFactory(
-      CibaRequestContext context,
-      BackchannelAuthenticationResponse response,
-      User user,
-      Authentication authentication) {
+  public CibaGrantFactory(CibaRequestContext context, BackchannelAuthenticationResponse response, User user, Authentication authentication) {
     this.context = context;
     this.response = response;
     this.user = user;
@@ -37,19 +33,14 @@ public class CibaGrantFactory {
 
   public CibaGrant create() {
 
-    BackchannelAuthenticationRequestIdentifier identifier =
-        context.backchannelAuthenticationRequestIdentifier();
+    BackchannelAuthenticationRequestIdentifier identifier = context.backchannelAuthenticationRequestIdentifier();
     RequestedClientId requestedClientId = context.requestedClientId();
 
     TenantIdentifier tenantIdentifier = context.tenantIdentifier();
     Client client = context.client();
     Scopes scopes = context.scopes();
     // TODO authorization_details
-    AuthorizationGrantBuilder builder =
-        new AuthorizationGrantBuilder(tenantIdentifier, requestedClientId, scopes)
-            .add(client)
-            .add(user)
-            .add(authentication);
+    AuthorizationGrantBuilder builder = new AuthorizationGrantBuilder(tenantIdentifier, requestedClientId, scopes).add(client).add(user).add(authentication);
 
     if (user.hasCustomProperties()) {
       builder.add(user.customProperties());
@@ -61,12 +52,6 @@ public class CibaGrantFactory {
     ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(context.expiresIn().value()));
     Interval interval = context.interval();
 
-    return new CibaGrant(
-        identifier,
-        authorizationGrant,
-        authReqId,
-        expiredAt,
-        interval,
-        CibaGrantStatus.authorization_pending);
+    return new CibaGrant(identifier, authorizationGrant, authReqId, expiredAt, interval, CibaGrantStatus.authorization_pending);
   }
 }

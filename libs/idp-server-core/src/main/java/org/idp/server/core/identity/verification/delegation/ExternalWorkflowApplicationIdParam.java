@@ -18,7 +18,8 @@ public class ExternalWorkflowApplicationIdParam {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     ExternalWorkflowApplicationIdParam that = (ExternalWorkflowApplicationIdParam) o;
     return Objects.equals(value, that.value);
   }

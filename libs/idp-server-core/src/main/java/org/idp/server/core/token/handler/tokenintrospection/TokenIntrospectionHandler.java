@@ -35,8 +35,7 @@ public class TokenIntrospectionHandler {
       return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
     }
 
-    Map<String, Object> contents =
-        TokenIntrospectionContentsCreator.createSuccessContents(oAuthToken);
+    Map<String, Object> contents = TokenIntrospectionContentsCreator.createSuccessContents(oAuthToken);
     return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
   }
 

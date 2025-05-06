@@ -40,18 +40,15 @@ class ModelConverter {
     TenantIdentifier tenantIdentifier = new TenantIdentifier(stringMap.get("tenant_id"));
     TokenIssuer tokenIssuer = new TokenIssuer(stringMap.get("token_issuer"));
     TokenType tokenType = TokenType.valueOf(stringMap.get("token_type"));
-    AccessTokenEntity accessTokenEntity =
-        new AccessTokenEntity(decrypt(stringMap.get("encrypted_access_token"), aesCipher));
+    AccessTokenEntity accessTokenEntity = new AccessTokenEntity(decrypt(stringMap.get("encrypted_access_token"), aesCipher));
 
     User user;
-    if (Objects.nonNull(stringMap.get("user_payload"))
-        && !stringMap.get("user_payload").isEmpty()) {
+    if (Objects.nonNull(stringMap.get("user_payload")) && !stringMap.get("user_payload").isEmpty()) {
       user = jsonConverter.read(stringMap.get("user_payload"), User.class);
     } else {
       user = new User();
     }
-    Authentication authentication =
-        jsonConverter.read(stringMap.get("authentication"), Authentication.class);
+    Authentication authentication = jsonConverter.read(stringMap.get("authentication"), Authentication.class);
     RequestedClientId requestedClientId = new RequestedClientId(stringMap.get("client_id"));
     Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
     Scopes scopes = new Scopes(stringMap.get("scopes"));
@@ -59,51 +56,24 @@ class ModelConverter {
     GrantIdTokenClaims idTokenClaims = new GrantIdTokenClaims(stringMap.get("id_token_claims"));
     GrantUserinfoClaims userinfoClaims = new GrantUserinfoClaims(stringMap.get("userinfo_claims"));
 
-    AuthorizationDetails authorizationDetails =
-        convertAuthorizationDetails(stringMap.get("authorization_details"));
+    AuthorizationDetails authorizationDetails = convertAuthorizationDetails(stringMap.get("authorization_details"));
     ConsentClaims consentClaims = convertConsentClaims(stringMap.get("consent_claims"));
 
-    AuthorizationGrant authorizationGrant =
-        new AuthorizationGrant(
-            tenantIdentifier,
-            user,
-            authentication,
-            requestedClientId,
-            client,
-            scopes,
-            idTokenClaims,
-            userinfoClaims,
-            customProperties,
-            authorizationDetails,
-            consentClaims);
+    AuthorizationGrant authorizationGrant = new AuthorizationGrant(tenantIdentifier, user, authentication, requestedClientId, client, scopes, idTokenClaims, userinfoClaims, customProperties, authorizationDetails, consentClaims);
 
-    ClientCertificationThumbprint thumbprint =
-        new ClientCertificationThumbprint(stringMap.get("client_certification_thumbprint"));
+    ClientCertificationThumbprint thumbprint = new ClientCertificationThumbprint(stringMap.get("client_certification_thumbprint"));
     ExpiresIn expiresIn = new ExpiresIn(stringMap.get("expires_in"));
     ExpiredAt accessTokenExpiredAt = new ExpiredAt(stringMap.get("access_token_expired_at"));
     CreatedAt accessTokenCreatedAt = new CreatedAt(stringMap.get("access_token_created_at"));
 
     OAuthTokenBuilder oAuthTokenBuilder = new OAuthTokenBuilder(id);
 
-    AccessToken accessToken =
-        new AccessToken(
-            tenantIdentifier,
-            tokenIssuer,
-            tokenType,
-            accessTokenEntity,
-            authorizationGrant,
-            thumbprint,
-            accessTokenCreatedAt,
-            expiresIn,
-            accessTokenExpiredAt);
-    if (!Objects.nonNull(stringMap.get("encrypted_refresh_token"))
-        && !stringMap.get("refresh_token").equals("{}")) {
-      RefreshTokenEntity refreshTokenEntity =
-          new RefreshTokenEntity(decrypt(stringMap.get("encrypted_refresh_token"), aesCipher));
+    AccessToken accessToken = new AccessToken(tenantIdentifier, tokenIssuer, tokenType, accessTokenEntity, authorizationGrant, thumbprint, accessTokenCreatedAt, expiresIn, accessTokenExpiredAt);
+    if (!Objects.nonNull(stringMap.get("encrypted_refresh_token")) && !stringMap.get("refresh_token").equals("{}")) {
+      RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity(decrypt(stringMap.get("encrypted_refresh_token"), aesCipher));
       ExpiredAt refreshTokenExpiredAt = new ExpiredAt(stringMap.get("refresh_token_expired_at"));
       CreatedAt refreshTokenCreatedAt = new CreatedAt(stringMap.get("refresh_token_created_at"));
-      RefreshToken refreshToken =
-          new RefreshToken(refreshTokenEntity, refreshTokenCreatedAt, refreshTokenExpiredAt);
+      RefreshToken refreshToken = new RefreshToken(refreshTokenEntity, refreshTokenCreatedAt, refreshTokenExpiredAt);
       oAuthTokenBuilder.add(refreshToken);
     }
 
@@ -136,8 +106,7 @@ class ModelConverter {
       JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
       List list = jsonConverter.read(value, List.class);
       List<Map> details = (List<Map>) list;
-      List<AuthorizationDetail> authorizationDetailsList =
-          details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
+      List<AuthorizationDetail> authorizationDetailsList = details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
       return new AuthorizationDetails(authorizationDetailsList);
     } catch (Exception exception) {
       return new AuthorizationDetails();

@@ -21,40 +21,32 @@ public class OAuthAuthorizeErrorHandler {
     if (exception instanceof OAuthBadRequestException badRequestException) {
 
       log.warn(badRequestException.getMessage());
-      return new OAuthAuthorizeResponse(
-          OAuthAuthorizeStatus.BAD_REQUEST,
-          badRequestException.error().value(),
-          badRequestException.errorDescription().value());
+      return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.BAD_REQUEST, badRequestException.error().value(), badRequestException.errorDescription().value());
     }
 
     if (exception instanceof OAuthRedirectableBadRequestException redirectableBadRequestException) {
-      AuthorizationErrorResponseCreator authorizationErrorResponseCreator =
-          new AuthorizationErrorResponseCreator(redirectableBadRequestException);
+      AuthorizationErrorResponseCreator authorizationErrorResponseCreator = new AuthorizationErrorResponseCreator(redirectableBadRequestException);
       AuthorizationErrorResponse errorResponse = authorizationErrorResponseCreator.create();
       log.warn(redirectableBadRequestException.getMessage());
-      return new OAuthAuthorizeResponse(
-          OAuthAuthorizeStatus.REDIRECABLE_BAD_REQUEST, errorResponse);
+      return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.REDIRECABLE_BAD_REQUEST, errorResponse);
     }
     if (exception instanceof ClientConfigurationNotFoundException) {
       log.warn("not found configuration");
       log.warn(exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
-      return new OAuthAuthorizeResponse(
-          OAuthAuthorizeStatus.BAD_REQUEST, error.value(), errorDescription.value());
+      return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.BAD_REQUEST, error.value(), errorDescription.value());
     }
     if (exception instanceof ServerConfigurationNotFoundException) {
       log.warn("not found configuration");
       log.warn(exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
-      return new OAuthAuthorizeResponse(
-          OAuthAuthorizeStatus.BAD_REQUEST, error.value(), errorDescription.value());
+      return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.BAD_REQUEST, error.value(), errorDescription.value());
     }
     Error error = new Error("server_error");
     ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
     log.error(exception.getMessage(), exception);
-    return new OAuthAuthorizeResponse(
-        OAuthAuthorizeStatus.SERVER_ERROR, error.value(), errorDescription.value());
+    return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.SERVER_ERROR, error.value(), errorDescription.value());
   }
 }

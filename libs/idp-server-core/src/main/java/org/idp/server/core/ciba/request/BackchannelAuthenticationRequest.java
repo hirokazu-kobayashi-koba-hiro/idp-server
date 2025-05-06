@@ -31,22 +31,7 @@ public class BackchannelAuthenticationRequest {
   RequestObject requestObject;
   AuthorizationDetails authorizationDetails;
 
-  BackchannelAuthenticationRequest(
-      BackchannelAuthenticationRequestIdentifier identifier,
-      TenantIdentifier tenantIdentifier,
-      CibaProfile profile,
-      BackchannelTokenDeliveryMode deliveryMode,
-      Scopes scopes,
-      RequestedClientId requestedClientId,
-      IdTokenHint idTokenHint,
-      LoginHint loginHint,
-      LoginHintToken loginHintToken,
-      AcrValues acrValues,
-      UserCode userCode,
-      ClientNotificationToken clientNotificationToken,
-      BindingMessage bindingMessage,
-      RequestedExpiry requestedExpiry,
-      RequestObject requestObject,
+  BackchannelAuthenticationRequest(BackchannelAuthenticationRequestIdentifier identifier, TenantIdentifier tenantIdentifier, CibaProfile profile, BackchannelTokenDeliveryMode deliveryMode, Scopes scopes, RequestedClientId requestedClientId, IdTokenHint idTokenHint, LoginHint loginHint, LoginHintToken loginHintToken, AcrValues acrValues, UserCode userCode, ClientNotificationToken clientNotificationToken, BindingMessage bindingMessage, RequestedExpiry requestedExpiry, RequestObject requestObject,
       AuthorizationDetails authorizationDetails) {
     this.identifier = identifier;
     this.tenantIdentifier = tenantIdentifier;

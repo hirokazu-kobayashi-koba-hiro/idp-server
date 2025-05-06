@@ -16,8 +16,7 @@ public class X509SubjectAlternativeNames {
     this.values = values;
   }
 
-  public static X509SubjectAlternativeNames parse(X509Certificate x509Certificate)
-      throws X509CertInvalidException {
+  public static X509SubjectAlternativeNames parse(X509Certificate x509Certificate) throws X509CertInvalidException {
     try {
       Collection<List<?>> subjectAlternativeNames = x509Certificate.getSubjectAlternativeNames();
       if (Objects.isNull(subjectAlternativeNames) || subjectAlternativeNames.isEmpty()) {
@@ -25,8 +24,7 @@ public class X509SubjectAlternativeNames {
       }
       Map<X509SubjectAlternativeNameType, String> values = new HashMap<>();
       for (List<?> names : subjectAlternativeNames) {
-        X509SubjectAlternativeNameType type =
-            X509SubjectAlternativeNameType.of((Integer) names.get(0));
+        X509SubjectAlternativeNameType type = X509SubjectAlternativeNameType.of((Integer) names.get(0));
         String value = (String) names.get(1);
         values.put(type, value);
       }

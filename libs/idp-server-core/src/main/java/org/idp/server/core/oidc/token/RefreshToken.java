@@ -13,8 +13,7 @@ public class RefreshToken {
 
   public RefreshToken() {}
 
-  public RefreshToken(
-      RefreshTokenEntity refreshTokenEntity, CreatedAt createdAt, ExpiredAt expiredAt) {
+  public RefreshToken(RefreshTokenEntity refreshTokenEntity, CreatedAt createdAt, ExpiredAt expiredAt) {
     this.refreshTokenEntity = refreshTokenEntity;
     this.createdAt = createdAt;
     this.expiredAt = expiredAt;

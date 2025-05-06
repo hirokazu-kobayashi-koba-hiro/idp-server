@@ -13,8 +13,7 @@ public class BatchCredentialRequest implements AuthorizationHeaderHandlerable {
   Map<String, Object> params;
   String clientCert;
 
-  public BatchCredentialRequest(
-      Tenant tenant, String authorizationHeaders, Map<String, Object> params) {
+  public BatchCredentialRequest(Tenant tenant, String authorizationHeaders, Map<String, Object> params) {
     this.tenant = tenant;
     this.authorizationHeaders = authorizationHeaders;
     this.params = params;

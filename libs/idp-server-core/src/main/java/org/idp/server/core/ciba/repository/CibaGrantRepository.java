@@ -13,9 +13,7 @@ public interface CibaGrantRepository {
 
   CibaGrant find(Tenant tenant, AuthReqId authReqId);
 
-  CibaGrant get(
-      Tenant tenant,
-      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier);
+  CibaGrant get(Tenant tenant, BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier);
 
   void delete(Tenant tenant, CibaGrant cibaGrant);
 }

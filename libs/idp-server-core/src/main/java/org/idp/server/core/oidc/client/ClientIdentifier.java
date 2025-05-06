@@ -21,7 +21,8 @@ public class ClientIdentifier {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     ClientIdentifier that = (ClientIdentifier) o;
     return Objects.equals(value, that.value);
   }

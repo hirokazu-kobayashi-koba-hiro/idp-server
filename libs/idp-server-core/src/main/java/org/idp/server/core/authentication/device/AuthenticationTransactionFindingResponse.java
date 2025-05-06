@@ -7,8 +7,7 @@ public class AuthenticationTransactionFindingResponse {
   int statusCode;
   AuthenticationTransaction authenticationTransaction;
 
-  public static AuthenticationTransactionFindingResponse success(
-      AuthenticationTransaction authenticationTransaction) {
+  public static AuthenticationTransactionFindingResponse success(AuthenticationTransaction authenticationTransaction) {
     return new AuthenticationTransactionFindingResponse(200, authenticationTransaction);
   }
 
@@ -16,8 +15,7 @@ public class AuthenticationTransactionFindingResponse {
     return new AuthenticationTransactionFindingResponse(404, null);
   }
 
-  private AuthenticationTransactionFindingResponse(
-      int statusCode, AuthenticationTransaction authenticationTransaction) {
+  private AuthenticationTransactionFindingResponse(int statusCode, AuthenticationTransaction authenticationTransaction) {
     this.statusCode = statusCode;
     this.authenticationTransaction = authenticationTransaction;
   }

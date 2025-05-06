@@ -26,12 +26,7 @@ public class OAuthRequestHandler {
   ClientConfigurationRepository clientConfigurationRepository;
   AuthorizationGrantedRepository grantedRepository;
 
-  public OAuthRequestHandler(
-      AuthorizationRequestRepository authorizationRequestRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository,
-      RequestObjectGateway requestObjectGateway,
-      AuthorizationGrantedRepository grantedRepository) {
+  public OAuthRequestHandler(AuthorizationRequestRepository authorizationRequestRepository, ServerConfigurationRepository serverConfigurationRepository, ClientConfigurationRepository clientConfigurationRepository, RequestObjectGateway requestObjectGateway, AuthorizationGrantedRepository grantedRepository) {
     this.oAuthRequestContextCreators = new OAuthRequestContextCreators(requestObjectGateway);
     this.verifier = new OAuthRequestVerifier();
     this.authorizationRequestRepository = authorizationRequestRepository;
@@ -47,16 +42,12 @@ public class OAuthRequestHandler {
     validator.validate();
 
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, parameters.clientId());
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, parameters.clientId());
 
     OAuthRequestPattern oAuthRequestPattern = parameters.analyzePattern();
-    OAuthRequestContextCreator oAuthRequestContextCreator =
-        oAuthRequestContextCreators.get(oAuthRequestPattern);
+    OAuthRequestContextCreator oAuthRequestContextCreator = oAuthRequestContextCreators.get(oAuthRequestPattern);
 
-    OAuthRequestContext context =
-        oAuthRequestContextCreator.create(
-            tenant, parameters, serverConfiguration, clientConfiguration);
+    OAuthRequestContext context = oAuthRequestContextCreator.create(tenant, parameters, serverConfiguration, clientConfiguration);
     verifier.verify(context);
 
     authorizationRequestRepository.register(tenant, context.authorizationRequest());
@@ -66,8 +57,7 @@ public class OAuthRequestHandler {
     if (session.exists()) {
       context.setSession(session);
 
-      AuthorizationGranted authorizationGranted =
-          grantedRepository.find(tenant, parameters.clientId(), session.user());
+      AuthorizationGranted authorizationGranted = grantedRepository.find(tenant, parameters.clientId(), session.user());
       context.setAuthorizationGranted(authorizationGranted);
     }
 

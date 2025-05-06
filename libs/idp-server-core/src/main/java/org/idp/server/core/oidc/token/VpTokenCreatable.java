@@ -16,19 +16,10 @@ import org.idp.server.core.oidc.vp.response.VerifiablePresentationBuilder;
 
 public interface VpTokenCreatable extends Base64Codeable {
 
-  default VpToken createVpToken(
-      User user,
-      AuthorizationGrant authorizationGrant,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration,
-      ClientCredentials clientCredentials) {
+  default VpToken createVpToken(User user, AuthorizationGrant authorizationGrant, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration, ClientCredentials clientCredentials) {
     try {
 
-      VerifiablePresentationBuilder builder =
-          new VerifiablePresentationBuilder()
-              .addContext(VerifiableCredentialContext.values)
-              .addType(VerifiableCredentialType.vp.types())
-              .addVerifiableCredential(user.verifiableCredentials());
+      VerifiablePresentationBuilder builder = new VerifiablePresentationBuilder().addContext(VerifiableCredentialContext.values).addType(VerifiableCredentialType.vp.types()).addVerifiableCredential(user.verifiableCredentials());
 
       Map<String, Object> verifiablePresentation = builder.build();
       JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();

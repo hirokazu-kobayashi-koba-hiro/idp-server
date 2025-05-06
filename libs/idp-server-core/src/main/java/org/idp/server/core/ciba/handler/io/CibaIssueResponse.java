@@ -21,11 +21,7 @@ public class CibaIssueResponse {
   BackchannelAuthenticationErrorResponse errorResponse;
   ContentType contentType;
 
-  public CibaIssueResponse(
-      CibaRequestStatus status,
-      CibaRequestContext cibaRequestContext,
-      BackchannelAuthenticationResponse response,
-      User user) {
+  public CibaIssueResponse(CibaRequestStatus status, CibaRequestContext cibaRequestContext, BackchannelAuthenticationResponse response, User user) {
     this.status = status;
     this.cibaRequestContext = cibaRequestContext;
     this.request = cibaRequestContext.backchannelAuthenticationRequest();

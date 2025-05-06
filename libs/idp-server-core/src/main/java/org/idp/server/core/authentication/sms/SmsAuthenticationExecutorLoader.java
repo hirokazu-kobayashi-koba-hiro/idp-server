@@ -8,13 +8,11 @@ import org.idp.server.core.authentication.factory.AuthenticationDependencyContai
 
 public class SmsAuthenticationExecutorLoader {
 
-  private static final LoggerWrapper log =
-      LoggerWrapper.getLogger(SmsAuthenticationExecutorLoader.class);
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(SmsAuthenticationExecutorLoader.class);
 
   public static SmsAuthenticationExecutors load(AuthenticationDependencyContainer container) {
     Map<SmsAuthenticationType, SmsAuthenticationExecutor> executors = new HashMap<>();
-    ServiceLoader<SmsAuthenticationExecutorFactory> loader =
-        ServiceLoader.load(SmsAuthenticationExecutorFactory.class);
+    ServiceLoader<SmsAuthenticationExecutorFactory> loader = ServiceLoader.load(SmsAuthenticationExecutorFactory.class);
 
     for (SmsAuthenticationExecutorFactory factory : loader) {
       SmsAuthenticationExecutor executor = factory.create(container);

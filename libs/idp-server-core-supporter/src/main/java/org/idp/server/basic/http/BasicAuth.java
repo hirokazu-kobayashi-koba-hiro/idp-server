@@ -31,10 +31,10 @@ public class BasicAuth {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     BasicAuth basicAuth = (BasicAuth) o;
-    return Objects.equals(username, basicAuth.username)
-        && Objects.equals(password, basicAuth.password);
+    return Objects.equals(username, basicAuth.username) && Objects.equals(password, basicAuth.password);
   }
 
   @Override

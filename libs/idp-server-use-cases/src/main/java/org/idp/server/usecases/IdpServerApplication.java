@@ -98,309 +98,110 @@ public class IdpServerApplication {
   UserManagementApi userManagementApi;
   OperatorAuthenticationApi operatorAuthenticationApi;
 
-  public IdpServerApplication(
-      String adminTenantId,
-      DbConnectionProvider dbConnectionProvider,
-      String encryptionKey,
-      OAuthSessionDelegate oAuthSessionDelegate,
-      PasswordEncodeDelegation passwordEncodeDelegation,
-      PasswordVerificationDelegation passwordVerificationDelegation,
-      SecurityEventPublisher securityEventPublisher,
-      UserLifecycleEventPublisher userLifecycleEventPublisher) {
+  public IdpServerApplication(String adminTenantId, DbConnectionProvider dbConnectionProvider, String encryptionKey, OAuthSessionDelegate oAuthSessionDelegate, PasswordEncodeDelegation passwordEncodeDelegation, PasswordVerificationDelegation passwordVerificationDelegation, SecurityEventPublisher securityEventPublisher, UserLifecycleEventPublisher userLifecycleEventPublisher) {
 
     AdminTenantContext.configure(adminTenantId);
     TransactionManager.configure(dbConnectionProvider);
 
-    ApplicationComponentDependencyContainer dependencyContainer =
-        new ApplicationComponentDependencyContainer();
+    ApplicationComponentDependencyContainer dependencyContainer = new ApplicationComponentDependencyContainer();
     AesCipher aesCipher = new AesCipher(encryptionKey);
     HmacHasher hmacHasher = new HmacHasher(encryptionKey);
     dependencyContainer.register(AesCipher.class, aesCipher);
     dependencyContainer.register(HmacHasher.class, hmacHasher);
-    ApplicationComponentContainer applicationComponentContainer =
-        ApplicationComponentContainerLoader.load(dependencyContainer);
+    ApplicationComponentContainer applicationComponentContainer = ApplicationComponentContainerLoader.load(dependencyContainer);
     applicationComponentContainer.register(OAuthSessionDelegate.class, oAuthSessionDelegate);
 
-    ServerConfigurationRepository serverConfigurationRepository =
-        applicationComponentContainer.resolve(ServerConfigurationRepository.class);
-    ClientConfigurationRepository clientConfigurationRepository =
-        applicationComponentContainer.resolve(ClientConfigurationRepository.class);
-    SecurityEventCommandRepository securityEventCommandRepository =
-        applicationComponentContainer.resolve(SecurityEventCommandRepository.class);
-    SecurityEventHookResultCommandRepository securityEventHookResultCommandRepository =
-        applicationComponentContainer.resolve(SecurityEventHookResultCommandRepository.class);
-    UserCommandRepository userCommandRepository =
-        applicationComponentContainer.resolve(UserCommandRepository.class);
-    UserQueryRepository userQueryRepository =
-        applicationComponentContainer.resolve(UserQueryRepository.class);
-    OrganizationRepository organizationRepository =
-        applicationComponentContainer.resolve(OrganizationRepository.class);
-    TenantRepository tenantRepository =
-        applicationComponentContainer.resolve(TenantRepository.class);
-    AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository =
-        applicationComponentContainer.resolve(AuthenticationTransactionCommandRepository.class);
-    AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository =
-        applicationComponentContainer.resolve(AuthenticationTransactionQueryRepository.class);
-    IdentityVerificationConfigurationQueryRepository
-        identityVerificationConfigurationQueryRepository =
-            applicationComponentContainer.resolve(
-                IdentityVerificationConfigurationQueryRepository.class);
-    IdentityVerificationApplicationCommandRepository
-        identityVerificationApplicationCommandRepository =
-            applicationComponentContainer.resolve(
-                IdentityVerificationApplicationCommandRepository.class);
-    IdentityVerificationApplicationQueryRepository identityVerificationApplicationQueryRepository =
-        applicationComponentContainer.resolve(IdentityVerificationApplicationQueryRepository.class);
-    IdentityVerificationResultCommandRepository identityVerificationResultCommandRepository =
-        applicationComponentContainer.resolve(IdentityVerificationResultCommandRepository.class);
+    ServerConfigurationRepository serverConfigurationRepository = applicationComponentContainer.resolve(ServerConfigurationRepository.class);
+    ClientConfigurationRepository clientConfigurationRepository = applicationComponentContainer.resolve(ClientConfigurationRepository.class);
+    SecurityEventCommandRepository securityEventCommandRepository = applicationComponentContainer.resolve(SecurityEventCommandRepository.class);
+    SecurityEventHookResultCommandRepository securityEventHookResultCommandRepository = applicationComponentContainer.resolve(SecurityEventHookResultCommandRepository.class);
+    UserCommandRepository userCommandRepository = applicationComponentContainer.resolve(UserCommandRepository.class);
+    UserQueryRepository userQueryRepository = applicationComponentContainer.resolve(UserQueryRepository.class);
+    OrganizationRepository organizationRepository = applicationComponentContainer.resolve(OrganizationRepository.class);
+    TenantRepository tenantRepository = applicationComponentContainer.resolve(TenantRepository.class);
+    AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository = applicationComponentContainer.resolve(AuthenticationTransactionCommandRepository.class);
+    AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository = applicationComponentContainer.resolve(AuthenticationTransactionQueryRepository.class);
+    IdentityVerificationConfigurationQueryRepository identityVerificationConfigurationQueryRepository = applicationComponentContainer.resolve(IdentityVerificationConfigurationQueryRepository.class);
+    IdentityVerificationApplicationCommandRepository identityVerificationApplicationCommandRepository = applicationComponentContainer.resolve(IdentityVerificationApplicationCommandRepository.class);
+    IdentityVerificationApplicationQueryRepository identityVerificationApplicationQueryRepository = applicationComponentContainer.resolve(IdentityVerificationApplicationQueryRepository.class);
+    IdentityVerificationResultCommandRepository identityVerificationResultCommandRepository = applicationComponentContainer.resolve(IdentityVerificationResultCommandRepository.class);
 
-    RoleCommandRepository roleCommandRepository =
-        applicationComponentContainer.resolve(RoleCommandRepository.class);
-    PermissionCommandRepository permissionCommandRepository =
-        applicationComponentContainer.resolve(PermissionCommandRepository.class);
-    SecurityEventHookConfigurationQueryRepository hookQueryRepository =
-        applicationComponentContainer.resolve(SecurityEventHookConfigurationQueryRepository.class);
-    UserLifecycleEventResultCommandRepository userLifecycleEventResultCommandRepository =
-        applicationComponentContainer.resolve(UserLifecycleEventResultCommandRepository.class);
+    RoleCommandRepository roleCommandRepository = applicationComponentContainer.resolve(RoleCommandRepository.class);
+    PermissionCommandRepository permissionCommandRepository = applicationComponentContainer.resolve(PermissionCommandRepository.class);
+    SecurityEventHookConfigurationQueryRepository hookQueryRepository = applicationComponentContainer.resolve(SecurityEventHookConfigurationQueryRepository.class);
+    UserLifecycleEventResultCommandRepository userLifecycleEventResultCommandRepository = applicationComponentContainer.resolve(UserLifecycleEventResultCommandRepository.class);
 
-    applicationComponentContainer.register(
-        PasswordCredentialsGrantDelegate.class,
-        new UserPasswordAuthenticator(userQueryRepository, passwordVerificationDelegation));
+    applicationComponentContainer.register(PasswordCredentialsGrantDelegate.class, new UserPasswordAuthenticator(userQueryRepository, passwordVerificationDelegation));
 
-    ProtocolContainer protocolContainer =
-        ProtocolContainerLoader.load(applicationComponentContainer);
+    ProtocolContainer protocolContainer = ProtocolContainerLoader.load(applicationComponentContainer);
 
     SecurityEventHooks securityEventHooks = SecurityEventHooksLoader.load();
 
     // create mfa instance
-    AuthenticationDependencyContainer authenticationDependencyContainer =
-        AuthenticationDependencyContainerLoader.load();
-    authenticationDependencyContainer.register(
-        PasswordEncodeDelegation.class, passwordEncodeDelegation);
-    authenticationDependencyContainer.register(
-        PasswordVerificationDelegation.class, passwordVerificationDelegation);
+    AuthenticationDependencyContainer authenticationDependencyContainer = AuthenticationDependencyContainerLoader.load();
+    authenticationDependencyContainer.register(PasswordEncodeDelegation.class, passwordEncodeDelegation);
+    authenticationDependencyContainer.register(PasswordVerificationDelegation.class, passwordVerificationDelegation);
     EmailSenders emailSenders = EmailSenderLoader.load();
     authenticationDependencyContainer.register(EmailSenders.class, emailSenders);
-    WebAuthnExecutors webAuthnExecutors =
-        WebAuthnExecutorLoader.load(authenticationDependencyContainer);
+    WebAuthnExecutors webAuthnExecutors = WebAuthnExecutorLoader.load(authenticationDependencyContainer);
     authenticationDependencyContainer.register(WebAuthnExecutors.class, webAuthnExecutors);
-    AuthenticationDeviceNotifiers authenticationDeviceNotifiers =
-        AuthenticationDeviceNotifiersLoader.load();
-    authenticationDependencyContainer.register(
-        AuthenticationDeviceNotifiers.class, authenticationDeviceNotifiers);
+    AuthenticationDeviceNotifiers authenticationDeviceNotifiers = AuthenticationDeviceNotifiersLoader.load();
+    authenticationDependencyContainer.register(AuthenticationDeviceNotifiers.class, authenticationDeviceNotifiers);
 
-    FidoUafExecutors fidoUafExecutors =
-        FidoUafExecutorLoader.load(authenticationDependencyContainer);
+    FidoUafExecutors fidoUafExecutors = FidoUafExecutorLoader.load(authenticationDependencyContainer);
     authenticationDependencyContainer.register(FidoUafExecutors.class, fidoUafExecutors);
 
-    SmsAuthenticationExecutors smsAuthenticationExecutors =
-        SmsAuthenticationExecutorLoader.load(authenticationDependencyContainer);
-    authenticationDependencyContainer.register(
-        SmsAuthenticationExecutors.class, smsAuthenticationExecutors);
+    SmsAuthenticationExecutors smsAuthenticationExecutors = SmsAuthenticationExecutorLoader.load(authenticationDependencyContainer);
+    authenticationDependencyContainer.register(SmsAuthenticationExecutors.class, smsAuthenticationExecutors);
 
-    AuthenticationInteractors authenticationInteractors =
-        AuthenticationInteractorLoader.load(authenticationDependencyContainer);
+    AuthenticationInteractors authenticationInteractors = AuthenticationInteractorLoader.load(authenticationDependencyContainer);
 
-    UserLifecycleEventExecutorsMap userLifecycleEventExecutorsMap =
-        UserLifecycleEventExecutorLoader.load(
-            applicationComponentContainer, authenticationDependencyContainer);
+    UserLifecycleEventExecutorsMap userLifecycleEventExecutorsMap = UserLifecycleEventExecutorLoader.load(applicationComponentContainer, authenticationDependencyContainer);
 
     TenantDialectProvider tenantDialectProvider = new TenantDialectProvider(tenantRepository);
 
-    this.idpServerStarterApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new IdpServerStarterEntryService(
-                organizationRepository,
-                tenantRepository,
-                userQueryRepository,
-                permissionCommandRepository,
-                roleCommandRepository,
-                serverConfigurationRepository,
-                passwordEncodeDelegation),
-            IdpServerStarterApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.idpServerStarterApi = TenantAwareEntryServiceProxy.createProxy(new IdpServerStarterEntryService(organizationRepository, tenantRepository, userQueryRepository, permissionCommandRepository, roleCommandRepository, serverConfigurationRepository, passwordEncodeDelegation), IdpServerStarterApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    OAuthFlowEventPublisher oAuthFLowEventPublisher =
-        new OAuthFlowEventPublisher(securityEventPublisher);
-    CibaFlowEventPublisher cibaFlowEventPublisher =
-        new CibaFlowEventPublisher(securityEventPublisher);
+    OAuthFlowEventPublisher oAuthFLowEventPublisher = new OAuthFlowEventPublisher(securityEventPublisher);
+    CibaFlowEventPublisher cibaFlowEventPublisher = new CibaFlowEventPublisher(securityEventPublisher);
     TokenEventPublisher tokenEventPublisher = new TokenEventPublisher(securityEventPublisher);
 
     OidcSsoExecutors oidcSsoExecutors = OidcSsoExecutorLoader.load();
-    FederationDependencyContainer federationDependencyContainer =
-        FederationDependencyContainerLoader.load();
+    FederationDependencyContainer federationDependencyContainer = FederationDependencyContainerLoader.load();
     federationDependencyContainer.register(OidcSsoExecutors.class, oidcSsoExecutors);
-    FederationInteractors federationInteractors =
-        FederationInteractorLoader.load(federationDependencyContainer);
+    FederationInteractors federationInteractors = FederationInteractorLoader.load(federationDependencyContainer);
 
-    this.oAuthFlowApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new OAuthFlowEntryService(
-                new OAuthProtocols(protocolContainer.resolveAll(OAuthProtocol.class)),
-                oAuthSessionDelegate,
-                authenticationInteractors,
-                federationInteractors,
-                userQueryRepository,
-                tenantRepository,
-                authenticationTransactionCommandRepository,
-                authenticationTransactionQueryRepository,
-                oAuthFLowEventPublisher),
-            OAuthFlowApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.oAuthFlowApi = TenantAwareEntryServiceProxy.createProxy(new OAuthFlowEntryService(new OAuthProtocols(protocolContainer.resolveAll(OAuthProtocol.class)), oAuthSessionDelegate, authenticationInteractors, federationInteractors, userQueryRepository, tenantRepository, authenticationTransactionCommandRepository, authenticationTransactionQueryRepository, oAuthFLowEventPublisher), OAuthFlowApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.tokenApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new TokenEntryService(
-                new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
-                userQueryRepository,
-                tenantRepository,
-                tokenEventPublisher),
-            TokenApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.tokenApi = TenantAwareEntryServiceProxy.createProxy(new TokenEntryService(new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)), userQueryRepository, tenantRepository, tokenEventPublisher), TokenApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.oidcMetaDataApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new OidcMetaDataEntryService(
-                tenantRepository,
-                new DiscoveryProtocols(protocolContainer.resolveAll(DiscoveryProtocol.class))),
-            OidcMetaDataApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.oidcMetaDataApi = TenantAwareEntryServiceProxy.createProxy(new OidcMetaDataEntryService(tenantRepository, new DiscoveryProtocols(protocolContainer.resolveAll(DiscoveryProtocol.class))), OidcMetaDataApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.userinfoApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new UserinfoEntryService(
-                new UserinfoProtocols(protocolContainer.resolveAll(UserinfoProtocol.class)),
-                userQueryRepository,
-                tenantRepository,
-                tokenEventPublisher),
-            UserinfoApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.userinfoApi = TenantAwareEntryServiceProxy.createProxy(new UserinfoEntryService(new UserinfoProtocols(protocolContainer.resolveAll(UserinfoProtocol.class)), userQueryRepository, tenantRepository, tokenEventPublisher), UserinfoApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.cibaFlowApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new CibaFlowEntryService(
-                new CibaProtocols(protocolContainer.resolveAll(CibaProtocol.class)),
-                authenticationInteractors,
-                userQueryRepository,
-                tenantRepository,
-                authenticationTransactionCommandRepository,
-                authenticationTransactionQueryRepository,
-                cibaFlowEventPublisher),
-            CibaFlowApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.cibaFlowApi = TenantAwareEntryServiceProxy.createProxy(new CibaFlowEntryService(new CibaProtocols(protocolContainer.resolveAll(CibaProtocol.class)), authenticationInteractors, userQueryRepository, tenantRepository, authenticationTransactionCommandRepository, authenticationTransactionQueryRepository, cibaFlowEventPublisher), CibaFlowApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.authenticationMetaDataApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new AuthenticationMetaDataEntryService(
-                authenticationDependencyContainer.resolve(
-                    AuthenticationConfigurationQueryRepository.class),
-                fidoUafExecutors,
-                tenantRepository),
-            AuthenticationMetaDataApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.authenticationMetaDataApi = TenantAwareEntryServiceProxy.createProxy(new AuthenticationMetaDataEntryService(authenticationDependencyContainer.resolve(AuthenticationConfigurationQueryRepository.class), fidoUafExecutors, tenantRepository), AuthenticationMetaDataApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.authenticationDeviceApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new AuthenticationDeviceEntryService(
-                tenantRepository, authenticationTransactionQueryRepository),
-            AuthenticationDeviceApi.class,
-            OperationType.READ,
-            tenantDialectProvider);
+    this.authenticationDeviceApi = TenantAwareEntryServiceProxy.createProxy(new AuthenticationDeviceEntryService(tenantRepository, authenticationTransactionQueryRepository), AuthenticationDeviceApi.class, OperationType.READ, tenantDialectProvider);
 
-    this.identityVerificationApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new IdentityVerificationEntryService(
-                identityVerificationConfigurationQueryRepository,
-                identityVerificationApplicationCommandRepository,
-                identityVerificationApplicationQueryRepository,
-                identityVerificationResultCommandRepository,
-                tenantRepository,
-                userQueryRepository,
-                tokenEventPublisher),
-            IdentityVerificationApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.identityVerificationApi = TenantAwareEntryServiceProxy.createProxy(new IdentityVerificationEntryService(identityVerificationConfigurationQueryRepository, identityVerificationApplicationCommandRepository, identityVerificationApplicationQueryRepository, identityVerificationResultCommandRepository, tenantRepository, userQueryRepository, tokenEventPublisher), IdentityVerificationApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.securityEventApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new SecurityEventEntryService(
-                securityEventHooks,
-                securityEventCommandRepository,
-                securityEventHookResultCommandRepository,
-                hookQueryRepository,
-                tenantRepository),
-            SecurityEventApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.securityEventApi = TenantAwareEntryServiceProxy.createProxy(new SecurityEventEntryService(securityEventHooks, securityEventCommandRepository, securityEventHookResultCommandRepository, hookQueryRepository, tenantRepository), SecurityEventApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.userApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new UserEntryService(
-                userCommandRepository,
-                tenantRepository,
-                tokenEventPublisher,
-                userLifecycleEventPublisher),
-            UserApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.userApi = TenantAwareEntryServiceProxy.createProxy(new UserEntryService(userCommandRepository, tenantRepository, tokenEventPublisher, userLifecycleEventPublisher), UserApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.userLifecycleEventApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new UserLifecycleEventEntryService(
-                userLifecycleEventExecutorsMap, userLifecycleEventResultCommandRepository),
-            UserLifecycleEventApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.userLifecycleEventApi = TenantAwareEntryServiceProxy.createProxy(new UserLifecycleEventEntryService(userLifecycleEventExecutorsMap, userLifecycleEventResultCommandRepository), UserLifecycleEventApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.onboardingApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new OnboardingEntryService(
-                tenantRepository,
-                organizationRepository,
-                userQueryRepository,
-                serverConfigurationRepository),
-            OnboardingApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.onboardingApi = TenantAwareEntryServiceProxy.createProxy(new OnboardingEntryService(tenantRepository, organizationRepository, userQueryRepository, serverConfigurationRepository), OnboardingApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.serverManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new ServerManagementEntryService(tenantRepository, serverConfigurationRepository),
-            ServerManagementApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.serverManagementApi = TenantAwareEntryServiceProxy.createProxy(new ServerManagementEntryService(tenantRepository, serverConfigurationRepository), ServerManagementApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.clientManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new ClientManagementEntryService(
-                tenantRepository, new ClientConfigurationHandler(clientConfigurationRepository)),
-            ClientManagementApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.clientManagementApi = TenantAwareEntryServiceProxy.createProxy(new ClientManagementEntryService(tenantRepository, new ClientConfigurationHandler(clientConfigurationRepository)), ClientManagementApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.userManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new UserManagementEntryService(tenantRepository, userQueryRepository),
-            UserManagementApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.userManagementApi = TenantAwareEntryServiceProxy.createProxy(new UserManagementEntryService(tenantRepository, userQueryRepository), UserManagementApi.class, OperationType.WRITE, tenantDialectProvider);
 
-    this.operatorAuthenticationApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new OperatorAuthenticationEntryService(
-                new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
-                tenantRepository,
-                userQueryRepository),
-            OperatorAuthenticationApi.class,
-            OperationType.WRITE,
-            tenantDialectProvider);
+    this.operatorAuthenticationApi = TenantAwareEntryServiceProxy.createProxy(new OperatorAuthenticationEntryService(new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)), tenantRepository, userQueryRepository), OperatorAuthenticationApi.class, OperationType.WRITE, tenantDialectProvider);
   }
 
   public OAuthFlowApi oAuthFlowApi() {

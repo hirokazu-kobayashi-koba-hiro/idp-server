@@ -13,11 +13,7 @@ public class OAuthAuthorizeRequestValidator {
   Authentication authentication;
   CustomProperties customProperties;
 
-  public OAuthAuthorizeRequestValidator(
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      User user,
-      Authentication authentication,
-      CustomProperties customProperties) {
+  public OAuthAuthorizeRequestValidator(AuthorizationRequestIdentifier authorizationRequestIdentifier, User user, Authentication authentication, CustomProperties customProperties) {
     this.authorizationRequestIdentifier = authorizationRequestIdentifier;
     this.user = user;
     this.authentication = authentication;
@@ -29,10 +25,8 @@ public class OAuthAuthorizeRequestValidator {
   }
 
   void throwExceptionIfNotRequiredParameters() {
-    if (Objects.isNull(authorizationRequestIdentifier)
-        || !authorizationRequestIdentifier.exists()) {
-      throw new OAuthBadRequestException(
-          "invalid_request", "authorizationRequestIdentifier is required");
+    if (Objects.isNull(authorizationRequestIdentifier) || !authorizationRequestIdentifier.exists()) {
+      throw new OAuthBadRequestException("invalid_request", "authorizationRequestIdentifier is required");
     }
     if (Objects.isNull(user) || !user.exists()) {
       throw new OAuthBadRequestException("invalid_request", "user is required");

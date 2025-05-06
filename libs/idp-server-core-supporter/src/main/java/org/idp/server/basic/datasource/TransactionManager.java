@@ -39,7 +39,8 @@ public class TransactionManager {
 
   public static void commitTransaction() {
     Connection conn = connectionHolder.get();
-    if (conn == null) return;
+    if (conn == null)
+      return;
     try {
       conn.commit();
     } catch (SQLException e) {
@@ -51,7 +52,8 @@ public class TransactionManager {
 
   public static void rollbackTransaction() {
     Connection conn = connectionHolder.get();
-    if (conn == null) return;
+    if (conn == null)
+      return;
     try {
       conn.rollback();
     } catch (SQLException e) {

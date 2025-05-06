@@ -9,8 +9,7 @@ public class TokenRevocationResponse {
   OAuthToken oAuthToken;
   Map<String, Object> response;
 
-  public TokenRevocationResponse(
-      TokenRevocationRequestStatus status, OAuthToken oAuthToken, Map<String, Object> contents) {
+  public TokenRevocationResponse(TokenRevocationRequestStatus status, OAuthToken oAuthToken, Map<String, Object> contents) {
     this.status = status;
     this.oAuthToken = oAuthToken;
     this.response = contents;

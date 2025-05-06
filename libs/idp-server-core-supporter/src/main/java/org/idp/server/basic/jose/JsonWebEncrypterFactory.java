@@ -26,8 +26,7 @@ public class JsonWebEncrypterFactory {
         return new RSAEncrypter((RSAPublicKey) jsonWebKey.toPublicKey());
       }
       default -> {
-        throw new UnSupportedException(
-            String.format("unsupported encryption alg (%s)", jsonWebKeyType.name()));
+        throw new UnSupportedException(String.format("unsupported encryption alg (%s)", jsonWebKeyType.name()));
       }
     }
   }

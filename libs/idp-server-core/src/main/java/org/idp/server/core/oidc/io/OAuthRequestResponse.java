@@ -31,8 +31,7 @@ public class OAuthRequestResponse {
 
   public OAuthRequestResponse() {}
 
-  public OAuthRequestResponse(
-      OAuthRequestStatus status, OAuthRequestContext context, OAuthSession session) {
+  public OAuthRequestResponse(OAuthRequestStatus status, OAuthRequestContext context, OAuthSession session) {
     this.status = status;
     this.authorizationRequest = context.authorizationRequest();
     this.serverConfiguration = context.serverConfiguration();
@@ -42,8 +41,7 @@ public class OAuthRequestResponse {
     this.sessionKey = context.sessionKeyValue();
   }
 
-  public OAuthRequestResponse(
-      OAuthRequestStatus status, Error error, ErrorDescription errorDescription) {
+  public OAuthRequestResponse(OAuthRequestStatus status, Error error, ErrorDescription errorDescription) {
     this.status = status;
     this.error = error.value();
     this.errorDescription = errorDescription.value();

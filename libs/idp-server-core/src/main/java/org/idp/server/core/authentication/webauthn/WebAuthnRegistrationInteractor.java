@@ -17,45 +17,24 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
   AuthenticationConfigurationQueryRepository configurationRepository;
   WebAuthnExecutors webAuthnExecutors;
 
-  public WebAuthnRegistrationInteractor(
-      AuthenticationConfigurationQueryRepository configurationRepository,
-      WebAuthnExecutors webAuthnExecutors) {
+  public WebAuthnRegistrationInteractor(AuthenticationConfigurationQueryRepository configurationRepository, WebAuthnExecutors webAuthnExecutors) {
     this.configurationRepository = configurationRepository;
     this.webAuthnExecutors = webAuthnExecutors;
   }
 
   @Override
-  public AuthenticationInteractionRequestResult interact(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
-      UserQueryRepository userQueryRepository) {
+  public AuthenticationInteractionRequestResult interact(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, AuthenticationInteractionType type, AuthenticationInteractionRequest request, AuthenticationTransaction transaction, UserQueryRepository userQueryRepository) {
 
     String userId = transaction.user().sub();
-    WebAuthnConfiguration configuration =
-        configurationRepository.get(tenant, "webauthn", WebAuthnConfiguration.class);
+    WebAuthnConfiguration configuration = configurationRepository.get(tenant, "webauthn", WebAuthnConfiguration.class);
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
-    WebAuthnVerificationResult webAuthnVerificationResult =
-        webAuthnExecutor.verifyRegistration(
-            tenant, authorizationIdentifier, userId, request, configuration);
+    WebAuthnVerificationResult webAuthnVerificationResult = webAuthnExecutor.verifyRegistration(tenant, authorizationIdentifier, userId, request, configuration);
 
     Map<String, Object> response = new HashMap<>();
     response.put("registration", webAuthnVerificationResult.toMap());
 
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("hwk")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
+    Authentication authentication = new Authentication().setTime(SystemDateTime.now()).addMethods(new ArrayList<>(List.of("hwk"))).addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
-    return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.SUCCESS,
-        type,
-        transaction.user(),
-        authentication,
-        response,
-        DefaultSecurityEventType.webauthn_registration_success);
+    return new AuthenticationInteractionRequestResult(AuthenticationInteractionStatus.SUCCESS, type, transaction.user(), authentication, response, DefaultSecurityEventType.webauthn_registration_success);
   }
 }

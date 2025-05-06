@@ -10,10 +10,7 @@ public class RequestObjectValidator {
   ServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
 
-  public RequestObjectValidator(
-      OAuthRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public RequestObjectValidator(OAuthRequestParameters parameters, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     this.parameters = parameters;
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;

@@ -19,46 +19,31 @@ public class SecurityEventHandler {
 
   LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHandler.class);
 
-  public SecurityEventHandler(
-      SecurityEventHooks securityEventHooks,
-      SecurityEventCommandRepository securityEventCommandRepository,
-      SecurityEventHookResultCommandRepository resultsCommandRepository,
-      SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository) {
+  public SecurityEventHandler(SecurityEventHooks securityEventHooks, SecurityEventCommandRepository securityEventCommandRepository, SecurityEventHookResultCommandRepository resultsCommandRepository, SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository) {
     this.securityEventHooks = securityEventHooks;
     this.securityEventCommandRepository = securityEventCommandRepository;
     this.resultsCommandRepository = resultsCommandRepository;
-    this.securityEventHookConfigurationQueryRepository =
-        securityEventHookConfigurationQueryRepository;
+    this.securityEventHookConfigurationQueryRepository = securityEventHookConfigurationQueryRepository;
   }
 
   public void handle(Tenant tenant, SecurityEvent securityEvent) {
 
     securityEventCommandRepository.register(tenant, securityEvent);
 
-    SecurityEventHookConfigurations securityEventHookConfigurations =
-        securityEventHookConfigurationQueryRepository.find(tenant);
+    SecurityEventHookConfigurations securityEventHookConfigurations = securityEventHookConfigurationQueryRepository.find(tenant);
 
     List<SecurityEventHookResult> results = new ArrayList<>();
     for (SecurityEventHookConfiguration hookConfiguration : securityEventHookConfigurations) {
 
-      SecurityEventHookExecutor securityEventHookExecutor =
-          securityEventHooks.get(hookConfiguration.hookType());
+      SecurityEventHookExecutor securityEventHookExecutor = securityEventHooks.get(hookConfiguration.hookType());
 
       if (securityEventHookExecutor.shouldNotExecute(tenant, securityEvent, hookConfiguration)) {
         return;
       }
 
-      log.info(
-          String.format(
-              "security event hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
-              securityEvent.type().value(),
-              hookConfiguration.hookType().name(),
-              securityEvent.tenantIdentifierValue(),
-              securityEvent.clientIdentifierValue(),
-              securityEvent.userSub()));
+      log.info(String.format("security event hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ", securityEvent.type().value(), hookConfiguration.hookType().name(), securityEvent.tenantIdentifierValue(), securityEvent.clientIdentifierValue(), securityEvent.userSub()));
 
-      SecurityEventHookResult hookResult =
-          securityEventHookExecutor.execute(tenant, securityEvent, hookConfiguration);
+      SecurityEventHookResult hookResult = securityEventHookExecutor.execute(tenant, securityEvent, hookConfiguration);
       results.add(hookResult);
     }
 

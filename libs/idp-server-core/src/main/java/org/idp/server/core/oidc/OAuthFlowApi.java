@@ -17,54 +17,21 @@ import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
 public interface OAuthFlowApi {
-  Pairs<Tenant, OAuthRequestResponse> request(
-      TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      RequestAttributes requestAttributes);
+  Pairs<Tenant, OAuthRequestResponse> request(TenantIdentifier tenantIdentifier, Map<String, String[]> params, RequestAttributes requestAttributes);
 
-  OAuthViewDataResponse getViewData(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      RequestAttributes requestAttributes);
+  OAuthViewDataResponse getViewData(TenantIdentifier tenantIdentifier, AuthorizationRequestIdentifier authorizationRequestIdentifier, RequestAttributes requestAttributes);
 
-  AuthenticationInteractionRequestResult interact(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      RequestAttributes requestAttributes);
+  AuthenticationInteractionRequestResult interact(TenantIdentifier tenantIdentifier, AuthorizationRequestIdentifier authorizationRequestIdentifier, AuthenticationInteractionType type, AuthenticationInteractionRequest request, RequestAttributes requestAttributes);
 
-  FederationRequestResponse requestFederation(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      FederationType federationType,
-      SsoProvider ssoProvider,
-      RequestAttributes requestAttributes);
+  FederationRequestResponse requestFederation(TenantIdentifier tenantIdentifier, AuthorizationRequestIdentifier authorizationRequestIdentifier, FederationType federationType, SsoProvider ssoProvider, RequestAttributes requestAttributes);
 
-  FederationInteractionResult callbackFederation(
-      TenantIdentifier tenantIdentifier,
-      FederationType federationType,
-      SsoProvider ssoProvider,
-      FederationCallbackRequest callbackRequest,
-      RequestAttributes requestAttributes);
+  FederationInteractionResult callbackFederation(TenantIdentifier tenantIdentifier, FederationType federationType, SsoProvider ssoProvider, FederationCallbackRequest callbackRequest, RequestAttributes requestAttributes);
 
-  OAuthAuthorizeResponse authorize(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      RequestAttributes requestAttributes);
+  OAuthAuthorizeResponse authorize(TenantIdentifier tenantIdentifier, AuthorizationRequestIdentifier authorizationRequestIdentifier, RequestAttributes requestAttributes);
 
-  OAuthAuthorizeResponse authorizeWithSession(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      RequestAttributes requestAttributes);
+  OAuthAuthorizeResponse authorizeWithSession(TenantIdentifier tenantIdentifier, AuthorizationRequestIdentifier authorizationRequestIdentifier, RequestAttributes requestAttributes);
 
-  OAuthDenyResponse deny(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      RequestAttributes requestAttributes);
+  OAuthDenyResponse deny(TenantIdentifier tenantIdentifier, AuthorizationRequestIdentifier authorizationRequestIdentifier, RequestAttributes requestAttributes);
 
-  OAuthLogoutResponse logout(
-      TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      RequestAttributes requestAttributes);
+  OAuthLogoutResponse logout(TenantIdentifier tenantIdentifier, Map<String, String[]> params, RequestAttributes requestAttributes);
 }

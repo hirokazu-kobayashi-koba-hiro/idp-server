@@ -18,10 +18,7 @@ public class HikariConnectionProvider implements DbConnectionProvider {
 
   public Connection getConnection(DatabaseType databaseType) {
     OperationType type = OperationContext.get();
-    HikariDataSource hikariDataSource =
-        (type == OperationType.READ)
-            ? readerConfigs.get(databaseType)
-            : writerConfigs.get(databaseType);
+    HikariDataSource hikariDataSource = (type == OperationType.READ) ? readerConfigs.get(databaseType) : writerConfigs.get(databaseType);
     try {
       Connection connection = hikariDataSource.getConnection();
       connection.setAutoCommit(false);

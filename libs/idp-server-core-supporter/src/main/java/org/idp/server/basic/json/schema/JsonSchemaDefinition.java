@@ -15,9 +15,7 @@ public class JsonSchemaDefinition {
     if (!definition.contains("required")) {
       return List.of();
     }
-    return definition.getValueAsJsonNodeList("required").stream()
-        .map(JsonNodeWrapper::asText)
-        .toList();
+    return definition.getValueAsJsonNodeList("required").stream().map(JsonNodeWrapper::asText).toList();
   }
 
   public JsonNodeWrapper getField(String fieldName) {
@@ -28,14 +26,10 @@ public class JsonSchemaDefinition {
     JsonNodeWrapper jsonNodeWrapper = definition.getValueAsJsonNode("properties");
     Map<String, JsonSchemaProperty> properties = new HashMap<>();
 
-    jsonNodeWrapper
-        .fieldNames()
-        .forEachRemaining(
-            fieldName -> {
-              JsonSchemaProperty jsonSchemaProperty =
-                  new JsonSchemaProperty(jsonNodeWrapper.getValueAsJsonNode(fieldName));
-              properties.put(fieldName, jsonSchemaProperty);
-            });
+    jsonNodeWrapper.fieldNames().forEachRemaining(fieldName -> {
+      JsonSchemaProperty jsonSchemaProperty = new JsonSchemaProperty(jsonNodeWrapper.getValueAsJsonNode(fieldName));
+      properties.put(fieldName, jsonSchemaProperty);
+    });
 
     return properties;
   }
@@ -45,8 +39,7 @@ public class JsonSchemaDefinition {
   }
 
   public JsonSchemaProperty propertySchema(String fieldName) {
-    return new JsonSchemaProperty(
-        definition.getValueAsJsonNode("properties").getValueAsJsonNode(fieldName));
+    return new JsonSchemaProperty(definition.getValueAsJsonNode("properties").getValueAsJsonNode(fieldName));
   }
 
   public Iterator<String> propertyNames() {

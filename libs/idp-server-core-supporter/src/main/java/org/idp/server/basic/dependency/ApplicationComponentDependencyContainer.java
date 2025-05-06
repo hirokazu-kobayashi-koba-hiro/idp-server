@@ -17,8 +17,7 @@ public class ApplicationComponentDependencyContainer {
 
   public <T> T resolve(Class<T> type) {
     if (!dependencies.containsKey(type)) {
-      throw new ApplicationComponentDependencyMissionException(
-          "Missing dependency for type: " + type.getName());
+      throw new ApplicationComponentDependencyMissionException("Missing dependency for type: " + type.getName());
     }
     return type.cast(dependencies.get(type));
   }

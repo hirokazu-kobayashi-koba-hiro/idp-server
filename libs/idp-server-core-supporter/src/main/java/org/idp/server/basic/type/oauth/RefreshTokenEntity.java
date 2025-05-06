@@ -17,8 +17,10 @@ public class RefreshTokenEntity {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
     RefreshTokenEntity that = (RefreshTokenEntity) o;
     return Objects.equals(value, that.value);
   }

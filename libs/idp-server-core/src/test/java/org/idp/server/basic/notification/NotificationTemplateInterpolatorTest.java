@@ -13,8 +13,7 @@ public class NotificationTemplateInterpolatorTest {
     String template = "Hi, ${name}!";
     Map<String, Object> context = Map.of("name", "jack");
 
-    NotificationTemplateInterpolator interpolator =
-        new NotificationTemplateInterpolator(template, context);
+    NotificationTemplateInterpolator interpolator = new NotificationTemplateInterpolator(template, context);
     String result = interpolator.interpolate();
 
     assertEquals("Hi, jack!", result);
@@ -27,8 +26,7 @@ public class NotificationTemplateInterpolatorTest {
     Map<String, Object> tenant = Map.of("id", "tenant-123");
     Map<String, Object> context = Map.of("user", user, "tenant", tenant);
 
-    NotificationTemplateInterpolator interpolator =
-        new NotificationTemplateInterpolator(template, context);
+    NotificationTemplateInterpolator interpolator = new NotificationTemplateInterpolator(template, context);
     String result = interpolator.interpolate();
 
     assertEquals("User email: koba@example.com, Tenant ID: tenant-123", result);
@@ -39,8 +37,7 @@ public class NotificationTemplateInterpolatorTest {
     String template = "Hi, ${name}. Your age is ${age}";
     Map<String, Object> context = Map.of("name", "jack");
 
-    NotificationTemplateInterpolator interpolator =
-        new NotificationTemplateInterpolator(template, context);
+    NotificationTemplateInterpolator interpolator = new NotificationTemplateInterpolator(template, context);
     String result = interpolator.interpolate();
 
     assertEquals("Hi, jack. Your age is ", result);
@@ -52,8 +49,7 @@ public class NotificationTemplateInterpolatorTest {
     Map<String, Object> client = Map.of("id", "client-456", "name", "Awesome App");
     Map<String, Object> context = Map.of("client", client);
 
-    NotificationTemplateInterpolator interpolator =
-        new NotificationTemplateInterpolator(template, context);
+    NotificationTemplateInterpolator interpolator = new NotificationTemplateInterpolator(template, context);
     String result = interpolator.interpolate();
 
     assertEquals("Client ID: client-456, Client Name: Awesome App", result);
@@ -64,8 +60,7 @@ public class NotificationTemplateInterpolatorTest {
     String template = "";
     Map<String, Object> context = new HashMap<>();
 
-    NotificationTemplateInterpolator interpolator =
-        new NotificationTemplateInterpolator(template, context);
+    NotificationTemplateInterpolator interpolator = new NotificationTemplateInterpolator(template, context);
     String result = interpolator.interpolate();
 
     assertEquals("", result);

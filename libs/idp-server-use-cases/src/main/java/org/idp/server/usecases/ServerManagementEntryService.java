@@ -14,19 +14,13 @@ public class ServerManagementEntryService implements ServerManagementApi {
   TenantRepository tenantRepository;
   ServerConfigurationHandler serverConfigurationHandler;
 
-  public ServerManagementEntryService(
-      TenantRepository tenantRepository,
-      ServerConfigurationRepository serverConfigurationRepository) {
+  public ServerManagementEntryService(TenantRepository tenantRepository, ServerConfigurationRepository serverConfigurationRepository) {
     this.tenantRepository = tenantRepository;
     this.serverConfigurationHandler = new ServerConfigurationHandler(serverConfigurationRepository);
   }
 
   // TODO
-  public String register(
-      TenantIdentifier adminTenantIdentifier,
-      TenantType tenantType,
-      ServerDomain serverDomain,
-      String serverConfig) {
+  public String register(TenantIdentifier adminTenantIdentifier, TenantType tenantType, ServerDomain serverDomain, String serverConfig) {
 
     TenantCreator tenantCreator = new TenantCreator(tenantType, serverDomain);
     Tenant newTenant = tenantCreator.create();
@@ -34,8 +28,7 @@ public class ServerManagementEntryService implements ServerManagementApi {
 
     String replacedBody = serverConfig.replaceAll("IDP_ISSUER", newTenant.tokenIssuerValue());
 
-    ServerConfiguration serverConfiguration =
-        serverConfigurationHandler.handleRegistration(newTenant, replacedBody);
+    ServerConfiguration serverConfiguration = serverConfigurationHandler.handleRegistration(newTenant, replacedBody);
 
     return serverConfig;
   }

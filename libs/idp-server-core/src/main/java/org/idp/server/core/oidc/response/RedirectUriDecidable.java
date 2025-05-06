@@ -6,8 +6,7 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 
 public interface RedirectUriDecidable {
 
-  default RedirectUri decideRedirectUri(
-      AuthorizationRequest authorizationRequest, ClientConfiguration clientConfiguration) {
+  default RedirectUri decideRedirectUri(AuthorizationRequest authorizationRequest, ClientConfiguration clientConfiguration) {
     if (authorizationRequest.hasRedirectUri()) {
       return authorizationRequest.redirectUri();
     }

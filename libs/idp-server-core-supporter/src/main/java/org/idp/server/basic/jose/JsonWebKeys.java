@@ -28,34 +28,25 @@ public class JsonWebKeys implements Iterable<JsonWebKey> {
   }
 
   public JsonWebKey findBy(String keyId) {
-    return values.stream()
-        .filter(
-            value -> {
-              if (Objects.isNull(value.keyId())) {
-                return false;
-              }
-              return value.keyId().equals(keyId);
-            })
-        .findFirst()
-        .orElse(new JsonWebKey());
+    return values.stream().filter(value -> {
+      if (Objects.isNull(value.keyId())) {
+        return false;
+      }
+      return value.keyId().equals(keyId);
+    }).findFirst().orElse(new JsonWebKey());
   }
 
   public JsonWebKey findByAlgorithm(String algorithm) {
-    return values.stream()
-        .filter(
-            value -> {
-              if (Objects.isNull(value.algorithm())) {
-                return false;
-              }
-              return value.algorithm().equals(algorithm);
-            })
-        .findFirst()
-        .orElse(new JsonWebKey());
+    return values.stream().filter(value -> {
+      if (Objects.isNull(value.algorithm())) {
+        return false;
+      }
+      return value.algorithm().equals(algorithm);
+    }).findFirst().orElse(new JsonWebKey());
   }
 
   public JsonWebKeys filterWithAlgorithm(String algorithm) {
-    List<JsonWebKey> list =
-        values.stream().filter(value -> value.algorithm().equals(algorithm)).toList();
+    List<JsonWebKey> list = values.stream().filter(value -> value.algorithm().equals(algorithm)).toList();
     return new JsonWebKeys(list);
   }
 

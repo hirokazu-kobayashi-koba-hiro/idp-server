@@ -11,8 +11,7 @@ public class BatchCredentialResponse {
   VerifiableCredentialErrorResponse errorResponse;
   Map<String, String> headers;
 
-  public BatchCredentialResponse(
-      CredentialRequestStatus status, BatchVerifiableCredentialResponses responses) {
+  public BatchCredentialResponse(CredentialRequestStatus status, BatchVerifiableCredentialResponses responses) {
     this.status = status;
     this.responses = responses;
     this.errorResponse = new VerifiableCredentialErrorResponse();
@@ -23,8 +22,7 @@ public class BatchCredentialResponse {
     this.headers = values;
   }
 
-  public BatchCredentialResponse(
-      CredentialRequestStatus status, VerifiableCredentialErrorResponse errorResponse) {
+  public BatchCredentialResponse(CredentialRequestStatus status, VerifiableCredentialErrorResponse errorResponse) {
     this.status = status;
     this.responses = new BatchVerifiableCredentialResponses();
     this.errorResponse = errorResponse;

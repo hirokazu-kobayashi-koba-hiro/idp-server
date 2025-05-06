@@ -20,10 +20,8 @@ public class VerifiablePresentationBuilder {
     return this;
   }
 
-  public VerifiablePresentationBuilder addVerifiableCredential(
-      List<Credential> verifiableCredentials) {
-    List<Map<String, Object>> credentials =
-        verifiableCredentials.stream().map(Credential::values).toList();
+  public VerifiablePresentationBuilder addVerifiableCredential(List<Credential> verifiableCredentials) {
+    List<Map<String, Object>> credentials = verifiableCredentials.stream().map(Credential::values).toList();
     this.values.put("verifiableCredential", credentials);
     return this;
   }

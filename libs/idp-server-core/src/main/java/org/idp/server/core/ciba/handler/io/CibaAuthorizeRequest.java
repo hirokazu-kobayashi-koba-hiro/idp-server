@@ -13,9 +13,7 @@ public class CibaAuthorizeRequest {
   // TODO authentication
   Map<String, Object> customProperties = new HashMap<>();
 
-  public CibaAuthorizeRequest(
-      Tenant tenant,
-      BackchannelAuthenticationRequestIdentifier backchannleAuthenticationIdentifier) {
+  public CibaAuthorizeRequest(Tenant tenant, BackchannelAuthenticationRequestIdentifier backchannleAuthenticationIdentifier) {
     this.tenant = tenant;
     this.backchannleAuthenticationIdentifier = backchannleAuthenticationIdentifier;
   }

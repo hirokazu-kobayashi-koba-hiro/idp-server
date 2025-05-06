@@ -20,11 +20,10 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
   public void insert(ServerConfiguration serverConfiguration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                    INSERT INTO server_configuration (tenant_id, token_issuer, payload)
-                    VALUES (?, ?, ?);
-                    """;
+    String sqlTemplate = """
+        INSERT INTO server_configuration (tenant_id, token_issuer, payload)
+        VALUES (?, ?, ?);
+        """;
     String payload = jsonConverter.write(serverConfiguration);
     List<Object> params = new ArrayList<>();
     params.add(serverConfiguration.tenantId());
@@ -37,12 +36,11 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
   @Override
   public Map<String, String> selectOne(TenantIdentifier tenantIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                    SELECT tenant_id, token_issuer, payload
-                    FROM server_configuration
-                    WHERE tenant_id = ?;
-                    """;
+    String sqlTemplate = """
+        SELECT tenant_id, token_issuer, payload
+        FROM server_configuration
+        WHERE tenant_id = ?;
+        """;
     return sqlExecutor.selectOne(sqlTemplate, List.of(tenantIdentifier.value()));
   }
 }

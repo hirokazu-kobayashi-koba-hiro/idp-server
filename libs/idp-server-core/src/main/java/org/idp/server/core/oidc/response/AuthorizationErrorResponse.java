@@ -18,15 +18,7 @@ public class AuthorizationErrorResponse {
 
   public AuthorizationErrorResponse() {}
 
-  AuthorizationErrorResponse(
-      RedirectUri redirectUri,
-      ResponseModeValue responseModeValue,
-      State state,
-      TokenIssuer tokenIssuer,
-      Error error,
-      ErrorDescription errorDescription,
-      JarmPayload jarmPayload,
-      QueryParams queryParams) {
+  AuthorizationErrorResponse(RedirectUri redirectUri, ResponseModeValue responseModeValue, State state, TokenIssuer tokenIssuer, Error error, ErrorDescription errorDescription, JarmPayload jarmPayload, QueryParams queryParams) {
     this.redirectUri = redirectUri;
     this.responseModeValue = responseModeValue;
     this.state = state;
@@ -70,7 +62,6 @@ public class AuthorizationErrorResponse {
   }
 
   public String redirectUriValue() {
-    return String.format(
-        "%s%s%s", redirectUri.value(), responseModeValue.value(), queryParams.params());
+    return String.format("%s%s%s", redirectUri.value(), responseModeValue.value(), queryParams.params());
   }
 }

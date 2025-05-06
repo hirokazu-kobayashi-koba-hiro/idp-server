@@ -8,8 +8,7 @@ public interface BackchannelAuthenticationRequestRepository {
 
   void register(Tenant tenant, BackchannelAuthenticationRequest request);
 
-  BackchannelAuthenticationRequest find(
-      Tenant tenant, BackchannelAuthenticationRequestIdentifier identifier);
+  BackchannelAuthenticationRequest find(Tenant tenant, BackchannelAuthenticationRequestIdentifier identifier);
 
   void delete(Tenant tenant, BackchannelAuthenticationRequestIdentifier identifier);
 }

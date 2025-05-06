@@ -8,8 +8,7 @@ public class DatabaseConfig {
 
   public DatabaseConfig() {}
 
-  public DatabaseConfig(
-      Map<DatabaseType, DbConfig> writerConfigs, Map<DatabaseType, DbConfig> readerConfigs) {
+  public DatabaseConfig(Map<DatabaseType, DbConfig> writerConfigs, Map<DatabaseType, DbConfig> readerConfigs) {
     this.writerConfigs = writerConfigs;
     this.readerConfigs = readerConfigs;
   }

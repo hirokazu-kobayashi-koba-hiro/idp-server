@@ -25,21 +25,7 @@ public class OidcSsoConfiguration implements JsonReadable {
 
   public OidcSsoConfiguration() {}
 
-  public OidcSsoConfiguration(
-      String type,
-      String issuer,
-      String issuerName,
-      String description,
-      String clientId,
-      String clientSecret,
-      String clientAuthenticationType,
-      String redirectUri,
-      List<String> scopesSupported,
-      String authorizationEndpoint,
-      String tokenEndpoint,
-      String userinfoEndpoint,
-      String jwksUri,
-      String paramsDelimiter) {
+  public OidcSsoConfiguration(String type, String issuer, String issuerName, String description, String clientId, String clientSecret, String clientAuthenticationType, String redirectUri, List<String> scopesSupported, String authorizationEndpoint, String tokenEndpoint, String userinfoEndpoint, String jwksUri, String paramsDelimiter) {
     this.type = type;
     this.issuer = issuer;
     this.issuerName = issuerName;

@@ -28,8 +28,7 @@ public class BackchannelAuthenticationRequestBuilder {
 
   public BackchannelAuthenticationRequestBuilder() {}
 
-  public BackchannelAuthenticationRequestBuilder add(
-      BackchannelAuthenticationRequestIdentifier identifier) {
+  public BackchannelAuthenticationRequestBuilder add(BackchannelAuthenticationRequestIdentifier identifier) {
     this.identifier = identifier;
     return this;
   }
@@ -89,8 +88,7 @@ public class BackchannelAuthenticationRequestBuilder {
     return this;
   }
 
-  public BackchannelAuthenticationRequestBuilder add(
-      ClientNotificationToken clientNotificationToken) {
+  public BackchannelAuthenticationRequestBuilder add(ClientNotificationToken clientNotificationToken) {
     this.clientNotificationToken = clientNotificationToken;
     return this;
   }
@@ -111,22 +109,6 @@ public class BackchannelAuthenticationRequestBuilder {
   }
 
   public BackchannelAuthenticationRequest build() {
-    return new BackchannelAuthenticationRequest(
-        identifier,
-        tenantIdentifier,
-        profile,
-        deliveryMode,
-        scopes,
-        requestedClientId,
-        idTokenHint,
-        loginHint,
-        loginHintToken,
-        acrValues,
-        userCode,
-        clientNotificationToken,
-        bindingMessage,
-        requestedExpiry,
-        requestObject,
-        authorizationDetails);
+    return new BackchannelAuthenticationRequest(identifier, tenantIdentifier, profile, deliveryMode, scopes, requestedClientId, idTokenHint, loginHint, loginHintToken, acrValues, userCode, clientNotificationToken, bindingMessage, requestedExpiry, requestObject, authorizationDetails);
   }
 }

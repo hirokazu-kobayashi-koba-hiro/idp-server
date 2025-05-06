@@ -16,12 +16,11 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
   @Override
   public void insert(Tenant tenant, IdentityVerificationApplication application) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                    INSERT INTO public.identity_verification_applications
-                    (id, tenant_id, client_id, user_id, verification_type, application_details, external_workflow_delegation, external_application_id, external_application_details, trust_framework, processes, status, requested_at)
-                    VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?::jsonb, ?, ?::jsonb, ?, ?);
-                """;
+    String sqlTemplate = """
+            INSERT INTO public.identity_verification_applications
+            (id, tenant_id, client_id, user_id, verification_type, application_details, external_workflow_delegation, external_application_id, external_application_details, trust_framework, processes, status, requested_at)
+            VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?::jsonb, ?, ?::jsonb, ?, ?);
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(application.identifier().value());
@@ -96,17 +95,15 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
   }
 
   @Override
-  public void delete(
-      Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier) {
+  public void delete(Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-            DELETE FROM identity_verification_applications
-            WHERE tenant_id = ?
-            AND user_id = ?
-            AND id = ?;
-            """;
+    String sqlTemplate = """
+        DELETE FROM identity_verification_applications
+        WHERE tenant_id = ?
+        AND user_id = ?
+        AND id = ?;
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());

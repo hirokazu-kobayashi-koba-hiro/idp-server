@@ -22,29 +22,20 @@ class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator {
   @Override
   public ClientCredentials authenticate(BackchannelRequestContext context) {
     throwExceptionIfNotContainsClientCert(context);
-    ClientCertification clientCertification =
-        parseOrThrowExceptionIfUnSpecifiedOrUnMatchKey(context);
+    ClientCertification clientCertification = parseOrThrowExceptionIfUnSpecifiedOrUnMatchKey(context);
     RequestedClientId requestedClientId = context.requestedClientId();
     ClientSecret clientSecret = new ClientSecret();
-    return new ClientCredentials(
-        requestedClientId,
-        ClientAuthenticationType.self_signed_tls_client_auth,
-        clientSecret,
-        new ClientAuthenticationPublicKey(),
-        new ClientAssertionJwt(),
-        clientCertification);
+    return new ClientCredentials(requestedClientId, ClientAuthenticationType.self_signed_tls_client_auth, clientSecret, new ClientAuthenticationPublicKey(), new ClientAssertionJwt(), clientCertification);
   }
 
   void throwExceptionIfNotContainsClientCert(BackchannelRequestContext context) {
     ClientCert clientCert = context.clientCert();
     if (!clientCert.exists()) {
-      throw new ClientUnAuthorizedException(
-          "client authentication type is self_signed_tls_client_auth, but request does not contains client_cert");
+      throw new ClientUnAuthorizedException("client authentication type is self_signed_tls_client_auth, but request does not contains client_cert");
     }
   }
 
-  ClientCertification parseOrThrowExceptionIfUnSpecifiedOrUnMatchKey(
-      BackchannelRequestContext context) {
+  ClientCertification parseOrThrowExceptionIfUnSpecifiedOrUnMatchKey(BackchannelRequestContext context) {
     try {
       String jwks = context.clientConfiguration().jwks();
       JsonWebKeys jsonWebKeys = JwkParser.parseKeys(jwks);

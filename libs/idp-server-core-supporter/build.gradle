@@ -34,6 +34,7 @@ spotless {
 		removeUnusedImports()
 		googleJavaFormat()
 		toggleOffOn()
+		eclipse().configFile("../../format/eclipse-java-google-style.xml")
 	}
 	groovyGradle {
 		target '*.gradle'

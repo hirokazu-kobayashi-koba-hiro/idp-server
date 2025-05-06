@@ -22,17 +22,12 @@ public class AuthenticationInteractionResults implements Iterable<Authentication
   }
 
   public AuthenticationInteractionResults filter(String authenticationType) {
-    Set<AuthenticationInteractionResult> filtered =
-        values.stream()
-            .filter(result -> result.type().equals(authenticationType))
-            .collect(Collectors.toSet());
+    Set<AuthenticationInteractionResult> filtered = values.stream().filter(result -> result.type().equals(authenticationType)).collect(Collectors.toSet());
     return new AuthenticationInteractionResults(filtered);
   }
 
   public boolean containsSuccessful(String type) {
-    return values.stream()
-        .filter(result -> result.type().equals(type))
-        .anyMatch(result -> result.successCount() > 0);
+    return values.stream().filter(result -> result.type().equals(type)).anyMatch(result -> result.successCount() > 0);
   }
 
   public boolean allSuccess() {
@@ -56,12 +51,6 @@ public class AuthenticationInteractionResults implements Iterable<Authentication
   }
 
   public AuthenticationInteractionResult get(String interactionType) {
-    return values.stream()
-        .filter(result -> result.type().equals(interactionType))
-        .findFirst()
-        .orElseThrow(
-            () ->
-                new NotFoundException(
-                    String.format("No interaction result found (%s)", interactionType)));
+    return values.stream().filter(result -> result.type().equals(interactionType)).findFirst().orElseThrow(() -> new NotFoundException(String.format("No interaction result found (%s)", interactionType)));
   }
 }

@@ -9,12 +9,7 @@ public class SecurityEventSearchCriteria {
 
   public SecurityEventSearchCriteria() {}
 
-  public SecurityEventSearchCriteria(
-      String eventId,
-      String eventServerId,
-      String clientId,
-      String userId,
-      SecurityEventType securityEventType) {
+  public SecurityEventSearchCriteria(String eventId, String eventServerId, String clientId, String userId, SecurityEventType securityEventType) {
     this.eventId = eventId;
     this.eventServerId = eventServerId;
     this.clientId = clientId;

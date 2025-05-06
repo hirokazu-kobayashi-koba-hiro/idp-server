@@ -17,18 +17,8 @@ public class SecurityEventEntryService implements SecurityEventApi {
   SecurityEventHandler securityEventHandler;
   TenantRepository tenantRepository;
 
-  public SecurityEventEntryService(
-      SecurityEventHooks securityEventHooks,
-      SecurityEventCommandRepository securityEventCommandRepository,
-      SecurityEventHookResultCommandRepository securityEventHookResultCommandRepository,
-      SecurityEventHookConfigurationQueryRepository hookQueryRepository,
-      TenantRepository tenantRepository) {
-    this.securityEventHandler =
-        new SecurityEventHandler(
-            securityEventHooks,
-            securityEventCommandRepository,
-            securityEventHookResultCommandRepository,
-            hookQueryRepository);
+  public SecurityEventEntryService(SecurityEventHooks securityEventHooks, SecurityEventCommandRepository securityEventCommandRepository, SecurityEventHookResultCommandRepository securityEventHookResultCommandRepository, SecurityEventHookConfigurationQueryRepository hookQueryRepository, TenantRepository tenantRepository) {
+    this.securityEventHandler = new SecurityEventHandler(securityEventHooks, securityEventCommandRepository, securityEventHookResultCommandRepository, hookQueryRepository);
     this.tenantRepository = tenantRepository;
   }
 

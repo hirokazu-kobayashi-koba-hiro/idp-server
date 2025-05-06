@@ -7,6 +7,5 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public interface FederationConfigurationQuerySqlExecutor {
 
-  Map<String, String> selectOne(
-      Tenant tenant, FederationType federationType, SsoProvider ssoProvider);
+  Map<String, String> selectOne(Tenant tenant, FederationType federationType, SsoProvider ssoProvider);
 }

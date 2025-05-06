@@ -12,16 +12,14 @@ public class UserinfoRequestResponse {
   UserinfoResponse userinfoResponse;
   UserinfoErrorResponse errorResponse;
 
-  public UserinfoRequestResponse(
-      UserinfoRequestStatus status, OAuthToken oAuthToken, UserinfoResponse userinfoResponse) {
+  public UserinfoRequestResponse(UserinfoRequestStatus status, OAuthToken oAuthToken, UserinfoResponse userinfoResponse) {
     this.status = status;
     this.oAuthToken = oAuthToken;
     this.userinfoResponse = userinfoResponse;
     this.errorResponse = new UserinfoErrorResponse();
   }
 
-  public UserinfoRequestResponse(
-      UserinfoRequestStatus status, UserinfoErrorResponse errorResponse) {
+  public UserinfoRequestResponse(UserinfoRequestStatus status, UserinfoErrorResponse errorResponse) {
     this.status = status;
     this.userinfoResponse = new UserinfoResponse();
     this.errorResponse = errorResponse;

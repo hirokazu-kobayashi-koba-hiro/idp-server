@@ -32,16 +32,14 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter {
   }
 
   @Override
-  protected void doFilterInternal(
-      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
 
     String authorization = request.getHeader("Authorization");
     String clientCert = request.getHeader("x-ssl-cert");
 
     try {
       TenantIdentifier adminTenantIdentifier = extractTenantIdentifier(request);
-      Pairs<User, OAuthToken> result =
-          operatorAuthenticationApi.authenticate(adminTenantIdentifier, authorization);
+      Pairs<User, OAuthToken> result = operatorAuthenticationApi.authenticate(adminTenantIdentifier, authorization);
       User user = result.getLeft();
       OAuthToken oAuthToken = result.getRight();
 
@@ -60,8 +58,7 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter {
     } catch (Exception e) {
 
       logger.error(e.getMessage(), e);
-      response.setHeader(
-          HttpHeaders.WWW_AUTHENTICATE, "error=invalid_token unexpected error occurred");
+      response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "error=invalid_token unexpected error occurred");
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
   }

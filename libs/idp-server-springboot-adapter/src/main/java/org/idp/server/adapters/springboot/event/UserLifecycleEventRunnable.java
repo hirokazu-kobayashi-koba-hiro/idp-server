@@ -8,8 +8,7 @@ public class UserLifecycleEventRunnable implements Runnable {
   UserLifecycleEvent userLifecycleEvent;
   Consumer<UserLifecycleEvent> handler;
 
-  public UserLifecycleEventRunnable(
-      UserLifecycleEvent userLifecycleEvent, Consumer<UserLifecycleEvent> handler) {
+  public UserLifecycleEventRunnable(UserLifecycleEvent userLifecycleEvent, Consumer<UserLifecycleEvent> handler) {
     this.userLifecycleEvent = userLifecycleEvent;
     this.handler = handler;
   }

@@ -16,8 +16,7 @@ import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.ClientCredentialsGrantValidator;
 import org.idp.server.core.token.verifier.ClientCredentialsGrantVerifier;
 
-public class ClientCredentialsGrantService
-    implements OAuthTokenCreationService, AccessTokenCreatable {
+public class ClientCredentialsGrantService implements OAuthTokenCreationService, AccessTokenCreatable {
   OAuthTokenRepository oAuthTokenRepository;
 
   public ClientCredentialsGrantService(OAuthTokenRepository oAuthTokenRepository) {
@@ -33,27 +32,16 @@ public class ClientCredentialsGrantService
     ServerConfiguration serverConfiguration = context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
 
-    Scopes scopes =
-        new Scopes(clientConfiguration.filteredScope(context.scopes().toStringValues()));
+    Scopes scopes = new Scopes(clientConfiguration.filteredScope(context.scopes().toStringValues()));
     ClientCredentialsGrantVerifier verifier = new ClientCredentialsGrantVerifier(scopes);
     verifier.verify();
 
     CustomProperties customProperties = context.customProperties();
-    AuthorizationGrant authorizationGrant =
-        new AuthorizationGrantBuilder(
-                context.tenantIdentifier(), context.requestedClientId(), scopes)
-            .add(customProperties)
-            .add(clientConfiguration.client())
-            .build();
+    AuthorizationGrant authorizationGrant = new AuthorizationGrantBuilder(context.tenantIdentifier(), context.requestedClientId(), scopes).add(customProperties).add(clientConfiguration.client()).build();
 
-    AccessToken accessToken =
-        createAccessToken(
-            authorizationGrant, serverConfiguration, clientConfiguration, clientCredentials);
+    AccessToken accessToken = createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration, clientCredentials);
 
-    OAuthToken oAuthToken =
-        new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))
-            .add(accessToken)
-            .build();
+    OAuthToken oAuthToken = new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString())).add(accessToken).build();
 
     oAuthTokenRepository.register(tenant, oAuthToken);
     return oAuthToken;

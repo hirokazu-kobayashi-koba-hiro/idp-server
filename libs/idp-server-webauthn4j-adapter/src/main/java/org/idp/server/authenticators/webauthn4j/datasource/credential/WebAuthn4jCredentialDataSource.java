@@ -15,11 +15,10 @@ public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepos
   @Override
   public void register(WebAuthn4jCredential credential) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-            INSERT INTO public.webauthn_credentials (id, idp_user_id, rp_id, attestation_object, sign_count)
-            VALUES (?, ?, ?, ?, ?);
-            """;
+    String sqlTemplate = """
+        INSERT INTO public.webauthn_credentials (id, idp_user_id, rp_id, attestation_object, sign_count)
+        VALUES (?, ?, ?, ?, ?);
+        """;
     List<Object> params = new ArrayList<>();
     params.add(credential.id());
     params.add(credential.userId());
@@ -34,12 +33,11 @@ public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepos
   public WebAuthn4jCredentials findAll(String userId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-            SELECT id, idp_user_id, rp_id, attestation_object, sign_count
-            FROM webauthn_credentials
-            WHERE idp_user_id = ?;
-            """;
+    String sqlTemplate = """
+        SELECT id, idp_user_id, rp_id, attestation_object, sign_count
+        FROM webauthn_credentials
+        WHERE idp_user_id = ?;
+        """;
     List<Object> params = new ArrayList<>();
     params.add(userId);
 
@@ -49,8 +47,7 @@ public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepos
       return new WebAuthn4jCredentials();
     }
 
-    List<WebAuthn4jCredential> credentials =
-        results.stream().map(ModelConverter::convert).collect(Collectors.toList());
+    List<WebAuthn4jCredential> credentials = results.stream().map(ModelConverter::convert).collect(Collectors.toList());
 
     return new WebAuthn4jCredentials(credentials);
   }

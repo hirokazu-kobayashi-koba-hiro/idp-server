@@ -2,11 +2,7 @@ package org.idp.server.core.oidc.io;
 
 /** OAuthLogoutStatus */
 public enum OAuthLogoutStatus {
-  OK,
-  REDIRECABLE_FOUND,
-  BAD_REQUEST,
-  REDIRECABLE_BAD_REQUEST,
-  SERVER_ERROR;
+  OK, REDIRECABLE_FOUND, BAD_REQUEST, REDIRECABLE_BAD_REQUEST, SERVER_ERROR;
 
   public boolean isOK() {
     return this == OK;

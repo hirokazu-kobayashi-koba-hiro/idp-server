@@ -13,10 +13,7 @@ public class X509Certification implements Base64Codeable {
 
   public X509Certification() {}
 
-  public X509Certification(
-      X509Certificate x509Certificate,
-      byte[] der,
-      X509SubjectAlternativeNames subjectAlternativeNames) {
+  public X509Certification(X509Certificate x509Certificate, byte[] der, X509SubjectAlternativeNames subjectAlternativeNames) {
     this.x509Certificate = x509Certificate;
     this.der = der;
     this.subjectAlternativeNames = subjectAlternativeNames;
@@ -28,8 +25,7 @@ public class X509Certification implements Base64Codeable {
       byte[] bytes = value.getBytes();
       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
       CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-      X509Certificate cert =
-          (X509Certificate) certificateFactory.generateCertificate(byteArrayInputStream);
+      X509Certificate cert = (X509Certificate) certificateFactory.generateCertificate(byteArrayInputStream);
       byte[] der = cert.getEncoded();
       X509SubjectAlternativeNames subjectAlternativeNames = X509SubjectAlternativeNames.parse(cert);
       return new X509Certification(cert, der, subjectAlternativeNames);

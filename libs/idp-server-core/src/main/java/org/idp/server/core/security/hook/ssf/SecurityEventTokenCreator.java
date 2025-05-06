@@ -13,8 +13,7 @@ public class SecurityEventTokenCreator {
   SecurityEventTokenEntity securityEventTokenEntity;
   String privateKey;
 
-  public SecurityEventTokenCreator(
-      SecurityEventTokenEntity securityEventTokenEntity, String privateKey) {
+  public SecurityEventTokenCreator(SecurityEventTokenEntity securityEventTokenEntity, String privateKey) {
     this.securityEventTokenEntity = securityEventTokenEntity;
     this.privateKey = privateKey;
   }
@@ -33,14 +32,12 @@ public class SecurityEventTokenCreator {
 
       Map<String, Object> headers = new HashMap<>();
 
-      JsonWebSignature jsonWebSignature =
-          jsonWebSignatureFactory.createWithAsymmetricKey(claims, headers, privateKey);
+      JsonWebSignature jsonWebSignature = jsonWebSignatureFactory.createWithAsymmetricKey(claims, headers, privateKey);
       String jws = jsonWebSignature.serialize();
 
       return new SecurityEventToken(jws);
     } catch (JsonWebKeyInvalidException e) {
-      throw new SecurityEventTokenCreationFailedException(
-          "security event token creation is failed.", e);
+      throw new SecurityEventTokenCreationFailedException("security event token creation is failed.", e);
     }
   }
 }

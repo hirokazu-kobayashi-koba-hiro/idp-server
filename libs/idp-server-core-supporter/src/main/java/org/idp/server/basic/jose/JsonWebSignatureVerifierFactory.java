@@ -14,16 +14,14 @@ public class JsonWebSignatureVerifierFactory {
   String secret;
   DefaultJWSVerifierFactory defaultJWSVerifierFactory;
 
-  public JsonWebSignatureVerifierFactory(
-      JsonWebSignature jsonWebSignature, String publicJwks, String secret) {
+  public JsonWebSignatureVerifierFactory(JsonWebSignature jsonWebSignature, String publicJwks, String secret) {
     this.jsonWebSignature = jsonWebSignature;
     this.publicJwks = publicJwks;
     this.secret = secret;
     this.defaultJWSVerifierFactory = new DefaultJWSVerifierFactory();
   }
 
-  public Pairs<JsonWebSignatureVerifier, JsonWebKey> create()
-      throws JsonWebKeyInvalidException, JoseInvalidException, JsonWebKeyNotFoundException {
+  public Pairs<JsonWebSignatureVerifier, JsonWebKey> create() throws JsonWebKeyInvalidException, JoseInvalidException, JsonWebKeyNotFoundException {
     try {
       if (jsonWebSignature.isSymmetricType()) {
         MACVerifier macVerifier = new MACVerifier(secret);
@@ -31,9 +29,7 @@ public class JsonWebSignatureVerifierFactory {
       }
       JsonWebKey publicKey = get();
       SignedJWT signedJWT = jsonWebSignature.value();
-      JWSVerifier jwsVerifier =
-          defaultJWSVerifierFactory.createJWSVerifier(
-              signedJWT.getHeader(), publicKey.toPublicKey());
+      JWSVerifier jwsVerifier = defaultJWSVerifierFactory.createJWSVerifier(signedJWT.getHeader(), publicKey.toPublicKey());
       return Pairs.of(new JsonWebSignatureVerifier(jwsVerifier), publicKey);
     } catch (JOSEException e) {
       throw new JoseInvalidException(e.getMessage(), e);
@@ -52,8 +48,7 @@ public class JsonWebSignatureVerifierFactory {
     String algorithm = jsonWebSignature.algorithm();
     JsonWebKey jsonWebKey = publicKeys.findByAlgorithm(algorithm);
     if (!jsonWebKey.exists()) {
-      throw new JsonWebKeyNotFoundException(
-          String.format("not found jwk kid (%s) algorithm (%s)", keyId, algorithm));
+      throw new JsonWebKeyNotFoundException(String.format("not found jwk kid (%s) algorithm (%s)", keyId, algorithm));
     }
     return jsonWebKey;
   }

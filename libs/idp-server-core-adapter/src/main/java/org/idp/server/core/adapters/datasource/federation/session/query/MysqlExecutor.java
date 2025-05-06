@@ -12,12 +12,11 @@ public class MysqlExecutor implements SsoSessionQuerySqlExecutor {
   public Map<String, String> selectOne(SsoSessionIdentifier ssoSessionIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                SELECT id, payload
-                FROM federation_sso_session
-                WHERE id = ?
-                """;
+    String sqlTemplate = """
+        SELECT id, payload
+        FROM federation_sso_session
+        WHERE id = ?
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(ssoSessionIdentifier.value());

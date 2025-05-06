@@ -22,7 +22,8 @@ public class AuthenticationDeviceIdentifier {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     AuthenticationDeviceIdentifier that = (AuthenticationDeviceIdentifier) o;
     return Objects.equals(value, that.value);
   }

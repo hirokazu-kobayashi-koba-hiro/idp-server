@@ -12,10 +12,7 @@ public class SharedSignalFrameworkConfiguration implements JsonReadable {
 
   public SharedSignalFrameworkConfiguration() {}
 
-  public SharedSignalFrameworkConfiguration(
-      String issuer,
-      SharedSignalFrameworkConfig base,
-      Map<String, SharedSignalFrameworkConfig> overlays) {
+  public SharedSignalFrameworkConfiguration(String issuer, SharedSignalFrameworkConfig base, Map<String, SharedSignalFrameworkConfig> overlays) {
     this.issuer = issuer;
     this.base = base;
     this.overlays = overlays;

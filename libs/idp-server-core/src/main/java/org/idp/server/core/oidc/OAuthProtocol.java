@@ -14,8 +14,7 @@ public interface OAuthProtocol {
 
   OAuthViewDataResponse getViewData(OAuthViewDataRequest request);
 
-  AuthorizationRequest get(
-      Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier);
+  AuthorizationRequest get(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier);
 
   OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request);
 

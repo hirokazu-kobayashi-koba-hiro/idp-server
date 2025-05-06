@@ -18,18 +18,7 @@ public class TokenRequestResponse {
   public TokenRequestResponse(TokenRequestStatus status, OAuthToken oAuthToken) {
     this.status = status;
     this.oAuthToken = oAuthToken;
-    this.tokenResponse =
-        new TokenResponseBuilder()
-            .add(oAuthToken.accessTokenEntity())
-            .add(oAuthToken.refreshTokenEntity())
-            .add(oAuthToken.scopes())
-            .add(oAuthToken.tokenType())
-            .add(oAuthToken.expiresIn())
-            .add(oAuthToken.idToken())
-            .add(oAuthToken.authorizationDetails())
-            .add(oAuthToken.cNonce())
-            .add(oAuthToken.cNonceExpiresIn())
-            .build();
+    this.tokenResponse = new TokenResponseBuilder().add(oAuthToken.accessTokenEntity()).add(oAuthToken.refreshTokenEntity()).add(oAuthToken.scopes()).add(oAuthToken.tokenType()).add(oAuthToken.expiresIn()).add(oAuthToken.idToken()).add(oAuthToken.authorizationDetails()).add(oAuthToken.cNonce()).add(oAuthToken.cNonceExpiresIn()).build();
     this.errorResponse = new TokenErrorResponse();
     Map<String, String> values = new HashMap<>();
     values.put("Content-Typ", "application/json");

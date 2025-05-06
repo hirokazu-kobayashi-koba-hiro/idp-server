@@ -19,41 +19,29 @@ public class JsonWebSignatureFactory {
 
   public JsonWebSignatureFactory() {}
 
-  public JsonWebSignature createWithAsymmetricKey(
-      Map<String, Object> claims, Map<String, Object> customHeaders, String jwks, String keyId)
-      throws JsonWebKeyInvalidException, JoseInvalidException {
+  public JsonWebSignature createWithAsymmetricKey(Map<String, Object> claims, Map<String, Object> customHeaders, String jwks, String keyId) throws JsonWebKeyInvalidException, JoseInvalidException {
     JsonWebKeys jsonWebKeys = JwkParser.parseKeys(jwks);
     JsonWebKey jsonWebKey = jsonWebKeys.findBy(keyId);
     return this.createWithAsymmetricKey(claims, customHeaders, jsonWebKey);
   }
 
-  public JsonWebSignature createWithAsymmetricKeyByAlgorithm(
-      Map<String, Object> claims, Map<String, Object> customHeaders, String jwks, String algorithm)
-      throws JsonWebKeyInvalidException, JoseInvalidException {
+  public JsonWebSignature createWithAsymmetricKeyByAlgorithm(Map<String, Object> claims, Map<String, Object> customHeaders, String jwks, String algorithm) throws JsonWebKeyInvalidException, JoseInvalidException {
     JsonWebKeys jsonWebKeys = JwkParser.parseKeys(jwks);
     JsonWebKey jsonWebKey = jsonWebKeys.findByAlgorithm(algorithm);
     return this.createWithAsymmetricKey(claims, customHeaders, jsonWebKey);
   }
 
-  public JsonWebSignature createWithAsymmetricKey(
-      String claims, Map<String, Object> customHeaders, String jwks, String keyId)
-      throws JsonWebKeyInvalidException, JoseInvalidException {
+  public JsonWebSignature createWithAsymmetricKey(String claims, Map<String, Object> customHeaders, String jwks, String keyId) throws JsonWebKeyInvalidException, JoseInvalidException {
     JsonWebKeys jsonWebKeys = JwkParser.parseKeys(jwks);
     JsonWebKey jsonWebKey = jsonWebKeys.findBy(keyId);
     return this.createWithAsymmetricKey(claims, customHeaders, jsonWebKey);
   }
 
-  public JsonWebSignature createWithAsymmetricKey(
-      Map<String, Object> claims, Map<String, Object> customHeaders, String privateKey)
-      throws JsonWebKeyInvalidException {
+  public JsonWebSignature createWithAsymmetricKey(Map<String, Object> claims, Map<String, Object> customHeaders, String privateKey) throws JsonWebKeyInvalidException {
     try {
       JsonWebKey jsonWebKey = JwkParser.parse(privateKey);
       JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(jsonWebKey.algorithm());
-      JWSHeader jwsHeader =
-          new JWSHeader.Builder(jwsAlgorithm)
-              .keyID(jsonWebKey.keyId())
-              .customParams(customHeaders)
-              .build();
+      JWSHeader jwsHeader = new JWSHeader.Builder(jwsAlgorithm).keyID(jsonWebKey.keyId()).customParams(customHeaders).build();
 
       JWTClaimsSet claimsSet = JWTClaimsSet.parse(claims);
       SignedJWT signedJWT = new SignedJWT(jwsHeader, claimsSet);
@@ -65,17 +53,11 @@ public class JsonWebSignatureFactory {
     }
   }
 
-  public JsonWebSignature createWithAsymmetricKey(
-      String claims, Map<String, Object> customHeaders, String privateKey)
-      throws JoseInvalidException {
+  public JsonWebSignature createWithAsymmetricKey(String claims, Map<String, Object> customHeaders, String privateKey) throws JoseInvalidException {
     try {
       JsonWebKey jsonWebKey = JwkParser.parse(privateKey);
       JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(jsonWebKey.algorithm());
-      JWSHeader jwsHeader =
-          new JWSHeader.Builder(jwsAlgorithm)
-              .keyID(jsonWebKey.keyId())
-              .customParams(customHeaders)
-              .build();
+      JWSHeader jwsHeader = new JWSHeader.Builder(jwsAlgorithm).keyID(jsonWebKey.keyId()).customParams(customHeaders).build();
 
       JWTClaimsSet claimsSet = JWTClaimsSet.parse(claims);
       SignedJWT signedJWT = new SignedJWT(jwsHeader, claimsSet);
@@ -87,16 +69,10 @@ public class JsonWebSignatureFactory {
     }
   }
 
-  JsonWebSignature createWithAsymmetricKey(
-      Map<String, Object> claims, Map<String, Object> customHeaders, JsonWebKey jsonWebKey)
-      throws JoseInvalidException {
+  JsonWebSignature createWithAsymmetricKey(Map<String, Object> claims, Map<String, Object> customHeaders, JsonWebKey jsonWebKey) throws JoseInvalidException {
     try {
       JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(jsonWebKey.algorithm());
-      JWSHeader jwsHeader =
-          new JWSHeader.Builder(jwsAlgorithm)
-              .keyID(jsonWebKey.keyId())
-              .customParams(customHeaders)
-              .build();
+      JWSHeader jwsHeader = new JWSHeader.Builder(jwsAlgorithm).keyID(jsonWebKey.keyId()).customParams(customHeaders).build();
 
       JWTClaimsSet claimsSet = JWTClaimsSet.parse(claims);
       SignedJWT signedJWT = new SignedJWT(jwsHeader, claimsSet);
@@ -108,16 +84,10 @@ public class JsonWebSignatureFactory {
     }
   }
 
-  JsonWebSignature createWithAsymmetricKey(
-      String claims, Map<String, Object> customHeaders, JsonWebKey jsonWebKey)
-      throws JoseInvalidException {
+  JsonWebSignature createWithAsymmetricKey(String claims, Map<String, Object> customHeaders, JsonWebKey jsonWebKey) throws JoseInvalidException {
     try {
       JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(jsonWebKey.algorithm());
-      JWSHeader jwsHeader =
-          new JWSHeader.Builder(jwsAlgorithm)
-              .keyID(jsonWebKey.keyId())
-              .customParams(customHeaders)
-              .build();
+      JWSHeader jwsHeader = new JWSHeader.Builder(jwsAlgorithm).keyID(jsonWebKey.keyId()).customParams(customHeaders).build();
 
       JWTClaimsSet claimsSet = JWTClaimsSet.parse(claims);
       SignedJWT signedJWT = new SignedJWT(jwsHeader, claimsSet);
@@ -140,8 +110,7 @@ public class JsonWebSignatureFactory {
         return new RSASSASigner(privateKey);
       }
       default -> {
-        throw new UnSupportedException(
-            String.format("unsupported sign key (%s)", jsonWebKeyType.name()));
+        throw new UnSupportedException(String.format("unsupported sign key (%s)", jsonWebKeyType.name()));
       }
     }
   }

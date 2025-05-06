@@ -13,11 +13,7 @@ public class VerifiableCredentialRequest {
 
   public VerifiableCredentialRequest() {}
 
-  public VerifiableCredentialRequest(
-      Format format,
-      DocType docType,
-      CredentialDefinition credentialDefinition,
-      VerifiableCredentialProof proof) {
+  public VerifiableCredentialRequest(Format format, DocType docType, CredentialDefinition credentialDefinition, VerifiableCredentialProof proof) {
     this.format = format;
     this.docType = docType;
     this.credentialDefinition = credentialDefinition;

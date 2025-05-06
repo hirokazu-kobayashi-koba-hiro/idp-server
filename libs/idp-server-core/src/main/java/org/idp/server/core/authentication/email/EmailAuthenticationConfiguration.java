@@ -14,11 +14,7 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
 
   public EmailAuthenticationConfiguration() {}
 
-  public EmailAuthenticationConfiguration(
-      String sender,
-      Map<String, EmailVerificationTemplate> templates,
-      int retryCountLimitation,
-      int expireSeconds) {
+  public EmailAuthenticationConfiguration(String sender, Map<String, EmailVerificationTemplate> templates, int retryCountLimitation, int expireSeconds) {
     this.sender = sender;
     this.templates = templates;
     this.retryCountLimitation = retryCountLimitation;

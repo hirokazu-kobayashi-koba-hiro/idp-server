@@ -18,24 +18,16 @@ public class EmailVerificationChallenge implements Serializable, JsonReadable {
 
   public EmailVerificationChallenge() {}
 
-  public static EmailVerificationChallenge create(
-      OneTimePassword oneTimePassword, int retryCountLimitation, int expiresSeconds) {
-    return new EmailVerificationChallenge(
-        oneTimePassword.value(), retryCountLimitation, 0, expiresSeconds, SystemDateTime.now());
+  public static EmailVerificationChallenge create(OneTimePassword oneTimePassword, int retryCountLimitation, int expiresSeconds) {
+    return new EmailVerificationChallenge(oneTimePassword.value(), retryCountLimitation, 0, expiresSeconds, SystemDateTime.now());
   }
 
   public EmailVerificationChallenge countUp() {
     int newTryCount = tryCount + 1;
-    return new EmailVerificationChallenge(
-        verificationCode, retryCountLimitation, newTryCount, expiresSeconds, createdAt);
+    return new EmailVerificationChallenge(verificationCode, retryCountLimitation, newTryCount, expiresSeconds, createdAt);
   }
 
-  public EmailVerificationChallenge(
-      String verificationCode,
-      int retryCountLimitation,
-      int tryCount,
-      int expiresSeconds,
-      LocalDateTime createdAt) {
+  public EmailVerificationChallenge(String verificationCode, int retryCountLimitation, int tryCount, int expiresSeconds, LocalDateTime createdAt) {
     this.verificationCode = verificationCode;
     this.retryCountLimitation = retryCountLimitation;
     this.tryCount = tryCount;
@@ -56,9 +48,7 @@ public class EmailVerificationChallenge implements Serializable, JsonReadable {
     if (tryCount >= retryCountLimitation) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "invalid_request");
-      response.put(
-          "error_description",
-          "email challenge is reached limited to " + retryCountLimitation + " attempts");
+      response.put("error_description", "email challenge is reached limited to " + retryCountLimitation + " attempts");
 
       return EmailVerificationResult.failure(response);
     }

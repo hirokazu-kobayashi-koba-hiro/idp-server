@@ -17,9 +17,7 @@ public class UserLifecycleEventListerService {
   TaskExecutor taskExecutor;
   UserLifecycleEventApi userLifecycleEventApi;
 
-  public UserLifecycleEventListerService(
-      @Qualifier("userLifecycleEventTaskExecutor") TaskExecutor taskExecutor,
-      IdpServerApplication idpServerApplication) {
+  public UserLifecycleEventListerService(@Qualifier("userLifecycleEventTaskExecutor") TaskExecutor taskExecutor, IdpServerApplication idpServerApplication) {
     this.taskExecutor = taskExecutor;
     this.userLifecycleEventApi = idpServerApplication.userLifecycleEventApi();
   }
@@ -29,11 +27,8 @@ public class UserLifecycleEventListerService {
   public void onEvent(UserLifecycleEvent userLifecycleEvent) {
     log.info("onEvent: {}", userLifecycleEvent.lifecycleType().name());
 
-    taskExecutor.execute(
-        new UserLifecycleEventRunnable(
-            userLifecycleEvent,
-            event -> {
-              userLifecycleEventApi.handle(event.tenantIdentifier(), event);
-            }));
+    taskExecutor.execute(new UserLifecycleEventRunnable(userLifecycleEvent, event -> {
+      userLifecycleEventApi.handle(event.tenantIdentifier(), event);
+    }));
   }
 }

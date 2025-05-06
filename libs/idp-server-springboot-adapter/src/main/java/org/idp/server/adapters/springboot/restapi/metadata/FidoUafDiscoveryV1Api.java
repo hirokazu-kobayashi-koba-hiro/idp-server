@@ -28,7 +28,6 @@ public class FidoUafDiscoveryV1Api {
     FidoUafExecutionResult result = authenticationMetaDataApi.getFidoUafFacets(tenantId);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
-    return new ResponseEntity<>(
-        result.contents(), httpHeaders, HttpStatus.valueOf(result.statusCode()));
+    return new ResponseEntity<>(result.contents(), httpHeaders, HttpStatus.valueOf(result.statusCode()));
   }
 }

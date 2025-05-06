@@ -24,12 +24,9 @@ public class SecurityEventTokenEntityConvertor {
   private SharedSecurityEvent convertToSecurityEvent() {
     SecurityEventType securityEventType = SecurityEventType.of(securityEvent.type());
 
-    Map<String, String> subjectMap =
-        Map.of("sub", securityEvent.userSub(), "iss", securityEvent.tokenIssuerValue());
-    SecurityEventSubjectPayload securityEventSubjectPayload =
-        new SecurityEventSubjectPayload(subjectMap);
-    SecurityEventSubject subject =
-        new SecurityEventSubject(SecuritySubjectFormat.iss_sub, securityEventSubjectPayload);
+    Map<String, String> subjectMap = Map.of("sub", securityEvent.userSub(), "iss", securityEvent.tokenIssuerValue());
+    SecurityEventSubjectPayload securityEventSubjectPayload = new SecurityEventSubjectPayload(subjectMap);
+    SecurityEventSubject subject = new SecurityEventSubject(SecuritySubjectFormat.iss_sub, securityEventSubjectPayload);
 
     Map<String, Object> payload = securityEvent.toMap();
     SecurityEventPayload eventPayload = new SecurityEventPayload(payload);

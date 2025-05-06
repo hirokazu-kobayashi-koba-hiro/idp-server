@@ -22,14 +22,8 @@ public class RequestObjectHttpClient implements RequestObjectGateway {
   @Override
   public RequestObject get(RequestUri requestUri) {
     try {
-      HttpRequest request =
-          HttpRequest.newBuilder()
-              .uri(new URI(requestUri.value()))
-              .GET()
-              .header("Content-Type", "application/json")
-              .build();
-      HttpResponse<String> response =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpRequest request = HttpRequest.newBuilder().uri(new URI(requestUri.value())).GET().header("Content-Type", "application/json").build();
+      HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String body = response.body();
       return new RequestObject(body);
     } catch (URISyntaxException | IOException | InterruptedException e) {

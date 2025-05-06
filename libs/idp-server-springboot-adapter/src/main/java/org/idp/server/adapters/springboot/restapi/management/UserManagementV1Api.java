@@ -21,22 +21,15 @@ public class UserManagementV1Api {
   }
 
   @GetMapping
-  public ResponseEntity<?> get(
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestParam(value = "limit", defaultValue = "20") String limitValue,
-      @RequestParam(value = "offset", defaultValue = "0") String offsetValue) {
+  public ResponseEntity<?> get(@PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @RequestParam(value = "limit", defaultValue = "20") String limitValue, @RequestParam(value = "offset", defaultValue = "0") String offsetValue) {
 
-    List<User> userList =
-        userManagementApi.find(
-            tenantIdentifier, Integer.parseInt(limitValue), Integer.parseInt(offsetValue));
+    List<User> userList = userManagementApi.find(tenantIdentifier, Integer.parseInt(limitValue), Integer.parseInt(offsetValue));
 
     return new ResponseEntity<>(new UserListResponse(userList), HttpStatus.OK);
   }
 
   @GetMapping("/{user-id}")
-  public ResponseEntity<?> getById(
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("user-id") UserIdentifier userIdentifier) {
+  public ResponseEntity<?> getById(@PathVariable("tenant-id") TenantIdentifier tenantIdentifier, @PathVariable("user-id") UserIdentifier userIdentifier) {
 
     User user = userManagementApi.get(tenantIdentifier, userIdentifier);
     return new ResponseEntity<>(new UserResponse(user), HttpStatus.OK);

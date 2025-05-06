@@ -12,18 +12,11 @@ public class Organization implements JsonReadable {
 
   public Organization() {}
 
-  public Organization(
-      OrganizationIdentifier identifier,
-      OrganizationName name,
-      OrganizationDescription description) {
+  public Organization(OrganizationIdentifier identifier, OrganizationName name, OrganizationDescription description) {
     this(identifier, name, description, new AssignedTenants());
   }
 
-  public Organization(
-      OrganizationIdentifier identifier,
-      OrganizationName name,
-      OrganizationDescription description,
-      AssignedTenants assignedTenants) {
+  public Organization(OrganizationIdentifier identifier, OrganizationName name, OrganizationDescription description, AssignedTenants assignedTenants) {
     this.identifier = identifier;
     this.name = name;
     this.description = description;

@@ -22,8 +22,7 @@ public class CibaRequestResult {
     this.contentType = ContentType.application_json;
   }
 
-  public CibaRequestResult(
-      CibaRequestStatus status, BackchannelAuthenticationErrorResponse errorResponse) {
+  public CibaRequestResult(CibaRequestStatus status, BackchannelAuthenticationErrorResponse errorResponse) {
     this.status = status;
     this.errorResponse = errorResponse;
     // FIXME consider

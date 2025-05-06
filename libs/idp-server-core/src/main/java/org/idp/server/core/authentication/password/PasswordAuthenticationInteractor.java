@@ -17,19 +17,12 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
 
   PasswordVerificationDelegation passwordVerificationDelegation;
 
-  public PasswordAuthenticationInteractor(
-      PasswordVerificationDelegation passwordVerificationDelegation) {
+  public PasswordAuthenticationInteractor(PasswordVerificationDelegation passwordVerificationDelegation) {
     this.passwordVerificationDelegation = passwordVerificationDelegation;
   }
 
   @Override
-  public AuthenticationInteractionRequestResult interact(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
-      UserQueryRepository userQueryRepository) {
+  public AuthenticationInteractionRequestResult interact(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, AuthenticationInteractionType type, AuthenticationInteractionRequest request, AuthenticationTransaction transaction, UserQueryRepository userQueryRepository) {
 
     String username = request.optValueAsString("username", "");
     String password = request.optValueAsString("password", "");
@@ -41,31 +34,15 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
       response.put("error", "invalid_request");
       response.put("error_description", "user is not found or invalid password");
 
-      return new AuthenticationInteractionRequestResult(
-          AuthenticationInteractionStatus.CLIENT_ERROR,
-          type,
-          user,
-          new Authentication(),
-          response,
-          DefaultSecurityEventType.password_failure);
+      return new AuthenticationInteractionRequestResult(AuthenticationInteractionStatus.CLIENT_ERROR, type, user, new Authentication(), response, DefaultSecurityEventType.password_failure);
     }
 
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("pwd")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
+    Authentication authentication = new Authentication().setTime(SystemDateTime.now()).addMethods(new ArrayList<>(List.of("pwd"))).addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     Map<String, Object> response = new HashMap<>();
     response.put("user", user.toMap());
     response.put("authentication", authentication.toMap());
 
-    return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.SUCCESS,
-        type,
-        user,
-        authentication,
-        response,
-        DefaultSecurityEventType.password_success);
+    return new AuthenticationInteractionRequestResult(AuthenticationInteractionStatus.SUCCESS, type, user, authentication, response, DefaultSecurityEventType.password_success);
   }
 }

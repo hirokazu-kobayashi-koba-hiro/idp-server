@@ -8,8 +8,7 @@ public class ProtocolContainerLoader {
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(ProtocolContainerLoader.class);
 
-  public static ProtocolContainer load(
-      ApplicationComponentContainer applicationComponentContainer) {
+  public static ProtocolContainer load(ApplicationComponentContainer applicationComponentContainer) {
     ProtocolContainer container = new ProtocolContainer();
     ServiceLoader<ProtocolProvider> loader = ServiceLoader.load(ProtocolProvider.class);
 

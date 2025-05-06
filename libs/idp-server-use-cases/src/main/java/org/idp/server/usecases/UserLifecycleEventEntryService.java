@@ -14,9 +14,7 @@ public class UserLifecycleEventEntryService implements UserLifecycleEventApi {
   UserLifecycleEventResultCommandRepository resultCommandRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(UserLifecycleEventEntryService.class);
 
-  public UserLifecycleEventEntryService(
-      UserLifecycleEventExecutorsMap userLifecycleEventExecutorsMap,
-      UserLifecycleEventResultCommandRepository resultCommandRepository) {
+  public UserLifecycleEventEntryService(UserLifecycleEventExecutorsMap userLifecycleEventExecutorsMap, UserLifecycleEventResultCommandRepository resultCommandRepository) {
     this.userLifecycleEventExecutorsMap = userLifecycleEventExecutorsMap;
     this.resultCommandRepository = resultCommandRepository;
   }
@@ -26,8 +24,7 @@ public class UserLifecycleEventEntryService implements UserLifecycleEventApi {
     log.info("UserLifecycleEventEntryService.handle: " + userLifecycleEvent.lifecycleType().name());
 
     List<UserLifecycleEventResult> results = new ArrayList<>();
-    UserLifecycleEventExecutors userLifecycleEventExecutors =
-        userLifecycleEventExecutorsMap.find(userLifecycleEvent.lifecycleType());
+    UserLifecycleEventExecutors userLifecycleEventExecutors = userLifecycleEventExecutorsMap.find(userLifecycleEvent.lifecycleType());
 
     for (UserLifecycleEventExecutor executor : userLifecycleEventExecutors) {
 

@@ -11,8 +11,7 @@ import org.idp.server.core.oidc.configuration.ServerConfiguration;
 
 public interface RefreshTokenCreatable {
 
-  default RefreshToken createRefreshToken(
-      ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
+  default RefreshToken createRefreshToken(ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     RandomStringGenerator randomStringGenerator = new RandomStringGenerator(24);
     String code = randomStringGenerator.generate();
     RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity(code);

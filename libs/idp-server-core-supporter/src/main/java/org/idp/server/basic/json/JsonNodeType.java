@@ -1,19 +1,7 @@
 package org.idp.server.basic.json;
 
 public enum JsonNodeType {
-  STRING("string"),
-  INT("integer"),
-  LONG("long"),
-  DOUBLE("double"),
-  BOOLEAN("boolean"),
-  ARRAY("array"),
-  OBJECT("object"),
-  BINARY("binary"),
-  DATE("date"),
-  DATETIME("datetime"),
-  TIME("time"),
-  TIMESTAMP("timestamp"),
-  NULL("null");
+  STRING("string"), INT("integer"), LONG("long"), DOUBLE("double"), BOOLEAN("boolean"), ARRAY("array"), OBJECT("object"), BINARY("binary"), DATE("date"), DATETIME("datetime"), TIME("time"), TIMESTAMP("timestamp"), NULL("null");
 
   String typeName;
 

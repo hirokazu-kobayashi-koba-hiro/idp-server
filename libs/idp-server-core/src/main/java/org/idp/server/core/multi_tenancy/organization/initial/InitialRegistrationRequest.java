@@ -10,11 +10,7 @@ public class InitialRegistrationRequest {
   TenantName tenantName;
   String serverConfig;
 
-  public InitialRegistrationRequest(
-      OrganizationName organizationName,
-      ServerDomain serverDomain,
-      TenantName tenantName,
-      String serverConfig) {
+  public InitialRegistrationRequest(OrganizationName organizationName, ServerDomain serverDomain, TenantName tenantName, String serverConfig) {
     this.organizationName = organizationName;
     this.serverDomain = serverDomain;
     this.tenantName = tenantName;

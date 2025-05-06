@@ -6,8 +6,5 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public interface AuthenticationDeviceApi {
 
-  AuthenticationTransactionFindingResponse findLatest(
-      TenantIdentifier tenantIdentifier,
-      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
-      RequestAttributes requestAttributes);
+  AuthenticationTransactionFindingResponse findLatest(TenantIdentifier tenantIdentifier, AuthenticationDeviceIdentifier authenticationDeviceIdentifier, RequestAttributes requestAttributes);
 }

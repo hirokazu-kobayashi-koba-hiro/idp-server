@@ -40,7 +40,8 @@ public class Role implements Serializable {
   }
 
   public boolean match(Role role) {
-    if (!exists()) return false;
+    if (!exists())
+      return false;
 
     return this.name.equals(role.name());
   }

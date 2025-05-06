@@ -13,31 +13,10 @@ import org.idp.server.core.oidc.configuration.ServerConfiguration;
 public class NormalRequestFactory implements BackchannelAuthenticationRequestFactory {
 
   @Override
-  public BackchannelAuthenticationRequest create(
-      CibaProfile profile,
-      ClientSecretBasic clientSecretBasic,
-      CibaRequestParameters parameters,
-      JoseContext joseContext,
-      Set<String> filteredScopes,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public BackchannelAuthenticationRequest create(CibaProfile profile, ClientSecretBasic clientSecretBasic, CibaRequestParameters parameters, JoseContext joseContext, Set<String> filteredScopes, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
 
-    BackchannelAuthenticationRequestBuilder builder =
-        new BackchannelAuthenticationRequestBuilder()
-            .add(createIdentifier())
-            .add(serverConfiguration.tenantIdentifier())
-            .add(profile)
-            .add(clientConfiguration.backchannelTokenDeliveryMode())
-            .add(new Scopes(filteredScopes))
-            .add(parameters.idTokenHint())
-            .add(parameters.loginHint())
-            .add(parameters.loginHintToken())
-            .add(parameters.acrValues())
-            .add(parameters.bindingMessage())
-            .add(parameters.request())
-            .add(parameters.clientNotificationToken())
-            .add(parameters.userCode())
-            .add(parameters.requestedExpiry());
+    BackchannelAuthenticationRequestBuilder builder = new BackchannelAuthenticationRequestBuilder().add(createIdentifier()).add(serverConfiguration.tenantIdentifier()).add(profile).add(clientConfiguration.backchannelTokenDeliveryMode()).add(new Scopes(filteredScopes)).add(parameters.idTokenHint()).add(parameters.loginHint()).add(parameters.loginHintToken()).add(parameters.acrValues()).add(parameters.bindingMessage()).add(parameters.request()).add(parameters.clientNotificationToken())
+        .add(parameters.userCode()).add(parameters.requestedExpiry());
 
     if (parameters.hasClientId()) {
       builder.add(parameters.clientId());

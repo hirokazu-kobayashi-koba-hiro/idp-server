@@ -16,8 +16,7 @@ public class OidcMetaDataEntryService implements OidcMetaDataApi {
   TenantRepository tenantRepository;
   DiscoveryProtocols discoveryProtocols;
 
-  public OidcMetaDataEntryService(
-      TenantRepository tenantRepository, DiscoveryProtocols discoveryProtocols) {
+  public OidcMetaDataEntryService(TenantRepository tenantRepository, DiscoveryProtocols discoveryProtocols) {
     this.tenantRepository = tenantRepository;
     this.discoveryProtocols = discoveryProtocols;
   }
@@ -25,8 +24,7 @@ public class OidcMetaDataEntryService implements OidcMetaDataApi {
   public ServerConfigurationRequestResponse getConfiguration(TenantIdentifier tenantIdentifier) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    DiscoveryProtocol discoveryProtocol =
-        discoveryProtocols.get(tenant.authorizationProtocolProvider());
+    DiscoveryProtocol discoveryProtocol = discoveryProtocols.get(tenant.authorizationProtocolProvider());
 
     return discoveryProtocol.getConfiguration(tenant);
   }
@@ -34,8 +32,7 @@ public class OidcMetaDataEntryService implements OidcMetaDataApi {
   public JwksRequestResponse getJwks(TenantIdentifier tenantIdentifier) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    DiscoveryProtocol discoveryProtocol =
-        discoveryProtocols.get(tenant.authorizationProtocolProvider());
+    DiscoveryProtocol discoveryProtocol = discoveryProtocols.get(tenant.authorizationProtocolProvider());
 
     return discoveryProtocol.getJwks(tenant);
   }

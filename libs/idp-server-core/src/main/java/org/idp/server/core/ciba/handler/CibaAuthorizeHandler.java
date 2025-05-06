@@ -24,39 +24,23 @@ public class CibaAuthorizeHandler {
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
-  public CibaAuthorizeHandler(
-      BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
-      CibaGrantRepository cibaGrantRepository,
-      AuthorizationGrantedRepository authorizationGrantedRepository,
-      OAuthTokenRepository oAuthTokenRepository,
-      ClientNotificationGateway clientNotificationGateway,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+  public CibaAuthorizeHandler(BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository, CibaGrantRepository cibaGrantRepository, AuthorizationGrantedRepository authorizationGrantedRepository, OAuthTokenRepository oAuthTokenRepository, ClientNotificationGateway clientNotificationGateway, ServerConfigurationRepository serverConfigurationRepository, ClientConfigurationRepository clientConfigurationRepository) {
     this.cibaGrantRepository = cibaGrantRepository;
-    this.clientNotificationService =
-        new ClientNotificationService(
-            backchannelAuthenticationRequestRepository,
-            authorizationGrantedRepository,
-            oAuthTokenRepository,
-            clientNotificationGateway);
+    this.clientNotificationService = new ClientNotificationService(backchannelAuthenticationRequestRepository, authorizationGrantedRepository, oAuthTokenRepository, clientNotificationGateway);
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
   public CibaAuthorizeResponse handle(CibaAuthorizeRequest request) {
-    BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier =
-        request.backchannleAuthenticationIdentifier();
+    BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier = request.backchannleAuthenticationIdentifier();
 
     Tenant tenant = request.tenant();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
-    CibaGrant cibaGrant =
-        cibaGrantRepository.get(tenant, backchannelAuthenticationRequestIdentifier);
+    CibaGrant cibaGrant = cibaGrantRepository.get(tenant, backchannelAuthenticationRequestIdentifier);
 
     // TODO verify
 
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(
-            tenant, cibaGrant.authorizationGrant().clientIdentifier());
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, cibaGrant.authorizationGrant().clientIdentifier());
     CibaGrant updated = cibaGrant.update(CibaGrantStatus.authorized);
     cibaGrantRepository.update(tenant, updated);
 

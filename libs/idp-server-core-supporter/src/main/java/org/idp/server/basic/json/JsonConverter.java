@@ -39,9 +39,7 @@ public class JsonConverter {
 
   private static JsonConverter createWithSnakeCaseStrategy() {
     JavaTimeModule javaTimeModule = new JavaTimeModule();
-    javaTimeModule.addDeserializer(
-        LocalDateTime.class,
-        new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
+    javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
     objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);

@@ -9,49 +9,15 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
 
 public interface IdentityVerificationApi {
-  IdentityVerificationResponse apply(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationType identityVerificationType,
-      IdentityVerificationProcess identityVerificationProcess,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes);
+  IdentityVerificationResponse apply(TenantIdentifier tenantIdentifier, User user, OAuthToken oAuthToken, IdentityVerificationType identityVerificationType, IdentityVerificationProcess identityVerificationProcess, IdentityVerificationRequest request, RequestAttributes requestAttributes);
 
-  IdentityVerificationResponse findApplications(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationQueries queries,
-      RequestAttributes requestAttributes);
+  IdentityVerificationResponse findApplications(TenantIdentifier tenantIdentifier, User user, OAuthToken oAuthToken, IdentityVerificationApplicationQueries queries, RequestAttributes requestAttributes);
 
-  IdentityVerificationResponse process(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType identityVerificationType,
-      IdentityVerificationProcess identityVerificationProcess,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes);
+  IdentityVerificationResponse process(TenantIdentifier tenantIdentifier, User user, OAuthToken oAuthToken, IdentityVerificationApplicationIdentifier identifier, IdentityVerificationType identityVerificationType, IdentityVerificationProcess identityVerificationProcess, IdentityVerificationRequest request, RequestAttributes requestAttributes);
 
-  IdentityVerificationResponse callbackExaminationForStaticPath(
-      TenantIdentifier tenantIdentifier,
-      IdentityVerificationType type,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes);
+  IdentityVerificationResponse callbackExaminationForStaticPath(TenantIdentifier tenantIdentifier, IdentityVerificationType type, IdentityVerificationRequest request, RequestAttributes requestAttributes);
 
-  IdentityVerificationResponse callbackResultForStaticPath(
-      TenantIdentifier tenantIdentifier,
-      IdentityVerificationType identityVerificationType,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes);
+  IdentityVerificationResponse callbackResultForStaticPath(TenantIdentifier tenantIdentifier, IdentityVerificationType identityVerificationType, IdentityVerificationRequest request, RequestAttributes requestAttributes);
 
-  IdentityVerificationResponse delete(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType type,
-      RequestAttributes requestAttributes);
+  IdentityVerificationResponse delete(TenantIdentifier tenantIdentifier, User user, OAuthToken oAuthToken, IdentityVerificationApplicationIdentifier identifier, IdentityVerificationType type, RequestAttributes requestAttributes);
 }

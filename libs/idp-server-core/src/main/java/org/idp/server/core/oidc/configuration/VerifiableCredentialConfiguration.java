@@ -102,10 +102,7 @@ public class VerifiableCredentialConfiguration implements JsonReadable {
   }
 
   public boolean isSupportedFormat(String format) {
-    List<String> formats =
-        credentialsSupported.stream()
-            .map(VerifiableCredentialsSupportConfiguration::format)
-            .toList();
+    List<String> formats = credentialsSupported.stream().map(VerifiableCredentialsSupportConfiguration::format).toList();
     return formats.contains(format);
   }
 

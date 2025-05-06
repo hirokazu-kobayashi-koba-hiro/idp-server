@@ -19,7 +19,8 @@ public class TenantIdentifier {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     TenantIdentifier that = (TenantIdentifier) o;
     return Objects.equals(value, that.value);
   }

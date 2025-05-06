@@ -23,9 +23,7 @@ public class ClientAuthenticatorHandler {
 
   public ClientCredentials authenticate(BackchannelRequestContext context) {
     ClientAuthenticator clientAuthenticator = map.get(context.clientAuthenticationType());
-    ClientAuthenticationVerifier verifier =
-        new ClientAuthenticationVerifier(
-            context.clientAuthenticationType(), clientAuthenticator, context.serverConfiguration());
+    ClientAuthenticationVerifier verifier = new ClientAuthenticationVerifier(context.clientAuthenticationType(), clientAuthenticator, context.serverConfiguration());
     verifier.verify();
     return clientAuthenticator.authenticate(context);
   }

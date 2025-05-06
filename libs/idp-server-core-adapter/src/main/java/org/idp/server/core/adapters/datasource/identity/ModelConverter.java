@@ -36,8 +36,7 @@ class ModelConverter {
     user.setZoneinfo(stringMap.getOrDefault("zoneinfo", ""));
     user.setLocale(stringMap.getOrDefault("locale", ""));
     user.setPhoneNumber(stringMap.getOrDefault("phone_number", ""));
-    user.setPhoneNumberVerified(
-        Boolean.parseBoolean(stringMap.getOrDefault("phone_number_verified", "false")));
+    user.setPhoneNumberVerified(Boolean.parseBoolean(stringMap.getOrDefault("phone_number_verified", "false")));
     user.setHashedPassword(stringMap.getOrDefault("hashed_password", ""));
 
     if (stringMap.containsKey("updated_at")) {
@@ -49,23 +48,18 @@ class ModelConverter {
       user.setAddress(address);
     }
 
-    if (stringMap.containsKey("multi_factor_authentication")
-        && !stringMap.get("multi_factor_authentication").isEmpty()) {
-      HashMap<String, Object> customProps =
-          jsonConverter.read(stringMap.get("multi_factor_authentication"), HashMap.class);
+    if (stringMap.containsKey("multi_factor_authentication") && !stringMap.get("multi_factor_authentication").isEmpty()) {
+      HashMap<String, Object> customProps = jsonConverter.read(stringMap.get("multi_factor_authentication"), HashMap.class);
       user.setMultiFactorAuthentication(customProps);
     }
 
-    if (stringMap.containsKey("custom_properties")
-        && !stringMap.get("custom_properties").isEmpty()) {
-      HashMap<String, Object> customProps =
-          jsonConverter.read(stringMap.get("custom_properties"), HashMap.class);
+    if (stringMap.containsKey("custom_properties") && !stringMap.get("custom_properties").isEmpty()) {
+      HashMap<String, Object> customProps = jsonConverter.read(stringMap.get("custom_properties"), HashMap.class);
       user.setCustomProperties(customProps);
     }
 
     if (stringMap.containsKey("credentials") && !stringMap.get("credentials").isEmpty()) {
-      List<HashMap<String, Object>> credentials =
-          jsonConverter.read(stringMap.get("credentials"), List.class);
+      List<HashMap<String, Object>> credentials = jsonConverter.read(stringMap.get("credentials"), List.class);
       user.setCredentials(credentials);
     }
     if (stringMap.containsKey("roles") && !stringMap.get("roles").equals("[]")) {
@@ -79,11 +73,8 @@ class ModelConverter {
       List<String> filtered = permissions.stream().filter(Objects::nonNull).toList();
       user.setPermissions(filtered);
     }
-    if (stringMap.containsKey("authentication_devices")
-        && stringMap.get("authentication_devices") != null
-        && !stringMap.get("authentication_devices").equals("[]")) {
-      JsonNodeWrapper jsonNodeWrapper =
-          jsonConverter.readTree(stringMap.get("authentication_devices"));
+    if (stringMap.containsKey("authentication_devices") && stringMap.get("authentication_devices") != null && !stringMap.get("authentication_devices").equals("[]")) {
+      JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(stringMap.get("authentication_devices"));
       List<JsonNodeWrapper> wrapperList = jsonNodeWrapper.elements();
       List<AuthenticationDevice> authenticationDevices = new ArrayList<>();
       for (JsonNodeWrapper wrapper : wrapperList) {
@@ -94,23 +85,14 @@ class ModelConverter {
         String notificationChannel = wrapper.getValueOrEmptyAsString("notification_channel");
         String notificationToken = wrapper.getValueOrEmptyAsString("notification_token");
         boolean preferredForNotification = wrapper.getValueAsBoolean("preferred_for_notification");
-        AuthenticationDevice authenticationDevice =
-            new AuthenticationDevice(
-                id,
-                platform,
-                os,
-                model,
-                notificationChannel,
-                notificationToken,
-                preferredForNotification);
+        AuthenticationDevice authenticationDevice = new AuthenticationDevice(id, platform, os, model, notificationChannel, notificationToken, preferredForNotification);
         authenticationDevices.add(authenticationDevice);
       }
       user.setAuthenticationDevices(authenticationDevices);
     }
 
     if (stringMap.containsKey("verified_claims") && !stringMap.get("verified_claims").isEmpty()) {
-      HashMap<String, Object> verifiedClaims =
-          jsonConverter.read(stringMap.get("verified_claims"), HashMap.class);
+      HashMap<String, Object> verifiedClaims = jsonConverter.read(stringMap.get("verified_claims"), HashMap.class);
       user.setVerifiedClaims(verifiedClaims);
     }
 

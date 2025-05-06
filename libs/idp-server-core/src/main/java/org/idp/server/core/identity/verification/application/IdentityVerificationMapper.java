@@ -6,8 +6,7 @@ import org.idp.server.basic.json.schema.JsonSchemaProperty;
 
 public class IdentityVerificationMapper {
 
-  public static Map<String, Object> mapping(
-      Map<String, Object> request, JsonSchemaDefinition schemaDefinition) {
+  public static Map<String, Object> mapping(Map<String, Object> request, JsonSchemaDefinition schemaDefinition) {
     Map<String, Object> mappingResult = new HashMap<>();
     Map<String, JsonSchemaProperty> properties = schemaDefinition.getProperties();
 

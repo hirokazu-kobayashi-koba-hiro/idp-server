@@ -46,24 +46,11 @@ public class IdPServerConfiguration {
   String encryptionKey;
 
   @Bean
-  public IdpServerApplication idpServerApplication(
-      OAuthSessionService oAuthSessionService,
-      SecurityEventPublisherService eventPublisherService,
-      UserLifecycleEventPublisherService userLifecycleEventPublisherService) {
+  public IdpServerApplication idpServerApplication(OAuthSessionService oAuthSessionService, SecurityEventPublisherService eventPublisherService, UserLifecycleEventPublisherService userLifecycleEventPublisherService) {
 
-    Map<DatabaseType, DbConfig> writerConfigs =
-        Map.of(
-            DatabaseType.POSTGRESQL,
-            DbConfig.defaultConfig(postgresqlUrl, postgresqlUsername, postgresqlPassword),
-            DatabaseType.MYSQL,
-            DbConfig.defaultConfig(mysqlUrl, mysqlUsername, mysqlPassword));
+    Map<DatabaseType, DbConfig> writerConfigs = Map.of(DatabaseType.POSTGRESQL, DbConfig.defaultConfig(postgresqlUrl, postgresqlUsername, postgresqlPassword), DatabaseType.MYSQL, DbConfig.defaultConfig(mysqlUrl, mysqlUsername, mysqlPassword));
 
-    Map<DatabaseType, DbConfig> readerConfigs =
-        Map.of(
-            DatabaseType.POSTGRESQL,
-            DbConfig.defaultConfig(postgresqlUrl, postgresqlUsername, postgresqlPassword),
-            DatabaseType.MYSQL,
-            DbConfig.defaultConfig(mysqlUrl, mysqlUsername, mysqlPassword));
+    Map<DatabaseType, DbConfig> readerConfigs = Map.of(DatabaseType.POSTGRESQL, DbConfig.defaultConfig(postgresqlUrl, postgresqlUsername, postgresqlPassword), DatabaseType.MYSQL, DbConfig.defaultConfig(mysqlUrl, mysqlUsername, mysqlPassword));
 
     DatabaseConfig databaseConfig = new DatabaseConfig(writerConfigs, readerConfigs);
     HikariConnectionProvider dbConnectionProvider = new HikariConnectionProvider(databaseConfig);
@@ -72,14 +59,6 @@ public class IdPServerConfiguration {
     PasswordEncoder passwordEncoder = new PasswordEncoder(bCryptPasswordEncoder);
     PasswordVerification passwordVerification = new PasswordVerification(bCryptPasswordEncoder);
 
-    return new IdpServerApplication(
-        adminTenantId,
-        dbConnectionProvider,
-        encryptionKey,
-        oAuthSessionService,
-        passwordEncoder,
-        passwordVerification,
-        eventPublisherService,
-        userLifecycleEventPublisherService);
+    return new IdpServerApplication(adminTenantId, dbConnectionProvider, encryptionKey, oAuthSessionService, passwordEncoder, passwordVerification, eventPublisherService, userLifecycleEventPublisherService);
   }
 }

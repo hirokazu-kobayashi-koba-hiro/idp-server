@@ -7,8 +7,7 @@ import org.idp.server.core.authentication.exception.AuthenticationConfigurationN
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class AuthenticationConfigurationQueryDataSource
-    implements AuthenticationConfigurationQueryRepository {
+public class AuthenticationConfigurationQueryDataSource implements AuthenticationConfigurationQueryRepository {
 
   AuthenticationConfigSqlExecutors executors;
   JsonConverter jsonConverter;
@@ -24,9 +23,7 @@ public class AuthenticationConfigurationQueryDataSource
     Map<String, String> result = executor.selectOne(tenant, type);
 
     if (Objects.isNull(result) || result.isEmpty()) {
-      throw new AuthenticationConfigurationNotFoundException(
-          String.format(
-              "Mfa Configuration is Not Found (%s) (%s)", tenant.identifierValue(), type));
+      throw new AuthenticationConfigurationNotFoundException(String.format("Mfa Configuration is Not Found (%s) (%s)", tenant.identifierValue(), type));
     }
 
     return jsonConverter.read(result.get("payload"), clazz);

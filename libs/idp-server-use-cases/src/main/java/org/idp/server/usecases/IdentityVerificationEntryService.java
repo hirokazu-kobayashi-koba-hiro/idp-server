@@ -40,14 +40,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   UserQueryRepository userQueryRepository;
   TokenEventPublisher eventPublisher;
 
-  public IdentityVerificationEntryService(
-      IdentityVerificationConfigurationQueryRepository configurationQueryRepository,
-      IdentityVerificationApplicationCommandRepository applicationCommandRepository,
-      IdentityVerificationApplicationQueryRepository applicationQueryRepository,
-      IdentityVerificationResultCommandRepository resultCommandRepository,
-      TenantRepository tenantRepository,
-      UserQueryRepository userQueryRepository,
-      TokenEventPublisher eventPublisher) {
+  public IdentityVerificationEntryService(IdentityVerificationConfigurationQueryRepository configurationQueryRepository, IdentityVerificationApplicationCommandRepository applicationCommandRepository, IdentityVerificationApplicationQueryRepository applicationQueryRepository, IdentityVerificationResultCommandRepository resultCommandRepository, TenantRepository tenantRepository, UserQueryRepository userQueryRepository, TokenEventPublisher eventPublisher) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.applicationCommandRepository = applicationCommandRepository;
     this.applicationQueryRepository = applicationQueryRepository;
@@ -59,80 +52,36 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   }
 
   @Override
-  public IdentityVerificationResponse apply(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationType type,
-      IdentityVerificationProcess process,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes) {
+  public IdentityVerificationResponse apply(TenantIdentifier tenantIdentifier, User user, OAuthToken oAuthToken, IdentityVerificationType type, IdentityVerificationProcess process, IdentityVerificationRequest request, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    IdentityVerificationConfiguration verificationConfiguration =
-        configurationQueryRepository.get(tenant, type);
-    IdentityVerificationApplications applications =
-        applicationQueryRepository.findAll(tenant, user);
+    IdentityVerificationConfiguration verificationConfiguration = configurationQueryRepository.get(tenant, type);
+    IdentityVerificationApplications applications = applicationQueryRepository.findAll(tenant, user);
 
-    ExternalWorkflowApplyingResult applyingResult =
-        identityVerificationHandler.handleRequest(
-            tenant, user, applications, type, process, request, verificationConfiguration);
+    ExternalWorkflowApplyingResult applyingResult = identityVerificationHandler.handleRequest(tenant, user, applications, type, process, request, verificationConfiguration);
     if (applyingResult.isError()) {
 
-      eventPublisher.publish(
-          tenant,
-          oAuthToken,
-          DefaultSecurityEventType.identity_verification_application_failure,
-          requestAttributes);
+      eventPublisher.publish(tenant, oAuthToken, DefaultSecurityEventType.identity_verification_application_failure, requestAttributes);
       return applyingResult.errorResponse();
     }
 
-    IdentityVerificationApplication application =
-        IdentityVerificationApplication.create(
-            tenant,
-            oAuthToken.requestedClientId(),
-            user,
-            type,
-            request,
-            verificationConfiguration.externalWorkflowDelegation(),
-            applyingResult,
-            process,
-            verificationConfiguration);
+    IdentityVerificationApplication application = IdentityVerificationApplication.create(tenant, oAuthToken.requestedClientId(), user, type, request, verificationConfiguration.externalWorkflowDelegation(), applyingResult, process, verificationConfiguration);
     applicationCommandRepository.register(tenant, application);
-    eventPublisher.publish(
-        tenant,
-        oAuthToken,
-        DefaultSecurityEventType.identity_verification_application_apply,
-        requestAttributes);
+    eventPublisher.publish(tenant, oAuthToken, DefaultSecurityEventType.identity_verification_application_apply, requestAttributes);
 
-    Map<String, Object> response =
-        IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
-            application,
-            applyingResult.externalWorkflowResponse(),
-            process,
-            verificationConfiguration);
+    Map<String, Object> response = IdentityVerificationDynamicResponseMapper.buildDynamicResponse(application, applyingResult.externalWorkflowResponse(), process, verificationConfiguration);
 
     return IdentityVerificationResponse.OK(response);
   }
 
   @Override
-  public IdentityVerificationResponse findApplications(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationQueries queries,
-      RequestAttributes requestAttributes) {
+  public IdentityVerificationResponse findApplications(TenantIdentifier tenantIdentifier, User user, OAuthToken oAuthToken, IdentityVerificationApplicationQueries queries, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    IdentityVerificationApplications applications =
-        applicationQueryRepository.findList(tenant, user, queries);
+    IdentityVerificationApplications applications = applicationQueryRepository.findList(tenant, user, queries);
 
-    eventPublisher.publish(
-        tenant,
-        oAuthToken,
-        DefaultSecurityEventType.identity_verification_application_findList,
-        requestAttributes);
+    eventPublisher.publish(tenant, oAuthToken, DefaultSecurityEventType.identity_verification_application_findList, requestAttributes);
 
     Map<String, Object> response = new HashMap<>();
     response.put("list", applications.toList());
@@ -140,70 +89,39 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   }
 
   @Override
-  public IdentityVerificationResponse process(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType type,
-      IdentityVerificationProcess process,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes) {
+  public IdentityVerificationResponse process(TenantIdentifier tenantIdentifier, User user, OAuthToken oAuthToken, IdentityVerificationApplicationIdentifier identifier, IdentityVerificationType type, IdentityVerificationProcess process, IdentityVerificationRequest request, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    IdentityVerificationApplication application =
-        applicationQueryRepository.get(tenant, user, identifier);
-    IdentityVerificationConfiguration verificationConfiguration =
-        configurationQueryRepository.get(tenant, type);
-    IdentityVerificationApplications applications =
-        applicationQueryRepository.findAll(tenant, user);
+    IdentityVerificationApplication application = applicationQueryRepository.get(tenant, user, identifier);
+    IdentityVerificationConfiguration verificationConfiguration = configurationQueryRepository.get(tenant, type);
+    IdentityVerificationApplications applications = applicationQueryRepository.findAll(tenant, user);
 
-    ExternalWorkflowApplyingResult applyingResult =
-        identityVerificationHandler.handleRequest(
-            tenant, user, applications, type, process, request, verificationConfiguration);
+    ExternalWorkflowApplyingResult applyingResult = identityVerificationHandler.handleRequest(tenant, user, applications, type, process, request, verificationConfiguration);
     if (applyingResult.isError()) {
 
-      eventPublisher.publish(
-          tenant,
-          oAuthToken,
-          DefaultSecurityEventType.identity_verification_application_failure,
-          requestAttributes);
+      eventPublisher.publish(tenant, oAuthToken, DefaultSecurityEventType.identity_verification_application_failure, requestAttributes);
 
       return applyingResult.errorResponse();
     }
 
-    IdentityVerificationApplication updated =
-        application.updateProcess(process, request, applyingResult, verificationConfiguration);
+    IdentityVerificationApplication updated = application.updateProcess(process, request, applyingResult, verificationConfiguration);
     applicationCommandRepository.update(tenant, updated);
     eventPublisher.publish(tenant, oAuthToken, type, process, true, requestAttributes);
 
-    Map<String, Object> response =
-        IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
-            application,
-            applyingResult.externalWorkflowResponse(),
-            process,
-            verificationConfiguration);
+    Map<String, Object> response = IdentityVerificationDynamicResponseMapper.buildDynamicResponse(application, applyingResult.externalWorkflowResponse(), process, verificationConfiguration);
     return IdentityVerificationResponse.OK(response);
   }
 
   @Override
-  public IdentityVerificationResponse callbackExaminationForStaticPath(
-      TenantIdentifier tenantIdentifier,
-      IdentityVerificationType type,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes) {
+  public IdentityVerificationResponse callbackExaminationForStaticPath(TenantIdentifier tenantIdentifier, IdentityVerificationType type, IdentityVerificationRequest request, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
-    IdentityVerificationConfiguration verificationConfiguration =
-        configurationQueryRepository.get(tenant, type);
+    IdentityVerificationConfiguration verificationConfiguration = configurationQueryRepository.get(tenant, type);
 
-    IdentityVerificationProcess process =
-        ReservedIdentityVerificationProcess.CALLBACK_EXAMINATION.toProcess();
-    IdentityVerificationProcessConfiguration processConfiguration =
-        verificationConfiguration.getProcessConfig(process);
+    IdentityVerificationProcess process = ReservedIdentityVerificationProcess.CALLBACK_EXAMINATION.toProcess();
+    IdentityVerificationProcessConfiguration processConfiguration = verificationConfiguration.getProcessConfig(process);
 
-    IdentityVerificationRequestValidator applicationValidator =
-        new IdentityVerificationRequestValidator(processConfiguration, request);
+    IdentityVerificationRequestValidator applicationValidator = new IdentityVerificationRequestValidator(processConfiguration, request);
     IdentityVerificationValidationResult validationResult = applicationValidator.validate();
 
     if (validationResult.isError()) {
@@ -211,15 +129,10 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       return validationResult.errorResponse();
     }
 
-    ExternalWorkflowApplicationIdentifier externalWorkflowApplicationIdentifier =
-        new ExternalWorkflowApplicationIdentifier(
-            request.getValueAsString(
-                verificationConfiguration.externalWorkflowApplicationIdParam().value()));
-    IdentityVerificationApplication application =
-        applicationQueryRepository.get(tenant, externalWorkflowApplicationIdentifier);
+    ExternalWorkflowApplicationIdentifier externalWorkflowApplicationIdentifier = new ExternalWorkflowApplicationIdentifier(request.getValueAsString(verificationConfiguration.externalWorkflowApplicationIdParam().value()));
+    IdentityVerificationApplication application = applicationQueryRepository.get(tenant, externalWorkflowApplicationIdentifier);
 
-    IdentityVerificationApplication updatedExamination =
-        application.updateExamination(process, request, verificationConfiguration);
+    IdentityVerificationApplication updatedExamination = application.updateExamination(process, request, verificationConfiguration);
     applicationCommandRepository.update(tenant, updatedExamination);
 
     Map<String, Object> response = new HashMap<>();
@@ -227,23 +140,15 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   }
 
   @Override
-  public IdentityVerificationResponse callbackResultForStaticPath(
-      TenantIdentifier tenantIdentifier,
-      IdentityVerificationType type,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes) {
+  public IdentityVerificationResponse callbackResultForStaticPath(TenantIdentifier tenantIdentifier, IdentityVerificationType type, IdentityVerificationRequest request, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
 
-    IdentityVerificationConfiguration verificationConfiguration =
-        configurationQueryRepository.get(tenant, type);
-    IdentityVerificationProcess process =
-        ReservedIdentityVerificationProcess.CALLBACK_RESULT.toProcess();
-    IdentityVerificationProcessConfiguration processConfiguration =
-        verificationConfiguration.getProcessConfig(process);
+    IdentityVerificationConfiguration verificationConfiguration = configurationQueryRepository.get(tenant, type);
+    IdentityVerificationProcess process = ReservedIdentityVerificationProcess.CALLBACK_RESULT.toProcess();
+    IdentityVerificationProcessConfiguration processConfiguration = verificationConfiguration.getProcessConfig(process);
 
-    IdentityVerificationRequestValidator applicationValidator =
-        new IdentityVerificationRequestValidator(processConfiguration, request);
+    IdentityVerificationRequestValidator applicationValidator = new IdentityVerificationRequestValidator(processConfiguration, request);
     IdentityVerificationValidationResult validationResult = applicationValidator.validate();
 
     if (validationResult.isError()) {
@@ -251,26 +156,18 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       return validationResult.errorResponse();
     }
 
-    ExternalWorkflowApplicationIdentifier externalWorkflowApplicationIdentifier =
-        new ExternalWorkflowApplicationIdentifier(
-            request.getValueAsString(
-                verificationConfiguration.externalWorkflowApplicationIdParam().value()));
-    IdentityVerificationApplication application =
-        applicationQueryRepository.get(tenant, externalWorkflowApplicationIdentifier);
+    ExternalWorkflowApplicationIdentifier externalWorkflowApplicationIdentifier = new ExternalWorkflowApplicationIdentifier(request.getValueAsString(verificationConfiguration.externalWorkflowApplicationIdParam().value()));
+    IdentityVerificationApplication application = applicationQueryRepository.get(tenant, externalWorkflowApplicationIdentifier);
 
-    IdentityVerificationApplication updatedExamination =
-        application.completeExamination(process, request, verificationConfiguration);
+    IdentityVerificationApplication updatedExamination = application.completeExamination(process, request, verificationConfiguration);
     applicationCommandRepository.update(tenant, updatedExamination);
 
-    IdentityVerificationResult identityVerificationResult =
-        IdentityVerificationResult.create(updatedExamination, request, verificationConfiguration);
+    IdentityVerificationResult identityVerificationResult = IdentityVerificationResult.create(updatedExamination, request, verificationConfiguration);
     resultCommandRepository.register(tenant, identityVerificationResult);
 
     // TODO dynamic lifecycle management
     User user = userQueryRepository.get(tenant, application.userIdentifier());
-    User verifiedUser =
-        user.transitStatus(UserStatus.IDENTITY_VERIFIED)
-            .setVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
+    User verifiedUser = user.transitStatus(UserStatus.IDENTITY_VERIFIED).setVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
 
     userQueryRepository.update(tenant, verifiedUser);
 
@@ -279,23 +176,13 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   }
 
   @Override
-  public IdentityVerificationResponse delete(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType type,
-      RequestAttributes requestAttributes) {
+  public IdentityVerificationResponse delete(TenantIdentifier tenantIdentifier, User user, OAuthToken oAuthToken, IdentityVerificationApplicationIdentifier identifier, IdentityVerificationType type, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantRepository.get(tenantIdentifier);
     applicationQueryRepository.get(tenant, user, identifier);
     applicationCommandRepository.delete(tenant, user, identifier);
 
-    eventPublisher.publish(
-        tenant,
-        oAuthToken,
-        DefaultSecurityEventType.identity_verification_application_delete,
-        requestAttributes);
+    eventPublisher.publish(tenant, oAuthToken, DefaultSecurityEventType.identity_verification_application_delete, requestAttributes);
 
     return IdentityVerificationResponse.OK(Map.of());
   }

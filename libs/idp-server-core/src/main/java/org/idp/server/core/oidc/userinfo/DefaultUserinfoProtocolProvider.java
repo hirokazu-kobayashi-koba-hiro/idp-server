@@ -16,13 +16,10 @@ public class DefaultUserinfoProtocolProvider implements ProtocolProvider<Userinf
   @Override
   public UserinfoProtocol provide(ApplicationComponentContainer container) {
 
-    ServerConfigurationRepository serverConfigurationRepository =
-        container.resolve(ServerConfigurationRepository.class);
-    ClientConfigurationRepository clientConfigurationRepository =
-        container.resolve(ClientConfigurationRepository.class);
+    ServerConfigurationRepository serverConfigurationRepository = container.resolve(ServerConfigurationRepository.class);
+    ClientConfigurationRepository clientConfigurationRepository = container.resolve(ClientConfigurationRepository.class);
     OAuthTokenRepository oAuthTokenRepository = container.resolve(OAuthTokenRepository.class);
 
-    return new DefaultUserinfoProtocol(
-        oAuthTokenRepository, serverConfigurationRepository, clientConfigurationRepository);
+    return new DefaultUserinfoProtocol(oAuthTokenRepository, serverConfigurationRepository, clientConfigurationRepository);
   }
 }

@@ -17,7 +17,8 @@ public class FidoUafExecutorType {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     FidoUafExecutorType that = (FidoUafExecutorType) o;
     return Objects.equals(name, that.name);
   }

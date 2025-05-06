@@ -1,8 +1,7 @@
 package org.idp.server.core.identity.verification;
 
 public enum ReservedIdentityVerificationProcess {
-  CALLBACK_EXAMINATION("callback-examination"),
-  CALLBACK_RESULT("callback-result");
+  CALLBACK_EXAMINATION("callback-examination"), CALLBACK_RESULT("callback-result");
 
   private final String value;
 

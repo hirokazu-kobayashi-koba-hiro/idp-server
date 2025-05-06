@@ -4,8 +4,7 @@ import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.identity.event.UserLifecycleEventResultCommandRepository;
 
-public class UserLifecycleEventResultCommandDataSourceProvider
-    implements ApplicationComponentProvider<UserLifecycleEventResultCommandRepository> {
+public class UserLifecycleEventResultCommandDataSourceProvider implements ApplicationComponentProvider<UserLifecycleEventResultCommandRepository> {
 
   @Override
   public Class<UserLifecycleEventResultCommandRepository> type() {
@@ -13,8 +12,7 @@ public class UserLifecycleEventResultCommandDataSourceProvider
   }
 
   @Override
-  public UserLifecycleEventResultCommandRepository provide(
-      ApplicationComponentDependencyContainer container) {
+  public UserLifecycleEventResultCommandRepository provide(ApplicationComponentDependencyContainer container) {
     return new UserLifecycleEventResultCommandDataSource();
   }
 }

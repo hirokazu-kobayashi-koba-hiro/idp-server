@@ -6,8 +6,7 @@ import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.hook.SecurityEventHookResult;
 import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 
-public class SecurityEventHoolResultCommandDataSource
-    implements SecurityEventHookResultCommandRepository {
+public class SecurityEventHoolResultCommandDataSource implements SecurityEventHookResultCommandRepository {
 
   SecurityEventHoolResultSqlExecutors executors;
 
@@ -16,8 +15,7 @@ public class SecurityEventHoolResultCommandDataSource
   }
 
   @Override
-  public void register(
-      Tenant tenant, SecurityEvent securityEvent, List<SecurityEventHookResult> results) {
+  public void register(Tenant tenant, SecurityEvent securityEvent, List<SecurityEventHookResult> results) {
     SecurityEventHoolResultSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, securityEvent, results);
   }

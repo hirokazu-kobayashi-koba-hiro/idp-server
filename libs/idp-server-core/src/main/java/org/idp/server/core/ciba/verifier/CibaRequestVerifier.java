@@ -22,8 +22,7 @@ public class CibaRequestVerifier {
   public void verify() {
     CibaVerifier cibaVerifier = baseVerifiers.get(context.profile());
     if (Objects.isNull(cibaVerifier)) {
-      throw new UnSupportedException(
-          String.format("unsupported ciba profile (%s)", context.profile().name()));
+      throw new UnSupportedException(String.format("unsupported ciba profile (%s)", context.profile().name()));
     }
     cibaVerifier.verify(context);
   }

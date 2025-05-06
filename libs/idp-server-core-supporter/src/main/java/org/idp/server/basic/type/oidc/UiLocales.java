@@ -9,7 +9,8 @@ import java.util.stream.Collectors;
 /**
  * ui_locales OPTIONAL.
  *
- * <p>End-User's preferred languages and scripts for the user interface, represented as a
+ * <p>
+ * End-User's preferred languages and scripts for the user interface, represented as a
  * space-separated list of BCP47 [RFC5646] language tag values, ordered by preference. For instance,
  * the value "fr-CA fr en" represents a preference for French as spoken in Canada, then French
  * (without a region designation), followed by English (without a region designation). An error
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
  * Provider.
  *
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">3.1.2.1.
- *     Authentication Request</a>
+ *      Authentication Request</a>
  */
 public class UiLocales {
 

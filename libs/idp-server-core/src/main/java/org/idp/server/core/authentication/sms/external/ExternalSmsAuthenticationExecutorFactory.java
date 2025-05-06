@@ -11,11 +11,8 @@ public class ExternalSmsAuthenticationExecutorFactory implements SmsAuthenticati
   @Override
   public SmsAuthenticationExecutor create(AuthenticationDependencyContainer container) {
 
-    AuthenticationInteractionCommandRepository interactionCommandRepository =
-        container.resolve(AuthenticationInteractionCommandRepository.class);
-    AuthenticationInteractionQueryRepository interactionQueryRepository =
-        container.resolve(AuthenticationInteractionQueryRepository.class);
-    return new ExternalSmsAuthenticationExecutor(
-        interactionCommandRepository, interactionQueryRepository);
+    AuthenticationInteractionCommandRepository interactionCommandRepository = container.resolve(AuthenticationInteractionCommandRepository.class);
+    AuthenticationInteractionQueryRepository interactionQueryRepository = container.resolve(AuthenticationInteractionQueryRepository.class);
+    return new ExternalSmsAuthenticationExecutor(interactionCommandRepository, interactionQueryRepository);
   }
 }

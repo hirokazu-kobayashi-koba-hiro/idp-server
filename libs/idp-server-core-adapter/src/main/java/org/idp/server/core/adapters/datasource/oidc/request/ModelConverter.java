@@ -78,8 +78,7 @@ class ModelConverter {
 
       List list = jsonConverter.read(value, List.class);
       List<Map> details = (List<Map>) list;
-      List<AuthorizationDetail> authorizationDetailsList =
-          details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
+      List<AuthorizationDetail> authorizationDetailsList = details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
 
       return new AuthorizationDetails(authorizationDetailsList);
     } catch (Exception exception) {

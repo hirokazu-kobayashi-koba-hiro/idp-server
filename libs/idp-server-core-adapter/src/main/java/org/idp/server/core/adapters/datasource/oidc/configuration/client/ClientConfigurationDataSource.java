@@ -36,12 +36,10 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
       return ModelConverter.convert(resultClientIdAlias);
     }
 
-    Map<String, String> resultClientId =
-        executor.selectById(tenant, new ClientIdentifier(requestedClientId.value()));
+    Map<String, String> resultClientId = executor.selectById(tenant, new ClientIdentifier(requestedClientId.value()));
 
     if (resultClientId == null || resultClientId.isEmpty()) {
-      throw new ClientConfigurationNotFoundException(
-          String.format("unregistered client (%s)", requestedClientId.value()));
+      throw new ClientConfigurationNotFoundException(String.format("unregistered client (%s)", requestedClientId.value()));
     }
 
     return ModelConverter.convert(resultClientId);
@@ -53,8 +51,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
     Map<String, String> result = executor.selectById(tenant, clientIdentifier);
 
     if (result == null || result.isEmpty()) {
-      throw new ClientConfigurationNotFoundException(
-          String.format("unregistered client (%s)", clientIdentifier.value()));
+      throw new ClientConfigurationNotFoundException(String.format("unregistered client (%s)", clientIdentifier.value()));
     }
 
     return ModelConverter.convert(result);

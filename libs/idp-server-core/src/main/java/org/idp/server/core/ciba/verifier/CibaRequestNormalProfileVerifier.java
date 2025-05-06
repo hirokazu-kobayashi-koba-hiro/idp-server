@@ -18,12 +18,11 @@ public class CibaRequestNormalProfileVerifier implements CibaVerifier {
   @Override
   public void verify(CibaRequestContext context) {
     baseVerifier.verify(context);
-    extensionVerifiers.forEach(
-        cibaExtensionVerifier -> {
-          if (cibaExtensionVerifier.shouldNotVerify(context)) {
-            return;
-          }
-          cibaExtensionVerifier.verify(context);
-        });
+    extensionVerifiers.forEach(cibaExtensionVerifier -> {
+      if (cibaExtensionVerifier.shouldNotVerify(context)) {
+        return;
+      }
+      cibaExtensionVerifier.verify(context);
+    });
   }
 }

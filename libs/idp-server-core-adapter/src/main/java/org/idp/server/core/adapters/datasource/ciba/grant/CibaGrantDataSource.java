@@ -43,17 +43,13 @@ public class CibaGrantDataSource implements CibaGrantRepository {
   }
 
   @Override
-  public CibaGrant get(
-      Tenant tenant,
-      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
+  public CibaGrant get(Tenant tenant, BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
     CibaGrantSqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> stringMap = executor.selectOne(backchannelAuthenticationRequestIdentifier);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
-      throw new CibaGrantNotFoundException(
-          String.format(
-              "ciba grant not found (%s)", backchannelAuthenticationRequestIdentifier.value()));
+      throw new CibaGrantNotFoundException(String.format("ciba grant not found (%s)", backchannelAuthenticationRequestIdentifier.value()));
     }
 
     return ModelConverter.convert(stringMap);

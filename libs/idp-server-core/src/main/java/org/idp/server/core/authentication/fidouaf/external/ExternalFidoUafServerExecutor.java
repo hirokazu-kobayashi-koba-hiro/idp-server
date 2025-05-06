@@ -14,8 +14,7 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
   ExternalFidoUafServerHttpClient httpClient;
   JsonConverter jsonConverter;
 
-  public ExternalFidoUafServerExecutor(
-      AuthenticationConfigurationQueryRepository configurationQueryRepository) {
+  public ExternalFidoUafServerExecutor(AuthenticationConfigurationQueryRepository configurationQueryRepository) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.httpClient = new ExternalFidoUafServerHttpClient();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
@@ -27,72 +26,49 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
   }
 
   @Override
-  public FidoUafExecutionResult getFidoUafFacets(
-      Tenant tenant, FidoUafConfiguration configuration) {
+  public FidoUafExecutionResult getFidoUafFacets(Tenant tenant, FidoUafConfiguration configuration) {
 
     return execute("facets", FidoUafExecutionRequest.empty(), configuration);
   }
 
   @Override
-  public FidoUafExecutionResult challengeRegistration(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      FidoUafExecutionRequest request,
-      FidoUafConfiguration configuration) {
+  public FidoUafExecutionResult challengeRegistration(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, FidoUafExecutionRequest request, FidoUafConfiguration configuration) {
 
     return execute("registration-challenge", request, configuration);
   }
 
   @Override
-  public FidoUafExecutionResult verifyRegistration(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      FidoUafExecutionRequest request,
-      FidoUafConfiguration configuration) {
+  public FidoUafExecutionResult verifyRegistration(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, FidoUafExecutionRequest request, FidoUafConfiguration configuration) {
 
     return execute("registration", request, configuration);
   }
 
   @Override
-  public FidoUafExecutionResult challengeAuthentication(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      FidoUafExecutionRequest request,
-      FidoUafConfiguration configuration) {
+  public FidoUafExecutionResult challengeAuthentication(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, FidoUafExecutionRequest request, FidoUafConfiguration configuration) {
 
     return execute("authentication-challenge", request, configuration);
   }
 
   @Override
-  public FidoUafExecutionResult verifyAuthentication(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      FidoUafExecutionRequest request,
-      FidoUafConfiguration configuration) {
+  public FidoUafExecutionResult verifyAuthentication(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, FidoUafExecutionRequest request, FidoUafConfiguration configuration) {
 
     return execute("authentication", request, configuration);
   }
 
   @Override
-  public FidoUafExecutionResult deleteKey(
-      Tenant tenant, FidoUafExecutionRequest request, FidoUafConfiguration fidoUafConfiguration) {
+  public FidoUafExecutionResult deleteKey(Tenant tenant, FidoUafExecutionRequest request, FidoUafConfiguration fidoUafConfiguration) {
     return execute("delete-key", request, fidoUafConfiguration);
   }
 
-  private FidoUafExecutionResult execute(
-      String executionType, FidoUafExecutionRequest request, FidoUafConfiguration configuration) {
+  private FidoUafExecutionResult execute(String executionType, FidoUafExecutionRequest request, FidoUafConfiguration configuration) {
 
     Map<String, Object> detail = configuration.getDetail(type());
-    ExternalFidoUafServerConfiguration externalFidoUafServerConfiguration =
-        jsonConverter.read(detail, ExternalFidoUafServerConfiguration.class);
+    ExternalFidoUafServerConfiguration externalFidoUafServerConfiguration = jsonConverter.read(detail, ExternalFidoUafServerConfiguration.class);
 
-    ExternalFidoUafServerExecutionConfiguration executionConfiguration =
-        externalFidoUafServerConfiguration.getExecutionConfig(executionType);
-    OAuthAuthorizationConfiguration oAuthAuthorizationConfiguration =
-        externalFidoUafServerConfiguration.oauthAuthorization();
+    ExternalFidoUafServerExecutionConfiguration executionConfiguration = externalFidoUafServerConfiguration.getExecutionConfig(executionType);
+    OAuthAuthorizationConfiguration oAuthAuthorizationConfiguration = externalFidoUafServerConfiguration.oauthAuthorization();
 
-    ExternalFidoUafServerHttpRequestResult httpRequestResult =
-        httpClient.execute(request, executionConfiguration, oAuthAuthorizationConfiguration);
+    ExternalFidoUafServerHttpRequestResult httpRequestResult = httpClient.execute(request, executionConfiguration, oAuthAuthorizationConfiguration);
 
     if (httpRequestResult.isClientError()) {
       return FidoUafExecutionResult.clientError(httpRequestResult.responseBody());

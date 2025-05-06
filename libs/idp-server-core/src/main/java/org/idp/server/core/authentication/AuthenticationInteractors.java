@@ -8,8 +8,7 @@ public class AuthenticationInteractors {
 
   Map<AuthenticationInteractionType, AuthenticationInteractor> values;
 
-  public AuthenticationInteractors(
-      Map<AuthenticationInteractionType, AuthenticationInteractor> values) {
+  public AuthenticationInteractors(Map<AuthenticationInteractionType, AuthenticationInteractor> values) {
     this.values = values;
   }
 
@@ -17,8 +16,7 @@ public class AuthenticationInteractors {
     AuthenticationInteractor interactor = values.get(type);
 
     if (Objects.isNull(interactor)) {
-      throw new MfaInteractorUnSupportedException(
-          "No OAuthInteractor found for type " + type.name());
+      throw new MfaInteractorUnSupportedException("No OAuthInteractor found for type " + type.name());
     }
 
     return interactor;

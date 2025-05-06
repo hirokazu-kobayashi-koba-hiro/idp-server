@@ -21,15 +21,13 @@ public class ResourceOwnerPasswordGrantVerifier {
 
   void throwExceptionIfUnspecifiedUser() {
     if (!user.exists()) {
-      throw new TokenBadRequestException(
-          "does not found user by token request, or invalid password");
+      throw new TokenBadRequestException("does not found user by token request, or invalid password");
     }
   }
 
   void throwExceptionIfInvalidScope() {
     if (!scopes.exists()) {
-      throw new TokenBadRequestException(
-          "invalid_scope", "token request does not contains valid scope");
+      throw new TokenBadRequestException("invalid_scope", "token request does not contains valid scope");
     }
   }
 }

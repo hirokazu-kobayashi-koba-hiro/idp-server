@@ -13,17 +13,13 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 public class PostgresqlExecutor implements IdentityVerificationApplicationQuerySqlExecutor {
 
   @Override
-  public Map<String, String> selectOne(
-      Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier) {
+  public Map<String, String> selectOne(Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        selectSql
-            + " "
-            + """
-                 WHERE id = ?
-                 AND tenant_id = ?
-                 AND user_id = ?;
-                """;
+    String sqlTemplate = selectSql + " " + """
+         WHERE id = ?
+         AND tenant_id = ?
+         AND user_id = ?;
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
@@ -34,16 +30,12 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
   }
 
   @Override
-  public Map<String, String> selectOne(
-      Tenant tenant, ExternalWorkflowApplicationIdentifier identifier) {
+  public Map<String, String> selectOne(Tenant tenant, ExternalWorkflowApplicationIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        selectSql
-            + " "
-            + """
-                 WHERE external_application_id = ?
-                 AND tenant_id = ?;
-                """;
+    String sqlTemplate = selectSql + " " + """
+         WHERE external_application_id = ?
+         AND tenant_id = ?;
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
@@ -55,14 +47,11 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
   @Override
   public List<Map<String, String>> selectList(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        selectSql
-            + " "
-            + """
-                     WHERE user_id = ?
-                     AND tenant_id = ?
-                     ORDER BY requested_at DESC;
-                    """;
+    String sqlTemplate = selectSql + " " + """
+         WHERE user_id = ?
+         AND tenant_id = ?
+         ORDER BY requested_at DESC;
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(user.sub());
@@ -72,8 +61,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
   }
 
   @Override
-  public List<Map<String, String>> selectList(
-      Tenant tenant, User user, IdentityVerificationApplicationQueries queries) {
+  public List<Map<String, String>> selectList(Tenant tenant, User user, IdentityVerificationApplicationQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     StringBuilder sqlBuilder = new StringBuilder();
@@ -119,24 +107,23 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
     return sqlExecutor.selectList(sql, params);
   }
 
-  String selectSql =
-      """
-          SELECT id,
-                       tenant_id,
-                       client_id,
-                       user_id,
-                       verification_type,
-                       application_details,
-                       external_workflow_delegation,
-                       external_application_id,
-                       external_application_details,
-                       trust_framework,
-                       examination_results,
-                       processes,
-                       status,
-                       requested_at,
-                       examination_results,
-                       comment
-                 FROM identity_verification_applications
-          """;
+  String selectSql = """
+      SELECT id,
+                   tenant_id,
+                   client_id,
+                   user_id,
+                   verification_type,
+                   application_details,
+                   external_workflow_delegation,
+                   external_application_id,
+                   external_application_details,
+                   trust_framework,
+                   examination_results,
+                   processes,
+                   status,
+                   requested_at,
+                   examination_results,
+                   comment
+             FROM identity_verification_applications
+      """;
 }

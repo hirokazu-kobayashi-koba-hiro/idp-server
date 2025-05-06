@@ -17,12 +17,11 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
   @Override
   public void insert(CibaGrant cibaGrant) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                    INSERT INTO ciba_grant
-                    (backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb);
-                    """;
+    String sqlTemplate = """
+        INSERT INTO ciba_grant
+        (backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb);
+        """;
     List<Object> params = new ArrayList<>();
     AuthorizationGrant authorizationGrant = cibaGrant.authorizationGrant();
     params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().value());
@@ -75,13 +74,12 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
   public void update(CibaGrant cibaGrant) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                UPDATE ciba_grant
-                SET authentication = ?::jsonb,
-                status = ?
-                WHERE backchannel_authentication_request_id = ?;
-                """;
+    String sqlTemplate = """
+        UPDATE ciba_grant
+        SET authentication = ?::jsonb,
+        status = ?
+        WHERE backchannel_authentication_request_id = ?;
+        """;
     List<Object> params = new ArrayList<>();
     params.add(toJson(cibaGrant.authorizationGrant().authentication()));
     params.add(cibaGrant.status().name());
@@ -93,12 +91,11 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
   @Override
   public Map<String, String> selectOne(AuthReqId authReqId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
-                FROM ciba_grant
-                WHERE auth_req_id = ?;
-                """;
+    String sqlTemplate = """
+        SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
+        FROM ciba_grant
+        WHERE auth_req_id = ?;
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(authReqId.value());
@@ -107,15 +104,13 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectOne(
-      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
+  public Map<String, String> selectOne(BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-            SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
-            FROM ciba_grant
-            WHERE backchannel_authentication_request_id = ?;
-            """;
+    String sqlTemplate = """
+        SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
+        FROM ciba_grant
+        WHERE backchannel_authentication_request_id = ?;
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(backchannelAuthenticationRequestIdentifier.value());
@@ -126,10 +121,9 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
   @Override
   public void delete(CibaGrant cibaGrant) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-            DELETE FROM ciba_grant WHERE backchannel_authentication_request_id = ?;
-            """;
+    String sqlTemplate = """
+        DELETE FROM ciba_grant WHERE backchannel_authentication_request_id = ?;
+        """;
     List<Object> params = new ArrayList<>();
     params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().value());
 

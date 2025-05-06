@@ -14,13 +14,9 @@ public class ClientConfigurationErrorHandler {
 
     if (exception instanceof ClientConfigurationNotFoundException) {
       log.warn(exception.getMessage());
-      return new ClientConfigurationManagementResponse(
-          ClientConfigurationManagementStatus.NOT_FOUND,
-          Map.of("error", "invalid_client", "error_description", exception.getMessage()));
+      return new ClientConfigurationManagementResponse(ClientConfigurationManagementStatus.NOT_FOUND, Map.of("error", "invalid_client", "error_description", exception.getMessage()));
     }
     log.error(exception.getMessage(), exception);
-    return new ClientConfigurationManagementResponse(
-        ClientConfigurationManagementStatus.SERVER_ERROR,
-        Map.of("error", "server_error", "error_description", exception.getMessage()));
+    return new ClientConfigurationManagementResponse(ClientConfigurationManagementStatus.SERVER_ERROR, Map.of("error", "server_error", "error_description", exception.getMessage()));
   }
 }

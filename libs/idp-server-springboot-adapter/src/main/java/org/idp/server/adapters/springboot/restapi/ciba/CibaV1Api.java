@@ -25,23 +25,15 @@ public class CibaV1Api implements ParameterTransformable {
   }
 
   @PostMapping
-  public ResponseEntity<?> request(
-      @RequestBody(required = false) MultiValueMap<String, String> body,
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      HttpServletRequest httpServletRequest) {
+  public ResponseEntity<?> request(@RequestBody(required = false) MultiValueMap<String, String> body, @RequestHeader(required = false, value = "Authorization") String authorizationHeader, @RequestHeader(required = false, value = "x-ssl-cert") String clientCert, @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, HttpServletRequest httpServletRequest) {
 
     Map<String, String[]> params = transform(body);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    CibaRequestResponse response =
-        cibaFlowApi.request(
-            tenantIdentifier, params, authorizationHeader, clientCert, requestAttributes);
+    CibaRequestResponse response = cibaFlowApi.request(tenantIdentifier, params, authorizationHeader, clientCert, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", response.contentTypeValue());
-    return new ResponseEntity<>(
-        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+    return new ResponseEntity<>(response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }

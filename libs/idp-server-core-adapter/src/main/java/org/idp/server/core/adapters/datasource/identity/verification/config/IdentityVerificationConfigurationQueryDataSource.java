@@ -9,8 +9,7 @@ import org.idp.server.core.identity.verification.configuration.IdentityVerificat
 import org.idp.server.core.identity.verification.exception.IdentityVerificationConfigurationNotFoundException;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class IdentityVerificationConfigurationQueryDataSource
-    implements IdentityVerificationConfigurationQueryRepository {
+public class IdentityVerificationConfigurationQueryDataSource implements IdentityVerificationConfigurationQueryRepository {
 
   IdentityVerificationConfigSqlExecutors executors;
   JsonConverter jsonConverter;
@@ -27,10 +26,7 @@ public class IdentityVerificationConfigurationQueryDataSource
     Map<String, String> result = executor.selectOne(tenant, type.name());
 
     if (Objects.isNull(result) || result.isEmpty()) {
-      throw new IdentityVerificationConfigurationNotFoundException(
-          String.format(
-              "IdentityVerification Configuration is Not Found (%s) (%s)",
-              tenant.identifierValue(), type.name()));
+      throw new IdentityVerificationConfigurationNotFoundException(String.format("IdentityVerification Configuration is Not Found (%s) (%s)", tenant.identifierValue(), type.name()));
     }
 
     return jsonConverter.read(result.get("payload"), IdentityVerificationConfiguration.class);

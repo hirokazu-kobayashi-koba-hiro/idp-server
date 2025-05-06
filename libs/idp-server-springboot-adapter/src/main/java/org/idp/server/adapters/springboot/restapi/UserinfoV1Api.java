@@ -21,31 +21,21 @@ public class UserinfoV1Api implements ParameterTransformable {
   }
 
   @GetMapping
-  public ResponseEntity<?> get(
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
-      HttpServletRequest httpServletRequest) {
+  public ResponseEntity<?> get(@RequestHeader(required = false, value = "Authorization") String authorizationHeader, @RequestHeader(required = false, value = "x-ssl-cert") String clientCert, @PathVariable("tenant-id") TenantIdentifier tenantId, HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    UserinfoRequestResponse response =
-        userinfoApi.request(tenantId, authorizationHeader, clientCert, requestAttributes);
+    UserinfoRequestResponse response = userinfoApi.request(tenantId, authorizationHeader, clientCert, requestAttributes);
 
     return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
   }
 
   @PostMapping
-  public ResponseEntity<?> post(
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
-      HttpServletRequest httpServletRequest) {
+  public ResponseEntity<?> post(@RequestHeader(required = false, value = "Authorization") String authorizationHeader, @RequestHeader(required = false, value = "x-ssl-cert") String clientCert, @PathVariable("tenant-id") TenantIdentifier tenantId, HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    UserinfoRequestResponse response =
-        userinfoApi.request(tenantId, authorizationHeader, clientCert, requestAttributes);
+    UserinfoRequestResponse response = userinfoApi.request(tenantId, authorizationHeader, clientCert, requestAttributes);
 
     return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
   }

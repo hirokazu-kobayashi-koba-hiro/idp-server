@@ -1,8 +1,7 @@
 package org.idp.server.basic.oauth;
 
 public enum OAuthAuthorizationType {
-  CLIENT_CREDENTIALS("client_credentials"),
-  RESOURCE_OWNER_PASSWORD_CREDENTIALS("password");
+  CLIENT_CREDENTIALS("client_credentials"), RESOURCE_OWNER_PASSWORD_CREDENTIALS("password");
 
   String type;
 

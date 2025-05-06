@@ -35,12 +35,7 @@ public class OAuthAuthorizeHandler {
   ServerConfigurationRepository serverConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
-  public OAuthAuthorizeHandler(
-      AuthorizationRequestRepository authorizationRequestRepository,
-      AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
-      OAuthTokenRepository oAuthTokenRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+  public OAuthAuthorizeHandler(AuthorizationRequestRepository authorizationRequestRepository, AuthorizationCodeGrantRepository authorizationCodeGrantRepository, OAuthTokenRepository oAuthTokenRepository, ServerConfigurationRepository serverConfigurationRepository, ClientConfigurationRepository clientConfigurationRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
     this.oAuthTokenRepository = oAuthTokenRepository;
@@ -49,8 +44,7 @@ public class OAuthAuthorizeHandler {
     this.creators = new AuthorizationResponseCreators();
   }
 
-  public AuthorizationResponse handle(
-      OAuthAuthorizeRequest request, OAuthSessionDelegate delegate) {
+  public AuthorizationResponse handle(OAuthAuthorizeRequest request, OAuthSessionDelegate delegate) {
 
     Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
@@ -58,35 +52,22 @@ public class OAuthAuthorizeHandler {
     Authentication authentication = request.authentication();
     CustomProperties customProperties = request.toCustomProperties();
 
-    OAuthAuthorizeRequestValidator validator =
-        new OAuthAuthorizeRequestValidator(
-            authorizationRequestIdentifier, user, authentication, customProperties);
+    OAuthAuthorizeRequestValidator validator = new OAuthAuthorizeRequestValidator(authorizationRequestIdentifier, user, authentication, customProperties);
     validator.validate();
 
-    AuthorizationRequest authorizationRequest =
-        authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
+    AuthorizationRequest authorizationRequest = authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
     RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, requestedClientId);
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, requestedClientId);
 
-    OAuthAuthorizeContext context =
-        new OAuthAuthorizeContext(
-            authorizationRequest,
-            user,
-            authentication,
-            customProperties,
-            serverConfiguration,
-            clientConfiguration);
+    OAuthAuthorizeContext context = new OAuthAuthorizeContext(authorizationRequest, user, authentication, customProperties, serverConfiguration, clientConfiguration);
 
-    AuthorizationResponseCreator authorizationResponseCreator =
-        creators.get(context.responseType());
+    AuthorizationResponseCreator authorizationResponseCreator = creators.get(context.responseType());
     AuthorizationResponse authorizationResponse = authorizationResponseCreator.create(context);
 
     AuthorizationGrant authorizationGrant = context.authorize();
     if (authorizationResponse.hasAuthorizationCode()) {
-      AuthorizationCodeGrant authorizationCodeGrant =
-          AuthorizationCodeGrantCreator.create(context, authorizationResponse);
+      AuthorizationCodeGrant authorizationCodeGrant = AuthorizationCodeGrantCreator.create(context, authorizationResponse);
       authorizationCodeGrantRepository.register(tenant, authorizationCodeGrant);
     }
 
@@ -95,10 +76,8 @@ public class OAuthAuthorizeHandler {
       oAuthTokenRepository.register(tenant, oAuthToken);
     }
 
-    OAuthSessionKey oAuthSessionKey =
-        new OAuthSessionKey(tenant.identifierValue(), requestedClientId.value());
-    OAuthSession session =
-        OAuthSession.create(oAuthSessionKey, user, authentication, authorizationRequest.maxAge());
+    OAuthSessionKey oAuthSessionKey = new OAuthSessionKey(tenant.identifierValue(), requestedClientId.value());
+    OAuthSession session = OAuthSession.create(oAuthSessionKey, user, authentication, authorizationRequest.maxAge());
     delegate.registerSession(session);
 
     return authorizationResponse;

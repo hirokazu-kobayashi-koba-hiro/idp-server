@@ -41,7 +41,6 @@ public class IdTokenCustomClaimsBuilder {
   }
 
   public IdTokenCustomClaims build() {
-    return new IdTokenCustomClaims(
-        authorizationCode, accessTokenEntity, state, nonce, customProperties);
+    return new IdTokenCustomClaims(authorizationCode, accessTokenEntity, state, nonce, customProperties);
   }
 }

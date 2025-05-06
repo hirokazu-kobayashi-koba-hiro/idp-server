@@ -3,8 +3,7 @@ package org.idp.server.basic.type;
 import org.idp.server.basic.exception.UnSupportedException;
 
 public enum AuthorizationFlow {
-  OAUTH("oauth"),
-  CIBA("ciba");
+  OAUTH("oauth"), CIBA("ciba");
 
   String value;
 
@@ -18,12 +17,10 @@ public enum AuthorizationFlow {
         return flow;
       }
     }
-    throw new UnSupportedException(
-        String.format("unsupported authorization flow (%s)", authorizationFlow));
+    throw new UnSupportedException(String.format("unsupported authorization flow (%s)", authorizationFlow));
   }
 
   public String value() {
     return value;
-  }
-  ;
+  };
 }

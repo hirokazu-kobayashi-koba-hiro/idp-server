@@ -8,8 +8,7 @@ public class AuthenticationDeviceNotifiers {
 
   Map<NotificationChannel, AuthenticationDeviceNotifier> notifiers;
 
-  public AuthenticationDeviceNotifiers(
-      Map<NotificationChannel, AuthenticationDeviceNotifier> notifiers) {
+  public AuthenticationDeviceNotifiers(Map<NotificationChannel, AuthenticationDeviceNotifier> notifiers) {
     this.notifiers = notifiers;
   }
 
@@ -17,8 +16,7 @@ public class AuthenticationDeviceNotifiers {
     AuthenticationDeviceNotifier notifier = notifiers.get(channel);
 
     if (notifier == null) {
-      throw new UnSupportedException(
-          "Authentication device notifier " + channel.name() + " not supported");
+      throw new UnSupportedException("Authentication device notifier " + channel.name() + " not supported");
     }
 
     return notifier;

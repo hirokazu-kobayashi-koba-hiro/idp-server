@@ -18,34 +18,15 @@ public class NormalPatternContextCreator implements OAuthRequestContextCreator {
   NormalRequestFactory normalRequestFactory = new NormalRequestFactory();
 
   @Override
-  public OAuthRequestContext create(
-      Tenant tenant,
-      OAuthRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public OAuthRequestContext create(Tenant tenant, OAuthRequestParameters parameters, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
 
     JoseContext joseContext = new JoseContext();
     OAuthRequestPattern pattern = OAuthRequestPattern.NORMAL;
-    Set<String> filteredScopes =
-        filterScopes(pattern, parameters, joseContext, clientConfiguration);
+    Set<String> filteredScopes = filterScopes(pattern, parameters, joseContext, clientConfiguration);
     AuthorizationProfile profile = analyze(filteredScopes, serverConfiguration);
 
-    AuthorizationRequest authorizationRequest =
-        normalRequestFactory.create(
-            profile,
-            parameters,
-            joseContext,
-            filteredScopes,
-            serverConfiguration,
-            clientConfiguration);
+    AuthorizationRequest authorizationRequest = normalRequestFactory.create(profile, parameters, joseContext, filteredScopes, serverConfiguration, clientConfiguration);
 
-    return new OAuthRequestContext(
-        tenant,
-        pattern,
-        parameters,
-        joseContext,
-        authorizationRequest,
-        serverConfiguration,
-        clientConfiguration);
+    return new OAuthRequestContext(tenant, pattern, parameters, joseContext, authorizationRequest, serverConfiguration, clientConfiguration);
   }
 }

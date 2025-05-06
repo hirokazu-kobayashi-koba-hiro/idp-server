@@ -34,23 +34,13 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   public CibaRequestContext() {}
 
-  public CibaRequestContext(
-      CibaRequestPattern pattern,
-      ClientSecretBasic clientSecretBasic,
-      ClientCert clientCert,
-      CibaRequestParameters parameters,
-      CibaRequestObjectParameters requestObjectParameters,
-      JoseContext joseContext,
-      BackchannelAuthenticationRequest backchannelAuthenticationRequest,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public CibaRequestContext(CibaRequestPattern pattern, ClientSecretBasic clientSecretBasic, ClientCert clientCert, CibaRequestParameters parameters, CibaRequestObjectParameters requestObjectParameters, JoseContext joseContext, BackchannelAuthenticationRequest backchannelAuthenticationRequest, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     this.pattern = pattern;
     this.clientSecretBasic = clientSecretBasic;
     this.clientCert = clientCert;
     this.parameters = parameters;
     this.requestObjectParameters = requestObjectParameters;
-    this.assembleParameters =
-        new CibaRequestAssembleParameters(parameters, requestObjectParameters);
+    this.assembleParameters = new CibaRequestAssembleParameters(parameters, requestObjectParameters);
     this.joseContext = joseContext;
     this.backchannelAuthenticationRequest = backchannelAuthenticationRequest;
     this.serverConfiguration = serverConfiguration;

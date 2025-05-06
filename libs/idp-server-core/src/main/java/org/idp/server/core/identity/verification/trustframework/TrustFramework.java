@@ -17,7 +17,8 @@ public class TrustFramework {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     TrustFramework that = (TrustFramework) o;
     return Objects.equals(name, that.name);
   }

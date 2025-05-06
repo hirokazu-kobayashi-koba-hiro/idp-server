@@ -16,74 +16,73 @@ public class MysqlExecutor implements UserSqlExecutor {
   @Override
   public void insert(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                    INSERT INTO idp_user
-                    (
-                    id,
-                    tenant_id,
-                    provider_id,
-                    provider_user_id,
-                    provider_user_original_payload,
-                    name,
-                    given_name,
-                    family_name,
-                    middle_name,
-                    nickname,
-                    preferred_username,
-                    profile,
-                    picture,
-                    website,
-                    email,
-                    email_verified,
-                    gender,
-                    birthdate,
-                    zoneinfo,
-                    locale,
-                    phone_number,
-                    phone_number_verified,
-                    address,
-                    custom_properties,
-                    credentials,
-                    hashed_password,
-                    multi_factor_authentication,
-                    authentication_devices,
-                    verified_claims,
-                    status)
-                    VALUES
-                    (
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?::jsonb,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?::jsonb,
-                    ?::jsonb,
-                    ?::jsonb,
-                    ?,
-                    ?::jsonb,
-                    ?::jsonb,
-                    ?::jsonb,
-                    ?
-                    );
-                    """;
+    String sqlTemplate = """
+        INSERT INTO idp_user
+        (
+        id,
+        tenant_id,
+        provider_id,
+        provider_user_id,
+        provider_user_original_payload,
+        name,
+        given_name,
+        family_name,
+        middle_name,
+        nickname,
+        preferred_username,
+        profile,
+        picture,
+        website,
+        email,
+        email_verified,
+        gender,
+        birthdate,
+        zoneinfo,
+        locale,
+        phone_number,
+        phone_number_verified,
+        address,
+        custom_properties,
+        credentials,
+        hashed_password,
+        multi_factor_authentication,
+        authentication_devices,
+        verified_claims,
+        status)
+        VALUES
+        (
+        ?,
+        ?,
+        ?,
+        ?,
+        ?::jsonb,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?::jsonb,
+        ?::jsonb,
+        ?::jsonb,
+        ?,
+        ?::jsonb,
+        ?::jsonb,
+        ?::jsonb,
+        ?
+        );
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(user.sub());
@@ -124,8 +123,7 @@ public class MysqlExecutor implements UserSqlExecutor {
   public Map<String, String> selectOne(Tenant tenant, UserIdentifier userIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        String.format(selectSql, "WHERE idp_user.tenant_id = ? AND idp_user.id = ?");
+    String sqlTemplate = String.format(selectSql, "WHERE idp_user.tenant_id = ? AND idp_user.id = ?");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(userIdentifier.value());
@@ -137,14 +135,11 @@ public class MysqlExecutor implements UserSqlExecutor {
   public Map<String, String> selectByEmail(Tenant tenant, String email, String providerId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        String.format(
-            selectSql,
-            """
-                WHERE idp_user.tenant_id = ?
-                AND idp_user.email = ?
-                AND idp_user.provider_id = ?
-            """);
+    String sqlTemplate = String.format(selectSql, """
+            WHERE idp_user.tenant_id = ?
+            AND idp_user.email = ?
+            AND idp_user.provider_id = ?
+        """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(email);
@@ -157,14 +152,11 @@ public class MysqlExecutor implements UserSqlExecutor {
   public Map<String, String> selectByPhone(Tenant tenant, String phone, String providerId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        String.format(
-            selectSql,
-            """
-                        WHERE idp_user.tenant_id = ?
-                        AND idp_user.phone_number = ?
-                        AND idp_user.provider_id = ?
-                    """);
+    String sqlTemplate = String.format(selectSql, """
+            WHERE idp_user.tenant_id = ?
+            AND idp_user.phone_number = ?
+            AND idp_user.provider_id = ?
+        """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(phone);
@@ -177,15 +169,14 @@ public class MysqlExecutor implements UserSqlExecutor {
   public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        String.format(selectSql, """
-                WHERE idp_user.tenant_id = ?
-            """);
+    String sqlTemplate = String.format(selectSql, """
+            WHERE idp_user.tenant_id = ?
+        """);
 
     String pagedSql = sqlTemplate + """
-            limit ?
-            OFFSET ?
-            """;
+        limit ?
+        OFFSET ?
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
@@ -198,35 +189,34 @@ public class MysqlExecutor implements UserSqlExecutor {
   @Override
   public void update(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-              UPDATE idp_user
-              SET name = ?,
-              given_name = ?,
-              family_name = ?,
-              middle_name = ?,
-              nickname = ?,
-              preferred_username = ?,
-              profile = ?,
-              picture = ?,
-              website = ?,
-              email = ?,
-              email_verified = ?,
-              gender = ?,
-              birthdate = ?,
-              zoneinfo = ?,
-              locale = ?,
-              phone_number = ?,
-              phone_number_verified = ?,
-              address = ?,
-              custom_properties = ?,
-              multi_factor_authentication = ?,
-              authentication_devices = ?,
-              verified_claims = ?,
-              status = ?,
-              updated_at = now()
-              WHERE id = ?;
-              """;
+    String sqlTemplate = """
+        UPDATE idp_user
+        SET name = ?,
+        given_name = ?,
+        family_name = ?,
+        middle_name = ?,
+        nickname = ?,
+        preferred_username = ?,
+        profile = ?,
+        picture = ?,
+        website = ?,
+        email = ?,
+        email_verified = ?,
+        gender = ?,
+        birthdate = ?,
+        zoneinfo = ?,
+        locale = ?,
+        phone_number = ?,
+        phone_number_verified = ?,
+        address = ?,
+        custom_properties = ?,
+        multi_factor_authentication = ?,
+        authentication_devices = ?,
+        verified_claims = ?,
+        status = ?,
+        updated_at = now()
+        WHERE id = ?;
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(user.name());
@@ -258,19 +248,15 @@ public class MysqlExecutor implements UserSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectByProvider(
-      Tenant tenant, String providerId, String providerUserId) {
+  public Map<String, String> selectByProvider(Tenant tenant, String providerId, String providerUserId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        String.format(
-            selectSql,
-            """
-                WHERE
-                idp_user.tenant_id = ?
-                AND idp_user.provider_id = ?
-                AND idp_user.provider_user_id = ?
-            """);
+    String sqlTemplate = String.format(selectSql, """
+            WHERE
+            idp_user.tenant_id = ?
+            AND idp_user.provider_id = ?
+            AND idp_user.provider_user_id = ?
+        """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(providerId);
@@ -283,19 +269,16 @@ public class MysqlExecutor implements UserSqlExecutor {
   public Map<String, String> selectByAuthenticationDevice(Tenant tenant, String deviceId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        String.format(
-            selectSql,
-            """
-                    JOIN JSON_TABLE(
-                                   idp_user.authentication_devices,
-                                   '$[*]' COLUMNS (
-                                     device_id VARCHAR(255) PATH '$.id'
-                                   )
-                                 ) AS device
-                                 ON device.device_id = ?
-                                 WHERE idp_user.tenant_id = ?
-                    """);
+    String sqlTemplate = String.format(selectSql, """
+        JOIN JSON_TABLE(
+                       idp_user.authentication_devices,
+                       '$[*]' COLUMNS (
+                         device_id VARCHAR(255) PATH '$.id'
+                       )
+                     ) AS device
+                     ON device.device_id = ?
+                     WHERE idp_user.tenant_id = ?
+        """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(deviceId);
@@ -303,76 +286,75 @@ public class MysqlExecutor implements UserSqlExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
-  String selectSql =
-      """
-                  SELECT
-                               idp_user.id,
-                               idp_user.provider_id,
-                               idp_user.provider_user_id,
-                               idp_user.provider_user_original_payload,
-                               idp_user.name,
-                               idp_user.given_name,
-                               idp_user.family_name,
-                               idp_user.middle_name,
-                               idp_user.nickname,
-                               idp_user.preferred_username,
-                               idp_user.profile,
-                               idp_user.picture,
-                               idp_user.website,
-                               idp_user.email,
-                               idp_user.email_verified,
-                               idp_user.gender,
-                               idp_user.birthdate,
-                               idp_user.zoneinfo,
-                               idp_user.locale,
-                               idp_user.phone_number,
-                               idp_user.phone_number_verified,
-                               idp_user.address,
-                               idp_user.custom_properties,
-                               idp_user.credentials,
-                               idp_user.hashed_password,
-                               idp_user.multi_factor_authentication,
-                               idp_user.authentication_devices,
-                               idp_user.verified_claims,
-                               idp_user.status,
-                               idp_user.created_at,
-                               idp_user.updated_at,
-                               JSON_ARRAYAGG(role.name) roles,
-                               JSON_ARRAYAGG(user_effective_permissions_view.permission_name) AS permissions
-                             FROM idp_user
-                             LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
-                             LEFT JOIN role ON idp_user_roles.role_id = role.id
-                             LEFT JOIN user_effective_permissions_view ON idp_user.id = user_effective_permissions_view.user_id
-                             %s
-                             GROUP BY
-                               idp_user.id,
-                               idp_user.provider_id,
-                               idp_user.provider_user_id,
-                               idp_user.provider_user_original_payload,
-                               idp_user.name,
-                               idp_user.given_name,
-                               idp_user.family_name,
-                               idp_user.middle_name,
-                               idp_user.nickname,
-                               idp_user.preferred_username,
-                               idp_user.profile,
-                               idp_user.picture,
-                               idp_user.website,
-                               idp_user.email,
-                               idp_user.email_verified,
-                               idp_user.gender,
-                               idp_user.birthdate,
-                               idp_user.zoneinfo,
-                               idp_user.locale,
-                               idp_user.phone_number,
-                               idp_user.phone_number_verified,
-                               idp_user.address,
-                               idp_user.custom_properties,
-                               idp_user.credentials,
-                               idp_user.hashed_password,
-                               idp_user.multi_factor_authentication,
-                               idp_user.status,
-                               idp_user.created_at,
-                               idp_user.updated_at
-                  """;
+  String selectSql = """
+      SELECT
+                   idp_user.id,
+                   idp_user.provider_id,
+                   idp_user.provider_user_id,
+                   idp_user.provider_user_original_payload,
+                   idp_user.name,
+                   idp_user.given_name,
+                   idp_user.family_name,
+                   idp_user.middle_name,
+                   idp_user.nickname,
+                   idp_user.preferred_username,
+                   idp_user.profile,
+                   idp_user.picture,
+                   idp_user.website,
+                   idp_user.email,
+                   idp_user.email_verified,
+                   idp_user.gender,
+                   idp_user.birthdate,
+                   idp_user.zoneinfo,
+                   idp_user.locale,
+                   idp_user.phone_number,
+                   idp_user.phone_number_verified,
+                   idp_user.address,
+                   idp_user.custom_properties,
+                   idp_user.credentials,
+                   idp_user.hashed_password,
+                   idp_user.multi_factor_authentication,
+                   idp_user.authentication_devices,
+                   idp_user.verified_claims,
+                   idp_user.status,
+                   idp_user.created_at,
+                   idp_user.updated_at,
+                   JSON_ARRAYAGG(role.name) roles,
+                   JSON_ARRAYAGG(user_effective_permissions_view.permission_name) AS permissions
+                 FROM idp_user
+                 LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
+                 LEFT JOIN role ON idp_user_roles.role_id = role.id
+                 LEFT JOIN user_effective_permissions_view ON idp_user.id = user_effective_permissions_view.user_id
+                 %s
+                 GROUP BY
+                   idp_user.id,
+                   idp_user.provider_id,
+                   idp_user.provider_user_id,
+                   idp_user.provider_user_original_payload,
+                   idp_user.name,
+                   idp_user.given_name,
+                   idp_user.family_name,
+                   idp_user.middle_name,
+                   idp_user.nickname,
+                   idp_user.preferred_username,
+                   idp_user.profile,
+                   idp_user.picture,
+                   idp_user.website,
+                   idp_user.email,
+                   idp_user.email_verified,
+                   idp_user.gender,
+                   idp_user.birthdate,
+                   idp_user.zoneinfo,
+                   idp_user.locale,
+                   idp_user.phone_number,
+                   idp_user.phone_number_verified,
+                   idp_user.address,
+                   idp_user.custom_properties,
+                   idp_user.credentials,
+                   idp_user.hashed_password,
+                   idp_user.multi_factor_authentication,
+                   idp_user.status,
+                   idp_user.created_at,
+                   idp_user.updated_at
+      """;
 }

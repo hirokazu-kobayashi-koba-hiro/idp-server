@@ -15,27 +15,24 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
   public void insert(AuthorizationRequest authorizationRequest) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                    INSERT INTO authorization_request
-                    (id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, custom_params)
-                    VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb);
-                    """;
+    String sqlTemplate = """
+        INSERT INTO authorization_request
+        (id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, custom_params)
+        VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb);
+        """;
 
     List<Object> params = InsertSqlCreator.createInsert(authorizationRequest);
     sqlExecutor.execute(sqlTemplate, params);
   }
 
   @Override
-  public Map<String, String> selectOne(
-      AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+  public Map<String, String> selectOne(AuthorizationRequestIdentifier authorizationRequestIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                SELECT id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, custom_params
-                FROM authorization_request
-                WHERE id = ?;
-                """;
+    String sqlTemplate = """
+        SELECT id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, custom_params
+        FROM authorization_request
+        WHERE id = ?;
+        """;
     List<Object> params = new ArrayList<>();
     params.add(authorizationRequestIdentifier.value());
 

@@ -19,49 +19,28 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
   AuthenticationConfigurationQueryRepository configurationRepository;
   WebAuthnExecutors webAuthnExecutors;
 
-  public WebAuthnAuthenticationInteractor(
-      AuthenticationConfigurationQueryRepository configurationRepository,
-      WebAuthnExecutors webAuthnExecutors) {
+  public WebAuthnAuthenticationInteractor(AuthenticationConfigurationQueryRepository configurationRepository, WebAuthnExecutors webAuthnExecutors) {
     this.configurationRepository = configurationRepository;
     this.webAuthnExecutors = webAuthnExecutors;
   }
 
   @Override
-  public AuthenticationInteractionRequestResult interact(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
-      UserQueryRepository userQueryRepository) {
+  public AuthenticationInteractionRequestResult interact(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, AuthenticationInteractionType type, AuthenticationInteractionRequest request, AuthenticationTransaction transaction, UserQueryRepository userQueryRepository) {
 
-    WebAuthnConfiguration configuration =
-        configurationRepository.get(tenant, "webauthn", WebAuthnConfiguration.class);
+    WebAuthnConfiguration configuration = configurationRepository.get(tenant, "webauthn", WebAuthnConfiguration.class);
 
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
-    WebAuthnVerificationResult webAuthnVerificationResult =
-        webAuthnExecutor.verifyAuthentication(
-            tenant, authorizationIdentifier, request, configuration);
+    WebAuthnVerificationResult webAuthnVerificationResult = webAuthnExecutor.verifyAuthentication(tenant, authorizationIdentifier, request, configuration);
 
     UserIdentifier userIdentifier = new UserIdentifier(webAuthnVerificationResult.getUserId());
     User user = userQueryRepository.get(tenant, userIdentifier);
 
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("hwk")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
+    Authentication authentication = new Authentication().setTime(SystemDateTime.now()).addMethods(new ArrayList<>(List.of("hwk"))).addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     Map<String, Object> response = new HashMap<>();
     response.put("user", user.toMap());
     response.put("authentication", authentication.toMap());
 
-    return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.SUCCESS,
-        type,
-        user,
-        authentication,
-        response,
-        DefaultSecurityEventType.webauthn_authentication_success);
+    return new AuthenticationInteractionRequestResult(AuthenticationInteractionStatus.SUCCESS, type, user, authentication, response, DefaultSecurityEventType.webauthn_authentication_success);
   }
 }

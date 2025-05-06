@@ -13,8 +13,7 @@ public class TokenIntrospectionValidator {
 
   public void validate() {
     if (!parameters.hasToken()) {
-      throw new TokenIntrospectionBadRequestException(
-          "invalid_request", "token introspection request must contains token parameters");
+      throw new TokenIntrospectionBadRequestException("invalid_request", "token introspection request must contains token parameters");
     }
   }
 }

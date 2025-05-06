@@ -27,10 +27,7 @@ public class UserV1Api implements ParameterTransformable {
   }
 
   @DeleteMapping
-  public ResponseEntity<?> apply(
-      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      HttpServletRequest httpServletRequest) {
+  public ResponseEntity<?> apply(@AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal, @PathVariable("tenant-id") TenantIdentifier tenantIdentifier, HttpServletRequest httpServletRequest) {
 
     User user = resourceOwnerPrincipal.getUser();
     OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();

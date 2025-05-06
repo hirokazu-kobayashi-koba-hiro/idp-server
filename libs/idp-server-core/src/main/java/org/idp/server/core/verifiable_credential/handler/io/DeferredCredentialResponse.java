@@ -11,8 +11,7 @@ public class DeferredCredentialResponse {
   VerifiableCredentialErrorResponse errorResponse;
   Map<String, String> headers;
 
-  public DeferredCredentialResponse(
-      CredentialRequestStatus status, VerifiableCredentialResponse response) {
+  public DeferredCredentialResponse(CredentialRequestStatus status, VerifiableCredentialResponse response) {
     this.status = status;
     this.response = response;
     this.errorResponse = new VerifiableCredentialErrorResponse();
@@ -23,8 +22,7 @@ public class DeferredCredentialResponse {
     this.headers = values;
   }
 
-  public DeferredCredentialResponse(
-      CredentialRequestStatus status, VerifiableCredentialErrorResponse errorResponse) {
+  public DeferredCredentialResponse(CredentialRequestStatus status, VerifiableCredentialErrorResponse errorResponse) {
     this.status = status;
     this.response = new VerifiableCredentialResponse();
     this.errorResponse = errorResponse;

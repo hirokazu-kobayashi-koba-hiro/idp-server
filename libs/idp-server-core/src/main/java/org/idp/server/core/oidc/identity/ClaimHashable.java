@@ -7,9 +7,10 @@ import org.idp.server.basic.hash.MessageDigestable;
 /**
  * example at_hash case
  *
- * <p>Access Token hash value. Its value is the base64url encoding of the left-most half of the hash
- * of the octets of the ASCII representation of the access_token value, where the hash algorithm
- * used is the hash algorithm used in the alg Header Parameter of the ID Token's JOSE Header. For
+ * <p>
+ * Access Token hash value. Its value is the base64url encoding of the left-most half of the hash of
+ * the octets of the ASCII representation of the access_token value, where the hash algorithm used
+ * is the hash algorithm used in the alg Header Parameter of the ID Token's JOSE Header. For
  * instance, if the alg is RS256, hash the access_token value with SHA-256, then take the left-most
  * 128 bits and base64url encode them. The at_hash value is a case sensitive string.
  */

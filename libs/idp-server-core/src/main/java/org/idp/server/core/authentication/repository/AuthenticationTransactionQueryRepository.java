@@ -9,6 +9,5 @@ public interface AuthenticationTransactionQueryRepository {
 
   AuthenticationTransaction get(Tenant tenant, AuthorizationIdentifier identifier);
 
-  AuthenticationTransaction findLatest(
-      Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier);
+  AuthenticationTransaction findLatest(Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier);
 }

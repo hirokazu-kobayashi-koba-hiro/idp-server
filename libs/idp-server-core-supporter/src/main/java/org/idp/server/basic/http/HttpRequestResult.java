@@ -12,8 +12,7 @@ public class HttpRequestResult {
 
   public HttpRequestResult() {}
 
-  public HttpRequestResult(
-      int statusCode, Map<String, List<String>> headers, JsonNodeWrapper body) {
+  public HttpRequestResult(int statusCode, Map<String, List<String>> headers, JsonNodeWrapper body) {
     this.statusCode = statusCode;
     this.headers = headers;
     this.body = body;

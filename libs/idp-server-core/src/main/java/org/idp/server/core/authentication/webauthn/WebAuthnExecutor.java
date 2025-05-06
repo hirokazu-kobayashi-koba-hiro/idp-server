@@ -8,28 +8,11 @@ public interface WebAuthnExecutor {
 
   WebAuthnExecutorType type();
 
-  WebAuthnChallenge challengeRegistration(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      AuthenticationInteractionRequest request,
-      WebAuthnConfiguration configuration);
+  WebAuthnChallenge challengeRegistration(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, AuthenticationInteractionRequest request, WebAuthnConfiguration configuration);
 
-  WebAuthnVerificationResult verifyRegistration(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      String userId,
-      AuthenticationInteractionRequest request,
-      WebAuthnConfiguration configuration);
+  WebAuthnVerificationResult verifyRegistration(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, String userId, AuthenticationInteractionRequest request, WebAuthnConfiguration configuration);
 
-  WebAuthnChallenge challengeAuthentication(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      AuthenticationInteractionRequest request,
-      WebAuthnConfiguration configuration);
+  WebAuthnChallenge challengeAuthentication(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, AuthenticationInteractionRequest request, WebAuthnConfiguration configuration);
 
-  WebAuthnVerificationResult verifyAuthentication(
-      Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
-      AuthenticationInteractionRequest request,
-      WebAuthnConfiguration configuration);
+  WebAuthnVerificationResult verifyAuthentication(Tenant tenant, AuthorizationIdentifier authorizationIdentifier, AuthenticationInteractionRequest request, WebAuthnConfiguration configuration);
 }

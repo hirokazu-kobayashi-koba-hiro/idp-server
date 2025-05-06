@@ -5,11 +5,12 @@ import java.util.Objects;
 /**
  * c_nonce_expires_in: OPTIONAL.
  *
- * <p>JSON integer denoting the lifetime in seconds of the c_nonce.
+ * <p>
+ * JSON integer denoting the lifetime in seconds of the c_nonce.
  *
- * @see <a
- *     href="https://openid.bitbucket.io/connect/openid-4-verifiable-credential-issuance-1_0.html#name-credential-response">7.3.
- *     Credential Response</a>
+ * @see <a href=
+ *      "https://openid.bitbucket.io/connect/openid-4-verifiable-credential-issuance-1_0.html#name-credential-response">7.3.
+ *      Credential Response</a>
  */
 public class CNonceExpiresIn {
   Long value;

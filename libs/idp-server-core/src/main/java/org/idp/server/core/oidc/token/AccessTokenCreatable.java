@@ -24,11 +24,7 @@ import org.idp.server.core.oidc.mtls.ClientCertificationThumbprintCalculator;
 
 public interface AccessTokenCreatable {
 
-  default AccessToken createAccessToken(
-      AuthorizationGrant authorizationGrant,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration,
-      ClientCredentials clientCredentials) {
+  default AccessToken createAccessToken(AuthorizationGrant authorizationGrant, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration, ClientCredentials clientCredentials) {
     try {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
@@ -48,36 +44,19 @@ public interface AccessTokenCreatable {
       payloadBuilder.addJti(UUID.randomUUID().toString());
 
       ClientCertificationThumbprint thumbprint = new ClientCertificationThumbprint();
-      if (clientCredentials.isTlsClientAuthOrSelfSignedTlsClientAuth()
-          && serverConfiguration.isTlsClientCertificateBoundAccessTokens()
-          && clientConfiguration.isTlsClientCertificateBoundAccessTokens()) {
+      if (clientCredentials.isTlsClientAuthOrSelfSignedTlsClientAuth() && serverConfiguration.isTlsClientCertificateBoundAccessTokens() && clientConfiguration.isTlsClientCertificateBoundAccessTokens()) {
         ClientCertification clientCertification = clientCredentials.clientCertification();
-        ClientCertificationThumbprintCalculator calculator =
-            new ClientCertificationThumbprintCalculator(clientCertification);
+        ClientCertificationThumbprintCalculator calculator = new ClientCertificationThumbprintCalculator(clientCertification);
         thumbprint = calculator.calculate();
         payloadBuilder.add(thumbprint);
       }
 
       Map<String, Object> accessTokenPayload = payloadBuilder.build();
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
-      JsonWebSignature jsonWebSignature =
-          jsonWebSignatureFactory.createWithAsymmetricKey(
-              accessTokenPayload,
-              Map.of(),
-              serverConfiguration.jwks(),
-              serverConfiguration.tokenSignedKeyId());
+      JsonWebSignature jsonWebSignature = jsonWebSignatureFactory.createWithAsymmetricKey(accessTokenPayload, Map.of(), serverConfiguration.jwks(), serverConfiguration.tokenSignedKeyId());
       AccessTokenEntity accessTokenEntity = new AccessTokenEntity(jsonWebSignature.serialize());
 
-      return new AccessToken(
-          serverConfiguration.tenantIdentifier(),
-          serverConfiguration.tokenIssuer(),
-          TokenType.Bearer,
-          accessTokenEntity,
-          authorizationGrant,
-          thumbprint,
-          createdAt,
-          expiresIn,
-          expiredAt);
+      return new AccessToken(serverConfiguration.tenantIdentifier(), serverConfiguration.tokenIssuer(), TokenType.Bearer, accessTokenEntity, authorizationGrant, thumbprint, createdAt, expiresIn, expiredAt);
     } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
       throw new ConfigurationInvalidException(exception);
     }

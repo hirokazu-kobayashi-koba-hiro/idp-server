@@ -145,8 +145,7 @@ public class SqlExecutor {
     }
   }
 
-  private List<Map<String, String>> select(String sql, PreparedStatement preparedStatement)
-      throws SQLException {
+  private List<Map<String, String>> select(String sql, PreparedStatement preparedStatement) throws SQLException {
     ResultSet resultSet = preparedStatement.executeQuery();
     ResultSetMetaData metaData = resultSet.getMetaData();
     int columnCount = metaData.getColumnCount();
@@ -164,8 +163,7 @@ public class SqlExecutor {
     return results;
   }
 
-  private List<Map<String, Object>> selectWithType(String sql, PreparedStatement preparedStatement)
-      throws SQLException {
+  private List<Map<String, Object>> selectWithType(String sql, PreparedStatement preparedStatement) throws SQLException {
     ResultSet resultSet = preparedStatement.executeQuery();
     ResultSetMetaData metaData = resultSet.getMetaData();
     int columnCount = metaData.getColumnCount();

@@ -6,9 +6,5 @@ import org.idp.server.core.multi_tenancy.tenant.TenantType;
 
 public interface ServerManagementApi {
 
-  String register(
-      TenantIdentifier adminTenantIdentifier,
-      TenantType tenantType,
-      ServerDomain serverDomain,
-      String json);
+  String register(TenantIdentifier adminTenantIdentifier, TenantType tenantType, ServerDomain serverDomain, String json);
 }

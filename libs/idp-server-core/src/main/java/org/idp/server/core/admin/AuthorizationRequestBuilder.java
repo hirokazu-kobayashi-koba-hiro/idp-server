@@ -12,13 +12,7 @@ public class AuthorizationRequestBuilder {
   Map<String, String> customParameters;
   QueryParams queryParams = new QueryParams();
 
-  public AuthorizationRequestBuilder(
-      String authorizationEndpoint,
-      String clientId,
-      String redirectUri,
-      String scope,
-      String responseType,
-      Map<String, String> customParameters) {
+  public AuthorizationRequestBuilder(String authorizationEndpoint, String clientId, String redirectUri, String scope, String responseType, Map<String, String> customParameters) {
     this.authorizationEndpoint = authorizationEndpoint;
     this.clientId = clientId;
     this.redirectUri = redirectUri;

@@ -7,6 +7,5 @@ import org.idp.server.core.token.OAuthToken;
 
 public interface OperatorAuthenticationApi {
 
-  Pairs<User, OAuthToken> authenticate(
-      TenantIdentifier adminTenantIdentifier, String authorizationHeader);
+  Pairs<User, OAuthToken> authenticate(TenantIdentifier adminTenantIdentifier, String authorizationHeader);
 }

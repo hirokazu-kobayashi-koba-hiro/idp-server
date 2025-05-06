@@ -27,53 +27,26 @@ public class RequestUriPatternContextCreator implements OAuthRequestContextCreat
   }
 
   @Override
-  public OAuthRequestContext create(
-      Tenant tenant,
-      OAuthRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public OAuthRequestContext create(Tenant tenant, OAuthRequestParameters parameters, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     try {
 
       if (!clientConfiguration.isRegisteredRequestUri(parameters.requestUri().value())) {
-        throw new OAuthBadRequestException(
-            "invalid_request",
-            String.format("request uri does not registered (%s)", parameters.requestUri().value()));
+        throw new OAuthBadRequestException("invalid_request", String.format("request uri does not registered (%s)", parameters.requestUri().value()));
       }
 
       RequestObject requestObject = requestObjectGateway.get(parameters.requestUri());
       JoseHandler joseHandler = new JoseHandler();
-      JoseContext joseContext =
-          joseHandler.handle(
-              requestObject.value(),
-              clientConfiguration.jwks(),
-              serverConfiguration.jwks(),
-              clientConfiguration.clientSecretValue());
+      JoseContext joseContext = joseHandler.handle(requestObject.value(), clientConfiguration.jwks(), serverConfiguration.jwks(), clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
 
       OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_URI;
-      Set<String> filteredScopes =
-          filterScopes(pattern, parameters, joseContext, clientConfiguration);
+      Set<String> filteredScopes = filterScopes(pattern, parameters, joseContext, clientConfiguration);
 
       AuthorizationProfile profile = analyze(filteredScopes, serverConfiguration);
-      AuthorizationRequestFactory requestFactory =
-          selectAuthorizationRequestFactory(profile, serverConfiguration, clientConfiguration);
-      AuthorizationRequest authorizationRequest =
-          requestFactory.create(
-              profile,
-              parameters,
-              joseContext,
-              filteredScopes,
-              serverConfiguration,
-              clientConfiguration);
+      AuthorizationRequestFactory requestFactory = selectAuthorizationRequestFactory(profile, serverConfiguration, clientConfiguration);
+      AuthorizationRequest authorizationRequest = requestFactory.create(profile, parameters, joseContext, filteredScopes, serverConfiguration, clientConfiguration);
 
-      return new OAuthRequestContext(
-          tenant,
-          pattern,
-          parameters,
-          joseContext,
-          authorizationRequest,
-          serverConfiguration,
-          clientConfiguration);
+      return new OAuthRequestContext(tenant, pattern, parameters, joseContext, authorizationRequest, serverConfiguration, clientConfiguration);
     } catch (JoseInvalidException exception) {
       throw new OAuthBadRequestException("invalid_request", exception.getMessage(), exception);
     }

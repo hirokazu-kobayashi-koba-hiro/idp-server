@@ -13,11 +13,10 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
   public void insert(Organization organization) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlOrganizationTemplate =
-        """
-                INSERT INTO organization(id, name, description)
-                VALUES (?, ?, ?);
-                """;
+    String sqlOrganizationTemplate = """
+        INSERT INTO organization(id, name, description)
+        VALUES (?, ?, ?);
+        """;
     List<Object> organizationParams = new ArrayList<>();
     organizationParams.add(organization.identifier().value());
     organizationParams.add(organization.name().value());
@@ -25,23 +24,18 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
 
     sqlExecutor.execute(sqlOrganizationTemplate, organizationParams);
 
-    StringBuilder sqlTemplateBuilder =
-        new StringBuilder(
-            """
-                         INSERT INTO organization_tenants(organization_id, tenant_id)
-                          VALUES
-                        """);
+    StringBuilder sqlTemplateBuilder = new StringBuilder("""
+         INSERT INTO organization_tenants(organization_id, tenant_id)
+          VALUES
+        """);
     List<String> sqlValues = new ArrayList<>();
     List<Object> tenantParams = new ArrayList<>();
 
-    organization
-        .assignedTenants()
-        .forEach(
-            organizationTenant -> {
-              sqlValues.add("(?, ?)");
-              tenantParams.add(organization.identifier().value());
-              tenantParams.add(organizationTenant.identifier().value());
-            });
+    organization.assignedTenants().forEach(organizationTenant -> {
+      sqlValues.add("(?, ?)");
+      tenantParams.add(organization.identifier().value());
+      tenantParams.add(organizationTenant.identifier().value());
+    });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(";");
 
@@ -52,14 +46,13 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
   public void update(Organization organization) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                UPDATE organization
-                SET name = ?
-                description = ?
-                WHERE
-                id = ?
-                """;
+    String sqlTemplate = """
+        UPDATE organization
+        SET name = ?
+        description = ?
+        WHERE
+        id = ?
+        """;
 
     List<Object> organizationParams = new ArrayList<>();
     organizationParams.add(organization.name().value());
@@ -73,11 +66,10 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
   public Map<String, String> selectOne(OrganizationIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                SELECT id, name, type, issuer FROM organization
-                WHERE id = ?
-                """;
+    String sqlTemplate = """
+        SELECT id, name, type, issuer FROM organization
+        WHERE id = ?
+        """;
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
 

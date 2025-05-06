@@ -7,9 +7,5 @@ import org.idp.server.core.token.TokenRequestContext;
 
 public interface AuthorizationCodeGrantVerifierInterface {
 
-  void verify(
-      TokenRequestContext tokenRequestContext,
-      AuthorizationRequest authorizationRequest,
-      AuthorizationCodeGrant authorizationCodeGrant,
-      ClientCredentials clientCredentials);
+  void verify(TokenRequestContext tokenRequestContext, AuthorizationRequest authorizationRequest, AuthorizationCodeGrant authorizationCodeGrant, ClientCredentials clientCredentials);
 }

@@ -28,24 +28,24 @@ import org.idp.server.core.token.verifier.ResourceOwnerPasswordGrantVerifier;
 /**
  * ResourceOwnerPasswordCredentialsGrantService
  *
- * <p>The authorization server MUST:
+ * <p>
+ * The authorization server MUST:
  *
- * <p>o require client authentication for confidential clients or for any client that was issued
- * client credentials (or with other authentication requirements),
+ * <p>
+ * o require client authentication for confidential clients or for any client that was issued client
+ * credentials (or with other authentication requirements),
  *
- * <p>o authenticate the client if client authentication is included, and
+ * <p>
+ * o authenticate the client if client authentication is included, and
  *
- * <p>o validate the resource owner password credentials using its existing password validation
+ * <p>
+ * o validate the resource owner password credentials using its existing password validation
  * algorithm.
  *
  * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-4.3.2">4.3.2. Access Token
- *     Request</a>
+ *      Request</a>
  */
-public class ResourceOwnerPasswordCredentialsGrantService
-    implements OAuthTokenCreationService,
-        AccessTokenCreatable,
-        IdTokenCreatable,
-        RefreshTokenCreatable {
+public class ResourceOwnerPasswordCredentialsGrantService implements OAuthTokenCreationService, AccessTokenCreatable, IdTokenCreatable, RefreshTokenCreatable {
   OAuthTokenRepository oAuthTokenRepository;
 
   public ResourceOwnerPasswordCredentialsGrantService(OAuthTokenRepository oAuthTokenRepository) {
@@ -54,8 +54,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
 
   @Override
   public OAuthToken create(TokenRequestContext context, ClientCredentials clientCredentials) {
-    ResourceOwnerPasswordGrantValidator validator =
-        new ResourceOwnerPasswordGrantValidator(context);
+    ResourceOwnerPasswordGrantValidator validator = new ResourceOwnerPasswordGrantValidator(context);
     validator.validate();
 
     Tenant tenant = context.tenant();
@@ -63,43 +62,21 @@ public class ResourceOwnerPasswordCredentialsGrantService
     ClientConfiguration clientConfiguration = context.clientConfiguration();
 
     PasswordCredentialsGrantDelegate delegate = context.passwordCredentialsGrantDelegate();
-    User user =
-        delegate.findAndAuthenticate(context.tenant(), context.username(), context.password());
-    Scopes scopes =
-        new Scopes(clientConfiguration.filteredScope(context.scopes().toStringValues()));
-    ResourceOwnerPasswordGrantVerifier verifier =
-        new ResourceOwnerPasswordGrantVerifier(user, scopes);
+    User user = delegate.findAndAuthenticate(context.tenant(), context.username(), context.password());
+    Scopes scopes = new Scopes(clientConfiguration.filteredScope(context.scopes().toStringValues()));
+    ResourceOwnerPasswordGrantVerifier verifier = new ResourceOwnerPasswordGrantVerifier(user, scopes);
     verifier.verify();
 
     CustomProperties customProperties = context.customProperties();
-    AuthorizationGrant authorizationGrant =
-        new AuthorizationGrantBuilder(
-                context.tenantIdentifier(), context.requestedClientId(), scopes)
-            .add(user)
-            .add(clientConfiguration.client())
-            .add(customProperties)
-            .build();
+    AuthorizationGrant authorizationGrant = new AuthorizationGrantBuilder(context.tenantIdentifier(), context.requestedClientId(), scopes).add(user).add(clientConfiguration.client()).add(customProperties).build();
 
-    AccessToken accessToken =
-        createAccessToken(
-            authorizationGrant, serverConfiguration, clientConfiguration, clientCredentials);
+    AccessToken accessToken = createAccessToken(authorizationGrant, serverConfiguration, clientConfiguration, clientCredentials);
     RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
-    OAuthTokenBuilder oAuthTokenBuilder =
-        new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))
-            .add(accessToken)
-            .add(refreshToken);
+    OAuthTokenBuilder oAuthTokenBuilder = new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString())).add(accessToken).add(refreshToken);
 
     if (authorizationGrant.hasOpenidScope()) {
       IdTokenCustomClaims idTokenCustomClaims = new IdTokenCustomClaimsBuilder().build();
-      IdToken idToken =
-          createIdToken(
-              authorizationGrant.user(),
-              new Authentication(),
-              authorizationGrant,
-              idTokenCustomClaims,
-              new RequestedClaimsPayload(),
-              serverConfiguration,
-              clientConfiguration);
+      IdToken idToken = createIdToken(authorizationGrant.user(), new Authentication(), authorizationGrant, idTokenCustomClaims, new RequestedClaimsPayload(), serverConfiguration, clientConfiguration);
       oAuthTokenBuilder.add(idToken);
     }
 

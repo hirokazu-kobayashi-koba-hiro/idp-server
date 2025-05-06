@@ -340,3 +340,11 @@ Apache License, Version 2.0
     * https://connect2id.com/products/nimbus-jose-jwt
 * webauthn
     * https://github.com/webauthn4j/webauthn4j
+
+
+### extract exception
+
+```shell
+./gradlew spotlessApply
+grep -r --include="*.java" "throw new" ./libs | sed -E 's|^(.+):(.+)|"\1","\2"|' > throw_statements.csv
+```

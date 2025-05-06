@@ -45,33 +45,8 @@ public class AuthorizationRequest {
 
   public AuthorizationRequest() {}
 
-  AuthorizationRequest(
-      AuthorizationRequestIdentifier identifier,
-      TenantIdentifier tenantIdentifier,
-      AuthorizationProfile profile,
-      Scopes scopes,
-      ResponseType responseType,
-      RequestedClientId requestedClientId,
-      Client client,
-      RedirectUri redirectUri,
-      State state,
-      ResponseMode responseMode,
-      Nonce nonce,
-      Display display,
-      Prompts prompts,
-      MaxAge maxAge,
-      UiLocales uiLocales,
-      IdTokenHint idTokenHint,
-      LoginHint loginHint,
-      AcrValues acrValues,
-      ClaimsValue claimsValue,
-      RequestObject requestObject,
-      RequestUri requestUri,
-      RequestedClaimsPayload requestedClaimsPayload,
-      CodeChallenge codeChallenge,
-      CodeChallengeMethod codeChallengeMethod,
-      AuthorizationDetails authorizationDetails,
-      CustomParams customParams) {
+  AuthorizationRequest(AuthorizationRequestIdentifier identifier, TenantIdentifier tenantIdentifier, AuthorizationProfile profile, Scopes scopes, ResponseType responseType, RequestedClientId requestedClientId, Client client, RedirectUri redirectUri, State state, ResponseMode responseMode, Nonce nonce, Display display, Prompts prompts, MaxAge maxAge, UiLocales uiLocales, IdTokenHint idTokenHint, LoginHint loginHint, AcrValues acrValues, ClaimsValue claimsValue, RequestObject requestObject,
+      RequestUri requestUri, RequestedClaimsPayload requestedClaimsPayload, CodeChallenge codeChallenge, CodeChallengeMethod codeChallengeMethod, AuthorizationDetails authorizationDetails, CustomParams customParams) {
     this.identifier = identifier;
     this.tenantIdentifier = tenantIdentifier;
     this.profile = profile;

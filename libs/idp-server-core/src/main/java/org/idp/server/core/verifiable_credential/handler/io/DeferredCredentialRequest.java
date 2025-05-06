@@ -14,8 +14,7 @@ public class DeferredCredentialRequest implements AuthorizationHeaderHandlerable
   Map<String, Object> params;
   String clientCert;
 
-  public DeferredCredentialRequest(
-      Tenant tenant, String authorizationHeaders, Map<String, Object> params) {
+  public DeferredCredentialRequest(Tenant tenant, String authorizationHeaders, Map<String, Object> params) {
     this.tenant = tenant;
     this.authorizationHeaders = authorizationHeaders;
     this.params = params;

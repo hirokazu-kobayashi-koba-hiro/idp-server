@@ -5,8 +5,7 @@ import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
-public class AuthenticationTransactionCommandDataSource
-    implements AuthenticationTransactionCommandRepository {
+public class AuthenticationTransactionCommandDataSource implements AuthenticationTransactionCommandRepository {
 
   AuthenticationTransactionCommandSqlExecutors executors;
 

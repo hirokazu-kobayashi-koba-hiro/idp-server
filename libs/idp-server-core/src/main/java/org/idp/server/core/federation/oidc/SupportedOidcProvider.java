@@ -3,9 +3,7 @@ package org.idp.server.core.federation.oidc;
 import org.idp.server.core.federation.SsoProvider;
 
 public enum SupportedOidcProvider {
-  Goggle("Standard"),
-  Facebook("Facebook"),
-  Yahoo("Yahoo");
+  Goggle("Standard"), Facebook("Facebook"), Yahoo("Yahoo");
 
   String type;
 

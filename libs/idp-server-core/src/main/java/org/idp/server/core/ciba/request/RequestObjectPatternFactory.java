@@ -15,9 +15,11 @@ import org.idp.server.core.oidc.configuration.ServerConfiguration;
 /**
  * RequestObjectPatternFactory
  *
- * <p>6.3.3. Request Parameter Assembly and Validation
+ * <p>
+ * 6.3.3. Request Parameter Assembly and Validation
  *
- * <p>The Authorization Server MUST assemble the set of Authorization Request parameters to be used
+ * <p>
+ * The Authorization Server MUST assemble the set of Authorization Request parameters to be used
  * from the Request Object value and the OAuth 2.0 Authorization Request parameters (minus the
  * request or request_uri parameters). If the same parameter exists both in the Request Object and
  * the OAuth Authorization Request parameters, the parameter in the Request Object is used. Using
@@ -28,52 +30,19 @@ import org.idp.server.core.oidc.configuration.ServerConfiguration;
 public class RequestObjectPatternFactory implements BackchannelAuthenticationRequestFactory {
 
   @Override
-  public BackchannelAuthenticationRequest create(
-      CibaProfile profile,
-      ClientSecretBasic clientSecretBasic,
-      CibaRequestParameters parameters,
-      JoseContext joseContext,
-      Set<String> filteredScopes,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public BackchannelAuthenticationRequest create(CibaProfile profile, ClientSecretBasic clientSecretBasic, CibaRequestParameters parameters, JoseContext joseContext, Set<String> filteredScopes, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     JsonWebTokenClaims jsonWebTokenClaims = joseContext.claims();
-    CibaRequestObjectParameters requestObjectParameters =
-        new CibaRequestObjectParameters(jsonWebTokenClaims.payload());
+    CibaRequestObjectParameters requestObjectParameters = new CibaRequestObjectParameters(jsonWebTokenClaims.payload());
     Scopes scopes = new Scopes(filteredScopes);
-    RequestedClientId requestedClientId =
-        getClientId(clientSecretBasic, parameters, requestObjectParameters);
-    IdTokenHint idTokenHint =
-        requestObjectParameters.hasIdTokenHint()
-            ? requestObjectParameters.idTokenHint()
-            : parameters.idTokenHint();
-    LoginHint loginHint =
-        requestObjectParameters.hasLoginHint()
-            ? requestObjectParameters.loginHint()
-            : parameters.loginHint();
-    AcrValues acrValues =
-        requestObjectParameters.hasAcrValues()
-            ? requestObjectParameters.acrValues()
-            : parameters.acrValues();
-    LoginHintToken loginHintToken =
-        requestObjectParameters.hasLoginHintToken()
-            ? requestObjectParameters.loginHintToken()
-            : parameters.loginHintToken();
-    UserCode userCode =
-        requestObjectParameters.hasUserCode()
-            ? requestObjectParameters.userCode()
-            : parameters.userCode();
-    BindingMessage bindingMessage =
-        requestObjectParameters.hasBindingMessage()
-            ? requestObjectParameters.bindingMessage()
-            : parameters.bindingMessage();
-    ClientNotificationToken clientNotificationToken =
-        requestObjectParameters.hasClientNotificationToken()
-            ? requestObjectParameters.clientNotificationToken()
-            : parameters.clientNotificationToken();
-    RequestedExpiry requestedExpiry =
-        requestObjectParameters.hasRequestedExpiry()
-            ? requestObjectParameters.requestedExpiry()
-            : parameters.requestedExpiry();
+    RequestedClientId requestedClientId = getClientId(clientSecretBasic, parameters, requestObjectParameters);
+    IdTokenHint idTokenHint = requestObjectParameters.hasIdTokenHint() ? requestObjectParameters.idTokenHint() : parameters.idTokenHint();
+    LoginHint loginHint = requestObjectParameters.hasLoginHint() ? requestObjectParameters.loginHint() : parameters.loginHint();
+    AcrValues acrValues = requestObjectParameters.hasAcrValues() ? requestObjectParameters.acrValues() : parameters.acrValues();
+    LoginHintToken loginHintToken = requestObjectParameters.hasLoginHintToken() ? requestObjectParameters.loginHintToken() : parameters.loginHintToken();
+    UserCode userCode = requestObjectParameters.hasUserCode() ? requestObjectParameters.userCode() : parameters.userCode();
+    BindingMessage bindingMessage = requestObjectParameters.hasBindingMessage() ? requestObjectParameters.bindingMessage() : parameters.bindingMessage();
+    ClientNotificationToken clientNotificationToken = requestObjectParameters.hasClientNotificationToken() ? requestObjectParameters.clientNotificationToken() : parameters.clientNotificationToken();
+    RequestedExpiry requestedExpiry = requestObjectParameters.hasRequestedExpiry() ? requestObjectParameters.requestedExpiry() : parameters.requestedExpiry();
 
     RequestObject requestObject = new RequestObject();
 
@@ -96,14 +65,8 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
     return builder.build();
   }
 
-  private static RequestedClientId getClientId(
-      ClientSecretBasic clientSecretBasic,
-      CibaRequestParameters parameters,
-      CibaRequestObjectParameters requestObjectParameters) {
-    RequestedClientId requestedClientId =
-        requestObjectParameters.hasIdTokenHint()
-            ? requestObjectParameters.clientId()
-            : parameters.clientId();
+  private static RequestedClientId getClientId(ClientSecretBasic clientSecretBasic, CibaRequestParameters parameters, CibaRequestObjectParameters requestObjectParameters) {
+    RequestedClientId requestedClientId = requestObjectParameters.hasIdTokenHint() ? requestObjectParameters.clientId() : parameters.clientId();
     if (requestedClientId.exists()) {
       return requestedClientId;
     }

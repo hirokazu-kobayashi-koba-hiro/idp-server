@@ -16,12 +16,7 @@ public class CibaFlowEventCreator {
   SecurityEventDescription securityEventDescription;
   RequestAttributes requestAttributes;
 
-  public CibaFlowEventCreator(
-      Tenant tenant,
-      BackchannelAuthenticationRequest request,
-      User user,
-      DefaultSecurityEventType defaultSecurityEventType,
-      RequestAttributes requestAttributes) {
+  public CibaFlowEventCreator(Tenant tenant, BackchannelAuthenticationRequest request, User user, DefaultSecurityEventType defaultSecurityEventType, RequestAttributes requestAttributes) {
     this.tenant = tenant;
     this.request = request;
     this.user = user;
@@ -36,13 +31,10 @@ public class CibaFlowEventCreator {
     builder.add(securityEventType);
     builder.add(securityEventDescription);
 
-    SecurityEventTenant securityEventTenant =
-        new SecurityEventTenant(
-            tenant.identifier().value(), tenant.tokenIssuer().value(), tenant.name().value());
+    SecurityEventTenant securityEventTenant = new SecurityEventTenant(tenant.identifier().value(), tenant.tokenIssuer().value(), tenant.name().value());
     builder.add(securityEventTenant);
 
-    SecurityEventClient securityEventClient =
-        new SecurityEventClient(request.requestedClientId().value(), "");
+    SecurityEventClient securityEventClient = new SecurityEventClient(request.requestedClientId().value(), "");
     builder.add(securityEventClient);
 
     if (user != null) {

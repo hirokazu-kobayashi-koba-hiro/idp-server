@@ -13,8 +13,7 @@ import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.mtls.ClientCertification;
 
-class PrivateKeyJwtAuthenticator
-    implements ClientAuthenticator, ClientAuthenticationJwtValidatable {
+class PrivateKeyJwtAuthenticator implements ClientAuthenticator, ClientAuthenticationJwtValidatable {
 
   JoseHandler joseHandler = new JoseHandler();
 
@@ -24,28 +23,19 @@ class PrivateKeyJwtAuthenticator
     JoseContext joseContext = parseOrThrowExceptionIfUnMatchClientAssertion(context);
     RequestedClientId requestedClientId = context.requestedClientId();
     ClientSecret clientSecret = new ClientSecret();
-    ClientAuthenticationPublicKey clientAuthenticationPublicKey =
-        new ClientAuthenticationPublicKey(joseContext.jsonWebKey());
+    ClientAuthenticationPublicKey clientAuthenticationPublicKey = new ClientAuthenticationPublicKey(joseContext.jsonWebKey());
     ClientAssertionJwt clientAssertionJwt = new ClientAssertionJwt(joseContext.jsonWebSignature());
 
-    return new ClientCredentials(
-        requestedClientId,
-        ClientAuthenticationType.private_key_jwt,
-        clientSecret,
-        clientAuthenticationPublicKey,
-        clientAssertionJwt,
-        new ClientCertification());
+    return new ClientCredentials(requestedClientId, ClientAuthenticationType.private_key_jwt, clientSecret, clientAuthenticationPublicKey, clientAssertionJwt, new ClientCertification());
   }
 
   void throwExceptionIfNotContainsClientAssertion(BackchannelRequestContext context) {
     BackchannelRequestParameters parameters = context.parameters();
     if (!parameters.hasClientAssertion()) {
-      throw new ClientUnAuthorizedException(
-          "client authentication type is client_secret_jwt, but request does not contains client_assertion");
+      throw new ClientUnAuthorizedException("client authentication type is client_secret_jwt, but request does not contains client_assertion");
     }
     if (!parameters.hasClientAssertionType()) {
-      throw new ClientUnAuthorizedException(
-          "client authentication type is client_secret_jwt, but request does not contains client_assertion_type");
+      throw new ClientUnAuthorizedException("client authentication type is client_secret_jwt, but request does not contains client_assertion_type");
     }
   }
 
@@ -53,12 +43,7 @@ class PrivateKeyJwtAuthenticator
     try {
       BackchannelRequestParameters parameters = context.parameters();
       ClientConfiguration clientConfiguration = context.clientConfiguration();
-      JoseContext joseContext =
-          joseHandler.handle(
-              parameters.clientAssertion().value(),
-              clientConfiguration.jwks(),
-              clientConfiguration.jwks(),
-              clientConfiguration.clientSecretValue());
+      JoseContext joseContext = joseHandler.handle(parameters.clientAssertion().value(), clientConfiguration.jwks(), clientConfiguration.jwks(), clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
       validate(joseContext, context);
       return joseContext;

@@ -11,9 +11,7 @@ import org.idp.server.basic.json.JsonConverter;
 
 /** JoseType */
 public enum JoseType {
-  plain,
-  signature,
-  encryption;
+  plain, signature, encryption;
 
   public static JoseType parse(String jose) throws JoseInvalidException {
     try {

@@ -3,8 +3,7 @@ package org.idp.server.core.adapters.datasource.authentication.interaction.comma
 import org.idp.server.core.authentication.factory.AuthenticationDependencyProvider;
 import org.idp.server.core.authentication.repository.AuthenticationInteractionCommandRepository;
 
-public class AuthenticationInteractionCommandDataSourceProvider
-    implements AuthenticationDependencyProvider<AuthenticationInteractionCommandRepository> {
+public class AuthenticationInteractionCommandDataSourceProvider implements AuthenticationDependencyProvider<AuthenticationInteractionCommandRepository> {
 
   @Override
   public Class<AuthenticationInteractionCommandRepository> type() {

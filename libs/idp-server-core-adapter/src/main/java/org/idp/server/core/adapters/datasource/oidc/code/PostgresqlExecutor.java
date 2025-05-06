@@ -16,12 +16,11 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
 
   public void insert(AuthorizationCodeGrant authorizationCodeGrant) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                    INSERT INTO authorization_code_grant
-                    (authorization_request_id, tenant_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, expired_at, consent_claims)
-                    VALUES (?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb);
-                    """;
+    String sqlTemplate = """
+        INSERT INTO authorization_code_grant
+        (authorization_request_id, tenant_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, expired_at, consent_claims)
+        VALUES (?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb);
+        """;
     List<Object> params = new ArrayList<>();
 
     params.add(authorizationCodeGrant.authorizationRequestIdentifier().value());
@@ -53,8 +52,7 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
     }
 
     if (authorizationCodeGrant.authorizationGrant().hasAuthorizationDetails()) {
-      params.add(
-          toJson(authorizationCodeGrant.authorizationGrant().authorizationDetails().toMapValues()));
+      params.add(toJson(authorizationCodeGrant.authorizationGrant().authorizationDetails().toMapValues()));
     } else {
       params.add("[]");
     }
@@ -72,12 +70,11 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
 
   public Map<String, String> selectOne(AuthorizationCode authorizationCode) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                SELECT authorization_request_id, tenant_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, expired_at, consent_claims
-                FROM authorization_code_grant
-                WHERE authorization_code = ?;
-                """;
+    String sqlTemplate = """
+        SELECT authorization_request_id, tenant_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, expired_at, consent_claims
+        FROM authorization_code_grant
+        WHERE authorization_code = ?;
+        """;
 
     List<Object> params = List.of(authorizationCode.value());
     return sqlExecutor.selectOne(sqlTemplate, params);
@@ -85,11 +82,10 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
 
   public void delete(AuthorizationCodeGrant authorizationCodeGrant) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                DELETE FROM authorization_code_grant
-                WHERE authorization_request_id = ?;
-            """;
+    String sqlTemplate = """
+            DELETE FROM authorization_code_grant
+            WHERE authorization_request_id = ?;
+        """;
     List<Object> params = List.of(authorizationCodeGrant.authorizationRequestIdentifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);

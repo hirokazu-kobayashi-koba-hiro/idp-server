@@ -23,25 +23,19 @@ public class AuthenticationTransaction {
   AuthenticationInteractionType lastInteractionType;
   AuthenticationInteractionResults interactionResults;
 
-  public static AuthenticationTransaction createOnOAuthFlow(
-      Tenant tenant, OAuthRequestResponse requestResponse) {
-    AuthorizationIdentifier identifier =
-        new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier());
+  public static AuthenticationTransaction createOnOAuthFlow(Tenant tenant, OAuthRequestResponse requestResponse) {
+    AuthorizationIdentifier identifier = new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier());
     AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
     return new AuthenticationTransaction(identifier, authenticationRequest);
   }
 
-  public static AuthenticationTransaction createOnCibaFlow(
-      Tenant tenant, CibaIssueResponse cibaIssueResponse) {
-    AuthorizationIdentifier identifier =
-        new AuthorizationIdentifier(cibaIssueResponse.backchannelAuthenticationRequestIdentifier());
-    AuthenticationRequest authenticationRequest =
-        toAuthenticationRequest(tenant, cibaIssueResponse);
+  public static AuthenticationTransaction createOnCibaFlow(Tenant tenant, CibaIssueResponse cibaIssueResponse) {
+    AuthorizationIdentifier identifier = new AuthorizationIdentifier(cibaIssueResponse.backchannelAuthenticationRequestIdentifier());
+    AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, cibaIssueResponse);
     return new AuthenticationTransaction(identifier, authenticationRequest);
   }
 
-  private static AuthenticationRequest toAuthenticationRequest(
-      Tenant tenant, OAuthRequestResponse requestResponse) {
+  private static AuthenticationRequest toAuthenticationRequest(Tenant tenant, OAuthRequestResponse requestResponse) {
     AuthorizationRequest authorizationRequest = requestResponse.authorizationRequest();
     AuthorizationFlow authorizationFlow = AuthorizationFlow.OAUTH;
     TenantIdentifier tenantIdentifier = tenant.identifier();
@@ -49,24 +43,13 @@ public class AuthenticationTransaction {
     RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
     User user = User.notFound();
     List<String> availableAuthenticationTypes = requestResponse.availableAuthenticationTypes();
-    List<String> requiredAnyOfAuthenticationTypes =
-        requestResponse.requiredAnyOfAuthenticationTypes();
+    List<String> requiredAnyOfAuthenticationTypes = requestResponse.requiredAnyOfAuthenticationTypes();
     LocalDateTime createdAt = SystemDateTime.now();
-    LocalDateTime expiredAt =
-        createdAt.plusSeconds(requestResponse.oauthAuthorizationRequestExpiresIn());
-    return new AuthenticationRequest(
-        authorizationFlow,
-        tenantIdentifier,
-        requestedClientId,
-        user,
-        availableAuthenticationTypes,
-        requiredAnyOfAuthenticationTypes,
-        createdAt,
-        expiredAt);
+    LocalDateTime expiredAt = createdAt.plusSeconds(requestResponse.oauthAuthorizationRequestExpiresIn());
+    return new AuthenticationRequest(authorizationFlow, tenantIdentifier, requestedClientId, user, availableAuthenticationTypes, requiredAnyOfAuthenticationTypes, createdAt, expiredAt);
   }
 
-  private static AuthenticationRequest toAuthenticationRequest(
-      Tenant tenant, CibaIssueResponse cibaIssueResponse) {
+  private static AuthenticationRequest toAuthenticationRequest(Tenant tenant, CibaIssueResponse cibaIssueResponse) {
     BackchannelAuthenticationRequest backchannelAuthenticationRequest = cibaIssueResponse.request();
     ExpiresIn expiresIn = cibaIssueResponse.expiresIn();
     AuthorizationFlow authorizationFlow = AuthorizationFlow.CIBA;
@@ -75,35 +58,20 @@ public class AuthenticationTransaction {
     RequestedClientId requestedClientId = backchannelAuthenticationRequest.requestedClientId();
     User user = cibaIssueResponse.user();
     List<String> availableAuthenticationTypes = cibaIssueResponse.availableAuthenticationTypes();
-    List<String> requiredAnyOfAuthenticationTypes =
-        cibaIssueResponse.requiredAnyOfAuthenticationTypes();
+    List<String> requiredAnyOfAuthenticationTypes = cibaIssueResponse.requiredAnyOfAuthenticationTypes();
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt = createdAt.plusSeconds(expiresIn.value());
-    return new AuthenticationRequest(
-        authorizationFlow,
-        tenantIdentifier,
-        requestedClientId,
-        user,
-        availableAuthenticationTypes,
-        requiredAnyOfAuthenticationTypes,
-        createdAt,
-        expiredAt);
+    return new AuthenticationRequest(authorizationFlow, tenantIdentifier, requestedClientId, user, availableAuthenticationTypes, requiredAnyOfAuthenticationTypes, createdAt, expiredAt);
   }
 
-  public AuthenticationTransaction update(
-      AuthenticationInteractionRequestResult interactionRequestResult) {
+  public AuthenticationTransaction update(AuthenticationInteractionRequestResult interactionRequestResult) {
     Set<AuthenticationInteractionResult> set = interactionResults.toSet();
 
-    AuthenticationRequest updatedRequest =
-        interactionRequestResult.isIdentifyUserEventType()
-            ? request.updateUser(interactionRequestResult)
-            : request;
+    AuthenticationRequest updatedRequest = interactionRequestResult.isIdentifyUserEventType() ? request.updateUser(interactionRequestResult) : request;
     if (interactionResults.contains(interactionRequestResult.interactionTypeName())) {
 
-      AuthenticationInteractionResult foundResult =
-          interactionResults.get(interactionRequestResult.interactionTypeName());
-      AuthenticationInteractionResult updatedInteraction =
-          foundResult.update(interactionRequestResult);
+      AuthenticationInteractionResult foundResult = interactionResults.get(interactionRequestResult.interactionTypeName());
+      AuthenticationInteractionResult updatedInteraction = foundResult.update(interactionRequestResult);
       set.remove(foundResult);
       set.add(updatedInteraction);
 
@@ -111,33 +79,22 @@ public class AuthenticationTransaction {
 
       int successCount = interactionRequestResult.isSuccess() ? 1 : 0;
       int failureCount = interactionRequestResult.isSuccess() ? 0 : 1;
-      AuthenticationInteractionResult result =
-          new AuthenticationInteractionResult(
-              interactionRequestResult.interactionTypeName(), 1, successCount, failureCount);
+      AuthenticationInteractionResult result = new AuthenticationInteractionResult(interactionRequestResult.interactionTypeName(), 1, successCount, failureCount);
       set.add(result);
     }
 
     AuthenticationInteractionType lastInteractionType = interactionRequestResult.type();
     AuthenticationInteractionResults updatedResults = new AuthenticationInteractionResults(set);
-    return new AuthenticationTransaction(
-        identifier, updatedRequest, lastInteractionType, updatedResults);
+    return new AuthenticationTransaction(identifier, updatedRequest, lastInteractionType, updatedResults);
   }
 
   public AuthenticationTransaction() {}
 
   AuthenticationTransaction(AuthorizationIdentifier identifier, AuthenticationRequest request) {
-    this(
-        identifier,
-        request,
-        new AuthenticationInteractionType(),
-        new AuthenticationInteractionResults());
+    this(identifier, request, new AuthenticationInteractionType(), new AuthenticationInteractionResults());
   }
 
-  public AuthenticationTransaction(
-      AuthorizationIdentifier identifier,
-      AuthenticationRequest request,
-      AuthenticationInteractionType lastInteractionType,
-      AuthenticationInteractionResults interactionResults) {
+  public AuthenticationTransaction(AuthorizationIdentifier identifier, AuthenticationRequest request, AuthenticationInteractionType lastInteractionType, AuthenticationInteractionResults interactionResults) {
     this.identifier = identifier;
     this.request = request;
     this.lastInteractionType = lastInteractionType;
@@ -187,8 +144,7 @@ public class AuthenticationTransaction {
       return interactionResults.containsAnySuccess();
     }
 
-    return request.requiredAnyOfAuthenticationTypes().stream()
-        .anyMatch(required -> interactionResults.contains(required));
+    return request.requiredAnyOfAuthenticationTypes().stream().anyMatch(required -> interactionResults.contains(required));
   }
 
   // TODO implement. this is debug code

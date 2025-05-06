@@ -19,52 +19,28 @@ public class ModelConverter {
 
   static IdentityVerificationApplication convert(Map<String, String> map) {
 
-    IdentityVerificationApplicationIdentifier identifier =
-        new IdentityVerificationApplicationIdentifier(map.get("id"));
+    IdentityVerificationApplicationIdentifier identifier = new IdentityVerificationApplicationIdentifier(map.get("id"));
     TenantIdentifier tenantIdentifier = new TenantIdentifier(map.get("tenant_id"));
     RequestedClientId requestedClientId = new RequestedClientId(map.get("client_id"));
-    IdentityVerificationType verificationType =
-        new IdentityVerificationType(map.get("verification_type"));
+    IdentityVerificationType verificationType = new IdentityVerificationType(map.get("verification_type"));
     UserIdentifier sub = new UserIdentifier(map.get("user_id"));
-    IdentityVerificationApplicationDetails details =
-        new IdentityVerificationApplicationDetails(
-            JsonNodeWrapper.fromString(map.get("application_details")));
+    IdentityVerificationApplicationDetails details = new IdentityVerificationApplicationDetails(JsonNodeWrapper.fromString(map.get("application_details")));
 
-    ExternalWorkflowDelegation externalWorkflowDelegation =
-        new ExternalWorkflowDelegation(map.get("external_workflow_delegation"));
-    ExternalWorkflowApplicationIdentifier externalApplicationId =
-        new ExternalWorkflowApplicationIdentifier(map.get("external_application_id"));
-    ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails =
-        new ExternalWorkflowApplicationDetails(
-            JsonNodeWrapper.fromString(map.get("external_application_details")));
+    ExternalWorkflowDelegation externalWorkflowDelegation = new ExternalWorkflowDelegation(map.get("external_workflow_delegation"));
+    ExternalWorkflowApplicationIdentifier externalApplicationId = new ExternalWorkflowApplicationIdentifier(map.get("external_application_id"));
+    ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails = new ExternalWorkflowApplicationDetails(JsonNodeWrapper.fromString(map.get("external_application_details")));
 
     TrustFramework trustFramework = new TrustFramework(map.get("trust_framework"));
     IdentityVerificationExaminationResults examinationResults = toExaminationResults(map);
     IdentityVerificationApplicationProcesses processes = toProcesses(map);
 
-    IdentityVerificationApplicationStatus status =
-        IdentityVerificationApplicationStatus.of(map.get("status"));
+    IdentityVerificationApplicationStatus status = IdentityVerificationApplicationStatus.of(map.get("status"));
     LocalDateTime requestedAt = LocalDateTime.parse(map.get("requested_at"));
 
-    return new IdentityVerificationApplication(
-        identifier,
-        verificationType,
-        tenantIdentifier,
-        requestedClientId,
-        sub,
-        details,
-        externalWorkflowDelegation,
-        externalApplicationId,
-        externalWorkflowApplicationDetails,
-        trustFramework,
-        examinationResults,
-        processes,
-        status,
-        requestedAt);
+    return new IdentityVerificationApplication(identifier, verificationType, tenantIdentifier, requestedClientId, sub, details, externalWorkflowDelegation, externalApplicationId, externalWorkflowApplicationDetails, trustFramework, examinationResults, processes, status, requestedAt);
   }
 
-  private static IdentityVerificationExaminationResults toExaminationResults(
-      Map<String, String> map) {
+  private static IdentityVerificationExaminationResults toExaminationResults(Map<String, String> map) {
     if (map.get("examination_results") == null || map.get("examination_results").isEmpty()) {
       return new IdentityVerificationExaminationResults();
     }
@@ -85,8 +61,7 @@ public class ModelConverter {
     for (JsonNodeWrapper wrapper : jsonNodeWrapper.elements()) {
       String process = wrapper.getValueOrEmptyAsString("process");
       String requestedAt = wrapper.getValueOrEmptyAsString("requested_at");
-      IdentityVerificationApplicationProcess applicationProcess =
-          new IdentityVerificationApplicationProcess(process, requestedAt);
+      IdentityVerificationApplicationProcess applicationProcess = new IdentityVerificationApplicationProcess(process, requestedAt);
       processList.add(applicationProcess);
     }
 

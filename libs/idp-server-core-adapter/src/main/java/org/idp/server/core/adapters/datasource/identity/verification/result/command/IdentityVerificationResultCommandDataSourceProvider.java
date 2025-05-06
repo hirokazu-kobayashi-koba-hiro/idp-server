@@ -4,8 +4,7 @@ import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
 
-public class IdentityVerificationResultCommandDataSourceProvider
-    implements ApplicationComponentProvider<IdentityVerificationResultCommandRepository> {
+public class IdentityVerificationResultCommandDataSourceProvider implements ApplicationComponentProvider<IdentityVerificationResultCommandRepository> {
 
   @Override
   public Class<IdentityVerificationResultCommandRepository> type() {
@@ -13,8 +12,7 @@ public class IdentityVerificationResultCommandDataSourceProvider
   }
 
   @Override
-  public IdentityVerificationResultCommandRepository provide(
-      ApplicationComponentDependencyContainer container) {
+  public IdentityVerificationResultCommandRepository provide(ApplicationComponentDependencyContainer container) {
     return new IdentityVerificationResultCommandDataSource();
   }
 }

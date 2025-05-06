@@ -17,8 +17,7 @@ public class OrganizationCreator {
 
   public Organization create() {
     OrganizationIdentifier identifier = new OrganizationIdentifier(UUID.randomUUID().toString());
-    OrganizationDescription organizationDescription =
-        new OrganizationDescription(tenant.name().value());
+    OrganizationDescription organizationDescription = new OrganizationDescription(tenant.name().value());
     AssignedTenants assignedTenants = new AssignedTenants(List.of(tenant));
     return new Organization(identifier, organizationName, organizationDescription, assignedTenants);
   }

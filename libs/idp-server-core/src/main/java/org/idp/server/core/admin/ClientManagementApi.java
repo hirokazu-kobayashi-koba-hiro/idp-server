@@ -11,12 +11,9 @@ public interface ClientManagementApi {
 
   String update(TenantIdentifier tenantIdentifier, String body);
 
-  ClientConfigurationManagementListResponse find(
-      TenantIdentifier tenantIdentifier, int limit, int offset);
+  ClientConfigurationManagementListResponse find(TenantIdentifier tenantIdentifier, int limit, int offset);
 
-  ClientConfigurationManagementResponse get(
-      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId);
+  ClientConfigurationManagementResponse get(TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId);
 
-  ClientConfigurationManagementResponse delete(
-      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId);
+  ClientConfigurationManagementResponse delete(TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId);
 }

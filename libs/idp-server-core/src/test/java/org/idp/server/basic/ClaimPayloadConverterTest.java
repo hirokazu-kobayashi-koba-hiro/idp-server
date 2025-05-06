@@ -9,29 +9,27 @@ public class ClaimPayloadConverterTest {
 
   @Test
   void convertable() {
-    String claimsValue =
-        """
-                {
-                   "userinfo":
-                    {
-                     "given_name": {"essential": true},
-                     "nickname": null,
-                     "email": {"essential": true},
-                     "email_verified": {"essential": true},
-                     "picture": null,
-                     "http://example.info/claimsValue/groups": null
-                    },
-                   "id_token":
-                    {
-                     "auth_time": {"essential": true},
-                     "acr": {"values": ["urn:mace:incommon:iap:silver"] }
-                    }
-                  }
-                """;
+    String claimsValue = """
+        {
+           "userinfo":
+            {
+             "given_name": {"essential": true},
+             "nickname": null,
+             "email": {"essential": true},
+             "email_verified": {"essential": true},
+             "picture": null,
+             "http://example.info/claimsValue/groups": null
+            },
+           "id_token":
+            {
+             "auth_time": {"essential": true},
+             "acr": {"values": ["urn:mace:incommon:iap:silver"] }
+            }
+          }
+        """;
 
     JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-    RequestedClaimsPayload requestedClaimsPayload =
-        jsonConverter.read(claimsValue, RequestedClaimsPayload.class);
+    RequestedClaimsPayload requestedClaimsPayload = jsonConverter.read(claimsValue, RequestedClaimsPayload.class);
     System.out.println(requestedClaimsPayload);
     Assertions.assertTrue(requestedClaimsPayload.exists());
   }

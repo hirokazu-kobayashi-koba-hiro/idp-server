@@ -24,8 +24,7 @@ public class AuthorizationGrantBuilder {
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
   ConsentClaims consentClaims = new ConsentClaims();
 
-  public AuthorizationGrantBuilder(
-      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, Scopes scopes) {
+  public AuthorizationGrantBuilder(TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, Scopes scopes) {
     this.tenantIdentifier = tenantIdentifier;
     this.requestedClientId = requestedClientId;
     this.scopes = scopes;
@@ -72,17 +71,6 @@ public class AuthorizationGrantBuilder {
   }
 
   public AuthorizationGrant build() {
-    return new AuthorizationGrant(
-        tenantIdentifier,
-        user,
-        authentication,
-        requestedClientId,
-        client,
-        scopes,
-        grantIdTokenClaims,
-        grantUserinfoClaims,
-        customProperties,
-        authorizationDetails,
-        consentClaims);
+    return new AuthorizationGrant(tenantIdentifier, user, authentication, requestedClientId, client, scopes, grantIdTokenClaims, grantUserinfoClaims, customProperties, authorizationDetails, consentClaims);
   }
 }

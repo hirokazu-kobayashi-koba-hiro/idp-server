@@ -1,3 +1,4 @@
 package org.idp.server.core.multi_tenancy.organization;
 
-public class OrganizationMember {}
+public class OrganizationMember {
+}

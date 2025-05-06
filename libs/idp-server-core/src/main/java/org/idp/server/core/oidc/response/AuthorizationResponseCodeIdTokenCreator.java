@@ -10,43 +10,18 @@ import org.idp.server.core.oidc.identity.IdTokenCustomClaims;
 import org.idp.server.core.oidc.identity.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 
-public class AuthorizationResponseCodeIdTokenCreator
-    implements AuthorizationResponseCreator,
-        AuthorizationCodeCreatable,
-        IdTokenCreatable,
-        RedirectUriDecidable,
-        JarmCreatable {
+public class AuthorizationResponseCodeIdTokenCreator implements AuthorizationResponseCreator, AuthorizationCodeCreatable, IdTokenCreatable, RedirectUriDecidable, JarmCreatable {
 
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     AuthorizationCode authorizationCode = createAuthorizationCode();
 
-    IdTokenCustomClaims idTokenCustomClaims =
-        new IdTokenCustomClaimsBuilder()
-            .add(authorizationCode)
-            .add(authorizationRequest.state())
-            .add(authorizationRequest.nonce())
-            .build();
+    IdTokenCustomClaims idTokenCustomClaims = new IdTokenCustomClaimsBuilder().add(authorizationCode).add(authorizationRequest.state()).add(authorizationRequest.nonce()).build();
 
-    IdToken idToken =
-        createIdToken(
-            context.user(),
-            context.authentication(),
-            context.authorize(),
-            idTokenCustomClaims,
-            context.requestedClaimsPayload(),
-            context.serverConfiguration(),
-            context.clientConfiguration());
+    IdToken idToken = createIdToken(context.user(), context.authentication(), context.authorize(), idTokenCustomClaims, context.requestedClaimsPayload(), context.serverConfiguration(), context.clientConfiguration());
 
-    AuthorizationResponseBuilder authorizationResponseBuilder =
-        new AuthorizationResponseBuilder(
-                decideRedirectUri(authorizationRequest, context.clientConfiguration()),
-                context.responseMode(),
-                ResponseModeValue.fragment(),
-                context.tokenIssuer())
-            .add(authorizationCode)
-            .add(idToken);
+    AuthorizationResponseBuilder authorizationResponseBuilder = new AuthorizationResponseBuilder(decideRedirectUri(authorizationRequest, context.clientConfiguration()), context.responseMode(), ResponseModeValue.fragment(), context.tokenIssuer()).add(authorizationCode).add(idToken);
 
     if (context.hasState()) {
       authorizationResponseBuilder.add(authorizationRequest.state());
@@ -54,9 +29,7 @@ public class AuthorizationResponseCodeIdTokenCreator
 
     if (context.isJwtMode()) {
       AuthorizationResponse authorizationResponse = authorizationResponseBuilder.build();
-      JarmPayload jarmPayload =
-          createResponse(
-              authorizationResponse, context.serverConfiguration(), context.clientConfiguration());
+      JarmPayload jarmPayload = createResponse(authorizationResponse, context.serverConfiguration(), context.clientConfiguration());
       authorizationResponseBuilder.add(jarmPayload);
     }
 

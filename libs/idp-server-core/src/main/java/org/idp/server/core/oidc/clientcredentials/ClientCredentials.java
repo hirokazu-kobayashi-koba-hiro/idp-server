@@ -16,13 +16,7 @@ public class ClientCredentials {
 
   public ClientCredentials() {}
 
-  public ClientCredentials(
-      RequestedClientId requestedClientId,
-      ClientAuthenticationType clientAuthenticationType,
-      ClientSecret clientSecret,
-      ClientAuthenticationPublicKey clientAuthenticationPublicKey,
-      ClientAssertionJwt clientAssertionJwt,
-      ClientCertification clientCertification) {
+  public ClientCredentials(RequestedClientId requestedClientId, ClientAuthenticationType clientAuthenticationType, ClientSecret clientSecret, ClientAuthenticationPublicKey clientAuthenticationPublicKey, ClientAssertionJwt clientAssertionJwt, ClientCertification clientCertification) {
     this.requestedClientId = requestedClientId;
     this.clientAuthenticationType = clientAuthenticationType;
     this.clientSecret = clientSecret;
@@ -59,7 +53,6 @@ public class ClientCredentials {
     if (Objects.isNull(clientAuthenticationType)) {
       return false;
     }
-    return clientAuthenticationType == ClientAuthenticationType.tls_client_auth
-        || clientAuthenticationType == ClientAuthenticationType.self_signed_tls_client_auth;
+    return clientAuthenticationType == ClientAuthenticationType.tls_client_auth || clientAuthenticationType == ClientAuthenticationType.self_signed_tls_client_auth;
   }
 }

@@ -71,12 +71,7 @@ public class Address implements JsonReadable, Serializable {
   }
 
   public boolean exists() {
-    return hasFormatted()
-        || hasStreetAddress()
-        || hasLocality()
-        || hasRegion()
-        || hasPostalCode()
-        || hasCountry();
+    return hasFormatted() || hasStreetAddress() || hasLocality() || hasRegion() || hasPostalCode() || hasCountry();
   }
 
   public boolean hasFormatted() {
@@ -105,12 +100,18 @@ public class Address implements JsonReadable, Serializable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    if (hasFormatted()) map.put("formatted", formatted);
-    if (hasStreetAddress()) map.put("street_address", streetAddress);
-    if (hasLocality()) map.put("locality", locality);
-    if (hasRegion()) map.put("region", region);
-    if (hasPostalCode()) map.put("postal_code", postalCode);
-    if (hasCountry()) map.put("country", country);
+    if (hasFormatted())
+      map.put("formatted", formatted);
+    if (hasStreetAddress())
+      map.put("street_address", streetAddress);
+    if (hasLocality())
+      map.put("locality", locality);
+    if (hasRegion())
+      map.put("region", region);
+    if (hasPostalCode())
+      map.put("postal_code", postalCode);
+    if (hasCountry())
+      map.put("country", country);
     return map;
   }
 }

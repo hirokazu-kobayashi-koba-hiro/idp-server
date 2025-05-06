@@ -22,8 +22,7 @@ public class CredentialResponse {
     this.headers = values;
   }
 
-  public CredentialResponse(
-      CredentialRequestStatus status, VerifiableCredentialErrorResponse errorResponse) {
+  public CredentialResponse(CredentialRequestStatus status, VerifiableCredentialErrorResponse errorResponse) {
     this.status = status;
     this.response = new VerifiableCredentialResponse();
     this.errorResponse = errorResponse;

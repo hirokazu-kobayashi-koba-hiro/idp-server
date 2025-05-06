@@ -41,21 +41,8 @@ public class IdentityVerificationApplication {
 
   public IdentityVerificationApplication() {}
 
-  public IdentityVerificationApplication(
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType identityVerificationType,
-      TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
-      UserIdentifier userIdentifier,
-      IdentityVerificationApplicationDetails applicationDetails,
-      ExternalWorkflowDelegation externalWorkflowDelegation,
-      ExternalWorkflowApplicationIdentifier externalApplicationId,
-      ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails,
-      TrustFramework trustFramework,
-      IdentityVerificationExaminationResults examinations,
-      IdentityVerificationApplicationProcesses processes,
-      IdentityVerificationApplicationStatus status,
-      LocalDateTime requestedAt) {
+  public IdentityVerificationApplication(IdentityVerificationApplicationIdentifier identifier, IdentityVerificationType identityVerificationType, TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, UserIdentifier userIdentifier, IdentityVerificationApplicationDetails applicationDetails, ExternalWorkflowDelegation externalWorkflowDelegation, ExternalWorkflowApplicationIdentifier externalApplicationId, ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails,
+      TrustFramework trustFramework, IdentityVerificationExaminationResults examinations, IdentityVerificationApplicationProcesses processes, IdentityVerificationApplicationStatus status, LocalDateTime requestedAt) {
     this.identifier = identifier;
     this.identityVerificationType = identityVerificationType;
     this.tenantIdentifier = tenantIdentifier;
@@ -72,164 +59,65 @@ public class IdentityVerificationApplication {
     this.requestedAt = requestedAt;
   }
 
-  public static IdentityVerificationApplication create(
-      Tenant tenant,
-      RequestedClientId requestedClientId,
-      User user,
-      IdentityVerificationType verificationType,
-      IdentityVerificationRequest request,
-      ExternalWorkflowDelegation externalWorkflowDelegation,
-      ExternalWorkflowApplyingResult applyingResult,
-      IdentityVerificationProcess process,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public static IdentityVerificationApplication create(Tenant tenant, RequestedClientId requestedClientId, User user, IdentityVerificationType verificationType, IdentityVerificationRequest request, ExternalWorkflowDelegation externalWorkflowDelegation, ExternalWorkflowApplyingResult applyingResult, IdentityVerificationProcess process, IdentityVerificationConfiguration verificationConfiguration) {
 
-    IdentityVerificationApplicationIdentifier identifier =
-        new IdentityVerificationApplicationIdentifier(UUID.randomUUID().toString());
+    IdentityVerificationApplicationIdentifier identifier = new IdentityVerificationApplicationIdentifier(UUID.randomUUID().toString());
     TenantIdentifier tenantIdentifier = tenant.identifier();
     UserIdentifier userIdentifier = user.userIdentifier();
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(process);
-    IdentityVerificationApplicationDetails details =
-        IdentityVerificationApplicationDetails.create(request, processConfig);
+    IdentityVerificationProcessConfiguration processConfig = verificationConfiguration.getProcessConfig(process);
+    IdentityVerificationApplicationDetails details = IdentityVerificationApplicationDetails.create(request, processConfig);
 
-    ExternalWorkflowApplicationIdentifier externalApplicationId =
-        applyingResult.extractApplicationIdentifierFromBody();
-    ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails =
-        ExternalWorkflowApplicationDetails.create(
-            applyingResult.externalWorkflowResponse(), processConfig);
+    ExternalWorkflowApplicationIdentifier externalApplicationId = applyingResult.extractApplicationIdentifierFromBody();
+    ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails = ExternalWorkflowApplicationDetails.create(applyingResult.externalWorkflowResponse(), processConfig);
 
     TrustFramework trustFramework = new TrustFramework(request.extractTrustFramework());
     LocalDateTime requestedAt = SystemDateTime.now();
-    IdentityVerificationApplicationProcess applicationProcess =
-        new IdentityVerificationApplicationProcess(process, requestedAt);
-    IdentityVerificationApplicationProcesses processes =
-        new IdentityVerificationApplicationProcesses(List.of(applicationProcess));
+    IdentityVerificationApplicationProcess applicationProcess = new IdentityVerificationApplicationProcess(process, requestedAt);
+    IdentityVerificationApplicationProcesses processes = new IdentityVerificationApplicationProcesses(List.of(applicationProcess));
 
-    return new IdentityVerificationApplication(
-        identifier,
-        verificationType,
-        tenantIdentifier,
-        requestedClientId,
-        userIdentifier,
-        details,
-        externalWorkflowDelegation,
-        externalApplicationId,
-        externalWorkflowApplicationDetails,
-        trustFramework,
-        new IdentityVerificationExaminationResults(),
-        processes,
-        IdentityVerificationApplicationStatus.REQUESTED,
-        requestedAt);
+    return new IdentityVerificationApplication(identifier, verificationType, tenantIdentifier, requestedClientId, userIdentifier, details, externalWorkflowDelegation, externalApplicationId, externalWorkflowApplicationDetails, trustFramework, new IdentityVerificationExaminationResults(), processes, IdentityVerificationApplicationStatus.REQUESTED, requestedAt);
   }
 
-  public IdentityVerificationApplication updateProcess(
-      IdentityVerificationProcess process,
-      IdentityVerificationRequest request,
-      ExternalWorkflowApplyingResult applyingResult,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public IdentityVerificationApplication updateProcess(IdentityVerificationProcess process, IdentityVerificationRequest request, ExternalWorkflowApplyingResult applyingResult, IdentityVerificationConfiguration verificationConfiguration) {
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(process);
-    IdentityVerificationApplicationDetails mergedApplicationDetails =
-        applicationDetails.merge(request, processConfig);
-    ExternalWorkflowApplicationDetails mergedExternalWorkflowApplicationDetails =
-        externalWorkflowApplicationDetails.merge(
-            applyingResult.externalWorkflowResponse(), processConfig);
+    IdentityVerificationProcessConfiguration processConfig = verificationConfiguration.getProcessConfig(process);
+    IdentityVerificationApplicationDetails mergedApplicationDetails = applicationDetails.merge(request, processConfig);
+    ExternalWorkflowApplicationDetails mergedExternalWorkflowApplicationDetails = externalWorkflowApplicationDetails.merge(applyingResult.externalWorkflowResponse(), processConfig);
     TrustFramework trustFramework = new TrustFramework(request.extractTrustFramework());
 
-    IdentityVerificationApplicationProcess applicationProcess =
-        new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
+    IdentityVerificationApplicationProcess applicationProcess = new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
     IdentityVerificationApplicationProcesses addedProcesses = processes.add(applicationProcess);
 
-    return new IdentityVerificationApplication(
-        identifier,
-        identityVerificationType,
-        tenantIdentifier,
-        requestedClientId,
-        userIdentifier,
-        mergedApplicationDetails,
-        externalWorkflowDelegation,
-        externalApplicationId,
-        mergedExternalWorkflowApplicationDetails,
-        trustFramework,
-        new IdentityVerificationExaminationResults(),
-        addedProcesses,
-        IdentityVerificationApplicationStatus.APPLYING,
-        requestedAt);
+    return new IdentityVerificationApplication(identifier, identityVerificationType, tenantIdentifier, requestedClientId, userIdentifier, mergedApplicationDetails, externalWorkflowDelegation, externalApplicationId, mergedExternalWorkflowApplicationDetails, trustFramework, new IdentityVerificationExaminationResults(), addedProcesses, IdentityVerificationApplicationStatus.APPLYING, requestedAt);
   }
 
-  public IdentityVerificationApplication updateExamination(
-      IdentityVerificationProcess process,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public IdentityVerificationApplication updateExamination(IdentityVerificationProcess process, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(process);
+    IdentityVerificationProcessConfiguration processConfig = verificationConfiguration.getProcessConfig(process);
 
-    IdentityVerificationExaminationResult identityVerificationExaminationResult =
-        IdentityVerificationExaminationResult.create(request, processConfig);
-    IdentityVerificationExaminationResults addExaminations =
-        examinations.add(identityVerificationExaminationResult);
-    IdentityVerificationApplicationProcess applicationProcess =
-        new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
+    IdentityVerificationExaminationResult identityVerificationExaminationResult = IdentityVerificationExaminationResult.create(request, processConfig);
+    IdentityVerificationExaminationResults addExaminations = examinations.add(identityVerificationExaminationResult);
+    IdentityVerificationApplicationProcess applicationProcess = new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
     IdentityVerificationApplicationProcesses addedProcesses = processes.add(applicationProcess);
 
-    IdentityVerificationApplicationStatus status =
-        IdentityVerificationApplicationStatus.isRejected(request, processConfig)
-            ? IdentityVerificationApplicationStatus.REJECTED
-            : IdentityVerificationApplicationStatus.EXAMINATION_PROCESSING;
+    IdentityVerificationApplicationStatus status = IdentityVerificationApplicationStatus.isRejected(request, processConfig) ? IdentityVerificationApplicationStatus.REJECTED : IdentityVerificationApplicationStatus.EXAMINATION_PROCESSING;
 
-    return new IdentityVerificationApplication(
-        identifier,
-        identityVerificationType,
-        tenantIdentifier,
-        requestedClientId,
-        userIdentifier,
-        applicationDetails,
-        externalWorkflowDelegation,
-        externalApplicationId,
-        externalWorkflowApplicationDetails,
-        trustFramework,
-        addExaminations,
-        addedProcesses,
-        status,
-        requestedAt);
+    return new IdentityVerificationApplication(identifier, identityVerificationType, tenantIdentifier, requestedClientId, userIdentifier, applicationDetails, externalWorkflowDelegation, externalApplicationId, externalWorkflowApplicationDetails, trustFramework, addExaminations, addedProcesses, status, requestedAt);
   }
 
-  public IdentityVerificationApplication completeExamination(
-      IdentityVerificationProcess process,
-      IdentityVerificationRequest request,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public IdentityVerificationApplication completeExamination(IdentityVerificationProcess process, IdentityVerificationRequest request, IdentityVerificationConfiguration verificationConfiguration) {
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(process);
+    IdentityVerificationProcessConfiguration processConfig = verificationConfiguration.getProcessConfig(process);
 
-    IdentityVerificationExaminationResult identityVerificationExaminationResult =
-        IdentityVerificationExaminationResult.create(request, processConfig);
-    IdentityVerificationExaminationResults addExaminations =
-        examinations.add(identityVerificationExaminationResult);
-    IdentityVerificationApplicationProcess applicationProcess =
-        new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
+    IdentityVerificationExaminationResult identityVerificationExaminationResult = IdentityVerificationExaminationResult.create(request, processConfig);
+    IdentityVerificationExaminationResults addExaminations = examinations.add(identityVerificationExaminationResult);
+    IdentityVerificationApplicationProcess applicationProcess = new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
     IdentityVerificationApplicationProcesses addedProcesses = processes.add(applicationProcess);
 
     IdentityVerificationApplicationStatus status = IdentityVerificationApplicationStatus.APPROVED;
 
-    return new IdentityVerificationApplication(
-        identifier,
-        identityVerificationType,
-        tenantIdentifier,
-        requestedClientId,
-        userIdentifier,
-        applicationDetails,
-        externalWorkflowDelegation,
-        externalApplicationId,
-        externalWorkflowApplicationDetails,
-        trustFramework,
-        addExaminations,
-        addedProcesses,
-        status,
-        requestedAt);
+    return new IdentityVerificationApplication(identifier, identityVerificationType, tenantIdentifier, requestedClientId, userIdentifier, applicationDetails, externalWorkflowDelegation, externalApplicationId, externalWorkflowApplicationDetails, trustFramework, addExaminations, addedProcesses, status, requestedAt);
   }
 
   public IdentityVerificationApplicationIdentifier identifier() {
@@ -309,8 +197,7 @@ public class IdentityVerificationApplication {
   }
 
   public boolean hasExternalApplicationDetails() {
-    return externalWorkflowApplicationDetails != null
-        && externalWorkflowApplicationDetails.exists();
+    return externalWorkflowApplicationDetails != null && externalWorkflowApplicationDetails.exists();
   }
 
   public boolean hasExaminationResults() {

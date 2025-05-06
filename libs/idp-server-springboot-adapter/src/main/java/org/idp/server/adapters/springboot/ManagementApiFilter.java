@@ -31,24 +31,15 @@ public class ManagementApiFilter extends OncePerRequestFilter {
   }
 
   @Override
-  protected void doFilterInternal(
-      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
 
     String authorization = request.getHeader("Authorization");
 
     try {
       TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
-      Pairs<User, OAuthToken> result =
-          operatorAuthenticationApi.authenticate(adminTenantIdentifier, authorization);
+      Pairs<User, OAuthToken> result = operatorAuthenticationApi.authenticate(adminTenantIdentifier, authorization);
 
-      Operator operator =
-          new Operator(
-              result.getLeft(),
-              result.getRight(),
-              List.of(
-                  IdPScope.tenant_management,
-                  IdPScope.user_management,
-                  IdPScope.client_management));
+      Operator operator = new Operator(result.getLeft(), result.getRight(), List.of(IdPScope.tenant_management, IdPScope.user_management, IdPScope.client_management));
       SecurityContextHolder.getContext().setAuthentication(operator);
       filterChain.doFilter(request, response);
     } catch (UnauthorizedException e) {
@@ -58,8 +49,7 @@ public class ManagementApiFilter extends OncePerRequestFilter {
     } catch (Exception e) {
 
       logger.error(e.getMessage(), e);
-      response.setHeader(
-          HttpHeaders.WWW_AUTHENTICATE, "error=invalid_token unexpected error occurred");
+      response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "error=invalid_token unexpected error occurred");
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
   }

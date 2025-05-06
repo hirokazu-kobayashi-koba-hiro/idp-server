@@ -59,8 +59,7 @@ public class PresentationDefinition implements JsonReadable {
 
   public PresentationDefinition() {}
 
-  public PresentationDefinition(
-      String id, PresentationDefinitionInputDescriptors inputDescriptors) {
+  public PresentationDefinition(String id, PresentationDefinitionInputDescriptors inputDescriptors) {
     this.id = id;
     this.inputDescriptors = inputDescriptors;
   }

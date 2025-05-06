@@ -15,27 +15,19 @@ public class GrantIdTokenClaims implements Iterable<String> {
     this.values = new HashSet<>();
   }
 
-  public static GrantIdTokenClaims create(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  public static GrantIdTokenClaims create(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     Set<String> claims = new HashSet<>();
     if (shouldAddName(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("name");
     if (shouldAddGivenName(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("given_name");
-    if (shouldAddFamilyName(
-        scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
+    if (shouldAddFamilyName(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("family_name");
-    if (shouldAddMiddleName(
-        scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
+    if (shouldAddMiddleName(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("middle_name");
     if (shouldAddNickname(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("nickname");
-    if (shouldAddPreferredUsername(
-        scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
+    if (shouldAddPreferredUsername(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("preferred_username");
     if (shouldAddProfile(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("profile");
@@ -45,8 +37,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
       claims.add("website");
     if (shouldAddEmail(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("email");
-    if (shouldAddEmailVerified(
-        scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
+    if (shouldAddEmailVerified(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("email_verified");
     if (shouldAddGender(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("gender");
@@ -56,18 +47,17 @@ public class GrantIdTokenClaims implements Iterable<String> {
       claims.add("zoneinfo");
     if (shouldAddLocale(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("locale");
-    if (shouldAddPhoneNumber(
-        scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
+    if (shouldAddPhoneNumber(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("phone_number");
-    if (shouldAddPhoneNumberVerified(
-        scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
+    if (shouldAddPhoneNumberVerified(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("phone_number_verified");
     if (shouldAddAddress(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("address");
     if (shouldAddUpdatedAt(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("updated_at");
 
-    if (shouldAddVerifiedClaims(idTokenClaims)) claims.add("verified_claims");
+    if (shouldAddVerifiedClaims(idTokenClaims))
+      claims.add("verified_claims");
 
     return new GrantIdTokenClaims(claims);
   }
@@ -187,12 +177,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return Objects.nonNull(values) && values.contains("verified_claims");
   }
 
-  private static boolean shouldAddName(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddName(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("name")) {
       return false;
     }
@@ -205,12 +190,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddGivenName(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddGivenName(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("given_name")) {
       return false;
     }
@@ -223,12 +203,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddFamilyName(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddFamilyName(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("family_name")) {
       return false;
     }
@@ -241,12 +216,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddMiddleName(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddMiddleName(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("middle_name")) {
       return false;
     }
@@ -259,12 +229,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddNickname(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddNickname(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("nickname")) {
       return false;
     }
@@ -277,12 +242,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddPreferredUsername(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddPreferredUsername(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("preferred_username")) {
       return false;
     }
@@ -295,12 +255,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddProfile(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddProfile(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("profile")) {
       return false;
     }
@@ -313,12 +268,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddPicture(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddPicture(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("picture")) {
       return false;
     }
@@ -331,12 +281,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddWebsite(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddWebsite(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("website")) {
       return false;
     }
@@ -349,12 +294,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddEmail(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddEmail(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("email")) {
       return false;
     }
@@ -367,12 +307,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("email");
   }
 
-  private static boolean shouldAddEmailVerified(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddEmailVerified(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("email_verified")) {
       return false;
     }
@@ -385,12 +320,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("email");
   }
 
-  private static boolean shouldAddGender(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddGender(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("gender")) {
       return false;
     }
@@ -403,12 +333,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddBirthdate(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddBirthdate(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("birthdate")) {
       return false;
     }
@@ -421,12 +346,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddZoneinfo(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddZoneinfo(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("zoneinfo")) {
       return false;
     }
@@ -439,12 +359,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddLocale(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddLocale(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("locale")) {
       return false;
     }
@@ -457,12 +372,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("profile");
   }
 
-  private static boolean shouldAddPhoneNumber(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddPhoneNumber(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("phone_number")) {
       return false;
     }
@@ -475,12 +385,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("phone");
   }
 
-  private static boolean shouldAddPhoneNumberVerified(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddPhoneNumberVerified(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("phone_number_verified")) {
       return false;
     }
@@ -493,12 +398,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("phone");
   }
 
-  private static boolean shouldAddAddress(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddAddress(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("address")) {
       return false;
     }
@@ -511,12 +411,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
     return scopes.contains("address");
   }
 
-  private static boolean shouldAddUpdatedAt(
-      Scopes scopes,
-      ResponseType responseType,
-      List<String> supportedClaims,
-      RequestedIdTokenClaims idTokenClaims,
-      boolean idTokenStrictMode) {
+  private static boolean shouldAddUpdatedAt(Scopes scopes, ResponseType responseType, List<String> supportedClaims, RequestedIdTokenClaims idTokenClaims, boolean idTokenStrictMode) {
     if (!supportedClaims.contains("updated_at")) {
       return false;
     }

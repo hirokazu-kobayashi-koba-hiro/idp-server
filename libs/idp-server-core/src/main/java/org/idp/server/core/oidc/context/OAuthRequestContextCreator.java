@@ -18,14 +18,9 @@ import org.idp.server.core.oidc.request.OAuthRequestParameters;
 /** OAuthRequestContextService */
 public interface OAuthRequestContextCreator {
 
-  OAuthRequestContext create(
-      Tenant tenant,
-      OAuthRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration);
+  OAuthRequestContext create(Tenant tenant, OAuthRequestParameters parameters, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration);
 
-  default AuthorizationProfile analyze(
-      Set<String> filteredScopes, ServerConfiguration serverConfiguration) {
+  default AuthorizationProfile analyze(Set<String> filteredScopes, ServerConfiguration serverConfiguration) {
 
     if (serverConfiguration.hasFapiAdvanceScope(filteredScopes)) {
       return AuthorizationProfile.FAPI_ADVANCE;
@@ -39,25 +34,17 @@ public interface OAuthRequestContextCreator {
     return AuthorizationProfile.OAUTH2;
   }
 
-  default Set<String> filterScopes(
-      OAuthRequestPattern pattern,
-      OAuthRequestParameters parameters,
-      JoseContext joseContext,
-      ClientConfiguration clientConfiguration) {
+  default Set<String> filterScopes(OAuthRequestPattern pattern, OAuthRequestParameters parameters, JoseContext joseContext, ClientConfiguration clientConfiguration) {
 
     String scope = parameters.getValueOrEmpty(OAuthRequestKey.scope);
     JsonWebTokenClaims claims = joseContext.claims();
     String joseScope = claims.getValue("scope");
-    String targetScope =
-        (pattern.isRequestParameter() || clientConfiguration.isSupportedJar()) ? joseScope : scope;
+    String targetScope = (pattern.isRequestParameter() || clientConfiguration.isSupportedJar()) ? joseScope : scope;
 
     return clientConfiguration.filteredScope(targetScope);
   }
 
-  default AuthorizationRequestFactory selectAuthorizationRequestFactory(
-      AuthorizationProfile profile,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  default AuthorizationRequestFactory selectAuthorizationRequestFactory(AuthorizationProfile profile, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     if (profile.isFapiAdvance()) {
       return new FapiAdvanceRequestObjectPatternFactory();
     }

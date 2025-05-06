@@ -41,8 +41,7 @@ public class ExternalSmsAuthenticationConfiguration implements JsonReadable {
 
   public ExternalSmsAuthenticationExecutionConfiguration getExecutionConfig(String executionType) {
     if (!executions.containsKey(executionType)) {
-      throw new SmsAuthenticationExecutionConfigNotFoundException(
-          "invalid configuration. type: " + executionType + " is unregistered.");
+      throw new SmsAuthenticationExecutionConfigNotFoundException("invalid configuration. type: " + executionType + " is unregistered.");
     }
     return executions.get(executionType);
   }

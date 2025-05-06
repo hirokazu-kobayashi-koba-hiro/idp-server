@@ -1,9 +1,7 @@
 package org.idp.server.core.authentication.sms;
 
 public enum SmsAuthenticationExecutionStatus {
-  OK(200),
-  CLIENT_ERROR(400),
-  SERVER_ERROR(500);
+  OK(200), CLIENT_ERROR(400), SERVER_ERROR(500);
 
   int statusCode;
 

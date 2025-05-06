@@ -17,8 +17,7 @@ import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters
 public class CibaRequestAssembleParameters implements BackchannelRequestParameters {
   Map<String, Object> values;
 
-  public CibaRequestAssembleParameters(
-      CibaRequestParameters parameters, CibaRequestObjectParameters requestObjectParameters) {
+  public CibaRequestAssembleParameters(CibaRequestParameters parameters, CibaRequestObjectParameters requestObjectParameters) {
     Map<String, Object> map = new HashMap<>(parameters.singleValues());
     map.putAll(requestObjectParameters.values());
     this.values = map;

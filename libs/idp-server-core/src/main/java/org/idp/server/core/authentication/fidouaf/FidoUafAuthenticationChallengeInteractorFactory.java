@@ -5,8 +5,7 @@ import org.idp.server.core.authentication.factory.AuthenticationDependencyContai
 import org.idp.server.core.authentication.factory.AuthenticationInteractorFactory;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 
-public class FidoUafAuthenticationChallengeInteractorFactory
-    implements AuthenticationInteractorFactory {
+public class FidoUafAuthenticationChallengeInteractorFactory implements AuthenticationInteractorFactory {
 
   @Override
   public AuthenticationInteractionType type() {
@@ -17,9 +16,7 @@ public class FidoUafAuthenticationChallengeInteractorFactory
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
     FidoUafExecutors fidoUafExecutors = container.resolve(FidoUafExecutors.class);
-    AuthenticationConfigurationQueryRepository configurationQueryRepository =
-        container.resolve(AuthenticationConfigurationQueryRepository.class);
-    return new FidoUafAuthenticationChallengeInteractor(
-        fidoUafExecutors, configurationQueryRepository);
+    AuthenticationConfigurationQueryRepository configurationQueryRepository = container.resolve(AuthenticationConfigurationQueryRepository.class);
+    return new FidoUafAuthenticationChallengeInteractor(fidoUafExecutors, configurationQueryRepository);
   }
 }

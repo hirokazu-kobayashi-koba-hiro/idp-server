@@ -17,9 +17,7 @@ public class ServerRegistrationV1Api implements ParameterTransformable {
   ServerDomain serverDomain;
   ServerManagementApi serverManagementApi;
 
-  public ServerRegistrationV1Api(
-      IdpServerApplication idpServerApplication,
-      @Value("${idp.configurations.serverUrl}") String publicTenantDomainValue) {
+  public ServerRegistrationV1Api(IdpServerApplication idpServerApplication, @Value("${idp.configurations.serverUrl}") String publicTenantDomainValue) {
     this.serverManagementApi = idpServerApplication.serverManagementApi();
 
     this.serverDomain = new ServerDomain(publicTenantDomainValue);
@@ -29,8 +27,7 @@ public class ServerRegistrationV1Api implements ParameterTransformable {
   public ResponseEntity<?> post(@RequestBody(required = false) String body) {
 
     TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
-    String response =
-        serverManagementApi.register(adminTenantIdentifier, TenantType.PUBLIC, serverDomain, body);
+    String response = serverManagementApi.register(adminTenantIdentifier, TenantType.PUBLIC, serverDomain, body);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

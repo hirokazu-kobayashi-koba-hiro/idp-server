@@ -10,14 +10,7 @@ import org.idp.server.core.oidc.configuration.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.ServerConfiguration;
 
 public interface BackchannelAuthenticationRequestFactory {
-  BackchannelAuthenticationRequest create(
-      CibaProfile profile,
-      ClientSecretBasic clientSecretBasic,
-      CibaRequestParameters parameters,
-      JoseContext joseContext,
-      Set<String> filteredScopes,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration);
+  BackchannelAuthenticationRequest create(CibaProfile profile, ClientSecretBasic clientSecretBasic, CibaRequestParameters parameters, JoseContext joseContext, Set<String> filteredScopes, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration);
 
   default BackchannelAuthenticationRequestIdentifier createIdentifier() {
     return new BackchannelAuthenticationRequestIdentifier(UUID.randomUUID().toString());

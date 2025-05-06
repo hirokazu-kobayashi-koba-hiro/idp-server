@@ -24,23 +24,19 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
   }
 
   @Override
-  public AuthorizationRequest get(
-      Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+  public AuthorizationRequest get(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
     AuthorizationRequestSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> stringMap = executor.selectOne(authorizationRequestIdentifier);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
-      throw new OAuthException(
-          "invalid_request",
-          String.format("not found oauth request (%s)", authorizationRequestIdentifier.value()));
+      throw new OAuthException("invalid_request", String.format("not found oauth request (%s)", authorizationRequestIdentifier.value()));
     }
 
     return ModelConverter.convert(stringMap);
   }
 
   @Override
-  public AuthorizationRequest find(
-      Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+  public AuthorizationRequest find(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
     AuthorizationRequestSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> stringMap = executor.selectOne(authorizationRequestIdentifier);
 

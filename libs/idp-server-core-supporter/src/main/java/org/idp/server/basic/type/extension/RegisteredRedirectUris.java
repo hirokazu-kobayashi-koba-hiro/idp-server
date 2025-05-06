@@ -16,8 +16,7 @@ public class RegisteredRedirectUris implements Iterable<String> {
   }
 
   public boolean containsWithNormalizationAndComparison(String other) {
-    return values.stream()
-        .anyMatch(value -> UriMatcher.matchWithNormalizationAndComparison(value, other));
+    return values.stream().anyMatch(value -> UriMatcher.matchWithNormalizationAndComparison(value, other));
   }
 
   @Override

@@ -13,8 +13,7 @@ public class AuthorizationIdentifier {
     this.value = authorizationRequestIdentifier.value();
   }
 
-  public AuthorizationIdentifier(
-      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
+  public AuthorizationIdentifier(BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
     this.value = backchannelAuthenticationRequestIdentifier.value();
   }
 
@@ -28,7 +27,8 @@ public class AuthorizationIdentifier {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass())
+      return false;
     AuthorizationIdentifier that = (AuthorizationIdentifier) o;
     return Objects.equals(value, that.value);
   }

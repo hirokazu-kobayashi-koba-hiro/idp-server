@@ -36,39 +36,33 @@ public class JsonSchemaValidator {
   }
 
   void validateType(JsonNodeWrapper target, List<String> errors) {
-    target
-        .fieldNames()
-        .forEachRemaining(
-            field -> {
-              JsonNodeWrapper valueObject = target.getValueAsJsonNode(field);
-              JsonSchemaProperty schemaProperty = schemaDefinition.propertySchema(field);
-              if (!schemaProperty.exists()) {
-                return;
-              }
-              if (!valueObject.nodeTypeAsString().equals(schemaProperty.type())) {
-                errors.add(field + " type is " + schemaDefinition.propertySchema(field).type());
-              }
+    target.fieldNames().forEachRemaining(field -> {
+      JsonNodeWrapper valueObject = target.getValueAsJsonNode(field);
+      JsonSchemaProperty schemaProperty = schemaDefinition.propertySchema(field);
+      if (!schemaProperty.exists()) {
+        return;
+      }
+      if (!valueObject.nodeTypeAsString().equals(schemaProperty.type())) {
+        errors.add(field + " type is " + schemaDefinition.propertySchema(field).type());
+      }
 
-              if (schemaProperty.hasMinLength()) {
-                if (valueObject.isString()
-                    && valueObject.asText().length() < schemaProperty.minLength()) {
-                  errors.add(field + " minLength is " + schemaProperty.minLength());
-                }
-              }
+      if (schemaProperty.hasMinLength()) {
+        if (valueObject.isString() && valueObject.asText().length() < schemaProperty.minLength()) {
+          errors.add(field + " minLength is " + schemaProperty.minLength());
+        }
+      }
 
-              if (schemaProperty.hasMaxLength()) {
-                if (valueObject.isString()
-                    && valueObject.asText().length() > schemaProperty.maxLength()) {
-                  errors.add(field + " maxLength is " + schemaProperty.maxLength());
-                }
-              }
+      if (schemaProperty.hasMaxLength()) {
+        if (valueObject.isString() && valueObject.asText().length() > schemaProperty.maxLength()) {
+          errors.add(field + " maxLength is " + schemaProperty.maxLength());
+        }
+      }
 
-              if (schemaProperty.hasPattern()) {
-                if (valueObject.isString()
-                    && !valueObject.asText().matches(schemaProperty.pattern())) {
-                  errors.add(field + " pattern is " + schemaProperty.pattern());
-                }
-              }
-            });
+      if (schemaProperty.hasPattern()) {
+        if (valueObject.isString() && !valueObject.asText().matches(schemaProperty.pattern())) {
+          errors.add(field + " pattern is " + schemaProperty.pattern());
+        }
+      }
+    });
   }
 }

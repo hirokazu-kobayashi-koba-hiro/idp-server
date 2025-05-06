@@ -7,8 +7,7 @@ import org.idp.server.core.authentication.notification.EmailSenders;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.authentication.repository.AuthenticationInteractionCommandRepository;
 
-public class EmailAuthenticationChallengeInteractorFactory
-    implements AuthenticationInteractorFactory {
+public class EmailAuthenticationChallengeInteractorFactory implements AuthenticationInteractorFactory {
 
   @Override
   public AuthenticationInteractionType type() {
@@ -18,12 +17,9 @@ public class EmailAuthenticationChallengeInteractorFactory
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
-    AuthenticationConfigurationQueryRepository configurationQueryRepository =
-        container.resolve(AuthenticationConfigurationQueryRepository.class);
-    AuthenticationInteractionCommandRepository transactionCommandRepository =
-        container.resolve(AuthenticationInteractionCommandRepository.class);
+    AuthenticationConfigurationQueryRepository configurationQueryRepository = container.resolve(AuthenticationConfigurationQueryRepository.class);
+    AuthenticationInteractionCommandRepository transactionCommandRepository = container.resolve(AuthenticationInteractionCommandRepository.class);
     EmailSenders emailSenders = container.resolve(EmailSenders.class);
-    return new EmailAuthenticationChallengeInteractor(
-        configurationQueryRepository, transactionCommandRepository, emailSenders);
+    return new EmailAuthenticationChallengeInteractor(configurationQueryRepository, transactionCommandRepository, emailSenders);
   }
 }

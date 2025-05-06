@@ -9,15 +9,13 @@ public class TokenIntrospectionResponse {
   OAuthToken oAuthToken;
   Map<String, Object> response;
 
-  public TokenIntrospectionResponse(
-      TokenIntrospectionRequestStatus status, OAuthToken oAuthToken, Map<String, Object> contents) {
+  public TokenIntrospectionResponse(TokenIntrospectionRequestStatus status, OAuthToken oAuthToken, Map<String, Object> contents) {
     this.status = status;
     this.oAuthToken = oAuthToken;
     this.response = contents;
   }
 
-  public TokenIntrospectionResponse(
-      TokenIntrospectionRequestStatus status, Map<String, Object> contents) {
+  public TokenIntrospectionResponse(TokenIntrospectionRequestStatus status, Map<String, Object> contents) {
     this.status = status;
     this.response = contents;
   }

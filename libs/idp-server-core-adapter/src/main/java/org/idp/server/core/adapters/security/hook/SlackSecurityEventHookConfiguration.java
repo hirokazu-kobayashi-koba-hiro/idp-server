@@ -11,8 +11,7 @@ public class SlackSecurityEventHookConfiguration implements JsonReadable {
 
   public SlackSecurityEventHookConfiguration() {}
 
-  public SlackSecurityEventHookConfiguration(
-      SlackHookConfig base, Map<String, SlackHookConfig> overlays) {
+  public SlackSecurityEventHookConfiguration(SlackHookConfig base, Map<String, SlackHookConfig> overlays) {
     this.base = base;
     this.overlays = overlays;
   }

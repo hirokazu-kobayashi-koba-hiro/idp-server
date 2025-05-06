@@ -13,15 +13,14 @@ public class MysqlExecutor implements RoleSqlExecutor {
   public void insert(Tenant tenant, Role role) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-                INSERT INTO role (id, tenant_id, name, description)
-                VALUES (?, ?, ?, ?)
-                ON DUPLICATE KEY
-                UPDATE
-                description = VALUES(description),
-                updated_at = now();
-                """;
+    String sqlTemplate = """
+        INSERT INTO role (id, tenant_id, name, description)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY
+        UPDATE
+        description = VALUES(description),
+        updated_at = now();
+        """;
 
     List<Object> params = new ArrayList<>();
     params.add(role.id());
@@ -42,23 +41,21 @@ public class MysqlExecutor implements RoleSqlExecutor {
 
   private void bulkRegisterRole(Tenant tenant, Roles roles, SqlExecutor sqlExecutor) {
     StringBuilder sqlTemplateBuilder = new StringBuilder();
-    sqlTemplateBuilder.append(
-        """
-                    INSERT INTO role (id, tenant_id, name, description)
-                    VALUES
-                    """);
+    sqlTemplateBuilder.append("""
+        INSERT INTO role (id, tenant_id, name, description)
+        VALUES
+        """);
 
     List<String> sqlValues = new ArrayList<>();
     List<Object> params = new ArrayList<>();
 
-    roles.forEach(
-        role -> {
-          sqlValues.add("(?, ?, ?, ?)");
-          params.add(role.id());
-          params.add(tenant.identifierValue());
-          params.add(role.name());
-          params.add(role.description());
-        });
+    roles.forEach(role -> {
+      sqlValues.add("(?, ?, ?, ?)");
+      params.add(role.id());
+      params.add(tenant.identifierValue());
+      params.add(role.name());
+      params.add(role.description());
+    });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(";");
 
@@ -67,23 +64,18 @@ public class MysqlExecutor implements RoleSqlExecutor {
 
   private void bulkRegisterPermission(Roles roles, SqlExecutor sqlExecutor) {
     StringBuilder sqlTemplateBuilder = new StringBuilder();
-    sqlTemplateBuilder.append(
-        """
-                        INSERT INTO role_permission (role_id, permission_id)
-                        VALUES
-                        """);
+    sqlTemplateBuilder.append("""
+        INSERT INTO role_permission (role_id, permission_id)
+        VALUES
+        """);
 
     List<String> sqlValues = new ArrayList<>();
     List<Object> params = new ArrayList<>();
-    roles.forEach(
-        role ->
-            role.permissions()
-                .forEach(
-                    permission -> {
-                      sqlValues.add("(?, ?)");
-                      params.add(role.id());
-                      params.add(permission.id());
-                    }));
+    roles.forEach(role -> role.permissions().forEach(permission -> {
+      sqlValues.add("(?, ?)");
+      params.add(role.id());
+      params.add(permission.id());
+    }));
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(";");
 

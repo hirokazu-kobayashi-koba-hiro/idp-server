@@ -4,8 +4,7 @@ import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 
-public class CibaGrantDataSourceProvider
-    implements ApplicationComponentProvider<CibaGrantRepository> {
+public class CibaGrantDataSourceProvider implements ApplicationComponentProvider<CibaGrantRepository> {
 
   @Override
   public Class<CibaGrantRepository> type() {

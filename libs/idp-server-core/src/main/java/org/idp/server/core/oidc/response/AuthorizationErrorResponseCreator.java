@@ -7,8 +7,7 @@ import org.idp.server.basic.type.oidc.ResponseMode;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 
-public class AuthorizationErrorResponseCreator
-    implements RedirectUriDecidable, ResponseModeDecidable, JarmCreatable {
+public class AuthorizationErrorResponseCreator implements RedirectUriDecidable, ResponseModeDecidable, JarmCreatable {
 
   OAuthRedirectableBadRequestException exception;
 
@@ -23,17 +22,10 @@ public class AuthorizationErrorResponseCreator
     ResponseModeValue responseModeValue = context.responseModeValue();
     ResponseMode responseMode = context.responseMode();
     State state = context.state();
-    AuthorizationErrorResponseBuilder builder =
-        new AuthorizationErrorResponseBuilder(
-                redirectUri, responseMode, responseModeValue, tokenIssuer)
-            .add(state)
-            .add(exception.error())
-            .add(exception.errorDescription());
+    AuthorizationErrorResponseBuilder builder = new AuthorizationErrorResponseBuilder(redirectUri, responseMode, responseModeValue, tokenIssuer).add(state).add(exception.error()).add(exception.errorDescription());
     if (context.isJwtMode()) {
       AuthorizationErrorResponse errorResponse = builder.build();
-      JarmPayload jarmPayload =
-          createResponse(
-              errorResponse, context.serverConfiguration(), context.clientConfiguration());
+      JarmPayload jarmPayload = createResponse(errorResponse, context.serverConfiguration(), context.clientConfiguration());
       builder.add(jarmPayload);
     }
 

@@ -16,8 +16,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
   private final DialectProvider dialectProvider;
   LoggerWrapper log = LoggerWrapper.getLogger(TenantAwareEntryServiceProxy.class);
 
-  public TenantAwareEntryServiceProxy(
-      Object target, OperationType operationType, DialectProvider dialectProvider) {
+  public TenantAwareEntryServiceProxy(Object target, OperationType operationType, DialectProvider dialectProvider) {
     this.target = target;
     this.operationType = operationType;
     this.dialectProvider = dialectProvider;
@@ -25,9 +24,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    boolean isTransactional =
-        method.isAnnotationPresent(Transaction.class)
-            || target.getClass().isAnnotationPresent(Transaction.class);
+    boolean isTransactional = method.isAnnotationPresent(Transaction.class) || target.getClass().isAnnotationPresent(Transaction.class);
 
     if (isTransactional) {
       try {
@@ -40,41 +37,19 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
 
         TransactionManager.beginTransaction(databaseType);
 
-        log.debug(
-            databaseType.name()
-                + ": begin transaction: "
-                + target.getClass().getName()
-                + ": "
-                + method.getName());
+        log.debug(databaseType.name() + ": begin transaction: " + target.getClass().getName() + ": " + method.getName());
 
         Object result = method.invoke(target, args);
         TransactionManager.commitTransaction();
-        log.debug(
-            databaseType.name()
-                + ": commit transaction: "
-                + target.getClass().getName()
-                + ": "
-                + method.getName());
+        log.debug(databaseType.name() + ": commit transaction: " + target.getClass().getName() + ": " + method.getName());
         return result;
       } catch (InvocationTargetException e) {
         TransactionManager.rollbackTransaction();
-        log.error(
-            "rollback transaction (InvocationTargetException): "
-                + target.getClass().getName()
-                + ": "
-                + method.getName()
-                + ", cause: "
-                + e.getTargetException().toString());
+        log.error("rollback transaction (InvocationTargetException): " + target.getClass().getName() + ": " + method.getName() + ", cause: " + e.getTargetException().toString());
         throw e.getTargetException();
       } catch (Throwable e) {
         TransactionManager.rollbackTransaction();
-        log.error(
-            "rollback transaction: "
-                + target.getClass().getName()
-                + ": "
-                + method.getName()
-                + ", cause: "
-                + e);
+        log.error("rollback transaction: " + target.getClass().getName() + ": " + method.getName() + ", cause: " + e);
         throw e;
       }
     } else {
@@ -88,17 +63,11 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         return tenantId;
       }
     }
-    throw new MissingRequiredTenantIdentifierException(
-        "Missing required TenantIdentifier. Please ensure it is explicitly passed to the service.");
+    throw new MissingRequiredTenantIdentifierException("Missing required TenantIdentifier. Please ensure it is explicitly passed to the service.");
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> T createProxy(
-      T target, Class<T> interfaceType, OperationType opType, DialectProvider provider) {
-    return (T)
-        Proxy.newProxyInstance(
-            interfaceType.getClassLoader(),
-            new Class<?>[] {interfaceType},
-            new TenantAwareEntryServiceProxy(target, opType, provider));
+  public static <T> T createProxy(T target, Class<T> interfaceType, OperationType opType, DialectProvider provider) {
+    return (T) Proxy.newProxyInstance(interfaceType.getClassLoader(), new Class<?>[] {interfaceType}, new TenantAwareEntryServiceProxy(target, opType, provider));
   }
 }

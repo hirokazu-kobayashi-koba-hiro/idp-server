@@ -19,20 +19,9 @@ public class WebAuthn4jCredentialConverter {
   }
 
   public CredentialRecordImpl convert() {
-    AttestedCredentialData deserializedAttestedCredentialData =
-        attestedCredentialDataConverter.convert(credential.attestationObject());
+    AttestedCredentialData deserializedAttestedCredentialData = attestedCredentialDataConverter.convert(credential.attestationObject());
 
     // TODO
-    return new CredentialRecordImpl(
-        new NoneAttestationStatement(),
-        null,
-        null,
-        null,
-        credential.signCount(),
-        deserializedAttestedCredentialData,
-        new AuthenticationExtensionsAuthenticatorOutputs<>(),
-        null,
-        null,
-        null);
+    return new CredentialRecordImpl(new NoneAttestationStatement(), null, null, null, credential.signCount(), deserializedAttestedCredentialData, new AuthenticationExtensionsAuthenticatorOutputs<>(), null, null, null);
   }
 }

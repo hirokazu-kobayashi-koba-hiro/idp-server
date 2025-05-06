@@ -14,8 +14,7 @@ import org.idp.server.core.oidc.grant.AuthorizationGrant;
 
 public class CibaGrant {
 
-  BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier =
-      new BackchannelAuthenticationRequestIdentifier();
+  BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier = new BackchannelAuthenticationRequestIdentifier();
   AuthorizationGrant authorizationGrant;
   AuthReqId authReqId;
   ExpiredAt expiredAt;
@@ -24,13 +23,7 @@ public class CibaGrant {
 
   public CibaGrant() {}
 
-  public CibaGrant(
-      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier,
-      AuthorizationGrant authorizationGrant,
-      AuthReqId authReqId,
-      ExpiredAt expiredAt,
-      Interval interval,
-      CibaGrantStatus status) {
+  public CibaGrant(BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier, AuthorizationGrant authorizationGrant, AuthReqId authReqId, ExpiredAt expiredAt, Interval interval, CibaGrantStatus status) {
     this.backchannelAuthenticationRequestIdentifier = backchannelAuthenticationRequestIdentifier;
     this.authorizationGrant = authorizationGrant;
     this.authReqId = authReqId;
@@ -108,12 +101,6 @@ public class CibaGrant {
   }
 
   public CibaGrant update(CibaGrantStatus cibaGrantStatus) {
-    return new CibaGrant(
-        backchannelAuthenticationRequestIdentifier,
-        authorizationGrant,
-        authReqId,
-        expiredAt,
-        interval,
-        cibaGrantStatus);
+    return new CibaGrant(backchannelAuthenticationRequestIdentifier, authorizationGrant, authReqId, expiredAt, interval, cibaGrantStatus);
   }
 }

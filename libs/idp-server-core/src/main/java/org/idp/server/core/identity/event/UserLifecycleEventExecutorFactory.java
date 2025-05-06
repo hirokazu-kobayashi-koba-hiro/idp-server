@@ -5,7 +5,5 @@ import org.idp.server.core.authentication.factory.AuthenticationDependencyContai
 
 public interface UserLifecycleEventExecutorFactory {
 
-  UserLifecycleEventExecutor create(
-      ApplicationComponentContainer applicationComponentContainer,
-      AuthenticationDependencyContainer authenticationDependencyContainer);
+  UserLifecycleEventExecutor create(ApplicationComponentContainer applicationComponentContainer, AuthenticationDependencyContainer authenticationDependencyContainer);
 }

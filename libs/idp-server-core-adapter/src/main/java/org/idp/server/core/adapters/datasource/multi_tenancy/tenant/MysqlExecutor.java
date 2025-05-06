@@ -13,11 +13,10 @@ public class MysqlExecutor implements TenantSqlExecutor {
   public void insert(Tenant tenant) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-            INSERT INTO tenant(id, name, type, domain, attributes)
-            VALUES (?, ?, ?, ?, ?);
-            """;
+    String sqlTemplate = """
+        INSERT INTO tenant(id, name, type, domain, attributes)
+        VALUES (?, ?, ?, ?, ?);
+        """;
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(tenant.name().value());
@@ -31,12 +30,11 @@ public class MysqlExecutor implements TenantSqlExecutor {
   public Map<String, String> selectOne(TenantIdentifier tenantIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-            SELECT id, name, type, domain, attributes
-            FROM tenant
-            WHERE id = ?
-            """;
+    String sqlTemplate = """
+        SELECT id, name, type, domain, attributes
+        FROM tenant
+        WHERE id = ?
+        """;
     List<Object> params = new ArrayList<>();
     params.add(tenantIdentifier.value());
 
@@ -48,12 +46,11 @@ public class MysqlExecutor implements TenantSqlExecutor {
 
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        """
-            SELECT id, name, type, domain, attributes
-            FROM tenant
-            WHERE type = ?
-            """;
+    String sqlTemplate = """
+        SELECT id, name, type, domain, attributes
+        FROM tenant
+        WHERE type = ?
+        """;
     List<Object> params = new ArrayList<>();
     params.add("ADMIN");
 

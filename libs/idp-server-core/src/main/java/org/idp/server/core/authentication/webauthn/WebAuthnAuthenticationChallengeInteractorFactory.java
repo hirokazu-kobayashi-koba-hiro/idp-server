@@ -5,8 +5,7 @@ import org.idp.server.core.authentication.factory.AuthenticationDependencyContai
 import org.idp.server.core.authentication.factory.AuthenticationInteractorFactory;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 
-public class WebAuthnAuthenticationChallengeInteractorFactory
-    implements AuthenticationInteractorFactory {
+public class WebAuthnAuthenticationChallengeInteractorFactory implements AuthenticationInteractorFactory {
 
   @Override
   public AuthenticationInteractionType type() {
@@ -16,11 +15,9 @@ public class WebAuthnAuthenticationChallengeInteractorFactory
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
-    AuthenticationConfigurationQueryRepository configurationRepository =
-        container.resolve(AuthenticationConfigurationQueryRepository.class);
+    AuthenticationConfigurationQueryRepository configurationRepository = container.resolve(AuthenticationConfigurationQueryRepository.class);
     WebAuthnExecutors webAuthnExecutors = container.resolve(WebAuthnExecutors.class);
 
-    return new WebAuthnAuthenticationChallengeInteractor(
-        configurationRepository, webAuthnExecutors);
+    return new WebAuthnAuthenticationChallengeInteractor(configurationRepository, webAuthnExecutors);
   }
 }

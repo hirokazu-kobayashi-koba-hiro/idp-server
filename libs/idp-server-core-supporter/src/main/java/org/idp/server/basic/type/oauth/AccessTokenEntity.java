@@ -17,8 +17,10 @@ public class AccessTokenEntity {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
     AccessTokenEntity that = (AccessTokenEntity) o;
     return Objects.equals(value, that.value);
   }

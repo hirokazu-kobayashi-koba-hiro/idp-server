@@ -24,10 +24,7 @@ public class TokenRevocationHandler {
   ClientConfigurationRepository clientConfigurationRepository;
   ClientAuthenticatorHandler clientAuthenticatorHandler;
 
-  public TokenRevocationHandler(
-      OAuthTokenRepository oAuthTokenRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+  public TokenRevocationHandler(OAuthTokenRepository oAuthTokenRepository, ServerConfigurationRepository serverConfigurationRepository, ClientConfigurationRepository clientConfigurationRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.serverConfigurationRepository = serverConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
@@ -40,15 +37,8 @@ public class TokenRevocationHandler {
 
     Tenant tenant = request.tenant();
     ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, request.clientId());
-    TokenRevocationRequestContext tokenRevocationRequestContext =
-        new TokenRevocationRequestContext(
-            request.clientSecretBasic(),
-            request.toClientCert(),
-            request.toParameters(),
-            serverConfiguration,
-            clientConfiguration);
+    ClientConfiguration clientConfiguration = clientConfigurationRepository.get(tenant, request.clientId());
+    TokenRevocationRequestContext tokenRevocationRequestContext = new TokenRevocationRequestContext(request.clientSecretBasic(), request.toClientCert(), request.toParameters(), serverConfiguration, clientConfiguration);
     clientAuthenticatorHandler.authenticate(tokenRevocationRequestContext);
 
     OAuthToken oAuthToken = find(request);

@@ -31,8 +31,7 @@ public class ServerConfigurationDataSource implements ServerConfigurationReposit
     Map<String, String> stringMap = executor.selectOne(tenant.identifier());
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
-      throw new ServerConfigurationNotFoundException(
-          String.format("unregistered server configuration (%s)", tenant.identifierValue()));
+      throw new ServerConfigurationNotFoundException(String.format("unregistered server configuration (%s)", tenant.identifierValue()));
     }
 
     return ModelConverter.convert(stringMap);

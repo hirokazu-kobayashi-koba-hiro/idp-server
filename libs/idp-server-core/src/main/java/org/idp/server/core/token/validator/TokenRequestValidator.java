@@ -18,25 +18,23 @@ public class TokenRequestValidator {
 
   void throwExceptionIfNotContainsGrantType() {
     if (!parameters.hasGrantType()) {
-      throw new TokenBadRequestException(
-          "token request must contains grant_type, but this request does not contains grant_type");
+      throw new TokenBadRequestException("token request must contains grant_type, but this request does not contains grant_type");
     }
   }
 
   /**
    * 3.2. Token Endpoint validation
    *
-   * <p>Request and response parameters MUST NOT be included more than once.
+   * <p>
+   * Request and response parameters MUST NOT be included more than once.
    *
-   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.2">3.2. Authorization
-   *     Endpoint</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.2">3.2. Authorization Endpoint</a>
    */
   void throwExceptionIfDuplicateValue() {
     List<String> keys = parameters.multiValueKeys();
     if (!keys.isEmpty()) {
       String keysValue = String.join(" ", keys);
-      throw new TokenBadRequestException(
-          String.format("token request must not contains duplicate value; keys (%s)", keysValue));
+      throw new TokenBadRequestException(String.format("token request must not contains duplicate value; keys (%s)", keysValue));
     }
   }
 }

@@ -12,25 +12,17 @@ public class SecurityEventHookResult {
 
   public SecurityEventHookResult() {}
 
-  public static SecurityEventHookResult success(
-      SecurityEventHookType type, Map<String, Object> contents) {
-    SecurityEventHookResultIdentifier identifier =
-        new SecurityEventHookResultIdentifier(UUID.randomUUID().toString());
+  public static SecurityEventHookResult success(SecurityEventHookType type, Map<String, Object> contents) {
+    SecurityEventHookResultIdentifier identifier = new SecurityEventHookResultIdentifier(UUID.randomUUID().toString());
     return new SecurityEventHookResult(identifier, SecurityEventHookStatus.SUCCESS, type, contents);
   }
 
-  public static SecurityEventHookResult failure(
-      SecurityEventHookType type, Map<String, Object> contents) {
-    SecurityEventHookResultIdentifier identifier =
-        new SecurityEventHookResultIdentifier(UUID.randomUUID().toString());
+  public static SecurityEventHookResult failure(SecurityEventHookType type, Map<String, Object> contents) {
+    SecurityEventHookResultIdentifier identifier = new SecurityEventHookResultIdentifier(UUID.randomUUID().toString());
     return new SecurityEventHookResult(identifier, SecurityEventHookStatus.FAILURE, type, contents);
   }
 
-  public SecurityEventHookResult(
-      SecurityEventHookResultIdentifier identifier,
-      SecurityEventHookStatus status,
-      SecurityEventHookType type,
-      Map<String, Object> contents) {
+  public SecurityEventHookResult(SecurityEventHookResultIdentifier identifier, SecurityEventHookStatus status, SecurityEventHookType type, Map<String, Object> contents) {
     this.identifier = identifier;
     this.status = status;
     this.type = type;

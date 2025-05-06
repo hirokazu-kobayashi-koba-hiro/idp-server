@@ -19,10 +19,7 @@ public interface ParameterTransformable {
 
   default RequestAttributes transform(HttpServletRequest request) {
 
-    String ip =
-        Optional.ofNullable(request.getHeader("X-Forwarded-For"))
-            .map(s -> s.split(",")[0].trim())
-            .orElse(request.getRemoteAddr());
+    String ip = Optional.ofNullable(request.getHeader("X-Forwarded-For")).map(s -> s.split(",")[0].trim()).orElse(request.getRemoteAddr());
 
     String userAgent = Optional.ofNullable(request.getHeader("User-Agent")).orElse("unknown");
 

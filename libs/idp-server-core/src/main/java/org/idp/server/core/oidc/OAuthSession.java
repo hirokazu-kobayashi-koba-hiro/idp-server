@@ -18,23 +18,15 @@ public class OAuthSession implements Serializable {
   LocalDateTime expiredAt;
   HashMap<String, Object> attributes = new HashMap<>();
 
-  public static OAuthSession create(
-      OAuthSessionKey oAuthSessionKey, User user, Authentication authentication, MaxAge maxAge) {
+  public static OAuthSession create(OAuthSessionKey oAuthSessionKey, User user, Authentication authentication, MaxAge maxAge) {
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt = createdAt.plusSeconds(maxAge.toLongValue());
-    return new OAuthSession(
-        oAuthSessionKey, user, authentication, maxAge.toLongValue(), createdAt, expiredAt);
+    return new OAuthSession(oAuthSessionKey, user, authentication, maxAge.toLongValue(), createdAt, expiredAt);
   }
 
   public OAuthSession() {}
 
-  public OAuthSession(
-      OAuthSessionKey oAuthSessionKey,
-      User user,
-      Authentication authentication,
-      long maxAge,
-      LocalDateTime createdAt,
-      LocalDateTime expiredAt) {
+  public OAuthSession(OAuthSessionKey oAuthSessionKey, User user, Authentication authentication, long maxAge, LocalDateTime createdAt, LocalDateTime expiredAt) {
     this.oAuthSessionKey = oAuthSessionKey;
     this.user = user;
     this.authentication = authentication;
@@ -43,14 +35,7 @@ public class OAuthSession implements Serializable {
     this.expiredAt = expiredAt;
   }
 
-  public OAuthSession(
-      OAuthSessionKey oAuthSessionKey,
-      User user,
-      Authentication authentication,
-      long maxAge,
-      LocalDateTime createdAt,
-      LocalDateTime expiredAt,
-      HashMap<String, Object> attributes) {
+  public OAuthSession(OAuthSessionKey oAuthSessionKey, User user, Authentication authentication, long maxAge, LocalDateTime createdAt, LocalDateTime expiredAt, HashMap<String, Object> attributes) {
     this.oAuthSessionKey = oAuthSessionKey;
     this.user = user;
     this.authentication = authentication;
@@ -129,8 +114,7 @@ public class OAuthSession implements Serializable {
 
   public OAuthSession addAttribute(HashMap<String, Object> attributes) {
     this.attributes.putAll(attributes);
-    return new OAuthSession(
-        oAuthSessionKey, user, authentication, maxAge, createdAt, expiredAt, attributes);
+    return new OAuthSession(oAuthSessionKey, user, authentication, maxAge, createdAt, expiredAt, attributes);
   }
 
   public boolean exists() {

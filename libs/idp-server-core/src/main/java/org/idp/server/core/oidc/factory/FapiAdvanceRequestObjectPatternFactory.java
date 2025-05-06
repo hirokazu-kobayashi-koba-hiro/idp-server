@@ -23,16 +23,9 @@ import org.idp.server.core.oidc.request.RequestObjectParameters;
 public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequestFactory {
 
   @Override
-  public AuthorizationRequest create(
-      AuthorizationProfile profile,
-      OAuthRequestParameters parameters,
-      JoseContext joseContext,
-      Set<String> filteredScopes,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public AuthorizationRequest create(AuthorizationProfile profile, OAuthRequestParameters parameters, JoseContext joseContext, Set<String> filteredScopes, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     JsonWebTokenClaims jsonWebTokenClaims = joseContext.claims();
-    RequestObjectParameters requestObjectParameters =
-        new RequestObjectParameters(jsonWebTokenClaims.payload());
+    RequestObjectParameters requestObjectParameters = new RequestObjectParameters(jsonWebTokenClaims.payload());
     Scopes scopes = new Scopes(filteredScopes);
     ResponseType responseType = requestObjectParameters.responseType();
     RequestedClientId requestedClientId = requestObjectParameters.clientId();
@@ -52,8 +45,7 @@ public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequ
     RequestUri requestUri = parameters.requestUri();
     CodeChallenge codeChallenge = requestObjectParameters.codeChallenge();
     CodeChallengeMethod codeChallengeMethod = requestObjectParameters.codeChallengeMethod();
-    AuthorizationDetailsEntity authorizationDetailsEntity =
-        requestObjectParameters.authorizationDetailsEntity();
+    AuthorizationDetailsEntity authorizationDetailsEntity = requestObjectParameters.authorizationDetailsEntity();
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());

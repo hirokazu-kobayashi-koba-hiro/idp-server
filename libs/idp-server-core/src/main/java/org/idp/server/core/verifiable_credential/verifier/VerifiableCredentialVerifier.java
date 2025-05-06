@@ -16,11 +16,7 @@ public class VerifiableCredentialVerifier implements VerifiableCredentialRequest
   CredentialRequestParameters parameters;
   ServerConfiguration serverConfiguration;
 
-  public VerifiableCredentialVerifier(
-      OAuthToken oAuthToken,
-      ClientCert clientCert,
-      CredentialRequestParameters parameters,
-      ServerConfiguration serverConfiguration) {
+  public VerifiableCredentialVerifier(OAuthToken oAuthToken, ClientCert clientCert, CredentialRequestParameters parameters, ServerConfiguration serverConfiguration) {
     this.oAuthToken = oAuthToken;
     this.clientCert = clientCert;
     this.parameters = parameters;
@@ -29,19 +25,16 @@ public class VerifiableCredentialVerifier implements VerifiableCredentialRequest
 
   public void verify() {
     throwExceptionIfUnSupportedVerifiableCredential();
-    VerifiableCredentialOAuthTokenVerifier oAuthTokenVerifier =
-        new VerifiableCredentialOAuthTokenVerifier(oAuthToken, clientCert, serverConfiguration);
+    VerifiableCredentialOAuthTokenVerifier oAuthTokenVerifier = new VerifiableCredentialOAuthTokenVerifier(oAuthToken, clientCert, serverConfiguration);
     oAuthTokenVerifier.verify();
     VerifiableCredentialRequest request = transformAndVerify();
-    VerifiableCredentialRequestVerifier requestVerifier =
-        new VerifiableCredentialRequestVerifier(request, serverConfiguration);
+    VerifiableCredentialRequestVerifier requestVerifier = new VerifiableCredentialRequestVerifier(request, serverConfiguration);
     requestVerifier.verify();
   }
 
   void throwExceptionIfUnSupportedVerifiableCredential() {
     if (!serverConfiguration.hasCredentialIssuerMetadata()) {
-      throw new VerifiableCredentialBadRequestException(
-          "invalid_request", "unsupported verifiable credential");
+      throw new VerifiableCredentialBadRequestException("invalid_request", "unsupported verifiable credential");
     }
   }
 

@@ -17,8 +17,7 @@ public class ClientCredentialsGrantVerifier {
 
   void throwExceptionIfInvalidScope() {
     if (!scopes.exists()) {
-      throw new TokenBadRequestException(
-          "invalid_scope", "token request does not contains valid scope");
+      throw new TokenBadRequestException("invalid_scope", "token request does not contains valid scope");
     }
   }
 }

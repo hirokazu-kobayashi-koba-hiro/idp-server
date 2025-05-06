@@ -37,13 +37,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
 
   public OAuthAuthorizeContext() {}
 
-  public OAuthAuthorizeContext(
-      AuthorizationRequest authorizationRequest,
-      User user,
-      Authentication authentication,
-      CustomProperties customProperties,
-      ServerConfiguration serverConfiguration,
-      ClientConfiguration clientConfiguration) {
+  public OAuthAuthorizeContext(AuthorizationRequest authorizationRequest, User user, Authentication authentication, CustomProperties customProperties, ServerConfiguration serverConfiguration, ClientConfiguration clientConfiguration) {
     this.authorizationRequest = authorizationRequest;
     this.user = user;
     this.authentication = authentication;
@@ -84,30 +78,12 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     RequestedClaimsPayload requestedClaimsPayload = authorizationRequest.requestedClaimsPayload();
     boolean idTokenStrictMode = serverConfiguration().isIdTokenStrictMode();
 
-    GrantIdTokenClaims grantIdTokenClaims =
-        GrantIdTokenClaims.create(
-            scopes,
-            responseType,
-            supportedClaims,
-            requestedClaimsPayload.idToken(),
-            idTokenStrictMode);
-    GrantUserinfoClaims grantUserinfoClaims =
-        GrantUserinfoClaims.create(scopes, supportedClaims, requestedClaimsPayload.userinfo());
+    GrantIdTokenClaims grantIdTokenClaims = GrantIdTokenClaims.create(scopes, responseType, supportedClaims, requestedClaimsPayload.idToken(), idTokenStrictMode);
+    GrantUserinfoClaims grantUserinfoClaims = GrantUserinfoClaims.create(scopes, supportedClaims, requestedClaimsPayload.userinfo());
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
     ConsentClaims consentClaims = createConsentClaims();
 
-    return new AuthorizationGrant(
-        tenantIdentifier,
-        user,
-        authentication,
-        requestedClientId,
-        client,
-        scopes,
-        grantIdTokenClaims,
-        grantUserinfoClaims,
-        customProperties,
-        authorizationDetails,
-        consentClaims);
+    return new AuthorizationGrant(tenantIdentifier, user, authentication, requestedClientId, client, scopes, grantIdTokenClaims, grantUserinfoClaims, customProperties, authorizationDetails, consentClaims);
   }
 
   private ConsentClaims createConsentClaims() {
@@ -115,13 +91,11 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     LocalDateTime now = SystemDateTime.now();
 
     if (clientConfiguration.hasTosUri()) {
-      contents.put(
-          "terms", List.of(new ConsentClaim("tos_uri", clientConfiguration.tosUri(), now)));
+      contents.put("terms", List.of(new ConsentClaim("tos_uri", clientConfiguration.tosUri(), now)));
     }
 
     if (clientConfiguration.hasPolicyUri()) {
-      contents.put(
-          "privacy", List.of(new ConsentClaim("policy_uri", clientConfiguration.policyUri(), now)));
+      contents.put("privacy", List.of(new ConsentClaim("policy_uri", clientConfiguration.policyUri(), now)));
     }
 
     return new ConsentClaims(contents);

@@ -4,8 +4,7 @@ import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.authentication.repository.AuthenticationTransactionCommandRepository;
 
-public class AuthenticationTransactionCommandDataSourceProvider
-    implements ApplicationComponentProvider<AuthenticationTransactionCommandRepository> {
+public class AuthenticationTransactionCommandDataSourceProvider implements ApplicationComponentProvider<AuthenticationTransactionCommandRepository> {
 
   @Override
   public Class<AuthenticationTransactionCommandRepository> type() {
@@ -13,8 +12,7 @@ public class AuthenticationTransactionCommandDataSourceProvider
   }
 
   @Override
-  public AuthenticationTransactionCommandRepository provide(
-      ApplicationComponentDependencyContainer container) {
+  public AuthenticationTransactionCommandRepository provide(ApplicationComponentDependencyContainer container) {
     return new AuthenticationTransactionCommandDataSource();
   }
 }

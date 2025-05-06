@@ -3,14 +3,7 @@ package org.idp.server.basic.type.oauth;
 import java.util.Objects;
 
 public enum GrantType {
-  authorization_code("authorization_code"),
-  implicit("implicit"),
-  password("password"),
-  client_credentials("client_credentials"),
-  refresh_token("refresh_token"),
-  ciba("urn:openid:params:grant-type:ciba"),
-  unknown(""),
-  undefined("");
+  authorization_code("authorization_code"), implicit("implicit"), password("password"), client_credentials("client_credentials"), refresh_token("refresh_token"), ciba("urn:openid:params:grant-type:ciba"), unknown(""), undefined("");
 
   String value;
 

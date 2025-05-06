@@ -1,8 +1,7 @@
 package org.idp.server.core.identity.event;
 
 public enum UserLifecycleEventResultStatus {
-  SUCCESS,
-  FAILURE;
+  SUCCESS, FAILURE;
 
   public boolean isSuccess() {
     return this == SUCCESS;

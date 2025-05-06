@@ -16,8 +16,7 @@ public class SmsAuthenticationInteractorFactory implements AuthenticationInterac
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
     SmsAuthenticationExecutors executors = container.resolve(SmsAuthenticationExecutors.class);
-    AuthenticationConfigurationQueryRepository configurationQueryRepository =
-        container.resolve(AuthenticationConfigurationQueryRepository.class);
+    AuthenticationConfigurationQueryRepository configurationQueryRepository = container.resolve(AuthenticationConfigurationQueryRepository.class);
     return new SmsAuthenticationInteractor(executors, configurationQueryRepository);
   }
 }

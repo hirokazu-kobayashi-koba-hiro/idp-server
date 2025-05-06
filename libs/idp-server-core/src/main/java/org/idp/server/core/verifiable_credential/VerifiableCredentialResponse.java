@@ -13,12 +13,7 @@ public class VerifiableCredentialResponse {
 
   public VerifiableCredentialResponse() {}
 
-  VerifiableCredentialResponse(
-      Format format,
-      VerifiableCredential credentialJwt,
-      CNonce cNonce,
-      CNonceExpiresIn cNonceExpiresIn,
-      String contents) {
+  VerifiableCredentialResponse(Format format, VerifiableCredential credentialJwt, CNonce cNonce, CNonceExpiresIn cNonceExpiresIn, String contents) {
     this.format = format;
     this.credentialJwt = credentialJwt;
     this.cNonce = cNonce;

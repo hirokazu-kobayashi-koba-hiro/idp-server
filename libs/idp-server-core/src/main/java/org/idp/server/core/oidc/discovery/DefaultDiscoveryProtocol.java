@@ -28,8 +28,7 @@ public class DefaultDiscoveryProtocol implements DiscoveryProtocol {
     try {
       return discoveryHandler.getConfiguration(tenant);
     } catch (Exception exception) {
-      return new ServerConfigurationRequestResponse(
-          ServerConfigurationRequestStatus.SERVER_ERROR, Map.of());
+      return new ServerConfigurationRequestResponse(ServerConfigurationRequestStatus.SERVER_ERROR, Map.of());
     }
   }
 

@@ -10,11 +10,8 @@ public class OAuthAuthorizationResolvers {
 
   public OAuthAuthorizationResolvers() {
     this.resolvers = new HashMap<>();
-    resolvers.put(
-        OAuthAuthorizationType.CLIENT_CREDENTIALS, new ClientCredentialsAuthorizationResolver());
-    resolvers.put(
-        OAuthAuthorizationType.RESOURCE_OWNER_PASSWORD_CREDENTIALS,
-        new ResourceOwnerPasswordCredentialsAuthorizationResolver());
+    resolvers.put(OAuthAuthorizationType.CLIENT_CREDENTIALS, new ClientCredentialsAuthorizationResolver());
+    resolvers.put(OAuthAuthorizationType.RESOURCE_OWNER_PASSWORD_CREDENTIALS, new ResourceOwnerPasswordCredentialsAuthorizationResolver());
   }
 
   public OAuthAuthorizationResolver get(OAuthAuthorizationType type) {
