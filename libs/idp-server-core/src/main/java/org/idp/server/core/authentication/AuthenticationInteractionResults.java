@@ -47,4 +47,13 @@ public class AuthenticationInteractionResults implements JsonReadable {
     }
     return false;
   }
+
+  public boolean containsDenyInteraction() {
+    for (Map.Entry<String, AuthenticationInteractionResult> result : values.entrySet()) {
+      if (result.getKey().contains("deny") && result.getValue().successCount() > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

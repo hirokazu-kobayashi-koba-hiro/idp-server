@@ -235,7 +235,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
             tenant,
             authorizationRequestIdentifier.value(),
             user,
-            authenticationTransaction.isComplete()
+            authenticationTransaction.isSuccess()
                 ? session.authentication()
                 : new Authentication());
 

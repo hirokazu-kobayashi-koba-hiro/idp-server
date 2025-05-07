@@ -29,8 +29,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
             user_id,
             user_payload,
             authentication_device_id,
-            available_authentication_types,
-            required_any_of_authentication_types,
+            mfa_policy,
             interactions,
             created_at,
             expired_at
@@ -44,7 +43,6 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
             ?,
             ?::jsonb,
             ?,
-            ?::jsonb,
             ?::jsonb,
             ?::jsonb,
             ?,
@@ -67,11 +65,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
     } else {
       params.add(null);
     }
-    params.add(
-        jsonConverter.write(authenticationTransaction.request().availableAuthenticationTypes()));
-    params.add(
-        jsonConverter.write(
-            authenticationTransaction.request().requiredAnyOfAuthenticationTypes()));
+    params.add(jsonConverter.write(authenticationTransaction.mfaPolicy().toMap()));
     if (authenticationTransaction.hasInteractions()) {
       params.add(jsonConverter.write(authenticationTransaction.interactionResultsAsMap()));
     } else {

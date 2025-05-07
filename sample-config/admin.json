@@ -202,7 +202,63 @@
       ],
       "fapi_advance_scopes": [
         "write"
-      ]
+      ],
+      "mfa_policy": {
+        "id": "default_mfa_policy",
+        "conditions": {
+          "acr_values": [
+            "urn:mfa:required"
+          ],
+          "scopes": [
+            "read",
+            "write"
+          ]
+        },
+        "available_methods": [
+          "password",
+          "email",
+          "sms",
+          "webauthn",
+          "fido-uaf",
+          "legacy"
+        ],
+        "success_conditions": {
+          "all_of": [
+            {
+              "type": "password-authentication",
+              "success_count": 1
+            },
+            {
+              "type": "fido-uaf-authentication",
+              "success_count": 1
+            }
+          ]
+        },
+        "failure_conditions": {
+          "any_of": [
+            {
+              "type": "password",
+              "failure_count": 5
+            },
+            {
+              "type": "fido-uaf-authentication",
+              "failure_count": 5
+            }
+          ]
+        },
+        "lock_conditions": {
+          "any_of": [
+            {
+              "type": "password",
+              "failure_count": 5
+            },
+            {
+              "type": "fido-uaf-authentication",
+              "failure_count": 5
+            }
+          ]
+        }
+      }
     },
     "credential_issuer_metadata": {
       "credential_issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
@@ -399,20 +455,36 @@
       "name": "Administrator",
       "description": "administrator has all permissions",
       "permissions": [
-        "tenant:create", "tenant:read", "tenant:update", "tenant:delete",
-        "client:create", "client:read", "client:update", "client:delete",
-        "user:create", "user:read", "user:update", "user:delete",
-        "payment:create", "payment:read", "payment:update", "payment:delete"
+        "tenant:create",
+        "tenant:read",
+        "tenant:update",
+        "tenant:delete",
+        "client:create",
+        "client:read",
+        "client:update",
+        "client:delete",
+        "user:create",
+        "user:read",
+        "user:update",
+        "user:delete",
+        "payment:create",
+        "payment:read",
+        "payment:update",
+        "payment:delete"
       ]
     },
     {
       "name": "Editor",
       "description": "editor has permissions for edition",
       "permissions": [
-        "tenant:read", "tenant:update",
-        "client:read", "client:update",
-        "user:read", "user:update",
-        "payment:read", "payment:update"
+        "tenant:read",
+        "tenant:update",
+        "client:read",
+        "client:update",
+        "user:read",
+        "user:update",
+        "payment:read",
+        "payment:update"
       ]
     },
     {

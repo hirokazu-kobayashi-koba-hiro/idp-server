@@ -9,6 +9,7 @@ import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.mfa.MfaPolicy;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.response.AuthorizationErrorResponse;
@@ -130,5 +131,9 @@ public class OAuthRequestResponse {
 
   public boolean isOK() {
     return status.isSuccess();
+  }
+
+  public MfaPolicy mfaPolicy() {
+    return authorizationServerConfiguration.mfaPolicy();
   }
 }

@@ -504,19 +504,17 @@ CREATE INDEX idx_authentication_configuration_type ON authentication_configurati
 
 CREATE TABLE authentication_transaction
 (
-    authorization_id                     CHAR(36)     NOT NULL,
-    tenant_id                            CHAR(36)     NOT NULL,
-    authorization_flow                   VARCHAR(255) NOT NULL,
-    client_id                            VARCHAR(255) NOT NULL,
-    user_id                              CHAR(36),
-    user_payload                         JSONB,
-    authentication_device_id             CHAR(36),
-    available_authentication_types       JSONB        NOT NULL,
-    required_any_of_authentication_types JSONB,
-    last_interaction_type                VARCHAR(255),
-    interactions                         JSONB,
-    created_at                           TEXT         NOT NULL,
-    expired_at                           TEXT         NOT NULL,
+    authorization_id         CHAR(36)     NOT NULL,
+    tenant_id                CHAR(36)     NOT NULL,
+    authorization_flow       VARCHAR(255) NOT NULL,
+    client_id                VARCHAR(255) NOT NULL,
+    user_id                  CHAR(36),
+    user_payload             JSONB,
+    authentication_device_id CHAR(36),
+    mfa_policy               JSONB,
+    interactions             JSONB,
+    created_at               TEXT         NOT NULL,
+    expired_at               TEXT         NOT NULL,
     PRIMARY KEY (authorization_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
@@ -606,6 +604,6 @@ CREATE TABLE idp_user_lifecycle_event_result
     executor_name  VARCHAR(255) NOT NULL,
     status         VARCHAR(16)  NOT NULL,
     payload        JSONB,
-    created_at    TIMESTAMP DEFAULT now(),
+    created_at     TIMESTAMP DEFAULT now(),
     PRIMARY KEY (id)
 );

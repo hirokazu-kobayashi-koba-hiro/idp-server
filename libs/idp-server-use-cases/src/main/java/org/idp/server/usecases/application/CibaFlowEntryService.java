@@ -16,6 +16,9 @@ import org.idp.server.core.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.ciba.user.UserHintResolver;
 import org.idp.server.core.ciba.user.UserHintResolvers;
 import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.event.UserLifecycleEvent;
+import org.idp.server.core.identity.event.UserLifecycleEventPublisher;
+import org.idp.server.core.identity.event.UserLifecycleType;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
@@ -34,6 +37,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
   AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
   CibaFlowEventPublisher eventPublisher;
+  UserLifecycleEventPublisher userLifecycleEventPublisher;
 
   public CibaFlowEntryService(
       CibaProtocols cibaProtocols,
@@ -42,7 +46,8 @@ public class CibaFlowEntryService implements CibaFlowApi {
       TenantRepository tenantRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
-      CibaFlowEventPublisher eventPublisher) {
+      CibaFlowEventPublisher eventPublisher,
+      UserLifecycleEventPublisher userLifecycleEventPublisher) {
     this.cibaProtocols = cibaProtocols;
     this.userHintResolvers = new UserHintResolvers();
     this.authenticationInteractors = authenticationInteractors;
@@ -51,6 +56,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
     this.eventPublisher = eventPublisher;
+    this.userLifecycleEventPublisher = userLifecycleEventPublisher;
   }
 
   public CibaRequestResponse request(
@@ -176,7 +182,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
         result.eventType(),
         requestAttributes);
 
-    if (authenticationTransaction.isComplete()) {
+    if (authenticationTransaction.isSuccess()) {
       CibaAuthorizeRequest cibaAuthorizeRequest =
           new CibaAuthorizeRequest(tenant, backchannelAuthenticationRequestIdentifier);
       cibaProtocol.authorize(cibaAuthorizeRequest);
@@ -188,7 +194,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
           requestAttributes);
     }
 
-    if (authenticationTransaction.isDeny()) {
+    if (authenticationTransaction.isFailure()) {
       CibaDenyRequest cibaDenyRequest =
           new CibaDenyRequest(tenant, backchannelAuthenticationRequestIdentifier);
       cibaProtocol.deny(cibaDenyRequest);
@@ -198,6 +204,12 @@ public class CibaFlowEntryService implements CibaFlowApi {
           result.user(),
           DefaultSecurityEventType.backchannel_authentication_deny,
           requestAttributes);
+    }
+
+    if (authenticationTransaction.isLocked()) {
+      UserLifecycleEvent userLifecycleEvent =
+          new UserLifecycleEvent(tenant, result.user(), UserLifecycleType.LOCK);
+      userLifecycleEventPublisher.publish(userLifecycleEvent);
     }
 
     return result;
