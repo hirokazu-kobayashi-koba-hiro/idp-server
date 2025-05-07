@@ -13,9 +13,9 @@ public class MfaConditionEvaluator {
     }
 
     if (config.hasAllOf()) {
-      for (MfaCondition cond : config.allOf()) {
-        if (!results.contains(cond.type())) return false;
-        if (results.get(cond.type()).successCount() < cond.successCount()) return false;
+      for (MfaCondition condition : config.allOf()) {
+        if (!results.contains(condition.type())) return false;
+        if (results.get(condition.type()).successCount() < condition.successCount()) return false;
       }
       return true;
     }
@@ -38,9 +38,9 @@ public class MfaConditionEvaluator {
     }
 
     if (config.hasAllOf()) {
-      for (MfaCondition cond : config.allOf()) {
-        if (!results.contains(cond.type())) return false;
-        if (results.get(cond.type()).failureCount() < cond.failureCount()) return false;
+      for (MfaCondition condition : config.allOf()) {
+        if (!results.contains(condition.type())) return false;
+        if (results.get(condition.type()).failureCount() < condition.failureCount()) return false;
       }
       return true;
     }
