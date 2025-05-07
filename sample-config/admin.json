@@ -205,59 +205,6 @@
       ],
       "authentication_policies": [
         {
-          "id": "transaction_authentication_policy",
-          "priority": 100,
-          "conditions": {
-            "acr_values": [
-              "urn:mfa:required"
-            ],
-            "scopes": [
-              "read",
-              "write"
-            ]
-          },
-          "available_methods": [
-            "password",
-            "email",
-            "sms",
-            "webauthn",
-            "fido-uaf",
-            "legacy"
-          ],
-          "success_conditions": {
-            "all_of": [
-              {
-                "type": "fido-uaf-authentication",
-                "success_count": 1
-              }
-            ]
-          },
-          "failure_conditions": {
-            "any_of": [
-              {
-                "type": "password",
-                "failure_count": 5
-              },
-              {
-                "type": "fido-uaf-authentication",
-                "failure_count": 5
-              }
-            ]
-          },
-          "lock_conditions": {
-            "any_of": [
-              {
-                "type": "password",
-                "failure_count": 5
-              },
-              {
-                "type": "fido-uaf-authentication",
-                "failure_count": 5
-              }
-            ]
-          }
-        },
-        {
           "id": "default_authentication_policy",
           "priority": 1,
           "conditions": {
