@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.Scopes;
+import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
@@ -14,6 +16,7 @@ public class AuthenticationRequest {
   TenantIdentifier tenantIdentifier;
   RequestedClientId requestedClientId;
   User user;
+  AuthenticationContext context;
   LocalDateTime createdAt;
   LocalDateTime expiredAt;
 
@@ -24,12 +27,14 @@ public class AuthenticationRequest {
       TenantIdentifier tenantIdentifier,
       RequestedClientId requestedClientId,
       User user,
+      AuthenticationContext context,
       LocalDateTime createdAt,
       LocalDateTime expiredAt) {
     this.authorizationFlow = authorizationFlow;
     this.tenantIdentifier = tenantIdentifier;
     this.requestedClientId = requestedClientId;
     this.user = user;
+    this.context = context;
     this.createdAt = createdAt;
     this.expiredAt = expiredAt;
   }
@@ -50,6 +55,10 @@ public class AuthenticationRequest {
     return user;
   }
 
+  public AuthenticationContext context() {
+    return context;
+  }
+
   public LocalDateTime createdAt() {
     return createdAt;
   }
@@ -68,6 +77,7 @@ public class AuthenticationRequest {
     map.put("tenant_id", tenantIdentifier.value());
     map.put("client_id", requestedClientId.value());
     map.put("user", user.toMap());
+    map.put("context", context.toMap());
     map.put("created_at", createdAt.toString());
     map.put("expired_at", expiredAt.toString());
     return map;
@@ -77,6 +87,20 @@ public class AuthenticationRequest {
       AuthenticationInteractionRequestResult interactionRequestResult) {
     User user = interactionRequestResult.user();
     return new AuthenticationRequest(
-        authorizationFlow, tenantIdentifier, requestedClientId, user, createdAt, expiredAt);
+        authorizationFlow,
+        tenantIdentifier,
+        requestedClientId,
+        user,
+        context,
+        createdAt,
+        expiredAt);
+  }
+
+  public AcrValues acrValues() {
+    return context.acrValues();
+  }
+
+  public Scopes scopes() {
+    return context.scopes();
   }
 }

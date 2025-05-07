@@ -5,23 +5,24 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonReadable;
 
-public class AuthenticationPolicyResultConditions implements JsonReadable {
+public class AuthenticationResultConditions implements JsonReadable {
 
-  List<AuthenticationPolicyCondition> anyOf;
-  List<AuthenticationPolicyCondition> allOf;
+  List<AuthenticationResultCondition> anyOf;
+  List<AuthenticationResultCondition> allOf;
 
-  public AuthenticationPolicyResultConditions() {}
+  public AuthenticationResultConditions() {}
 
-  public AuthenticationPolicyResultConditions(List<AuthenticationPolicyCondition> anyOf, List<AuthenticationPolicyCondition> allOf) {
+  public AuthenticationResultConditions(
+      List<AuthenticationResultCondition> anyOf, List<AuthenticationResultCondition> allOf) {
     this.anyOf = anyOf;
     this.allOf = allOf;
   }
 
-  public List<AuthenticationPolicyCondition> anyOf() {
+  public List<AuthenticationResultCondition> anyOf() {
     return anyOf;
   }
 
-  public List<AuthenticationPolicyCondition> allOf() {
+  public List<AuthenticationResultCondition> allOf() {
     return allOf;
   }
 

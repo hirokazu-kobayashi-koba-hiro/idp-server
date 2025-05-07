@@ -6,7 +6,7 @@ import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.ResponseType;
 import org.idp.server.basic.type.oauth.TokenIssuer;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.configuration.vc.VerifiableCredentialConfiguration;
 
 /** ServerConfiguration */
@@ -523,11 +523,7 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     return extension.oauthAuthorizationRequestExpiresIn();
   }
 
-  public List<String> availableAuthenticationMethods() {
-    return extension.availableAuthenticationMethods();
-  }
-
-  public AuthenticationPolicyPolicy authenticationPolicy() {
-    return extension.authenticationPolicy();
+  public List<AuthenticationPolicy> authenticationPolicies() {
+    return extension.authenticationPolicies();
   }
 }

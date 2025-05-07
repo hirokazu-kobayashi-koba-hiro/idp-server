@@ -1,37 +1,57 @@
 package org.idp.server.core.oidc.configuration.authentication;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.basic.type.AuthorizationFlow;
+import org.idp.server.basic.type.oauth.Scopes;
+import org.idp.server.basic.type.oidc.AcrValues;
 
 public class AuthenticationPolicyCondition implements JsonReadable {
-  String type;
-  int successCount;
-  int failureCount;
+  List<String> authorizationFlows = new ArrayList<>();
+  List<String> acrValues = new ArrayList<>();
+  List<String> scopes = new ArrayList<>();
 
   public AuthenticationPolicyCondition() {}
 
-  public AuthenticationPolicyCondition(String type, int successCount, int failureCount) {
-    this.type = type;
-    this.successCount = successCount;
-    this.failureCount = failureCount;
+  public AuthenticationPolicyCondition(
+      List<String> authorizationFlows, List<String> acrValues, List<String> scopes) {
+    this.authorizationFlows = authorizationFlows;
+    this.acrValues = acrValues;
+    this.scopes = scopes;
   }
 
-  public String type() {
-    return type;
+  public boolean anyMatch(AuthorizationFlow authorizationFlow, AcrValues acrValues, Scopes scopes) {
+    if (authorizationFlows.contains(authorizationFlow.name())) {
+      return true;
+    }
+
+    if (this.acrValues.stream().anyMatch(acrValues::contains)) {
+      return true;
+    }
+
+    return this.scopes.stream().anyMatch(scopes::contains);
   }
 
-  public int successCount() {
-    return successCount;
+  public List<String> authorizationFlows() {
+    return authorizationFlows;
   }
 
-  public int failureCount() {
-    return failureCount;
+  public List<String> acrValues() {
+    return acrValues;
   }
 
-  public boolean isSatisfiedSuccess(int successCount) {
-    return successCount >= this.successCount;
+  public List<String> scopes() {
+    return scopes;
   }
 
-  public boolean isSatisfiedFailure(int failureCount) {
-    return failureCount >= this.failureCount;
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("authorization_flows", authorizationFlows);
+    map.put("acr_values", acrValues);
+    map.put("scopes", scopes);
+    return map;
   }
 }
