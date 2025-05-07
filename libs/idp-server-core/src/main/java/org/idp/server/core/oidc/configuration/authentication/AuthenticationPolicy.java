@@ -10,6 +10,7 @@ import org.idp.server.basic.type.oidc.AcrValues;
 
 public class AuthenticationPolicy implements JsonReadable {
   String id;
+  int priority;
   AuthenticationPolicyCondition conditions;
   List<String> availableMethods;
   AuthenticationResultConditions successConditions;
@@ -24,6 +25,10 @@ public class AuthenticationPolicy implements JsonReadable {
 
   public AuthenticationPolicyIdentifier identifier() {
     return new AuthenticationPolicyIdentifier(id);
+  }
+
+  public int priority() {
+    return priority;
   }
 
   public AuthenticationPolicyCondition conditions() {

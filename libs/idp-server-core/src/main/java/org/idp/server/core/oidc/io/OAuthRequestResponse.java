@@ -1,5 +1,6 @@
 package org.idp.server.core.oidc.io;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.type.AuthorizationFlow;
@@ -133,7 +134,7 @@ public class OAuthRequestResponse {
                     AuthorizationFlow.OAUTH,
                     authorizationRequest.acrValues(),
                     authorizationRequest.scopes()))
-        .findFirst()
+        .max(Comparator.comparingInt(AuthenticationPolicy::priority))
         .orElse(new AuthenticationPolicy());
   }
 }

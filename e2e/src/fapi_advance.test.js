@@ -56,7 +56,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
       jwks: jwksResponse.data,
     });
 
-    console.log(decodedResponse)
+    console.log(decodedResponse);
 
     const tokenResponse = await requestToken({
       endpoint: serverConfig.tokenEndpoint,

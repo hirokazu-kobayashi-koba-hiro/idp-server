@@ -1,6 +1,7 @@
 package org.idp.server.core.ciba.handler.io;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.ContentType;
@@ -114,7 +115,7 @@ public class CibaIssueResponse {
         .filter(
             policy ->
                 policy.anyMatch(AuthorizationFlow.CIBA, request.acrValues(), request.scopes()))
-        .findFirst()
+        .max(Comparator.comparingInt(AuthenticationPolicy::priority))
         .orElse(new AuthenticationPolicy());
   }
 }
