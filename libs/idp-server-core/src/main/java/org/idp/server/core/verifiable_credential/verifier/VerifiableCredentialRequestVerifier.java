@@ -1,6 +1,6 @@
 package org.idp.server.core.verifiable_credential.verifier;
 
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.verifiable_credential.exception.VerifiableCredentialBadRequestException;
 import org.idp.server.core.verifiable_credential.request.VerifiableCredentialProof;
 import org.idp.server.core.verifiable_credential.request.VerifiableCredentialRequest;
@@ -10,12 +10,13 @@ public class VerifiableCredentialRequestVerifier
     implements VerifiableCredentialRequestTransformable {
 
   VerifiableCredentialRequest request;
-  ServerConfiguration serverConfiguration;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
 
   public VerifiableCredentialRequestVerifier(
-      VerifiableCredentialRequest request, ServerConfiguration serverConfiguration) {
+      VerifiableCredentialRequest request,
+      AuthorizationServerConfiguration authorizationServerConfiguration) {
     this.request = request;
-    this.serverConfiguration = serverConfiguration;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
   }
 
   public void verify() {
@@ -32,7 +33,7 @@ public class VerifiableCredentialRequestVerifier
   }
 
   void throwExceptionIfUnSupportedFormat() {
-    if (!serverConfiguration
+    if (!authorizationServerConfiguration
         .credentialIssuerMetadata()
         .isSupportedFormat(request.format().value())) {
       throw new VerifiableCredentialBadRequestException(

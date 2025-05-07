@@ -4,8 +4,8 @@ import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.control.plane.ServerManagementApi;
 import org.idp.server.core.multi_tenancy.organization.initial.TenantCreator;
 import org.idp.server.core.multi_tenancy.tenant.*;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
 import org.idp.server.core.oidc.configuration.handler.ServerConfigurationHandler;
 
 @Transaction
@@ -16,9 +16,10 @@ public class ServerManagementEntryService implements ServerManagementApi {
 
   public ServerManagementEntryService(
       TenantRepository tenantRepository,
-      ServerConfigurationRepository serverConfigurationRepository) {
+      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository) {
     this.tenantRepository = tenantRepository;
-    this.serverConfigurationHandler = new ServerConfigurationHandler(serverConfigurationRepository);
+    this.serverConfigurationHandler =
+        new ServerConfigurationHandler(authorizationServerConfigurationRepository);
   }
 
   // TODO
@@ -34,7 +35,7 @@ public class ServerManagementEntryService implements ServerManagementApi {
 
     String replacedBody = serverConfig.replaceAll("IDP_ISSUER", newTenant.tokenIssuerValue());
 
-    ServerConfiguration serverConfiguration =
+    AuthorizationServerConfiguration authorizationServerConfiguration =
         serverConfigurationHandler.handleRegistration(newTenant, replacedBody);
 
     return serverConfig;

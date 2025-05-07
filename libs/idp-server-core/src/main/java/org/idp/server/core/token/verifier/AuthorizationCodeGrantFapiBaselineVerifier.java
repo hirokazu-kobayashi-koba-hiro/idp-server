@@ -5,7 +5,7 @@ import org.idp.server.basic.type.oauth.ClientSecret;
 import org.idp.server.core.oidc.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.oidc.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.token.TokenRequestContext;

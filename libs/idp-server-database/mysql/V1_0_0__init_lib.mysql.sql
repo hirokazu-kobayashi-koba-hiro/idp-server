@@ -34,7 +34,7 @@ CREATE TABLE organization_tenants
     FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE server_configuration
+CREATE TABLE authorization_server_configuration
 (
     tenant_id    CHAR(36)                           NOT NULL,
     token_issuer TEXT                               NOT NULL,

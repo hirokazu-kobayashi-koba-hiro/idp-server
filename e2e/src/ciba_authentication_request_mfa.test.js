@@ -195,6 +195,19 @@ describe("ciba - mfa", () => {
     });
     expect(authenticationResponse.status).toBe(200);
 
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransactionResponse.data.authorization_flow,
+      id: authenticationTransactionResponse.data.id,
+      interactionType: "password-authentication",
+      body: {
+        username: serverConfig.ciba.username,
+        password: serverConfig.ciba.userCode,
+      }
+    });
+    console.log(authenticationResponse.data);
+    console.log(authenticationResponse.status);
+
 
     const tokenResponse = await requestToken({
       endpoint: serverConfig.tokenEndpoint,

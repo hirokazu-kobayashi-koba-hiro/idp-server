@@ -4,27 +4,28 @@ import java.util.Date;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.exception.RequestObjectInvalidException;
 
 public interface RequestObjectVerifyable {
 
   default void verify(
       JoseContext joseContext,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration)
       throws RequestObjectInvalidException {
-    throwExceptionIfSymmetricKey(joseContext, serverConfiguration, clientConfiguration);
-    throwExceptionIfInvalidIss(joseContext, serverConfiguration, clientConfiguration);
-    throwExceptionIfInvalidAud(joseContext, serverConfiguration, clientConfiguration);
-    throwExceptionIfInvalidJti(joseContext, serverConfiguration, clientConfiguration);
-    throwExceptionIfInvalidExp(joseContext, serverConfiguration, clientConfiguration);
+    throwExceptionIfSymmetricKey(
+        joseContext, authorizationServerConfiguration, clientConfiguration);
+    throwExceptionIfInvalidIss(joseContext, authorizationServerConfiguration, clientConfiguration);
+    throwExceptionIfInvalidAud(joseContext, authorizationServerConfiguration, clientConfiguration);
+    throwExceptionIfInvalidJti(joseContext, authorizationServerConfiguration, clientConfiguration);
+    throwExceptionIfInvalidExp(joseContext, authorizationServerConfiguration, clientConfiguration);
   }
 
   default void throwExceptionIfSymmetricKey(
       JoseContext joseContext,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration)
       throws RequestObjectInvalidException {
     if (joseContext.isSymmetricKey()) {
@@ -36,7 +37,7 @@ public interface RequestObjectVerifyable {
 
   default void throwExceptionIfInvalidIss(
       JoseContext joseContext,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration)
       throws RequestObjectInvalidException {
     JsonWebTokenClaims claims = joseContext.claims();
@@ -54,7 +55,7 @@ public interface RequestObjectVerifyable {
 
   default void throwExceptionIfInvalidAud(
       JoseContext joseContext,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration)
       throws RequestObjectInvalidException {
     JsonWebTokenClaims claims = joseContext.claims();
@@ -63,7 +64,7 @@ public interface RequestObjectVerifyable {
           "invalid_request_object",
           "request object is invalid, must contains aud claim in jwt payload");
     }
-    if (claims.getAud().contains(serverConfiguration.tokenIssuer().value())) {
+    if (claims.getAud().contains(authorizationServerConfiguration.tokenIssuer().value())) {
       return;
     }
     throw new RequestObjectInvalidException(
@@ -72,7 +73,7 @@ public interface RequestObjectVerifyable {
 
   default void throwExceptionIfInvalidJti(
       JoseContext joseContext,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration)
       throws RequestObjectInvalidException {
     JsonWebTokenClaims claims = joseContext.claims();
@@ -85,7 +86,7 @@ public interface RequestObjectVerifyable {
 
   default void throwExceptionIfInvalidExp(
       JoseContext joseContext,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration)
       throws RequestObjectInvalidException {
     JsonWebTokenClaims claims = joseContext.claims();

@@ -9,8 +9,8 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.oidc.ClaimsValue;
 import org.idp.server.basic.type.rar.AuthorizationDetailsEntity;
 import org.idp.server.core.oidc.AuthorizationProfile;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.identity.RequestedClaimsPayload;
 import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
@@ -25,7 +25,7 @@ public interface AuthorizationRequestFactory {
       OAuthRequestParameters parameters,
       JoseContext joseContext,
       Set<String> filteredScopes,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration);
 
   default AuthorizationRequestIdentifier createIdentifier() {

@@ -1,67 +1,59 @@
 package org.idp.server.core.authentication;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import org.idp.server.basic.exception.NotFoundException;
+import org.idp.server.basic.json.JsonReadable;
 
-public class AuthenticationInteractionResults implements Iterable<AuthenticationInteractionResult> {
+public class AuthenticationInteractionResults implements JsonReadable {
 
-  Set<AuthenticationInteractionResult> values;
+  Map<String, AuthenticationInteractionResult> values;
 
   public AuthenticationInteractionResults() {
-    this.values = new HashSet<>();
+    this.values = new HashMap<>();
   }
 
-  public AuthenticationInteractionResults(Set<AuthenticationInteractionResult> values) {
+  public AuthenticationInteractionResults(Map<String, AuthenticationInteractionResult> values) {
     this.values = values;
   }
 
-  @Override
-  public Iterator<AuthenticationInteractionResult> iterator() {
-    return values.iterator();
-  }
-
-  public AuthenticationInteractionResults filter(String authenticationType) {
-    Set<AuthenticationInteractionResult> filtered =
-        values.stream()
-            .filter(result -> result.type().equals(authenticationType))
-            .collect(Collectors.toSet());
-    return new AuthenticationInteractionResults(filtered);
-  }
-
   public boolean containsSuccessful(String type) {
-    return values.stream()
-        .filter(result -> result.type().equals(type))
-        .anyMatch(result -> result.successCount() > 0);
-  }
-
-  public boolean allSuccess() {
-    return values.stream().allMatch(result -> result.successCount() > 0);
-  }
-
-  public boolean containsAnySuccess() {
-    return values.stream().anyMatch(result -> result.successCount() > 0);
+    if (!values.containsKey(type)) {
+      return false;
+    }
+    AuthenticationInteractionResult result = values.get(type);
+    return result.successCount() > 0;
   }
 
   public boolean contains(String type) {
-    return values.stream().anyMatch(result -> result.type().equals(type));
+    return values.containsKey(type);
   }
 
   public boolean exists() {
     return values != null && !values.isEmpty();
   }
 
-  public Set<AuthenticationInteractionResult> toSet() {
+  public Map<String, AuthenticationInteractionResult> toMap() {
     return values;
   }
 
   public AuthenticationInteractionResult get(String interactionType) {
-    return values.stream()
-        .filter(result -> result.type().equals(interactionType))
-        .findFirst()
-        .orElseThrow(
-            () ->
-                new NotFoundException(
-                    String.format("No interaction result found (%s)", interactionType)));
+    return values.get(interactionType);
+  }
+
+  public boolean containsAnySuccess() {
+    for (AuthenticationInteractionResult result : values.values()) {
+      if (result.successCount() > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean containsDenyInteraction() {
+    for (Map.Entry<String, AuthenticationInteractionResult> result : values.entrySet()) {
+      if (result.getKey().contains("deny") && result.getValue().successCount() > 0) {
+        return true;
+      }
+    }
+    return false;
   }
 }

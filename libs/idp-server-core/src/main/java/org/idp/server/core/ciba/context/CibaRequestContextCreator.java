@@ -10,8 +10,8 @@ import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.ciba.CibaRequestContext;
 import org.idp.server.core.ciba.CibaRequestParameters;
 import org.idp.server.core.ciba.CibaRequestPattern;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 public interface CibaRequestContextCreator {
 
@@ -19,15 +19,17 @@ public interface CibaRequestContextCreator {
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
       CibaRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration);
 
-  default CibaProfile analyze(Set<String> filteredScopes, ServerConfiguration serverConfiguration) {
+  default CibaProfile analyze(
+      Set<String> filteredScopes,
+      AuthorizationServerConfiguration authorizationServerConfiguration) {
 
-    if (serverConfiguration.hasFapiAdvanceScope(filteredScopes)) {
+    if (authorizationServerConfiguration.hasFapiAdvanceScope(filteredScopes)) {
       return CibaProfile.FAPI_CIBA;
     }
-    if (serverConfiguration.hasFapiBaselineScope(filteredScopes)) {
+    if (authorizationServerConfiguration.hasFapiBaselineScope(filteredScopes)) {
       return CibaProfile.FAPI_CIBA;
     }
     return CibaProfile.CIBA;

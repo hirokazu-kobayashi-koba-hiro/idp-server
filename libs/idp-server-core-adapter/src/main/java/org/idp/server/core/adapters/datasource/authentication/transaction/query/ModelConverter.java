@@ -9,6 +9,7 @@ import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
 
 public class ModelConverter {
 
@@ -20,26 +21,15 @@ public class ModelConverter {
     TenantIdentifier tenantIdentifier = new TenantIdentifier(map.get("tenant_id"));
     RequestedClientId requestedClientId = new RequestedClientId(map.get("client_id"));
     User user = toUser(map);
-    List<String> availableAuthenticationTypes =
-        jsonConverter.read(map.get("available_authentication_types"), List.class);
-    List<String> requiredAnyOfAuthenticationTypes = toRequiredAnyOfAuthenticationTypes(map);
+    AuthenticationPolicyPolicy authenticationPolicyPolicy = jsonConverter.read(map.get("authentication_policy"), AuthenticationPolicyPolicy.class);
     LocalDateTime createdAt = LocalDateTime.parse(map.get("created_at"));
     LocalDateTime expiredAt = LocalDateTime.parse(map.get("expired_at"));
     AuthenticationRequest request =
         new AuthenticationRequest(
-            authorizationFlow,
-            tenantIdentifier,
-            requestedClientId,
-            user,
-            availableAuthenticationTypes,
-            requiredAnyOfAuthenticationTypes,
-            createdAt,
-            expiredAt);
-    AuthenticationInteractionType lastInteractionType =
-        new AuthenticationInteractionType(map.get("last_interaction_type"));
+            authorizationFlow, tenantIdentifier, requestedClientId, user, createdAt, expiredAt);
+
     AuthenticationInteractionResults interactionResults = toAuthenticationInteractionResults(map);
-    return new AuthenticationTransaction(
-        identifier, request, lastInteractionType, interactionResults);
+    return new AuthenticationTransaction(identifier, request, authenticationPolicyPolicy, interactionResults);
   }
 
   static User toUser(Map<String, String> map) {
@@ -61,16 +51,20 @@ public class ModelConverter {
       Map<String, String> map) {
     if (map.containsKey("interactions") && map.get("interactions") != null) {
 
-      JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(map.get("interactions"));
-      Set<AuthenticationInteractionResult> results = new HashSet<>();
-      for (JsonNodeWrapper wrapper : jsonNodeWrapper.elements()) {
-        String type = wrapper.getValueOrEmptyAsString("type");
-        int callCount = wrapper.getValueAsInt("call_count");
-        int successCount = wrapper.getValueAsInt("success_count");
-        int failureCount = wrapper.getValueAsInt("failure_count");
-        results.add(
-            new AuthenticationInteractionResult(type, callCount, successCount, failureCount));
+      HashMap<String, AuthenticationInteractionResult> results = new HashMap<>();
+      JsonNodeWrapper interactions = JsonNodeWrapper.fromString(map.get("interactions"));
+
+      for (Iterator<String> it = interactions.fieldNames(); it.hasNext(); ) {
+        String interaction = it.next();
+        JsonNodeWrapper node = interactions.getValueAsJsonNode(interaction);
+        int callCount = node.getValueAsInt("call_count");
+        int successCount = node.getValueAsInt("success_count");
+        int failureCount = node.getValueAsInt("failure_count");
+        AuthenticationInteractionResult authenticationInteractionResult =
+            new AuthenticationInteractionResult(callCount, successCount, failureCount);
+        results.put(interaction, authenticationInteractionResult);
       }
+
       return new AuthenticationInteractionResults(results);
     }
 

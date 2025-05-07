@@ -10,6 +10,7 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifi
 import org.idp.server.core.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.core.identity.User;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
 
 // TODO to be more readable name
 public class CibaIssueResponse {
@@ -57,6 +58,10 @@ public class CibaIssueResponse {
 
   public List<String> availableAuthenticationTypes() {
     return cibaRequestContext.availableAuthenticationMethods();
+  }
+
+  public AuthenticationPolicyPolicy authenticationPolicy() {
+    return cibaRequestContext.authenticationPolicy();
   }
 
   public List<String> requiredAnyOfAuthenticationTypes() {

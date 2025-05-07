@@ -1,41 +1,40 @@
 plugins {
-    id 'java'
-    id "com.diffplug.spotless" version "6.24.0"
-    id "org.dddjava.jig-gradle-plugin" version "2023.2.1"
+	id 'java'
+	id "com.diffplug.spotless" version "6.24.0"
 }
 
 group = 'org.idp.server'
 version = '1.0.0'
 
 repositories {
-    mavenCentral()
+	mavenCentral()
 }
 
 sourceCompatibility = JavaVersion.VERSION_21
 targetCompatibility = JavaVersion.VERSION_21
 
 dependencies {
-    implementation project(':libs:idp-server-core')
-    implementation project(':libs:idp-server-core-supporter')
+	implementation project(':libs:idp-server-core')
+	implementation project(':libs:idp-server-core-supporter')
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }
 
 test {
-    useJUnitPlatform()
+	useJUnitPlatform()
 }
 
 spotless {
-    java {
-        target 'src/*/java/**/*.java'
-        importOrder()
-        removeUnusedImports()
-        googleJavaFormat()
-        toggleOffOn()
-    }
-    groovyGradle {
-        target '*.gradle'
-        greclipse()
-    }
+	java {
+		target 'src/*/java/**/*.java'
+		importOrder()
+		removeUnusedImports()
+		googleJavaFormat()
+		toggleOffOn()
+	}
+	groovyGradle {
+		target '*.gradle'
+		greclipse()
+	}
 }

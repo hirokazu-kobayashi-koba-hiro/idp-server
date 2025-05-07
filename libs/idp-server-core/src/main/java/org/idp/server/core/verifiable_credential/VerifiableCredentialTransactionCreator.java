@@ -6,7 +6,7 @@ import org.idp.server.basic.type.oauth.Subject;
 import org.idp.server.basic.type.verifiablecredential.CredentialIssuer;
 import org.idp.server.basic.type.verifiablecredential.TransactionId;
 import org.idp.server.basic.vc.Credential;
-import org.idp.server.core.oidc.configuration.VerifiableCredentialConfiguration;
+import org.idp.server.core.oidc.configuration.vc.VerifiableCredentialConfiguration;
 import org.idp.server.core.token.OAuthToken;
 
 public class VerifiableCredentialTransactionCreator {

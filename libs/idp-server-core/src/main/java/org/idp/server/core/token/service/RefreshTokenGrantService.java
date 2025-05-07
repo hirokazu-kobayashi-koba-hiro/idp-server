@@ -4,8 +4,8 @@ import java.util.UUID;
 import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.token.*;
 import org.idp.server.core.token.*;
@@ -29,7 +29,8 @@ public class RefreshTokenGrantService
 
     Tenant tenant = context.tenant();
     RefreshTokenEntity refreshTokenEntity = context.refreshToken();
-    ServerConfiguration serverConfiguration = context.serverConfiguration();
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
     OAuthToken oAuthToken = oAuthTokenRepository.find(context.tenant(), refreshTokenEntity);
 
@@ -38,8 +39,12 @@ public class RefreshTokenGrantService
     AuthorizationGrant authorizationGrant = oAuthToken.authorizationGrant();
     AccessToken accessToken =
         createAccessToken(
-            authorizationGrant, serverConfiguration, clientConfiguration, clientCredentials);
-    RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
+            authorizationGrant,
+            authorizationServerConfiguration,
+            clientConfiguration,
+            clientCredentials);
+    RefreshToken refreshToken =
+        createRefreshToken(authorizationServerConfiguration, clientConfiguration);
     OAuthTokenBuilder oAuthTokenBuilder =
         new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))
             .add(accessToken)

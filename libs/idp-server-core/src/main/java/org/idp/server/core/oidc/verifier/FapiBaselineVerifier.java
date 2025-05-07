@@ -3,7 +3,7 @@ package org.idp.server.core.oidc.verifier;
 import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 import org.idp.server.basic.type.oauth.RedirectUri;
 import org.idp.server.core.oidc.OAuthRequestContext;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oidc.request.AuthorizationRequest;

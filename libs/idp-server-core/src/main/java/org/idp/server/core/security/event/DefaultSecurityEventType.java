@@ -56,6 +56,16 @@ public enum DefaultSecurityEventType {
   authentication_device_notification_success("User successfully received a device notification"),
   authentication_device_notification_cancel("User canceled a device notification"),
   authentication_device_notification_failure("User failed to receive a device notification"),
+  authentication_device_deny_success("User successfully denied a device notification"),
+  authentication_device_deny_failure("User failed to deny a device notification"),
+  authentication_device_allow_success("User successfully allowed a device notification"),
+  authentication_device_allow_failure("User failed to allow a device notification"),
+  authentication_device_registration_success("User successfully registered a device"),
+  authentication_device_registration_failure("User failed to register a device"),
+  authentication_device_deregistration_success("User successfully deregistered a device"),
+  authentication_device_deregistration_failure("User failed to deregister a device"),
+  authentication_device_registration_challenge_success(
+      "User successfully challenge a device registration"),
   backchannel_authentication_request_success(
       "User successfully authenticated with a backchannel authentication"),
   backchannel_authentication_request_failure(

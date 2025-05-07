@@ -9,8 +9,8 @@ import org.idp.server.basic.type.oidc.*;
 import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.ciba.CibaRequestObjectParameters;
 import org.idp.server.core.ciba.CibaRequestParameters;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 /**
  * RequestObjectPatternFactory
@@ -34,7 +34,7 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
       CibaRequestParameters parameters,
       JoseContext joseContext,
       Set<String> filteredScopes,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     JsonWebTokenClaims jsonWebTokenClaims = joseContext.claims();
     CibaRequestObjectParameters requestObjectParameters =
@@ -79,7 +79,7 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
 
     BackchannelAuthenticationRequestBuilder builder = new BackchannelAuthenticationRequestBuilder();
     builder.add(createIdentifier());
-    builder.add(serverConfiguration.tenantIdentifier());
+    builder.add(authorizationServerConfiguration.tenantIdentifier());
     builder.add(profile);
     builder.add(clientConfiguration.backchannelTokenDeliveryMode());
     builder.add(scopes);

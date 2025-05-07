@@ -16,8 +16,8 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifi
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 public class DefaultCibaProtocol implements CibaProtocol {
@@ -36,13 +36,13 @@ public class DefaultCibaProtocol implements CibaProtocol {
       UserQueryRepository userQueryRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
       OAuthTokenRepository oAuthTokenRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
+      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
     this.cibaRequestHandler =
         new CibaRequestHandler(
             backchannelAuthenticationRequestRepository,
             cibaGrantRepository,
-            serverConfigurationRepository,
+            authorizationServerConfigurationRepository,
             clientConfigurationRepository);
     this.cibaAuthorizeHandler =
         new CibaAuthorizeHandler(
@@ -51,11 +51,13 @@ public class DefaultCibaProtocol implements CibaProtocol {
             authorizationGrantedRepository,
             oAuthTokenRepository,
             new NotificationClient(),
-            serverConfigurationRepository,
+            authorizationServerConfigurationRepository,
             clientConfigurationRepository);
     this.cibaDenyHandler =
         new CibaDenyHandler(
-            cibaGrantRepository, serverConfigurationRepository, clientConfigurationRepository);
+            cibaGrantRepository,
+            authorizationServerConfigurationRepository,
+            clientConfigurationRepository);
     this.errorHandler = new CibaRequestErrorHandler();
     this.cibaGrantRepository = cibaGrantRepository;
     this.userQueryRepository = userQueryRepository;

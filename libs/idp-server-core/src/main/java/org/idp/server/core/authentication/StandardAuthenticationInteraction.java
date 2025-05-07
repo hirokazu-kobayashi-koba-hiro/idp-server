@@ -17,7 +17,9 @@ public enum StandardAuthenticationInteraction {
   WEBAUTHN_REGISTRATION("webauthn-registration"),
   WEBAUTHN_AUTHENTICATION_CHALLENGE("webauthn-authentication-challenge"),
   WEBAUTHN_AUTHENTICATION("webauthn-authentication"),
-  AUTHENTICATION_DEVICE_NOTIFICATION("authentication-device-notification");
+  AUTHENTICATION_DEVICE_NOTIFICATION("authentication-device-notification"),
+  AUTHENTICATION_DEVICE_DENY("authentication-device-deny"),
+  ;
 
   String type;
 

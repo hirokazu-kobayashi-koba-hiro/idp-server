@@ -7,8 +7,9 @@ import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.OAuthSession;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.response.AuthorizationErrorResponse;
@@ -18,7 +19,7 @@ import org.idp.server.core.oidc.response.AuthorizationResponse;
 public class OAuthRequestResponse {
   OAuthRequestStatus status;
   AuthorizationRequest authorizationRequest;
-  ServerConfiguration serverConfiguration;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
   AuthorizationResponse response;
   OAuthSession session;
@@ -35,7 +36,7 @@ public class OAuthRequestResponse {
       OAuthRequestStatus status, OAuthRequestContext context, OAuthSession session) {
     this.status = status;
     this.authorizationRequest = context.authorizationRequest();
-    this.serverConfiguration = context.serverConfiguration();
+    this.authorizationServerConfiguration = context.serverConfiguration();
     this.clientConfiguration = context.clientConfiguration();
     this.session = session;
     this.contents = Map.of("id", context.identifier().value());
@@ -70,8 +71,8 @@ public class OAuthRequestResponse {
     return authorizationRequest;
   }
 
-  public ServerConfiguration serverConfiguration() {
-    return serverConfiguration;
+  public AuthorizationServerConfiguration serverConfiguration() {
+    return authorizationServerConfiguration;
   }
 
   public ClientConfiguration clientConfiguration() {
@@ -111,7 +112,7 @@ public class OAuthRequestResponse {
   }
 
   public List<String> availableAuthenticationTypes() {
-    return serverConfiguration.availableAuthenticationMethods();
+    return authorizationServerConfiguration.availableAuthenticationMethods();
   }
 
   public List<String> requiredAnyOfAuthenticationTypes() {
@@ -125,10 +126,14 @@ public class OAuthRequestResponse {
   }
 
   public int oauthAuthorizationRequestExpiresIn() {
-    return serverConfiguration.oauthAuthorizationRequestExpiresIn();
+    return authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn();
   }
 
   public boolean isOK() {
     return status.isSuccess();
+  }
+
+  public AuthenticationPolicyPolicy authenticationPolicy() {
+    return authorizationServerConfiguration.authenticationPolicy();
   }
 }

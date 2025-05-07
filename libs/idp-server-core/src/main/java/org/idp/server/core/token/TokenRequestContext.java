@@ -12,8 +12,8 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 public class TokenRequestContext implements BackchannelRequestContext {
 
@@ -23,7 +23,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
   TokenRequestParameters parameters;
   CustomProperties customProperties;
   PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
-  ServerConfiguration serverConfiguration;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
 
   public TokenRequestContext(
@@ -33,7 +33,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
       TokenRequestParameters parameters,
       CustomProperties customProperties,
       PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.tenant = tenant;
     this.clientSecretBasic = clientSecretBasic;
@@ -41,7 +41,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
     this.parameters = parameters;
     this.customProperties = customProperties;
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
-    this.serverConfiguration = serverConfiguration;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
   }
 
@@ -93,8 +93,8 @@ public class TokenRequestContext implements BackchannelRequestContext {
   }
 
   @Override
-  public ServerConfiguration serverConfiguration() {
-    return serverConfiguration;
+  public AuthorizationServerConfiguration serverConfiguration() {
+    return authorizationServerConfiguration;
   }
 
   @Override
@@ -108,7 +108,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
   }
 
   public boolean isSupportedGrantTypeWithServer(GrantType grantType) {
-    return serverConfiguration.isSupportedGrantType(grantType);
+    return authorizationServerConfiguration.isSupportedGrantType(grantType);
   }
 
   public boolean isSupportedGrantTypeWithClient(GrantType grantType) {
@@ -128,7 +128,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
   }
 
   public TokenIssuer tokenIssuer() {
-    return serverConfiguration.tokenIssuer();
+    return authorizationServerConfiguration.tokenIssuer();
   }
 
   public boolean hasRefreshToken() {

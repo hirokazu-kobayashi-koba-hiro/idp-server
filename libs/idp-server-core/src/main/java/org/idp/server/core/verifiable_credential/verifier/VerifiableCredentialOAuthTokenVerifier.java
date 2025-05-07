@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.basic.x509.X509CertInvalidException;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.mtls.ClientCertification;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprintCalculator;
@@ -17,13 +17,15 @@ import org.idp.server.core.verifiable_credential.exception.VerifiableCredentialT
 public class VerifiableCredentialOAuthTokenVerifier {
   OAuthToken oAuthToken;
   ClientCert clientCert;
-  ServerConfiguration serverConfiguration;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
 
   public VerifiableCredentialOAuthTokenVerifier(
-      OAuthToken oAuthToken, ClientCert clientCert, ServerConfiguration serverConfiguration) {
+      OAuthToken oAuthToken,
+      ClientCert clientCert,
+      AuthorizationServerConfiguration authorizationServerConfiguration) {
     this.oAuthToken = oAuthToken;
     this.clientCert = clientCert;
-    this.serverConfiguration = serverConfiguration;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
   }
 
   public void verify() {

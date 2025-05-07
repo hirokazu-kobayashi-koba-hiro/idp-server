@@ -11,17 +11,17 @@ import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 public class CibaAuthorizeHandler {
 
   CibaGrantRepository cibaGrantRepository;
   ClientNotificationService clientNotificationService;
-  ServerConfigurationRepository serverConfigurationRepository;
+  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
   public CibaAuthorizeHandler(
@@ -30,7 +30,7 @@ public class CibaAuthorizeHandler {
       AuthorizationGrantedRepository authorizationGrantedRepository,
       OAuthTokenRepository oAuthTokenRepository,
       ClientNotificationGateway clientNotificationGateway,
-      ServerConfigurationRepository serverConfigurationRepository,
+      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
     this.cibaGrantRepository = cibaGrantRepository;
     this.clientNotificationService =
@@ -39,7 +39,7 @@ public class CibaAuthorizeHandler {
             authorizationGrantedRepository,
             oAuthTokenRepository,
             clientNotificationGateway);
-    this.serverConfigurationRepository = serverConfigurationRepository;
+    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
@@ -48,7 +48,8 @@ public class CibaAuthorizeHandler {
         request.backchannleAuthenticationIdentifier();
 
     Tenant tenant = request.tenant();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        authorizationServerConfigurationRepository.get(tenant);
     CibaGrant cibaGrant =
         cibaGrantRepository.get(tenant, backchannelAuthenticationRequestIdentifier);
 
@@ -60,7 +61,8 @@ public class CibaAuthorizeHandler {
     CibaGrant updated = cibaGrant.update(CibaGrantStatus.authorized);
     cibaGrantRepository.update(tenant, updated);
 
-    clientNotificationService.notify(tenant, cibaGrant, serverConfiguration, clientConfiguration);
+    clientNotificationService.notify(
+        tenant, cibaGrant, authorizationServerConfiguration, clientConfiguration);
     return new CibaAuthorizeResponse(CibaAuthorizeStatus.OK);
   }
 }

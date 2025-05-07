@@ -8,8 +8,8 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.OAuthRequestPattern;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.factory.AuthorizationRequestFactory;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
@@ -23,11 +23,12 @@ public class RequestObjectPatternContextCreator implements OAuthRequestContextCr
   public OAuthRequestContext create(
       Tenant tenant,
       OAuthRequestParameters parameters,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
       RequestObjectValidator validator =
-          new RequestObjectValidator(parameters, serverConfiguration, clientConfiguration);
+          new RequestObjectValidator(
+              parameters, authorizationServerConfiguration, clientConfiguration);
       validator.validate();
 
       JoseHandler joseHandler = new JoseHandler();
@@ -35,23 +36,24 @@ public class RequestObjectPatternContextCreator implements OAuthRequestContextCr
           joseHandler.handle(
               parameters.request().value(),
               clientConfiguration.jwks(),
-              serverConfiguration.jwks(),
+              authorizationServerConfiguration.jwks(),
               clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
 
       OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_OBJECT;
       Set<String> filteredScopes =
           filterScopes(pattern, parameters, joseContext, clientConfiguration);
-      AuthorizationProfile profile = analyze(filteredScopes, serverConfiguration);
+      AuthorizationProfile profile = analyze(filteredScopes, authorizationServerConfiguration);
       AuthorizationRequestFactory requestFactory =
-          selectAuthorizationRequestFactory(profile, serverConfiguration, clientConfiguration);
+          selectAuthorizationRequestFactory(
+              profile, authorizationServerConfiguration, clientConfiguration);
       AuthorizationRequest authorizationRequest =
           requestFactory.create(
               profile,
               parameters,
               joseContext,
               filteredScopes,
-              serverConfiguration,
+              authorizationServerConfiguration,
               clientConfiguration);
 
       return new OAuthRequestContext(
@@ -60,7 +62,7 @@ public class RequestObjectPatternContextCreator implements OAuthRequestContextCr
           parameters,
           joseContext,
           authorizationRequest,
-          serverConfiguration,
+          authorizationServerConfiguration,
           clientConfiguration);
     } catch (JoseInvalidException exception) {
       throw new OAuthBadRequestException("invalid_request", exception.getMessage(), exception);

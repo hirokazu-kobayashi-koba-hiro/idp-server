@@ -2,25 +2,26 @@ package org.idp.server.core.authentication;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.core.authentication.evaluator.MfaConditionEvaluator;
 import org.idp.server.core.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyResultConditions;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 
 public class AuthenticationTransaction {
   AuthorizationIdentifier identifier;
   AuthenticationRequest request;
-  AuthenticationInteractionType lastInteractionType;
+  AuthenticationPolicyPolicy authenticationPolicyPolicy;
   AuthenticationInteractionResults interactionResults;
 
   public static AuthenticationTransaction createOnOAuthFlow(
@@ -28,7 +29,8 @@ public class AuthenticationTransaction {
     AuthorizationIdentifier identifier =
         new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier());
     AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
-    return new AuthenticationTransaction(identifier, authenticationRequest);
+    AuthenticationPolicyPolicy authenticationPolicyPolicy = requestResponse.authenticationPolicy();
+    return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicyPolicy);
   }
 
   public static AuthenticationTransaction createOnCibaFlow(
@@ -37,7 +39,8 @@ public class AuthenticationTransaction {
         new AuthorizationIdentifier(cibaIssueResponse.backchannelAuthenticationRequestIdentifier());
     AuthenticationRequest authenticationRequest =
         toAuthenticationRequest(tenant, cibaIssueResponse);
-    return new AuthenticationTransaction(identifier, authenticationRequest);
+    AuthenticationPolicyPolicy authenticationPolicyPolicy = cibaIssueResponse.authenticationPolicy();
+    return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicyPolicy);
   }
 
   private static AuthenticationRequest toAuthenticationRequest(
@@ -48,21 +51,12 @@ public class AuthenticationTransaction {
 
     RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
     User user = User.notFound();
-    List<String> availableAuthenticationTypes = requestResponse.availableAuthenticationTypes();
-    List<String> requiredAnyOfAuthenticationTypes =
-        requestResponse.requiredAnyOfAuthenticationTypes();
+    requestResponse.requiredAnyOfAuthenticationTypes();
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt =
         createdAt.plusSeconds(requestResponse.oauthAuthorizationRequestExpiresIn());
     return new AuthenticationRequest(
-        authorizationFlow,
-        tenantIdentifier,
-        requestedClientId,
-        user,
-        availableAuthenticationTypes,
-        requiredAnyOfAuthenticationTypes,
-        createdAt,
-        expiredAt);
+        authorizationFlow, tenantIdentifier, requestedClientId, user, createdAt, expiredAt);
   }
 
   private static AuthenticationRequest toAuthenticationRequest(
@@ -74,73 +68,58 @@ public class AuthenticationTransaction {
 
     RequestedClientId requestedClientId = backchannelAuthenticationRequest.requestedClientId();
     User user = cibaIssueResponse.user();
-    List<String> availableAuthenticationTypes = cibaIssueResponse.availableAuthenticationTypes();
-    List<String> requiredAnyOfAuthenticationTypes =
-        cibaIssueResponse.requiredAnyOfAuthenticationTypes();
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt = createdAt.plusSeconds(expiresIn.value());
     return new AuthenticationRequest(
-        authorizationFlow,
-        tenantIdentifier,
-        requestedClientId,
-        user,
-        availableAuthenticationTypes,
-        requiredAnyOfAuthenticationTypes,
-        createdAt,
-        expiredAt);
+        authorizationFlow, tenantIdentifier, requestedClientId, user, createdAt, expiredAt);
   }
 
-  public AuthenticationTransaction update(
+  public AuthenticationTransaction updateWith(
       AuthenticationInteractionRequestResult interactionRequestResult) {
-    Set<AuthenticationInteractionResult> set = interactionResults.toSet();
+    Map<String, AuthenticationInteractionResult> resultMap = interactionResults.toMap();
 
     AuthenticationRequest updatedRequest =
         interactionRequestResult.isIdentifyUserEventType()
-            ? request.updateUser(interactionRequestResult)
+            ? request.updateWithUser(interactionRequestResult)
             : request;
     if (interactionResults.contains(interactionRequestResult.interactionTypeName())) {
 
       AuthenticationInteractionResult foundResult =
           interactionResults.get(interactionRequestResult.interactionTypeName());
       AuthenticationInteractionResult updatedInteraction =
-          foundResult.update(interactionRequestResult);
-      set.remove(foundResult);
-      set.add(updatedInteraction);
+          foundResult.updateWith(interactionRequestResult);
+      resultMap.remove(interactionRequestResult.interactionTypeName());
+      resultMap.put(interactionRequestResult.interactionTypeName(), updatedInteraction);
 
     } else {
 
       int successCount = interactionRequestResult.isSuccess() ? 1 : 0;
       int failureCount = interactionRequestResult.isSuccess() ? 0 : 1;
       AuthenticationInteractionResult result =
-          new AuthenticationInteractionResult(
-              interactionRequestResult.interactionTypeName(), 1, successCount, failureCount);
-      set.add(result);
+          new AuthenticationInteractionResult(1, successCount, failureCount);
+      resultMap.put(interactionRequestResult.interactionTypeName(), result);
     }
 
-    AuthenticationInteractionType lastInteractionType = interactionRequestResult.type();
-    AuthenticationInteractionResults updatedResults = new AuthenticationInteractionResults(set);
-    return new AuthenticationTransaction(
-        identifier, updatedRequest, lastInteractionType, updatedResults);
+    AuthenticationInteractionResults updatedResults =
+        new AuthenticationInteractionResults(resultMap);
+    return new AuthenticationTransaction(identifier, updatedRequest, authenticationPolicyPolicy, updatedResults);
   }
 
   public AuthenticationTransaction() {}
 
-  AuthenticationTransaction(AuthorizationIdentifier identifier, AuthenticationRequest request) {
-    this(
-        identifier,
-        request,
-        new AuthenticationInteractionType(),
-        new AuthenticationInteractionResults());
+  AuthenticationTransaction(
+      AuthorizationIdentifier identifier, AuthenticationRequest request, AuthenticationPolicyPolicy authenticationPolicyPolicy) {
+    this(identifier, request, authenticationPolicyPolicy, new AuthenticationInteractionResults());
   }
 
   public AuthenticationTransaction(
       AuthorizationIdentifier identifier,
       AuthenticationRequest request,
-      AuthenticationInteractionType lastInteractionType,
+      AuthenticationPolicyPolicy authenticationPolicyPolicy,
       AuthenticationInteractionResults interactionResults) {
     this.identifier = identifier;
     this.request = request;
-    this.lastInteractionType = lastInteractionType;
+    this.authenticationPolicyPolicy = authenticationPolicyPolicy;
     this.interactionResults = interactionResults;
   }
 
@@ -163,16 +142,8 @@ public class AuthenticationTransaction {
     return interactionResults;
   }
 
-  public Set<AuthenticationInteractionResult> interactionResultsAsSet() {
-    return interactionResults.toSet();
-  }
-
-  public AuthenticationInteractionType lastInteractionType() {
-    return lastInteractionType;
-  }
-
-  public AuthenticationInteractionResult lastInteraction() {
-    return interactionResults.get(lastInteractionType.name());
+  public Map<String, AuthenticationInteractionResult> interactionResultsAsMap() {
+    return interactionResults.toMap();
   }
 
   public Map<String, Object> toMap() {
@@ -182,18 +153,35 @@ public class AuthenticationTransaction {
     return map;
   }
 
-  public boolean isComplete() {
-    if (request.requiredAnyOfAuthenticationTypes().isEmpty()) {
-      return interactionResults.containsAnySuccess();
-    }
-
-    return request.requiredAnyOfAuthenticationTypes().stream()
-        .anyMatch(required -> interactionResults.contains(required));
+  public boolean hasAuthenticationPolicy() {
+    return authenticationPolicyPolicy != null && authenticationPolicyPolicy.exists();
   }
 
-  // TODO implement. this is debug code
-  public boolean isDeny() {
+  public AuthenticationPolicyPolicy authenticationPolicy() {
+    return authenticationPolicyPolicy;
+  }
 
+  public boolean isSuccess() {
+    if (hasAuthenticationPolicy()) {
+      AuthenticationPolicyResultConditions authenticationPolicyResultConditions = authenticationPolicyPolicy.successConditions();
+      return MfaConditionEvaluator.isSuccessSatisfied(authenticationPolicyResultConditions, interactionResults);
+    }
+    return interactionResults.containsAnySuccess();
+  }
+
+  public boolean isFailure() {
+    if (hasAuthenticationPolicy()) {
+      AuthenticationPolicyResultConditions authenticationPolicyResultConditions = authenticationPolicyPolicy.failureConditions();
+      return MfaConditionEvaluator.isFailureSatisfied(authenticationPolicyResultConditions, interactionResults);
+    }
+    return interactionResults.containsDenyInteraction();
+  }
+
+  public boolean isLocked() {
+    if (hasAuthenticationPolicy()) {
+      AuthenticationPolicyResultConditions authenticationPolicyResultConditions = authenticationPolicyPolicy.lockConditions();
+      return MfaConditionEvaluator.isLockedSatisfied(authenticationPolicyResultConditions, interactionResults);
+    }
     return false;
   }
 

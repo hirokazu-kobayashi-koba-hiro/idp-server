@@ -6,7 +6,7 @@ import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 
 public interface ClientAuthenticationJwtValidatable {
 
@@ -55,11 +55,12 @@ public interface ClientAuthenticationJwtValidatable {
       throw new ClientUnAuthorizedException(
           "client assertion is invalid, must contains aud claim in jwt payload");
     }
-    ServerConfiguration serverConfiguration = context.serverConfiguration();
-    if (claims.getAud().contains(serverConfiguration.tokenIssuer().value())) {
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        context.serverConfiguration();
+    if (claims.getAud().contains(authorizationServerConfiguration.tokenIssuer().value())) {
       return;
     }
-    if (claims.getAud().contains(serverConfiguration.tokenEndpoint())) {
+    if (claims.getAud().contains(authorizationServerConfiguration.tokenEndpoint())) {
       return;
     }
     throw new ClientUnAuthorizedException(

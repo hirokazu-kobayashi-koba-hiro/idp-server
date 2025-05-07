@@ -8,8 +8,8 @@ import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.basic.type.oauth.RedirectUri;
 import org.idp.server.basic.type.oauth.TokenIssuer;
 import org.idp.server.basic.type.oidc.ResponseMode;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 
 public class AuthorizationDenyErrorResponseCreator
@@ -17,22 +17,22 @@ public class AuthorizationDenyErrorResponseCreator
 
   AuthorizationRequest authorizationRequest;
   OAuthDenyReason denyReason;
-  ServerConfiguration serverConfiguration;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
 
   public AuthorizationDenyErrorResponseCreator(
       AuthorizationRequest authorizationRequest,
       OAuthDenyReason denyReason,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.authorizationRequest = authorizationRequest;
     this.denyReason = denyReason;
-    this.serverConfiguration = serverConfiguration;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
   }
 
   public AuthorizationErrorResponse create() {
-    TokenIssuer tokenIssuer = serverConfiguration.tokenIssuer();
+    TokenIssuer tokenIssuer = authorizationServerConfiguration.tokenIssuer();
     RedirectUri redirectUri = decideRedirectUri(authorizationRequest, clientConfiguration);
     ResponseMode responseMode = authorizationRequest.responseMode();
     ResponseModeValue responseModeValue =
@@ -47,7 +47,7 @@ public class AuthorizationDenyErrorResponseCreator
     if (responseMode.isJwtMode()) {
       AuthorizationErrorResponse errorResponse = responseBuilder.build();
       JarmPayload jarmPayload =
-          createResponse(errorResponse, serverConfiguration, clientConfiguration);
+          createResponse(errorResponse, authorizationServerConfiguration, clientConfiguration);
       responseBuilder.add(jarmPayload);
     }
 

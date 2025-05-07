@@ -110,7 +110,7 @@ public class ClientAuthenticatorHandler {
     ClientAuthenticator clientAuthenticator = map.get(context.clientAuthenticationType());
     ClientAuthenticationVerifier verifier =
         new ClientAuthenticationVerifier(
-            context.clientAuthenticationType(), clientAuthenticator, context.serverConfiguration());
+            context.clientAuthenticationType(), clientAuthenticator, context.authorizationServerConfiguration());
     verifier.verify();
     return clientAuthenticator.authenticate(context);
   }

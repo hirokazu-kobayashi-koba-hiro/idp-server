@@ -2,7 +2,6 @@ package org.idp.server.core.authentication;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.oauth.RequestedClientId;
@@ -15,8 +14,6 @@ public class AuthenticationRequest {
   TenantIdentifier tenantIdentifier;
   RequestedClientId requestedClientId;
   User user;
-  List<String> availableAuthenticationTypes;
-  List<String> requiredAnyOfAuthenticationTypes;
   LocalDateTime createdAt;
   LocalDateTime expiredAt;
 
@@ -27,16 +24,12 @@ public class AuthenticationRequest {
       TenantIdentifier tenantIdentifier,
       RequestedClientId requestedClientId,
       User user,
-      List<String> availableAuthenticationTypes,
-      List<String> requiredAnyOfAuthenticationTypes,
       LocalDateTime createdAt,
       LocalDateTime expiredAt) {
     this.authorizationFlow = authorizationFlow;
     this.tenantIdentifier = tenantIdentifier;
     this.requestedClientId = requestedClientId;
     this.user = user;
-    this.availableAuthenticationTypes = availableAuthenticationTypes;
-    this.requiredAnyOfAuthenticationTypes = requiredAnyOfAuthenticationTypes;
     this.createdAt = createdAt;
     this.expiredAt = expiredAt;
   }
@@ -57,14 +50,6 @@ public class AuthenticationRequest {
     return user;
   }
 
-  public List<String> availableAuthenticationTypes() {
-    return availableAuthenticationTypes;
-  }
-
-  public List<String> requiredAnyOfAuthenticationTypes() {
-    return requiredAnyOfAuthenticationTypes;
-  }
-
   public LocalDateTime createdAt() {
     return createdAt;
   }
@@ -83,24 +68,15 @@ public class AuthenticationRequest {
     map.put("tenant_id", tenantIdentifier.value());
     map.put("client_id", requestedClientId.value());
     map.put("user", user.toMap());
-    map.put("available_authentication_types", availableAuthenticationTypes);
-    map.put("required_any_of_authentication_types", requiredAnyOfAuthenticationTypes);
     map.put("created_at", createdAt.toString());
     map.put("expired_at", expiredAt.toString());
     return map;
   }
 
-  public AuthenticationRequest updateUser(
+  public AuthenticationRequest updateWithUser(
       AuthenticationInteractionRequestResult interactionRequestResult) {
     User user = interactionRequestResult.user();
     return new AuthenticationRequest(
-        authorizationFlow,
-        tenantIdentifier,
-        requestedClientId,
-        user,
-        availableAuthenticationTypes,
-        requiredAnyOfAuthenticationTypes,
-        createdAt,
-        expiredAt);
+        authorizationFlow, tenantIdentifier, requestedClientId, user, createdAt, expiredAt);
   }
 }

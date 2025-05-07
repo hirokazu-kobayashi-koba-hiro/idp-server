@@ -16,8 +16,8 @@ import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.identity.IdTokenCreatable;
 import org.idp.server.core.oidc.identity.IdTokenCustomClaims;
 import org.idp.server.core.oidc.identity.IdTokenCustomClaimsBuilder;
@@ -51,7 +51,7 @@ public class ClientNotificationService
   public void notify(
       Tenant tenant,
       CibaGrant cibaGrant,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
 
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
@@ -73,10 +73,11 @@ public class ClientNotificationService
       AccessToken accessToken =
           createAccessToken(
               cibaGrant.authorizationGrant(),
-              serverConfiguration,
+              authorizationServerConfiguration,
               clientConfiguration,
               new ClientCredentials());
-      RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
+      RefreshToken refreshToken =
+          createRefreshToken(authorizationServerConfiguration, clientConfiguration);
 
       IdTokenCustomClaims idTokenCustomClaims = new IdTokenCustomClaimsBuilder().build();
       IdToken idToken =
@@ -86,12 +87,12 @@ public class ClientNotificationService
               cibaGrant.authorizationGrant(),
               idTokenCustomClaims,
               new RequestedClaimsPayload(),
-              serverConfiguration,
+              authorizationServerConfiguration,
               clientConfiguration);
       builder
           .add(accessToken.accessTokenEntity())
           .add(TokenType.Bearer)
-          .add(new ExpiresIn(serverConfiguration.accessTokenDuration()))
+          .add(new ExpiresIn(authorizationServerConfiguration.accessTokenDuration()))
           .add(refreshToken.refreshTokenEntity())
           .add(idToken);
 

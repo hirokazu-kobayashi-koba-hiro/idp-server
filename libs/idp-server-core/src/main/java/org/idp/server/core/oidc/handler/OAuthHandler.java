@@ -5,10 +5,10 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.OAuthSessionDelegate;
 import org.idp.server.core.oidc.OAuthSessionKey;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
 import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
@@ -20,15 +20,15 @@ import org.idp.server.core.oidc.view.OAuthViewDataCreator;
 public class OAuthHandler {
 
   AuthorizationRequestRepository authorizationRequestRepository;
-  ServerConfigurationRepository serverConfigurationRepository;
+  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
   ClientConfigurationRepository clientConfigurationRepository;
 
   public OAuthHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
+      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
       ClientConfigurationRepository clientConfigurationRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
-    this.serverConfigurationRepository = serverConfigurationRepository;
+    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
     this.clientConfigurationRepository = clientConfigurationRepository;
   }
 
@@ -40,7 +40,8 @@ public class OAuthHandler {
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
     RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
-    ServerConfiguration serverConfiguration = serverConfigurationRepository.get(tenant);
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        authorizationServerConfigurationRepository.get(tenant);
     ClientConfiguration clientConfiguration =
         clientConfigurationRepository.get(tenant, requestedClientId);
 
@@ -48,7 +49,7 @@ public class OAuthHandler {
 
     OAuthViewDataCreator creator =
         new OAuthViewDataCreator(
-            authorizationRequest, serverConfiguration, clientConfiguration, session);
+            authorizationRequest, authorizationServerConfiguration, clientConfiguration, session);
     OAuthViewData oAuthViewData = creator.create();
 
     return new OAuthViewDataResponse(OAuthViewDataStatus.OK, oAuthViewData);

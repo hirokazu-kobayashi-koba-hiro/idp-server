@@ -1,4 +1,4 @@
-package org.idp.server.core.oidc.configuration;
+package org.idp.server.core.oidc.configuration.exception;
 
 public class ConfigurationInvalidException extends RuntimeException {
   public ConfigurationInvalidException(String message) {

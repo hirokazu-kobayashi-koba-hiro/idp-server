@@ -10,7 +10,7 @@ import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorized
 import org.idp.server.core.oidc.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.oidc.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.mtls.ClientCertification;
 
 class TlsClientAuthAuthenticator implements ClientAuthenticator {

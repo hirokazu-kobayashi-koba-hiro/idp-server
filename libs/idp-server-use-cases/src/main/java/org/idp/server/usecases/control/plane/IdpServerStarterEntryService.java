@@ -20,8 +20,8 @@ import org.idp.server.core.identity.role.Roles;
 import org.idp.server.core.multi_tenancy.organization.Organization;
 import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.core.multi_tenancy.tenant.*;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
 
 @Transaction
 public class IdpServerStarterEntryService implements IdpServerStarterApi {
@@ -31,7 +31,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
   UserQueryRepository userQueryRepository;
   PermissionCommandRepository permissionCommandRepository;
   RoleCommandRepository roleCommandRepository;
-  ServerConfigurationRepository serverConfigurationRepository;
+  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
   PasswordEncodeDelegation passwordEncodeDelegation;
   JsonConverter jsonConverter;
 
@@ -41,14 +41,14 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
       UserQueryRepository userQueryRepository,
       PermissionCommandRepository permissionCommandRepository,
       RoleCommandRepository roleCommandRepository,
-      ServerConfigurationRepository serverConfigurationRepository,
+      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
       PasswordEncodeDelegation passwordEncodeDelegation) {
     this.organizationRepository = organizationRepository;
     this.tenantRepository = tenantRepository;
     this.userQueryRepository = userQueryRepository;
     this.permissionCommandRepository = permissionCommandRepository;
     this.roleCommandRepository = roleCommandRepository;
-    this.serverConfigurationRepository = serverConfigurationRepository;
+    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
@@ -61,8 +61,10 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
         jsonConverter.read(request.get("organization"), OrganizationRegistrationRequest.class);
     TenantRegistrationRequest tenantRequest =
         jsonConverter.read(request.get("tenant"), TenantRegistrationRequest.class);
-    ServerConfiguration serverConfiguration =
-        jsonConverter.read(request.get("server_configuration"), ServerConfiguration.class);
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        jsonConverter.read(
+            request.get("authorization_server_configuration"),
+            AuthorizationServerConfiguration.class);
 
     List<Map> rolesRequest = (List<Map>) jsonConverter.read(request.get("roles"), List.class);
     List<Map> permissionsRequest =
@@ -82,12 +84,12 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
             tenantRequest.tenantIdentifier(),
             tenantRequest.tenantName(),
             TenantType.ADMIN,
-            new TenantDomain(serverConfiguration.tokenIssuer().value()),
+            new TenantDomain(authorizationServerConfiguration.tokenIssuer().value()),
             TenantAttributes.createDefaultType());
     organization.assign(tenant);
 
     tenantRepository.register(tenant);
-    serverConfigurationRepository.register(tenant, serverConfiguration);
+    authorizationServerConfigurationRepository.register(tenant, authorizationServerConfiguration);
     organizationRepository.register(tenant, organization);
     permissionCommandRepository.bulkRegister(tenant, permissions);
     roleCommandRepository.bulkRegister(tenant, roles);

@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.oidc.configuration.client;
 
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
-import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
 
 public class ClientConfigurationDataSourceProvider
     implements ApplicationComponentProvider<ClientConfigurationRepository> {

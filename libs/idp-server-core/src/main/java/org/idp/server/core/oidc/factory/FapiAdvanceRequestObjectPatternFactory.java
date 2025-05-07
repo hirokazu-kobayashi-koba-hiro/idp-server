@@ -9,8 +9,8 @@ import org.idp.server.basic.type.pkce.CodeChallenge;
 import org.idp.server.basic.type.pkce.CodeChallengeMethod;
 import org.idp.server.basic.type.rar.AuthorizationDetailsEntity;
 import org.idp.server.core.oidc.AuthorizationProfile;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
@@ -28,7 +28,7 @@ public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequ
       OAuthRequestParameters parameters,
       JoseContext joseContext,
       Set<String> filteredScopes,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     JsonWebTokenClaims jsonWebTokenClaims = joseContext.claims();
     RequestObjectParameters requestObjectParameters =
@@ -57,7 +57,7 @@ public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequ
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());
-    builder.add(serverConfiguration.tenantIdentifier());
+    builder.add(authorizationServerConfiguration.tenantIdentifier());
     builder.add(profile);
     builder.add(scopes);
     builder.add(responseType);
@@ -72,7 +72,7 @@ public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequ
     if (maxAge.exists()) {
       builder.add(maxAge);
     } else {
-      builder.add(new MaxAge(serverConfiguration.defaultMaxAge()));
+      builder.add(new MaxAge(authorizationServerConfiguration.defaultMaxAge()));
     }
     builder.add(uiLocales);
     builder.add(idTokenHint);

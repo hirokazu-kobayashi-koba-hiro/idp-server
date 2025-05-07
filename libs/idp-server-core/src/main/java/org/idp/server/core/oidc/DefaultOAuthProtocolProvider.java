@@ -3,8 +3,8 @@ package org.idp.server.core.oidc;
 import org.idp.server.basic.dependency.ApplicationComponentContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolProvider;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.oidc.configuration.ClientConfigurationRepository;
-import org.idp.server.core.oidc.configuration.ServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
@@ -20,8 +20,8 @@ public class DefaultOAuthProtocolProvider implements ProtocolProvider<OAuthProto
   public OAuthProtocol provide(ApplicationComponentContainer container) {
     AuthorizationRequestRepository authorizationRequestRepository =
         container.resolve(AuthorizationRequestRepository.class);
-    ServerConfigurationRepository serverConfigurationRepository =
-        container.resolve(ServerConfigurationRepository.class);
+    AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository =
+        container.resolve(AuthorizationServerConfigurationRepository.class);
     ClientConfigurationRepository clientConfigurationRepository =
         container.resolve(ClientConfigurationRepository.class);
     AuthorizationGrantedRepository authorizationGrantedRepository =
@@ -32,7 +32,7 @@ public class DefaultOAuthProtocolProvider implements ProtocolProvider<OAuthProto
     OAuthSessionDelegate oAuthSessionDelegate = container.resolve(OAuthSessionDelegate.class);
     return new DefaultOAuthProtocol(
         authorizationRequestRepository,
-        serverConfigurationRepository,
+        authorizationServerConfigurationRepository,
         clientConfigurationRepository,
         authorizationGrantedRepository,
         authorizationCodeGrantRepository,

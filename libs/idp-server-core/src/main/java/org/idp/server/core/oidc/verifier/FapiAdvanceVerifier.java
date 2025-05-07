@@ -6,8 +6,8 @@ import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.oidc.OAuthRequestContext;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oidc.verifier.base.AuthorizationRequestVerifier;
@@ -38,7 +38,8 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
   }
 
   void throwIfExceptionInvalidConfig(OAuthRequestContext context) {
-    ServerConfiguration serverConfiguration = context.serverConfiguration();
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
     if (context.isJwtMode()) {
       if (!clientConfiguration.hasAuthorizationSignedResponseAlg()) {
@@ -46,7 +47,8 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
             "unauthorized_client",
             "When FAPI Advance profile and jarm mode, client config must have authorization_signed_response_alg");
       }
-      if (!serverConfiguration.hasKey(clientConfiguration.authorizationSignedResponseAlg())) {
+      if (!authorizationServerConfiguration.hasKey(
+          clientConfiguration.authorizationSignedResponseAlg())) {
         throw new OAuthBadRequestException(
             "unauthorized_client",
             "When FAPI Advance profile and jarm mode, server jwks must have client authorization_signed_response_alg");
@@ -90,9 +92,10 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
    * <p>shall support MTLS as mechanism for constraining the legitimate senders of access tokens;
    */
   void throwIfNotSenderConstrainedAccessToken(OAuthRequestContext context) {
-    ServerConfiguration serverConfiguration = context.serverConfiguration();
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
-    if (!serverConfiguration.isTlsClientCertificateBoundAccessTokens()) {
+    if (!authorizationServerConfiguration.isTlsClientCertificateBoundAccessTokens()) {
       throw new OAuthRedirectableBadRequestException(
           "invalid_request",
           "When FAPI Advance profile, shall only issue sender-constrained access tokens, but server tls_client_certificate_bound_access_tokens is false",

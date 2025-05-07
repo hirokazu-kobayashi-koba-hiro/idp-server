@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.authentication.AuthenticationInteractionResult;
-import org.idp.server.core.authentication.AuthenticationInteractionType;
 import org.idp.server.core.authentication.AuthenticationTransaction;
 import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.identity.User;
@@ -22,8 +20,34 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
 
     String sqlTemplate =
         """
-            INSERT INTO authentication_transaction (authorization_id, tenant_id, authorization_flow, client_id, user_id, user_payload, authentication_device_id, available_authentication_types, required_any_of_authentication_types, last_interaction_type, interactions, created_at, expired_at)
-            VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?)
+            INSERT INTO authentication_transaction
+            (
+            authorization_id,
+            tenant_id,
+            authorization_flow,
+            client_id,
+            user_id,
+            user_payload,
+            authentication_device_id,
+            authentication_policy,
+            interactions,
+            created_at,
+            expired_at
+            )
+            VALUES
+            (
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?::jsonb,
+            ?,
+            ?::jsonb,
+            ?::jsonb,
+            ?,
+            ?
+            )
             ON CONFLICT DO NOTHING;
             """;
 
@@ -41,18 +65,10 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
     } else {
       params.add(null);
     }
-    params.add(
-        jsonConverter.write(authenticationTransaction.request().availableAuthenticationTypes()));
-    params.add(
-        jsonConverter.write(
-            authenticationTransaction.request().requiredAnyOfAuthenticationTypes()));
+    params.add(jsonConverter.write(authenticationTransaction.authenticationPolicy().toMap()));
     if (authenticationTransaction.hasInteractions()) {
-      AuthenticationInteractionType lastInteractionType =
-          authenticationTransaction.lastInteractionType();
-      params.add(lastInteractionType.name());
-      params.add(jsonConverter.write(authenticationTransaction.interactionResultsAsSet()));
+      params.add(jsonConverter.write(authenticationTransaction.interactionResultsAsMap()));
     } else {
-      params.add(null);
       params.add(null);
     }
 
@@ -72,7 +88,6 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
                 SET user_id = ?,
                 user_payload = ?::jsonb,
                 authentication_device_id = ?,
-                last_interaction_type = ?,
                 interactions = ?::jsonb
                 WHERE authorization_id = ?
                 AND tenant_id = ?
@@ -91,11 +106,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
     }
 
     if (authenticationTransaction.hasInteractions()) {
-      AuthenticationInteractionResult last = authenticationTransaction.lastInteraction();
-      params.add(last.type());
-      params.add(jsonConverter.write(authenticationTransaction.interactionResultsAsSet()));
+      params.add(jsonConverter.write(authenticationTransaction.interactionResultsAsMap()));
     } else {
-      params.add(null);
       params.add(null);
     }
 

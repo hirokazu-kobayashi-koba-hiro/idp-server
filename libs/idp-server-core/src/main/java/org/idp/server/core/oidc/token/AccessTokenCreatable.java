@@ -14,9 +14,9 @@ import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.TokenType;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
-import org.idp.server.core.oidc.configuration.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.ConfigurationInvalidException;
-import org.idp.server.core.oidc.configuration.ServerConfiguration;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.exception.ConfigurationInvalidException;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.mtls.ClientCertification;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
@@ -26,18 +26,18 @@ public interface AccessTokenCreatable {
 
   default AccessToken createAccessToken(
       AuthorizationGrant authorizationGrant,
-      ServerConfiguration serverConfiguration,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
       ClientCredentials clientCredentials) {
     try {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
-      long accessTokenDuration = serverConfiguration.accessTokenDuration();
+      long accessTokenDuration = authorizationServerConfiguration.accessTokenDuration();
       ExpiresIn expiresIn = new ExpiresIn(accessTokenDuration);
       ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(accessTokenDuration));
 
       AccessTokenPayloadBuilder payloadBuilder = new AccessTokenPayloadBuilder();
-      payloadBuilder.add(serverConfiguration.tokenIssuer());
+      payloadBuilder.add(authorizationServerConfiguration.tokenIssuer());
       payloadBuilder.add(authorizationGrant.subject());
       payloadBuilder.add(authorizationGrant.requestedClientId());
       payloadBuilder.add(authorizationGrant.scopes());
@@ -49,7 +49,7 @@ public interface AccessTokenCreatable {
 
       ClientCertificationThumbprint thumbprint = new ClientCertificationThumbprint();
       if (clientCredentials.isTlsClientAuthOrSelfSignedTlsClientAuth()
-          && serverConfiguration.isTlsClientCertificateBoundAccessTokens()
+          && authorizationServerConfiguration.isTlsClientCertificateBoundAccessTokens()
           && clientConfiguration.isTlsClientCertificateBoundAccessTokens()) {
         ClientCertification clientCertification = clientCredentials.clientCertification();
         ClientCertificationThumbprintCalculator calculator =
@@ -64,13 +64,13 @@ public interface AccessTokenCreatable {
           jsonWebSignatureFactory.createWithAsymmetricKey(
               accessTokenPayload,
               Map.of(),
-              serverConfiguration.jwks(),
-              serverConfiguration.tokenSignedKeyId());
+              authorizationServerConfiguration.jwks(),
+              authorizationServerConfiguration.tokenSignedKeyId());
       AccessTokenEntity accessTokenEntity = new AccessTokenEntity(jsonWebSignature.serialize());
 
       return new AccessToken(
-          serverConfiguration.tenantIdentifier(),
-          serverConfiguration.tokenIssuer(),
+          authorizationServerConfiguration.tenantIdentifier(),
+          authorizationServerConfiguration.tokenIssuer(),
           TokenType.Bearer,
           accessTokenEntity,
           authorizationGrant,
