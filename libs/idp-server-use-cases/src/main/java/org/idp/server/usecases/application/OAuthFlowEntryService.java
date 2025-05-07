@@ -23,7 +23,6 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
 import org.idp.server.core.oidc.*;
-import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
@@ -247,9 +246,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
             tenant,
             authorizationRequestIdentifier.value(),
             user,
-            authenticationTransaction.isSuccess()
-                ? session.authentication()
-                : new Authentication());
+            authenticationTransaction.isSuccess() ? session.authentication() : null);
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 

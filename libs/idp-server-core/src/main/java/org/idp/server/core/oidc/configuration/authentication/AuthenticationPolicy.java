@@ -4,27 +4,39 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.basic.type.AuthorizationFlow;
+import org.idp.server.basic.type.oauth.Scopes;
+import org.idp.server.basic.type.oidc.AcrValues;
 
-public class AuthenticationPolicyPolicy implements JsonReadable {
+public class AuthenticationPolicy implements JsonReadable {
   String id;
-  AuthenticationPolicyPolicyCondition policyConditions;
+  int priority;
+  AuthenticationPolicyCondition conditions;
   List<String> availableMethods;
-  AuthenticationPolicyResultConditions successConditions;
-  AuthenticationPolicyResultConditions failureConditions;
-  AuthenticationPolicyResultConditions lockConditions;
+  AuthenticationResultConditions successConditions;
+  AuthenticationResultConditions failureConditions;
+  AuthenticationResultConditions lockConditions;
 
-  public AuthenticationPolicyPolicy() {}
+  public AuthenticationPolicy() {}
 
-  public AuthenticationPolicyPolicyIdentifier identifier() {
-    return new AuthenticationPolicyPolicyIdentifier(id);
+  public boolean anyMatch(AuthorizationFlow authorizationFlow, AcrValues acrValues, Scopes scopes) {
+    return conditions.anyMatch(authorizationFlow, acrValues, scopes);
   }
 
-  public AuthenticationPolicyPolicyCondition policyConditions() {
-    return policyConditions;
+  public AuthenticationPolicyIdentifier identifier() {
+    return new AuthenticationPolicyIdentifier(id);
+  }
+
+  public int priority() {
+    return priority;
+  }
+
+  public AuthenticationPolicyCondition conditions() {
+    return conditions;
   }
 
   public boolean hasPolicyConditions() {
-    return policyConditions != null;
+    return conditions != null;
   }
 
   public List<String> availableMethods() {
@@ -35,7 +47,7 @@ public class AuthenticationPolicyPolicy implements JsonReadable {
     return availableMethods != null;
   }
 
-  public AuthenticationPolicyResultConditions successConditions() {
+  public AuthenticationResultConditions successConditions() {
     return successConditions;
   }
 
@@ -43,7 +55,7 @@ public class AuthenticationPolicyPolicy implements JsonReadable {
     return successConditions != null;
   }
 
-  public AuthenticationPolicyResultConditions failureConditions() {
+  public AuthenticationResultConditions failureConditions() {
     return failureConditions;
   }
 
@@ -51,7 +63,7 @@ public class AuthenticationPolicyPolicy implements JsonReadable {
     return failureConditions != null;
   }
 
-  public AuthenticationPolicyResultConditions lockConditions() {
+  public AuthenticationResultConditions lockConditions() {
     return lockConditions;
   }
 
@@ -66,7 +78,7 @@ public class AuthenticationPolicyPolicy implements JsonReadable {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);
-    if (hasPolicyConditions()) map.put("policy_conditions", policyConditions.toMap());
+    if (hasPolicyConditions()) map.put("conditions", conditions.toMap());
     if (hasAvailableMethods()) map.put("available_methods", availableMethods);
     if (hasSuccessConditions()) map.put("success_conditions", successConditions.toMap());
     if (hasFailureConditions()) map.put("failure_conditions", failureConditions.toMap());

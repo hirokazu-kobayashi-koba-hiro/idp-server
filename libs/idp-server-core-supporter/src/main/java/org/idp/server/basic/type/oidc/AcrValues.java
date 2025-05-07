@@ -50,4 +50,8 @@ public class AcrValues {
   public String toStringValues() {
     return String.join(" ", values);
   }
+
+  public boolean contains(String value) {
+    return values.contains(value);
+  }
 }
