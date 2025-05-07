@@ -37,6 +37,10 @@ public class MfaConditionEvaluator {
       return false;
     }
 
+    if (results.containsDenyInteraction()) {
+      return true;
+    }
+
     if (config.hasAllOf()) {
       for (MfaCondition condition : config.allOf()) {
         if (!results.contains(condition.type())) return false;
@@ -53,6 +57,31 @@ public class MfaConditionEvaluator {
       return false;
     }
 
-    return results.containsDenyInteraction();
+    return false;
+  }
+
+  public static boolean isLockedSatisfied(
+      MfaResultConditions config, AuthenticationInteractionResults results) {
+    if (!config.exists() || !results.exists()) {
+      return false;
+    }
+
+    if (config.hasAllOf()) {
+      for (MfaCondition condition : config.allOf()) {
+        if (!results.contains(condition.type())) return false;
+        if (results.get(condition.type()).failureCount() < condition.failureCount()) return false;
+      }
+      return true;
+    }
+
+    if (config.hasAnyOf()) {
+      for (MfaCondition cond : config.anyOf()) {
+        if (!results.contains(cond.type())) continue;
+        if (results.get(cond.type()).failureCount() >= cond.failureCount()) return true;
+      }
+      return false;
+    }
+
+    return false;
   }
 }

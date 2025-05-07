@@ -247,7 +247,8 @@ public class IdpServerApplication {
                 tenantRepository,
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository,
-                oAuthFLowEventPublisher),
+                oAuthFLowEventPublisher,
+                userLifecycleEventPublisher),
             OAuthFlowApi.class,
             OperationType.WRITE,
             tenantDialectProvider);
@@ -292,7 +293,8 @@ public class IdpServerApplication {
                 tenantRepository,
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository,
-                cibaFlowEventPublisher),
+                cibaFlowEventPublisher,
+                userLifecycleEventPublisher),
             CibaFlowApi.class,
             OperationType.WRITE,
             tenantDialectProvider);

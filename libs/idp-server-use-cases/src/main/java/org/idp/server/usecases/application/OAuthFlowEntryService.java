@@ -15,6 +15,9 @@ import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.federation.io.FederationRequestResponse;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
+import org.idp.server.core.identity.event.UserLifecycleEvent;
+import org.idp.server.core.identity.event.UserLifecycleEventPublisher;
+import org.idp.server.core.identity.event.UserLifecycleType;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
@@ -41,6 +44,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
   OAuthFlowEventPublisher eventPublisher;
+  UserLifecycleEventPublisher userLifecycleEventPublisher;
 
   public OAuthFlowEntryService(
       OAuthProtocols oAuthProtocols,
@@ -51,7 +55,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       TenantRepository tenantRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
-      OAuthFlowEventPublisher eventPublisher) {
+      OAuthFlowEventPublisher eventPublisher,
+      UserLifecycleEventPublisher userLifecycleEventPublisher) {
     this.oAuthProtocols = oAuthProtocols;
     this.oAuthSessionDelegate = oAuthSessiondelegate;
     this.authenticationInteractors = authenticationInteractors;
@@ -62,6 +67,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
     this.eventPublisher = eventPublisher;
+    this.userLifecycleEventPublisher = userLifecycleEventPublisher;
   }
 
   public Pairs<Tenant, OAuthRequestResponse> request(
@@ -136,6 +142,12 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     if (result.isSuccess()) {
       OAuthSession updated = oAuthSession.didAuthentication(result.user(), result.authentication());
       oAuthSessionDelegate.updateSession(updated);
+    }
+
+    if (updatedTransaction.isLocked()) {
+      UserLifecycleEvent userLifecycleEvent =
+          new UserLifecycleEvent(tenant, updatedTransaction.user(), UserLifecycleType.LOCK);
+      userLifecycleEventPublisher.publish(userLifecycleEvent);
     }
 
     eventPublisher.publish(

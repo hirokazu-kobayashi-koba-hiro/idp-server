@@ -3,7 +3,7 @@ module.exports = {
   testMatch: ["**/*.test.js"],
   testEnvironment: "node",
   moduleDirectories: ["node_modules", "src"],
-  maxWorkers: 5,
+  maxWorkers: 1,
   setupFilesAfterEnv: [`${process.cwd()}/jest.setup.js`],
   testRunner: "jest-jasmine2",
   reporters: [

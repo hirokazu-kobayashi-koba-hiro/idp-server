@@ -180,9 +180,9 @@ public class AuthenticationTransaction {
   public boolean isLocked() {
     if (hasMfaPolicy()) {
       MfaResultConditions mfaResultConditions = mfaPolicy.lockConditions();
-      return MfaConditionEvaluator.isFailureSatisfied(mfaResultConditions, interactionResults);
+      return MfaConditionEvaluator.isLockedSatisfied(mfaResultConditions, interactionResults);
     }
-    return interactionResults.containsDenyInteraction();
+    return false;
   }
 
   public boolean exists() {

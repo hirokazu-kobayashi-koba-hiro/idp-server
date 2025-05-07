@@ -182,7 +182,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
         result.eventType(),
         requestAttributes);
 
-    if (authenticationTransaction.isSuccess()) {
+    if (updatedTransaction.isSuccess()) {
       CibaAuthorizeRequest cibaAuthorizeRequest =
           new CibaAuthorizeRequest(tenant, backchannelAuthenticationRequestIdentifier);
       cibaProtocol.authorize(cibaAuthorizeRequest);
@@ -194,7 +194,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
           requestAttributes);
     }
 
-    if (authenticationTransaction.isFailure()) {
+    if (updatedTransaction.isFailure()) {
       CibaDenyRequest cibaDenyRequest =
           new CibaDenyRequest(tenant, backchannelAuthenticationRequestIdentifier);
       cibaProtocol.deny(cibaDenyRequest);
@@ -206,7 +206,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
           requestAttributes);
     }
 
-    if (authenticationTransaction.isLocked()) {
+    if (updatedTransaction.isLocked()) {
       UserLifecycleEvent userLifecycleEvent =
           new UserLifecycleEvent(tenant, result.user(), UserLifecycleType.LOCK);
       userLifecycleEventPublisher.publish(userLifecycleEvent);
