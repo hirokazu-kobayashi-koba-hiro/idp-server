@@ -203,8 +203,8 @@
       "fapi_advance_scopes": [
         "write"
       ],
-      "mfa_policy": {
-        "id": "default_mfa_policy",
+      "authentication_policy": {
+        "id": "default_authentication_policy",
         "conditions": {
           "acr_values": [
             "urn:mfa:required"

@@ -1,15 +1,15 @@
-package org.idp.server.core.oidc.configuration.mfa;
+package org.idp.server.core.oidc.configuration.authentication;
 
 import org.idp.server.basic.json.JsonReadable;
 
-public class MfaCondition implements JsonReadable {
+public class AuthenticationPolicyCondition implements JsonReadable {
   String type;
   int successCount;
   int failureCount;
 
-  public MfaCondition() {}
+  public AuthenticationPolicyCondition() {}
 
-  public MfaCondition(String type, int successCount, int failureCount) {
+  public AuthenticationPolicyCondition(String type, int successCount, int failureCount) {
     this.type = type;
     this.successCount = successCount;
     this.failureCount = failureCount;

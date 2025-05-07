@@ -1,27 +1,27 @@
-package org.idp.server.core.oidc.configuration.mfa;
+package org.idp.server.core.oidc.configuration.authentication;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonReadable;
 
-public class MfaResultConditions implements JsonReadable {
+public class AuthenticationPolicyResultConditions implements JsonReadable {
 
-  List<MfaCondition> anyOf;
-  List<MfaCondition> allOf;
+  List<AuthenticationPolicyCondition> anyOf;
+  List<AuthenticationPolicyCondition> allOf;
 
-  public MfaResultConditions() {}
+  public AuthenticationPolicyResultConditions() {}
 
-  public MfaResultConditions(List<MfaCondition> anyOf, List<MfaCondition> allOf) {
+  public AuthenticationPolicyResultConditions(List<AuthenticationPolicyCondition> anyOf, List<AuthenticationPolicyCondition> allOf) {
     this.anyOf = anyOf;
     this.allOf = allOf;
   }
 
-  public List<MfaCondition> anyOf() {
+  public List<AuthenticationPolicyCondition> anyOf() {
     return anyOf;
   }
 
-  public List<MfaCondition> allOf() {
+  public List<AuthenticationPolicyCondition> allOf() {
     return allOf;
   }
 

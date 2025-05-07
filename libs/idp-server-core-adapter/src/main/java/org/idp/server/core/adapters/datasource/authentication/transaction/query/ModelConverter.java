@@ -9,7 +9,7 @@ import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.oidc.configuration.mfa.MfaPolicy;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
 
 public class ModelConverter {
 
@@ -21,7 +21,7 @@ public class ModelConverter {
     TenantIdentifier tenantIdentifier = new TenantIdentifier(map.get("tenant_id"));
     RequestedClientId requestedClientId = new RequestedClientId(map.get("client_id"));
     User user = toUser(map);
-    MfaPolicy mfaPolicy = jsonConverter.read(map.get("mfa_policy"), MfaPolicy.class);
+    AuthenticationPolicyPolicy authenticationPolicyPolicy = jsonConverter.read(map.get("authentication_policy"), AuthenticationPolicyPolicy.class);
     LocalDateTime createdAt = LocalDateTime.parse(map.get("created_at"));
     LocalDateTime expiredAt = LocalDateTime.parse(map.get("expired_at"));
     AuthenticationRequest request =
@@ -29,7 +29,7 @@ public class ModelConverter {
             authorizationFlow, tenantIdentifier, requestedClientId, user, createdAt, expiredAt);
 
     AuthenticationInteractionResults interactionResults = toAuthenticationInteractionResults(map);
-    return new AuthenticationTransaction(identifier, request, mfaPolicy, interactionResults);
+    return new AuthenticationTransaction(identifier, request, authenticationPolicyPolicy, interactionResults);
   }
 
   static User toUser(Map<String, String> map) {

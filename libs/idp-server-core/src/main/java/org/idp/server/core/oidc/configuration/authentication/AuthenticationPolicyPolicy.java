@@ -1,25 +1,25 @@
-package org.idp.server.core.oidc.configuration.mfa;
+package org.idp.server.core.oidc.configuration.authentication;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonReadable;
 
-public class MfaPolicy implements JsonReadable {
+public class AuthenticationPolicyPolicy implements JsonReadable {
   String id;
-  MfaPolicyCondition policyConditions;
+  AuthenticationPolicyPolicyCondition policyConditions;
   List<String> availableMethods;
-  MfaResultConditions successConditions;
-  MfaResultConditions failureConditions;
-  MfaResultConditions lockConditions;
+  AuthenticationPolicyResultConditions successConditions;
+  AuthenticationPolicyResultConditions failureConditions;
+  AuthenticationPolicyResultConditions lockConditions;
 
-  public MfaPolicy() {}
+  public AuthenticationPolicyPolicy() {}
 
-  public MfaPolicyIdentifier identifier() {
-    return new MfaPolicyIdentifier(id);
+  public AuthenticationPolicyPolicyIdentifier identifier() {
+    return new AuthenticationPolicyPolicyIdentifier(id);
   }
 
-  public MfaPolicyCondition policyConditions() {
+  public AuthenticationPolicyPolicyCondition policyConditions() {
     return policyConditions;
   }
 
@@ -35,7 +35,7 @@ public class MfaPolicy implements JsonReadable {
     return availableMethods != null;
   }
 
-  public MfaResultConditions successConditions() {
+  public AuthenticationPolicyResultConditions successConditions() {
     return successConditions;
   }
 
@@ -43,7 +43,7 @@ public class MfaPolicy implements JsonReadable {
     return successConditions != null;
   }
 
-  public MfaResultConditions failureConditions() {
+  public AuthenticationPolicyResultConditions failureConditions() {
     return failureConditions;
   }
 
@@ -51,7 +51,7 @@ public class MfaPolicy implements JsonReadable {
     return failureConditions != null;
   }
 
-  public MfaResultConditions lockConditions() {
+  public AuthenticationPolicyResultConditions lockConditions() {
     return lockConditions;
   }
 

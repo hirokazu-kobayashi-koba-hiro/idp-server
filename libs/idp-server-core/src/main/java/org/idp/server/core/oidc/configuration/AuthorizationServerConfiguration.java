@@ -6,7 +6,7 @@ import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.ResponseType;
 import org.idp.server.basic.type.oauth.TokenIssuer;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.oidc.configuration.mfa.MfaPolicy;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
 import org.idp.server.core.oidc.configuration.vc.VerifiableCredentialConfiguration;
 
 /** ServerConfiguration */
@@ -527,7 +527,7 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     return extension.availableAuthenticationMethods();
   }
 
-  public MfaPolicy mfaPolicy() {
-    return extension.mfaPolicy();
+  public AuthenticationPolicyPolicy authenticationPolicy() {
+    return extension.authenticationPolicy();
   }
 }

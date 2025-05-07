@@ -2,7 +2,7 @@ package org.idp.server.core.oidc.configuration;
 
 import java.util.*;
 import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.core.oidc.configuration.mfa.MfaPolicy;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
 
 public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
@@ -20,7 +20,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   int backchannelAuthRequestExpiresIn = 300;
   int backchannelAuthPollingInterval = 5;
   int oauthAuthorizationRequestExpiresIn = 1800;
-  MfaPolicy mfaPolicy = new MfaPolicy();
+  AuthenticationPolicyPolicy authenticationPolicyPolicy = new AuthenticationPolicyPolicy();
 
   public AuthorizationServerExtensionConfiguration() {}
 
@@ -81,10 +81,10 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   }
 
   public List<String> availableAuthenticationMethods() {
-    if (mfaPolicy == null) {
+    if (authenticationPolicyPolicy == null) {
       return List.of("password");
     }
-    return mfaPolicy.availableMethods();
+    return authenticationPolicyPolicy.availableMethods();
   }
 
   public List<String> fapiBaselineScopes() {
@@ -99,7 +99,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return idTokenStrictMode;
   }
 
-  public MfaPolicy mfaPolicy() {
-    return mfaPolicy;
+  public AuthenticationPolicyPolicy authenticationPolicy() {
+    return authenticationPolicyPolicy;
   }
 }

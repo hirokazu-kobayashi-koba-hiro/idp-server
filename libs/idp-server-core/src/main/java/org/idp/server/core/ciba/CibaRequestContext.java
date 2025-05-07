@@ -18,7 +18,7 @@ import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.mfa.MfaPolicy;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
 
 public class CibaRequestContext implements BackchannelRequestContext {
 
@@ -184,8 +184,8 @@ public class CibaRequestContext implements BackchannelRequestContext {
     return authorizationServerConfiguration.availableAuthenticationMethods();
   }
 
-  public MfaPolicy mfaPolicy() {
-    return authorizationServerConfiguration.mfaPolicy();
+  public AuthenticationPolicyPolicy authenticationPolicy() {
+    return authorizationServerConfiguration.authenticationPolicy();
   }
 
   public boolean isFapiProfile() {

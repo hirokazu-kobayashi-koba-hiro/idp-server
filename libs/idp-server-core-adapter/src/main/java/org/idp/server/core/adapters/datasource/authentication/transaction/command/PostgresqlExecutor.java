@@ -29,7 +29,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
             user_id,
             user_payload,
             authentication_device_id,
-            mfa_policy,
+            authentication_policy,
             interactions,
             created_at,
             expired_at
@@ -65,7 +65,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
     } else {
       params.add(null);
     }
-    params.add(jsonConverter.write(authenticationTransaction.mfaPolicy().toMap()));
+    params.add(jsonConverter.write(authenticationTransaction.authenticationPolicy().toMap()));
     if (authenticationTransaction.hasInteractions()) {
       params.add(jsonConverter.write(authenticationTransaction.interactionResultsAsMap()));
     } else {

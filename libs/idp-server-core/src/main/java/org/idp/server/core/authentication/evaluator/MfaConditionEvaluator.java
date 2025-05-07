@@ -1,19 +1,19 @@
 package org.idp.server.core.authentication.evaluator;
 
 import org.idp.server.core.authentication.AuthenticationInteractionResults;
-import org.idp.server.core.oidc.configuration.mfa.MfaCondition;
-import org.idp.server.core.oidc.configuration.mfa.MfaResultConditions;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyCondition;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyResultConditions;
 
 public class MfaConditionEvaluator {
 
   public static boolean isSuccessSatisfied(
-      MfaResultConditions config, AuthenticationInteractionResults results) {
+          AuthenticationPolicyResultConditions config, AuthenticationInteractionResults results) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
 
     if (config.hasAllOf()) {
-      for (MfaCondition condition : config.allOf()) {
+      for (AuthenticationPolicyCondition condition : config.allOf()) {
         if (!results.contains(condition.type())) return false;
         if (results.get(condition.type()).successCount() < condition.successCount()) return false;
       }
@@ -21,7 +21,7 @@ public class MfaConditionEvaluator {
     }
 
     if (config.hasAnyOf()) {
-      for (MfaCondition cond : config.anyOf()) {
+      for (AuthenticationPolicyCondition cond : config.anyOf()) {
         if (!results.contains(cond.type())) continue;
         if (results.get(cond.type()).successCount() >= cond.successCount()) return true;
       }
@@ -32,7 +32,7 @@ public class MfaConditionEvaluator {
   }
 
   public static boolean isFailureSatisfied(
-      MfaResultConditions config, AuthenticationInteractionResults results) {
+          AuthenticationPolicyResultConditions config, AuthenticationInteractionResults results) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
@@ -42,7 +42,7 @@ public class MfaConditionEvaluator {
     }
 
     if (config.hasAllOf()) {
-      for (MfaCondition condition : config.allOf()) {
+      for (AuthenticationPolicyCondition condition : config.allOf()) {
         if (!results.contains(condition.type())) return false;
         if (results.get(condition.type()).failureCount() < condition.failureCount()) return false;
       }
@@ -50,7 +50,7 @@ public class MfaConditionEvaluator {
     }
 
     if (config.hasAnyOf()) {
-      for (MfaCondition cond : config.anyOf()) {
+      for (AuthenticationPolicyCondition cond : config.anyOf()) {
         if (!results.contains(cond.type())) continue;
         if (results.get(cond.type()).failureCount() >= cond.failureCount()) return true;
       }
@@ -61,13 +61,13 @@ public class MfaConditionEvaluator {
   }
 
   public static boolean isLockedSatisfied(
-      MfaResultConditions config, AuthenticationInteractionResults results) {
+          AuthenticationPolicyResultConditions config, AuthenticationInteractionResults results) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
 
     if (config.hasAllOf()) {
-      for (MfaCondition condition : config.allOf()) {
+      for (AuthenticationPolicyCondition condition : config.allOf()) {
         if (!results.contains(condition.type())) return false;
         if (results.get(condition.type()).failureCount() < condition.failureCount()) return false;
       }
@@ -75,7 +75,7 @@ public class MfaConditionEvaluator {
     }
 
     if (config.hasAnyOf()) {
-      for (MfaCondition cond : config.anyOf()) {
+      for (AuthenticationPolicyCondition cond : config.anyOf()) {
         if (!results.contains(cond.type())) continue;
         if (results.get(cond.type()).failureCount() >= cond.failureCount()) return true;
       }

@@ -1,13 +1,13 @@
-package org.idp.server.core.oidc.configuration.mfa;
+package org.idp.server.core.oidc.configuration.authentication;
 
 import java.util.Objects;
 
-public class MfaPolicyIdentifier {
+public class AuthenticationPolicyPolicyIdentifier {
   String value;
 
-  public MfaPolicyIdentifier() {}
+  public AuthenticationPolicyPolicyIdentifier() {}
 
-  public MfaPolicyIdentifier(String value) {
+  public AuthenticationPolicyPolicyIdentifier(String value) {
     this.value = value;
   }
 
@@ -22,7 +22,7 @@ public class MfaPolicyIdentifier {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    MfaPolicyIdentifier that = (MfaPolicyIdentifier) o;
+    AuthenticationPolicyPolicyIdentifier that = (AuthenticationPolicyPolicyIdentifier) o;
     return Objects.equals(value, that.value);
   }
 

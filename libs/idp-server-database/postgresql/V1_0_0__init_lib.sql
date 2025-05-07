@@ -511,7 +511,7 @@ CREATE TABLE authentication_transaction
     user_id                  CHAR(36),
     user_payload             JSONB,
     authentication_device_id CHAR(36),
-    mfa_policy               JSONB,
+    authentication_policy               JSONB,
     interactions             JSONB,
     created_at               TEXT         NOT NULL,
     expired_at               TEXT         NOT NULL,

@@ -13,15 +13,15 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.oidc.configuration.mfa.MfaPolicy;
-import org.idp.server.core.oidc.configuration.mfa.MfaResultConditions;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyResultConditions;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 
 public class AuthenticationTransaction {
   AuthorizationIdentifier identifier;
   AuthenticationRequest request;
-  MfaPolicy mfaPolicy;
+  AuthenticationPolicyPolicy authenticationPolicyPolicy;
   AuthenticationInteractionResults interactionResults;
 
   public static AuthenticationTransaction createOnOAuthFlow(
@@ -29,8 +29,8 @@ public class AuthenticationTransaction {
     AuthorizationIdentifier identifier =
         new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier());
     AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
-    MfaPolicy mfaPolicy = requestResponse.mfaPolicy();
-    return new AuthenticationTransaction(identifier, authenticationRequest, mfaPolicy);
+    AuthenticationPolicyPolicy authenticationPolicyPolicy = requestResponse.authenticationPolicy();
+    return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicyPolicy);
   }
 
   public static AuthenticationTransaction createOnCibaFlow(
@@ -39,8 +39,8 @@ public class AuthenticationTransaction {
         new AuthorizationIdentifier(cibaIssueResponse.backchannelAuthenticationRequestIdentifier());
     AuthenticationRequest authenticationRequest =
         toAuthenticationRequest(tenant, cibaIssueResponse);
-    MfaPolicy mfaPolicy = cibaIssueResponse.mfaPolicy();
-    return new AuthenticationTransaction(identifier, authenticationRequest, mfaPolicy);
+    AuthenticationPolicyPolicy authenticationPolicyPolicy = cibaIssueResponse.authenticationPolicy();
+    return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicyPolicy);
   }
 
   private static AuthenticationRequest toAuthenticationRequest(
@@ -102,24 +102,24 @@ public class AuthenticationTransaction {
 
     AuthenticationInteractionResults updatedResults =
         new AuthenticationInteractionResults(resultMap);
-    return new AuthenticationTransaction(identifier, updatedRequest, mfaPolicy, updatedResults);
+    return new AuthenticationTransaction(identifier, updatedRequest, authenticationPolicyPolicy, updatedResults);
   }
 
   public AuthenticationTransaction() {}
 
   AuthenticationTransaction(
-      AuthorizationIdentifier identifier, AuthenticationRequest request, MfaPolicy mfaPolicy) {
-    this(identifier, request, mfaPolicy, new AuthenticationInteractionResults());
+      AuthorizationIdentifier identifier, AuthenticationRequest request, AuthenticationPolicyPolicy authenticationPolicyPolicy) {
+    this(identifier, request, authenticationPolicyPolicy, new AuthenticationInteractionResults());
   }
 
   public AuthenticationTransaction(
       AuthorizationIdentifier identifier,
       AuthenticationRequest request,
-      MfaPolicy mfaPolicy,
+      AuthenticationPolicyPolicy authenticationPolicyPolicy,
       AuthenticationInteractionResults interactionResults) {
     this.identifier = identifier;
     this.request = request;
-    this.mfaPolicy = mfaPolicy;
+    this.authenticationPolicyPolicy = authenticationPolicyPolicy;
     this.interactionResults = interactionResults;
   }
 
@@ -153,34 +153,34 @@ public class AuthenticationTransaction {
     return map;
   }
 
-  public boolean hasMfaPolicy() {
-    return mfaPolicy != null && mfaPolicy.exists();
+  public boolean hasAuthenticationPolicy() {
+    return authenticationPolicyPolicy != null && authenticationPolicyPolicy.exists();
   }
 
-  public MfaPolicy mfaPolicy() {
-    return mfaPolicy;
+  public AuthenticationPolicyPolicy authenticationPolicy() {
+    return authenticationPolicyPolicy;
   }
 
   public boolean isSuccess() {
-    if (hasMfaPolicy()) {
-      MfaResultConditions mfaResultConditions = mfaPolicy.successConditions();
-      return MfaConditionEvaluator.isSuccessSatisfied(mfaResultConditions, interactionResults);
+    if (hasAuthenticationPolicy()) {
+      AuthenticationPolicyResultConditions authenticationPolicyResultConditions = authenticationPolicyPolicy.successConditions();
+      return MfaConditionEvaluator.isSuccessSatisfied(authenticationPolicyResultConditions, interactionResults);
     }
     return interactionResults.containsAnySuccess();
   }
 
   public boolean isFailure() {
-    if (hasMfaPolicy()) {
-      MfaResultConditions mfaResultConditions = mfaPolicy.failureConditions();
-      return MfaConditionEvaluator.isFailureSatisfied(mfaResultConditions, interactionResults);
+    if (hasAuthenticationPolicy()) {
+      AuthenticationPolicyResultConditions authenticationPolicyResultConditions = authenticationPolicyPolicy.failureConditions();
+      return MfaConditionEvaluator.isFailureSatisfied(authenticationPolicyResultConditions, interactionResults);
     }
     return interactionResults.containsDenyInteraction();
   }
 
   public boolean isLocked() {
-    if (hasMfaPolicy()) {
-      MfaResultConditions mfaResultConditions = mfaPolicy.lockConditions();
-      return MfaConditionEvaluator.isLockedSatisfied(mfaResultConditions, interactionResults);
+    if (hasAuthenticationPolicy()) {
+      AuthenticationPolicyResultConditions authenticationPolicyResultConditions = authenticationPolicyPolicy.lockConditions();
+      return MfaConditionEvaluator.isLockedSatisfied(authenticationPolicyResultConditions, interactionResults);
     }
     return false;
   }

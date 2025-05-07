@@ -59,7 +59,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
           user_id,
           user_payload,
           authentication_device_id,
-          mfa_policy,
+          authentication_policy,
           interactions,
           created_at,
           expired_at

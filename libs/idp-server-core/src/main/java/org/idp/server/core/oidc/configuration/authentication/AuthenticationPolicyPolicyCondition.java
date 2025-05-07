@@ -1,17 +1,17 @@
-package org.idp.server.core.oidc.configuration.mfa;
+package org.idp.server.core.oidc.configuration.authentication;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonReadable;
 
-public class MfaPolicyCondition implements JsonReadable {
+public class AuthenticationPolicyPolicyCondition implements JsonReadable {
   List<String> acrValues;
   List<String> scopes;
 
-  public MfaPolicyCondition() {}
+  public AuthenticationPolicyPolicyCondition() {}
 
-  public MfaPolicyCondition(List<String> acrValues, List<String> scopes) {
+  public AuthenticationPolicyPolicyCondition(List<String> acrValues, List<String> scopes) {
     this.acrValues = acrValues;
     this.scopes = scopes;
   }
