@@ -491,29 +491,6 @@ ALTER TABLE authorization_granted FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_authorization_granted_tenant_client_user ON authorization_granted (tenant_id, client_id, user_id);
 
-
-CREATE TABLE verifiable_credential_transaction
-(
-    id                    VARCHAR(255)            NOT NULL,
-    tenant_id             UUID                    NOT NULL,
-    credential_issuer     TEXT                    NOT NULL,
-    client_id             VARCHAR(255)            NOT NULL,
-    user_id               UUID                    NOT NULL,
-    verifiable_credential JSONB                   NOT NULL,
-    status                VARCHAR(10)             NOT NULL,
-    created_at            TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at            TIMESTAMP DEFAULT now() NOT NULL,
-    PRIMARY KEY (id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
-);
-
-ALTER TABLE verifiable_credential_transaction ENABLE ROW LEVEL SECURITY;
-CREATE
-POLICY rls_verifiable_credential_transaction
-  ON verifiable_credential_transaction
-  USING (tenant_id = current_setting('app.tenant_id')::uuid);
-ALTER TABLE verifiable_credential_transaction FORCE ROW LEVEL SECURITY;
-
 CREATE TABLE security_event
 (
     id          UUID,
@@ -663,7 +640,7 @@ CREATE TABLE authentication_transaction
     client_id                VARCHAR(255) NOT NULL,
     user_id                  UUID,
     user_payload             JSONB,
-    context                  JSONB
+    context                  JSONB,
     authentication_device_id UUID,
     authentication_policy    JSONB,
     interactions             JSONB,
