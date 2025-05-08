@@ -8,6 +8,10 @@ import org.idp.server.adapters.springboot.event.UserLifecycleEventPublisherServi
 import org.idp.server.basic.datasource.DatabaseConfig;
 import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.datasource.DbConfig;
+import org.idp.server.basic.datasource.cache.CacheConfiguration;
+import org.idp.server.basic.datasource.cache.CacheStore;
+import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
+import org.idp.server.core.adapters.datasource.cache.NoOperationCacheStore;
 import org.idp.server.core.adapters.datasource.config.HikariConnectionProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -45,6 +49,24 @@ public class IdPServerConfiguration {
   @Value("${idp.configurations.encryptionKey}")
   String encryptionKey;
 
+  @Value("${idp.cache.enabled}")
+  boolean enabledCache;
+
+  @Value("${idp.cache.redis.host}")
+  String redisHost;
+
+  @Value("${idp.cache.redis.port}")
+  int redisPort;
+
+  @Value("${idp.cache.redis.maxTotal}")
+  int maxTotal;
+
+  @Value("${idp.cache.redis.maxIdle}")
+  int maxIdle;
+
+  @Value("${idp.cache.redis.minIdle}")
+  int minIdle;
+
   @Bean
   public IdpServerApplication idpServerApplication(
       OAuthSessionService oAuthSessionService,
@@ -68,6 +90,8 @@ public class IdPServerConfiguration {
     DatabaseConfig databaseConfig = new DatabaseConfig(writerConfigs, readerConfigs);
     HikariConnectionProvider dbConnectionProvider = new HikariConnectionProvider(databaseConfig);
 
+    CacheStore cacheStore = createCacheStore();
+
     BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
     PasswordEncoder passwordEncoder = new PasswordEncoder(bCryptPasswordEncoder);
     PasswordVerification passwordVerification = new PasswordVerification(bCryptPasswordEncoder);
@@ -76,10 +100,21 @@ public class IdPServerConfiguration {
         adminTenantId,
         dbConnectionProvider,
         encryptionKey,
+        cacheStore,
         oAuthSessionService,
         passwordEncoder,
         passwordVerification,
         eventPublisherService,
         userLifecycleEventPublisherService);
+  }
+
+  private CacheStore createCacheStore() {
+    if (enabledCache) {
+      CacheConfiguration cacheConfiguration =
+          new CacheConfiguration(redisHost, redisPort, maxTotal, maxIdle, minIdle);
+      return new JedisCacheStore(cacheConfiguration);
+    }
+
+    return new NoOperationCacheStore();
   }
 }

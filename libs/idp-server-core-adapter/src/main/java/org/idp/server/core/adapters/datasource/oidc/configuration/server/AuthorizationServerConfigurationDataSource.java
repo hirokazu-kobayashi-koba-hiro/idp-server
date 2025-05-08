@@ -2,8 +2,11 @@ package org.idp.server.core.adapters.datasource.oidc.configuration.server;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import org.idp.server.basic.datasource.cache.CacheStore;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
 import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
@@ -13,10 +16,12 @@ public class AuthorizationServerConfigurationDataSource
 
   ServerConfigSqlExecutors executors;
   JsonConverter jsonConverter;
+  CacheStore cacheStore;
 
-  public AuthorizationServerConfigurationDataSource() {
+  public AuthorizationServerConfigurationDataSource(CacheStore cacheStore) {
     this.executors = new ServerConfigSqlExecutors();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
+    this.cacheStore = cacheStore;
   }
 
   @Override
@@ -24,10 +29,21 @@ public class AuthorizationServerConfigurationDataSource
       Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration) {
     ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(authorizationServerConfiguration);
+    String key = key(tenant.identifier());
+    cacheStore.delete(key);
   }
 
   @Override
   public AuthorizationServerConfiguration get(Tenant tenant) {
+    String key = key(tenant.identifier());
+    Optional<AuthorizationServerConfiguration> authorizationServerConfiguration =
+        cacheStore.find(key, AuthorizationServerConfiguration.class);
+
+    if (authorizationServerConfiguration.isPresent()) {
+
+      return authorizationServerConfiguration.get();
+    }
+
     ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> stringMap = executor.selectOne(tenant.identifier());
@@ -37,6 +53,17 @@ public class AuthorizationServerConfigurationDataSource
           String.format("unregistered server configuration (%s)", tenant.identifierValue()));
     }
 
-    return ModelConverter.convert(stringMap);
+    AuthorizationServerConfiguration convert = ModelConverter.convert(stringMap);
+
+    cacheStore.put(key, convert, 300);
+
+    return convert;
+  }
+
+  private String key(TenantIdentifier tenantIdentifier) {
+    return "tenantId:"
+        + tenantIdentifier.value()
+        + ":"
+        + AuthorizationServerConfiguration.class.getSimpleName();
   }
 }

@@ -13,9 +13,13 @@ repositories {
 dependencies {
 	implementation project(':libs:idp-server-core')
 	implementation project(':libs:idp-server-core-supporter')
+
+	//database
 	runtimeOnly 'org.postgresql:postgresql:42.7.2'
 	runtimeOnly 'com.mysql:mysql-connector-j:9.2.0'
 	implementation 'com.zaxxer:HikariCP:6.3.0'
+	//cache
+	implementation("redis.clients:jedis:5.1.0")
 
 	testImplementation platform('org.junit:junit-bom:5.10.0')
 	testImplementation 'org.junit.jupiter:junit-jupiter'

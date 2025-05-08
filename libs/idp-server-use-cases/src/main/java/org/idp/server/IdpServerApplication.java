@@ -3,6 +3,7 @@ package org.idp.server;
 import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.HmacHasher;
 import org.idp.server.basic.datasource.*;
+import org.idp.server.basic.datasource.cache.CacheStore;
 import org.idp.server.basic.dependency.ApplicationComponentContainer;
 import org.idp.server.basic.dependency.ApplicationComponentContainerLoader;
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
@@ -104,6 +105,7 @@ public class IdpServerApplication {
       String adminTenantId,
       DbConnectionProvider dbConnectionProvider,
       String encryptionKey,
+      CacheStore cacheStore,
       OAuthSessionDelegate oAuthSessionDelegate,
       PasswordEncodeDelegation passwordEncodeDelegation,
       PasswordVerificationDelegation passwordVerificationDelegation,
@@ -119,6 +121,7 @@ public class IdpServerApplication {
     HmacHasher hmacHasher = new HmacHasher(encryptionKey);
     dependencyContainer.register(AesCipher.class, aesCipher);
     dependencyContainer.register(HmacHasher.class, hmacHasher);
+    dependencyContainer.register(CacheStore.class, cacheStore);
     ApplicationComponentContainer applicationComponentContainer =
         ApplicationComponentContainerLoader.load(dependencyContainer);
     applicationComponentContainer.register(OAuthSessionDelegate.class, oAuthSessionDelegate);

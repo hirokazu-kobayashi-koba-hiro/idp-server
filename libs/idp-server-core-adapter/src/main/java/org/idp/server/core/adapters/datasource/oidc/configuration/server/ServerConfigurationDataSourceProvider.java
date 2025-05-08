@@ -1,5 +1,6 @@
 package org.idp.server.core.adapters.datasource.oidc.configuration.server;
 
+import org.idp.server.basic.datasource.cache.CacheStore;
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
@@ -15,6 +16,7 @@ public class ServerConfigurationDataSourceProvider
   @Override
   public AuthorizationServerConfigurationRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new AuthorizationServerConfigurationDataSource();
+    CacheStore cacheStore = container.resolve(CacheStore.class);
+    return new AuthorizationServerConfigurationDataSource(cacheStore);
   }
 }
