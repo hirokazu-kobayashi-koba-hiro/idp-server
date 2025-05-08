@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.basic.uuid.UuidMatcher;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -34,6 +35,11 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
     if (resultClientIdAlias != null && !resultClientIdAlias.isEmpty()) {
       return ModelConverter.convert(resultClientIdAlias);
+    }
+
+    if (!UuidMatcher.isValid(requestedClientId.value())) {
+      throw new ClientConfigurationNotFoundException(
+          String.format("unregistered client (%s)", requestedClientId.value()));
     }
 
     Map<String, String> resultClientId =

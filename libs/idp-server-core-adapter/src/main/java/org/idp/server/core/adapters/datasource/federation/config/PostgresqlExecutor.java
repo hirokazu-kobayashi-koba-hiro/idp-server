@@ -16,8 +16,9 @@ public class PostgresqlExecutor implements FederationConfigurationQuerySqlExecut
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                SELECT id, payload FROM federation_configurations
-                WHERE tenant_id = ?
+                SELECT id, payload
+                FROM federation_configurations
+                WHERE tenant_id = ?::uuid
                 AND type = ?
                 AND sso_provider_name = ?
                 """;

@@ -52,8 +52,8 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                 status)
                 VALUES
                 (
-                ?,
-                ?,
+                ?::uuid,
+                ?::uuid,
                 ?,
                 ?,
                 ?::jsonb,
@@ -125,7 +125,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
-        String.format(selectSql, "WHERE idp_user.tenant_id = ? AND idp_user.id = ?");
+        String.format(selectSql, "WHERE idp_user.tenant_id = ?::uuid AND idp_user.id = ?::uuid");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(userIdentifier.value());
@@ -141,7 +141,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
         String.format(
             selectSql,
             """
-                WHERE idp_user.tenant_id = ?
+                WHERE idp_user.tenant_id = ?::uuid
                 AND idp_user.email = ?
                 AND idp_user.provider_id = ?
             """);
@@ -161,7 +161,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
         String.format(
             selectSql,
             """
-                        WHERE idp_user.tenant_id = ?
+                        WHERE idp_user.tenant_id = ?::uuid
                         AND idp_user.phone_number = ?
                         AND idp_user.provider_id = ?
                     """);
@@ -178,8 +178,9 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
-        String.format(selectSql, """
-                WHERE idp_user.tenant_id = ?
+        String.format(
+            selectSql, """
+                WHERE idp_user.tenant_id = ?::uuid
             """);
 
     String pagedSql = sqlTemplate + """
@@ -225,7 +226,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                  verified_claims = ?::jsonb,
                  status = ?,
                  updated_at = now()
-                 WHERE id = ?;
+                 WHERE id = ?::uuid;
                  """;
 
     List<Object> params = new ArrayList<>();
@@ -267,7 +268,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
             selectSql,
             """
                 WHERE
-                idp_user.tenant_id = ?
+                idp_user.tenant_id = ?::uuid
                 AND idp_user.provider_id = ?
                 AND idp_user.provider_user_id = ?
             """);
@@ -287,7 +288,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
         String.format(
             selectSql,
             """
-                        WHERE idp_user.tenant_id = ?
+                        WHERE idp_user.tenant_id = ?::uuid
                         AND EXISTS (
                                   SELECT 1
                                   FROM jsonb_array_elements(idp_user.authentication_devices) AS device

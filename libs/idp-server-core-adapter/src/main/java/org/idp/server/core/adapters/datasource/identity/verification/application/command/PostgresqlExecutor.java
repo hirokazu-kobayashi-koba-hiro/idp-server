@@ -19,8 +19,34 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     String sqlTemplate =
         """
                     INSERT INTO public.identity_verification_applications
-                    (id, tenant_id, client_id, user_id, verification_type, application_details, external_workflow_delegation, external_application_id, external_application_details, trust_framework, processes, status, requested_at)
-                    VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?::jsonb, ?, ?::jsonb, ?, ?);
+                    (id,
+                    tenant_id,
+                    client_id,
+                    user_id,
+                    verification_type,
+                    application_details,
+                    external_workflow_delegation,
+                    external_application_id,
+                    external_application_details,
+                    trust_framework,
+                    processes,
+                    status,
+                    requested_at)
+                    VALUES (
+                    ?::uuid,
+                    ?::uuid,
+                    ?,
+                    ?::uuid,
+                    ?,
+                    ?::jsonb,
+                    ?,
+                    ?,
+                    ?::jsonb,
+                    ?,
+                    ?::jsonb,
+                    ?,
+                    ?
+                    );
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -88,7 +114,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     setClauses.add("updated_at = now()");
     sqlBuilder.append(String.join(", ", setClauses));
 
-    sqlBuilder.append(" WHERE id = ? AND tenant_id = ?");
+    sqlBuilder.append(" WHERE id = ?::uuid AND tenant_id = ?::uuid");
     params.add(application.identifier().value());
     params.add(tenant.identifierValue());
 
@@ -103,9 +129,9 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     String sqlTemplate =
         """
             DELETE FROM identity_verification_applications
-            WHERE tenant_id = ?
-            AND user_id = ?
-            AND id = ?;
+            WHERE tenant_id = ?::uuid
+            AND user_id = ?::uuid
+            AND id = ?::uuid;
             """;
 
     List<Object> params = new ArrayList<>();

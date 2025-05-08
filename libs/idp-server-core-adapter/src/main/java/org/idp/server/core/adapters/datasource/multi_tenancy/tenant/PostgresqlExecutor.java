@@ -18,7 +18,7 @@ public class PostgresqlExecutor implements TenantSqlExecutor {
     String sqlTemplate =
         """
             INSERT INTO tenant(id, name, type, domain, attributes)
-            VALUES (?, ?, ?, ?, ?::jsonb)
+            VALUES (?::uuid, ?, ?, ?, ?::jsonb)
             """;
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
@@ -38,7 +38,7 @@ public class PostgresqlExecutor implements TenantSqlExecutor {
         """
             SELECT id, name, type, domain, attributes
             FROM tenant
-            WHERE id = ?
+            WHERE id = ?::uuid
             """;
     List<Object> params = new ArrayList<>();
     params.add(tenantIdentifier.value());

@@ -16,7 +16,7 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
     String sqlTemplate =
         """
                 INSERT INTO role (id, tenant_id, name, description)
-                VALUES (?, ?, ?, ?)
+                VALUES (?::uuid, ?::uuid, ?, ?)
                 ON CONFLICT (tenant_id, name)
                 DO UPDATE SET
                 description = EXCLUDED.description,
@@ -53,7 +53,7 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
 
     roles.forEach(
         role -> {
-          sqlValues.add("(?, ?, ?, ?)");
+          sqlValues.add("(?::uuid, ?::uuid, ?, ?)");
           params.add(role.id());
           params.add(tenant.identifierValue());
           params.add(role.name());
@@ -80,7 +80,7 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
             role.permissions()
                 .forEach(
                     permission -> {
-                      sqlValues.add("(?, ?, ?)");
+                      sqlValues.add("(?::uuid, ?::uuid, ?::uuid)");
                       params.add(tenant.identifierValue());
                       params.add(role.id());
                       params.add(permission.id());

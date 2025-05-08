@@ -30,7 +30,8 @@ public class AuthenticationTransaction {
         new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier());
     AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
     AuthenticationPolicyPolicy authenticationPolicyPolicy = requestResponse.authenticationPolicy();
-    return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicyPolicy);
+    return new AuthenticationTransaction(
+        identifier, authenticationRequest, authenticationPolicyPolicy);
   }
 
   public static AuthenticationTransaction createOnCibaFlow(
@@ -39,8 +40,10 @@ public class AuthenticationTransaction {
         new AuthorizationIdentifier(cibaIssueResponse.backchannelAuthenticationRequestIdentifier());
     AuthenticationRequest authenticationRequest =
         toAuthenticationRequest(tenant, cibaIssueResponse);
-    AuthenticationPolicyPolicy authenticationPolicyPolicy = cibaIssueResponse.authenticationPolicy();
-    return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicyPolicy);
+    AuthenticationPolicyPolicy authenticationPolicyPolicy =
+        cibaIssueResponse.authenticationPolicy();
+    return new AuthenticationTransaction(
+        identifier, authenticationRequest, authenticationPolicyPolicy);
   }
 
   private static AuthenticationRequest toAuthenticationRequest(
@@ -102,13 +105,16 @@ public class AuthenticationTransaction {
 
     AuthenticationInteractionResults updatedResults =
         new AuthenticationInteractionResults(resultMap);
-    return new AuthenticationTransaction(identifier, updatedRequest, authenticationPolicyPolicy, updatedResults);
+    return new AuthenticationTransaction(
+        identifier, updatedRequest, authenticationPolicyPolicy, updatedResults);
   }
 
   public AuthenticationTransaction() {}
 
   AuthenticationTransaction(
-      AuthorizationIdentifier identifier, AuthenticationRequest request, AuthenticationPolicyPolicy authenticationPolicyPolicy) {
+      AuthorizationIdentifier identifier,
+      AuthenticationRequest request,
+      AuthenticationPolicyPolicy authenticationPolicyPolicy) {
     this(identifier, request, authenticationPolicyPolicy, new AuthenticationInteractionResults());
   }
 
@@ -163,24 +169,30 @@ public class AuthenticationTransaction {
 
   public boolean isSuccess() {
     if (hasAuthenticationPolicy()) {
-      AuthenticationPolicyResultConditions authenticationPolicyResultConditions = authenticationPolicyPolicy.successConditions();
-      return MfaConditionEvaluator.isSuccessSatisfied(authenticationPolicyResultConditions, interactionResults);
+      AuthenticationPolicyResultConditions authenticationPolicyResultConditions =
+          authenticationPolicyPolicy.successConditions();
+      return MfaConditionEvaluator.isSuccessSatisfied(
+          authenticationPolicyResultConditions, interactionResults);
     }
     return interactionResults.containsAnySuccess();
   }
 
   public boolean isFailure() {
     if (hasAuthenticationPolicy()) {
-      AuthenticationPolicyResultConditions authenticationPolicyResultConditions = authenticationPolicyPolicy.failureConditions();
-      return MfaConditionEvaluator.isFailureSatisfied(authenticationPolicyResultConditions, interactionResults);
+      AuthenticationPolicyResultConditions authenticationPolicyResultConditions =
+          authenticationPolicyPolicy.failureConditions();
+      return MfaConditionEvaluator.isFailureSatisfied(
+          authenticationPolicyResultConditions, interactionResults);
     }
     return interactionResults.containsDenyInteraction();
   }
 
   public boolean isLocked() {
     if (hasAuthenticationPolicy()) {
-      AuthenticationPolicyResultConditions authenticationPolicyResultConditions = authenticationPolicyPolicy.lockConditions();
-      return MfaConditionEvaluator.isLockedSatisfied(authenticationPolicyResultConditions, interactionResults);
+      AuthenticationPolicyResultConditions authenticationPolicyResultConditions =
+          authenticationPolicyPolicy.lockConditions();
+      return MfaConditionEvaluator.isLockedSatisfied(
+          authenticationPolicyResultConditions, interactionResults);
     }
     return false;
   }

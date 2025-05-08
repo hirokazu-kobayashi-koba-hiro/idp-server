@@ -36,13 +36,13 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
             )
             VALUES
             (
+            ?::uuid,
+            ?::uuid,
             ?,
             ?,
-            ?,
-            ?,
-            ?,
+            ?::uuid,
             ?::jsonb,
-            ?,
+            ?::uuid,
             ?::jsonb,
             ?::jsonb,
             ?,
@@ -85,12 +85,12 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
     String sqlTemplate =
         """
                 UPDATE authentication_transaction
-                SET user_id = ?,
+                SET user_id = ?::uuid,
                 user_payload = ?::jsonb,
-                authentication_device_id = ?,
+                authentication_device_id = ?::uuid,
                 interactions = ?::jsonb
-                WHERE authorization_id = ?
-                AND tenant_id = ?
+                WHERE authorization_id = ?::uuid
+                AND tenant_id = ?::uuid
                 """;
 
     User user = authenticationTransaction.user();

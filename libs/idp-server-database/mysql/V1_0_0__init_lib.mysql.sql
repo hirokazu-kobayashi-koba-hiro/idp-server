@@ -153,7 +153,7 @@ CREATE TABLE idp_user_roles
 
 CREATE INDEX idx_idp_user_roles_user_role ON idp_user_roles (user_id, role_id);
 
-CREATE TABLE user_permission_override
+CREATE TABLE idp_user_permission_override
 (
     id            CHAR(36)               NOT NULL,
     user_id       CHAR(36)               NOT NULL,
@@ -177,7 +177,7 @@ FROM idp_user u
          JOIN idp_user_roles ur ON u.id = ur.user_id
          JOIN role_permission rp ON ur.role_id = rp.role_id
          JOIN permission p ON rp.permission_id = p.id
-         LEFT JOIN user_permission_override ovr
+         LEFT JOIN idp_user_permission_override ovr
                    ON u.id = ovr.user_id AND ovr.permission_id = p.id AND ovr.granted = false
 WHERE ovr.id IS NULL
 
@@ -189,7 +189,7 @@ SELECT u.id           AS user_id,
        p.description  AS permission_description,
        'OVERRIDE'     AS source,
        ovr.created_at AS granted_at
-FROM user_permission_override ovr
+FROM idp_user_permission_override ovr
          JOIN idp_user u ON ovr.user_id = u.id
          JOIN permission p ON ovr.permission_id = p.id
 WHERE ovr.granted = true;

@@ -7,7 +7,7 @@ import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolic
 public class MfaConditionEvaluator {
 
   public static boolean isSuccessSatisfied(
-          AuthenticationPolicyResultConditions config, AuthenticationInteractionResults results) {
+      AuthenticationPolicyResultConditions config, AuthenticationInteractionResults results) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
@@ -32,7 +32,7 @@ public class MfaConditionEvaluator {
   }
 
   public static boolean isFailureSatisfied(
-          AuthenticationPolicyResultConditions config, AuthenticationInteractionResults results) {
+      AuthenticationPolicyResultConditions config, AuthenticationInteractionResults results) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
@@ -61,7 +61,7 @@ public class MfaConditionEvaluator {
   }
 
   public static boolean isLockedSatisfied(
-          AuthenticationPolicyResultConditions config, AuthenticationInteractionResults results) {
+      AuthenticationPolicyResultConditions config, AuthenticationInteractionResults results) {
     if (!config.exists() || !results.exists()) {
       return false;
     }

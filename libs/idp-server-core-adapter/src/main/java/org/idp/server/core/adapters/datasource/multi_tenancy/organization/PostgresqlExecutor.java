@@ -15,7 +15,7 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
     String sqlOrganizationTemplate =
         """
                 INSERT INTO organization(id, name, description)
-                VALUES (?, ?, ?);
+                VALUES (?::uuid, ?, ?);
                 """;
     List<Object> organizationParams = new ArrayList<>();
     organizationParams.add(organization.identifier().value());
@@ -37,7 +37,7 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
         .assignedTenants()
         .forEach(
             organizationTenant -> {
-              sqlValues.add("(?, ?)");
+              sqlValues.add("(?::uuid, ?::uuid)");
               tenantParams.add(organization.identifier().value());
               tenantParams.add(organizationTenant.identifier().value());
             });
@@ -57,7 +57,7 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
                 SET name = ?
                 description = ?
                 WHERE
-                id = ?
+                id = ?::uuid
                 """;
 
     List<Object> organizationParams = new ArrayList<>();
@@ -75,7 +75,7 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
     String sqlTemplate =
         """
                 SELECT id, name, type, issuer FROM organization
-                WHERE id = ?
+                WHERE id = ?::uuid
                 """;
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());

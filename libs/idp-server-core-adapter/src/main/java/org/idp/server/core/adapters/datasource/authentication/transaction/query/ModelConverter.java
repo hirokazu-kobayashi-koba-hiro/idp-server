@@ -21,7 +21,8 @@ public class ModelConverter {
     TenantIdentifier tenantIdentifier = new TenantIdentifier(map.get("tenant_id"));
     RequestedClientId requestedClientId = new RequestedClientId(map.get("client_id"));
     User user = toUser(map);
-    AuthenticationPolicyPolicy authenticationPolicyPolicy = jsonConverter.read(map.get("authentication_policy"), AuthenticationPolicyPolicy.class);
+    AuthenticationPolicyPolicy authenticationPolicyPolicy =
+        jsonConverter.read(map.get("authentication_policy"), AuthenticationPolicyPolicy.class);
     LocalDateTime createdAt = LocalDateTime.parse(map.get("created_at"));
     LocalDateTime expiredAt = LocalDateTime.parse(map.get("expired_at"));
     AuthenticationRequest request =
@@ -29,7 +30,8 @@ public class ModelConverter {
             authorizationFlow, tenantIdentifier, requestedClientId, user, createdAt, expiredAt);
 
     AuthenticationInteractionResults interactionResults = toAuthenticationInteractionResults(map);
-    return new AuthenticationTransaction(identifier, request, authenticationPolicyPolicy, interactionResults);
+    return new AuthenticationTransaction(
+        identifier, request, authenticationPolicyPolicy, interactionResults);
   }
 
   static User toUser(Map<String, String> map) {

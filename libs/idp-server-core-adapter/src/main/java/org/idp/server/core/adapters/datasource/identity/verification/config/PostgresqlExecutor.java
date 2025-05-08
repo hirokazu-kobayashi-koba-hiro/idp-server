@@ -15,7 +15,7 @@ public class PostgresqlExecutor implements IdentityVerificationConfigSqlExecutor
         """
             SELECT id, payload
             FROM identity_verification_configurations
-            WHERE tenant_id = ?
+            WHERE tenant_id = ?::uuid
             AND type = ?
             AND enabled = true
             """;

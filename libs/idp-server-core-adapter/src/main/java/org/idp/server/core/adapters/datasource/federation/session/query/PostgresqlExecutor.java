@@ -14,9 +14,11 @@ public class PostgresqlExecutor implements SsoSessionQuerySqlExecutor {
 
     String sqlTemplate =
         """
-                SELECT id, payload
+                SELECT
+                id,
+                payload
                 FROM federation_sso_session
-                WHERE id = ?
+                WHERE id = ?::uuid
                 """;
 
     List<Object> params = new ArrayList<>();

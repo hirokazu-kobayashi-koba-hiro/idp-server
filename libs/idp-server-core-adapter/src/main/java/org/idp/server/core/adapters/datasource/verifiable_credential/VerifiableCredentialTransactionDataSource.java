@@ -21,14 +21,14 @@ public class VerifiableCredentialTransactionDataSource
   public void register(
       Tenant tenant, VerifiableCredentialTransaction verifiableCredentialTransaction) {
     VerifiableCredentialTransactionSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.insert(verifiableCredentialTransaction);
+    executor.insert(tenant, verifiableCredentialTransaction);
   }
 
   @Override
   public VerifiableCredentialTransaction find(Tenant tenant, TransactionId transactionId) {
     VerifiableCredentialTransactionSqlExecutor executor = executors.get(tenant.databaseType());
 
-    Map<String, String> stringMap = executor.selectOne(transactionId);
+    Map<String, String> stringMap = executor.selectOne(tenant, transactionId);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
       throw new NotFoundException(

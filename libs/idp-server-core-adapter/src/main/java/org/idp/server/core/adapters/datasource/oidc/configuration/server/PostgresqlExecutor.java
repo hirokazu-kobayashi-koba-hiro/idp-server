@@ -22,8 +22,12 @@ public class PostgresqlExecutor implements ServerConfigSqlExecutor {
 
     String sqlTemplate =
         """
-                    INSERT INTO authorization_server_configuration (tenant_id, token_issuer, payload)
-                    VALUES (?, ?, ?::jsonb);
+                    INSERT INTO authorization_server_configuration (
+                    tenant_id,
+                    token_issuer,
+                    payload
+                    )
+                    VALUES (?::uuid, ?, ?::jsonb);
                     """;
     String payload = jsonConverter.write(authorizationServerConfiguration);
     List<Object> params = new ArrayList<>();
@@ -41,7 +45,7 @@ public class PostgresqlExecutor implements ServerConfigSqlExecutor {
         """
                     SELECT tenant_id, token_issuer, payload
                     FROM authorization_server_configuration
-                    WHERE tenant_id = ?;
+                    WHERE tenant_id = ?::uuid;
                     """;
     return sqlExecutor.selectOne(sqlTemplate, List.of(tenantIdentifier.value()));
   }

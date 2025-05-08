@@ -12,7 +12,8 @@ public class AuthenticationPolicyResultConditions implements JsonReadable {
 
   public AuthenticationPolicyResultConditions() {}
 
-  public AuthenticationPolicyResultConditions(List<AuthenticationPolicyCondition> anyOf, List<AuthenticationPolicyCondition> allOf) {
+  public AuthenticationPolicyResultConditions(
+      List<AuthenticationPolicyCondition> anyOf, List<AuthenticationPolicyCondition> allOf) {
     this.anyOf = anyOf;
     this.allOf = allOf;
   }

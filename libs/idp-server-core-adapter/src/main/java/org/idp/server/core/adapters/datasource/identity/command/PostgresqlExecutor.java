@@ -51,8 +51,8 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
                 status)
                 VALUES
                 (
-                ?,
-                ?,
+                ?::uuid,
+                ?::uuid,
                 ?,
                 ?,
                 ?::jsonb,
@@ -149,7 +149,7 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
                  verified_claims = ?::jsonb,
                  status = ?,
                  updated_at = now()
-                 WHERE id = ?;
+                 WHERE id = ?::uuid;
                  """;
 
     List<Object> params = new ArrayList<>();
@@ -186,7 +186,10 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM idp_user WHERE idp_user.tenant_id = ? AND idp_user.id = ?;
+            DELETE FROM idp_user
+            WHERE
+            idp_user.tenant_id = ?::uuid
+            AND idp_user.id = ?::uuid;
             """;
 
     List<Object> params = new ArrayList<>();

@@ -20,9 +20,9 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
         selectSql
             + " "
             + """
-                 WHERE id = ?
-                 AND tenant_id = ?
-                 AND user_id = ?;
+                 WHERE id = ?::uuid
+                 AND tenant_id = ?::uuid
+                 AND user_id = ?::uuid;
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -42,7 +42,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
             + " "
             + """
                  WHERE external_application_id = ?
-                 AND tenant_id = ?;
+                 AND tenant_id = ?::uuid;
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -59,8 +59,8 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
         selectSql
             + " "
             + """
-                     WHERE user_id = ?
-                     AND tenant_id = ?
+                     WHERE user_id = ?::uuid
+                     AND tenant_id = ?::uuid
                      ORDER BY requested_at DESC;
                     """;
 
@@ -78,14 +78,14 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
 
     StringBuilder sqlBuilder = new StringBuilder();
     sqlBuilder.append(selectSql);
-    sqlBuilder.append(" WHERE user_id = ? AND tenant_id = ?");
+    sqlBuilder.append(" WHERE user_id = ?::uuid AND tenant_id = ?::uuid");
 
     List<Object> params = new ArrayList<>();
     params.add(user.sub());
     params.add(tenant.identifierValue());
 
     if (queries.hasId()) {
-      sqlBuilder.append(" AND id = ?");
+      sqlBuilder.append(" AND id = ?::uuid");
       params.add(queries.id());
     }
     if (queries.hasType()) {

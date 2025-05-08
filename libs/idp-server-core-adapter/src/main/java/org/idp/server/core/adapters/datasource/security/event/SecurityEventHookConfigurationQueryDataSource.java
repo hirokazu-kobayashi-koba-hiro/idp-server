@@ -16,7 +16,8 @@ public class SecurityEventHookConfigurationQueryDataSource
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
   String selectSql =
       """
-            SELECT id, payload FROM security_event_hook_configuration
+            SELECT id, payload
+            FROM security_event_hook_configuration
             """;
 
   @Override
@@ -26,7 +27,7 @@ public class SecurityEventHookConfigurationQueryDataSource
     String sqlTemplate =
         selectSql
             + """
-                WHERE tenant_id = ?
+                WHERE tenant_id = ?::uuid
                 AND enabled = true
                 ORDER BY execution_order;
                 """;

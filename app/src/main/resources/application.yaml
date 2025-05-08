@@ -11,8 +11,8 @@ idp:
   datasource:
     postgresql:
       url: "${DB_URL:jdbc:postgresql://localhost:5432/idpserver}"
-      username: "${DB_USER_NAME:idpserver}"
-      password: "${DB_PASSWORD:idpserver}"
+      username: "${DB_USER_NAME:idp_app_user}"
+      password: "${DB_PASSWORD:idp_app_user}"
       hikari:
         connection-timeout: 3000
         maximum-pool-size: 5
