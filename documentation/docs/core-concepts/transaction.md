@@ -84,3 +84,79 @@ back.
 
 This modular transaction architecture ensures portability, extensibility, and safe data consistency across all identity
 and authorization flows.
+
+## 8. Row-Level Security (RLS) Integration
+
+To ensure strict tenant-based data isolation, `idp-server` uses **PostgreSQL Row-Level Security (RLS)** in combination with its custom transaction management layer.
+
+### 🔐 Key Concepts
+
+* All multi-tenant tables define RLS policies like:
+
+  ```sql
+  CREATE POLICY rls_<table_name>
+    ON <table_name>
+    USING (tenant_id = current_setting('app.tenant_id')::uuid);
+  ```
+
+* Enforcement is enabled with:
+
+  ```sql
+  ALTER TABLE <table_name> FORCE ROW LEVEL SECURITY;
+  ```
+
+### 🔧 RLS Context Propagation
+
+The `TransactionManager` ensures the correct tenant context is applied to each DB connection:
+
+```java
+private static void setTenantId(Connection conn, String tenantIdentifier) {
+    stmt.execute("SET app.tenant_id = '" + tenantIdentifier + "'");
+}
+```
+
+* This sets the session-level variable `app.tenant_id` used by RLS policies.
+* It **must be set before any SQL execution**, including metadata queries.
+* The tenant ID is passed explicitly as a `TenantIdentifier` argument into all service-level methods.
+
+### 💡 Best Practices
+
+* **Avoid enabling RLS on the `tenant` table** if it is required to resolve the tenant context early in the request lifecycle.
+
+* After applying Flyway migrations, always run:
+
+  ```sql
+  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO idp_app_user;
+  ```
+
+* Use `ALTER DEFAULT PRIVILEGES` to ensure future tables and sequences are covered:
+
+  ```sql
+  ALTER DEFAULT PRIVILEGES FOR ROLE postgres
+    IN SCHEMA public
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO idp_app_user;
+
+  ALTER DEFAULT PRIVILEGES FOR ROLE postgres
+    IN SCHEMA public
+    GRANT USAGE, SELECT ON SEQUENCES TO idp_app_user;
+  ```
+
+### 🔪 Debugging Tips
+
+* List all active RLS policies:
+
+  ```sql
+  SELECT * FROM pg_policies WHERE schemaname = 'public';
+  ```
+
+* Verify user-level permissions:
+
+  ```sql
+  SELECT * FROM information_schema.role_table_grants
+  WHERE grantee = 'idp_app_user' AND table_schema = 'public';
+  ```
+
+---
+
+This design ensures **multi-tenant safety at the database level** while retaining full portability across different deployment environments.
+
