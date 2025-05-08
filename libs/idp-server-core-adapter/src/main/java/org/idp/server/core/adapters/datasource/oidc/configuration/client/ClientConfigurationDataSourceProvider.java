@@ -1,5 +1,6 @@
 package org.idp.server.core.adapters.datasource.oidc.configuration.client;
 
+import org.idp.server.basic.datasource.cache.CacheStore;
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
@@ -14,6 +15,7 @@ public class ClientConfigurationDataSourceProvider
 
   @Override
   public ClientConfigurationRepository provide(ApplicationComponentDependencyContainer container) {
-    return new ClientConfigurationDataSource();
+    CacheStore cacheStore = container.resolve(CacheStore.class);
+    return new ClientConfigurationDataSource(cacheStore);
   }
 }

@@ -2,7 +2,9 @@ package org.idp.server.core.adapters.datasource.multi_tenancy.tenant;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.idp.server.basic.datasource.DatabaseType;
+import org.idp.server.basic.datasource.cache.CacheStore;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.multi_tenancy.tenant.*;
 
@@ -10,10 +12,12 @@ public class TenantDataSource implements TenantRepository {
 
   TenantSqlExecutors executors;
   JsonConverter jsonConverter;
+  CacheStore cacheStore;
 
-  public TenantDataSource() {
+  public TenantDataSource(CacheStore cacheStore) {
     this.executors = new TenantSqlExecutors();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
+    this.cacheStore = cacheStore;
   }
 
   @Override
@@ -24,6 +28,13 @@ public class TenantDataSource implements TenantRepository {
 
   @Override
   public Tenant get(TenantIdentifier tenantIdentifier) {
+    String key = key(tenantIdentifier);
+    Optional<Tenant> optionalTenant = cacheStore.find(key, Tenant.class);
+
+    if (optionalTenant.isPresent()) {
+      return optionalTenant.get();
+    }
+
     TenantSqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
 
     Map<String, String> result = executor.selectOne(tenantIdentifier);
@@ -33,7 +44,11 @@ public class TenantDataSource implements TenantRepository {
           String.format("Tenant is not found (%s)", tenantIdentifier.value()));
     }
 
-    return ModelConverter.convert(result);
+    Tenant convert = ModelConverter.convert(result);
+
+    cacheStore.put(key, convert);
+
+    return convert;
   }
 
   @Override
@@ -50,8 +65,18 @@ public class TenantDataSource implements TenantRepository {
   }
 
   @Override
-  public void update(Tenant tenant) {}
+  public void update(Tenant tenant) {
+    String key = key(tenant.identifier());
+    cacheStore.delete(key);
+  }
 
   @Override
-  public void delete(TenantIdentifier tenantIdentifier) {}
+  public void delete(TenantIdentifier tenantIdentifier) {
+    String key = key(tenantIdentifier);
+    cacheStore.delete(key);
+  }
+
+  private String key(TenantIdentifier tenantIdentifier) {
+    return "tenantId:" + tenantIdentifier.value() + ":" + Tenant.class.getSimpleName();
+  }
 }

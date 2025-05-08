@@ -2,7 +2,6 @@ package org.idp.server.core.multi_tenancy.tenant;
 
 import java.util.Objects;
 
-/** TenantIdentifier is tenant identity. */
 public class TenantIdentifier {
 
   String value;

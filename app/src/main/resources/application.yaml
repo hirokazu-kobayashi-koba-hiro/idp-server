@@ -25,7 +25,15 @@ idp:
         connection-timeout: 3000
         maximum-pool-size: 5
         minimum-idle: 2
-
+  cache:
+    enabled: true
+    timeToLiveSecond: ${CACHE_TIME_TO_LIVE_SECOND:300}
+    redis:
+      host: "${REDIS_HOST:localhost}"
+      port: ${REDIS_PORT:6379}
+      maxTotal: 20
+      maxIdle: 3
+      minIdle: 2
 
 logging:
   level:
