@@ -24,8 +24,6 @@ public class TenantDataSource implements TenantRepository {
   public void register(Tenant tenant) {
     TenantSqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
     executor.insert(tenant);
-    String key = key(tenant.identifier());
-    cacheStore.put(key, tenant, 300);
   }
 
   @Override
@@ -48,7 +46,7 @@ public class TenantDataSource implements TenantRepository {
 
     Tenant convert = ModelConverter.convert(result);
 
-    cacheStore.put(key, convert, 300);
+    cacheStore.put(key, convert);
 
     return convert;
   }
@@ -67,10 +65,16 @@ public class TenantDataSource implements TenantRepository {
   }
 
   @Override
-  public void update(Tenant tenant) {}
+  public void update(Tenant tenant) {
+    String key = key(tenant.identifier());
+    cacheStore.delete(key);
+  }
 
   @Override
-  public void delete(TenantIdentifier tenantIdentifier) {}
+  public void delete(TenantIdentifier tenantIdentifier) {
+    String key = key(tenantIdentifier);
+    cacheStore.delete(key);
+  }
 
   private String key(TenantIdentifier tenantIdentifier) {
     return "tenantId:" + tenantIdentifier.value() + ":" + Tenant.class.getSimpleName();

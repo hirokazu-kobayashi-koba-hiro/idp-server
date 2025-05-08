@@ -29,8 +29,6 @@ public class AuthorizationServerConfigurationDataSource
       Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration) {
     ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(authorizationServerConfiguration);
-    String key = key(tenant.identifier());
-    cacheStore.delete(key);
   }
 
   @Override
@@ -55,7 +53,7 @@ public class AuthorizationServerConfigurationDataSource
 
     AuthorizationServerConfiguration convert = ModelConverter.convert(stringMap);
 
-    cacheStore.put(key, convert, 300);
+    cacheStore.put(key, convert);
 
     return convert;
   }

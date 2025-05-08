@@ -14,6 +14,7 @@ public class JedisCacheStore implements CacheStore {
   JedisPool jedisPool;
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
   LoggerWrapper log = LoggerWrapper.getLogger(JedisCacheStore.class);
+  int timeToLiveSecond;
 
   public JedisCacheStore(CacheConfiguration cacheConfiguration) {
     JedisPoolConfig config = new JedisPoolConfig();
@@ -21,13 +22,14 @@ public class JedisCacheStore implements CacheStore {
     config.setMaxIdle(cacheConfiguration.maxIdle());
     config.setMinIdle(cacheConfiguration.minIdle());
     this.jedisPool = new JedisPool(config, cacheConfiguration.host(), cacheConfiguration.port());
+    this.timeToLiveSecond = cacheConfiguration.timeToLiveSeconds();
   }
 
   @Override
-  public <T> void put(String key, T value, int second) {
+  public <T> void put(String key, T value) {
     try (Jedis resource = jedisPool.getResource()) {
       String json = jsonConverter.write(value);
-      resource.setex(key, second, json);
+      resource.setex(key, timeToLiveSecond, json);
     } catch (Exception e) {
       log.error("Failed to put cache", e);
     }

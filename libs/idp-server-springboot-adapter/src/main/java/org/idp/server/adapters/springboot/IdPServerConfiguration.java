@@ -52,6 +52,9 @@ public class IdPServerConfiguration {
   @Value("${idp.cache.enabled}")
   boolean enabledCache;
 
+  @Value("${idp.cache.timeToLiveSecond}")
+  int timeToLiveSecond;
+
   @Value("${idp.cache.redis.host}")
   String redisHost;
 
@@ -111,7 +114,8 @@ public class IdPServerConfiguration {
   private CacheStore createCacheStore() {
     if (enabledCache) {
       CacheConfiguration cacheConfiguration =
-          new CacheConfiguration(redisHost, redisPort, maxTotal, maxIdle, minIdle);
+          new CacheConfiguration(
+              redisHost, redisPort, maxTotal, maxIdle, minIdle, timeToLiveSecond);
       return new JedisCacheStore(cacheConfiguration);
     }
 

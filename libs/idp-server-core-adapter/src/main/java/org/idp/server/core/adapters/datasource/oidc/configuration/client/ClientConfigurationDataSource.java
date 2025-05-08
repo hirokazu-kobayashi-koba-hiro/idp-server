@@ -31,12 +31,6 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
   public void register(Tenant tenant, ClientConfiguration clientConfiguration) {
     ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, clientConfiguration);
-    String key = key(tenant.identifier(), clientConfiguration.clientIdentifier().value());
-    cacheStore.delete(key);
-    if (clientConfiguration.clientIdAlias() != null) {
-      String aliasKey = key(tenant.identifier(), clientConfiguration.clientIdAlias());
-      cacheStore.delete(aliasKey);
-    }
   }
 
   @Override
@@ -55,7 +49,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
     if (resultClientIdAlias != null && !resultClientIdAlias.isEmpty()) {
 
       ClientConfiguration convert = ModelConverter.convert(resultClientIdAlias);
-      cacheStore.put(key, convert, 300);
+      cacheStore.put(key, convert);
       return convert;
     }
 
@@ -74,7 +68,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
     ClientConfiguration convert = ModelConverter.convert(resultClientId);
 
-    cacheStore.put(key, convert, 300);
+    cacheStore.put(key, convert);
 
     return convert;
   }
@@ -97,7 +91,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
           String.format("unregistered client (%s)", clientIdentifier.value()));
     }
 
-    cacheStore.put(key, result, 300);
+    cacheStore.put(key, result);
 
     return ModelConverter.convert(result);
   }

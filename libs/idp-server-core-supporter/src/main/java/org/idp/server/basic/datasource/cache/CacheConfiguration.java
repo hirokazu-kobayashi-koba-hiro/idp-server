@@ -6,15 +6,18 @@ public class CacheConfiguration {
   int maxTotal;
   int maxIdle;
   int minIdle;
+  int timeToLiveSeconds;
 
   public CacheConfiguration() {}
 
-  public CacheConfiguration(String host, int port, int maxTotal, int maxIdle, int minIdle) {
+  public CacheConfiguration(
+      String host, int port, int maxTotal, int maxIdle, int minIdle, int timeToLiveSeconds) {
     this.host = host;
     this.port = port;
     this.maxTotal = maxTotal;
     this.maxIdle = maxIdle;
     this.minIdle = minIdle;
+    this.timeToLiveSeconds = timeToLiveSeconds;
   }
 
   public String host() {
@@ -35,5 +38,9 @@ public class CacheConfiguration {
 
   public int minIdle() {
     return minIdle;
+  }
+
+  public int timeToLiveSeconds() {
+    return timeToLiveSeconds;
   }
 }
