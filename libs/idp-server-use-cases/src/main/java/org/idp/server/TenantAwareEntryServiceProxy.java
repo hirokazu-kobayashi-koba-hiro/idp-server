@@ -29,9 +29,40 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         method.isAnnotationPresent(Transaction.class)
             || target.getClass().isAnnotationPresent(Transaction.class);
 
-    if (isTransactional) {
+    if (isTransactional && operationType == OperationType.READ) {
       try {
         OperationContext.set(operationType);
+        log.info("READ start: " + target.getClass().getName() + ": " + method.getName() + " ...");
+        TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
+        TransactionManager.createConnection(DatabaseType.POSTGRESQL, tenantIdentifier.value());
+        DatabaseType databaseType = dialectProvider.provide(tenantIdentifier);
+        TransactionManager.closeConnection();
+
+        TransactionManager.createConnection(databaseType, tenantIdentifier.value());
+        Object result = method.invoke(target, args);
+
+        TransactionManager.closeConnection();
+        log.info("READ end: " + target.getClass().getName() + ": " + method.getName() + " ...");
+
+        return result;
+      } catch (InvocationTargetException e) {
+        log.error(
+            "fail (InvocationTargetException): "
+                + target.getClass().getName()
+                + ": "
+                + method.getName()
+                + ", cause: "
+                + e.getTargetException().toString());
+        throw e.getTargetException();
+      } catch (Throwable e) {
+        log.error(
+            "fail: " + target.getClass().getName() + ": " + method.getName() + ", cause: " + e);
+        throw e;
+      }
+    } else if (isTransactional && operationType == OperationType.WRITE) {
+      try {
+        OperationContext.set(operationType);
+        log.info("WRITE start: " + target.getClass().getName() + ": " + method.getName() + " ...");
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
 
         TransactionManager.createConnection(DatabaseType.POSTGRESQL, tenantIdentifier.value());
@@ -55,6 +86,9 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
                 + target.getClass().getName()
                 + ": "
                 + method.getName());
+
+        log.info("WRITE end: " + target.getClass().getName() + ": " + method.getName() + " ...");
+
         return result;
       } catch (InvocationTargetException e) {
         TransactionManager.rollbackTransaction();

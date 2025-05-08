@@ -273,7 +273,7 @@ public class IdpServerApplication {
                 tenantRepository,
                 new DiscoveryProtocols(protocolContainer.resolveAll(DiscoveryProtocol.class))),
             OidcMetaDataApi.class,
-            OperationType.WRITE,
+            OperationType.READ,
             tenantDialectProvider);
 
     this.userinfoApi =
@@ -284,7 +284,7 @@ public class IdpServerApplication {
                 tenantRepository,
                 tokenEventPublisher),
             UserinfoApi.class,
-            OperationType.WRITE,
+            OperationType.READ,
             tenantDialectProvider);
 
     this.cibaFlowApi =
@@ -310,7 +310,7 @@ public class IdpServerApplication {
                 fidoUafExecutors,
                 tenantRepository),
             AuthenticationMetaDataApi.class,
-            OperationType.WRITE,
+            OperationType.READ,
             tenantDialectProvider);
 
     this.authenticationDeviceApi =

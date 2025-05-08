@@ -13,7 +13,9 @@ import org.idp.server.basic.datasource.cache.CacheStore;
 import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
 import org.idp.server.core.adapters.datasource.cache.NoOperationCacheStore;
 import org.idp.server.core.adapters.datasource.config.HikariConnectionProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -23,28 +25,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @EnableAsync
 @EnableScheduling
 @Configuration
+@EnableConfigurationProperties(DatabaseConfigProperties.class)
 public class IdPServerConfiguration {
 
   @Value("${idp.configurations.adminTenantId}")
   String adminTenantId;
-
-  @Value("${idp.datasource.postgresql.url}")
-  String postgresqlUrl;
-
-  @Value("${idp.datasource.postgresql.username}")
-  String postgresqlUsername;
-
-  @Value("${idp.datasource.postgresql.password}")
-  String postgresqlPassword;
-
-  @Value("${idp.datasource.mysql.url}")
-  String mysqlUrl;
-
-  @Value("${idp.datasource.mysql.username}")
-  String mysqlUsername;
-
-  @Value("${idp.datasource.mysql.password}")
-  String mysqlPassword;
 
   @Value("${idp.configurations.encryptionKey}")
   String encryptionKey;
@@ -70,6 +55,8 @@ public class IdPServerConfiguration {
   @Value("${idp.cache.redis.minIdle}")
   int minIdle;
 
+  @Autowired DatabaseConfigProperties databaseConfigProperties;
+
   @Bean
   public IdpServerApplication idpServerApplication(
       OAuthSessionService oAuthSessionService,
@@ -79,16 +66,16 @@ public class IdPServerConfiguration {
     Map<DatabaseType, DbConfig> writerConfigs =
         Map.of(
             DatabaseType.POSTGRESQL,
-            DbConfig.defaultConfig(postgresqlUrl, postgresqlUsername, postgresqlPassword),
+            databaseConfigProperties.getPostgresql().get("writer").toDbConfig(),
             DatabaseType.MYSQL,
-            DbConfig.defaultConfig(mysqlUrl, mysqlUsername, mysqlPassword));
+            databaseConfigProperties.getMysql().get("writer").toDbConfig());
 
     Map<DatabaseType, DbConfig> readerConfigs =
         Map.of(
             DatabaseType.POSTGRESQL,
-            DbConfig.defaultConfig(postgresqlUrl, postgresqlUsername, postgresqlPassword),
+            databaseConfigProperties.getPostgresql().get("reader").toDbConfig(),
             DatabaseType.MYSQL,
-            DbConfig.defaultConfig(mysqlUrl, mysqlUsername, mysqlPassword));
+            databaseConfigProperties.getMysql().get("reader").toDbConfig());
 
     DatabaseConfig databaseConfig = new DatabaseConfig(writerConfigs, readerConfigs);
     HikariConnectionProvider dbConnectionProvider = new HikariConnectionProvider(databaseConfig);

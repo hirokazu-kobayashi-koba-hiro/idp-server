@@ -16,6 +16,15 @@ services:
       - POSTGRES_DB=idpserver
     ports:
       - "5432:5432"
+  postgresql-reader:
+    image: postgres:15
+    container_name: postgres-reader
+    environment:
+      - POSTGRES_USER=idpserver
+      - POSTGRES_PASSWORD=idpserver
+      - POSTGRES_DB=idpserver_reader
+    ports:
+      - "54321:5432"
 
   mysql:
     image: mysql:8.0
