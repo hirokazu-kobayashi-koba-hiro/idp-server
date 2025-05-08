@@ -25,7 +25,7 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
     String sqlTemplate =
         """
             INSERT INTO client_configuration (id, id_alias, tenant_id, payload)
-            VALUES (?, ?, ?, ?::jsonb)
+            VALUES (?::uuid, ?, ?::uuid, ?::jsonb)
             """;
 
     String payload = jsonConverter.write(clientConfiguration);
@@ -46,7 +46,8 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
         """
                         SELECT id, id_alias, tenant_id, payload
                         FROM client_configuration
-                        WHERE tenant_id = ? AND id_alias = ?;
+                        WHERE tenant_id = ?::uuid
+                        AND id_alias = ?;
                         """;
     List<Object> paramsClientIdAlias = List.of(tenant.identifierValue(), requestedClientId.value());
     return sqlExecutor.selectOne(sqlTemplateClientIdAlias, paramsClientIdAlias);
@@ -59,7 +60,8 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
         """
                         SELECT id, id_alias, tenant_id, payload
                         FROM client_configuration
-                        WHERE tenant_id = ? AND id = ?;
+                        WHERE tenant_id = ?::uuid
+                        AND id = ?::uuid;
                         """;
     List<Object> params = List.of(tenant.identifierValue(), clientIdentifier.value());
     return sqlExecutor.selectOne(sqlTemplate, params);
@@ -72,7 +74,9 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
         """
                         SELECT id, id_alias, tenant_id, payload
                         FROM client_configuration
-                        WHERE tenant_id = ? limit ? offset ?;
+                        WHERE tenant_id = ?::uuid
+                        limit ?
+                        offset ?;
                         """;
     List<Object> params = List.of(tenant.identifierValue(), limit, offset);
     return sqlExecutor.selectList(sqlTemplate, params);
@@ -87,8 +91,8 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
                 UPDATE client_configuration
                 SET id_alias = ?,
                 payload = ?::jsonb
-                WHERE tenant_id = ?
-                AND id = ?
+                WHERE tenant_id = ?::uuid
+                AND id = ?::uuid
                 """;
 
     String payload = jsonConverter.write(clientConfiguration);
@@ -108,8 +112,8 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
     String sqlTemplate =
         """
                 DELETE FROM client_configuration
-                WHERE tenant_id = ?
-                AND id = ?
+                WHERE tenant_id = ?::uuid
+                AND id = ?::uuid
                 """;
 
     List<Object> params = new ArrayList<>();

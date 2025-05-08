@@ -18,8 +18,20 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
 
     String sqlTemplate =
         """
-            INSERT INTO authentication_interactions (authorization_id, tenant_id, interaction_type, payload)
-            VALUES (?, ?, ?, ?::jsonb)
+            INSERT INTO authentication_interactions
+            (
+            authorization_id,
+            tenant_id,
+            interaction_type,
+            payload
+            )
+            VALUES
+            (
+            ?::uuid,
+            ?::uuid,
+            ?,
+            ?::jsonb
+            )
             ON CONFLICT (authorization_id, interaction_type) DO UPDATE SET payload = ?::jsonb, updated_at = now()
             """;
 
@@ -46,7 +58,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
                 SET payload = ?::jsonb,
                 updated_at = now()
                 WHERE authorization_id = ?
-                AND tenant_id = ?
+                AND tenant_id = ?::uuid
                 AND interaction_type = ?
                 """;
 

@@ -18,8 +18,41 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
     String sqlTemplate =
         """
                 INSERT INTO backchannel_authentication_request
-                (id, tenant_id, profile, delivery_mode, scopes, client_id, id_token_hint, login_hint, login_hint_token, acr_values, user_code, client_notification_token, binding_message, requested_expiry, request_object, authorization_details)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb);
+                (
+                id,
+                tenant_id,
+                profile,
+                delivery_mode,
+                scopes,
+                client_id,
+                id_token_hint,
+                login_hint,
+                login_hint_token,
+                acr_values,
+                user_code,
+                client_notification_token,
+                binding_message,
+                requested_expiry,
+                request_object,
+                authorization_details
+                )
+                VALUES (
+                ?::uuid,
+                ?::uuid,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?::jsonb);
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -89,9 +122,25 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                        SELECT id, tenant_id, profile, delivery_mode, scopes, client_id, id_token_hint, login_hint, login_hint_token, acr_values, user_code, client_notification_token, binding_message, requested_expiry, request_object, authorization_details
+                        SELECT
+                        id,
+                        tenant_id,
+                        profile,
+                        delivery_mode,
+                        scopes,
+                        client_id,
+                        id_token_hint,
+                        login_hint,
+                        login_hint_token,
+                        acr_values,
+                        user_code,
+                        client_notification_token,
+                        binding_message,
+                        requested_expiry,
+                        request_object,
+                        authorization_details
                         FROM backchannel_authentication_request
-                        WHERE id = ?;
+                        WHERE id = ?::uuid;
                         """;
 
     List<Object> params = new ArrayList<>();
@@ -105,7 +154,8 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM backchannel_authentication_request WHERE id = ?;
+            DELETE FROM backchannel_authentication_request
+            WHERE id = ?::uuid;
             """;
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());

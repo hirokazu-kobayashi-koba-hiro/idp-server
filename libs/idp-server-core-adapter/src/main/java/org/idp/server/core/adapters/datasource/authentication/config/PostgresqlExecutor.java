@@ -15,7 +15,7 @@ public class PostgresqlExecutor implements AuthenticationConfigSqlExecutor {
         """
             SELECT id, payload
             FROM authentication_configuration
-            WHERE tenant_id = ?
+            WHERE tenant_id = ?::uuid
             AND type = ?
             AND enabled = true
             """;

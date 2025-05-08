@@ -17,8 +17,8 @@ public class PostgresqlExecutor implements AuthenticationInteractionQuerySqlExec
         """
             SELECT authorization_id, payload
             FROM authentication_interactions
-            WHERE authorization_id = ?
-            AND tenant_id = ?
+            WHERE authorization_id = ?::uuid
+            AND tenant_id = ?::uuid
             AND interaction_type = ?
             """;
 

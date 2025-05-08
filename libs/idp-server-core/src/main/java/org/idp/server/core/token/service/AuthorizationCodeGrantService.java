@@ -23,6 +23,7 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.token.*;
 import org.idp.server.core.oidc.vc.CNonceCreatable;
 import org.idp.server.core.token.*;
+import org.idp.server.core.token.exception.TokenBadRequestException;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.TokenRequestCodeGrantValidator;
 import org.idp.server.core.token.verifier.AuthorizationCodeGrantVerifier;
@@ -110,6 +111,13 @@ public class AuthorizationCodeGrantService
     AuthorizationCode code = tokenRequestContext.code();
     AuthorizationCodeGrant authorizationCodeGrant =
         authorizationCodeGrantRepository.find(tenant, code);
+
+    if (!authorizationCodeGrant.exists()) {
+      throw new TokenBadRequestException(
+          "invalid_grant",
+          String.format("not found authorization code (%s)", tokenRequestContext.code().value()));
+    }
+
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.find(
             tenant, authorizationCodeGrant.authorizationRequestIdentifier());

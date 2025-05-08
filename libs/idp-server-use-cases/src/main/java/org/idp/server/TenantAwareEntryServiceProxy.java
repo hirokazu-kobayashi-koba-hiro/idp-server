@@ -34,11 +34,11 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         OperationContext.set(operationType);
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
 
-        TransactionManager.createConnection(DatabaseType.POSTGRESQL);
+        TransactionManager.createConnection(DatabaseType.POSTGRESQL, tenantIdentifier.value());
         DatabaseType databaseType = dialectProvider.provide(tenantIdentifier);
         TransactionManager.closeConnection();
 
-        TransactionManager.beginTransaction(databaseType);
+        TransactionManager.beginTransaction(databaseType, tenantIdentifier.value());
 
         log.debug(
             databaseType.name()

@@ -16,8 +16,13 @@ public class PostgresqlExecutor implements SsoSessionCommandSqlExecutor {
 
     String sqlTemplate =
         """
-                INSERT INTO federation_sso_session (id, payload)
-                VALUES (?, ?::jsonb)
+                INSERT INTO federation_sso_session (
+                id,
+                payload)
+                VALUES (
+                ?::uuid,
+                ?::jsonb
+                )
                 ON CONFLICT (id) DO
                 UPDATE SET payload = ?::jsonb, updated_at = now();
                 """;
@@ -38,7 +43,7 @@ public class PostgresqlExecutor implements SsoSessionCommandSqlExecutor {
     String sqlTemplate =
         """
                 DELETE FROM federation_sso_session
-                WHERE id = ?;
+                WHERE id = ?::uuid;
                 """;
 
     List<Object> params = new ArrayList<>();

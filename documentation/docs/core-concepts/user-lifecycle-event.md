@@ -16,7 +16,7 @@
 |------------|-------------|
 | `idp_user` | Main user record |
 | `idp_user_roles` | Role assignments |
-| `user_permission_override` | User-specific permission overrides |
+| `idp_user_permission_override` | User-specific permission overrides |
 | `oauth_token` | Issued access/refresh tokens |
 | `authorization_code_grant` | Authorization code grant info |
 | `authentication_transaction` | Auth transaction records (with user_id) |
@@ -60,7 +60,7 @@
 1. `authentication_interactions`
 2. `authentication_transaction`
 3. `idp_user_roles`
-4. `user_permission_override`
+4. `idp_user_permission_override`
 5. `oauth_token`
 6. `authorization_code_grant`
 7. `ciba_grant`

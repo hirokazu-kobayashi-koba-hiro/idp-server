@@ -27,7 +27,18 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
                     verified_at,
                     valid_until,
                     source)
-                    VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?);
+                    VALUES (
+                    ?::uuid,
+                    ?::uuid,
+                    ?::uuid,
+                    ?::uuid,
+                    ?,
+                    ?,
+                    ?::jsonb,
+                    ?,
+                    ?,
+                    ?
+                    );
                 """;
 
     List<Object> params = new ArrayList<>();

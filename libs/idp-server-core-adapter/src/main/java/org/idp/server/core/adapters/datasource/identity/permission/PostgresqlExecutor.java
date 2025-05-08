@@ -15,8 +15,16 @@ public class PostgresqlExecutor implements PermissionSqlExecutor {
 
     String sqlTemplate =
         """
-                INSERT INTO permission (id, tenant_id, name, description)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO permission (
+                id,
+                tenant_id,
+                name,
+                description)
+                VALUES (
+                ?::uuid,
+                ?::uuid,
+                ?,
+                ?)
                 ON CONFLICT (tenant_id, name)
                 DO UPDATE SET
                 description = EXCLUDED.description,
@@ -39,7 +47,11 @@ public class PostgresqlExecutor implements PermissionSqlExecutor {
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(
         """
-                INSERT INTO permission (id, tenant_id, name, description)
+                INSERT INTO permission (
+                id,
+                tenant_id,
+                name,
+                description)
                 VALUES
                 """);
 
@@ -48,7 +60,7 @@ public class PostgresqlExecutor implements PermissionSqlExecutor {
 
     permissions.forEach(
         permission -> {
-          sqlValues.add("(?, ?, ?, ?)");
+          sqlValues.add("(?::uuid, ?::uuid, ?, ?)");
           params.add(permission.id());
           params.add(tenant.identifierValue());
           params.add(permission.name());

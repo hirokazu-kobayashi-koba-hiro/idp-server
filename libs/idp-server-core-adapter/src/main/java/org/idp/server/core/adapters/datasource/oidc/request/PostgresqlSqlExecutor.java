@@ -18,8 +18,58 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
     String sqlTemplate =
         """
                     INSERT INTO authorization_request
-                    (id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, custom_params)
-                    VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb);
+                    (id,
+                    tenant_id,
+                    profile,
+                    scopes,
+                    response_type,
+                    client_id,
+                    client_payload,
+                    redirect_uri,
+                    state,
+                    response_mode,
+                    nonce,
+                    display,
+                    prompts,
+                    max_age,
+                    ui_locales,
+                    id_token_hint,
+                    login_hint,
+                    acr_values,
+                    claims_value,
+                    request_object,
+                    request_uri,
+                    code_challenge,
+                    code_challenge_method,
+                    authorization_details,
+                    custom_params
+                    )
+                    VALUES (
+                    ?::uuid,
+                    ?::uuid,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?::jsonb,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?::jsonb,
+                    ?::jsonb);
                     """;
 
     List<Object> params = InsertSqlCreator.createInsert(authorizationRequest);
@@ -32,9 +82,33 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                SELECT id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, custom_params
+                SELECT id,
+                tenant_id,
+                profile,
+                scopes,
+                response_type,
+                client_id,
+                client_payload,
+                redirect_uri,
+                state,
+                response_mode,
+                nonce,
+                display,
+                prompts,
+                max_age,
+                ui_locales,
+                id_token_hint,
+                login_hint,
+                acr_values,
+                claims_value,
+                request_object,
+                request_uri,
+                code_challenge,
+                code_challenge_method,
+                authorization_details,
+                custom_params
                 FROM authorization_request
-                WHERE id = ?;
+                WHERE id = ?::uuid;
                 """;
     List<Object> params = new ArrayList<>();
     params.add(authorizationRequestIdentifier.value());

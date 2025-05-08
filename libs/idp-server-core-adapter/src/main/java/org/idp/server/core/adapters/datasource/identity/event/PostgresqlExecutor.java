@@ -44,7 +44,7 @@ public class PostgresqlExecutor implements UserLifecycleEventResultSqlExecutor {
       if (i > 0) {
         sql.append(", ");
       }
-      sql.append("(?, ?, ?, ?, ?, ?::jsonb, ?)");
+      sql.append("(?::uuid, ?::uuid, ?::uuid, ?, ?, ?::jsonb, ?)");
       params.add(result.identifier().value());
       params.add(tenant.identifierValue());
       params.add(user.sub());

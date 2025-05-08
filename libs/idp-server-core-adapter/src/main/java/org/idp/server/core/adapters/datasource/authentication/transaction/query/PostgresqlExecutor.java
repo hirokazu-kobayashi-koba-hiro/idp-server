@@ -18,8 +18,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
         selectSql
             + " "
             + """
-            WHERE authorization_id = ?
-            AND tenant_id = ?
+            WHERE authorization_id = ?::uuid
+            AND tenant_id = ?::uuid
             """;
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
@@ -37,8 +37,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
         selectSql
             + " "
             + """
-                WHERE authentication_device_id = ?
-                AND tenant_id = ?
+                WHERE authentication_device_id = ?::uuid
+                AND tenant_id = ?::uuid
                 ORDER BY created_at DESC
                 limit 1
                 """;

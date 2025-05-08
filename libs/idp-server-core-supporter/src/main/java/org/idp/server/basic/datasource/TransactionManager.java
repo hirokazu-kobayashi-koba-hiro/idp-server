@@ -2,8 +2,10 @@ package org.idp.server.basic.datasource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import org.idp.server.basic.log.LoggerWrapper;
 
 public class TransactionManager {
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(TransactionManager.class);
   private static final ThreadLocal<Connection> connectionHolder = new ThreadLocal<>();
   private static DbConnectionProvider dbConnectionProvider;
 
@@ -11,21 +13,27 @@ public class TransactionManager {
     dbConnectionProvider = provider;
   }
 
-  public static void createConnection(DatabaseType databaseType) {
+  public static void createConnection(DatabaseType databaseType, String tenantIdentifier) {
     if (connectionHolder.get() != null) {
       throw new SqlRuntimeException("Transaction already started");
     }
     OperationContext.set(OperationType.READ);
     Connection conn = dbConnectionProvider.getConnection(databaseType);
+    if (databaseType == DatabaseType.POSTGRESQL) {
+      setTenantId(conn, tenantIdentifier);
+    }
     connectionHolder.set(conn);
   }
 
-  public static void beginTransaction(DatabaseType databaseType) {
+  public static void beginTransaction(DatabaseType databaseType, String tenantIdentifier) {
     if (connectionHolder.get() != null) {
       throw new SqlRuntimeException("Transaction already started");
     }
     OperationContext.set(OperationType.WRITE);
     Connection conn = dbConnectionProvider.getConnection(databaseType);
+    if (databaseType == DatabaseType.POSTGRESQL) {
+      setTenantId(conn, tenantIdentifier);
+    }
     connectionHolder.set(conn);
   }
 
@@ -72,6 +80,16 @@ public class TransactionManager {
         connectionHolder.remove();
         OperationContext.clear();
       }
+    }
+  }
+
+  private static void setTenantId(Connection conn, String tenantIdentifier) {
+    log.info("[RLS] SET app.tenant_id = '" + tenantIdentifier + "'");
+
+    try (var stmt = conn.createStatement()) {
+      stmt.execute("SET app.tenant_id = '" + tenantIdentifier + "'");
+    } catch (SQLException e) {
+      throw new SqlRuntimeException("Failed to set tenant_id", e);
     }
   }
 }

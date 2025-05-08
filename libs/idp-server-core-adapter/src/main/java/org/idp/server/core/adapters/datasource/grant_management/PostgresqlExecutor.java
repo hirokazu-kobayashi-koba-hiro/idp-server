@@ -22,8 +22,33 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
     String sqlTemplate =
         """
                         INSERT INTO authorization_granted
-                        (id, tenant_id, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims)
-                        VALUES (?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb);
+                        (id,
+                        tenant_id,
+                        user_id,
+                        user_payload,
+                        authentication,
+                        client_id,
+                        client_payload,
+                        scopes,
+                        id_token_claims,
+                        userinfo_claims,
+                        custom_properties,
+                        authorization_details,
+                        consent_claims)
+                        VALUES (
+                        ?::uuid,
+                        ?::uuid,
+                        ?::uuid,
+                        ?::jsonb,
+                        ?::jsonb,
+                        ?,
+                        ?::jsonb,
+                        ?,
+                        ?,
+                        ?,
+                        ?::jsonb,
+                        ?::jsonb,
+                        ?::jsonb);
                         """;
     List<Object> params = new ArrayList<>();
 
@@ -77,11 +102,24 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
 
     String sqlTemplate =
         """
-              SELECT id, tenant_id, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
-                FROM authorization_granted
-              WHERE tenant_id = ?
+              SELECT
+              id,
+              tenant_id,
+              user_id,
+              user_payload,
+              authentication,
+              client_id,
+              client_payload,
+              scopes,
+              id_token_claims,
+              userinfo_claims,
+              custom_properties,
+              authorization_details,
+              consent_claims
+              FROM authorization_granted
+              WHERE tenant_id = ?::uuid
               AND client_id = ?
-              AND user_id = ?
+              AND user_id = ?::uuid
               limit 1;
               """;
     List<Object> params = new ArrayList<>();
@@ -109,7 +147,7 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
                 authorization_details = ?::jsonb,
                 consent_claims = ?::jsonb,
                 updated_at = now()
-                WHERE id = ?;
+                WHERE id = ?::uuid;
                 """;
 
     List<Object> params = new ArrayList<>();
