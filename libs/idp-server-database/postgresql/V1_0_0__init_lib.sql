@@ -663,6 +663,7 @@ CREATE TABLE authentication_transaction
     client_id                VARCHAR(255) NOT NULL,
     user_id                  UUID,
     user_payload             JSONB,
+    context                  JSONB
     authentication_device_id UUID,
     authentication_policy    JSONB,
     interactions             JSONB,

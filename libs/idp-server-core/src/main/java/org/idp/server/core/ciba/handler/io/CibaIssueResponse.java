@@ -1,16 +1,20 @@
 package org.idp.server.core.ciba.handler.io;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.ContentType;
 import org.idp.server.basic.type.oauth.ExpiresIn;
+import org.idp.server.basic.type.oauth.Scopes;
+import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.core.ciba.CibaRequestContext;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 
 // TODO to be more readable name
 public class CibaIssueResponse {
@@ -56,14 +60,6 @@ public class CibaIssueResponse {
     return user;
   }
 
-  public List<String> availableAuthenticationTypes() {
-    return cibaRequestContext.availableAuthenticationMethods();
-  }
-
-  public AuthenticationPolicyPolicy authenticationPolicy() {
-    return cibaRequestContext.authenticationPolicy();
-  }
-
   public List<String> requiredAnyOfAuthenticationTypes() {
     List<String> methods = new ArrayList<>();
     if (cibaRequestContext.isFapiProfile()) {
@@ -103,5 +99,23 @@ public class CibaIssueResponse {
 
   public CibaRequestResponse toResponse() {
     return new CibaRequestResponse(status, response);
+  }
+
+  public AcrValues acrValues() {
+    return cibaRequestContext.acrValues();
+  }
+
+  public Scopes scopes() {
+    return cibaRequestContext.scopes();
+  }
+
+  public AuthenticationPolicy findSatisfiedAuthenticationPolicy() {
+    List<AuthenticationPolicy> authenticationPolicies = cibaRequestContext.authenticationPolicies();
+    return authenticationPolicies.stream()
+        .filter(
+            policy ->
+                policy.anyMatch(AuthorizationFlow.CIBA, request.acrValues(), request.scopes()))
+        .max(Comparator.comparingInt(AuthenticationPolicy::priority))
+        .orElse(new AuthenticationPolicy());
   }
 }

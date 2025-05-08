@@ -13,15 +13,15 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
-import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyResultConditions;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationResultConditions;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 
 public class AuthenticationTransaction {
   AuthorizationIdentifier identifier;
   AuthenticationRequest request;
-  AuthenticationPolicyPolicy authenticationPolicyPolicy;
+  AuthenticationPolicy authenticationPolicy;
   AuthenticationInteractionResults interactionResults;
 
   public static AuthenticationTransaction createOnOAuthFlow(
@@ -29,9 +29,8 @@ public class AuthenticationTransaction {
     AuthorizationIdentifier identifier =
         new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier());
     AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
-    AuthenticationPolicyPolicy authenticationPolicyPolicy = requestResponse.authenticationPolicy();
-    return new AuthenticationTransaction(
-        identifier, authenticationRequest, authenticationPolicyPolicy);
+    AuthenticationPolicy authenticationPolicy = requestResponse.findSatisfiedAuthenticationPolicy();
+    return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicy);
   }
 
   public static AuthenticationTransaction createOnCibaFlow(
@@ -40,10 +39,9 @@ public class AuthenticationTransaction {
         new AuthorizationIdentifier(cibaIssueResponse.backchannelAuthenticationRequestIdentifier());
     AuthenticationRequest authenticationRequest =
         toAuthenticationRequest(tenant, cibaIssueResponse);
-    AuthenticationPolicyPolicy authenticationPolicyPolicy =
-        cibaIssueResponse.authenticationPolicy();
-    return new AuthenticationTransaction(
-        identifier, authenticationRequest, authenticationPolicyPolicy);
+    AuthenticationPolicy authenticationPolicy =
+        cibaIssueResponse.findSatisfiedAuthenticationPolicy();
+    return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicy);
   }
 
   private static AuthenticationRequest toAuthenticationRequest(
@@ -54,12 +52,19 @@ public class AuthenticationTransaction {
 
     RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
     User user = User.notFound();
-    requestResponse.requiredAnyOfAuthenticationTypes();
+    AuthenticationContext context =
+        new AuthenticationContext(authorizationRequest.acrValues(), authorizationRequest.scopes());
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt =
         createdAt.plusSeconds(requestResponse.oauthAuthorizationRequestExpiresIn());
     return new AuthenticationRequest(
-        authorizationFlow, tenantIdentifier, requestedClientId, user, createdAt, expiredAt);
+        authorizationFlow,
+        tenantIdentifier,
+        requestedClientId,
+        user,
+        context,
+        createdAt,
+        expiredAt);
   }
 
   private static AuthenticationRequest toAuthenticationRequest(
@@ -71,10 +76,18 @@ public class AuthenticationTransaction {
 
     RequestedClientId requestedClientId = backchannelAuthenticationRequest.requestedClientId();
     User user = cibaIssueResponse.user();
+    AuthenticationContext context =
+        new AuthenticationContext(cibaIssueResponse.acrValues(), cibaIssueResponse.scopes());
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt = createdAt.plusSeconds(expiresIn.value());
     return new AuthenticationRequest(
-        authorizationFlow, tenantIdentifier, requestedClientId, user, createdAt, expiredAt);
+        authorizationFlow,
+        tenantIdentifier,
+        requestedClientId,
+        user,
+        context,
+        createdAt,
+        expiredAt);
   }
 
   public AuthenticationTransaction updateWith(
@@ -106,7 +119,7 @@ public class AuthenticationTransaction {
     AuthenticationInteractionResults updatedResults =
         new AuthenticationInteractionResults(resultMap);
     return new AuthenticationTransaction(
-        identifier, updatedRequest, authenticationPolicyPolicy, updatedResults);
+        identifier, updatedRequest, authenticationPolicy, updatedResults);
   }
 
   public AuthenticationTransaction() {}
@@ -114,18 +127,18 @@ public class AuthenticationTransaction {
   AuthenticationTransaction(
       AuthorizationIdentifier identifier,
       AuthenticationRequest request,
-      AuthenticationPolicyPolicy authenticationPolicyPolicy) {
-    this(identifier, request, authenticationPolicyPolicy, new AuthenticationInteractionResults());
+      AuthenticationPolicy authenticationPolicy) {
+    this(identifier, request, authenticationPolicy, new AuthenticationInteractionResults());
   }
 
   public AuthenticationTransaction(
       AuthorizationIdentifier identifier,
       AuthenticationRequest request,
-      AuthenticationPolicyPolicy authenticationPolicyPolicy,
+      AuthenticationPolicy authenticationPolicy,
       AuthenticationInteractionResults interactionResults) {
     this.identifier = identifier;
     this.request = request;
-    this.authenticationPolicyPolicy = authenticationPolicyPolicy;
+    this.authenticationPolicy = authenticationPolicy;
     this.interactionResults = interactionResults;
   }
 
@@ -160,39 +173,39 @@ public class AuthenticationTransaction {
   }
 
   public boolean hasAuthenticationPolicy() {
-    return authenticationPolicyPolicy != null && authenticationPolicyPolicy.exists();
+    return authenticationPolicy != null && authenticationPolicy.exists();
   }
 
-  public AuthenticationPolicyPolicy authenticationPolicy() {
-    return authenticationPolicyPolicy;
+  public AuthenticationPolicy authenticationPolicy() {
+    return authenticationPolicy;
   }
 
   public boolean isSuccess() {
     if (hasAuthenticationPolicy()) {
-      AuthenticationPolicyResultConditions authenticationPolicyResultConditions =
-          authenticationPolicyPolicy.successConditions();
+      AuthenticationResultConditions authenticationResultConditions =
+          authenticationPolicy.successConditions();
       return MfaConditionEvaluator.isSuccessSatisfied(
-          authenticationPolicyResultConditions, interactionResults);
+          authenticationResultConditions, interactionResults);
     }
     return interactionResults.containsAnySuccess();
   }
 
   public boolean isFailure() {
     if (hasAuthenticationPolicy()) {
-      AuthenticationPolicyResultConditions authenticationPolicyResultConditions =
-          authenticationPolicyPolicy.failureConditions();
+      AuthenticationResultConditions authenticationResultConditions =
+          authenticationPolicy.failureConditions();
       return MfaConditionEvaluator.isFailureSatisfied(
-          authenticationPolicyResultConditions, interactionResults);
+          authenticationResultConditions, interactionResults);
     }
     return interactionResults.containsDenyInteraction();
   }
 
   public boolean isLocked() {
     if (hasAuthenticationPolicy()) {
-      AuthenticationPolicyResultConditions authenticationPolicyResultConditions =
-          authenticationPolicyPolicy.lockConditions();
+      AuthenticationResultConditions authenticationResultConditions =
+          authenticationPolicy.lockConditions();
       return MfaConditionEvaluator.isLockedSatisfied(
-          authenticationPolicyResultConditions, interactionResults);
+          authenticationResultConditions, interactionResults);
     }
     return false;
   }
@@ -207,5 +220,9 @@ public class AuthenticationTransaction {
 
   public boolean hasUser() {
     return request.hasUser();
+  }
+
+  public AuthenticationContext requestContext() {
+    return request.context();
   }
 }

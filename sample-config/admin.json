@@ -203,62 +203,69 @@
       "fapi_advance_scopes": [
         "write"
       ],
-      "authentication_policy": {
-        "id": "default_authentication_policy",
-        "conditions": {
-          "acr_values": [
-            "urn:mfa:required"
+      "authentication_policies": [
+        {
+          "id": "default_authentication_policy",
+          "priority": 1,
+          "conditions": {
+            "scopes": [
+              "openid"
+            ]
+          },
+          "available_methods": [
+            "password",
+            "email",
+            "sms",
+            "webauthn",
+            "fido-uaf",
+            "legacy"
           ],
-          "scopes": [
-            "read",
-            "write"
-          ]
-        },
-        "available_methods": [
-          "password",
-          "email",
-          "sms",
-          "webauthn",
-          "fido-uaf",
-          "legacy"
-        ],
-        "success_conditions": {
-          "all_of": [
-            {
-              "type": "password-authentication",
-              "success_count": 1
-            },
-            {
-              "type": "fido-uaf-authentication",
-              "success_count": 1
-            }
-          ]
-        },
-        "failure_conditions": {
-          "any_of": [
-            {
-              "type": "password",
-              "failure_count": 5
-            },
-            {
-              "type": "fido-uaf-authentication",
-              "failure_count": 5
-            }
-          ]
-        },
-        "lock_conditions": {
-          "any_of": [
-            {
-              "type": "password",
-              "failure_count": 5
-            },
-            {
-              "type": "fido-uaf-authentication",
-              "failure_count": 5
-            }
-          ]
+          "success_conditions": {
+            "any_of": [
+              {
+                "type": "password-authentication",
+                "success_count": 1
+              },
+              {
+                "type": "sms-authentication",
+                "success_count": 1
+              },
+              {
+                "type": "email-authentication",
+                "success_count": 1
+              },
+              {
+                "type": "fido-uaf-authentication",
+                "success_count": 1
+              }
+            ]
+          },
+          "failure_conditions": {
+            "any_of": [
+              {
+                "type": "password",
+                "failure_count": 5
+              },
+              {
+                "type": "fido-uaf-authentication",
+                "failure_count": 5
+              }
+            ]
+          },
+          "lock_conditions": {
+            "any_of": [
+              {
+                "type": "password",
+                "failure_count": 5
+              },
+              {
+                "type": "fido-uaf-authentication",
+                "failure_count": 5
+              }
+            ]
+          }
         }
-      }
+      ]
     },
     "credential_issuer_metadata": {
       "credential_issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",

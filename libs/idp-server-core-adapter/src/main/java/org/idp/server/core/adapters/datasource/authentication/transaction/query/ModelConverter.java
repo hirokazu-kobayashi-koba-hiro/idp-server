@@ -9,7 +9,7 @@ import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 
 public class ModelConverter {
 
@@ -21,17 +21,35 @@ public class ModelConverter {
     TenantIdentifier tenantIdentifier = new TenantIdentifier(map.get("tenant_id"));
     RequestedClientId requestedClientId = new RequestedClientId(map.get("client_id"));
     User user = toUser(map);
-    AuthenticationPolicyPolicy authenticationPolicyPolicy =
-        jsonConverter.read(map.get("authentication_policy"), AuthenticationPolicyPolicy.class);
+    AuthenticationContext context = toAuthenticationContext(map);
+    AuthenticationPolicy authenticationPolicy =
+        jsonConverter.read(map.get("authentication_policy"), AuthenticationPolicy.class);
     LocalDateTime createdAt = LocalDateTime.parse(map.get("created_at"));
     LocalDateTime expiredAt = LocalDateTime.parse(map.get("expired_at"));
     AuthenticationRequest request =
         new AuthenticationRequest(
-            authorizationFlow, tenantIdentifier, requestedClientId, user, createdAt, expiredAt);
+            authorizationFlow,
+            tenantIdentifier,
+            requestedClientId,
+            user,
+            context,
+            createdAt,
+            expiredAt);
 
     AuthenticationInteractionResults interactionResults = toAuthenticationInteractionResults(map);
     return new AuthenticationTransaction(
-        identifier, request, authenticationPolicyPolicy, interactionResults);
+        identifier, request, authenticationPolicy, interactionResults);
+  }
+
+  private static AuthenticationContext toAuthenticationContext(Map<String, String> map) {
+    if (map.containsKey("context") && map.get("context") != null) {
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(map.get("context"));
+      String acrValues = jsonNodeWrapper.getValueOrEmptyAsString("acr_values");
+      String scopes = jsonNodeWrapper.getValueOrEmptyAsString("scopes");
+      return new AuthenticationContext(acrValues, scopes);
+    }
+
+    return new AuthenticationContext();
   }
 
   static User toUser(Map<String, String> map) {
@@ -39,14 +57,6 @@ public class ModelConverter {
       return jsonConverter.read(map.get("user_payload"), User.class);
     }
     return User.notFound();
-  }
-
-  static List<String> toRequiredAnyOfAuthenticationTypes(Map<String, String> map) {
-    if (map.containsKey("required_any_of_authentication_types")
-        && map.get("required_any_of_authentication_types") != null) {
-      return jsonConverter.read(map.get("required_any_of_authentication_types"), List.class);
-    }
-    return List.of();
   }
 
   static AuthenticationInteractionResults toAuthenticationInteractionResults(

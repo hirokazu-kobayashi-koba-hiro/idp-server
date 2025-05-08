@@ -1,14 +1,15 @@
 package org.idp.server.core.oidc.io;
 
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
@@ -111,20 +112,6 @@ public class OAuthRequestResponse {
     return sessionKey;
   }
 
-  public List<String> availableAuthenticationTypes() {
-    return authorizationServerConfiguration.availableAuthenticationMethods();
-  }
-
-  public List<String> requiredAnyOfAuthenticationTypes() {
-    List<String> methods = new ArrayList<>();
-    if (authorizationRequest.isFapiProfile()) {
-      methods.add("webauthn");
-      methods.add("fido-uaf");
-      methods.add("fido2");
-    }
-    return methods;
-  }
-
   public int oauthAuthorizationRequestExpiresIn() {
     return authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn();
   }
@@ -133,7 +120,21 @@ public class OAuthRequestResponse {
     return status.isSuccess();
   }
 
-  public AuthenticationPolicyPolicy authenticationPolicy() {
-    return authorizationServerConfiguration.authenticationPolicy();
+  public List<AuthenticationPolicy> authenticationPolicies() {
+    return authorizationServerConfiguration.authenticationPolicies();
+  }
+
+  public AuthenticationPolicy findSatisfiedAuthenticationPolicy() {
+    List<AuthenticationPolicy> authenticationPolicies =
+        authorizationServerConfiguration.authenticationPolicies();
+    return authenticationPolicies.stream()
+        .filter(
+            authenticationPolicy ->
+                authenticationPolicy.anyMatch(
+                    AuthorizationFlow.OAUTH,
+                    authorizationRequest.acrValues(),
+                    authorizationRequest.scopes()))
+        .max(Comparator.comparingInt(AuthenticationPolicy::priority))
+        .orElse(new AuthenticationPolicy());
   }
 }

@@ -7,6 +7,7 @@ import org.idp.server.basic.type.ciba.Interval;
 import org.idp.server.basic.type.ciba.UserCode;
 import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.ciba.user.UserHint;
@@ -17,7 +18,7 @@ import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicyPolicy;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 public class CibaRequestContext implements BackchannelRequestContext {
@@ -180,14 +181,6 @@ public class CibaRequestContext implements BackchannelRequestContext {
     return authorizationServerConfiguration.tenantIdentifier();
   }
 
-  public List<String> availableAuthenticationMethods() {
-    return authorizationServerConfiguration.availableAuthenticationMethods();
-  }
-
-  public AuthenticationPolicyPolicy authenticationPolicy() {
-    return authorizationServerConfiguration.authenticationPolicy();
-  }
-
   public boolean isFapiProfile() {
     return profile().isFapiCiba();
   }
@@ -213,5 +206,17 @@ public class CibaRequestContext implements BackchannelRequestContext {
     }
 
     return new UserHintRelatedParams(map);
+  }
+
+  public AcrValues acrValues() {
+    return backchannelAuthenticationRequest.acrValues();
+  }
+
+  public AuthorizationServerConfiguration authorizationServerConfiguration() {
+    return authorizationServerConfiguration;
+  }
+
+  public List<AuthenticationPolicy> authenticationPolicies() {
+    return authorizationServerConfiguration.authenticationPolicies();
   }
 }

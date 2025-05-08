@@ -2,12 +2,12 @@ package org.idp.server.core.oidc.configuration.authentication;
 
 import java.util.Objects;
 
-public class AuthenticationPolicyPolicyIdentifier {
+public class AuthenticationPolicyIdentifier {
   String value;
 
-  public AuthenticationPolicyPolicyIdentifier() {}
+  public AuthenticationPolicyIdentifier() {}
 
-  public AuthenticationPolicyPolicyIdentifier(String value) {
+  public AuthenticationPolicyIdentifier(String value) {
     this.value = value;
   }
 
@@ -22,7 +22,7 @@ public class AuthenticationPolicyPolicyIdentifier {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    AuthenticationPolicyPolicyIdentifier that = (AuthenticationPolicyPolicyIdentifier) o;
+    AuthenticationPolicyIdentifier that = (AuthenticationPolicyIdentifier) o;
     return Objects.equals(value, that.value);
   }
 
