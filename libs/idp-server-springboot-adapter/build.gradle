@@ -23,9 +23,16 @@ dependencies {
 	implementation 'com.webauthn4j:webauthn4j-core:0.28.5.RELEASE'
 
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.session:spring-session-core'
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+	//session
+	implementation 'org.springframework.session:spring-session-core'
+	implementation 'org.springframework.session:spring-session-data-redis'
+	implementation('org.springframework.boot:spring-boot-starter-data-redis') {
+		exclude group: 'io.lettuce.core', module: 'lettuce-core'
+	}
+	implementation 'redis.clients:jedis:5.1.0'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 

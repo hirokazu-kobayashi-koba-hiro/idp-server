@@ -22,8 +22,10 @@ public class DynamicCookieSerializer extends DefaultCookieSerializer {
     Tenant tenant = tenantMetaDataApi.get(tenantIdentifier);
     setCookieName("IDP_SERVER_SESSION");
     setDomainName(tenant.domain().host());
+    // TODO dynamic setting
     setSameSite("None");
-    setUseSecureCookie(true);
+    // TODO local is false but production is true
+    setUseSecureCookie(false);
     setUseHttpOnlyCookie(true);
     setCookiePath("/");
     super.writeCookieValue(cookieValue);

@@ -1,7 +1,9 @@
 package org.idp.server.core.authentication;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.AuthorizationFlow;
@@ -13,6 +15,7 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationResultConditions;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
@@ -224,5 +227,12 @@ public class AuthenticationTransaction {
 
   public AuthenticationContext requestContext() {
     return request.context();
+  }
+
+  public Authentication authentication() {
+    LocalDateTime time = SystemDateTime.now();
+    List<String> methods = new ArrayList<>();
+    List<String> acrValues = new ArrayList<>();
+    return new Authentication().setTime(time);
   }
 }

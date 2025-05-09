@@ -59,6 +59,12 @@ logging:
     root: info
     web: info
 
-
-
-
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  session:
+    redis:
+      configure-action: none
+    timeout: 3600s
