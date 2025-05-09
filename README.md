@@ -4,25 +4,25 @@
 [![GitHub Issues](https://img.shields.io/github/issues/hirokazu-kobayashi-koba-hiro/idp-server)](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues)
 [![GitHub License](https://img.shields.io/github/license/hirokazu-kobayashi-koba-hiro/idp-server)](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/blob/main/LICENSE)
 
-## Overview
+## What is `idp-server`?
 
-A modern, developer-first Identity Provider designed for security, flexibility, and federation.
+`idp-server` is not just an identity provider —  
+**it is a full-featured, extensible identity framework** designed for modern, multi-tenant SaaS environments.  
+It supports OAuth 2.0, OpenID Connect, CIBA, FAPI, and verifiable credentials.
 
-🔐 OAuth2 & OpenID Connect / 🔄 Federation / 🧩 Verifiable Credentials / 🔌 Extensible by Design
+Designed with a clear separation of concerns, `idp-server` is built as a **framework-agnostic core** —  
+capable of integrating into any application stack while keeping protocol logic, authentication flows, and session control modular and customizable.
 
-→ For SaaS, Fintech, and Trust Framework providers who need full control over identity flows.
+### Key Features
+- Framework-independent core logic
+- Fully pluggable authentication and authorization flows
+- Dynamic, per-tenant configuration
+- Built-in support for session control, hooks, and federation
+- Production-ready support for multi-tenancy and database isolation
 
+Yes — **idp-server is a framework**.  
+It empowers developers to build enterprise-grade identity platforms with flexibility, structure, and control.
 
-## Why `idp-server`?
-
-Many existing identity solutions are either tightly coupled to specific platforms or too generic to handle real-world complexity.
-idp-server is built to give you full control and composability without compromise.
-
-- ✅ Clean, domain-driven modular architecture designed for maintainability and clarity
-- 🔁 Supports advanced flows like CIBA, Federation, Grant Management, and VC issuance
-- 🔧 Can run as a standalone server or be embedded as a lightweight Java library
-- 🌍 Ideal for organizations building identity-first products or trust frameworks
-- Built for developers who need precision, flexibility, and future-proof identity infrastructure.
 
 ## 🗂 System Architecture (Container Level)
 

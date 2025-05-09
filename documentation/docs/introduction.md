@@ -2,19 +2,25 @@
 
 Welcome to **idp-server**, an open-source Identity Provider (IdP) engine designed for modern authentication and authorization needs.
 
-## What is idp-server?
+## What is `idp-server`?
 
-`idp-server` is a lightweight, extensible, and specification-compliant Identity Provider that supports:
+`idp-server` is not just an identity provider —  
+**it is a full-featured, extensible identity framework** designed for modern, multi-tenant SaaS environments.  
+It supports OAuth 2.0, OpenID Connect, CIBA, FAPI, and verifiable credentials.
 
-- OAuth 2.0 (RFC 6749)
-- OpenID Connect (OIDC)
-- FAPI (Financial-grade API)
-- Client-Initiated Backchannel Authentication (CIBA)
-- Multi-Factor Authentication (MFA)
-- OpenID Connect for Identity Assurance 1.0 (OIDC4IDA)
-- Federation with external IdPs (OIDC / SAML)
+Designed with a clear separation of concerns, `idp-server` is built as a **framework-agnostic core** —  
+capable of integrating into any application stack while keeping protocol logic, authentication flows, and session control modular and customizable.
 
-It is built for developers who need full control, customization, and easy integration into existing systems.
+### Key Features
+- Framework-independent core logic
+- Fully pluggable authentication and authorization flows
+- Dynamic, per-tenant configuration
+- Built-in support for session control, hooks, and federation
+- Production-ready support for multi-tenancy and database isolation
+
+Yes — **idp-server is a framework**.  
+It empowers developers to build enterprise-grade identity platforms with flexibility, structure, and control.
+
 
 ## Key Goals
 
