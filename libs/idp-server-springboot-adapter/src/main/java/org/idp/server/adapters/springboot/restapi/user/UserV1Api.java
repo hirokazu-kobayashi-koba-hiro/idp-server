@@ -3,11 +3,11 @@ package org.idp.server.adapters.springboot.restapi.user;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.adapters.springboot.operation.ResourceOwnerPrincipal;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
+import org.idp.server.adapters.springboot.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserApi;
+import org.idp.server.core.identity.UserOperationApi;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
 import org.springframework.http.HttpHeaders;
@@ -20,10 +20,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/{tenant-id}/api/v1/users")
 public class UserV1Api implements ParameterTransformable {
 
-  UserApi userApi;
+  UserOperationApi userOperationApi;
 
   public UserV1Api(IdpServerApplication idpServerApplication) {
-    this.userApi = idpServerApplication.userApi();
+    this.userOperationApi = idpServerApplication.userOperationApi();
   }
 
   @DeleteMapping
@@ -36,7 +36,7 @@ public class UserV1Api implements ParameterTransformable {
     OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    userApi.delete(tenantIdentifier, user, oAuthToken, requestAttributes);
+    userOperationApi.delete(tenantIdentifier, user, oAuthToken, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

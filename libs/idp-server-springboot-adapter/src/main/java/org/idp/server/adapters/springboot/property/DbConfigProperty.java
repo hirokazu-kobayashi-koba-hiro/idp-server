@@ -1,4 +1,4 @@
-package org.idp.server.adapters.springboot;
+package org.idp.server.adapters.springboot.property;
 
 import org.idp.server.basic.datasource.DbConfig;
 

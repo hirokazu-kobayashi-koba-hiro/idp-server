@@ -15,14 +15,14 @@ import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.token.OAuthToken;
 
 @Transaction
-public class UserEntryService implements UserApi {
+public class UserOperationEntryService implements UserOperationApi {
 
   UserCommandRepository userCommandRepository;
   TenantRepository tenantRepository;
   TokenEventPublisher eventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
 
-  public UserEntryService(
+  public UserOperationEntryService(
       UserCommandRepository userCommandRepository,
       TenantRepository tenantRepository,
       TokenEventPublisher eventPublisher,

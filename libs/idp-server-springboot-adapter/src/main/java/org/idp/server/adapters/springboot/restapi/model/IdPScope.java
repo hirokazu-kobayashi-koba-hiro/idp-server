@@ -1,4 +1,4 @@
-package org.idp.server.adapters.springboot.operation;
+package org.idp.server.adapters.springboot.restapi.model;
 
 import org.springframework.security.core.GrantedAuthority;
 
