@@ -1,4 +1,4 @@
-package org.idp.server.adapters.springboot;
+package org.idp.server.adapters.springboot.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,4 +1,4 @@
-package org.idp.server.adapters.springboot.authorization.datasource;
+package org.idp.server.adapters.springboot.session.datasource;
 
 import jakarta.servlet.http.HttpSession;
 import org.idp.server.basic.log.LoggerWrapper;

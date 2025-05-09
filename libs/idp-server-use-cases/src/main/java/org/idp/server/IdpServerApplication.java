@@ -54,6 +54,7 @@ import org.idp.server.core.identity.verification.result.IdentityVerificationResu
 import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.core.multi_tenancy.tenant.AdminTenantContext;
 import org.idp.server.core.multi_tenancy.tenant.TenantDialectProvider;
+import org.idp.server.core.multi_tenancy.tenant.TenantMetaDataApi;
 import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.OAuthProtocol;
@@ -93,7 +94,8 @@ public class IdpServerApplication {
   AuthenticationDeviceApi authenticationDeviceApi;
   IdentityVerificationApi identityVerificationApi;
   SecurityEventApi securityEventApi;
-  UserApi userApi;
+  TenantMetaDataApi tenantMetaDataApi;
+  UserOperationApi userOperationApi;
   UserLifecycleEventApi userLifecycleEventApi;
   OnboardingApi onboardingApi;
   ServerManagementApi serverManagementApi;
@@ -347,14 +349,21 @@ public class IdpServerApplication {
             OperationType.WRITE,
             tenantDialectProvider);
 
-    this.userApi =
+    this.tenantMetaDataApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new UserEntryService(
+            new TenantMetaDataEntryService(tenantRepository),
+            TenantMetaDataApi.class,
+            OperationType.READ,
+            tenantDialectProvider);
+
+    this.userOperationApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new UserOperationEntryService(
                 userCommandRepository,
                 tenantRepository,
                 tokenEventPublisher,
                 userLifecycleEventPublisher),
-            UserApi.class,
+            UserOperationApi.class,
             OperationType.WRITE,
             tenantDialectProvider);
 
@@ -447,8 +456,12 @@ public class IdpServerApplication {
     return securityEventApi;
   }
 
-  public UserApi userApi() {
-    return userApi;
+  public TenantMetaDataApi tenantMetadataApi() {
+    return tenantMetaDataApi;
+  }
+
+  public UserOperationApi userOperationApi() {
+    return userOperationApi;
   }
 
   public UserLifecycleEventApi userLifecycleEventApi() {

@@ -1,4 +1,4 @@
-package org.idp.server.adapters.springboot;
+package org.idp.server.adapters.springboot.property;
 
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;

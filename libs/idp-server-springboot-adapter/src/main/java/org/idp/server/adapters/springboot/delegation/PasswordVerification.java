@@ -1,4 +1,4 @@
-package org.idp.server.adapters.springboot;
+package org.idp.server.adapters.springboot.delegation;
 
 import org.idp.server.core.identity.authentication.PasswordVerificationDelegation;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;

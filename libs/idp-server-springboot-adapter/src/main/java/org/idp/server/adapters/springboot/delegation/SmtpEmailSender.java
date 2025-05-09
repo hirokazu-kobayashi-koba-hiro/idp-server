@@ -1,4 +1,4 @@
-package org.idp.server.adapters.springboot.notification;
+package org.idp.server.adapters.springboot.delegation;
 
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;

@@ -1,5 +1,6 @@
 package org.idp.server.core.multi_tenancy.tenant;
 
+import java.net.URI;
 import org.idp.server.basic.type.oauth.TokenIssuer;
 
 public class TenantDomain {
@@ -17,5 +18,10 @@ public class TenantDomain {
 
   public TokenIssuer toTokenIssuer() {
     return new TokenIssuer(value);
+  }
+
+  public String host() {
+    URI uri = URI.create(value);
+    return uri.getHost();
   }
 }

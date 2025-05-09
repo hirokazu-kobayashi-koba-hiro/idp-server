@@ -1,4 +1,4 @@
-package org.idp.server.adapters.springboot.authorization;
+package org.idp.server.adapters.springboot.session;
 
 import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.OAuthSessionDelegate;

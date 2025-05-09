@@ -1,4 +1,4 @@
-package org.idp.server.adapters.springboot;
+package org.idp.server.adapters.springboot.config;
 
 import org.idp.server.adapters.springboot.event.SecurityEventRetryScheduler;
 import org.idp.server.adapters.springboot.event.SecurityEventRunnable;

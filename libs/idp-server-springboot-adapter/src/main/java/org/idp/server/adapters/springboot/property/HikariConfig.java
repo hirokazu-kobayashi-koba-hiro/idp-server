@@ -1,4 +1,4 @@
-package org.idp.server.adapters.springboot;
+package org.idp.server.adapters.springboot.property;
 
 public class HikariConfig {
   int maximumPoolSize = 10;

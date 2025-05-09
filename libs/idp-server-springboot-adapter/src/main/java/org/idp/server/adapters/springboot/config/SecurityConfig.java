@@ -1,10 +1,16 @@
-package org.idp.server.adapters.springboot;
+package org.idp.server.adapters.springboot.config;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.idp.server.adapters.springboot.operation.IdPScope;
+import org.idp.server.IdpServerApplication;
+import org.idp.server.adapters.springboot.filter.DynamicCorsFilter;
+import org.idp.server.adapters.springboot.filter.ManagementApiFilter;
+import org.idp.server.adapters.springboot.filter.ProtectedResourceApiFilter;
+import org.idp.server.adapters.springboot.restapi.model.IdPScope;
+import org.idp.server.adapters.springboot.session.DynamicCookieSerializer;
+import org.idp.server.core.multi_tenancy.tenant.TenantMetaDataApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +22,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.session.web.http.CookieSerializer;
-import org.springframework.session.web.http.DefaultCookieSerializer;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
@@ -27,6 +32,8 @@ public class SecurityConfig {
 
   ManagementApiFilter managementApiFilter;
   ProtectedResourceApiFilter protectedResourceApiFilter;
+  DynamicCorsFilter dynamicCorsFilter;
+  TenantMetaDataApi tenantMetaDataApi;
   String adminAuthViewUrl;
   String authViewUrl;
   String serverUrl;
@@ -35,12 +42,16 @@ public class SecurityConfig {
   public SecurityConfig(
       ManagementApiFilter managementApiFilter,
       ProtectedResourceApiFilter protectedResourceApiFilter,
+      DynamicCorsFilter dynamicCorsFilter,
+      IdpServerApplication idpServerApplication,
       @Value("${idp.configurations.adminAuthViewUrl}") String adminAuthViewUrl,
       @Value("${idp.configurations.authViewUrl}") String authViewUrl,
       @Value("${idp.configurations.serverUrl}") String serverUrl,
       @Value("${idp.configurations.additionalAuthViewUrls}") String additionalAuthViewUrls) {
     this.managementApiFilter = managementApiFilter;
     this.protectedResourceApiFilter = protectedResourceApiFilter;
+    this.dynamicCorsFilter = dynamicCorsFilter;
+    this.tenantMetaDataApi = idpServerApplication.tenantMetadataApi();
     this.adminAuthViewUrl = adminAuthViewUrl;
     this.authViewUrl = authViewUrl;
     this.serverUrl = serverUrl;
@@ -54,8 +65,6 @@ public class SecurityConfig {
             httpSecuritySessionManagementConfigurer.sessionCreationPolicy(
                 SessionCreationPolicy.STATELESS));
     http.csrf(AbstractHttpConfigurer::disable);
-
-    http.cors((cors) -> cors.configurationSource(corsConfigurationSource()));
 
     http.authorizeHttpRequests(
         (authorize) ->
@@ -80,6 +89,7 @@ public class SecurityConfig {
 
     http.addFilterBefore(managementApiFilter, BasicAuthenticationFilter.class);
     http.addFilterBefore(protectedResourceApiFilter, ManagementApiFilter.class);
+    http.addFilterBefore(dynamicCorsFilter, ProtectedResourceApiFilter.class);
 
     return http.build();
   }
@@ -102,14 +112,7 @@ public class SecurityConfig {
 
   @Bean
   public CookieSerializer cookieSerializer() {
-    DefaultCookieSerializer serializer = new DefaultCookieSerializer();
-    serializer.setCookieName("IDP_SERVER_SESSION");
-    serializer.setCookiePath("/");
-    serializer.setDomainName(serverDomain());
-    serializer.setUseSecureCookie(true);
-    serializer.setSameSite("Lax");
-    serializer.setUseHttpOnlyCookie(true);
-    return serializer;
+    return new DynamicCookieSerializer(tenantMetaDataApi);
   }
 
   private String serverDomain() {
