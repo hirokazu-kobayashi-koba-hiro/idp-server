@@ -5,6 +5,10 @@ DB_TYPE=postgresql ./gradlew flywayClean flywayMigrate
 ```
 
 ```shell
+DB_TYPE=postgresql DB_URL=jdbc:postgresql://localhost:54321/idpserver_reader ./gradlew flywayClean flywayMigrate
+```
+
+```shell
 DB_TYPE=mysql ./gradlew flywayClean flywayMigrate --info
 ```
 

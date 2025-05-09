@@ -10,21 +10,40 @@ idp:
    additionalAuthViewUrls: "${ADDITIONAL_AUTH_VIEW_URLS:}"
   datasource:
     postgresql:
-      url: "${DB_URL:jdbc:postgresql://localhost:5432/idpserver}"
-      username: "${DB_USER_NAME:idp_app_user}"
-      password: "${DB_PASSWORD:idp_app_user}"
-      hikari:
-        connection-timeout: 3000
-        maximum-pool-size: 5
-        minimum-idle: 2
+      writer:
+        url: "${DB_WRITE_URL:jdbc:postgresql://localhost:5432/idpserver}"
+        username: "${DB_WRITE_USER_NAME:idp_app_user}"
+        password: "${DB_WRITE_PASSWORD:idp_app_user}"
+        hikari:
+          connection-timeout: 2000
+          maximum-pool-size: 5
+          minimum-idle: 2
+      reader:
+        url: "${DB_READ_URL:jdbc:postgresql://localhost:5432/idpserver}"
+        username: "${DB_READ_USER_NAME:idp_app_user}"
+        password: "${DB_READ_PASSWORD:idp_app_user}"
+        hikari:
+          connection-timeout: 2000
+          maximum-pool-size: 3
+          minimum-idle: 1
+
     mysql:
-      url: "${DB_URL:jdbc:mysql://localhost:3306/idpserver}"
-      username: "${DB_USER_NAME:idpserver}"
-      password: "${DB_PASSWORD:idpserver}"
-      hikari:
-        connection-timeout: 3000
-        maximum-pool-size: 5
-        minimum-idle: 2
+      writer:
+        url: "${DB_WRITE_URL:jdbc:mysql://localhost:3306/idpserver}"
+        username: "${DB_WRITE_USER_NAME:idpserver}"
+        password: "${DB_WRITE_PASSWORD:idpserver}"
+        hikari:
+          connection-timeout: 3000
+          maximum-pool-size: 5
+          minimum-idle: 2
+      reader:
+        url: "${DB_READ_URL:jdbc:mysql://localhost:3306/idpserver}"
+        username: "${DB_READ_USER_NAME:idpserver}"
+        password: "${DB_READ_PASSWORD:idpserver}"
+        hikari:
+          connection-timeout: 2000
+          maximum-pool-size: 3
+          minimum-idle: 1
   cache:
     enabled: true
     timeToLiveSecond: ${CACHE_TIME_TO_LIVE_SECOND:300}
