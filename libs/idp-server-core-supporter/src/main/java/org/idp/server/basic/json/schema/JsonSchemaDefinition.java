@@ -7,6 +7,10 @@ public class JsonSchemaDefinition {
 
   JsonNodeWrapper definition;
 
+  public static JsonSchemaDefinition fromJson(String json) {
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromString(json));
+  }
+
   public JsonSchemaDefinition(JsonNodeWrapper definition) {
     this.definition = definition;
   }

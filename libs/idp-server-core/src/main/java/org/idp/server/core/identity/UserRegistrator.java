@@ -1,14 +1,18 @@
 package org.idp.server.core.identity;
 
+import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class UserRegistrator {
 
   UserQueryRepository userQueryRepository;
+  UserCommandRepository userCommandRepository;
 
-  public UserRegistrator(UserQueryRepository userQueryRepository) {
+  public UserRegistrator(
+      UserQueryRepository userQueryRepository, UserCommandRepository userCommandRepository) {
     this.userQueryRepository = userQueryRepository;
+    this.userCommandRepository = userCommandRepository;
   }
 
   public User registerOrUpdate(Tenant tenant, User user) {
@@ -18,11 +22,11 @@ public class UserRegistrator {
     if (existingUser.exists()) {
       UserUpdater userUpdater = new UserUpdater(user, existingUser);
       User updatedUser = userUpdater.update();
-      userQueryRepository.update(tenant, updatedUser);
+      userCommandRepository.update(tenant, updatedUser);
       return updatedUser;
     }
 
-    userQueryRepository.register(tenant, user);
+    userCommandRepository.register(tenant, user);
 
     return user;
   }

@@ -39,7 +39,8 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
     if (!clientConfiguration.hasRedirectUri()) {
       throw new OAuthBadRequestException(
           "invalid_request",
-          "When FAPI Baseline profile, shall require redirect URIs to be pre-registered");
+          "When FAPI Baseline profile, shall require redirect URIs to be pre-registered",
+          context.tenant());
     }
   }
 
@@ -48,7 +49,8 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
     if (!context.hasRedirectUriInRequest()) {
       throw new OAuthBadRequestException(
           "invalid_request",
-          "When FAPI Baseline profile, shall require the redirect_uri in the authorization request");
+          "When FAPI Baseline profile, shall require the redirect_uri in the authorization request",
+          context.tenant());
     }
   }
 
@@ -62,7 +64,8 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
           "invalid_request",
           String.format(
               "When FAPI Baseline profile, shall require the value of redirect_uri to exactly match one of the pre-registered redirect URIs (%s)",
-              context.redirectUri().value()));
+              context.redirectUri().value()),
+          context.tenant());
     }
   }
 
@@ -74,7 +77,8 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
           "invalid_request",
           String.format(
               "When FAPI Baseline profile, shall shall require redirect URIs to use the https scheme (%s)",
-              context.redirectUri().value()));
+              context.redirectUri().value()),
+          context.tenant());
     }
   }
 

@@ -4,10 +4,10 @@ import org.idp.server.basic.datasource.DatabaseType;
 
 public class TenantDialectProvider implements DialectProvider {
 
-  TenantRepository tenantRepository;
+  TenantQueryRepository tenantQueryRepository;
 
-  public TenantDialectProvider(TenantRepository tenantRepository) {
-    this.tenantRepository = tenantRepository;
+  public TenantDialectProvider(TenantQueryRepository tenantQueryRepository) {
+    this.tenantQueryRepository = tenantQueryRepository;
   }
 
   @Override
@@ -16,7 +16,7 @@ public class TenantDialectProvider implements DialectProvider {
       return DatabaseType.POSTGRESQL;
     }
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     return tenant.databaseType();
   }

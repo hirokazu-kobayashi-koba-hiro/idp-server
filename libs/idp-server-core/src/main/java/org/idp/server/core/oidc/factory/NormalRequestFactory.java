@@ -4,6 +4,7 @@ import java.util.Set;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.MaxAge;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -16,6 +17,7 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
 
   @Override
   public AuthorizationRequest create(
+      Tenant tenant,
       AuthorizationProfile profile,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
@@ -25,7 +27,7 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());
-    builder.add(authorizationServerConfiguration.tenantIdentifier());
+    builder.add(tenant.identifier());
     builder.add(profile);
     builder.add(new Scopes(filteredScopes));
     builder.add(parameters.responseType());

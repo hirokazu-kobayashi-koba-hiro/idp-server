@@ -32,6 +32,7 @@ public class NormalPatternContextCreator implements OAuthRequestContextCreator {
 
     AuthorizationRequest authorizationRequest =
         normalRequestFactory.create(
+            tenant,
             profile,
             parameters,
             joseContext,

@@ -1,6 +1,6 @@
 package org.idp.server.core.ciba;
 
-import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.ciba.clientnotification.NotificationClient;
@@ -64,7 +64,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
   }
 
   @Override
-  public AuthorizationProtocolProvider authorizationProtocolProvider() {
+  public AuthorizationProvider authorizationProtocolProvider() {
     return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
   }
 

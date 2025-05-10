@@ -1,7 +1,7 @@
 package org.idp.server.core.token;
 
 import java.util.Map;
-import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
@@ -67,7 +67,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
   }
 
   @Override
-  public AuthorizationProtocolProvider authorizationProtocolProvider() {
+  public AuthorizationProvider authorizationProtocolProvider() {
     return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
   }
 

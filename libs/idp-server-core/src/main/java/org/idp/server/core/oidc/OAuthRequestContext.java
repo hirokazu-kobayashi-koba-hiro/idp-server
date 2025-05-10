@@ -30,6 +30,7 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
 import org.idp.server.core.oidc.response.ResponseModeDecidable;
+import org.idp.server.core.oidc.view.OAuthViewUrlResolver;
 
 /** OAuthRequestContext */
 public class OAuthRequestContext implements ResponseModeDecidable {
@@ -177,16 +178,22 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   }
 
   public OAuthRequestResponse createResponse() {
+    String frontUrl = OAuthViewUrlResolver.resolve(this);
     if (isPromptCreate()) {
-      return new OAuthRequestResponse(OAuthRequestStatus.OK_ACCOUNT_CREATION, this, session);
+
+      return new OAuthRequestResponse(
+          OAuthRequestStatus.OK_ACCOUNT_CREATION, this, session, frontUrl);
     }
+
     if (Objects.isNull(session) || !session.exists()) {
-      return new OAuthRequestResponse(OAuthRequestStatus.OK, this, session);
+      return new OAuthRequestResponse(OAuthRequestStatus.OK, this, session, frontUrl);
     }
+
     if (!session.isValid(authorizationRequest())) {
-      return new OAuthRequestResponse(OAuthRequestStatus.OK, this, session);
+      return new OAuthRequestResponse(OAuthRequestStatus.OK, this, session, frontUrl);
     }
-    return new OAuthRequestResponse(OAuthRequestStatus.OK_SESSION_ENABLE, this, session);
+
+    return new OAuthRequestResponse(OAuthRequestStatus.OK_SESSION_ENABLE, this, session, frontUrl);
   }
 
   public Tenant tenant() {

@@ -45,6 +45,14 @@ test {
 	useJUnitPlatform()
 }
 
+jar {
+	enabled = true
+}
+
+bootJar {
+	enabled = false
+}
+
 sourceSets {
 	main {
 		// mybatis SQL map XML to java

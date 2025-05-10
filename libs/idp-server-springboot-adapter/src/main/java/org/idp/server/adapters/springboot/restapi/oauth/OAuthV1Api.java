@@ -1,12 +1,9 @@
 package org.idp.server.adapters.springboot.restapi.oauth;
 
-import static org.idp.server.core.oidc.io.OAuthRequestStatus.OK_ACCOUNT_CREATION;
-
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.authentication.AuthenticationInteractionRequestResult;
@@ -14,7 +11,6 @@ import org.idp.server.core.authentication.AuthenticationInteractionType;
 import org.idp.server.core.federation.FederationType;
 import org.idp.server.core.federation.SsoProvider;
 import org.idp.server.core.federation.io.FederationRequestResponse;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.io.OAuthAuthorizeResponse;
@@ -22,7 +18,6 @@ import org.idp.server.core.oidc.io.OAuthDenyResponse;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.core.oidc.io.OAuthViewDataResponse;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,20 +25,13 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/api/v1/authorizations")
+@RequestMapping("/{tenant-id}/v1/authorizations")
 public class OAuthV1Api implements ParameterTransformable {
 
   OAuthFlowApi oAuthFlowApi;
-  String adminAuthViewUrl;
-  String authViewUrl;
 
-  public OAuthV1Api(
-      IdpServerApplication idpServerApplication,
-      @Value("${idp.configurations.adminAuthViewUrl}") String adminAuthViewUrl,
-      @Value("${idp.configurations.authViewUrl}") String authViewUrl) {
+  public OAuthV1Api(IdpServerApplication idpServerApplication) {
     this.oAuthFlowApi = idpServerApplication.oAuthFlowApi();
-    this.adminAuthViewUrl = adminAuthViewUrl;
-    this.authViewUrl = authViewUrl;
   }
 
   @GetMapping
@@ -55,15 +43,11 @@ public class OAuthV1Api implements ParameterTransformable {
     Map<String, String[]> params = transform(request);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    Pairs<Tenant, OAuthRequestResponse> result =
-        oAuthFlowApi.request(tenantId, params, requestAttributes);
-
-    Tenant tenant = result.getLeft();
-    OAuthRequestResponse response = result.getRight();
+    OAuthRequestResponse response = oAuthFlowApi.request(tenantId, params, requestAttributes);
 
     switch (response.status()) {
       case OK, OK_SESSION_ENABLE, OK_ACCOUNT_CREATION -> {
-        String url = createUrl(tenant, response);
+        String url = response.frontUrl();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.LOCATION, url);
 
@@ -77,38 +61,11 @@ public class OAuthV1Api implements ParameterTransformable {
       }
       default -> {
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add(HttpHeaders.LOCATION, createErrorUrl(tenant, response));
+        httpHeaders.add(HttpHeaders.LOCATION, response.frontUrl());
 
         return new ResponseEntity<>(httpHeaders, HttpStatus.FOUND);
       }
     }
-  }
-
-  // TODO move to core logic
-  private String createUrl(Tenant tenant, OAuthRequestResponse response) {
-    String url = tenant.isAdmin() ? adminAuthViewUrl : authViewUrl;
-
-    if (response.status() == OK_ACCOUNT_CREATION) {
-      return String.format(
-          url + "signup?id=%s&tenant_id=%s",
-          response.authorizationRequestId(),
-          tenant.identifier().value());
-    }
-
-    return String.format(
-        url + "signin/webauthn?id=%s&tenant_id=%s",
-        response.authorizationRequestId(),
-        tenant.identifier().value());
-  }
-
-  // TODO move to core logic
-  private String createErrorUrl(Tenant tenant, OAuthRequestResponse response) {
-    String url = tenant.isAdmin() ? adminAuthViewUrl : authViewUrl;
-
-    return String.format(
-        url + "error/?error=%s&error_description=%s",
-        response.error(),
-        response.errorDescription());
   }
 
   @GetMapping("/{id}/view-data")

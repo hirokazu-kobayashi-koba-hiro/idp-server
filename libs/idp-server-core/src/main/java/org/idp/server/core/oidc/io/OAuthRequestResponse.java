@@ -26,6 +26,7 @@ public class OAuthRequestResponse {
   OAuthSession session;
   AuthorizationErrorResponse errorResponse;
   Map<String, String> contents;
+  String frontUrl;
   String redirectUri;
   String error;
   String errorDescription;
@@ -34,7 +35,10 @@ public class OAuthRequestResponse {
   public OAuthRequestResponse() {}
 
   public OAuthRequestResponse(
-      OAuthRequestStatus status, OAuthRequestContext context, OAuthSession session) {
+      OAuthRequestStatus status,
+      OAuthRequestContext context,
+      OAuthSession session,
+      String frontUrl) {
     this.status = status;
     this.authorizationRequest = context.authorizationRequest();
     this.authorizationServerConfiguration = context.serverConfiguration();
@@ -42,11 +46,13 @@ public class OAuthRequestResponse {
     this.session = session;
     this.contents = Map.of("id", context.identifier().value());
     this.sessionKey = context.sessionKeyValue();
+    this.frontUrl = frontUrl;
   }
 
   public OAuthRequestResponse(
-      OAuthRequestStatus status, Error error, ErrorDescription errorDescription) {
+      OAuthRequestStatus status, String frontUrl, Error error, ErrorDescription errorDescription) {
     this.status = status;
+    this.frontUrl = frontUrl;
     this.error = error.value();
     this.errorDescription = errorDescription.value();
     this.contents = Map.of("error", error.value(), "error_description", errorDescription.value());
@@ -82,6 +88,10 @@ public class OAuthRequestResponse {
 
   public Map<String, String> contents() {
     return contents;
+  }
+
+  public String frontUrl() {
+    return frontUrl;
   }
 
   public String redirectUri() {

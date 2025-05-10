@@ -19,7 +19,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/api/v1/identity/applications")
+@RequestMapping("/{tenant-id}/v1/identity/applications")
 public class IdentityV1Api implements ParameterTransformable {
 
   IdentityVerificationApi identityVerificationApi;

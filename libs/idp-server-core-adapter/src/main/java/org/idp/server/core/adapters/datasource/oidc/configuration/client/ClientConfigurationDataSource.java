@@ -55,7 +55,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
     if (!UuidMatcher.isValid(requestedClientId.value())) {
       throw new ClientConfigurationNotFoundException(
-          String.format("unregistered client (%s)", requestedClientId.value()));
+          String.format("unregistered client (%s)", requestedClientId.value()), tenant);
     }
 
     Map<String, String> resultClientId =
@@ -63,7 +63,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
     if (resultClientId == null || resultClientId.isEmpty()) {
       throw new ClientConfigurationNotFoundException(
-          String.format("unregistered client (%s)", requestedClientId.value()));
+          String.format("unregistered client (%s)", requestedClientId.value()), tenant);
     }
 
     ClientConfiguration convert = ModelConverter.convert(resultClientId);
@@ -88,7 +88,7 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
 
     if (result == null || result.isEmpty()) {
       throw new ClientConfigurationNotFoundException(
-          String.format("unregistered client (%s)", clientIdentifier.value()));
+          String.format("unregistered client (%s)", clientIdentifier.value()), tenant);
     }
 
     cacheStore.put(key, result);

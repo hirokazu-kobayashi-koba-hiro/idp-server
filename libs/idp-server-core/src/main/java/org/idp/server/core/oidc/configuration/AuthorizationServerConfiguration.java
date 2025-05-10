@@ -5,13 +5,11 @@ import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.ResponseType;
 import org.idp.server.basic.type.oauth.TokenIssuer;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.configuration.vc.VerifiableCredentialConfiguration;
 
 /** ServerConfiguration */
 public class AuthorizationServerConfiguration implements JsonReadable {
-  String tenantId;
   String issuer;
   String authorizationEndpoint;
   String tokenEndpoint = "";
@@ -67,19 +65,6 @@ public class AuthorizationServerConfiguration implements JsonReadable {
   AuthorizationServerExtensionConfiguration extension;
 
   public AuthorizationServerConfiguration() {}
-
-  public String tenantId() {
-    return tenantId;
-  }
-
-  // TODO
-  public void setTenantId(String tenantId) {
-    this.tenantId = tenantId;
-  }
-
-  public TenantIdentifier tenantIdentifier() {
-    return new TenantIdentifier(tenantId);
-  }
 
   public TokenIssuer tokenIssuer() {
     return new TokenIssuer(issuer);

@@ -3,22 +3,22 @@ package org.idp.server.core.oidc;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.exception.UnSupportedException;
 
 public class OAuthProtocols {
 
-  Map<AuthorizationProtocolProvider, OAuthProtocol> protocols;
+  Map<AuthorizationProvider, OAuthProtocol> protocols;
 
   public OAuthProtocols(Set<OAuthProtocol> setProtocols) {
-    HashMap<AuthorizationProtocolProvider, OAuthProtocol> map = new HashMap<>();
+    HashMap<AuthorizationProvider, OAuthProtocol> map = new HashMap<>();
     for (OAuthProtocol oAuthProtocol : setProtocols) {
       map.put(oAuthProtocol.authorizationProtocolProvider(), oAuthProtocol);
     }
     this.protocols = map;
   }
 
-  public OAuthProtocol get(AuthorizationProtocolProvider provider) {
+  public OAuthProtocol get(AuthorizationProvider provider) {
     OAuthProtocol oAuthProtocol = protocols.get(provider);
 
     if (oAuthProtocol == null) {

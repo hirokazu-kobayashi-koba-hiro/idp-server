@@ -17,7 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("{tenant-id}/api/v1/ciba/{id}/{interaction-type}")
+@RequestMapping("{tenant-id}/v1/ciba/{id}/{interaction-type}")
 public class CibaInteractionV1Api implements ParameterTransformable {
 
   CibaFlowApi cibaFlowApi;

@@ -1,0 +1,230 @@
+{
+  "type": "object",
+  "required": [
+    "redirect_uris"
+  ],
+  "properties": {
+    "additionalProperties": true,
+    "client_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "client_id_alias": {
+      "type": "string",
+      "format": "uuid",
+      "maxLength": "255"
+    },
+    "client_secret": {
+      "type": "string"
+    },
+    "redirect_uris": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "response_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "code",
+          "token",
+          "id_token",
+          "code token",
+          "code token id_token",
+          "token id_token",
+          "code id_token",
+          "none"
+        ]
+      },
+      "default": ["code"]
+    },
+    "grant_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "authorization_code",
+          "implicit",
+          "refresh_token",
+          "password",
+          "client_credentials",
+          "urn:openid:params:grant-type:ciba"
+        ]
+      },
+      "default": [
+        "authorization_code"
+      ]
+    },
+    "application_type": {
+      "type": "string",
+      "enum": [
+        "native",
+        "web"
+      ],
+      "default": "web"
+    },
+    "contacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "logo_uri": {
+      "type": "string",
+      "format": "uri"
+    },
+    "client_uri": {
+      "type": "string",
+      "format": "uri"
+    },
+    "policy_uri": {
+      "type": "string",
+      "format": "uri"
+    },
+    "tos_uri": {
+      "type": "string",
+      "format": "uri"
+    },
+    "jwks_uri": {
+      "type": "string",
+      "format": "uri"
+    },
+    "jwks": {
+      "type": "string",
+      "format": "jwks"
+    },
+    "sector_identifier_uri": {
+      "type": "string",
+      "format": "uri"
+    },
+    "subject_type": {
+      "type": "string",
+      "enum": [
+        "pairwise",
+        "public"
+      ]
+    },
+    "id_token_signed_response_alg": {
+      "type": "string",
+      "enum": [
+        "RS256",
+        "ES256",
+        "HS256"
+      ]
+    },
+    "id_token_encrypted_response_alg": {
+      "type": "string",
+      "enum": [
+        "RSA1_5",
+        "A128KW"
+      ]
+    },
+    "id_token_encrypted_response_enc": {
+      "type": "string",
+      "enum": [
+        "A128CBC-HS256",
+        "A128GCM"
+      ]
+    },
+    "userinfo_signed_response_alg": {
+      "type": "string",
+      "enum": [
+        "RS256",
+        "ES256",
+        "HS256"
+      ]
+    },
+    "userinfo_encrypted_response_alg": {
+      "type": "string",
+      "enum": [
+        "RSA1_5",
+        "A128KW"
+      ]
+    },
+    "userinfo_encrypted_response_enc": {
+      "type": "string",
+      "enum": [
+        "A128CBC-HS256",
+        "A128GCM"
+      ]
+    },
+    "request_object_signing_alg": {
+      "type": "string",
+      "enum": [
+        "RS256",
+        "ES256",
+        "HS256"
+      ]
+    },
+    "request_object_encryption_alg": {
+      "type": "string",
+      "enum": [
+        "RSA1_5",
+        "A128KW"
+      ]
+    },
+    "request_object_encryption_enc": {
+      "type": "string",
+      "enum": [
+        "A128CBC-HS256",
+        "A128GCM"
+      ]
+    },
+    "token_endpoint_auth_method": {
+      "type": "string",
+      "enum": [
+        "client_secret_post",
+        "client_secret_basic",
+        "client_secret_jwt",
+        "private_key_jwt",
+        "tls_client_auth",
+        "self_signed_tls_client_auth"
+      ]
+    },
+    "token_endpoint_auth_signing_alg": {
+      "type": "string",
+      "enum": [
+        "RS256",
+        "ES256",
+        "HS256"
+      ]
+    },
+    "default_max_age":{
+      "type": "integer"
+    },
+    "require_auth_time": {
+      "type": "boolean",
+      "default": false
+    },
+    "default_acr_values": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "initiate_login_uri": {
+     "type": "string",
+      "format": "uri"
+    },
+    "request_uris": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "software_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "software_version": {
+      "type": "string"
+    }
+  }
+}

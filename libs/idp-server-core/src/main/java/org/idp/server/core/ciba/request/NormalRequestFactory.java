@@ -6,6 +6,7 @@ import org.idp.server.basic.type.oauth.ClientSecretBasic;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.ciba.CibaRequestParameters;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
@@ -14,6 +15,7 @@ public class NormalRequestFactory implements BackchannelAuthenticationRequestFac
 
   @Override
   public BackchannelAuthenticationRequest create(
+      Tenant tenant,
       CibaProfile profile,
       ClientSecretBasic clientSecretBasic,
       CibaRequestParameters parameters,
@@ -25,7 +27,7 @@ public class NormalRequestFactory implements BackchannelAuthenticationRequestFac
     BackchannelAuthenticationRequestBuilder builder =
         new BackchannelAuthenticationRequestBuilder()
             .add(createIdentifier())
-            .add(authorizationServerConfiguration.tenantIdentifier())
+            .add(tenant.identifier())
             .add(profile)
             .add(clientConfiguration.backchannelTokenDeliveryMode())
             .add(new Scopes(filteredScopes))

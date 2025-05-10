@@ -14,8 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(
-    "{tenant-id}/api/v1/authentication-devices/{authentication-device-id}/authentications")
+@RequestMapping("{tenant-id}/v1/authentication-devices/{authentication-device-id}/authentications")
 public class AuthenticationDeviceV1Api implements ParameterTransformable {
 
   AuthenticationDeviceApi authenticationDeviceApi;

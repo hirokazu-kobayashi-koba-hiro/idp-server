@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import org.idp.server.basic.datasource.DatabaseType;
-import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 
 public class TenantAttributes {
@@ -12,7 +12,7 @@ public class TenantAttributes {
 
   public static TenantAttributes createDefaultType() {
     return new TenantAttributes(
-        Map.of("authorization_protocol_provider", "idp_server", "database_type", "postgresql"));
+        Map.of("authorization_provider", "idp_server", "database_type", "postgresql"));
   }
 
   public TenantAttributes() {
@@ -50,12 +50,12 @@ public class TenantAttributes {
     return values != null && !values.isEmpty();
   }
 
-  public AuthorizationProtocolProvider authorizationProtocolProvider() {
+  public AuthorizationProvider authorizationProtocolProvider() {
     if (!values.containsKey("authorization_protocol_provider")) {
       return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
     }
 
-    return new AuthorizationProtocolProvider(getValueAsString("authorization_protocol_provider"));
+    return new AuthorizationProvider(getValueAsString("authorization_protocol_provider"));
   }
 
   public DatabaseType databaseType() {

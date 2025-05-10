@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot.restapi.management;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.control.plane.ClientManagementApi;
+import org.idp.server.control_plane.client.ClientManagementApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementListResponse;
@@ -15,7 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/management/tenants/{tenant-id}/clients")
+@RequestMapping("/v1/management/tenants/{tenant-id}/clients")
 public class ClientManagementV1Api implements ParameterTransformable {
 
   ClientManagementApi clientManagementApi;

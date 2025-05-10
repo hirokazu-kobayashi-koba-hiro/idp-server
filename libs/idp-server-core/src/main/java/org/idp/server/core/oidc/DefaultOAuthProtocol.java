@@ -1,6 +1,6 @@
 package org.idp.server.core.oidc;
 
-import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
@@ -66,7 +66,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
   }
 
   @Override
-  public AuthorizationProtocolProvider authorizationProtocolProvider() {
+  public AuthorizationProvider authorizationProtocolProvider() {
     return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
   }
 

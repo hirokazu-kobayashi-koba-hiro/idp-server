@@ -15,7 +15,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("{tenant-id}/api/v1/backchannel/authentications")
+@RequestMapping("{tenant-id}/v1/backchannel/authentications")
 public class CibaV1Api implements ParameterTransformable {
 
   CibaFlowApi cibaFlowApi;

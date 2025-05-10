@@ -88,7 +88,7 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       claims.putAll(user.customPropertiesValue());
     }
 
-    if (idTokenClaims.hasVerifiedClaims()) {
+    if (idTokenClaims.hasVerifiedClaims() && user.hasVerifiedClaims()) {
       VerifiedClaimsObject verifiedClaimsObject = requestedIdTokenClaims.verifiedClaims();
       JsonNodeWrapper userVerifiedClaims = user.verifiedClaimsNodeWrapper();
       Map<String, Object> verified = new HashMap<>();

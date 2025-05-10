@@ -20,9 +20,9 @@ describe("client management api", () => {
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
-      ///api/v1/management/tenants/{tenant-id}/clients
+      ///v1/management/tenants/{tenant-id}/clients
       const response = await get({
-        url: `${backendUrl}/api/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/clients`,
+        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/clients`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }

@@ -7,7 +7,7 @@ describe("identity-verification application", () => {
 
   describe("success pattern", () => {
 
-    xit("investment-account-opening", async () => {
+    it("investment-account-opening", async () => {
 
       const type = "investment-account-opening";
       const tokenResponse = await loginForClientSecretPost({

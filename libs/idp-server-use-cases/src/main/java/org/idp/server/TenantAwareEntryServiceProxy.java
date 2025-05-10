@@ -12,14 +12,11 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public class TenantAwareEntryServiceProxy implements InvocationHandler {
   private final Object target;
-  private final OperationType operationType;
   private final DialectProvider dialectProvider;
   LoggerWrapper log = LoggerWrapper.getLogger(TenantAwareEntryServiceProxy.class);
 
-  public TenantAwareEntryServiceProxy(
-      Object target, OperationType operationType, DialectProvider dialectProvider) {
+  public TenantAwareEntryServiceProxy(Object target, DialectProvider dialectProvider) {
     this.target = target;
-    this.operationType = operationType;
     this.dialectProvider = dialectProvider;
   }
 
@@ -28,6 +25,13 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
     boolean isTransactional =
         method.isAnnotationPresent(Transaction.class)
             || target.getClass().isAnnotationPresent(Transaction.class);
+
+    Transaction tx = method.getAnnotation(Transaction.class);
+    if (tx == null) {
+      tx = target.getClass().getAnnotation(Transaction.class);
+    }
+    boolean readOnly = tx != null && tx.readOnly();
+    OperationType operationType = readOnly ? OperationType.READ : OperationType.WRITE;
 
     if (isTransactional && operationType == OperationType.READ) {
       try {
@@ -127,12 +131,11 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> T createProxy(
-      T target, Class<T> interfaceType, OperationType opType, DialectProvider provider) {
+  public static <T> T createProxy(T target, Class<T> interfaceType, DialectProvider provider) {
     return (T)
         Proxy.newProxyInstance(
             interfaceType.getClassLoader(),
             new Class<?>[] {interfaceType},
-            new TenantAwareEntryServiceProxy(target, opType, provider));
+            new TenantAwareEntryServiceProxy(target, provider));
   }
 }

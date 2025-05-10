@@ -1,0 +1,122 @@
+[
+  {
+    "id": "87cb7a53-0fde-4e92-a685-59aa67b47829",
+    "name": "tenant:create",
+    "description": "Admin Create a tenant"
+  },
+  {
+    "id": "fdebbb38-05b1-4d14-8029-aaf7819b41e8",
+    "name": "tenant:read",
+    "description": "Admin Read tenant information"
+  },
+  {
+    "id": "d43e3b2e-d8b9-4b47-83cd-2f17d5acbfd6",
+    "name": "tenant:update",
+    "description": "Admin Update tenant"
+  },
+  {
+    "id": "2f7fcccf-9d54-4e83-bf66-e49bd4670d5e",
+    "name": "tenant:delete",
+    "description": "Admin Delete tenant"
+  },
+  {
+    "id": "77c26d65-e4e0-4ddf-8f04-263d51f1a44e",
+    "name": "client:create",
+    "description": "Admin Create a client"
+  },
+  {
+    "id": "e1ecdd27-3029-4184-9dc9-f35623763cce",
+    "name": "client:read",
+    "description": "Admin Read client information"
+  },
+  {
+    "id": "9f49f806-f41b-4f26-adf6-ebcca08f2f23",
+    "name": "client:update",
+    "description": "Admin Update client"
+  },
+  {
+    "id": "f1795881-93f4-4de7-ac16-2ef09d348057",
+    "name": "client:delete",
+    "description": "Admin Delete client"
+  },
+  {
+    "id": "1fbf59e5-82c9-4c46-9da2-9f055b435a6d",
+    "name": "user:create",
+    "description": "Admin Create a user"
+  },
+  {
+    "id": "d49a8c34-5a48-49bf-87fb-b2a510cf6ce8",
+    "name": "user:read",
+    "description": "Admin Read user information"
+  },
+  {
+    "id": "2430c236-0f76-4d4d-972f-86aab19464d0",
+    "name": "user:update",
+    "description": "Admin Update user"
+  },
+  {
+    "id": "469bd351-3c5b-43c4-b42d-0f8d6e65566f",
+    "name": "user:delete",
+    "description": "Admin Delete user"
+  },
+  {
+    "id": "4db331c8-f25a-435a-877b-b85d485cecb9",
+    "name": "payment:create",
+    "description": "Admin Create a payment"
+  },
+  {
+    "id": "674a898a-c6a9-42bf-a647-37dda58beb9a",
+    "name": "payment:read",
+    "description": "Admin Read payment information"
+  },
+  {
+    "id": "767424c4-0912-425b-a8ef-641067826c2f",
+    "name": "payment:update",
+    "description": "Admin Update payment"
+  },
+  {
+    "id": "c4ad66fe-ac7a-434f-843d-6a3d33f9a4bb",
+    "name": "payment:delete",
+    "description": "Admin Delete payment"
+  },
+  {
+    "id": "1cad5fe0-075a-4c5c-98fe-6be660a730aa",
+    "name": "permission:create",
+    "description": "Admin Create a permission"
+  },
+  {
+    "id": "36167cad-5d98-40cd-94b5-0398f55f5ef1",
+    "name": "permission:read",
+    "description": "Admin Read permission information"
+  },
+  {
+    "id": "ac7ead71-6edf-4920-b5d7-26fd4c2342f7",
+    "name": "permission:update",
+    "description": "Admin Update permission"
+  },
+  {
+    "id": "00a5c4ab-d93e-4289-8745-ec349fe0c7d5",
+    "name": "permission:delete",
+    "description": "Admin Delete permission"
+  },
+  {
+    "id": "8859b27f-7249-430e-aebd-5c08827bef0b",
+    "name": "role:create",
+    "description": "Admin Create a role"
+  },
+  {
+    "id": "773b3e89-eaa3-4307-b623-b4451c08cb37",
+    "name": "role:read",
+    "description": "Admin Read role information"
+  },
+  {
+    "id": "500d7a50-593b-4220-8589-bd0b5e90798d",
+    "name": "role:update",
+    "description": "Admin Update role"
+  },
+  {
+    "id": "46e33b99-daa3-44ef-9fe9-945aabc9ad3e",
+    "name": "role:delete",
+    "description": "Admin Delete role"
+  }
+]

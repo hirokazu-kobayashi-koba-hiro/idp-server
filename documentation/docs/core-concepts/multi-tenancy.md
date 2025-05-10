@@ -24,7 +24,7 @@ This document describes how **idp-server** supports multi-tenant environments, e
 The `OAuthFlowEntryService` demonstrates a consistent design pattern:
 
 ```java
-Tenant tenant = tenantRepository.get(tenantIdentifier);
+Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
 AuthorizationRequest authorizationRequest = oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 ```
@@ -92,7 +92,7 @@ public Pairs<Tenant, OAuthRequestResponse> request(
     Map<String, String[]> params,
     RequestAttributes requestAttributes) {
 
-  Tenant tenant = tenantRepository.get(tenantIdentifier);
+  Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
   OAuthRequest oAuthRequest = new OAuthRequest(tenant, params);
 
   OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());

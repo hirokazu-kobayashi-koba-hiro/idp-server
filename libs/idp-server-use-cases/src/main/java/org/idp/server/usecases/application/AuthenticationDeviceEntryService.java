@@ -9,18 +9,18 @@ import org.idp.server.core.authentication.repository.AuthenticationTransactionQu
 import org.idp.server.core.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 
-@Transaction
+@Transaction(readOnly = true)
 public class AuthenticationDeviceEntryService implements AuthenticationDeviceApi {
 
-  TenantRepository tenantRepository;
+  TenantQueryRepository tenantQueryRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
 
   public AuthenticationDeviceEntryService(
-      TenantRepository tenantRepository,
+      TenantQueryRepository tenantQueryRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository) {
-    this.tenantRepository = tenantRepository;
+    this.tenantQueryRepository = tenantQueryRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
   }
 
@@ -29,7 +29,7 @@ public class AuthenticationDeviceEntryService implements AuthenticationDeviceApi
       AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuthenticationTransaction authenticationTransaction =
         authenticationTransactionQueryRepository.findLatest(tenant, authenticationDeviceIdentifier);
 

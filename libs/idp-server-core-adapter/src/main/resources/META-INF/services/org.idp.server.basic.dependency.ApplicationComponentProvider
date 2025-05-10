@@ -14,7 +14,8 @@ org.idp.server.core.adapters.datasource.multi_tenancy.organization.OrganizationD
 org.idp.server.core.adapters.datasource.security.event.SecurityEventDataSourceProvider
 org.idp.server.core.adapters.datasource.security.event.SecurityEventHookConfigurationDataSourceProvider
 org.idp.server.core.adapters.datasource.security.hook.SecurityEventHookResultCommandDataSourceProvider
-org.idp.server.core.adapters.datasource.multi_tenancy.tenant.TenantDataSourceProvider
+org.idp.server.core.adapters.datasource.multi_tenancy.tenant.query.TenantQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.multi_tenancy.tenant.command.TenantCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.token.OAuthTokenDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.transaction.command.AuthenticationTransactionCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.transaction.query.AuthenticationTransactionQueryDataSourceProvider

@@ -24,7 +24,7 @@ public class OAuthFederationCallbackV1Api implements ParameterTransformable {
     this.oAuthFlowApi = idpServerApplication.oAuthFlowApi();
   }
 
-  @PostMapping("/api/v1/authorizations/federations/{federation-type}/{sso-provider-name}/callback")
+  @PostMapping("/v1/authorizations/federations/{federation-type}/{sso-provider-name}/callback")
   public ResponseEntity<?> callbackFederation(
       @PathVariable("federation-type") FederationType federationType,
       @PathVariable("sso-provider-name") SsoProvider ssoProvider,

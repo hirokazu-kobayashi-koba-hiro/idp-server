@@ -6,7 +6,6 @@ import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public interface UserQueryRepository {
-  void register(Tenant tenant, User user);
 
   User get(Tenant tenant, UserIdentifier userIdentifier);
 
@@ -15,8 +14,6 @@ public interface UserQueryRepository {
   User findByPhone(Tenant tenant, String hint, String providerId);
 
   List<User> findList(Tenant tenant, int limit, int offset);
-
-  void update(Tenant tenant, User user);
 
   User findByProvider(Tenant tenant, String providerId, String providerUserId);
 

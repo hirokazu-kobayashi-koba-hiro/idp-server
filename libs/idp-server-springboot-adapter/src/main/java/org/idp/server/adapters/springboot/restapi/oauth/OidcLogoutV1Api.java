@@ -15,7 +15,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/api/v1/logout")
+@RequestMapping("/{tenant-id}/v1/logout")
 public class OidcLogoutV1Api implements ParameterTransformable {
 
   OAuthFlowApi oAuthFlowApi;

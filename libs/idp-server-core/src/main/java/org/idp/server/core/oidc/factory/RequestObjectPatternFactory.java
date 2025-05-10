@@ -8,6 +8,7 @@ import org.idp.server.basic.type.oidc.*;
 import org.idp.server.basic.type.pkce.CodeChallenge;
 import org.idp.server.basic.type.pkce.CodeChallengeMethod;
 import org.idp.server.basic.type.rar.AuthorizationDetailsEntity;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -33,6 +34,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
 
   @Override
   public AuthorizationRequest create(
+      Tenant tenant,
       AuthorizationProfile profile,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
@@ -112,7 +114,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestFactory 
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());
-    builder.add(authorizationServerConfiguration.tenantIdentifier());
+    builder.add(tenant.identifier());
     builder.add(profile);
     builder.add(scopes);
     builder.add(responseType);

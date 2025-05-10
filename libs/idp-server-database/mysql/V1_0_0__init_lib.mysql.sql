@@ -10,13 +10,16 @@ CREATE TABLE organization
 
 CREATE TABLE tenant
 (
-    id         CHAR(36)     NOT NULL,
-    name       VARCHAR(255) NOT NULL,
-    type       VARCHAR(10)  NOT NULL,
-    domain     TEXT         NOT NULL,
-    attributes JSON,
-    created_at DATETIME     NOT NULL DEFAULT now(),
-    updated_at DATETIME     NOT NULL DEFAULT now(),
+    id                     CHAR(36)     NOT NULL,
+    name                   VARCHAR(255) NOT NULL,
+    type                   VARCHAR(10)  NOT NULL,
+    domain                 TEXT         NOT NULL,
+    authorization_provider VARCHAR(255) NOT NULL,
+    database_type          VARCHAR(255) NOT NULL,
+    attributes             JSON,
+    features               JSON,
+    created_at             DATETIME     NOT NULL DEFAULT now(),
+    updated_at             DATETIME     NOT NULL DEFAULT now(),
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -545,10 +548,10 @@ CREATE TABLE authentication_transaction
 
 CREATE TABLE authentication_interactions
 (
-    authorization_id CHAR(36)                NOT NULL,
-    tenant_id        CHAR(36)                NOT NULL,
-    interaction_type VARCHAR(255)            NOT NULL,
-    payload          JSON                    NOT NULL,
+    authorization_id CHAR(36)                           NOT NULL,
+    tenant_id        CHAR(36)                           NOT NULL,
+    interaction_type VARCHAR(255)                       NOT NULL,
+    payload          JSON                               NOT NULL,
     created_at       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (authorization_id, interaction_type),

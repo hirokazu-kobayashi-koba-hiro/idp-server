@@ -3,7 +3,7 @@ package org.idp.server.usecases.application;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.security.*;
 import org.idp.server.core.security.SecurityEventApi;
 import org.idp.server.core.security.handler.SecurityEventHandler;
@@ -15,27 +15,27 @@ import org.idp.server.core.security.repository.SecurityEventHookResultCommandRep
 public class SecurityEventEntryService implements SecurityEventApi {
 
   SecurityEventHandler securityEventHandler;
-  TenantRepository tenantRepository;
+  TenantQueryRepository tenantQueryRepository;
 
   public SecurityEventEntryService(
       SecurityEventHooks securityEventHooks,
       SecurityEventCommandRepository securityEventCommandRepository,
       SecurityEventHookResultCommandRepository securityEventHookResultCommandRepository,
       SecurityEventHookConfigurationQueryRepository hookQueryRepository,
-      TenantRepository tenantRepository) {
+      TenantQueryRepository tenantQueryRepository) {
     this.securityEventHandler =
         new SecurityEventHandler(
             securityEventHooks,
             securityEventCommandRepository,
             securityEventHookResultCommandRepository,
             hookQueryRepository);
-    this.tenantRepository = tenantRepository;
+    this.tenantQueryRepository = tenantQueryRepository;
   }
 
   @Override
   public void handle(TenantIdentifier tenantIdentifier, SecurityEvent securityEvent) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     securityEventHandler.handle(tenant, securityEvent);
   }
 }
