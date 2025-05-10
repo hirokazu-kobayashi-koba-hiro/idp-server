@@ -1,4 +1,4 @@
-package org.idp.server.control_plane;
+package org.idp.server.control_plane.user;
 
 import java.util.List;
 import org.idp.server.core.identity.User;

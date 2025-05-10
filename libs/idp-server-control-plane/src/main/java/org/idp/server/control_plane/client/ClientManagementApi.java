@@ -1,4 +1,4 @@
-package org.idp.server.control_plane;
+package org.idp.server.control_plane.client;
 
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;

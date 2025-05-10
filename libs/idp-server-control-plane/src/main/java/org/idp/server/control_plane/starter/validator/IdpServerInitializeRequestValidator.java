@@ -1,30 +1,30 @@
-package org.idp.server.control_plane.validator;
+package org.idp.server.control_plane.starter.validator;
 
-import java.util.Map;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.basic.json.schema.JsonSchemaValidator;
 import org.idp.server.control_plane.schema.SchemaReader;
+import org.idp.server.control_plane.starter.io.IdpServerStarterRequest;
 
 public class IdpServerInitializeRequestValidator {
 
-  Map<String, Object> request;
+  IdpServerStarterRequest request;
   JsonSchemaValidator organizationSchemaValidator;
   JsonSchemaValidator tenantSchemaValidator;
   JsonSchemaValidator authorizationServerSchemaValidator;
-  JsonSchemaValidator clientSchemaValidator;
+  JsonSchemaValidator adminUserSchemaValidator;
 
-  public IdpServerInitializeRequestValidator(Map<String, Object> request) {
+  public IdpServerInitializeRequestValidator(IdpServerStarterRequest request) {
     this.request = request;
     this.organizationSchemaValidator = new JsonSchemaValidator(SchemaReader.organizationSchema());
     this.tenantSchemaValidator = new JsonSchemaValidator(SchemaReader.tenantSchema());
     this.authorizationServerSchemaValidator =
         new JsonSchemaValidator(SchemaReader.authorizationServerSchema());
-    this.clientSchemaValidator = new JsonSchemaValidator(SchemaReader.clientSchema());
+    this.adminUserSchemaValidator = new JsonSchemaValidator(SchemaReader.adminUserSchema());
   }
 
   public IdpServerInitializeRequestValidationResult validate() {
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(request);
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(request.toMap());
     JsonSchemaValidationResult organizationResult =
         organizationSchemaValidator.validate(jsonNodeWrapper.getValueAsJsonNode("organization"));
     JsonSchemaValidationResult tenantResult =
@@ -32,15 +32,18 @@ public class IdpServerInitializeRequestValidator {
     JsonSchemaValidationResult authorizationServerResult =
         authorizationServerSchemaValidator.validate(
             jsonNodeWrapper.getValueAsJsonNode("authorization_server_configuration"));
+    JsonSchemaValidationResult adminUserResult =
+        adminUserSchemaValidator.validate(jsonNodeWrapper.getValueAsJsonNode("user"));
 
     if (!organizationResult.isValid()
         || !tenantResult.isValid()
-        || !authorizationServerResult.isValid()) {
+        || !authorizationServerResult.isValid()
+        || !adminUserResult.isValid()) {
       return IdpServerInitializeRequestValidationResult.error(
-          organizationResult, tenantResult, authorizationServerResult);
+          organizationResult, tenantResult, authorizationServerResult, adminUserResult);
     }
 
     return IdpServerInitializeRequestValidationResult.success(
-        organizationResult, tenantResult, authorizationServerResult);
+        organizationResult, tenantResult, authorizationServerResult, adminUserResult);
   }
 }

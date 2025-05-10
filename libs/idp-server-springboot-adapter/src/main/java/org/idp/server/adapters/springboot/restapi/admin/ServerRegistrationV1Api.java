@@ -2,7 +2,7 @@ package org.idp.server.adapters.springboot.restapi.admin;
 
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
-import org.idp.server.control_plane.AuthorizationServerManagementApi;
+import org.idp.server.control_plane.oidc.AuthorizationServerManagementApi;
 import org.idp.server.core.multi_tenancy.tenant.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;

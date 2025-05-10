@@ -3,7 +3,7 @@ package org.idp.server.usecases.application;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.exception.UnauthorizedException;
 import org.idp.server.basic.type.extension.Pairs;
-import org.idp.server.control_plane.TokenIntrospectionCreator;
+import org.idp.server.control_plane.oidc.TokenIntrospectionCreator;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserAuthenticationApi;
 import org.idp.server.core.identity.UserIdentifier;

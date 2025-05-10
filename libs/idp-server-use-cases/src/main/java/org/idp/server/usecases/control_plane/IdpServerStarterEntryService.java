@@ -1,27 +1,20 @@
 package org.idp.server.usecases.control_plane;
 
-import java.util.Map;
-import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.datasource.Transaction;
-import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.control_plane.IdpServerStarterApi;
-import org.idp.server.control_plane.definition.DefinitionReader;
-import org.idp.server.control_plane.io.*;
-import org.idp.server.control_plane.validator.IdpServerInitializeRequestValidationResult;
-import org.idp.server.control_plane.validator.IdpServerInitializeRequestValidator;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserStatus;
+import org.idp.server.control_plane.starter.IdpServerStarterApi;
+import org.idp.server.control_plane.starter.IdpServerStarterContext;
+import org.idp.server.control_plane.starter.IdpServerStarterContextCreator;
+import org.idp.server.control_plane.starter.io.IdpServerStarterRequest;
+import org.idp.server.control_plane.starter.io.IdpServerStarterResponse;
+import org.idp.server.control_plane.starter.validator.IdpServerInitializeRequestValidationResult;
+import org.idp.server.control_plane.starter.validator.IdpServerInitializeRequestValidator;
 import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.identity.permission.PermissionCommandRepository;
-import org.idp.server.core.identity.permission.Permissions;
 import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.role.RoleCommandRepository;
-import org.idp.server.core.identity.role.Roles;
-import org.idp.server.core.multi_tenancy.organization.Organization;
 import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.core.multi_tenancy.tenant.*;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
 
 @Transaction
@@ -55,8 +48,8 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
   }
 
   @Override
-  public Map<String, Object> initialize(
-      TenantIdentifier adminTenantIdentifier, Map<String, Object> request) {
+  public IdpServerStarterResponse initialize(
+      TenantIdentifier adminTenantIdentifier, IdpServerStarterRequest request) {
 
     IdpServerInitializeRequestValidator requestValidator =
         new IdpServerInitializeRequestValidator(request);
@@ -65,43 +58,19 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
       return validated.errorResponse();
     }
 
-    OrganizationRegistrationRequest organizationRequest =
-        jsonConverter.read(request.get("organization"), OrganizationRegistrationRequest.class);
-    TenantRegistrationRequest tenantRequest =
-        jsonConverter.read(request.get("tenant"), TenantRegistrationRequest.class);
-    AuthorizationServerConfiguration authorizationServerConfiguration =
-        jsonConverter.read(
-            request.get("authorization_server_configuration"),
-            AuthorizationServerConfiguration.class);
+    IdpServerStarterContextCreator contextCreator =
+        new IdpServerStarterContextCreator(request, passwordEncodeDelegation);
+    IdpServerStarterContext context = contextCreator.create();
 
-    Permissions permissions = DefinitionReader.permissions();
-    ;
-    Roles roles = DefinitionReader.roles();
-
-    User user = jsonConverter.read(request.get("user"), User.class);
-    String encode = passwordEncodeDelegation.encode(user.rawPassword());
-    user.setHashedPassword(encode);
-    User updatedUser = user.transitStatus(UserStatus.REGISTERED);
-
-    Organization organization = organizationRequest.toOrganization();
-    Tenant tenant =
-        new Tenant(
-            tenantRequest.tenantIdentifier(),
-            tenantRequest.tenantName(),
-            TenantType.ADMIN,
-            new TenantDomain(authorizationServerConfiguration.tokenIssuer().value()),
-            DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider(),
-            DatabaseType.POSTGRESQL,
-            TenantAttributes.createDefaultType());
-    organization.assign(tenant);
-
+    Tenant tenant = context.tenant();
     tenantCommandRepository.register(tenant);
-    authorizationServerConfigurationRepository.register(tenant, authorizationServerConfiguration);
-    organizationRepository.register(tenant, organization);
-    permissionCommandRepository.bulkRegister(tenant, permissions);
-    roleCommandRepository.bulkRegister(tenant, roles);
-    userCommandRepository.register(tenant, updatedUser);
+    authorizationServerConfigurationRepository.register(
+        tenant, context.authorizationServerConfiguration());
+    organizationRepository.register(tenant, context.organization());
+    permissionCommandRepository.bulkRegister(tenant, context.permissions());
+    roleCommandRepository.bulkRegister(tenant, context.roles());
+    userCommandRepository.register(tenant, context.user());
 
-    return Map.of("organization", organization.toMap(), "tenant", tenant.toMap());
+    return context.toResponse();
   }
 }

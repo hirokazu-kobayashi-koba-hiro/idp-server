@@ -2,7 +2,7 @@ package org.idp.server.usecases.control_plane;
 
 import java.util.List;
 import org.idp.server.basic.datasource.Transaction;
-import org.idp.server.control_plane.UserManagementApi;
+import org.idp.server.control_plane.user.UserManagementApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.repository.UserCommandRepository;

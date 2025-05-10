@@ -1,4 +1,4 @@
-package org.idp.server.control_plane;
+package org.idp.server.control_plane.oidc;
 
 import org.idp.server.core.multi_tenancy.tenant.ServerDomain;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
