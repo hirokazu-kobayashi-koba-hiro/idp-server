@@ -28,7 +28,7 @@ public class AuthorizationServerConfigurationDataSource
   public void register(
       Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration) {
     ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.insert(authorizationServerConfiguration);
+    executor.insert(tenant, authorizationServerConfiguration);
   }
 
   @Override
@@ -48,7 +48,8 @@ public class AuthorizationServerConfigurationDataSource
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
       throw new ServerConfigurationNotFoundException(
-          String.format("unregistered server configuration (%s)", tenant.identifierValue()), tenant);
+          String.format("unregistered server configuration (%s)", tenant.identifierValue()),
+          tenant);
     }
 
     AuthorizationServerConfiguration convert = ModelConverter.convert(stringMap);

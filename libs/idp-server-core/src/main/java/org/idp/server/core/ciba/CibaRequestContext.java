@@ -13,6 +13,7 @@ import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifi
 import org.idp.server.core.ciba.user.UserHint;
 import org.idp.server.core.ciba.user.UserHintRelatedParams;
 import org.idp.server.core.ciba.user.UserHintType;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
@@ -23,6 +24,7 @@ import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 public class CibaRequestContext implements BackchannelRequestContext {
 
+  Tenant tenant;
   CibaRequestPattern pattern;
   ClientSecretBasic clientSecretBasic;
   ClientCert clientCert;
@@ -37,6 +39,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
   public CibaRequestContext() {}
 
   public CibaRequestContext(
+      Tenant tenant,
       CibaRequestPattern pattern,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
@@ -46,6 +49,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
       BackchannelAuthenticationRequest backchannelAuthenticationRequest,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
+    this.tenant = tenant;
     this.pattern = pattern;
     this.clientSecretBasic = clientSecretBasic;
     this.clientCert = clientCert;
@@ -57,6 +61,10 @@ public class CibaRequestContext implements BackchannelRequestContext {
     this.backchannelAuthenticationRequest = backchannelAuthenticationRequest;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
+  }
+
+  public Tenant tenant() {
+    return tenant;
   }
 
   public CibaRequestPattern pattern() {
@@ -178,7 +186,7 @@ public class CibaRequestContext implements BackchannelRequestContext {
   }
 
   public TenantIdentifier tenantIdentifier() {
-    return authorizationServerConfiguration.tenantIdentifier();
+    return tenant.identifier();
   }
 
   public boolean isFapiProfile() {

@@ -1,7 +1,7 @@
-package org.idp.server.usecases.control.plane;
+package org.idp.server.usecases.control_plane;
 
 import org.idp.server.basic.datasource.Transaction;
-import org.idp.server.control.plane.AuthorizationServerManagementApi;
+import org.idp.server.control_plane.AuthorizationServerManagementApi;
 import org.idp.server.core.multi_tenancy.organization.initial.TenantCreator;
 import org.idp.server.core.multi_tenancy.tenant.*;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;

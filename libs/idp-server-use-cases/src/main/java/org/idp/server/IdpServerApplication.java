@@ -9,7 +9,7 @@ import org.idp.server.basic.dependency.ApplicationComponentContainerLoader;
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolContainerLoader;
-import org.idp.server.control.plane.*;
+import org.idp.server.control_plane.*;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiers;
@@ -76,7 +76,7 @@ import org.idp.server.core.security.repository.SecurityEventHookConfigurationQue
 import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.core.token.*;
 import org.idp.server.usecases.application.*;
-import org.idp.server.usecases.control.plane.*;
+import org.idp.server.usecases.control_plane.*;
 
 /** IdpServerApplication */
 public class IdpServerApplication {
@@ -218,7 +218,7 @@ public class IdpServerApplication {
             new IdpServerStarterEntryService(
                 organizationRepository,
                 tenantCommandRepository,
-                userQueryRepository,
+                userCommandRepository,
                 permissionCommandRepository,
                 roleCommandRepository,
                 authorizationServerConfigurationRepository,
@@ -247,6 +247,7 @@ public class IdpServerApplication {
                 authenticationInteractors,
                 federationInteractors,
                 userQueryRepository,
+                userCommandRepository,
                 tenantQueryRepository,
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository,
@@ -323,6 +324,7 @@ public class IdpServerApplication {
                 identityVerificationResultCommandRepository,
                 tenantQueryRepository,
                 userQueryRepository,
+                userCommandRepository,
                 tokenEventPublisher),
             IdentityVerificationApi.class,
             tenantDialectProvider);
@@ -368,6 +370,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 organizationRepository,
                 userQueryRepository,
+                userCommandRepository,
                 authorizationServerConfigurationRepository),
             OnboardingApi.class,
             tenantDialectProvider);
@@ -389,7 +392,8 @@ public class IdpServerApplication {
 
     this.userManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new UserManagementEntryService(tenantQueryRepository, userQueryRepository),
+            new UserManagementEntryService(
+                tenantQueryRepository, userQueryRepository, userCommandRepository),
             UserManagementApi.class,
             tenantDialectProvider);
 

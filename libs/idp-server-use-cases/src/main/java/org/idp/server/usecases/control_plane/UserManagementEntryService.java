@@ -1,10 +1,11 @@
-package org.idp.server.usecases.control.plane;
+package org.idp.server.usecases.control_plane;
 
 import java.util.List;
 import org.idp.server.basic.datasource.Transaction;
-import org.idp.server.control.plane.UserManagementApi;
+import org.idp.server.control_plane.UserManagementApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserIdentifier;
+import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
@@ -16,17 +17,21 @@ public class UserManagementEntryService implements UserManagementApi {
 
   TenantQueryRepository tenantQueryRepository;
   UserQueryRepository userQueryRepository;
+  UserCommandRepository userCommandRepository;
 
   public UserManagementEntryService(
-      TenantQueryRepository tenantQueryRepository, UserQueryRepository userQueryRepository) {
+      TenantQueryRepository tenantQueryRepository,
+      UserQueryRepository userQueryRepository,
+      UserCommandRepository userCommandRepository) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.userQueryRepository = userQueryRepository;
+    this.userCommandRepository = userCommandRepository;
   }
 
   @Override
   public void register(TenantIdentifier tenantIdentifier, User user) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    userQueryRepository.register(tenant, user);
+    userCommandRepository.register(tenant, user);
   }
 
   @Override
@@ -45,7 +50,7 @@ public class UserManagementEntryService implements UserManagementApi {
   @Override
   public void update(TenantIdentifier tenantIdentifier, User user) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    userQueryRepository.update(tenant, user);
+    userCommandRepository.update(tenant, user);
   }
 
   @Override

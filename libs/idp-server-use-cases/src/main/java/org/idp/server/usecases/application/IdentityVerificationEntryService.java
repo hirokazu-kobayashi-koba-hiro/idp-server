@@ -6,6 +6,7 @@ import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserStatus;
+import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.identity.verification.*;
 import org.idp.server.core.identity.verification.application.*;
@@ -38,6 +39,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   IdentityVerificationHandler identityVerificationHandler;
   TenantQueryRepository tenantQueryRepository;
   UserQueryRepository userQueryRepository;
+  UserCommandRepository userCommandRepository;
   TokenEventPublisher eventPublisher;
 
   public IdentityVerificationEntryService(
@@ -47,6 +49,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       IdentityVerificationResultCommandRepository resultCommandRepository,
       TenantQueryRepository tenantQueryRepository,
       UserQueryRepository userQueryRepository,
+      UserCommandRepository userCommandRepository,
       TokenEventPublisher eventPublisher) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.applicationCommandRepository = applicationCommandRepository;
@@ -54,6 +57,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     this.tenantQueryRepository = tenantQueryRepository;
     this.resultCommandRepository = resultCommandRepository;
     this.userQueryRepository = userQueryRepository;
+    this.userCommandRepository = userCommandRepository;
     this.identityVerificationHandler = new IdentityVerificationHandler();
     this.eventPublisher = eventPublisher;
   }
@@ -272,7 +276,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
         user.transitStatus(UserStatus.IDENTITY_VERIFIED)
             .setVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
 
-    userQueryRepository.update(tenant, verifiedUser);
+    userCommandRepository.update(tenant, verifiedUser);
 
     Map<String, Object> response = new HashMap<>();
     return IdentityVerificationResponse.OK(response);

@@ -24,12 +24,6 @@ public class UserQueryDataSource implements UserQueryRepository {
   }
 
   @Override
-  public void register(Tenant tenant, User user) {
-    UserSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.insert(tenant, user);
-  }
-
-  @Override
   public User get(Tenant tenant, UserIdentifier userIdentifier) {
     UserSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, userIdentifier);
@@ -85,12 +79,6 @@ public class UserQueryDataSource implements UserQueryRepository {
     }
 
     return results.stream().map(ModelConverter::convert).collect(Collectors.toList());
-  }
-
-  @Override
-  public void update(Tenant tenant, User user) {
-    UserSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.update(tenant, user);
   }
 
   @Override

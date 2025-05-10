@@ -1,4 +1,4 @@
-package org.idp.server.usecases.control.plane;
+package org.idp.server.usecases.control_plane;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,9 +8,10 @@ import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.control.plane.OnboardingApi;
+import org.idp.server.control_plane.OnboardingApi;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
+import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.organization.*;
 import org.idp.server.core.multi_tenancy.tenant.*;
@@ -32,11 +33,12 @@ public class OnboardingEntryService implements OnboardingApi {
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
       UserQueryRepository userQueryRepository,
+      UserCommandRepository userCommandRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository) {
     this.tenantCommandRepository = tenantCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
-    this.userRegistrator = new UserRegistrator(userQueryRepository);
+    this.userRegistrator = new UserRegistrator(userQueryRepository, userCommandRepository);
     this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }

@@ -18,7 +18,8 @@ public class OAuthBadRequestException extends RuntimeException {
     this.tenant = tenant;
   }
 
-  public OAuthBadRequestException(String error, String errorDescription, Throwable throwable, Tenant tenant) {
+  public OAuthBadRequestException(
+      String error, String errorDescription, Throwable throwable, Tenant tenant) {
     super(errorDescription, throwable);
     this.error = error;
     this.errorDescription = errorDescription;

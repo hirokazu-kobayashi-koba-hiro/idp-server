@@ -1,4 +1,4 @@
-package org.idp.server.usecases.control.plane;
+package org.idp.server.usecases.control_plane;
 
 import java.util.List;
 import java.util.Map;
@@ -6,17 +6,14 @@ import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.control.plane.IdpServerStarterApi;
-import org.idp.server.control.plane.io.OrganizationRegistrationRequest;
-import org.idp.server.control.plane.io.PermissionRegistrationRequestConvertor;
-import org.idp.server.control.plane.io.RoleRegistrationRequestConvertor;
-import org.idp.server.control.plane.io.TenantRegistrationRequest;
+import org.idp.server.control_plane.IdpServerStarterApi;
+import org.idp.server.control_plane.io.*;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserStatus;
 import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.identity.permission.Permissions;
-import org.idp.server.core.identity.repository.UserQueryRepository;
+import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.role.RoleCommandRepository;
 import org.idp.server.core.identity.role.Roles;
 import org.idp.server.core.multi_tenancy.organization.Organization;
@@ -30,7 +27,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
 
   OrganizationRepository organizationRepository;
   TenantCommandRepository tenantCommandRepository;
-  UserQueryRepository userQueryRepository;
+  UserCommandRepository userCommandRepository;
   PermissionCommandRepository permissionCommandRepository;
   RoleCommandRepository roleCommandRepository;
   AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
@@ -40,14 +37,14 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
   public IdpServerStarterEntryService(
       OrganizationRepository organizationRepository,
       TenantCommandRepository tenantCommandRepository,
-      UserQueryRepository userQueryRepository,
+      UserCommandRepository userCommandRepository,
       PermissionCommandRepository permissionCommandRepository,
       RoleCommandRepository roleCommandRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
       PasswordEncodeDelegation passwordEncodeDelegation) {
     this.organizationRepository = organizationRepository;
     this.tenantCommandRepository = tenantCommandRepository;
-    this.userQueryRepository = userQueryRepository;
+    this.userCommandRepository = userCommandRepository;
     this.permissionCommandRepository = permissionCommandRepository;
     this.roleCommandRepository = roleCommandRepository;
     this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
@@ -58,6 +55,13 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
   @Override
   public Map<String, Object> initialize(
       TenantIdentifier adminTenantIdentifier, Map<String, Object> request) {
+
+    IdpServerInitializeRequestValidator requestValidator =
+        new IdpServerInitializeRequestValidator(request);
+    IdpServerInitializeRequestValidationResult validated = requestValidator.validate();
+    if (!validated.isValid()) {
+      return validated.errorResponse();
+    }
 
     OrganizationRegistrationRequest organizationRequest =
         jsonConverter.read(request.get("organization"), OrganizationRegistrationRequest.class);
@@ -97,7 +101,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     organizationRepository.register(tenant, organization);
     permissionCommandRepository.bulkRegister(tenant, permissions);
     roleCommandRepository.bulkRegister(tenant, roles);
-    userQueryRepository.register(tenant, updatedUser);
+    userCommandRepository.register(tenant, updatedUser);
 
     return Map.of("organization", organization.toMap(), "tenant", tenant.toMap());
   }

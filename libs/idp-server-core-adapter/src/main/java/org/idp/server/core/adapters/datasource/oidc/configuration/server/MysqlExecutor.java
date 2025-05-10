@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 
@@ -17,7 +18,8 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
   }
 
   @Override
-  public void insert(AuthorizationServerConfiguration authorizationServerConfiguration) {
+  public void insert(
+      Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -27,7 +29,7 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
                     """;
     String payload = jsonConverter.write(authorizationServerConfiguration);
     List<Object> params = new ArrayList<>();
-    params.add(authorizationServerConfiguration.tenantId());
+    params.add(tenant.identifierValue());
     params.add(authorizationServerConfiguration.tokenIssuer().value());
     params.add(payload);
 

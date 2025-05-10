@@ -17,13 +17,13 @@ import org.idp.server.core.identity.UserRegistrator;
 import org.idp.server.core.identity.event.UserLifecycleEvent;
 import org.idp.server.core.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.identity.event.UserLifecycleType;
+import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.oidc.*;
 import org.idp.server.core.oidc.exception.OAuthAuthorizeBadRequestException;
-import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
@@ -51,6 +51,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       AuthenticationInteractors authenticationInteractors,
       FederationInteractors federationInteractors,
       UserQueryRepository userQueryRepository,
+      UserCommandRepository userCommandRepository,
       TenantQueryRepository tenantQueryRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
@@ -61,7 +62,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     this.authenticationInteractors = authenticationInteractors;
     this.federationInteractors = federationInteractors;
     this.userQueryRepository = userQueryRepository;
-    this.userRegistrator = new UserRegistrator(userQueryRepository);
+    this.userRegistrator = new UserRegistrator(userQueryRepository, userCommandRepository);
     this.tenantQueryRepository = tenantQueryRepository;
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;

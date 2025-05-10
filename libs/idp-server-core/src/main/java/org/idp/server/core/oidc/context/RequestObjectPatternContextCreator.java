@@ -49,6 +49,7 @@ public class RequestObjectPatternContextCreator implements OAuthRequestContextCr
               profile, authorizationServerConfiguration, clientConfiguration);
       AuthorizationRequest authorizationRequest =
           requestFactory.create(
+              tenant,
               profile,
               parameters,
               joseContext,
@@ -65,7 +66,8 @@ public class RequestObjectPatternContextCreator implements OAuthRequestContextCr
           authorizationServerConfiguration,
           clientConfiguration);
     } catch (JoseInvalidException exception) {
-      throw new OAuthBadRequestException("invalid_request", exception.getMessage(), exception, tenant);
+      throw new OAuthBadRequestException(
+          "invalid_request", exception.getMessage(), exception, tenant);
     }
   }
 }

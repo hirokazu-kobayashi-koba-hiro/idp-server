@@ -54,13 +54,15 @@ public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
       if (uri.hasFragment()) {
         throw new OAuthBadRequestException(
             "invalid_request",
-            String.format("redirect_uri must not fragment (%s)", context.redirectUri().value()), context.tenant());
+            String.format("redirect_uri must not fragment (%s)", context.redirectUri().value()),
+            context.tenant());
       }
     } catch (InvalidUriException exception) {
       throw new OAuthBadRequestException(
           "invalid_request",
           String.format(
-              "authorization request redirect_uri is invalid (%s)", context.redirectUri().value()), context.tenant());
+              "authorization request redirect_uri is invalid (%s)", context.redirectUri().value()),
+          context.tenant());
     }
   }
 
@@ -91,7 +93,8 @@ public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
           "invalid_request",
           String.format(
               "authorization request redirect_uri does not match registered redirect uris (%s)",
-              context.redirectUri().value()), context.tenant());
+              context.redirectUri().value()),
+          context.tenant());
     }
   }
 
@@ -110,7 +113,8 @@ public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
     if (context.isMultiRegisteredRedirectUri()) {
       throw new OAuthBadRequestException(
           "invalid_request",
-          "on multiple registered redirect uris, authorization request redirect_uri must contains", context.tenant());
+          "on multiple registered redirect uris, authorization request redirect_uri must contains",
+          context.tenant());
     }
   }
 }

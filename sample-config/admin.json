@@ -10,7 +10,6 @@
     "database": "postgresql"
   },
   "authorization_server_configuration": {
-    "tenant_id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
     "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
     "authorization_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations",
     "token_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens",

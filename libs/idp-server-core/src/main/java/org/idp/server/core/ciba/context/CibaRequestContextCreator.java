@@ -10,12 +10,14 @@ import org.idp.server.core.ciba.CibaProfile;
 import org.idp.server.core.ciba.CibaRequestContext;
 import org.idp.server.core.ciba.CibaRequestParameters;
 import org.idp.server.core.ciba.CibaRequestPattern;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 public interface CibaRequestContextCreator {
 
   CibaRequestContext create(
+      Tenant tenant,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
       CibaRequestParameters parameters,

@@ -1,7 +1,6 @@
 package org.idp.server.core.oidc.validator;
 
 import java.util.List;
-
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
@@ -54,7 +53,8 @@ public class OAuthRequestValidator {
       throw new OAuthBadRequestException(
           "invalid_request",
           String.format(
-              "authorization request must not contains duplicate value; keys (%s)", keysValue), tenant);
+              "authorization request must not contains duplicate value; keys (%s)", keysValue),
+          tenant);
     }
   }
 }

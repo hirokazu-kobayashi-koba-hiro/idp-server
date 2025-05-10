@@ -1,7 +1,5 @@
 package org.idp.server.core.oidc.io;
 
-import static org.idp.server.core.oidc.io.OAuthRequestStatus.OK_ACCOUNT_CREATION;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +35,10 @@ public class OAuthRequestResponse {
   public OAuthRequestResponse() {}
 
   public OAuthRequestResponse(
-      OAuthRequestStatus status, OAuthRequestContext context, OAuthSession session, String frontUrl) {
+      OAuthRequestStatus status,
+      OAuthRequestContext context,
+      OAuthSession session,
+      String frontUrl) {
     this.status = status;
     this.authorizationRequest = context.authorizationRequest();
     this.authorizationServerConfiguration = context.serverConfiguration();
@@ -146,5 +147,4 @@ public class OAuthRequestResponse {
         .max(Comparator.comparingInt(AuthenticationPolicy::priority))
         .orElse(new AuthenticationPolicy());
   }
-
 }

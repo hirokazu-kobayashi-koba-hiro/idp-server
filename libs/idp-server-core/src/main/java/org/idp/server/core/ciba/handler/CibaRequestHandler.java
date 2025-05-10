@@ -84,6 +84,7 @@ public class CibaRequestHandler {
 
     CibaRequestContext context =
         cibaRequestContextCreator.create(
+            tenant,
             request.clientSecretBasic(),
             request.toClientCert(),
             parameters,

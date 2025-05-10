@@ -1,4 +1,4 @@
-package org.idp.server.control.plane;
+package org.idp.server.control_plane;
 
 import java.util.HashMap;
 import java.util.Map;

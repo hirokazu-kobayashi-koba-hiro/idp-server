@@ -20,7 +20,11 @@ public class OAuthRequestErrorHandler {
   public OAuthRequestResponse handle(Exception exception) {
     if (exception instanceof OAuthBadRequestException badRequestException) {
       log.warn(exception.getMessage());
-      String frontUrl = OAuthViewUrlResolver.resolveError(badRequestException.tenant(), badRequestException.error(), badRequestException.errorDescription());
+      String frontUrl =
+          OAuthViewUrlResolver.resolveError(
+              badRequestException.tenant(),
+              badRequestException.error(),
+              badRequestException.errorDescription());
       return new OAuthRequestResponse(
           OAuthRequestStatus.BAD_REQUEST,
           frontUrl,
@@ -34,21 +38,29 @@ public class OAuthRequestErrorHandler {
       log.warn(redirectableBadRequestException.getMessage());
       return new OAuthRequestResponse(OAuthRequestStatus.REDIRECABLE_BAD_REQUEST, errorResponse);
     }
-    if (exception instanceof ClientConfigurationNotFoundException clientConfigurationNotFoundException) {
+    if (exception
+        instanceof ClientConfigurationNotFoundException clientConfigurationNotFoundException) {
       log.warn("not found configuration");
       log.warn(exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
-      String frontUrl = OAuthViewUrlResolver.resolveError(clientConfigurationNotFoundException.tenant(), error, errorDescription);
-      return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST, frontUrl, error, errorDescription);
+      String frontUrl =
+          OAuthViewUrlResolver.resolveError(
+              clientConfigurationNotFoundException.tenant(), error, errorDescription);
+      return new OAuthRequestResponse(
+          OAuthRequestStatus.BAD_REQUEST, frontUrl, error, errorDescription);
     }
-    if (exception instanceof ServerConfigurationNotFoundException serverConfigurationNotFoundException) {
+    if (exception
+        instanceof ServerConfigurationNotFoundException serverConfigurationNotFoundException) {
       log.warn("not found configuration");
       log.warn(exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
-      String frontUrl = OAuthViewUrlResolver.resolveError(serverConfigurationNotFoundException.tenant(), error, errorDescription);
-      return new OAuthRequestResponse(OAuthRequestStatus.BAD_REQUEST, frontUrl, error, errorDescription);
+      String frontUrl =
+          OAuthViewUrlResolver.resolveError(
+              serverConfigurationNotFoundException.tenant(), error, errorDescription);
+      return new OAuthRequestResponse(
+          OAuthRequestStatus.BAD_REQUEST, frontUrl, error, errorDescription);
     }
     Error error = new Error("server_error");
     ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
