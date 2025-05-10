@@ -7,7 +7,9 @@
   "tenant": {
     "id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
     "name": "admin-tenant",
-    "database": "postgresql"
+    "domain": "http://localhost:8080",
+    "authorization_provider": "idp-server",
+    "database_type": "postgresql"
   },
   "authorization_server_configuration": {
     "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
@@ -61,6 +63,10 @@
       "none",
       "vp_token",
       "vp_token id_token"
+    ],
+    "response_modes_supported": [
+      "query",
+      "fragment"
     ],
     "acr_values_supported": [
       "urn:mace:incommon:iap:silver",
@@ -390,120 +396,6 @@
       ]
     }
   },
-  "permissions": [
-    {
-      "name": "tenant:create",
-      "description": "Create a tenant"
-    },
-    {
-      "name": "tenant:read",
-      "description": "Read tenant information"
-    },
-    {
-      "name": "tenant:update",
-      "description": "Update tenant"
-    },
-    {
-      "name": "tenant:delete",
-      "description": "Delete tenant"
-    },
-    {
-      "name": "client:create",
-      "description": "Create a client"
-    },
-    {
-      "name": "client:read",
-      "description": "Read client information"
-    },
-    {
-      "name": "client:update",
-      "description": "Update client"
-    },
-    {
-      "name": "client:delete",
-      "description": "Delete client"
-    },
-    {
-      "name": "user:create",
-      "description": "Create a user"
-    },
-    {
-      "name": "user:read",
-      "description": "Read user information"
-    },
-    {
-      "name": "user:update",
-      "description": "Update user"
-    },
-    {
-      "name": "user:delete",
-      "description": "Delete user"
-    },
-    {
-      "name": "payment:create",
-      "description": "Create a payment"
-    },
-    {
-      "name": "payment:read",
-      "description": "Read payment information"
-    },
-    {
-      "name": "payment:update",
-      "description": "Update payment"
-    },
-    {
-      "name": "payment:delete",
-      "description": "Delete payment"
-    }
-  ],
-  "roles": [
-    {
-      "name": "Administrator",
-      "description": "administrator has all permissions",
-      "permissions": [
-        "tenant:create",
-        "tenant:read",
-        "tenant:update",
-        "tenant:delete",
-        "client:create",
-        "client:read",
-        "client:update",
-        "client:delete",
-        "user:create",
-        "user:read",
-        "user:update",
-        "user:delete",
-        "payment:create",
-        "payment:read",
-        "payment:update",
-        "payment:delete"
-      ]
-    },
-    {
-      "name": "Editor",
-      "description": "editor has permissions for edition",
-      "permissions": [
-        "tenant:read",
-        "tenant:update",
-        "client:read",
-        "client:update",
-        "user:read",
-        "user:update",
-        "payment:read",
-        "payment:update"
-      ]
-    },
-    {
-      "name": "Viewer",
-      "description": "viewer has permissions for view",
-      "permissions": [
-        "tenant:read",
-        "client:read",
-        "user:read",
-        "payment:read"
-      ]
-    }
-  ],
   "user": {
     "sub": "3ec055a8-8000-44a2-8677-e70ebff414e2",
     "provider_id": "idp-server",

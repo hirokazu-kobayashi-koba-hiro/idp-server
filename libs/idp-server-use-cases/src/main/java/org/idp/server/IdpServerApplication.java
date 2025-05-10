@@ -10,6 +10,8 @@ import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolContainerLoader;
 import org.idp.server.control_plane.*;
+import org.idp.server.control_plane.definition.DefinitionReader;
+import org.idp.server.control_plane.schema.SchemaReader;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiers;
@@ -238,6 +240,9 @@ public class IdpServerApplication {
     federationDependencyContainer.register(OidcSsoExecutors.class, oidcSsoExecutors);
     FederationInteractors federationInteractors =
         FederationInteractorLoader.load(federationDependencyContainer);
+
+    SchemaReader.initialValidate();
+    DefinitionReader.initialValidate();
 
     this.oAuthFlowApi =
         TenantAwareEntryServiceProxy.createProxy(

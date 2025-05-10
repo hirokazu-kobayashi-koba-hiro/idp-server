@@ -1,13 +1,15 @@
 package org.idp.server.usecases.control_plane;
 
-import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.control_plane.IdpServerStarterApi;
+import org.idp.server.control_plane.definition.DefinitionReader;
 import org.idp.server.control_plane.io.*;
+import org.idp.server.control_plane.validator.IdpServerInitializeRequestValidationResult;
+import org.idp.server.control_plane.validator.IdpServerInitializeRequestValidator;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserStatus;
 import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
@@ -72,12 +74,9 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
             request.get("authorization_server_configuration"),
             AuthorizationServerConfiguration.class);
 
-    List<Map> rolesRequest = (List<Map>) jsonConverter.read(request.get("roles"), List.class);
-    List<Map> permissionsRequest =
-        (List<Map>) jsonConverter.read(request.get("permissions"), List.class);
-    Permissions permissions =
-        new PermissionRegistrationRequestConvertor(permissionsRequest).toPermissions();
-    Roles roles = new RoleRegistrationRequestConvertor(rolesRequest, permissions).toRoles();
+    Permissions permissions = DefinitionReader.permissions();
+    ;
+    Roles roles = DefinitionReader.roles();
 
     User user = jsonConverter.read(request.get("user"), User.class);
     String encode = passwordEncodeDelegation.encode(user.rawPassword());

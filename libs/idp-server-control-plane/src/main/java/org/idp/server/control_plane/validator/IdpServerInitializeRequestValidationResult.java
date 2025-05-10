@@ -1,4 +1,4 @@
-package org.idp.server.control_plane.io;
+package org.idp.server.control_plane.validator;
 
 import java.util.HashMap;
 import java.util.Map;
