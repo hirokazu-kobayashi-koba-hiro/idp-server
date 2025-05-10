@@ -1,7 +1,6 @@
 package org.idp.server.core.oidc;
 
 import java.util.Map;
-import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.authentication.AuthenticationInteractionRequestResult;
@@ -11,13 +10,12 @@ import org.idp.server.core.federation.FederationType;
 import org.idp.server.core.federation.SsoProvider;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.federation.io.FederationRequestResponse;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
 public interface OAuthFlowApi {
-  Pairs<Tenant, OAuthRequestResponse> request(
+  OAuthRequestResponse request(
       TenantIdentifier tenantIdentifier,
       Map<String, String[]> params,
       RequestAttributes requestAttributes);

@@ -5,7 +5,6 @@ import java.util.Objects;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.extension.OAuthDenyReason;
-import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.repository.AuthenticationTransactionCommandRepository;
@@ -21,8 +20,9 @@ import org.idp.server.core.identity.event.UserLifecycleType;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.oidc.*;
+import org.idp.server.core.oidc.exception.OAuthAuthorizeBadRequestException;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
@@ -39,7 +39,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   AuthenticationInteractors authenticationInteractors;
   FederationInteractors federationInteractors;
   UserRegistrator userRegistrator;
-  TenantRepository tenantRepository;
+  TenantQueryRepository tenantQueryRepository;
   AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
   OAuthFlowEventPublisher eventPublisher;
@@ -51,7 +51,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       AuthenticationInteractors authenticationInteractors,
       FederationInteractors federationInteractors,
       UserQueryRepository userQueryRepository,
-      TenantRepository tenantRepository,
+      TenantQueryRepository tenantQueryRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       OAuthFlowEventPublisher eventPublisher,
@@ -62,22 +62,22 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     this.federationInteractors = federationInteractors;
     this.userQueryRepository = userQueryRepository;
     this.userRegistrator = new UserRegistrator(userQueryRepository);
-    this.tenantRepository = tenantRepository;
+    this.tenantQueryRepository = tenantQueryRepository;
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
     this.eventPublisher = eventPublisher;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
   }
 
-  public Pairs<Tenant, OAuthRequestResponse> request(
+  public OAuthRequestResponse request(
       TenantIdentifier tenantIdentifier,
       Map<String, String[]> params,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     OAuthRequest oAuthRequest = new OAuthRequest(tenant, params);
 
-    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     OAuthRequestResponse requestResponse = oAuthProtocol.request(oAuthRequest);
 
     if (requestResponse.isOK()) {
@@ -86,7 +86,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
     }
 
-    return new Pairs<>(tenant, requestResponse);
+    return requestResponse;
   }
 
   public OAuthViewDataResponse getViewData(
@@ -94,11 +94,11 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     OAuthViewDataRequest oAuthViewDataRequest =
         new OAuthViewDataRequest(tenant, authorizationRequestIdentifier.value());
 
-    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
     return oAuthProtocol.getViewData(oAuthViewDataRequest);
   }
@@ -111,9 +111,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
@@ -162,9 +162,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       SsoProvider ssoProvider,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
@@ -195,7 +195,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       RequestAttributes requestAttributes) {
 
     FederationInteractor federationInteractor = federationInteractors.get(federationType);
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     FederationInteractionResult result =
         federationInteractor.callback(
@@ -205,7 +205,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       return result;
     }
 
-    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, result.authorizationRequestIdentifier());
 
@@ -229,8 +229,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
-    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
@@ -275,8 +275,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
-    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
@@ -284,7 +284,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     if (Objects.isNull(session)
         || session.isExpire(SystemDateTime.now())
         || Objects.isNull(session.user())) {
-      throw new OAuthBadRequestException("invalid_request", "session expired");
+      throw new OAuthAuthorizeBadRequestException("invalid_request", "session expired");
     }
 
     OAuthAuthorizeRequest authAuthorizeRequest =
@@ -311,9 +311,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
@@ -340,10 +340,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       Map<String, String[]> params,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     OAuthLogoutRequest oAuthLogoutRequest = new OAuthLogoutRequest(tenant, params);
 
-    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProtocolProvider());
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
     return oAuthProtocol.logout(oAuthLogoutRequest);
   }

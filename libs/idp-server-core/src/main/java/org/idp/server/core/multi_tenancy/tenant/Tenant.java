@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.datasource.DatabaseType;
-import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.basic.type.oauth.TokenIssuer;
 
@@ -13,13 +13,28 @@ public class Tenant implements JsonReadable {
   TenantName name;
   TenantType type;
   TenantDomain domain;
+  AuthorizationProvider authorizationProvider;
+  DatabaseType databaseType;
   TenantAttributes attributes;
+  TenantFeatures features;
 
   public Tenant() {}
 
   public Tenant(
-      TenantIdentifier identifier, TenantName name, TenantType type, TenantDomain domain) {
-    this(identifier, name, type, domain, new TenantAttributes(Map.of()));
+      TenantIdentifier identifier,
+      TenantName name,
+      TenantType type,
+      TenantDomain domain,
+      AuthorizationProvider authorizationProvider,
+      DatabaseType databaseType) {
+    this(
+        identifier,
+        name,
+        type,
+        domain,
+        authorizationProvider,
+        databaseType,
+        new TenantAttributes(Map.of()));
   }
 
   public Tenant(
@@ -27,11 +42,15 @@ public class Tenant implements JsonReadable {
       TenantName name,
       TenantType type,
       TenantDomain domain,
+      AuthorizationProvider authorizationProvider,
+      DatabaseType databaseType,
       TenantAttributes attributes) {
     this.identifier = identifier;
     this.name = name;
     this.type = type;
     this.domain = domain;
+    this.authorizationProvider = authorizationProvider;
+    this.databaseType = databaseType;
     this.attributes = attributes;
   }
 
@@ -68,6 +87,8 @@ public class Tenant implements JsonReadable {
     map.put("id", identifier.value());
     map.put("name", name.value());
     map.put("type", type.name());
+    map.put("authorization_provider", authorizationProvider.name());
+    map.put("database_type", databaseType.name());
     map.put("attributes", attributes.toMap());
     return map;
   }
@@ -88,12 +109,12 @@ public class Tenant implements JsonReadable {
     return attributes;
   }
 
-  public AuthorizationProtocolProvider authorizationProtocolProvider() {
-    return attributes.authorizationProtocolProvider();
+  public AuthorizationProvider authorizationProvider() {
+    return authorizationProvider;
   }
 
   public DatabaseType databaseType() {
-    return attributes.databaseType();
+    return databaseType;
   }
 
   public Map<String, Object> attributesAsMap() {

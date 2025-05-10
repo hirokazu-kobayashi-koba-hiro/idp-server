@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.UUID;
 import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
+import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.control.plane.OnboardingApi;
 import org.idp.server.core.identity.User;
@@ -18,18 +20,21 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRe
 @Transaction
 public class OnboardingEntryService implements OnboardingApi {
 
-  TenantRepository tenantRepository;
+  TenantCommandRepository tenantCommandRepository;
+  TenantQueryRepository tenantQueryRepository;
   OrganizationRepository organizationRepository;
   UserRegistrator userRegistrator;
   AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
   JsonConverter jsonConverter;
 
   public OnboardingEntryService(
-      TenantRepository tenantRepository,
+      TenantCommandRepository tenantCommandRepository,
+      TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
       UserQueryRepository userQueryRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository) {
-    this.tenantRepository = tenantRepository;
+    this.tenantCommandRepository = tenantCommandRepository;
+    this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.userRegistrator = new UserRegistrator(userQueryRepository);
     this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
@@ -47,7 +52,9 @@ public class OnboardingEntryService implements OnboardingApi {
     String serverConfig = (String) request.get("authorization_server_configuration");
     TenantIdentifier tenantIdentifier = new TenantIdentifier(UUID.randomUUID().toString());
     TenantDomain tenantDomain = new TenantDomain(serverDomain + "/" + tenantIdentifier.value());
-    Map<String, Object> tenantAttributes = Map.of("database", DatabaseType.of(databaseString));
+    AuthorizationProvider authorizationProvider =
+        DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
+    DatabaseType databaseType = DatabaseType.of(databaseString);
 
     String replacedConfig =
         serverConfig
@@ -64,10 +71,17 @@ public class OnboardingEntryService implements OnboardingApi {
             new OrganizationDescription(""));
 
     Tenant tenant =
-        new Tenant(tenantIdentifier, new TenantName(tenantName), TenantType.PUBLIC, tenantDomain);
+        new Tenant(
+            tenantIdentifier,
+            new TenantName(tenantName),
+            TenantType.PUBLIC,
+            tenantDomain,
+            authorizationProvider,
+            databaseType,
+            TenantAttributes.createDefaultType());
     organization.assign(tenant);
 
-    tenantRepository.register(tenant);
+    tenantCommandRepository.register(tenant);
     authorizationServerConfigurationRepository.register(tenant, authorizationServerConfiguration);
     organizationRepository.register(tenant, organization);
 
@@ -75,7 +89,7 @@ public class OnboardingEntryService implements OnboardingApi {
     newCustomProperties.put("organization", organization.toMap());
     operator.setCustomProperties(newCustomProperties);
 
-    Tenant admin = tenantRepository.getAdmin();
+    Tenant admin = tenantQueryRepository.getAdmin();
     userRegistrator.registerOrUpdate(admin, operator);
 
     return organization.toMap();

@@ -15,7 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/management/tenants/{tenant-id}/clients")
+@RequestMapping("/v1/management/tenants/{tenant-id}/clients")
 public class ClientManagementV1Api implements ParameterTransformable {
 
   ClientManagementApi clientManagementApi;

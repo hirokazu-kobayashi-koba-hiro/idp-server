@@ -10,7 +10,7 @@ import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.TokenProtocol;
 import org.idp.server.core.token.TokenProtocols;
@@ -21,21 +21,21 @@ import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectio
 public class UserAuthenticationEntryService implements UserAuthenticationApi {
 
   TokenProtocols tokenProtocols;
-  TenantRepository tenantRepository;
+  TenantQueryRepository tenantQueryRepository;
   UserQueryRepository userQueryRepository;
 
   public UserAuthenticationEntryService(
       TokenProtocols tokenProtocols,
-      TenantRepository tenantRepository,
+      TenantQueryRepository tenantQueryRepository,
       UserQueryRepository userQueryRepository) {
     this.tokenProtocols = tokenProtocols;
-    this.tenantRepository = tenantRepository;
+    this.tenantQueryRepository = tenantQueryRepository;
     this.userQueryRepository = userQueryRepository;
   }
 
   public Pairs<User, OAuthToken> authenticate(
       TenantIdentifier tenantIdentifier, String authorizationHeader) {
-    Tenant adminTenant = tenantRepository.get(tenantIdentifier);
+    Tenant adminTenant = tenantQueryRepository.get(tenantIdentifier);
 
     TokenIntrospectionCreator tokenIntrospectionCreator =
         new TokenIntrospectionCreator(adminTenant, authorizationHeader);
@@ -45,7 +45,7 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
       throw new UnauthorizedException("error=invalid_token error_description=token is undefined");
     }
 
-    TokenProtocol tokenProtocol = tokenProtocols.get(adminTenant.authorizationProtocolProvider());
+    TokenProtocol tokenProtocol = tokenProtocols.get(adminTenant.authorizationProvider());
 
     TokenIntrospectionResponse introspectionResponse =
         tokenProtocol.inspect(tokenIntrospectionRequest);

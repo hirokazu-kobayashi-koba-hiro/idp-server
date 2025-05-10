@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.multi_tenancy.tenant;
+package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.query;
 
 import java.util.Map;
 import java.util.Objects;
@@ -8,22 +8,16 @@ import org.idp.server.basic.datasource.cache.CacheStore;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.multi_tenancy.tenant.*;
 
-public class TenantDataSource implements TenantRepository {
+public class TenantQueryDataSource implements TenantQueryRepository {
 
-  TenantSqlExecutors executors;
+  TenantQuerySqlExecutors executors;
   JsonConverter jsonConverter;
   CacheStore cacheStore;
 
-  public TenantDataSource(CacheStore cacheStore) {
-    this.executors = new TenantSqlExecutors();
+  public TenantQueryDataSource(CacheStore cacheStore) {
+    this.executors = new TenantQuerySqlExecutors();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
     this.cacheStore = cacheStore;
-  }
-
-  @Override
-  public void register(Tenant tenant) {
-    TenantSqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
-    executor.insert(tenant);
   }
 
   @Override
@@ -35,7 +29,7 @@ public class TenantDataSource implements TenantRepository {
       return optionalTenant.get();
     }
 
-    TenantSqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
+    TenantQuerySqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
 
     Map<String, String> result = executor.selectOne(tenantIdentifier);
 
@@ -53,7 +47,7 @@ public class TenantDataSource implements TenantRepository {
 
   @Override
   public Tenant getAdmin() {
-    TenantSqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
+    TenantQuerySqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
 
     Map<String, String> result = executor.selectAdmin();
 
@@ -62,18 +56,6 @@ public class TenantDataSource implements TenantRepository {
     }
 
     return ModelConverter.convert(result);
-  }
-
-  @Override
-  public void update(Tenant tenant) {
-    String key = key(tenant.identifier());
-    cacheStore.delete(key);
-  }
-
-  @Override
-  public void delete(TenantIdentifier tenantIdentifier) {
-    String key = key(tenantIdentifier);
-    cacheStore.delete(key);
   }
 
   private String key(TenantIdentifier tenantIdentifier) {

@@ -1,6 +1,8 @@
 package org.idp.server.core.oidc.validator;
 
 import java.util.List;
+
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
 
@@ -16,9 +18,11 @@ import org.idp.server.core.oidc.request.OAuthRequestParameters;
  */
 public class OAuthRequestValidator {
 
+  Tenant tenant;
   OAuthRequestParameters oAuthRequestParameters;
 
-  public OAuthRequestValidator(OAuthRequestParameters oAuthRequestParameters) {
+  public OAuthRequestValidator(Tenant tenant, OAuthRequestParameters oAuthRequestParameters) {
+    this.tenant = tenant;
     this.oAuthRequestParameters = oAuthRequestParameters;
   }
 
@@ -30,7 +34,7 @@ public class OAuthRequestValidator {
   void throwExceptionIfNotContainsClientId() {
     if (!oAuthRequestParameters.hasClientId()) {
       throw new OAuthBadRequestException(
-          "invalid_request", "authorization request must contains client_id");
+          "invalid_request", "authorization request must contains client_id", tenant);
     }
   }
 
@@ -50,7 +54,7 @@ public class OAuthRequestValidator {
       throw new OAuthBadRequestException(
           "invalid_request",
           String.format(
-              "authorization request must not contains duplicate value; keys (%s)", keysValue));
+              "authorization request must not contains duplicate value; keys (%s)", keysValue), tenant);
     }
   }
 }

@@ -10,13 +10,16 @@ CREATE TABLE organization
 
 CREATE TABLE tenant
 (
-    id         UUID         NOT NULL,
-    name       VARCHAR(255) NOT NULL,
-    type       VARCHAR(10)  NOT NULL,
-    domain     TEXT         NOT NULL,
-    attributes JSONB,
-    created_at TIMESTAMP    NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP    NOT NULL DEFAULT now(),
+    id                     UUID         NOT NULL,
+    name                   VARCHAR(255) NOT NULL,
+    type                   VARCHAR(10)  NOT NULL,
+    domain                 TEXT         NOT NULL,
+    authorization_provider VARCHAR(255) NOT NULL,
+    database_type          VARCHAR(255) NOT NULL,
+    attributes             JSONB,
+    features               JSONB,
+    created_at             TIMESTAMP    NOT NULL DEFAULT now(),
+    updated_at             TIMESTAMP    NOT NULL DEFAULT now(),
     PRIMARY KEY (id)
 );
 

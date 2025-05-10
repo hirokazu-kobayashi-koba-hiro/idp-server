@@ -4,7 +4,7 @@ import org.idp.server.core.multi_tenancy.tenant.ServerDomain;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantType;
 
-public interface ServerManagementApi {
+public interface AuthorizationServerManagementApi {
 
   String register(
       TenantIdentifier adminTenantIdentifier,

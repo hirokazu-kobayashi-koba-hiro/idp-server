@@ -1,8 +1,9 @@
-package org.idp.server.adapters.springboot.restapi;
+package org.idp.server.adapters.springboot.restapi.token;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
+import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.TokenApi;
@@ -16,7 +17,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("{tenant-id}/api/v1/tokens")
+@RequestMapping("{tenant-id}/v1/tokens")
 public class TokenV1Api implements ParameterTransformable {
 
   TokenApi tokenApi;

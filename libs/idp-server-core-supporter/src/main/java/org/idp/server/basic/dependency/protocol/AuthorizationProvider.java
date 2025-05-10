@@ -2,13 +2,13 @@ package org.idp.server.basic.dependency.protocol;
 
 import java.util.Objects;
 
-public class AuthorizationProtocolProvider {
+public class AuthorizationProvider {
 
   String name;
 
-  public AuthorizationProtocolProvider() {}
+  public AuthorizationProvider() {}
 
-  public AuthorizationProtocolProvider(String name) {
+  public AuthorizationProvider(String name) {
     this.name = name;
   }
 
@@ -19,7 +19,7 @@ public class AuthorizationProtocolProvider {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    AuthorizationProtocolProvider that = (AuthorizationProtocolProvider) o;
+    AuthorizationProvider that = (AuthorizationProvider) o;
     return Objects.equals(name, that.name);
   }
 

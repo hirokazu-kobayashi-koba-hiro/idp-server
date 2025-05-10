@@ -29,7 +29,7 @@ public class OpenIdDiscoveryV1Api {
     return new ResponseEntity<>(response.content(), HttpStatus.valueOf(response.statusCode()));
   }
 
-  @GetMapping("{tenant-id}/api/v1/jwks")
+  @GetMapping("{tenant-id}/v1/jwks")
   public ResponseEntity<?> getJwks(@PathVariable("tenant-id") TenantIdentifier tenantId) {
 
     JwksRequestResponse response = oidcMetaDataApi.getJwks(tenantId);

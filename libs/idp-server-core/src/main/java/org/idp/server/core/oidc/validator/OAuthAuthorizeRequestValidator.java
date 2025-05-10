@@ -4,6 +4,7 @@ import java.util.Objects;
 import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oidc.authentication.Authentication;
+import org.idp.server.core.oidc.exception.OAuthAuthorizeBadRequestException;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
@@ -31,14 +32,14 @@ public class OAuthAuthorizeRequestValidator {
   void throwExceptionIfNotRequiredParameters() {
     if (Objects.isNull(authorizationRequestIdentifier)
         || !authorizationRequestIdentifier.exists()) {
-      throw new OAuthBadRequestException(
+      throw new OAuthAuthorizeBadRequestException(
           "invalid_request", "authorizationRequestIdentifier is required");
     }
     if (Objects.isNull(user) || !user.exists()) {
-      throw new OAuthBadRequestException("invalid_request", "user is required");
+      throw new OAuthAuthorizeBadRequestException("invalid_request", "user is required");
     }
     if (Objects.isNull(authentication)) {
-      throw new OAuthBadRequestException("invalid_request", "authentication is required");
+      throw new OAuthAuthorizeBadRequestException("invalid_request", "authentication is required");
     }
   }
 }

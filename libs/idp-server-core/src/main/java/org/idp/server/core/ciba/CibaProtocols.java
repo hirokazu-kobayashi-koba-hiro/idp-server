@@ -3,22 +3,22 @@ package org.idp.server.core.ciba;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.exception.UnSupportedException;
 
 public class CibaProtocols {
 
-  Map<AuthorizationProtocolProvider, CibaProtocol> protocols;
+  Map<AuthorizationProvider, CibaProtocol> protocols;
 
   public CibaProtocols(Set<CibaProtocol> cibaProtocols) {
-    Map<AuthorizationProtocolProvider, CibaProtocol> map = new HashMap<>();
+    Map<AuthorizationProvider, CibaProtocol> map = new HashMap<>();
     for (CibaProtocol cibaProtocol : cibaProtocols) {
       map.put(cibaProtocol.authorizationProtocolProvider(), cibaProtocol);
     }
     this.protocols = map;
   }
 
-  public CibaProtocol get(AuthorizationProtocolProvider provider) {
+  public CibaProtocol get(AuthorizationProvider provider) {
     CibaProtocol cibaProtocol = protocols.get(provider);
 
     if (cibaProtocol == null) {

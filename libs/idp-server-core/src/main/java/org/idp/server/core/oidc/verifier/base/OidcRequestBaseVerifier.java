@@ -60,7 +60,7 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
   void throwExceptionIfNotContainsRedirectUri(OAuthRequestContext context) {
     if (!context.hasRedirectUriInRequest()) {
       throw new OAuthBadRequestException(
-          "invalid_request", "oidc profile authorization request must contains redirect_uri param");
+          "invalid_request", "oidc profile authorization request must contains redirect_uri param", context.tenant());
     }
   }
 
@@ -79,7 +79,7 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
           "invalid_request",
           String.format(
               "authorization request redirect_uri does not register in client configuration (%s)",
-              context.redirectUri().value()));
+              context.redirectUri().value()), context.tenant());
     }
   }
 

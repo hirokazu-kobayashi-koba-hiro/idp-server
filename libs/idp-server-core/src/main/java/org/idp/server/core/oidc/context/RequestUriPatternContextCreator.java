@@ -37,7 +37,7 @@ public class RequestUriPatternContextCreator implements OAuthRequestContextCreat
       if (!clientConfiguration.isRegisteredRequestUri(parameters.requestUri().value())) {
         throw new OAuthBadRequestException(
             "invalid_request",
-            String.format("request uri does not registered (%s)", parameters.requestUri().value()));
+            String.format("request uri does not registered (%s)", parameters.requestUri().value()), tenant);
       }
 
       RequestObject requestObject = requestObjectGateway.get(parameters.requestUri());
@@ -76,7 +76,7 @@ public class RequestUriPatternContextCreator implements OAuthRequestContextCreat
           authorizationServerConfiguration,
           clientConfiguration);
     } catch (JoseInvalidException exception) {
-      throw new OAuthBadRequestException("invalid_request", exception.getMessage(), exception);
+      throw new OAuthBadRequestException("invalid_request", exception.getMessage(), exception, tenant);
     }
   }
 }

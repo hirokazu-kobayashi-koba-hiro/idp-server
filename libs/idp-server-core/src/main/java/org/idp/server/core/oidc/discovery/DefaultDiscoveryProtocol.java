@@ -1,7 +1,7 @@
 package org.idp.server.core.oidc.discovery;
 
 import java.util.Map;
-import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
@@ -21,7 +21,7 @@ public class DefaultDiscoveryProtocol implements DiscoveryProtocol {
   }
 
   @Override
-  public AuthorizationProtocolProvider authorizationProtocolProvider() {
+  public AuthorizationProvider authorizationProtocolProvider() {
     return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
   }
 

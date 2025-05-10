@@ -5,9 +5,7 @@ import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.basic.log.LoggerWrapper;
-import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.basic.type.security.RequestAttributes;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
@@ -18,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
 @Controller
-@RequestMapping("{tenant-id}/v1/authorizations")
+@RequestMapping("{tenant-id}/view/v1/authorizations")
 public class OAuthController implements ParameterTransformable {
 
   LoggerWrapper log = LoggerWrapper.getLogger(OAuthController.class);
@@ -38,10 +36,8 @@ public class OAuthController implements ParameterTransformable {
     Map<String, String[]> params = transform(request);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    Pairs<Tenant, OAuthRequestResponse> result =
+    OAuthRequestResponse response =
         oAuthFlowApi.request(tenantIdentifier, params, requestAttributes);
-    Tenant tenant = result.getLeft();
-    OAuthRequestResponse response = result.getRight();
 
     switch (response.status()) {
       case OK -> {
@@ -49,21 +45,21 @@ public class OAuthController implements ParameterTransformable {
         return new RedirectView(
             String.format(
                 "/signin/index.html?id=%s&tenant_id=%s",
-                response.authorizationRequestId(), tenant.identifierValue()));
+                response.authorizationRequestId(), tenantIdentifier.value()));
       }
       case OK_SESSION_ENABLE -> {
         log.info("sessionEnable: true");
         return new RedirectView(
             String.format(
                 "/signin/index.html?id=%s&tenant_id=%s",
-                response.authorizationRequestId(), tenant.identifierValue()));
+                response.authorizationRequestId(), tenantIdentifier.value()));
       }
       case OK_ACCOUNT_CREATION -> {
         log.info("request creation account");
         return new RedirectView(
             String.format(
                 "/signup/index.html?id=%s&tenant_id=%s",
-                response.authorizationRequestId(), tenant.identifierValue()));
+                response.authorizationRequestId(), tenantIdentifier.value()));
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
         log.info("redirect");
@@ -92,10 +88,8 @@ public class OAuthController implements ParameterTransformable {
     Map<String, String[]> params = transform(request);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    Pairs<Tenant, OAuthRequestResponse> result =
+    OAuthRequestResponse response =
         oAuthFlowApi.request(tenantIdentifier, params, requestAttributes);
-    Tenant tenant = result.getLeft();
-    OAuthRequestResponse response = result.getRight();
 
     switch (response.status()) {
       case OK -> {
@@ -103,21 +97,21 @@ public class OAuthController implements ParameterTransformable {
         return new RedirectView(
             String.format(
                 "/signin/index.html?id=%s&tenant_id=%s",
-                response.authorizationRequestId(), tenant.identifierValue()));
+                response.authorizationRequestId(), tenantIdentifier.value()));
       }
       case OK_SESSION_ENABLE -> {
         log.info("sessionEnable: true");
         return new RedirectView(
             String.format(
                 "/signin/index.html?id=%s&tenant_id=%s",
-                response.authorizationRequestId(), tenant.identifierValue()));
+                response.authorizationRequestId(), tenantIdentifier.value()));
       }
       case OK_ACCOUNT_CREATION -> {
         log.info("request creation account");
         return new RedirectView(
             String.format(
                 "/signup/index.html?id=%s&tenant_id=%s",
-                response.authorizationRequestId(), tenant.identifierValue()));
+                response.authorizationRequestId(), tenantIdentifier.value()));
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
         log.info("redirect");

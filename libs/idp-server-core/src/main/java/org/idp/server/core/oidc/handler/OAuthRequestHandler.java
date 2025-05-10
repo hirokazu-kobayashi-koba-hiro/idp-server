@@ -43,7 +43,7 @@ public class OAuthRequestHandler {
   public OAuthRequestContext handle(OAuthRequest oAuthRequest, OAuthSessionDelegate delegate) {
     OAuthRequestParameters parameters = oAuthRequest.toParameters();
     Tenant tenant = oAuthRequest.tenant();
-    OAuthRequestValidator validator = new OAuthRequestValidator(parameters);
+    OAuthRequestValidator validator = new OAuthRequestValidator(tenant, parameters);
     validator.validate();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =

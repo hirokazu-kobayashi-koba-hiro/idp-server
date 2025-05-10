@@ -1,10 +1,6 @@
 package org.idp.server.core.multi_tenancy.tenant;
 
-public interface TenantRepository {
-
-  Tenant get(TenantIdentifier tenantIdentifier);
-
-  Tenant getAdmin();
+public interface TenantCommandRepository {
 
   void register(Tenant tenant);
 

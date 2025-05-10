@@ -1,6 +1,6 @@
 package org.idp.server.core.token;
 
-import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.core.token.handler.token.io.TokenRequest;
 import org.idp.server.core.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
@@ -10,7 +10,7 @@ import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationRespo
 
 public interface TokenProtocol {
 
-  AuthorizationProtocolProvider authorizationProtocolProvider();
+  AuthorizationProvider authorizationProtocolProvider();
 
   TokenRequestResponse request(TokenRequest tokenRequest);
 

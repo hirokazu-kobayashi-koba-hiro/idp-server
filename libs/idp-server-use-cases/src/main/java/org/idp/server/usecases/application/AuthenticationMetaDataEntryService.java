@@ -6,27 +6,27 @@ import org.idp.server.core.authentication.fidouaf.*;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 
-@Transaction
+@Transaction(readOnly = true)
 public class AuthenticationMetaDataEntryService implements AuthenticationMetaDataApi {
 
   AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository;
   FidoUafExecutors fidoUafExecutors;
-  TenantRepository tenantRepository;
+  TenantQueryRepository tenantQueryRepository;
 
   public AuthenticationMetaDataEntryService(
       AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository,
       FidoUafExecutors fidoUafExecutors,
-      TenantRepository tenantRepository) {
+      TenantQueryRepository tenantQueryRepository) {
     this.authenticationConfigurationQueryRepository = authenticationConfigurationQueryRepository;
     this.fidoUafExecutors = fidoUafExecutors;
-    this.tenantRepository = tenantRepository;
+    this.tenantQueryRepository = tenantQueryRepository;
   }
 
   @Override
   public FidoUafExecutionResult getFidoUafFacets(TenantIdentifier tenantIdentifier) {
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     FidoUafConfiguration fidoUafConfiguration =
         authenticationConfigurationQueryRepository.get(
             tenant, "fido-uaf", FidoUafConfiguration.class);

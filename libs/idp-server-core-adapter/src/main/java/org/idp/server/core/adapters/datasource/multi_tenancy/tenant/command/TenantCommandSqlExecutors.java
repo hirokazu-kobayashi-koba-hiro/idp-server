@@ -1,22 +1,22 @@
-package org.idp.server.core.adapters.datasource.multi_tenancy.tenant;
+package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.command;
 
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.exception.UnSupportedException;
 
-public class TenantSqlExecutors {
+public class TenantCommandSqlExecutors {
 
-  Map<DatabaseType, TenantSqlExecutor> executors;
+  Map<DatabaseType, TenantCommandSqlExecutor> executors;
 
-  public TenantSqlExecutors() {
+  public TenantCommandSqlExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
     executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
-  public TenantSqlExecutor get(DatabaseType databaseType) {
-    TenantSqlExecutor executor = executors.get(databaseType);
+  public TenantCommandSqlExecutor get(DatabaseType databaseType) {
+    TenantCommandSqlExecutor executor = executors.get(databaseType);
 
     if (executor == null) {
       throw new UnSupportedException("Unknown dialect " + databaseType.name());

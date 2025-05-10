@@ -1,7 +1,7 @@
 package org.idp.server.usecases.control.plane;
 
 import org.idp.server.basic.datasource.Transaction;
-import org.idp.server.control.plane.ServerManagementApi;
+import org.idp.server.control.plane.AuthorizationServerManagementApi;
 import org.idp.server.core.multi_tenancy.organization.initial.TenantCreator;
 import org.idp.server.core.multi_tenancy.tenant.*;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
@@ -9,15 +9,15 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRe
 import org.idp.server.core.oidc.configuration.handler.ServerConfigurationHandler;
 
 @Transaction
-public class ServerManagementEntryService implements ServerManagementApi {
+public class AuthorizationServerManagementEntryService implements AuthorizationServerManagementApi {
 
-  TenantRepository tenantRepository;
+  TenantCommandRepository tenantCommandRepository;
   ServerConfigurationHandler serverConfigurationHandler;
 
-  public ServerManagementEntryService(
-      TenantRepository tenantRepository,
+  public AuthorizationServerManagementEntryService(
+      TenantCommandRepository tenantCommandRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository) {
-    this.tenantRepository = tenantRepository;
+    this.tenantCommandRepository = tenantCommandRepository;
     this.serverConfigurationHandler =
         new ServerConfigurationHandler(authorizationServerConfigurationRepository);
   }
@@ -31,7 +31,7 @@ public class ServerManagementEntryService implements ServerManagementApi {
 
     TenantCreator tenantCreator = new TenantCreator(tenantType, serverDomain);
     Tenant newTenant = tenantCreator.create();
-    tenantRepository.register(newTenant);
+    tenantCommandRepository.register(newTenant);
 
     String replacedBody = serverConfig.replaceAll("IDP_ISSUER", newTenant.tokenIssuerValue());
 

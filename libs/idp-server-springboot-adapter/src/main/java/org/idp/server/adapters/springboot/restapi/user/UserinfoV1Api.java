@@ -1,7 +1,8 @@
-package org.idp.server.adapters.springboot.restapi;
+package org.idp.server.adapters.springboot.restapi.user;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.idp.server.IdpServerApplication;
+import org.idp.server.adapters.springboot.restapi.ParameterTransformable;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.userinfo.UserinfoApi;
@@ -11,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("{tenant-id}/api/v1/userinfo")
+@RequestMapping("{tenant-id}/v1/userinfo")
 public class UserinfoV1Api implements ParameterTransformable {
 
   UserinfoApi userinfoApi;

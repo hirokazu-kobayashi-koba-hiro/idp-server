@@ -52,10 +52,7 @@ import org.idp.server.core.identity.verification.application.IdentityVerificatio
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.core.multi_tenancy.tenant.AdminTenantContext;
-import org.idp.server.core.multi_tenancy.tenant.TenantDialectProvider;
-import org.idp.server.core.multi_tenancy.tenant.TenantMetaDataApi;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.*;
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.OAuthProtocol;
 import org.idp.server.core.oidc.OAuthProtocols;
@@ -98,7 +95,7 @@ public class IdpServerApplication {
   UserOperationApi userOperationApi;
   UserLifecycleEventApi userLifecycleEventApi;
   OnboardingApi onboardingApi;
-  ServerManagementApi serverManagementApi;
+  AuthorizationServerManagementApi authorizationServerManagementApi;
   ClientManagementApi clientManagementApi;
   UserManagementApi userManagementApi;
   UserAuthenticationApi userAuthenticationApi;
@@ -142,8 +139,10 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(UserQueryRepository.class);
     OrganizationRepository organizationRepository =
         applicationComponentContainer.resolve(OrganizationRepository.class);
-    TenantRepository tenantRepository =
-        applicationComponentContainer.resolve(TenantRepository.class);
+    TenantQueryRepository tenantQueryRepository =
+        applicationComponentContainer.resolve(TenantQueryRepository.class);
+    TenantCommandRepository tenantCommandRepository =
+        applicationComponentContainer.resolve(TenantCommandRepository.class);
     AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository =
         applicationComponentContainer.resolve(AuthenticationTransactionCommandRepository.class);
     AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository =
@@ -212,20 +211,19 @@ public class IdpServerApplication {
         UserLifecycleEventExecutorLoader.load(
             applicationComponentContainer, authenticationDependencyContainer);
 
-    TenantDialectProvider tenantDialectProvider = new TenantDialectProvider(tenantRepository);
+    TenantDialectProvider tenantDialectProvider = new TenantDialectProvider(tenantQueryRepository);
 
     this.idpServerStarterApi =
         TenantAwareEntryServiceProxy.createProxy(
             new IdpServerStarterEntryService(
                 organizationRepository,
-                tenantRepository,
+                tenantCommandRepository,
                 userQueryRepository,
                 permissionCommandRepository,
                 roleCommandRepository,
                 authorizationServerConfigurationRepository,
                 passwordEncodeDelegation),
             IdpServerStarterApi.class,
-            OperationType.WRITE,
             tenantDialectProvider);
 
     OAuthFlowEventPublisher oAuthFLowEventPublisher =
@@ -249,13 +247,12 @@ public class IdpServerApplication {
                 authenticationInteractors,
                 federationInteractors,
                 userQueryRepository,
-                tenantRepository,
+                tenantQueryRepository,
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository,
                 oAuthFLowEventPublisher,
                 userLifecycleEventPublisher),
             OAuthFlowApi.class,
-            OperationType.WRITE,
             tenantDialectProvider);
 
     this.tokenApi =
@@ -263,19 +260,17 @@ public class IdpServerApplication {
             new TokenEntryService(
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 userQueryRepository,
-                tenantRepository,
+                tenantQueryRepository,
                 tokenEventPublisher),
             TokenApi.class,
-            OperationType.WRITE,
             tenantDialectProvider);
 
     this.oidcMetaDataApi =
         TenantAwareEntryServiceProxy.createProxy(
             new OidcMetaDataEntryService(
-                tenantRepository,
+                tenantQueryRepository,
                 new DiscoveryProtocols(protocolContainer.resolveAll(DiscoveryProtocol.class))),
             OidcMetaDataApi.class,
-            OperationType.READ,
             tenantDialectProvider);
 
     this.userinfoApi =
@@ -283,10 +278,9 @@ public class IdpServerApplication {
             new UserinfoEntryService(
                 new UserinfoProtocols(protocolContainer.resolveAll(UserinfoProtocol.class)),
                 userQueryRepository,
-                tenantRepository,
+                tenantQueryRepository,
                 tokenEventPublisher),
             UserinfoApi.class,
-            OperationType.READ,
             tenantDialectProvider);
 
     this.cibaFlowApi =
@@ -295,13 +289,12 @@ public class IdpServerApplication {
                 new CibaProtocols(protocolContainer.resolveAll(CibaProtocol.class)),
                 authenticationInteractors,
                 userQueryRepository,
-                tenantRepository,
+                tenantQueryRepository,
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository,
                 cibaFlowEventPublisher,
                 userLifecycleEventPublisher),
             CibaFlowApi.class,
-            OperationType.WRITE,
             tenantDialectProvider);
 
     this.authenticationMetaDataApi =
@@ -310,17 +303,15 @@ public class IdpServerApplication {
                 authenticationDependencyContainer.resolve(
                     AuthenticationConfigurationQueryRepository.class),
                 fidoUafExecutors,
-                tenantRepository),
+                tenantQueryRepository),
             AuthenticationMetaDataApi.class,
-            OperationType.READ,
             tenantDialectProvider);
 
     this.authenticationDeviceApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuthenticationDeviceEntryService(
-                tenantRepository, authenticationTransactionQueryRepository),
+                tenantQueryRepository, authenticationTransactionQueryRepository),
             AuthenticationDeviceApi.class,
-            OperationType.READ,
             tenantDialectProvider);
 
     this.identityVerificationApi =
@@ -330,11 +321,10 @@ public class IdpServerApplication {
                 identityVerificationApplicationCommandRepository,
                 identityVerificationApplicationQueryRepository,
                 identityVerificationResultCommandRepository,
-                tenantRepository,
+                tenantQueryRepository,
                 userQueryRepository,
                 tokenEventPublisher),
             IdentityVerificationApi.class,
-            OperationType.WRITE,
             tenantDialectProvider);
 
     this.securityEventApi =
@@ -344,27 +334,24 @@ public class IdpServerApplication {
                 securityEventCommandRepository,
                 securityEventHookResultCommandRepository,
                 hookQueryRepository,
-                tenantRepository),
+                tenantQueryRepository),
             SecurityEventApi.class,
-            OperationType.WRITE,
             tenantDialectProvider);
 
     this.tenantMetaDataApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new TenantMetaDataEntryService(tenantRepository),
+            new TenantMetaDataEntryService(tenantQueryRepository),
             TenantMetaDataApi.class,
-            OperationType.READ,
             tenantDialectProvider);
 
     this.userOperationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new UserOperationEntryService(
                 userCommandRepository,
-                tenantRepository,
+                tenantQueryRepository,
                 tokenEventPublisher,
                 userLifecycleEventPublisher),
             UserOperationApi.class,
-            OperationType.WRITE,
             tenantDialectProvider);
 
     this.userLifecycleEventApi =
@@ -372,51 +359,47 @@ public class IdpServerApplication {
             new UserLifecycleEventEntryService(
                 userLifecycleEventExecutorsMap, userLifecycleEventResultCommandRepository),
             UserLifecycleEventApi.class,
-            OperationType.WRITE,
             tenantDialectProvider);
 
     this.onboardingApi =
         TenantAwareEntryServiceProxy.createProxy(
             new OnboardingEntryService(
-                tenantRepository,
+                tenantCommandRepository,
+                tenantQueryRepository,
                 organizationRepository,
                 userQueryRepository,
                 authorizationServerConfigurationRepository),
             OnboardingApi.class,
-            OperationType.WRITE,
             tenantDialectProvider);
 
-    this.serverManagementApi =
+    this.authorizationServerManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new ServerManagementEntryService(
-                tenantRepository, authorizationServerConfigurationRepository),
-            ServerManagementApi.class,
-            OperationType.WRITE,
+            new AuthorizationServerManagementEntryService(
+                tenantCommandRepository, authorizationServerConfigurationRepository),
+            AuthorizationServerManagementApi.class,
             tenantDialectProvider);
 
     this.clientManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new ClientManagementEntryService(
-                tenantRepository, new ClientConfigurationHandler(clientConfigurationRepository)),
+                tenantQueryRepository,
+                new ClientConfigurationHandler(clientConfigurationRepository)),
             ClientManagementApi.class,
-            OperationType.WRITE,
             tenantDialectProvider);
 
     this.userManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new UserManagementEntryService(tenantRepository, userQueryRepository),
+            new UserManagementEntryService(tenantQueryRepository, userQueryRepository),
             UserManagementApi.class,
-            OperationType.WRITE,
             tenantDialectProvider);
 
     this.userAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new UserAuthenticationEntryService(
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
-                tenantRepository,
+                tenantQueryRepository,
                 userQueryRepository),
             UserAuthenticationApi.class,
-            OperationType.WRITE,
             tenantDialectProvider);
   }
 
@@ -472,8 +455,8 @@ public class IdpServerApplication {
     return onboardingApi;
   }
 
-  public ServerManagementApi serverManagementApi() {
-    return serverManagementApi;
+  public AuthorizationServerManagementApi serverManagementApi() {
+    return authorizationServerManagementApi;
   }
 
   public ClientManagementApi clientManagementApi() {

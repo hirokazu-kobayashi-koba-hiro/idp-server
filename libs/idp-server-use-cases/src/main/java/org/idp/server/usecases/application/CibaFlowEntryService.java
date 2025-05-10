@@ -22,7 +22,7 @@ import org.idp.server.core.identity.event.UserLifecycleType;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.security.event.CibaFlowEventPublisher;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 
@@ -33,7 +33,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
   UserHintResolvers userHintResolvers;
   AuthenticationInteractors authenticationInteractors;
   UserQueryRepository userQueryRepository;
-  TenantRepository tenantRepository;
+  TenantQueryRepository tenantQueryRepository;
   AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
   CibaFlowEventPublisher eventPublisher;
@@ -43,7 +43,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
       CibaProtocols cibaProtocols,
       AuthenticationInteractors authenticationInteractors,
       UserQueryRepository userQueryRepository,
-      TenantRepository tenantRepository,
+      TenantQueryRepository tenantQueryRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       CibaFlowEventPublisher eventPublisher,
@@ -52,7 +52,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
     this.userHintResolvers = new UserHintResolvers();
     this.authenticationInteractors = authenticationInteractors;
     this.userQueryRepository = userQueryRepository;
-    this.tenantRepository = tenantRepository;
+    this.tenantQueryRepository = tenantQueryRepository;
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
     this.eventPublisher = eventPublisher;
@@ -66,11 +66,11 @@ public class CibaFlowEntryService implements CibaFlowApi {
       String clientCert,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     CibaRequest cibaRequest = new CibaRequest(tenant, authorizationHeader, params);
     cibaRequest.setClientCert(clientCert);
 
-    CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProtocolProvider());
+    CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProvider());
 
     CibaRequestResult requestResult = cibaProtocol.request(cibaRequest);
 
@@ -151,9 +151,9 @@ public class CibaFlowEntryService implements CibaFlowApi {
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProtocolProvider());
+    CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProvider());
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
         cibaProtocol.get(tenant, backchannelAuthenticationRequestIdentifier);
 

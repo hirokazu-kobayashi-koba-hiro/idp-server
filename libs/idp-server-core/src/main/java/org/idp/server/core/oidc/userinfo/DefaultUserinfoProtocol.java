@@ -1,6 +1,6 @@
 package org.idp.server.core.oidc.userinfo;
 
-import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.oauth.Error;
@@ -31,7 +31,7 @@ public class DefaultUserinfoProtocol implements UserinfoProtocol {
   }
 
   @Override
-  public AuthorizationProtocolProvider authorizationProtocolProvider() {
+  public AuthorizationProvider authorizationProtocolProvider() {
     return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
   }
 

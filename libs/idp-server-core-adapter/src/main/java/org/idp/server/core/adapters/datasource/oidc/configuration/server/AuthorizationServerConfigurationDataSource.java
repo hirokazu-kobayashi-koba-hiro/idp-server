@@ -48,7 +48,7 @@ public class AuthorizationServerConfigurationDataSource
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
       throw new ServerConfigurationNotFoundException(
-          String.format("unregistered server configuration (%s)", tenant.identifierValue()));
+          String.format("unregistered server configuration (%s)", tenant.identifierValue()), tenant);
     }
 
     AuthorizationServerConfiguration convert = ModelConverter.convert(stringMap);

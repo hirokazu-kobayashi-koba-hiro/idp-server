@@ -1,31 +1,12 @@
-package org.idp.server.core.adapters.datasource.multi_tenancy.tenant;
+package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.query;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
-public class MysqlExecutor implements TenantSqlExecutor {
-
-  @Override
-  public void insert(Tenant tenant) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sqlTemplate =
-        """
-            INSERT INTO tenant(id, name, type, domain, attributes)
-            VALUES (?, ?, ?, ?, ?);
-            """;
-    List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
-    params.add(tenant.name().value());
-    params.add(tenant.type().name());
-    params.add(tenant.domain().value());
-
-    sqlExecutor.execute(sqlTemplate, params);
-  }
+public class MysqlExecutor implements TenantQuerySqlExecutor {
 
   @Override
   public Map<String, String> selectOne(TenantIdentifier tenantIdentifier) {
@@ -59,10 +40,4 @@ public class MysqlExecutor implements TenantSqlExecutor {
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
-
-  @Override
-  public void update(Tenant tenant) {}
-
-  @Override
-  public void delete(TenantIdentifier tenantIdentifier) {}
 }

@@ -2,7 +2,9 @@ package org.idp.server.usecases.control.plane;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.control.plane.IdpServerStarterApi;
 import org.idp.server.control.plane.io.OrganizationRegistrationRequest;
@@ -27,7 +29,7 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRe
 public class IdpServerStarterEntryService implements IdpServerStarterApi {
 
   OrganizationRepository organizationRepository;
-  TenantRepository tenantRepository;
+  TenantCommandRepository tenantCommandRepository;
   UserQueryRepository userQueryRepository;
   PermissionCommandRepository permissionCommandRepository;
   RoleCommandRepository roleCommandRepository;
@@ -37,14 +39,14 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
 
   public IdpServerStarterEntryService(
       OrganizationRepository organizationRepository,
-      TenantRepository tenantRepository,
+      TenantCommandRepository tenantCommandRepository,
       UserQueryRepository userQueryRepository,
       PermissionCommandRepository permissionCommandRepository,
       RoleCommandRepository roleCommandRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
       PasswordEncodeDelegation passwordEncodeDelegation) {
     this.organizationRepository = organizationRepository;
-    this.tenantRepository = tenantRepository;
+    this.tenantCommandRepository = tenantCommandRepository;
     this.userQueryRepository = userQueryRepository;
     this.permissionCommandRepository = permissionCommandRepository;
     this.roleCommandRepository = roleCommandRepository;
@@ -85,10 +87,12 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
             tenantRequest.tenantName(),
             TenantType.ADMIN,
             new TenantDomain(authorizationServerConfiguration.tokenIssuer().value()),
+            DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider(),
+            DatabaseType.POSTGRESQL,
             TenantAttributes.createDefaultType());
     organization.assign(tenant);
 
-    tenantRepository.register(tenant);
+    tenantCommandRepository.register(tenant);
     authorizationServerConfigurationRepository.register(tenant, authorizationServerConfiguration);
     organizationRepository.register(tenant, organization);
     permissionCommandRepository.bulkRegister(tenant, permissions);

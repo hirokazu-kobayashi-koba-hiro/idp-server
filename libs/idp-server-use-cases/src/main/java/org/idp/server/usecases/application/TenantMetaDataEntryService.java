@@ -4,19 +4,19 @@ import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantMetaDataApi;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 
-@Transaction
+@Transaction(readOnly = true)
 public class TenantMetaDataEntryService implements TenantMetaDataApi {
 
-  TenantRepository tenantRepository;
+  TenantQueryRepository tenantQueryRepository;
 
-  public TenantMetaDataEntryService(TenantRepository tenantRepository) {
-    this.tenantRepository = tenantRepository;
+  public TenantMetaDataEntryService(TenantQueryRepository tenantQueryRepository) {
+    this.tenantQueryRepository = tenantQueryRepository;
   }
 
   @Override
   public Tenant get(TenantIdentifier tenantIdentifier) {
-    return tenantRepository.get(tenantIdentifier);
+    return tenantQueryRepository.get(tenantIdentifier);
   }
 }
