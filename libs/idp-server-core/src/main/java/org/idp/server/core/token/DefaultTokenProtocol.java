@@ -8,7 +8,7 @@ import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepos
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.token.handler.token.TokenRequestErrorHandler;
@@ -44,7 +44,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
       CibaGrantRepository cibaGrantRepository,
       OAuthTokenRepository oAuthTokenRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository,
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
     this.tokenRequestHandler =
         new TokenRequestHandler(
@@ -55,14 +55,14 @@ public class DefaultTokenProtocol implements TokenProtocol {
             cibaGrantRepository,
             oAuthTokenRepository,
             authorizationServerConfigurationRepository,
-            clientConfigurationRepository);
+            clientConfigurationQueryRepository);
     this.errorHandler = new TokenRequestErrorHandler();
     this.tokenIntrospectionHandler = new TokenIntrospectionHandler(oAuthTokenRepository);
     this.tokenRevocationHandler =
         new TokenRevocationHandler(
             oAuthTokenRepository,
             authorizationServerConfigurationRepository,
-            clientConfigurationRepository);
+            clientConfigurationQueryRepository);
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
   }
 

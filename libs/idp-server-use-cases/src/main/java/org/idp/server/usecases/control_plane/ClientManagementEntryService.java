@@ -6,6 +6,8 @@ import org.idp.server.control_plane.client.ClientManagementApi;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.handler.ClientConfigurationErrorHandler;
 import org.idp.server.core.oidc.configuration.handler.ClientConfigurationHandler;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementListResponse;
@@ -20,9 +22,12 @@ public class ClientManagementEntryService implements ClientManagementApi {
 
   public ClientManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
-      ClientConfigurationHandler clientConfigurationHandler) {
+      ClientConfigurationCommandRepository clientConfigurationCommandRepository,
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.tenantQueryRepository = tenantQueryRepository;
-    this.clientConfigurationHandler = clientConfigurationHandler;
+    this.clientConfigurationHandler =
+        new ClientConfigurationHandler(
+            clientConfigurationCommandRepository, clientConfigurationQueryRepository);
     this.errorHandler = new ClientConfigurationErrorHandler();
   }
 

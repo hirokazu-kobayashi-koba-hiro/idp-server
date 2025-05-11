@@ -1,6 +1,7 @@
 org.idp.server.core.adapters.datasource.ciba.grant.CibaGrantDataSourceProvider
 org.idp.server.core.adapters.datasource.ciba.request.BackchannelAuthenticationDataSourceProvider
-org.idp.server.core.adapters.datasource.oidc.configuration.client.ClientConfigurationDataSourceProvider
+org.idp.server.core.adapters.datasource.oidc.configuration.client.query.ClientConfigurationQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.oidc.configuration.client.command.ClientConfigurationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.configuration.server.ServerConfigurationDataSourceProvider
 org.idp.server.core.adapters.datasource.verifiable_credential.VerifiableCredentialTransactionDataSourceProvider
 org.idp.server.core.adapters.datasource.grant_management.AuthorizationGrantedDataSourceProvider

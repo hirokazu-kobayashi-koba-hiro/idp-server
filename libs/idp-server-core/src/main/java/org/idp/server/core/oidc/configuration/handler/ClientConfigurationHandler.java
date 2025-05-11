@@ -7,7 +7,8 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationResponseCreator;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementListResponse;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementListStatus;
@@ -16,19 +17,16 @@ import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationMana
 
 public class ClientConfigurationHandler {
 
-  ClientConfigurationRepository clientConfigurationRepository;
+  ClientConfigurationCommandRepository clientConfigurationCommandRepository;
+  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   JsonConverter jsonConverter;
 
-  public ClientConfigurationHandler(ClientConfigurationRepository clientConfigurationRepository) {
-    this.clientConfigurationRepository = clientConfigurationRepository;
+  public ClientConfigurationHandler(
+      ClientConfigurationCommandRepository clientConfigurationCommandRepository,
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+    this.clientConfigurationCommandRepository = clientConfigurationCommandRepository;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
-  }
-
-  // TODO
-  public String handleRegistration(Tenant tenant, String json) {
-    ClientConfiguration clientConfiguration = jsonConverter.read(json, ClientConfiguration.class);
-    clientConfigurationRepository.register(tenant, clientConfiguration);
-    return json;
   }
 
   public String handleRegistrationFor(Tenant tenant, String json) {
@@ -41,14 +39,14 @@ public class ClientConfigurationHandler {
     ClientConfiguration clientConfiguration =
         jsonConverter.read(replacedJson, ClientConfiguration.class);
 
-    clientConfigurationRepository.register(tenant, clientConfiguration);
+    clientConfigurationCommandRepository.register(tenant, clientConfiguration);
     return replacedJson;
   }
 
   public String handleUpdating(Tenant tenant, String json) {
     ClientConfiguration clientConfiguration = jsonConverter.read(json, ClientConfiguration.class);
 
-    clientConfigurationRepository.update(tenant, clientConfiguration);
+    clientConfigurationCommandRepository.update(tenant, clientConfiguration);
 
     return json;
   }
@@ -57,7 +55,7 @@ public class ClientConfigurationHandler {
       Tenant tenant, int limit, int offset) {
 
     List<ClientConfiguration> clientConfigurations =
-        clientConfigurationRepository.find(tenant, limit, offset);
+        clientConfigurationQueryRepository.find(tenant, limit, offset);
     Map<String, Object> content = ClientConfigurationResponseCreator.create(clientConfigurations);
     return new ClientConfigurationManagementListResponse(
         ClientConfigurationManagementListStatus.OK, content);
@@ -67,7 +65,7 @@ public class ClientConfigurationHandler {
       Tenant tenant, RequestedClientId requestedClientId) {
 
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, requestedClientId);
+        clientConfigurationQueryRepository.get(tenant, requestedClientId);
     Map<String, Object> content = ClientConfigurationResponseCreator.create(clientConfiguration);
     return new ClientConfigurationManagementResponse(
         ClientConfigurationManagementStatus.OK, content);
@@ -76,7 +74,7 @@ public class ClientConfigurationHandler {
   public ClientConfigurationManagementResponse handleDeletion(
       Tenant tenant, RequestedClientId requestedClientId) {
 
-    clientConfigurationRepository.delete(tenant, requestedClientId);
+    clientConfigurationCommandRepository.delete(tenant, requestedClientId);
 
     return new ClientConfigurationManagementResponse(
         ClientConfigurationManagementStatus.OK, Map.of());

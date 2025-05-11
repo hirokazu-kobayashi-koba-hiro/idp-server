@@ -7,7 +7,7 @@ import org.idp.server.core.oidc.*;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.context.*;
 import org.idp.server.core.oidc.gateway.RequestObjectGateway;
 import org.idp.server.core.oidc.io.OAuthRequest;
@@ -23,20 +23,20 @@ public class OAuthRequestHandler {
   OAuthRequestVerifier verifier;
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
-  ClientConfigurationRepository clientConfigurationRepository;
+  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   AuthorizationGrantedRepository grantedRepository;
 
   public OAuthRequestHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository,
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       RequestObjectGateway requestObjectGateway,
       AuthorizationGrantedRepository grantedRepository) {
     this.oAuthRequestContextCreators = new OAuthRequestContextCreators(requestObjectGateway);
     this.verifier = new OAuthRequestVerifier();
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
-    this.clientConfigurationRepository = clientConfigurationRepository;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.grantedRepository = grantedRepository;
   }
 
@@ -49,7 +49,7 @@ public class OAuthRequestHandler {
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationRepository.get(tenant);
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, parameters.clientId());
+        clientConfigurationQueryRepository.get(tenant, parameters.clientId());
 
     OAuthRequestPattern oAuthRequestPattern = parameters.analyzePattern();
     OAuthRequestContextCreator oAuthRequestContextCreator =

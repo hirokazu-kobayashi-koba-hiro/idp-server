@@ -5,9 +5,7 @@ import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 
-public interface ClientConfigurationRepository {
-
-  void register(Tenant tenant, ClientConfiguration clientConfiguration);
+public interface ClientConfigurationQueryRepository {
 
   ClientConfiguration get(Tenant tenant, RequestedClientId requestedClientId);
 
@@ -15,7 +13,5 @@ public interface ClientConfigurationRepository {
 
   List<ClientConfiguration> find(Tenant tenant, int limit, int offset);
 
-  void update(Tenant tenant, ClientConfiguration clientConfiguration);
-
-  void delete(Tenant tenant, RequestedClientId requestedClientId);
+  ClientConfiguration find(Tenant tenant, ClientIdentifier clientIdentifier);
 }

@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.oidc.configuration.client;
+package org.idp.server.core.adapters.datasource.oidc.configuration.client.query;
 
 import java.util.List;
 import java.util.Map;

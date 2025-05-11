@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.oidc.configuration.client;
+package org.idp.server.core.adapters.datasource.oidc.configuration.client.query;
 
 import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;

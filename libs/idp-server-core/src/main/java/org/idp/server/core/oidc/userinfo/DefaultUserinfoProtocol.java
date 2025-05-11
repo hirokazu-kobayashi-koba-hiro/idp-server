@@ -6,7 +6,7 @@ import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.userinfo.handler.UserinfoDelegate;
 import org.idp.server.core.oidc.userinfo.handler.UserinfoHandler;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequest;
@@ -22,12 +22,12 @@ public class DefaultUserinfoProtocol implements UserinfoProtocol {
   public DefaultUserinfoProtocol(
       OAuthTokenRepository oAuthTokenRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.userinfoHandler =
         new UserinfoHandler(
             oAuthTokenRepository,
             authorizationServerConfigurationRepository,
-            clientConfigurationRepository);
+            clientConfigurationQueryRepository);
   }
 
   @Override

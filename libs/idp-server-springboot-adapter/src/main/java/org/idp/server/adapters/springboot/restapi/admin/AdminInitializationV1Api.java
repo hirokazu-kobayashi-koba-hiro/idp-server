@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/v1/admin/registration")
-public class AdminRegistrationV1Api implements ParameterTransformable {
+@RequestMapping("/v1/admin/initialization")
+public class AdminInitializationV1Api implements ParameterTransformable {
 
   IdpServerStarterApi idpServerStarterApi;
 
-  public AdminRegistrationV1Api(IdpServerApplication idpServerApplication) {
+  public AdminInitializationV1Api(IdpServerApplication idpServerApplication) {
     this.idpServerStarterApi = idpServerApplication.idpServerStarterApi();
   }
 

@@ -8,7 +8,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.token.AccessToken;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
@@ -27,7 +27,7 @@ public class CredentialHandler {
 
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
-  ClientConfigurationRepository clientConfigurationRepository;
+  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   VerifiableCredentialTransactionRepository verifiableCredentialTransactionRepository;
   VerifiableCredentialCreators creators;
 
@@ -35,12 +35,12 @@ public class CredentialHandler {
       OAuthTokenRepository oAuthTokenRepository,
       VerifiableCredentialTransactionRepository verifiableCredentialTransactionRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository,
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       VerifiableCredentialCreators creators) {
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.verifiableCredentialTransactionRepository = verifiableCredentialTransactionRepository;
     this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
-    this.clientConfigurationRepository = clientConfigurationRepository;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.creators = creators;
   }
 
@@ -60,7 +60,7 @@ public class CredentialHandler {
 
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, accessToken.clientIdentifier());
+        clientConfigurationQueryRepository.get(tenant, accessToken.clientIdentifier());
     CredentialDelegateResponse credentialDelegateResponse =
         delegate.getCredential(
             tenant,
@@ -109,7 +109,7 @@ public class CredentialHandler {
     verifier.verify();
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, accessToken.clientIdentifier());
+        clientConfigurationQueryRepository.get(tenant, accessToken.clientIdentifier());
     BatchCredentialRequests batchCredentialRequests = parameters.toBatchCredentialRequest();
 
     // FIXME
@@ -180,7 +180,7 @@ public class CredentialHandler {
 
     AccessToken accessToken = oAuthToken.accessToken();
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, accessToken.clientIdentifier());
+        clientConfigurationQueryRepository.get(tenant, accessToken.clientIdentifier());
     CredentialDelegateResponse credentialDelegateResponse =
         delegate.getCredential(
             tenant,

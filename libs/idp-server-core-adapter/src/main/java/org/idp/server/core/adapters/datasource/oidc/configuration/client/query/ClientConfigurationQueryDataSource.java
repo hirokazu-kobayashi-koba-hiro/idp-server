@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.oidc.configuration.client;
+package org.idp.server.core.adapters.datasource.oidc.configuration.client.query;
 
 import java.util.List;
 import java.util.Map;
@@ -13,24 +13,18 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationNotFoundException;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 
-public class ClientConfigurationDataSource implements ClientConfigurationRepository {
+public class ClientConfigurationQueryDataSource implements ClientConfigurationQueryRepository {
 
   ClientConfigSqlExecutors executors;
   JsonConverter jsonConverter;
   CacheStore cacheStore;
 
-  public ClientConfigurationDataSource(CacheStore cacheStore) {
+  public ClientConfigurationQueryDataSource(CacheStore cacheStore) {
     this.executors = new ClientConfigSqlExecutors();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
     this.cacheStore = cacheStore;
-  }
-
-  @Override
-  public void register(Tenant tenant, ClientConfiguration clientConfiguration) {
-    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.insert(tenant, clientConfiguration);
   }
 
   @Override
@@ -109,23 +103,25 @@ public class ClientConfigurationDataSource implements ClientConfigurationReposit
   }
 
   @Override
-  public void update(Tenant tenant, ClientConfiguration clientConfiguration) {
-    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.update(tenant, clientConfiguration);
-    String key = key(tenant.identifier(), clientConfiguration.clientIdentifier().value());
-    cacheStore.delete(key);
-    if (clientConfiguration.clientIdAlias() != null) {
-      String aliasKey = key(tenant.identifier(), clientConfiguration.clientIdAlias());
-      cacheStore.delete(aliasKey);
-    }
-  }
+  public ClientConfiguration find(Tenant tenant, ClientIdentifier clientIdentifier) {
+    String key = key(tenant.identifier(), clientIdentifier.value());
+    Optional<ClientConfiguration> optionalClientConfiguration =
+        cacheStore.find(key, ClientConfiguration.class);
 
-  @Override
-  public void delete(Tenant tenant, RequestedClientId requestedClientId) {
+    if (optionalClientConfiguration.isPresent()) {
+      return optionalClientConfiguration.get();
+    }
+
     ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.delete(tenant, requestedClientId);
-    String key = key(tenant.identifier(), requestedClientId.value());
-    cacheStore.delete(key);
+    Map<String, String> result = executor.selectById(tenant, clientIdentifier);
+
+    if (result == null || result.isEmpty()) {
+      return new ClientConfiguration();
+    }
+
+    cacheStore.put(key, result);
+
+    return ModelConverter.convert(result);
   }
 
   private String key(TenantIdentifier tenantIdentifier, String clientId) {

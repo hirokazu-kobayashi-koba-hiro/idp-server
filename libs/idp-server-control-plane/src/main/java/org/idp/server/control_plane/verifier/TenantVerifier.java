@@ -1,16 +1,15 @@
-package org.idp.server.control_plane.onboarding.verifier;
+package org.idp.server.control_plane.verifier;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.control_plane.verifier.VerificationResult;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 
-public class OnboardingTenantVerifier {
+public class TenantVerifier {
 
   TenantQueryRepository tenantQueryRepository;
 
-  public OnboardingTenantVerifier(TenantQueryRepository tenantQueryRepository) {
+  public TenantVerifier(TenantQueryRepository tenantQueryRepository) {
     this.tenantQueryRepository = tenantQueryRepository;
   }
 

@@ -1,13 +1,14 @@
 package org.idp.server.control_plane.onboarding.verifier;
 
 import org.idp.server.control_plane.onboarding.OnboardingContext;
+import org.idp.server.control_plane.verifier.TenantVerifier;
 import org.idp.server.control_plane.verifier.VerificationResult;
 
 public class OnboardingVerifier {
 
-  OnboardingTenantVerifier tenantVerifier;
+  TenantVerifier tenantVerifier;
 
-  public OnboardingVerifier(OnboardingTenantVerifier tenantVerifier) {
+  public OnboardingVerifier(TenantVerifier tenantVerifier) {
     this.tenantVerifier = tenantVerifier;
   }
 

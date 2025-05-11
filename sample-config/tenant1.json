@@ -45,6 +45,10 @@
       "transfers"
     ],
     "response_types_supported": [],
+    "response_modes_supported": [
+      "query",
+      "fragment"
+    ],
     "acr_values_supported": [
       "urn:mace:incommon:iap:silver",
       "urn:mace:incommon:iap:bronze"

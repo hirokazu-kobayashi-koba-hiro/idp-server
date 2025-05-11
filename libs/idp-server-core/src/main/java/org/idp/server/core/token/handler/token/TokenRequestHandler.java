@@ -13,7 +13,7 @@ import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.token.OAuthToken;
@@ -33,7 +33,7 @@ public class TokenRequestHandler {
   ClientAuthenticatorHandler clientAuthenticatorHandler;
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
-  ClientConfigurationRepository clientConfigurationRepository;
+  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public TokenRequestHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
@@ -43,7 +43,7 @@ public class TokenRequestHandler {
       CibaGrantRepository cibaGrantRepository,
       OAuthTokenRepository oAuthTokenRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.oAuthTokenCreationServices =
         new OAuthTokenCreationServices(
             authorizationRequestRepository,
@@ -55,7 +55,7 @@ public class TokenRequestHandler {
     this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
-    this.clientConfigurationRepository = clientConfigurationRepository;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
   public TokenRequestResponse handle(
@@ -73,7 +73,7 @@ public class TokenRequestHandler {
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationRepository.get(tenant);
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, requestedClientId);
+        clientConfigurationQueryRepository.get(tenant, requestedClientId);
 
     TokenRequestContext tokenRequestContext =
         new TokenRequestContext(

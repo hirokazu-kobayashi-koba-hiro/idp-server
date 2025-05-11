@@ -1,16 +1,14 @@
-package org.idp.server.core.adapters.datasource.oidc.configuration.client;
+package org.idp.server.core.adapters.datasource.oidc.configuration.client.command;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
-public class MysqlExecutor implements ClientConfigSqlExecutor {
+public class MysqlExecutor implements ClientConfigCommandSqlExecutor {
 
   JsonConverter jsonConverter;
 
@@ -36,46 +34,6 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
     params.add(payload);
 
     sqlExecutor.execute(sqlTemplate, params);
-  }
-
-  @Override
-  public Map<String, String> selectByAlias(Tenant tenant, RequestedClientId requestedClientId) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sqlTemplateClientIdAlias =
-        """
-                        SELECT id, id_alias, tenant_id, payload
-                        FROM client_configuration
-                        WHERE tenant_id = ? AND id_alias = ?;
-                        """;
-    List<Object> paramsClientIdAlias = List.of(tenant.identifierValue(), requestedClientId.value());
-    return sqlExecutor.selectOne(sqlTemplateClientIdAlias, paramsClientIdAlias);
-  }
-
-  @Override
-  public Map<String, String> selectById(Tenant tenant, ClientIdentifier clientIdentifier) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                        SELECT id, id_alias, tenant_id, payload
-                        FROM client_configuration
-                        WHERE tenant_id = ? AND id = ?;
-                        """;
-    List<Object> params = List.of(tenant.identifierValue(), clientIdentifier.value());
-    return sqlExecutor.selectOne(sqlTemplate, params);
-  }
-
-  @Override
-  public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-                        SELECT id, id_alias, tenant_id, payload
-                        FROM client_configuration
-                        WHERE tenant_id = ? limit ? offset ?;
-                        """;
-    List<Object> params = List.of(tenant.identifierValue(), limit, offset);
-    return sqlExecutor.selectList(sqlTemplate, params);
   }
 
   @Override

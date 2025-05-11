@@ -9,16 +9,16 @@ idp:
     postgresql:
       writer:
         url: "${DB_WRITE_URL:jdbc:postgresql://localhost:5432/idpserver}"
-        username: "${DB_WRITE_USER_NAME:idp_app_user}"
-        password: "${DB_WRITE_PASSWORD:idp_app_user}"
+        username: "${DB_WRITE_USER_NAME:idpserver}"
+        password: "${DB_WRITE_PASSWORD:idpserver}"
         hikari:
           connection-timeout: 2000
           maximum-pool-size: 5
           minimum-idle: 2
       reader:
         url: "${DB_READ_URL:jdbc:postgresql://localhost:5432/idpserver}"
-        username: "${DB_READ_USER_NAME:idp_app_user}"
-        password: "${DB_READ_PASSWORD:idp_app_user}"
+        username: "${DB_READ_USER_NAME:idpserver}"
+        password: "${DB_READ_PASSWORD:idpserver}"
         hikari:
           connection-timeout: 2000
           maximum-pool-size: 3

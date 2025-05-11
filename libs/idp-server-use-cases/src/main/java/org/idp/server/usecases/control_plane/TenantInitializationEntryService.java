@@ -2,28 +2,32 @@ package org.idp.server.usecases.control_plane;
 
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
-import org.idp.server.control_plane.onboarding.OnboardingApi;
-import org.idp.server.control_plane.onboarding.OnboardingContext;
-import org.idp.server.control_plane.onboarding.OnboardingContextCreator;
-import org.idp.server.control_plane.onboarding.io.OnboardingRequest;
-import org.idp.server.control_plane.onboarding.io.OnboardingResponse;
-import org.idp.server.control_plane.onboarding.validator.OnboardingRequestValidationResult;
-import org.idp.server.control_plane.onboarding.validator.OnboardingRequestValidator;
-import org.idp.server.control_plane.onboarding.verifier.OnboardingVerificationResult;
-import org.idp.server.control_plane.onboarding.verifier.OnboardingVerifier;
+import org.idp.server.control_plane.tenant.TenantInitializationApi;
+import org.idp.server.control_plane.tenant.TenantInitializationContext;
+import org.idp.server.control_plane.tenant.TenantInitializationContextCreator;
+import org.idp.server.control_plane.tenant.io.TenantInitializationRequest;
+import org.idp.server.control_plane.tenant.io.TenantInitializationResponse;
+import org.idp.server.control_plane.tenant.validator.TenantInitializeRequestValidationResult;
+import org.idp.server.control_plane.tenant.validator.TenantInitializeRequestValidator;
+import org.idp.server.control_plane.tenant.verifier.TenantInitializationVerificationResult;
+import org.idp.server.control_plane.tenant.verifier.TenantInitializationVerifier;
+import org.idp.server.control_plane.verifier.ClientVerifier;
 import org.idp.server.control_plane.verifier.TenantVerifier;
-import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
+import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.repository.UserQueryRepository;
-import org.idp.server.core.multi_tenancy.organization.*;
-import org.idp.server.core.multi_tenancy.tenant.*;
+import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.multi_tenancy.tenant.TenantCommandRepository;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 
 @Transaction
-public class OnboardingEntryService implements OnboardingApi {
+public class TenantInitializationEntryService implements TenantInitializationApi {
 
   TenantCommandRepository tenantCommandRepository;
   TenantQueryRepository tenantQueryRepository;
@@ -32,9 +36,10 @@ public class OnboardingEntryService implements OnboardingApi {
   AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
   ClientConfigurationCommandRepository clientConfigurationCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
-  OnboardingVerifier onboardingVerifier;
+  TenantInitializationVerifier tenantInitializationVerifier;
+  PasswordEncodeDelegation passwordEncodeDelegation;
 
-  public OnboardingEntryService(
+  public TenantInitializationEntryService(
       TenantCommandRepository tenantCommandRepository,
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
@@ -42,7 +47,8 @@ public class OnboardingEntryService implements OnboardingApi {
       UserCommandRepository userCommandRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
       ClientConfigurationCommandRepository clientConfigurationCommandRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      PasswordEncodeDelegation passwordEncodeDelegation) {
     this.tenantCommandRepository = tenantCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
@@ -51,25 +57,30 @@ public class OnboardingEntryService implements OnboardingApi {
     this.clientConfigurationCommandRepository = clientConfigurationCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     TenantVerifier tenantVerifier = new TenantVerifier(tenantQueryRepository);
-    this.onboardingVerifier = new OnboardingVerifier(tenantVerifier);
+    ClientVerifier clientVerifier = new ClientVerifier(clientConfigurationQueryRepository);
+    this.tenantInitializationVerifier =
+        new TenantInitializationVerifier(tenantVerifier, clientVerifier);
+    this.passwordEncodeDelegation = passwordEncodeDelegation;
   }
 
-  public OnboardingResponse onboard(
+  @Override
+  public TenantInitializationResponse initialize(
       TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OnboardingRequest request,
+      TenantInitializationRequest request,
       RequestAttributes requestAttributes) {
-
-    OnboardingRequestValidator validator = new OnboardingRequestValidator(request);
-    OnboardingRequestValidationResult validationResult = validator.validate();
+    TenantInitializeRequestValidator validator = new TenantInitializeRequestValidator(request);
+    TenantInitializeRequestValidationResult validationResult = validator.validate();
     if (!validationResult.isValid()) {
       return validationResult.errorResponse();
     }
 
-    OnboardingContextCreator contextCreator = new OnboardingContextCreator(request, operator);
-    OnboardingContext context = contextCreator.create();
+    TenantInitializationContextCreator contextCreator =
+        new TenantInitializationContextCreator(request, passwordEncodeDelegation);
+    TenantInitializationContext context = contextCreator.create();
 
-    OnboardingVerificationResult verificationResult = onboardingVerifier.verify(context);
+    TenantInitializationVerificationResult verificationResult =
+        tenantInitializationVerifier.verify(context);
+
     if (!verificationResult.isValid()) {
       return verificationResult.errorResponse();
     }

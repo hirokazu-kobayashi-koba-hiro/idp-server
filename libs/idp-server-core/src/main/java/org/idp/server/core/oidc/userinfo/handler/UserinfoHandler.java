@@ -5,7 +5,7 @@ import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.userinfo.UserinfoClaimsCreator;
 import org.idp.server.core.oidc.userinfo.UserinfoResponse;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequest;
@@ -20,15 +20,15 @@ public class UserinfoHandler {
 
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
-  ClientConfigurationRepository clientConfigurationRepository;
+  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public UserinfoHandler(
       OAuthTokenRepository oAuthTokenRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
-    this.clientConfigurationRepository = clientConfigurationRepository;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
   public UserinfoRequestResponse handle(UserinfoRequest request, UserinfoDelegate delegate) {

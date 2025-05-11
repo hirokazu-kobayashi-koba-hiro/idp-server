@@ -9,21 +9,21 @@ import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 
 public class CibaDenyHandler {
 
   CibaGrantRepository cibaGrantRepository;
   AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
-  ClientConfigurationRepository clientConfigurationRepository;
+  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public CibaDenyHandler(
       CibaGrantRepository cibaGrantRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.cibaGrantRepository = cibaGrantRepository;
     this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
-    this.clientConfigurationRepository = clientConfigurationRepository;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
   public CibaDenyResponse handle(CibaDenyRequest request) {

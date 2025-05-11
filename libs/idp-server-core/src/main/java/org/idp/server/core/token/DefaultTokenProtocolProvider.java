@@ -6,7 +6,7 @@ import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepos
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
@@ -25,8 +25,8 @@ public class DefaultTokenProtocolProvider implements ProtocolProvider<TokenProto
         container.resolve(AuthorizationRequestRepository.class);
     AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository =
         container.resolve(AuthorizationServerConfigurationRepository.class);
-    ClientConfigurationRepository clientConfigurationRepository =
-        container.resolve(ClientConfigurationRepository.class);
+    ClientConfigurationQueryRepository clientConfigurationQueryRepository =
+        container.resolve(ClientConfigurationQueryRepository.class);
     AuthorizationGrantedRepository authorizationGrantedRepository =
         container.resolve(AuthorizationGrantedRepository.class);
     AuthorizationCodeGrantRepository authorizationCodeGrantRepository =
@@ -46,7 +46,7 @@ public class DefaultTokenProtocolProvider implements ProtocolProvider<TokenProto
         cibaGrantRepository,
         oAuthTokenRepository,
         authorizationServerConfigurationRepository,
-        clientConfigurationRepository,
+        clientConfigurationQueryRepository,
         passwordCredentialsGrantDelegate);
   }
 }
