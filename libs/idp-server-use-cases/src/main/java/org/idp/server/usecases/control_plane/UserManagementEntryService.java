@@ -1,8 +1,14 @@
 package org.idp.server.usecases.control_plane;
 
 import java.util.List;
+
 import org.idp.server.basic.datasource.Transaction;
-import org.idp.server.control_plane.user.UserManagementApi;
+import org.idp.server.control_plane.management.user.UserRegistrationContext;
+import org.idp.server.control_plane.management.user.UserRegistrationContextCreator;
+import org.idp.server.control_plane.management.user.UserManagementApi;
+import org.idp.server.control_plane.management.user.io.UserManagementResponse;
+import org.idp.server.control_plane.management.user.io.UserRegistrationRequest;
+import org.idp.server.control_plane.management.user.io.UserRegistrationStatus;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.repository.UserCommandRepository;
@@ -11,7 +17,6 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 
-// TODO
 @Transaction
 public class UserManagementEntryService implements UserManagementApi {
 
@@ -29,9 +34,19 @@ public class UserManagementEntryService implements UserManagementApi {
   }
 
   @Override
-  public void register(TenantIdentifier tenantIdentifier, User user) {
+  public UserManagementResponse register(TenantIdentifier tenantIdentifier, UserRegistrationRequest request) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    userCommandRepository.register(tenant, user);
+
+    UserRegistrationContextCreator userRegistrationContextCreator = new UserRegistrationContextCreator(request);
+    UserRegistrationContext context = userRegistrationContextCreator.create();
+
+    if (context.isDryRun()) {
+      return context.toResponse();
+    }
+
+    userCommandRepository.register(tenant, context.user());
+
+    return context.toResponse();
   }
 
   @Override
