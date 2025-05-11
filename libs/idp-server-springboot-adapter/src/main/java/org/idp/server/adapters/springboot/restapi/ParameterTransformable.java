@@ -29,6 +29,8 @@ public interface ParameterTransformable {
     Map<String, Object> contents = new HashMap<>();
     contents.put("ip_address", ip);
     contents.put("user_agent", userAgent);
+    contents.put("resource", request.getRequestURI());
+    contents.put("action", request.getMethod());
 
     return new RequestAttributes(contents);
   }

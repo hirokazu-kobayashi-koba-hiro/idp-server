@@ -46,6 +46,30 @@ public class TenantQueryDataSource implements TenantQueryRepository {
   }
 
   @Override
+  public Tenant find(TenantIdentifier tenantIdentifier) {
+    String key = key(tenantIdentifier);
+    Optional<Tenant> optionalTenant = cacheStore.find(key, Tenant.class);
+
+    if (optionalTenant.isPresent()) {
+      return optionalTenant.get();
+    }
+
+    TenantQuerySqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
+
+    Map<String, String> result = executor.selectOne(tenantIdentifier);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return new Tenant();
+    }
+
+    Tenant convert = ModelConverter.convert(result);
+
+    cacheStore.put(key, convert);
+
+    return convert;
+  }
+
+  @Override
   public Tenant getAdmin() {
     TenantQuerySqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
 
@@ -53,6 +77,19 @@ public class TenantQueryDataSource implements TenantQueryRepository {
 
     if (Objects.isNull(result) || result.isEmpty()) {
       throw new TenantNotFoundException("Admin Tenant is unregistered.");
+    }
+
+    return ModelConverter.convert(result);
+  }
+
+  @Override
+  public Tenant findAdmin() {
+    TenantQuerySqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
+
+    Map<String, String> result = executor.selectAdmin();
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return new Tenant();
     }
 
     return ModelConverter.convert(result);

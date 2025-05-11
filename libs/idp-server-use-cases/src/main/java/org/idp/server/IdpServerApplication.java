@@ -223,11 +223,13 @@ public class IdpServerApplication {
         TenantAwareEntryServiceProxy.createProxy(
             new IdpServerStarterEntryService(
                 organizationRepository,
+                tenantQueryRepository,
                 tenantCommandRepository,
                 userCommandRepository,
                 permissionCommandRepository,
                 roleCommandRepository,
                 authorizationServerConfigurationRepository,
+                clientConfigurationRepository,
                 passwordEncodeDelegation),
             IdpServerStarterApi.class,
             tenantDialectProvider);
@@ -380,7 +382,8 @@ public class IdpServerApplication {
                 organizationRepository,
                 userQueryRepository,
                 userCommandRepository,
-                authorizationServerConfigurationRepository),
+                authorizationServerConfigurationRepository,
+                clientConfigurationRepository),
             OnboardingApi.class,
             tenantDialectProvider);
 

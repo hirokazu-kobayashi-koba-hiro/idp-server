@@ -1,0 +1,219 @@
+{
+  "dry_run": false,
+  "organization": {
+    "id": "8df08cfe-e9d6-4ed3-a6a1-b3eb77479420",
+    "name": "tenant1",
+    "description": "tenant1"
+  },
+  "tenant": {
+    "id": "94d8598e-f238-4150-85c2-c4accf515784",
+    "name": "tenant1",
+    "domain": "http://localhost:8080",
+    "authorization_provider": "idp-server",
+    "database_type": "postgresql"
+  },
+  "authorization_server": {
+    "issuer": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784",
+    "authorization_endpoint": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/debug/v1/authorizations",
+    "token_endpoint": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens",
+    "token_endpoint_auth_methods_supported": [
+      "client_secret_post",
+      "client_secret_basic",
+      "client_secret_jwt",
+      "private_key_jwt",
+      "tls_client_auth",
+      "self_signed_tls_client_auth"
+    ],
+    "token_endpoint_auth_signing_alg_values_supported": [
+      "RS256",
+      "ES256"
+    ],
+    "userinfo_endpoint": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/userinfo",
+    "jwks_uri": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/jwks",
+    "jwks": "{\n    \"keys\": [\n        {\n            \"kty\": \"EC\",\n            \"d\": \"yIWDrlhnCy3yL9xLuqZGOBFFq4PWGsCeM7Sc_lfeaQQ\",\n            \"use\": \"sig\",\n            \"crv\": \"P-256\",\n            \"kid\": \"access_token\",\n            \"x\": \"iWJINqt0ySv3kVEvlHbvNkPKY2pPSf1cG1PSx3tRfw0\",\n            \"y\": \"rW1FdfXK5AQcv-Go6Xho0CR5AbLai7Gp9IdLTIXTSIQ\",\n            \"alg\": \"ES256\"\n        }\n    ]\n}",
+    "grant_types_supported": [],
+    "token_signed_key_id": "access_token",
+    "id_token_signed_key_id": "access_token",
+    "scopes_supported": [
+      "openid",
+      "profile",
+      "email",
+      "address",
+      "phone",
+      "offline_access",
+      "account",
+      "transfers"
+    ],
+    "response_types_supported": [],
+    "acr_values_supported": [
+      "urn:mace:incommon:iap:silver",
+      "urn:mace:incommon:iap:bronze"
+    ],
+    "subject_types_supported": [
+      "public",
+      "pairwise"
+    ],
+    "userinfo_signing_alg_values_supported": [
+      "RS256",
+      "ES256",
+      "HS256"
+    ],
+    "userinfo_encryption_alg_values_supported": [
+      "RSA1_5",
+      "A128KW"
+    ],
+    "userinfo_encryption_enc_values_supported": [
+      "A128CBC-HS256",
+      "A128GCM"
+    ],
+    "id_token_signing_alg_values_supported": [
+      "RS256",
+      "ES256",
+      "HS256"
+    ],
+    "id_token_encryption_alg_values_supported": [
+      "RSA1_5",
+      "A128KW"
+    ],
+    "id_token_encryption_enc_values_supported": [
+      "A128CBC-HS256",
+      "A128GCM"
+    ],
+    "request_object_signing_alg_values_supported": [
+      "none",
+      "RS256",
+      "ES256"
+    ],
+    "display_values_supported": [
+      "page",
+      "popup"
+    ],
+    "claim_types_supported": [
+      "normal",
+      "distributed"
+    ],
+    "claims_supported": [
+      "sub",
+      "iss",
+      "auth_time",
+      "acr",
+      "name",
+      "given_name",
+      "family_name",
+      "nickname",
+      "profile",
+      "picture",
+      "website",
+      "email",
+      "email_verified",
+      "locale",
+      "zoneinfo",
+      "http://example.info/claims/groups"
+    ],
+    "claims_parameter_supported": true,
+    "service_documentation": "http://server.example.com/connect/service_documentation.html",
+    "ui_locales_supported": [
+      "en-US",
+      "en-GB",
+      "en-CA",
+      "fr-FR",
+      "fr-CA"
+    ],
+    "token_introspection_endpoint": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/introspection",
+    "token_revocation_endpoint": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/revocation",
+    "backchannel_token_delivery_modes_supported": [
+      "poll",
+      "ping",
+      "push"
+    ],
+    "backchannel_authentication_endpoint": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications",
+    "backchannel_authentication_request_signing_alg_values_supported": [
+      "RS256",
+      "ES256"
+    ],
+    "backchannel_user_code_parameter_supported": true,
+    "access_token_duration": 3600
+  },
+  "user": {
+    "sub": "42fde73f-dfd9-4482-8802-04214ca343fb",
+    "provider_id": "idp-server",
+    "provider_user_id": "42fde73f-dfd9-4482-8802-04214ca343fb",
+    "name": "ito ichiro",
+    "given_name": "ichiro",
+    "family_name": "ito",
+    "middle_name": "mac",
+    "nickname": "ito",
+    "preferred_username": "ichiro",
+    "profile": "https://example.com/profiles/123",
+    "picture": "https://example.com/pictures/123",
+    "website": "https://example.com",
+    "email": "ito.ichiro@gmail.com",
+    "email_verified": true,
+    "gender": "other",
+    "birthdate": "2000-02-02",
+    "zoneinfo": "ja-jp",
+    "locale": "locale",
+    "phone_number": "09012345678",
+    "phone_number_verified": false,
+    "address": {
+      "street_address": "123 Main St",
+      "locality": "New York",
+      "region": "NY",
+      "postal_code": "10001",
+      "country": "USA"
+    },
+    "multi_factor_authentication": {
+      "fido_uaf": true
+    },
+    "authentication_devices": [
+      {
+        "id": "e87f1eeb-ef08-400b-9590-b8ebd0f7944f",
+        "platform": "iOS",
+        "os": "iOS 18.5",
+        "model": "iPhone15",
+        "notification_channel": "fcm",
+        "notification_token": "test token",
+        "preferred_for_notification": true
+      }
+    ],
+    "custom_properties": {
+      "key": "value"
+    },
+    "raw_password": "successUserCode",
+    "role": "Administrator"
+  },
+  "client": {
+    "tenant_id": "94d8598e-f238-4150-85c2-c4accf515784",
+    "issuer": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784",
+    "client_id": "9254dbd3-285a-4627-bfad-bf0d0a050ad7",
+    "client_id_alias": "unsupportedClient",
+    "client_secret": "unsupportedClientSecret",
+    "client_id_issued_at": 2893256800,
+    "client_secret_expires_at": 2893276800,
+    "redirect_uris": [
+      "https://client.example.org/callback",
+      "https://client.example.org/callback2",
+      "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+      "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_basic/callback",
+      "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_implicit/callback",
+      "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_hybrid/callback",
+      "http://localhost:8081/callback"
+    ],
+    "response_types": [],
+    "grant_types": [],
+    "scope": "openid profile email address phone offline_access account transfers read write identity_verification_application identity_verification_delete identity_credentials_update",
+    "client_name": "My Example Client",
+    "client_name#ja-Jpan-JP": "クライアント名",
+    "token_endpoint_auth_method": "client_secret_post",
+    "logo_uri": "https://client.example.org/logo.png",
+    "tos_uri": "https://idp-auth-frontend-diqt.vercel.app/terms",
+    "policy_uri": "https://idp-auth-frontend-diqt.vercel.app/privacy",
+    "jwks_uri": "https://client.example.org/my_public_keys.jwks",
+    "application_type": "web",
+    "authorization_details_types":[
+      "payment_initiation",
+      "account_information",
+      "openid_credential"
+    ]
+  }
+}

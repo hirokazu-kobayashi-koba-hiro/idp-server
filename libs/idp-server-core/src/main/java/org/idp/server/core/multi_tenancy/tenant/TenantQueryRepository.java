@@ -4,5 +4,9 @@ public interface TenantQueryRepository {
 
   Tenant get(TenantIdentifier tenantIdentifier);
 
+  Tenant find(TenantIdentifier tenantIdentifier);
+
   Tenant getAdmin();
+
+  Tenant findAdmin();
 }

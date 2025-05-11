@@ -12,6 +12,7 @@ public class OnboardingRequestValidator {
   JsonSchemaValidator organizationSchemaValidator;
   JsonSchemaValidator tenantSchemaValidator;
   JsonSchemaValidator authorizationServerSchemaValidator;
+  JsonSchemaValidator clientSchemaValidator;
 
   public OnboardingRequestValidator(OnboardingRequest request) {
     this.request = request;
@@ -19,6 +20,7 @@ public class OnboardingRequestValidator {
     this.tenantSchemaValidator = new JsonSchemaValidator(SchemaReader.tenantSchema());
     this.authorizationServerSchemaValidator =
         new JsonSchemaValidator(SchemaReader.authorizationServerSchema());
+    this.clientSchemaValidator = new JsonSchemaValidator(SchemaReader.clientSchema());
   }
 
   public OnboardingRequestValidationResult validate() {
@@ -29,16 +31,27 @@ public class OnboardingRequestValidator {
         tenantSchemaValidator.validate(jsonNodeWrapper.getValueAsJsonNode("tenant"));
     JsonSchemaValidationResult authorizationServerResult =
         authorizationServerSchemaValidator.validate(
-            jsonNodeWrapper.getValueAsJsonNode("authorization_server_configuration"));
+            jsonNodeWrapper.getValueAsJsonNode("authorization_server"));
+    JsonSchemaValidationResult clientResult =
+        clientSchemaValidator.validate(jsonNodeWrapper.getValueAsJsonNode("client"));
 
     if (!organizationResult.isValid()
         || !tenantResult.isValid()
-        || !authorizationServerResult.isValid()) {
+        || !authorizationServerResult.isValid()
+        || !clientResult.isValid()) {
       return OnboardingRequestValidationResult.error(
-          organizationResult, tenantResult, authorizationServerResult);
+          organizationResult,
+          tenantResult,
+          authorizationServerResult,
+          clientResult,
+          request.isDryRun());
     }
 
     return OnboardingRequestValidationResult.success(
-        organizationResult, tenantResult, authorizationServerResult);
+        organizationResult,
+        tenantResult,
+        authorizationServerResult,
+        clientResult,
+        request.isDryRun());
   }
 }

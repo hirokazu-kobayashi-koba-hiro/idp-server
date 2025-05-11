@@ -55,4 +55,12 @@ public class RequestAttributes {
   public UserAgent getUserAgent() {
     return new UserAgent(getValueAsString("user_agent"));
   }
+
+  public Resource resource() {
+    return new Resource(getValueAsString("resource"));
+  }
+
+  public Action action() {
+    return new Action(getValueAsString("action"));
+  }
 }

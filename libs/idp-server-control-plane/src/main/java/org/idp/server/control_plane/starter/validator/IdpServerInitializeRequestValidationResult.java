@@ -13,14 +13,24 @@ public class IdpServerInitializeRequestValidationResult {
   JsonSchemaValidationResult tenantResult;
   JsonSchemaValidationResult authorizationServerResult;
   JsonSchemaValidationResult adminUserResult;
+  JsonSchemaValidationResult clientResult;
+  boolean dryRun;
 
   public static IdpServerInitializeRequestValidationResult success(
       JsonSchemaValidationResult organizationResult,
       JsonSchemaValidationResult tenantResult,
       JsonSchemaValidationResult authorizationServerResult,
-      JsonSchemaValidationResult adminUserResult) {
+      JsonSchemaValidationResult adminUserResult,
+      JsonSchemaValidationResult clientResult,
+      boolean dryRun) {
     return new IdpServerInitializeRequestValidationResult(
-        true, organizationResult, tenantResult, authorizationServerResult, adminUserResult);
+        true,
+        organizationResult,
+        tenantResult,
+        authorizationServerResult,
+        adminUserResult,
+        clientResult,
+        dryRun);
   }
 
   private IdpServerInitializeRequestValidationResult(
@@ -28,21 +38,33 @@ public class IdpServerInitializeRequestValidationResult {
       JsonSchemaValidationResult organizationResult,
       JsonSchemaValidationResult tenantResult,
       JsonSchemaValidationResult authorizationServerResult,
-      JsonSchemaValidationResult adminUserResult) {
+      JsonSchemaValidationResult adminUserResult,
+      JsonSchemaValidationResult clientResult,
+      boolean dryRun) {
     this.isValid = isValid;
     this.organizationResult = organizationResult;
     this.tenantResult = tenantResult;
     this.authorizationServerResult = authorizationServerResult;
     this.adminUserResult = adminUserResult;
+    this.clientResult = clientResult;
+    this.dryRun = dryRun;
   }
 
   public static IdpServerInitializeRequestValidationResult error(
       JsonSchemaValidationResult organizationResult,
       JsonSchemaValidationResult tenantResult,
       JsonSchemaValidationResult authorizationServerResult,
-      JsonSchemaValidationResult adminUserResult) {
+      JsonSchemaValidationResult adminUserResult,
+      JsonSchemaValidationResult clientResult,
+      boolean dryRun) {
     return new IdpServerInitializeRequestValidationResult(
-        false, organizationResult, tenantResult, authorizationServerResult, adminUserResult);
+        false,
+        organizationResult,
+        tenantResult,
+        authorizationServerResult,
+        adminUserResult,
+        clientResult,
+        dryRun);
   }
 
   public boolean isValid() {
@@ -51,8 +73,9 @@ public class IdpServerInitializeRequestValidationResult {
 
   public IdpServerStarterResponse errorResponse() {
     Map<String, Object> response = new HashMap<>();
+    response.put("dry_run", dryRun);
     response.put("error", "invalid_request");
-    response.put("error_description", "Invalid request");
+    response.put("error_description", "idp-server starter validation is failed");
     Map<String, Object> details = new HashMap<>();
     if (!organizationResult.isValid()) {
       details.put("organization", organizationResult.errors());
@@ -67,6 +90,9 @@ public class IdpServerInitializeRequestValidationResult {
       {
         details.put("user", adminUserResult.errors());
       }
+    }
+    if (!clientResult.isValid()) {
+      details.put("client", clientResult.errors());
     }
     response.put("details", details);
     return new IdpServerStarterResponse(IdpServerStarterStatus.INVALID_REQUEST, response);

@@ -13,6 +13,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantAttributes;
 import org.idp.server.core.multi_tenancy.tenant.TenantType;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 public class OnboardingContextCreator {
 
@@ -35,6 +36,8 @@ public class OnboardingContextCreator {
         jsonConverter.read(
             request.get("authorization_server_configuration"),
             AuthorizationServerConfiguration.class);
+    ClientConfiguration clientConfiguration =
+        jsonConverter.read(request.get("client"), ClientConfiguration.class);
 
     Permissions permissions = DefinitionReader.permissions();
     Roles roles = DefinitionReader.roles();
@@ -54,6 +57,13 @@ public class OnboardingContextCreator {
     organization.assign(tenant);
 
     return new OnboardingContext(
-        tenant, authorizationServerConfiguration, organization, permissions, roles, updatedUser);
+        tenant,
+        authorizationServerConfiguration,
+        organization,
+        permissions,
+        roles,
+        updatedUser,
+        clientConfiguration,
+        request.isDryRun());
   }
 }
