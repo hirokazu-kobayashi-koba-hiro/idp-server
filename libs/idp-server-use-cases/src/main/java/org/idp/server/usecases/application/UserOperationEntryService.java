@@ -9,7 +9,7 @@ import org.idp.server.core.identity.event.UserLifecycleType;
 import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.token.OAuthToken;
@@ -18,17 +18,17 @@ import org.idp.server.core.token.OAuthToken;
 public class UserOperationEntryService implements UserOperationApi {
 
   UserCommandRepository userCommandRepository;
-  TenantRepository tenantRepository;
+  TenantQueryRepository tenantQueryRepository;
   TokenEventPublisher eventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
 
   public UserOperationEntryService(
       UserCommandRepository userCommandRepository,
-      TenantRepository tenantRepository,
+      TenantQueryRepository tenantQueryRepository,
       TokenEventPublisher eventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher) {
     this.userCommandRepository = userCommandRepository;
-    this.tenantRepository = tenantRepository;
+    this.tenantQueryRepository = tenantQueryRepository;
     this.eventPublisher = eventPublisher;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
   }
@@ -39,7 +39,7 @@ public class UserOperationEntryService implements UserOperationApi {
       User user,
       OAuthToken oAuthToken,
       RequestAttributes requestAttributes) {
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     userCommandRepository.delete(tenant, user.userIdentifier());
 

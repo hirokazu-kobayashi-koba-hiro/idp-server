@@ -3,39 +3,39 @@ export const backendUrl = process.env.IDP_SERVER_URL || "http://localhost:8080";
 export const serverConfig = {
   issuer: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66`,
   authorizationEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations`,
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations`,
   authenticationEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/`,
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations/{id}/`,
   authenticationDeviceEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authentication-devices/{id}/authentications/latest`,
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentication-devices/{id}/authentications/latest`,
   authorizeEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/authorize`,
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations/{id}/authorize`,
   denyEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/authorizations/{id}/deny`,
-  logoutEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/logout`,
-  tokenEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens`,
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations/{id}/deny`,
+  logoutEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/logout`,
+  tokenEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens`,
   tokenIntrospectionEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/introspection`,
-  tokenRevocationEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/tokens/revocation`,
-  userinfoEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/userinfo`,
-  jwksEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/jwks`,
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/introspection`,
+  tokenRevocationEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/revocation`,
+  userinfoEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/userinfo`,
+  jwksEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/jwks`,
   backchannelAuthenticationEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications`,
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/backchannel/authentications`,
   backchannelAuthenticationAutomatedCompleteEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/backchannel/authentications/automated-complete`,
-  authenticationDeviceInteractionEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/{flow-type}/{id}/`,
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/backchannel/authentications/automated-complete`,
+  authenticationDeviceInteractionEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/{flow-type}/{id}/`,
   fidoUafFacetsEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/fido/facets`,
-  identityVerificationApplyEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/{process}`,
-  identityVerificationProcessEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/{id}/{process}`,
-  identityVerificationApplicationsEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications`,
-  identityVerificationApplicationsStaticCallbackExaminationEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/callback-examination`,
-  identityVerificationApplicationsStaticCallbackResultEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/callback-result`,
-  identityVerificationApplicationsDeletionEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/identity/applications/{type}/{id}`,
+  identityVerificationApplyEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity/applications/{type}/{process}`,
+  identityVerificationProcessEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity/applications/{type}/{id}/{process}`,
+  identityVerificationApplicationsEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity/applications`,
+  identityVerificationApplicationsStaticCallbackExaminationEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity/applications/{type}/callback-examination`,
+  identityVerificationApplicationsStaticCallbackResultEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity/applications/{type}/callback-result`,
+  identityVerificationApplicationsDeletionEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity/applications/{type}/{id}`,
   discoveryEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration`,
-  credentialEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials`,
-  credentialBatchEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/credentials/batch-requests`,
-  usersEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/api/v1/users`,
+  credentialEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/credentials`,
+  credentialBatchEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/credentials/batch-requests`,
+  usersEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/users`,
   enabledSsr: false,
   ciba: {
     loginHint: "email:ito.ichiro@gmail.com,idp-server",
@@ -55,19 +55,19 @@ export const serverConfig = {
 export const unsupportedServerConfig = {
   issuer: "https://server.example.com/94d8598e-f238-4150-85c2-c4accf515784",
   authorizationEndpoint:
-    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/authorizations`,
+    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/authorizations`,
   authorizeEndpoint:
-    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/authorizations/{id}/authorize`,
-  tokenEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens`,
+    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/authorizations/{id}/authorize`,
+  tokenEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/tokens`,
   tokenIntrospectionEndpoint:
-    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/introspection`,
-  tokenRevocationEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/tokens/revocation`,
-  userinfoEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/userinfo`,
-  jwksEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/jwks`,
+    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/tokens/introspection`,
+  tokenRevocationEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/tokens/revocation`,
+  userinfoEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/userinfo`,
+  jwksEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/jwks`,
   backchannelAuthenticationEndpoint:
-    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications`,
+    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/backchannel/authentications`,
   backchannelAuthenticationAutomatedCompleteEndpoint:
-    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/api/v1/backchannel/authentications/automated-complete`,
+    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/backchannel/authentications/automated-complete`,
   discoveryEndpoint:
     `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/.well-known/openid-configuration`,
   enabledSsr: false,

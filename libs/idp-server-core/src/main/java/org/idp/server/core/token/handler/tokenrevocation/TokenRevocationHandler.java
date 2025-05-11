@@ -8,7 +8,7 @@ import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationRequestStatus;
@@ -21,16 +21,16 @@ import org.idp.server.core.token.tokenrevocation.validator.TokenRevocationValida
 public class TokenRevocationHandler {
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
-  ClientConfigurationRepository clientConfigurationRepository;
+  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   ClientAuthenticatorHandler clientAuthenticatorHandler;
 
   public TokenRevocationHandler(
       OAuthTokenRepository oAuthTokenRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
-    this.clientConfigurationRepository = clientConfigurationRepository;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
   }
 
@@ -42,7 +42,7 @@ public class TokenRevocationHandler {
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationRepository.get(tenant);
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, request.clientId());
+        clientConfigurationQueryRepository.get(tenant, request.clientId());
     TokenRevocationRequestContext tokenRevocationRequestContext =
         new TokenRevocationRequestContext(
             request.clientSecretBasic(),

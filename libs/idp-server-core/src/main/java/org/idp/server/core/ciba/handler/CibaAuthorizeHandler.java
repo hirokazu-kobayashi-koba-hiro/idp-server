@@ -14,7 +14,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 public class CibaAuthorizeHandler {
@@ -22,7 +22,7 @@ public class CibaAuthorizeHandler {
   CibaGrantRepository cibaGrantRepository;
   ClientNotificationService clientNotificationService;
   AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
-  ClientConfigurationRepository clientConfigurationRepository;
+  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public CibaAuthorizeHandler(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
@@ -31,7 +31,7 @@ public class CibaAuthorizeHandler {
       OAuthTokenRepository oAuthTokenRepository,
       ClientNotificationGateway clientNotificationGateway,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.cibaGrantRepository = cibaGrantRepository;
     this.clientNotificationService =
         new ClientNotificationService(
@@ -40,7 +40,7 @@ public class CibaAuthorizeHandler {
             oAuthTokenRepository,
             clientNotificationGateway);
     this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
-    this.clientConfigurationRepository = clientConfigurationRepository;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
   public CibaAuthorizeResponse handle(CibaAuthorizeRequest request) {
@@ -56,7 +56,7 @@ public class CibaAuthorizeHandler {
     // TODO verify
 
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(
+        clientConfigurationQueryRepository.get(
             tenant, cibaGrant.authorizationGrant().clientIdentifier());
     CibaGrant updated = cibaGrant.update(CibaGrantStatus.authorized);
     cibaGrantRepository.update(tenant, updated);

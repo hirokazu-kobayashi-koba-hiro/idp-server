@@ -6,6 +6,7 @@ import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserStatus;
+import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.identity.verification.*;
 import org.idp.server.core.identity.verification.application.*;
@@ -23,7 +24,7 @@ import org.idp.server.core.identity.verification.validation.IdentityVerification
 import org.idp.server.core.identity.verification.validation.IdentityVerificationValidationResult;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.token.OAuthToken;
@@ -36,8 +37,9 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   IdentityVerificationApplicationQueryRepository applicationQueryRepository;
   IdentityVerificationResultCommandRepository resultCommandRepository;
   IdentityVerificationHandler identityVerificationHandler;
-  TenantRepository tenantRepository;
+  TenantQueryRepository tenantQueryRepository;
   UserQueryRepository userQueryRepository;
+  UserCommandRepository userCommandRepository;
   TokenEventPublisher eventPublisher;
 
   public IdentityVerificationEntryService(
@@ -45,15 +47,17 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       IdentityVerificationApplicationCommandRepository applicationCommandRepository,
       IdentityVerificationApplicationQueryRepository applicationQueryRepository,
       IdentityVerificationResultCommandRepository resultCommandRepository,
-      TenantRepository tenantRepository,
+      TenantQueryRepository tenantQueryRepository,
       UserQueryRepository userQueryRepository,
+      UserCommandRepository userCommandRepository,
       TokenEventPublisher eventPublisher) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.applicationCommandRepository = applicationCommandRepository;
     this.applicationQueryRepository = applicationQueryRepository;
-    this.tenantRepository = tenantRepository;
+    this.tenantQueryRepository = tenantQueryRepository;
     this.resultCommandRepository = resultCommandRepository;
     this.userQueryRepository = userQueryRepository;
+    this.userCommandRepository = userCommandRepository;
     this.identityVerificationHandler = new IdentityVerificationHandler();
     this.eventPublisher = eventPublisher;
   }
@@ -68,7 +72,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
     IdentityVerificationApplications applications =
@@ -123,7 +127,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       IdentityVerificationApplicationQueries queries,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     IdentityVerificationApplications applications =
         applicationQueryRepository.findList(tenant, user, queries);
@@ -150,7 +154,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, user, identifier);
     IdentityVerificationConfiguration verificationConfiguration =
@@ -193,7 +197,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
 
@@ -233,7 +237,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
@@ -272,7 +276,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
         user.transitStatus(UserStatus.IDENTITY_VERIFIED)
             .setVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
 
-    userQueryRepository.update(tenant, verifiedUser);
+    userCommandRepository.update(tenant, verifiedUser);
 
     Map<String, Object> response = new HashMap<>();
     return IdentityVerificationResponse.OK(response);
@@ -287,7 +291,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       IdentityVerificationType type,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     applicationQueryRepository.get(tenant, user, identifier);
     applicationCommandRepository.delete(tenant, user, identifier);
 

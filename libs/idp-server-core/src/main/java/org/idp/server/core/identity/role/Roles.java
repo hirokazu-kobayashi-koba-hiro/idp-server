@@ -28,4 +28,8 @@ public class Roles implements Iterable<Role> {
   public Iterator<Role> iterator() {
     return values.iterator();
   }
+
+  public List<String> toStringList() {
+    return values.stream().map(Role::name).toList();
+  }
 }

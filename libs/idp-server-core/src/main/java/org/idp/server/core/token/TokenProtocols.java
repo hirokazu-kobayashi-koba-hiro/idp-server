@@ -3,22 +3,22 @@ package org.idp.server.core.token;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.exception.UnSupportedException;
 
 public class TokenProtocols {
 
-  Map<AuthorizationProtocolProvider, TokenProtocol> protocols;
+  Map<AuthorizationProvider, TokenProtocol> protocols;
 
   public TokenProtocols(Set<TokenProtocol> tokenProtocols) {
-    Map<AuthorizationProtocolProvider, TokenProtocol> map = new HashMap<>();
+    Map<AuthorizationProvider, TokenProtocol> map = new HashMap<>();
     for (TokenProtocol tokenProtocol : tokenProtocols) {
       map.put(tokenProtocol.authorizationProtocolProvider(), tokenProtocol);
     }
     this.protocols = map;
   }
 
-  public TokenProtocol get(AuthorizationProtocolProvider provider) {
+  public TokenProtocol get(AuthorizationProvider provider) {
     TokenProtocol tokenProtocol = protocols.get(provider);
 
     if (tokenProtocol == null) {

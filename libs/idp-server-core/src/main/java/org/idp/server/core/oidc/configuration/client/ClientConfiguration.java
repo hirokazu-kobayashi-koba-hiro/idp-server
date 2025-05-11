@@ -336,4 +336,8 @@ public class ClientConfiguration implements JsonReadable {
   public boolean hasSecret() {
     return clientSecret != null && !clientSecret.isEmpty();
   }
+
+  public boolean exists() {
+    return clientId != null && !clientId.isEmpty();
+  }
 }

@@ -5,7 +5,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.io.OAuthDenyRequest;
 import org.idp.server.core.oidc.io.OAuthDenyResponse;
 import org.idp.server.core.oidc.io.OAuthDenyStatus;
@@ -18,15 +18,15 @@ public class OAuthDenyHandler {
 
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
-  ClientConfigurationRepository clientConfigurationRepository;
+  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public OAuthDenyHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
-    this.clientConfigurationRepository = clientConfigurationRepository;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
   public OAuthDenyResponse handle(OAuthDenyRequest request) {
@@ -39,7 +39,7 @@ public class OAuthDenyHandler {
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationRepository.get(tenant);
     ClientConfiguration clientConfiguration =
-        clientConfigurationRepository.get(tenant, requestedClientId);
+        clientConfigurationQueryRepository.get(tenant, requestedClientId);
     AuthorizationDenyErrorResponseCreator authorizationDenyErrorResponseCreator =
         new AuthorizationDenyErrorResponseCreator(
             authorizationRequest,

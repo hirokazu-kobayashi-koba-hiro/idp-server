@@ -8,7 +8,7 @@ import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantRepository;
+import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.oidc.userinfo.UserinfoApi;
 import org.idp.server.core.oidc.userinfo.UserinfoProtocol;
 import org.idp.server.core.oidc.userinfo.UserinfoProtocols;
@@ -18,22 +18,22 @@ import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.security.event.TokenEventPublisher;
 
-@Transaction
+@Transaction(readOnly = true)
 public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
 
   UserinfoProtocols userinfoProtocols;
   UserQueryRepository userQueryRepository;
-  TenantRepository tenantRepository;
+  TenantQueryRepository tenantQueryRepository;
   TokenEventPublisher eventPublisher;
 
   public UserinfoEntryService(
       UserinfoProtocols userinfoProtocols,
       UserQueryRepository userQueryRepository,
-      TenantRepository tenantRepository,
+      TenantQueryRepository tenantQueryRepository,
       TokenEventPublisher eventPublisher) {
     this.userinfoProtocols = userinfoProtocols;
     this.userQueryRepository = userQueryRepository;
-    this.tenantRepository = tenantRepository;
+    this.tenantQueryRepository = tenantQueryRepository;
     this.eventPublisher = eventPublisher;
   }
 
@@ -49,12 +49,11 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
       String clientCert,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
     userinfoRequest.setClientCert(clientCert);
 
-    UserinfoProtocol userinfoProtocol =
-        userinfoProtocols.get(tenant.authorizationProtocolProvider());
+    UserinfoProtocol userinfoProtocol = userinfoProtocols.get(tenant.authorizationProvider());
 
     UserinfoRequestResponse result = userinfoProtocol.request(userinfoRequest, this);
 

@@ -4,7 +4,7 @@ import org.idp.server.basic.dependency.ApplicationComponentContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolProvider;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
@@ -22,8 +22,8 @@ public class DefaultOAuthProtocolProvider implements ProtocolProvider<OAuthProto
         container.resolve(AuthorizationRequestRepository.class);
     AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository =
         container.resolve(AuthorizationServerConfigurationRepository.class);
-    ClientConfigurationRepository clientConfigurationRepository =
-        container.resolve(ClientConfigurationRepository.class);
+    ClientConfigurationQueryRepository clientConfigurationQueryRepository =
+        container.resolve(ClientConfigurationQueryRepository.class);
     AuthorizationGrantedRepository authorizationGrantedRepository =
         container.resolve(AuthorizationGrantedRepository.class);
     AuthorizationCodeGrantRepository authorizationCodeGrantRepository =
@@ -33,7 +33,7 @@ public class DefaultOAuthProtocolProvider implements ProtocolProvider<OAuthProto
     return new DefaultOAuthProtocol(
         authorizationRequestRepository,
         authorizationServerConfigurationRepository,
-        clientConfigurationRepository,
+        clientConfigurationQueryRepository,
         authorizationGrantedRepository,
         authorizationCodeGrantRepository,
         oAuthTokenRepository,

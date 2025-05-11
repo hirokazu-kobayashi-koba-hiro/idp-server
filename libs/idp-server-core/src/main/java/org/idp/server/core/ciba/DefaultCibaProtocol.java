@@ -1,6 +1,6 @@
 package org.idp.server.core.ciba;
 
-import org.idp.server.basic.dependency.protocol.AuthorizationProtocolProvider;
+import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.ciba.clientnotification.NotificationClient;
@@ -17,7 +17,7 @@ import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationRepository;
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 
 public class DefaultCibaProtocol implements CibaProtocol {
@@ -37,13 +37,13 @@ public class DefaultCibaProtocol implements CibaProtocol {
       AuthorizationGrantedRepository authorizationGrantedRepository,
       OAuthTokenRepository oAuthTokenRepository,
       AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
-      ClientConfigurationRepository clientConfigurationRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.cibaRequestHandler =
         new CibaRequestHandler(
             backchannelAuthenticationRequestRepository,
             cibaGrantRepository,
             authorizationServerConfigurationRepository,
-            clientConfigurationRepository);
+            clientConfigurationQueryRepository);
     this.cibaAuthorizeHandler =
         new CibaAuthorizeHandler(
             backchannelAuthenticationRequestRepository,
@@ -52,19 +52,19 @@ public class DefaultCibaProtocol implements CibaProtocol {
             oAuthTokenRepository,
             new NotificationClient(),
             authorizationServerConfigurationRepository,
-            clientConfigurationRepository);
+            clientConfigurationQueryRepository);
     this.cibaDenyHandler =
         new CibaDenyHandler(
             cibaGrantRepository,
             authorizationServerConfigurationRepository,
-            clientConfigurationRepository);
+            clientConfigurationQueryRepository);
     this.errorHandler = new CibaRequestErrorHandler();
     this.cibaGrantRepository = cibaGrantRepository;
     this.userQueryRepository = userQueryRepository;
   }
 
   @Override
-  public AuthorizationProtocolProvider authorizationProtocolProvider() {
+  public AuthorizationProvider authorizationProtocolProvider() {
     return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
   }
 

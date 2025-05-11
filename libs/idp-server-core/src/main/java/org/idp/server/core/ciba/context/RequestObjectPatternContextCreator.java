@@ -10,6 +10,7 @@ import org.idp.server.core.ciba.*;
 import org.idp.server.core.ciba.exception.BackchannelAuthenticationBadRequestException;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.RequestObjectPatternFactory;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
@@ -21,6 +22,7 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
 
   @Override
   public CibaRequestContext create(
+      Tenant tenant,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
       CibaRequestParameters parameters,
@@ -43,6 +45,7 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
 
       BackchannelAuthenticationRequest backchannelAuthenticationRequest =
           requestObjectPatternFactory.create(
+              tenant,
               profile,
               clientSecretBasic,
               parameters,
@@ -52,6 +55,7 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
               clientConfiguration);
 
       return new CibaRequestContext(
+          tenant,
           pattern,
           clientSecretBasic,
           clientCert,

@@ -5,23 +5,20 @@ idp:
    apiSecret: ${IDP_SERVER_API_SECRET}
    encryptionKey: ${ENCRYPTION_KEY}
    serverUrl: "${IDP_SERVER_DOMAIN:http://localhost:8080/}"
-   adminAuthViewUrl: "${IDP_AUTH_ADMIN_VIEW_URL:http://localhost:3100/}"
-   authViewUrl: "${IDP_AUTH_VIEW_URL:http://localhost:3100/}"
-   additionalAuthViewUrls: "${ADDITIONAL_AUTH_VIEW_URLS:}"
   datasource:
     postgresql:
       writer:
         url: "${DB_WRITE_URL:jdbc:postgresql://localhost:5432/idpserver}"
-        username: "${DB_WRITE_USER_NAME:idp_app_user}"
-        password: "${DB_WRITE_PASSWORD:idp_app_user}"
+        username: "${DB_WRITE_USER_NAME:idpserver}"
+        password: "${DB_WRITE_PASSWORD:idpserver}"
         hikari:
           connection-timeout: 2000
           maximum-pool-size: 5
           minimum-idle: 2
       reader:
         url: "${DB_READ_URL:jdbc:postgresql://localhost:5432/idpserver}"
-        username: "${DB_READ_USER_NAME:idp_app_user}"
-        password: "${DB_READ_PASSWORD:idp_app_user}"
+        username: "${DB_READ_USER_NAME:idpserver}"
+        password: "${DB_READ_PASSWORD:idpserver}"
         hikari:
           connection-timeout: 2000
           maximum-pool-size: 3

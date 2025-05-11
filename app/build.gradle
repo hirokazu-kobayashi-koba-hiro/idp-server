@@ -5,8 +5,8 @@ plugins {
 	id "com.diffplug.spotless" version "6.24.0"
 }
 
-group = 'com.example'
-version = '0.0.2'
+group = 'org.idp.server'
+version = '1.0.0'
 sourceCompatibility = '21'
 
 repositories {
@@ -48,14 +48,3 @@ spotless {
 		greclipse()
 	}
 }
-
-sourceSets {
-	main {
-		// mybatis SQL map XML to java
-		resources.srcDirs = [
-			"src/main/java",
-			"src/main/resources"
-		]
-	}
-}
-
