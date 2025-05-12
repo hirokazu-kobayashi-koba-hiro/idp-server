@@ -63,6 +63,7 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration));
     params.add(configuration.id());
+    params.add(type.name());
     params.add(tenant.identifierValue());
 
     sqlExecutor.execute(sqlTemplate, params);
