@@ -274,12 +274,8 @@ export ENCRYPTION_KEY=xxx
 ```
 
 ```shell
-./sample-config/register-client.sh \
-  -u ito.ichiro@gmail.com \
-  -p successUserCode \
-  -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
-  -f ./sample-config/clients/clientSecretBasic.json
-```
+./sample-config/test-data.sh
+ ```
 
 ### e2e
 
