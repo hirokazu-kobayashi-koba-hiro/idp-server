@@ -1,18 +1,15 @@
 package org.idp.server.control_plane.management.identity.verification.io;
 
+import java.util.*;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
-import org.idp.server.core.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDelegation;
-import org.idp.server.core.identity.verification.exception.IdentityVerificationApplicationConfigurationNotFoundException;
-
-import java.util.*;
 
 public class IdentityVerificationConfigurationRequest implements JsonReadable {
   String id;
@@ -71,7 +68,6 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
     return processes;
   }
 
-
   public List<String> approvedTargetTypes() {
     return approvedTargetTypes;
   }
@@ -89,6 +85,16 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
   }
 
   public IdentityVerificationConfiguration toConfiguration(String identifier) {
-    return new IdentityVerificationConfiguration(identifier, type, delegation, description, externalWorkflowDelegation, externalWorkflowApplicationIdParam, oauthAuthorization, processes, approvedTargetTypes, verifiedClaimsSchema);
+    return new IdentityVerificationConfiguration(
+        identifier,
+        type,
+        delegation,
+        description,
+        externalWorkflowDelegation,
+        externalWorkflowApplicationIdParam,
+        oauthAuthorization,
+        processes,
+        approvedTargetTypes,
+        verifiedClaimsSchema);
   }
 }

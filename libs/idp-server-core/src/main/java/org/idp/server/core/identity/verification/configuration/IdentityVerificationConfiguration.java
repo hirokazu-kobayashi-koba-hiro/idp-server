@@ -28,7 +28,17 @@ public class IdentityVerificationConfiguration implements JsonReadable {
 
   public IdentityVerificationConfiguration() {}
 
-  public IdentityVerificationConfiguration(String id, String type, String delegation, String description, String externalWorkflowDelegation, String externalWorkflowApplicationIdParam, OAuthAuthorizationConfiguration oauthAuthorization, Map<String, IdentityVerificationProcessConfiguration> processes, List<String> approvedTargetTypes, Map<String, Object> verifiedClaimsSchema) {
+  public IdentityVerificationConfiguration(
+      String id,
+      String type,
+      String delegation,
+      String description,
+      String externalWorkflowDelegation,
+      String externalWorkflowApplicationIdParam,
+      OAuthAuthorizationConfiguration oauthAuthorization,
+      Map<String, IdentityVerificationProcessConfiguration> processes,
+      List<String> approvedTargetTypes,
+      Map<String, Object> verifiedClaimsSchema) {
     this.id = id;
     this.type = type;
     this.delegation = delegation;

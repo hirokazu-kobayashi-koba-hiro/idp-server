@@ -60,7 +60,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     ClientConfigurationManagementResponse response =
-        clientManagementApi.find(
+        clientManagementApi.findList(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),

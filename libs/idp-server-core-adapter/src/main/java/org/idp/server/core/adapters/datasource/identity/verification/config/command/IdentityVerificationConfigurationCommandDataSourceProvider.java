@@ -2,9 +2,7 @@ package org.idp.server.core.adapters.datasource.identity.verification.config.com
 
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;
-import org.idp.server.core.adapters.datasource.identity.verification.config.query.IdentityVerificationConfigurationQueryDataSource;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationCommandRepository;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 
 public class IdentityVerificationConfigurationCommandDataSourceProvider
     implements ApplicationComponentProvider<IdentityVerificationConfigurationCommandRepository> {

@@ -45,10 +45,14 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
   }
 
   @Override
-  public void update(Tenant tenant, IdentityVerificationType type, IdentityVerificationConfiguration configuration) {
+  public void update(
+      Tenant tenant,
+      IdentityVerificationType type,
+      IdentityVerificationConfiguration configuration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate = """
+    String sqlTemplate =
+        """
             UPDATE identity_verification_configurations
             SET payload = ?::jsonb
             WHERE id = ?::uuid
@@ -65,9 +69,13 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
   }
 
   @Override
-  public void delete(Tenant tenant, IdentityVerificationType type, IdentityVerificationConfiguration configuration) {
+  public void delete(
+      Tenant tenant,
+      IdentityVerificationType type,
+      IdentityVerificationConfiguration configuration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate = """
+    String sqlTemplate =
+        """
             DELETE FROM identity_verification_configurations
             WHERE tenant_id = ?::uuid
             AND type = ?

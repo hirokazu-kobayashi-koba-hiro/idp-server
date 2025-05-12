@@ -163,8 +163,10 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(AuthenticationTransactionCommandRepository.class);
     AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository =
         applicationComponentContainer.resolve(AuthenticationTransactionQueryRepository.class);
-    IdentityVerificationConfigurationCommandRepository identityVerificationConfigurationCommandRepository =
-            applicationComponentContainer.resolve(IdentityVerificationConfigurationCommandRepository.class);
+    IdentityVerificationConfigurationCommandRepository
+        identityVerificationConfigurationCommandRepository =
+            applicationComponentContainer.resolve(
+                IdentityVerificationConfigurationCommandRepository.class);
     IdentityVerificationConfigurationQueryRepository
         identityVerificationConfigurationQueryRepository =
             applicationComponentContainer.resolve(
@@ -443,14 +445,14 @@ public class IdpServerApplication {
             AuthenticationConfigurationManagementApi.class,
             tenantDialectProvider);
 
-    this.identityVerificationConfigManagementApi = TenantAwareEntryServiceProxy.createProxy(
+    this.identityVerificationConfigManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
             new IdentityVerificationConfigManagementEntryService(
-                    identityVerificationConfigurationCommandRepository,
-                    identityVerificationConfigurationQueryRepository,
-                    tenantQueryRepository),
+                identityVerificationConfigurationCommandRepository,
+                identityVerificationConfigurationQueryRepository,
+                tenantQueryRepository),
             IdentityVerificationConfigManagementApi.class,
-            tenantDialectProvider
-            );
+            tenantDialectProvider);
 
     this.userAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(

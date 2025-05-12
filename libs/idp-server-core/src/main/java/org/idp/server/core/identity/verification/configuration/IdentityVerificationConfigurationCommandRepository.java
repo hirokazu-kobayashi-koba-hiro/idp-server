@@ -11,9 +11,12 @@ public interface IdentityVerificationConfigurationCommandRepository {
       IdentityVerificationConfiguration configuration);
 
   void update(
-          Tenant tenant,
-          IdentityVerificationType type,
-          IdentityVerificationConfiguration configuration);
+      Tenant tenant,
+      IdentityVerificationType type,
+      IdentityVerificationConfiguration configuration);
 
-  void delete(Tenant tenant, IdentityVerificationType type, IdentityVerificationConfiguration configuration);
+  void delete(
+      Tenant tenant,
+      IdentityVerificationType type,
+      IdentityVerificationConfiguration configuration);
 }

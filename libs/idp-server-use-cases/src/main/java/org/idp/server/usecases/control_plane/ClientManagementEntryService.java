@@ -99,7 +99,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
   }
 
   @Override
-  public ClientConfigurationManagementResponse find(
+  public ClientConfigurationManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,

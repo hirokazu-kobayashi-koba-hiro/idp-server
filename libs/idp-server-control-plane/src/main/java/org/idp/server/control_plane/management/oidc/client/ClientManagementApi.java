@@ -25,7 +25,7 @@ public interface ClientManagementApi {
       ClientRegistrationRequest request,
       RequestAttributes requestAttributes);
 
-  ClientConfigurationManagementResponse find(
+  ClientConfigurationManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
