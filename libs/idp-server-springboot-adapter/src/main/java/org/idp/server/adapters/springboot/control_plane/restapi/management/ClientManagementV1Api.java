@@ -7,9 +7,9 @@ import org.idp.server.adapters.springboot.application.restapi.ParameterTransform
 import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.security.RequestAttributes;
-import org.idp.server.control_plane.management.client.ClientManagementApi;
-import org.idp.server.control_plane.management.client.io.ClientManagementResponse;
-import org.idp.server.control_plane.management.client.io.ClientRegistrationRequest;
+import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
+import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
+import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementListResponse;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementResponse;

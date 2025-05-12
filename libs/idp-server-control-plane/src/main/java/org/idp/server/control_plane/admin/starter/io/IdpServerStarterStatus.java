@@ -2,6 +2,7 @@ package org.idp.server.control_plane.admin.starter.io;
 
 public enum IdpServerStarterStatus {
   OK(200),
+  CREATED(201),
   INVALID_REQUEST(400),
   UNAUTHORIZED(401),
   FORBIDDEN(403),

@@ -76,6 +76,6 @@ public class OnboardingContext {
   public OnboardingResponse toResponse() {
     Map<String, Object> contents =
         Map.of("organization", organization.toMap(), "tenant", tenant.toMap(), "dry_run", dryRun);
-    return new OnboardingResponse(OnboardingStatus.OK, contents);
+    return new OnboardingResponse(OnboardingStatus.CREATED, contents);
   }
 }

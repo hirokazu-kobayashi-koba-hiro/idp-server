@@ -76,6 +76,6 @@ public class TenantInitializationContext {
   public TenantInitializationResponse toResponse() {
     Map<String, Object> contents =
         Map.of("organization", organization.toMap(), "tenant", tenant.toMap(), "dry_run", dryRun);
-    return new TenantInitializationResponse(TenantInitializationStatus.OK, contents);
+    return new TenantInitializationResponse(TenantInitializationStatus.CREATED, contents);
   }
 }

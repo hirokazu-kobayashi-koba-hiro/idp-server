@@ -13,9 +13,10 @@ import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.base.definition.DefinitionReader;
 import org.idp.server.control_plane.base.schema.SchemaReader;
-import org.idp.server.control_plane.management.client.ClientManagementApi;
+import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
+import org.idp.server.control_plane.management.identity.UserManagementApi;
+import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
-import org.idp.server.control_plane.management.user.UserManagementApi;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiers;
@@ -27,6 +28,7 @@ import org.idp.server.core.authentication.fidouaf.FidoUafExecutorLoader;
 import org.idp.server.core.authentication.fidouaf.FidoUafExecutors;
 import org.idp.server.core.authentication.notification.EmailSenderLoader;
 import org.idp.server.core.authentication.notification.EmailSenders;
+import org.idp.server.core.authentication.repository.AuthenticationConfigurationCommandRepository;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.authentication.repository.AuthenticationTransactionQueryRepository;
@@ -104,6 +106,7 @@ public class IdpServerApplication {
   TenantInitializationApi tenantInitializationApi;
   ClientManagementApi clientManagementApi;
   UserManagementApi userManagementApi;
+  AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi;
   UserAuthenticationApi userAuthenticationApi;
 
   public IdpServerApplication(
@@ -151,6 +154,8 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(TenantQueryRepository.class);
     TenantCommandRepository tenantCommandRepository =
         applicationComponentContainer.resolve(TenantCommandRepository.class);
+    AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository =
+        applicationComponentContainer.resolve(AuthenticationConfigurationCommandRepository.class);
     AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository =
         applicationComponentContainer.resolve(AuthenticationTransactionCommandRepository.class);
     AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository =
@@ -425,6 +430,13 @@ public class IdpServerApplication {
             UserManagementApi.class,
             tenantDialectProvider);
 
+    this.authenticationConfigurationManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AuthenticationConfigurationManagementEntryService(
+                authenticationConfigurationCommandRepository, tenantQueryRepository),
+            AuthenticationConfigurationManagementApi.class,
+            tenantDialectProvider);
+
     this.userAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new UserAuthenticationEntryService(
@@ -497,6 +509,10 @@ public class IdpServerApplication {
 
   public UserManagementApi userManagementAPi() {
     return userManagementApi;
+  }
+
+  public AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi() {
+    return authenticationConfigurationManagementApi;
   }
 
   public UserAuthenticationApi operatorAuthenticationApi() {

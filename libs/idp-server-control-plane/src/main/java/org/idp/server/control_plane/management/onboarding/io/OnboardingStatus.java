@@ -2,6 +2,7 @@ package org.idp.server.control_plane.management.onboarding.io;
 
 public enum OnboardingStatus {
   OK(200),
+  CREATED(201),
   INVALID_REQUEST(400),
   UNAUTHORIZED(401),
   FORBIDDEN(403),

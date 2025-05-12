@@ -1,0 +1,28 @@
+{
+  "dry_run": false,
+  "config": {
+    "type": "authentication-device",
+    "payload": {
+      "channel": "fcm",
+      "details": {
+        "fcm": {
+          "templates": {
+            "transaction": {
+              "subject": "transaction",
+              "body": "Hello,\n\nPlease try authentication"
+            },
+            "authentication": {
+              "subject": "authentication ",
+              "body": "Hello,\n\nPlease try authentication"
+            },
+            "default": {
+              "subject": "default",
+              "body": "Hello,\n\nPlease try"
+            }
+          },
+          "credential": "{}"
+        }
+      }
+    }
+  }
+}

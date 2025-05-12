@@ -34,3 +34,21 @@ for client_file in "${client_files[@]}"; do
   -f ./sample-config/clients/${client_file}
 
 done
+
+#authentication-config
+echo "authentication-config"
+
+authentication_config_files=(
+  authentication-device/fcm.json
+)
+
+for authentication_config_file in "${authentication_config_files[@]}"; do
+  echo "🔧 Registering: $(basename "$client_file")"
+
+./sample-config/register-authentication-config.sh \
+  -u ito.ichiro@gmail.com \
+  -p successUserCode \
+  -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
+  -f ./sample-config/authentication-config/${authentication_config_file}
+
+done

@@ -7,9 +7,9 @@ import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.basic.type.security.RequestAttributes;
-import org.idp.server.control_plane.management.user.UserManagementApi;
-import org.idp.server.control_plane.management.user.io.UserManagementResponse;
-import org.idp.server.control_plane.management.user.io.UserRegistrationRequest;
+import org.idp.server.control_plane.management.identity.UserManagementApi;
+import org.idp.server.control_plane.management.identity.io.UserManagementResponse;
+import org.idp.server.control_plane.management.identity.io.UserRegistrationRequest;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
@@ -70,7 +70,7 @@ public class UserManagementV1Api implements ParameterTransformable {
             Integer.parseInt(offsetValue),
             requestAttributes);
 
-    return new ResponseEntity<>(new UserListResponse(userList), HttpStatus.OK);
+    return new ResponseEntity<>(Map.of(), HttpStatus.OK);
   }
 
   @GetMapping("/{user-id}")
@@ -89,6 +89,6 @@ public class UserManagementV1Api implements ParameterTransformable {
             operatorPrincipal.getOAuthToken(),
             userIdentifier,
             requestAttributes);
-    return new ResponseEntity<>(new UserResponse(user), HttpStatus.OK);
+    return new ResponseEntity<>(Map.of(), HttpStatus.OK);
   }
 }
