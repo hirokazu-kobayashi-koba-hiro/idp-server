@@ -14,14 +14,12 @@ client_files=(
   clientSecretBasic.json
   clientSecretBasic2.json
   clientSecretJwt.json
-  clientSecretPost.json
   clientSecretPostWithIdTokenEnc.json
   privateKeyJwt.json
   publicClient.json
   selfSignedTlsClientAuth.json
   selfSignedTlsClientAuth2.json
   unsupportedClient.json
-  unsupportedServerUnsupportedClient.json
 )
 
 for client_file in "${client_files[@]}"; do
