@@ -1,4 +1,4 @@
-package org.idp.server.control_plane.management.io;
+package org.idp.server.control_plane.management.onboarding.io;
 
 import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.dependency.protocol.AuthorizationProvider;

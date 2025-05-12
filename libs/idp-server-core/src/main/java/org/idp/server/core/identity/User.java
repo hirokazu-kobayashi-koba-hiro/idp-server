@@ -73,6 +73,10 @@ public class User implements JsonReadable, Serializable {
     return this;
   }
 
+  public boolean hasSub() {
+    return sub != null && !sub.isEmpty();
+  }
+
   public String providerId() {
     return providerId;
   }

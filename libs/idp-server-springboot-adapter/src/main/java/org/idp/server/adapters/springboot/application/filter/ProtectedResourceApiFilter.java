@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.adapters.springboot.application.restapi.model.IdPScope;
+import org.idp.server.adapters.springboot.application.restapi.model.IdPApplicationScope;
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.basic.exception.UnSupportedException;
 import org.idp.server.basic.exception.UnauthorizedException;
@@ -45,12 +45,13 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter {
       User user = result.getLeft();
       OAuthToken oAuthToken = result.getRight();
 
-      List<IdPScope> idPScopes = new ArrayList<>();
+      List<IdPApplicationScope> idPApplicationScopes = new ArrayList<>();
       for (String scope : oAuthToken.scopeAsList()) {
-        idPScopes.add(IdPScope.of(scope));
+        idPApplicationScopes.add(IdPApplicationScope.of(scope));
       }
 
-      ResourceOwnerPrincipal principal = new ResourceOwnerPrincipal(user, oAuthToken, idPScopes);
+      ResourceOwnerPrincipal principal =
+          new ResourceOwnerPrincipal(user, oAuthToken, idPApplicationScopes);
       SecurityContextHolder.getContext().setAuthentication(principal);
       filterChain.doFilter(request, response);
     } catch (UnauthorizedException e) {

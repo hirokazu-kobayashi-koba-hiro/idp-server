@@ -1,10 +1,10 @@
 package org.idp.server.control_plane.admin.tenant;
 
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.control_plane.base.definition.DefinitionReader;
-import org.idp.server.control_plane.management.io.OrganizationRegistrationRequest;
-import org.idp.server.control_plane.management.io.TenantRegistrationRequest;
 import org.idp.server.control_plane.admin.tenant.io.TenantInitializationRequest;
+import org.idp.server.control_plane.base.definition.DefinitionReader;
+import org.idp.server.control_plane.management.onboarding.io.OrganizationRegistrationRequest;
+import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserStatus;
 import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;

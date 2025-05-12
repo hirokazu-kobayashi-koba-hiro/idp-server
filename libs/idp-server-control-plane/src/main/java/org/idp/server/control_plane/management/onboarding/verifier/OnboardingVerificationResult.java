@@ -2,9 +2,9 @@ package org.idp.server.control_plane.management.onboarding.verifier;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.verifier.VerificationResult;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingStatus;
-import org.idp.server.control_plane.base.verifier.VerificationResult;
 
 public class OnboardingVerificationResult {
   boolean isValid;

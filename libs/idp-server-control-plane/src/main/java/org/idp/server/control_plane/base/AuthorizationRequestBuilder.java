@@ -1,4 +1,4 @@
-package org.idp.server.control_plane.base.oidc;
+package org.idp.server.control_plane.base;
 
 import java.util.Map;
 import org.idp.server.basic.http.QueryParams;

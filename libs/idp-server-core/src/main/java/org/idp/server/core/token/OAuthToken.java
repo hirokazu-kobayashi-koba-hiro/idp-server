@@ -155,4 +155,8 @@ public class OAuthToken {
   public List<String> scopeAsList() {
     return accessToken.scopes().toStringList();
   }
+
+  public boolean isClientCredentialsGrant() {
+    return accessToken.isClientCredentialsGrant();
+  }
 }

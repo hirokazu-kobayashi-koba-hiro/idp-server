@@ -1,6 +1,7 @@
 package org.idp.server.core.oidc.grant;
 
 import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.identity.User;
@@ -17,6 +18,7 @@ public class AuthorizationGrantBuilder {
   Authentication authentication = new Authentication();
   RequestedClientId requestedClientId;
   Client client = new Client();
+  GrantType grantType;
   Scopes scopes;
   GrantIdTokenClaims grantIdTokenClaims = new GrantIdTokenClaims();
   GrantUserinfoClaims grantUserinfoClaims = new GrantUserinfoClaims();
@@ -25,9 +27,13 @@ public class AuthorizationGrantBuilder {
   ConsentClaims consentClaims = new ConsentClaims();
 
   public AuthorizationGrantBuilder(
-      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, Scopes scopes) {
+      TenantIdentifier tenantIdentifier,
+      RequestedClientId requestedClientId,
+      GrantType grantType,
+      Scopes scopes) {
     this.tenantIdentifier = tenantIdentifier;
     this.requestedClientId = requestedClientId;
+    this.grantType = grantType;
     this.scopes = scopes;
   }
 
@@ -78,6 +84,7 @@ public class AuthorizationGrantBuilder {
         authentication,
         requestedClientId,
         client,
+        grantType,
         scopes,
         grantIdTokenClaims,
         grantUserinfoClaims,

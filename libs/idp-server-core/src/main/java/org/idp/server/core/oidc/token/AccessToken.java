@@ -147,4 +147,8 @@ public class AccessToken {
   public Client client() {
     return authorizationGrant.client();
   }
+
+  public boolean isClientCredentialsGrant() {
+    return authorizationGrant.isClientCredentialsGrant();
+  }
 }

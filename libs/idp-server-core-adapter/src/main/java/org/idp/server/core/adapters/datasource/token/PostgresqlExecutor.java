@@ -29,6 +29,7 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             authentication,
                             client_id,
                             client_payload,
+                            grant_type,
                             scopes,
                             id_token_claims,
                             userinfo_claims,
@@ -61,6 +62,7 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             ?,
                             ?,
                             ?,
+                            ?,
                             ?::jsonb,
                             ?::jsonb,
                             ?,
@@ -75,7 +77,7 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             ?,
                             ?
                             );
-                            """;
+                          """;
     List<Object> params = InsertSqlParamsCreator.create(oAuthToken, aesCipher, hmacHasher);
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -147,6 +149,7 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
            authentication,
            client_id,
            client_payload,
+           grant_type,
            scopes,
            id_token_claims,
            userinfo_claims,

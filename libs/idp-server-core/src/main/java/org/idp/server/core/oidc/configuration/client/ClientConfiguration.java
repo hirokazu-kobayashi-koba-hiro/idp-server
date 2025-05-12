@@ -340,4 +340,9 @@ public class ClientConfiguration implements JsonReadable {
   public boolean exists() {
     return clientId != null && !clientId.isEmpty();
   }
+
+  public Map<String, Object> toMap() {
+    HashMap<String, Object> map = new HashMap<>();
+    return map;
+  }
 }

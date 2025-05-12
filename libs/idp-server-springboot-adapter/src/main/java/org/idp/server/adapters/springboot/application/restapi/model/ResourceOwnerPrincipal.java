@@ -11,8 +11,9 @@ public class ResourceOwnerPrincipal extends AbstractAuthenticationToken {
   User user;
   OAuthToken oAuthToken;
 
-  public ResourceOwnerPrincipal(User user, OAuthToken oAuthToken, List<IdPScope> idPScopes) {
-    super(idPScopes);
+  public ResourceOwnerPrincipal(
+      User user, OAuthToken oAuthToken, List<IdPApplicationScope> idPApplicationScopes) {
+    super(idPApplicationScopes);
     this.user = user;
     this.oAuthToken = oAuthToken;
   }

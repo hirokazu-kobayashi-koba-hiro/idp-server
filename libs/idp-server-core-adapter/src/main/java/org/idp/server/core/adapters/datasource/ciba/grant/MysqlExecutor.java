@@ -19,10 +19,47 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                    INSERT INTO ciba_grant
-                    (backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                    """;
+                        INSERT INTO ciba_grant (
+                        backchannel_authentication_request_id,
+                        tenant_id,
+                        auth_req_id,
+                        expired_at,
+                        polling_interval,
+                        status,
+                        user_id,
+                        user_payload,
+                        authentication,
+                        client_id,
+                        client_payload,
+                        grant_type,
+                        scopes,
+                        id_token_claims,
+                        userinfo_claims,
+                        custom_properties,
+                        authorization_details,
+                        consent_claims
+                        )
+                        VALUES (
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?
+                        );
+                        """;
     List<Object> params = new ArrayList<>();
     AuthorizationGrant authorizationGrant = cibaGrant.authorizationGrant();
     params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().value());
@@ -111,11 +148,9 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
       BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
-        """
-                SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
-                FROM ciba_grant
-                WHERE backchannel_authentication_request_id = ?;
-                """;
+        selectSql + """
+             WHERE backchannel_authentication_request_id = ?;
+         """;
 
     List<Object> params = new ArrayList<>();
     params.add(backchannelAuthenticationRequestIdentifier.value());
@@ -128,7 +163,8 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM ciba_grant WHERE backchannel_authentication_request_id = ?;
+            DELETE FROM ciba_grant
+            WHERE backchannel_authentication_request_id = ?;
             """;
     List<Object> params = new ArrayList<>();
     params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().value());
@@ -139,4 +175,28 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
   private String toJson(Object value) {
     return jsonConverter.write(value);
   }
+
+  String selectSql =
+      """
+                      SELECT
+                      backchannel_authentication_request_id,
+                      tenant_id,
+                      auth_req_id,
+                      expired_at,
+                      polling_interval,
+                      status,
+                      user_id,
+                      user_payload,
+                      authentication,
+                      client_id,
+                      client_payload,
+                      grant_type,
+                      scopes,
+                      id_token_claims,
+                      userinfo_claims,
+                      custom_properties,
+                      authorization_details,
+                      consent_claims
+                      FROM ciba_grant \n
+                      """;
 }

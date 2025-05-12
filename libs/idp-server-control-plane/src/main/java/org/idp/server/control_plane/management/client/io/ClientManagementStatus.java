@@ -1,6 +1,6 @@
-package org.idp.server.control_plane.management.user.io;
+package org.idp.server.control_plane.management.client.io;
 
-public enum UserRegistrationStatus {
+public enum ClientManagementStatus {
   OK(200),
   INVALID_REQUEST(400),
   UNAUTHORIZED(401),
@@ -9,7 +9,7 @@ public enum UserRegistrationStatus {
 
   int statusCode;
 
-  UserRegistrationStatus(int statusCode) {
+  ClientManagementStatus(int statusCode) {
     this.statusCode = statusCode;
   }
 

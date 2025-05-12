@@ -1,18 +1,15 @@
-package org.idp.server.adapters.springboot.application.restapi.model;
+package org.idp.server.adapters.springboot.control_plane.model;
 
 import org.springframework.security.core.GrantedAuthority;
 
-public enum IdPScope implements GrantedAuthority {
+public enum IdpControlPlaneScope implements GrantedAuthority {
   tenant_management,
   client_management,
   user_management,
-  identity_verification_application,
-  identity_verification_delete,
-  identity_credentials_update,
   unknown;
 
-  public static IdPScope of(String value) {
-    for (IdPScope scope : IdPScope.values()) {
+  public static IdpControlPlaneScope of(String value) {
+    for (IdpControlPlaneScope scope : IdpControlPlaneScope.values()) {
       if (scope.name().equalsIgnoreCase(value)) {
         return scope;
       }

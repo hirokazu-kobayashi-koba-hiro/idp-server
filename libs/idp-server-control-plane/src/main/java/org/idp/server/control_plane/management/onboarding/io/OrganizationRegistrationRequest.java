@@ -1,4 +1,4 @@
-package org.idp.server.control_plane.management.io;
+package org.idp.server.control_plane.management.onboarding.io;
 
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.multi_tenancy.organization.Organization;

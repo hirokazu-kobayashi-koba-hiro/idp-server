@@ -1,5 +1,25 @@
 [
   {
+    "id": "d20e02ab-f24b-410c-8acf-161843eb78b9",
+    "name": "organization:create",
+    "description": "Admin Create a organization"
+  },
+  {
+    "id": "edb4b49f-5ea3-45e5-b504-a21af71864bb",
+    "name": "organization:read",
+    "description": "Admin Read organization information"
+  },
+  {
+    "id": "cef58e53-fa12-4133-b931-f850fbdd92d0",
+    "name": "organization:update",
+    "description": "Admin Update organization"
+  },
+  {
+    "id": "91973295-6104-45e6-a288-7499840d02c3",
+    "name": "organization:delete",
+    "description": "Admin Delete organization"
+  },
+  {
     "id": "87cb7a53-0fde-4e92-a685-59aa67b47829",
     "name": "tenant:create",
     "description": "Admin Create a tenant"

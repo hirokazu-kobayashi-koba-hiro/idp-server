@@ -9,12 +9,12 @@ import org.idp.server.basic.dependency.ApplicationComponentContainerLoader;
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolContainerLoader;
-import org.idp.server.control_plane.management.client.ClientManagementApi;
-import org.idp.server.control_plane.base.definition.DefinitionReader;
-import org.idp.server.control_plane.management.onboarding.OnboardingApi;
-import org.idp.server.control_plane.base.schema.SchemaReader;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
+import org.idp.server.control_plane.base.definition.DefinitionReader;
+import org.idp.server.control_plane.base.schema.SchemaReader;
+import org.idp.server.control_plane.management.client.ClientManagementApi;
+import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.user.UserManagementApi;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
@@ -418,7 +418,10 @@ public class IdpServerApplication {
     this.userManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new UserManagementEntryService(
-                tenantQueryRepository, userQueryRepository, userCommandRepository),
+                tenantQueryRepository,
+                userQueryRepository,
+                userCommandRepository,
+                passwordEncodeDelegation),
             UserManagementApi.class,
             tenantDialectProvider);
 

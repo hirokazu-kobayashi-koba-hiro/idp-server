@@ -9,6 +9,7 @@ import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.AuthorizationCode;
+import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.identity.User;
@@ -38,6 +39,7 @@ class ModelConverter {
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);
     RequestedClientId requestedClientId = new RequestedClientId(stringMap.get("client_id"));
     Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
+    GrantType grantType = GrantType.of(stringMap.get("grant_type"));
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = convertCustomProperties(stringMap.get("custom_properties"));
     GrantIdTokenClaims idTokenClaims = new GrantIdTokenClaims(stringMap.get("id_token_claims"));
@@ -53,6 +55,7 @@ class ModelConverter {
             authentication,
             requestedClientId,
             client,
+            grantType,
             scopes,
             idTokenClaims,
             userinfoClaims,

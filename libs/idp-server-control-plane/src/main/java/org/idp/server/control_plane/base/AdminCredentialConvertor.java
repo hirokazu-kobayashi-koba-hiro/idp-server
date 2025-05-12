@@ -1,4 +1,4 @@
-package org.idp.server.control_plane.base.oidc;
+package org.idp.server.control_plane.base;
 
 import org.idp.server.basic.http.BasicAuth;
 import org.idp.server.core.token.AuthorizationHeaderHandlerable;

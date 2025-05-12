@@ -3,6 +3,7 @@ package org.idp.server.core.oidc.grant;
 import java.util.HashSet;
 import java.util.Set;
 import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oauth.Subject;
@@ -22,6 +23,7 @@ public class AuthorizationGrant {
   Authentication authentication;
   RequestedClientId requestedClientId;
   Client client;
+  GrantType grantType;
   Scopes scopes;
   GrantIdTokenClaims idTokenClaims;
   GrantUserinfoClaims userinfoClaims;
@@ -37,6 +39,7 @@ public class AuthorizationGrant {
       Authentication authentication,
       RequestedClientId requestedClientId,
       Client client,
+      GrantType grantType,
       Scopes scopes,
       GrantIdTokenClaims idTokenClaims,
       GrantUserinfoClaims userinfoClaims,
@@ -48,6 +51,7 @@ public class AuthorizationGrant {
     this.authentication = authentication;
     this.requestedClientId = requestedClientId;
     this.client = client;
+    this.grantType = grantType;
     this.scopes = scopes;
     this.idTokenClaims = idTokenClaims;
     this.userinfoClaims = userinfoClaims;
@@ -94,6 +98,14 @@ public class AuthorizationGrant {
 
   public String clientIdentifierValue() {
     return client.identifier().value();
+  }
+
+  public GrantType grantType() {
+    return grantType;
+  }
+
+  public boolean isClientCredentialsGrant() {
+    return grantType.isClientCredentials();
   }
 
   public Scopes scopes() {
@@ -186,6 +198,7 @@ public class AuthorizationGrant {
         newAuthentication,
         newRequestClientId,
         newClient,
+        grantType,
         newScopes,
         newGrantIdToken,
         newGrantUserinfo,

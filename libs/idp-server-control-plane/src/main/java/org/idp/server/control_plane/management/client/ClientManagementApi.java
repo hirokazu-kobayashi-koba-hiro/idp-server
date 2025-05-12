@@ -1,22 +1,50 @@
 package org.idp.server.control_plane.management.client;
 
 import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.control_plane.management.client.io.ClientManagementResponse;
+import org.idp.server.control_plane.management.client.io.ClientRegistrationRequest;
+import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementListResponse;
 import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementResponse;
+import org.idp.server.core.token.OAuthToken;
 
 public interface ClientManagementApi {
 
-  String register(TenantIdentifier tenantIdentifier, String body);
+  ClientManagementResponse register(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      ClientRegistrationRequest request,
+      RequestAttributes requestAttributes);
 
-  String update(TenantIdentifier tenantIdentifier, String body);
+  ClientManagementResponse update(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      ClientRegistrationRequest request,
+      RequestAttributes requestAttributes);
 
   ClientConfigurationManagementListResponse find(
-      TenantIdentifier tenantIdentifier, int limit, int offset);
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      int limit,
+      int offset,
+      RequestAttributes requestAttributes);
 
   ClientConfigurationManagementResponse get(
-      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId);
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      RequestedClientId requestedClientId,
+      RequestAttributes requestAttributes);
 
   ClientConfigurationManagementResponse delete(
-      TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId);
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      RequestedClientId requestedClientId,
+      RequestAttributes requestAttributes);
 }

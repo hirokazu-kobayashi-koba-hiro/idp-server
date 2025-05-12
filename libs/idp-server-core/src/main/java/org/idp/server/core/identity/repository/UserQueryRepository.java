@@ -9,6 +9,8 @@ public interface UserQueryRepository {
 
   User get(Tenant tenant, UserIdentifier userIdentifier);
 
+  User findById(Tenant tenant, UserIdentifier userIdentifier);
+
   User findByEmail(Tenant tenant, String hint, String providerId);
 
   User findByPhone(Tenant tenant, String hint, String providerId);

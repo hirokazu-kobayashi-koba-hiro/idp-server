@@ -36,6 +36,18 @@ public class UserQueryDataSource implements UserQueryRepository {
   }
 
   @Override
+  public User findById(Tenant tenant, UserIdentifier userIdentifier) {
+    UserSqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectOne(tenant, userIdentifier);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return User.notFound();
+    }
+
+    return ModelConverter.convert(result);
+  }
+
+  @Override
   public User findByEmail(Tenant tenant, String email, String providerId) {
     try {
       UserSqlExecutor executor = executors.get(tenant.databaseType());

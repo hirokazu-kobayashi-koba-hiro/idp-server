@@ -29,12 +29,14 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
                         authentication,
                         client_id,
                         client_payload,
+                        grant_type,
                         scopes,
                         id_token_claims,
                         userinfo_claims,
                         custom_properties,
                         authorization_details,
-                        consent_claims)
+                        consent_claims
+                        )
                         VALUES (
                         ?::uuid,
                         ?::uuid,
@@ -43,6 +45,7 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
                         ?::jsonb,
                         ?,
                         ?::jsonb,
+                        ?,
                         ?,
                         ?,
                         ?,
@@ -60,6 +63,7 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
     params.add(toJson(authorizationGrant.authentication()));
     params.add(authorizationGrant.requestedClientId().value());
     params.add(toJson(authorizationGrant.client()));
+    params.add(authorizationGrant.grantType().name());
     params.add(authorizationGrant.scopes().toStringValues());
 
     if (authorizationGrant.hasIdTokenClaims()) {
@@ -110,6 +114,7 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
               authentication,
               client_id,
               client_payload,
+              grant_type,
               scopes,
               id_token_claims,
               userinfo_claims,

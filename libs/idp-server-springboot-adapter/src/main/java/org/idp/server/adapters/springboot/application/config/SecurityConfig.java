@@ -2,10 +2,10 @@ package org.idp.server.adapters.springboot.application.config;
 
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.filter.DynamicCorsFilter;
-import org.idp.server.adapters.springboot.control_plane.filter.ManagementApiFilter;
 import org.idp.server.adapters.springboot.application.filter.ProtectedResourceApiFilter;
-import org.idp.server.adapters.springboot.application.restapi.model.IdPScope;
+import org.idp.server.adapters.springboot.application.restapi.model.IdPApplicationScope;
 import org.idp.server.adapters.springboot.application.session.DynamicCookieSerializer;
+import org.idp.server.adapters.springboot.control_plane.filter.ManagementApiFilter;
 import org.idp.server.core.multi_tenancy.tenant.TenantMetaDataApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,20 +51,17 @@ public class SecurityConfig {
         (authorize) ->
             authorize
                 .requestMatchers(
-                    "/{tenant-id}/v1/management/management/tenants",
-                    "/{tenant-id}/v1/management/management/tenants/**")
-                .hasAuthority(IdPScope.tenant_management.name())
+                    "/{tenant-id}/v1/management/tenants", "/{tenant-id}/v1/management/tenants/**")
+                .hasAuthority(IdPApplicationScope.tenant_management.name())
                 .requestMatchers(
-                    "/{tenant-id}/v1/management/management/clients",
-                    "/{tenant-id}/v1/management/management/clients/**")
-                .hasAuthority(IdPScope.client_management.name())
+                    "/{tenant-id}/v1/management/clients", "/{tenant-id}/v1/management/clients/**")
+                .hasAuthority(IdPApplicationScope.client_management.name())
                 .requestMatchers(
-                    "/{tenant-id}/v1/management/management/users",
-                    "/{tenant-id}/v1/management/management/users/**")
-                .hasAuthority(IdPScope.user_management.name())
+                    "/{tenant-id}/v1/management/users", "/{tenant-id}/v1/management/users/**")
+                .hasAuthority(IdPApplicationScope.user_management.name())
                 .requestMatchers(
                     "/{tenant-id}/v1/identity/{verification-type}/{verification-process}")
-                .hasAuthority(IdPScope.identity_verification_application.name())
+                .hasAuthority(IdPApplicationScope.identity_verification_application.name())
                 .anyRequest()
                 .permitAll());
 

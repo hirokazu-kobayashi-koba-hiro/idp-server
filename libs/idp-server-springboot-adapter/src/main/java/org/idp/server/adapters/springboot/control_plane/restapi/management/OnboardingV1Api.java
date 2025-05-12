@@ -4,11 +4,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
+import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
-import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.AdminTenantContext;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
@@ -29,7 +29,7 @@ public class OnboardingV1Api implements ParameterTransformable {
 
   @PostMapping
   public ResponseEntity<?> post(
-      @AuthenticationPrincipal User operator,
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @RequestBody Map<String, Object> request,
       HttpServletRequest httpServletRequest) {
 
@@ -37,7 +37,10 @@ public class OnboardingV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
     OnboardingResponse response =
         onboardingApi.onboard(
-            adminTenantIdentifier, operator, new OnboardingRequest(request), requestAttributes);
+            adminTenantIdentifier,
+            operatorPrincipal.getUser(),
+            new OnboardingRequest(request),
+            requestAttributes);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
