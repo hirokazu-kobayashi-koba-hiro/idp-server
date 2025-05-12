@@ -1,0 +1,45 @@
+{
+  "dry_run": false,
+  "config": {
+    "type": "sms",
+    "payload": {
+      "type": "external",
+      "description": "mocky",
+      "oauth_authorization": {
+        "type": "password",
+        "token_endpoint": "https://run.mocky.io/v3/04646fc3-8cce-44c8-bc59-5c64df51bf82",
+        "client_id": "your-client-id",
+        "username": "username",
+        "password": "password",
+        "scope": "application"
+      },
+      "transaction_id_param": "transaction_id",
+      "verification_code_param": "verification_code",
+      "details": {
+        "external": {
+          "executions": {
+            "challenge": {
+              "url": "https://run.mocky.io/v3/4b6d90d6-80b9-4769-9877-2d3dceb9fe1b",
+              "method": "POST",
+              "headers": {
+                "Content-Type": "application/json"
+              },
+              "dynamic_body_keys": [],
+              "static_body": {}
+            },
+            "verify": {
+              "url": "https://run.mocky.io/v3/4b6d90d6-80b9-4769-9877-2d3dceb9fe1b",
+              "method": "POST",
+              "headers": {
+                "Content-Type": "application/json"
+              },
+              "dynamic_body_keys": [],
+              "static_body": {}
+            }
+          }
+        }
+      }
+    }
+
+  }
+}

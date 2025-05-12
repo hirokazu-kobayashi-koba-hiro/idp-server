@@ -627,7 +627,8 @@ CREATE TABLE authentication_configuration
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    UNIQUE (tenant_id, type)
 );
 
 ALTER TABLE authentication_configuration ENABLE ROW LEVEL SECURITY;

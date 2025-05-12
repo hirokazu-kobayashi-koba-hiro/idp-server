@@ -1,28 +1,34 @@
 {
-  "type": "smtp",
-  "settings": {
-    "smtp": {
-      "host": "smtp.gmail.com",
-      "port": 587,
-      "username": "test@gmail.com",
-      "password": "test",
-      "auth": true,
-      "starttls": {
-        "enable": true
-      }
+  "dry_run": false,
+  "config": {
+    "type": "email",
+    "payload": {
+      "type": "smtp",
+      "settings": {
+        "smtp": {
+          "host": "smtp.gmail.com",
+          "port": 587,
+          "username": "test@gmail.com",
+          "password": "test",
+          "auth": true,
+          "starttls": {
+            "enable": true
+          }
+        }
+      },
+      "sender": "test@gmail.com",
+      "templates": {
+        "registration": {
+          "subject": "[ID Verification] Your signup confirmation code",
+          "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+        },
+        "authentication": {
+          "subject": "[ID Verification] Your login confirmation code",
+          "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+        }
+      },
+      "retry_count_limitation": 5,
+      "expire_seconds": 300
     }
-  },
-  "sender": "test@gmail.com",
-  "templates": {
-    "registration": {
-      "subject": "[ID Verification] Your signup confirmation code",
-      "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
-    },
-    "authentication": {
-      "subject": "[ID Verification] Your login confirmation code",
-      "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
-    }
-  },
-  "retry_count_limitation": 5,
-  "expire_seconds": 300
+  }
 }

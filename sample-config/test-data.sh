@@ -40,6 +40,12 @@ echo "authentication-config"
 
 authentication_config_files=(
   authentication-device/fcm.json
+  email/smtp.json
+  fido-uaf/external.json
+  legacy/mocky.json
+  password/standard.json
+  sms/external.json
+  webauthn/webauthn4j.json
 )
 
 for authentication_config_file in "${authentication_config_files[@]}"; do
