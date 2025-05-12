@@ -28,6 +28,7 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
                     authentication,
                     client_id,
                     client_payload,
+                    grant_type,
                     scopes,
                     id_token_claims,
                     userinfo_claims,
@@ -48,6 +49,7 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
                     ?,
                     ?,
                     ?,
+                    ?,
                     ?::jsonb,
                     ?::jsonb,
                     ?,
@@ -64,6 +66,7 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
     params.add(toJson(authorizationCodeGrant.authentication()));
     params.add(authorizationCodeGrant.clientId().value());
     params.add(toJson(authorizationCodeGrant.client()));
+    params.add(authorizationCodeGrant.authorizationGrant().grantType().name());
     params.add(authorizationCodeGrant.scopes().toStringValues());
 
     if (authorizationCodeGrant.authorizationGrant().hasIdTokenClaims()) {
@@ -115,6 +118,7 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
                 authentication,
                 client_id,
                 client_payload,
+                grant_type,
                 scopes,
                 id_token_claims,
                 userinfo_claims,

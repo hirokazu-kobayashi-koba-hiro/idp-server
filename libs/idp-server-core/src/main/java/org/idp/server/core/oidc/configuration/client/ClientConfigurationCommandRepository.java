@@ -1,6 +1,5 @@
 package org.idp.server.core.oidc.configuration.client;
 
-import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public interface ClientConfigurationCommandRepository {
@@ -9,5 +8,5 @@ public interface ClientConfigurationCommandRepository {
 
   void update(Tenant tenant, ClientConfiguration clientConfiguration);
 
-  void delete(Tenant tenant, RequestedClientId requestedClientId);
+  void delete(Tenant tenant, ClientConfiguration clientConfiguration);
 }

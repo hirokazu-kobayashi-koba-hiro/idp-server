@@ -1,13 +1,16 @@
 package org.idp.server.adapters.springboot.control_plane.restapi.management;
 
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
-import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.control_plane.management.client.ClientManagementApi;
-import org.idp.server.core.identity.User;
+import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
+import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
+import org.idp.server.control_plane.management.oidc.client.io.ClientConfigurationManagementResponse;
+import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementListResponse;
-import org.idp.server.core.oidc.configuration.handler.io.ClientConfigurationManagementResponse;
+import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,72 +29,118 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
   @PostMapping
   public ResponseEntity<?> post(
-      @AuthenticationPrincipal User operator,
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestBody(required = false) String body) {
+      @RequestBody(required = false) Map<String, Object> body,
+      HttpServletRequest httpServletRequest) {
 
-    String client = clientManagementApi.register(tenantIdentifier, body);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    ClientConfigurationManagementResponse response =
+        clientManagementApi.register(
+            tenantIdentifier,
+            operatorPrincipal.getUser(),
+            operatorPrincipal.getOAuthToken(),
+            new ClientRegistrationRequest(body),
+            requestAttributes);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
-    return new ResponseEntity<>(client, httpHeaders, HttpStatus.OK);
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @GetMapping
   public ResponseEntity<?> getList(
-      @AuthenticationPrincipal User operator,
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestParam(value = "limit", defaultValue = "20") String limitValue,
-      @RequestParam(value = "offset", defaultValue = "0") String offsetValue) {
+      @RequestParam(value = "offset", defaultValue = "0") String offsetValue,
+      HttpServletRequest httpServletRequest) {
 
-    ClientConfigurationManagementListResponse response =
-        clientManagementApi.find(
-            tenantIdentifier, Integer.parseInt(limitValue), Integer.parseInt(offsetValue));
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    ClientConfigurationManagementResponse response =
+        clientManagementApi.findList(
+            tenantIdentifier,
+            operatorPrincipal.getUser(),
+            operatorPrincipal.getOAuthToken(),
+            Integer.parseInt(limitValue),
+            Integer.parseInt(offsetValue),
+            requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
     return new ResponseEntity<>(
-        response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @GetMapping("/{client-id}")
   public ResponseEntity<?> get(
-      @AuthenticationPrincipal User operator,
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("client-id") String clientId) {
+      @PathVariable("client-id") ClientIdentifier clientIdentifier,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
 
     ClientConfigurationManagementResponse response =
-        clientManagementApi.get(tenantIdentifier, new RequestedClientId(clientId));
+        clientManagementApi.get(
+            tenantIdentifier,
+            operatorPrincipal.getUser(),
+            operatorPrincipal.getOAuthToken(),
+            clientIdentifier,
+            requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
     return new ResponseEntity<>(
-        response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @PutMapping("/{client-id}")
   public ResponseEntity<?> put(
-      @AuthenticationPrincipal User operator,
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestBody(required = false) String body) {
+      @PathVariable("client-id") ClientIdentifier clientIdentifier,
+      @RequestBody(required = false) Map<String, Object> body,
+      HttpServletRequest httpServletRequest) {
 
-    String client = clientManagementApi.update(tenantIdentifier, body);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    ClientConfigurationManagementResponse response =
+        clientManagementApi.update(
+            tenantIdentifier,
+            operatorPrincipal.getUser(),
+            operatorPrincipal.getOAuthToken(),
+            clientIdentifier,
+            new ClientRegistrationRequest(body),
+            requestAttributes);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
-    return new ResponseEntity<>(client, httpHeaders, HttpStatus.OK);
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @DeleteMapping("/{client-id}")
   public ResponseEntity<?> delete(
-      @AuthenticationPrincipal User operator,
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("client-id") String clientId) {
+      @PathVariable("client-id") ClientIdentifier clientIdentifier,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
 
     ClientConfigurationManagementResponse response =
-        clientManagementApi.delete(tenantIdentifier, new RequestedClientId(clientId));
+        clientManagementApi.delete(
+            tenantIdentifier,
+            operatorPrincipal.getUser(),
+            operatorPrincipal.getOAuthToken(),
+            clientIdentifier,
+            requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
     return new ResponseEntity<>(
-        response.content(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }

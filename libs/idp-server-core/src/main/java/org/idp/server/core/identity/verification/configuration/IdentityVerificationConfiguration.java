@@ -1,6 +1,7 @@
 package org.idp.server.core.identity.verification.configuration;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonNodeWrapper;
@@ -14,6 +15,7 @@ import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDele
 import org.idp.server.core.identity.verification.exception.IdentityVerificationApplicationConfigurationNotFoundException;
 
 public class IdentityVerificationConfiguration implements JsonReadable {
+  String id;
   String type;
   String delegation;
   String description;
@@ -25,6 +27,33 @@ public class IdentityVerificationConfiguration implements JsonReadable {
   Map<String, Object> verifiedClaimsSchema;
 
   public IdentityVerificationConfiguration() {}
+
+  public IdentityVerificationConfiguration(
+      String id,
+      String type,
+      String delegation,
+      String description,
+      String externalWorkflowDelegation,
+      String externalWorkflowApplicationIdParam,
+      OAuthAuthorizationConfiguration oauthAuthorization,
+      Map<String, IdentityVerificationProcessConfiguration> processes,
+      List<String> approvedTargetTypes,
+      Map<String, Object> verifiedClaimsSchema) {
+    this.id = id;
+    this.type = type;
+    this.delegation = delegation;
+    this.description = description;
+    this.externalWorkflowDelegation = externalWorkflowDelegation;
+    this.externalWorkflowApplicationIdParam = externalWorkflowApplicationIdParam;
+    this.oauthAuthorization = oauthAuthorization;
+    this.processes = processes;
+    this.approvedTargetTypes = approvedTargetTypes;
+    this.verifiedClaimsSchema = verifiedClaimsSchema;
+  }
+
+  public String id() {
+    return id;
+  }
 
   public IdentityVerificationType type() {
     return new IdentityVerificationType(type);
@@ -84,5 +113,21 @@ public class IdentityVerificationConfiguration implements JsonReadable {
 
   public JsonSchemaDefinition verifiedClaimsSchemaAsDefinition() {
     return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(verifiedClaimsSchema));
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", id);
+    map.put("type", type);
+    map.put("delegation", delegation);
+    map.put("description", description);
+    map.put("external_workflow_delegation", externalWorkflowDelegation);
+    map.put("externalWorkflowApplicationIdParam", externalWorkflowApplicationIdParam);
+    map.put("oauth_authorization", oauthAuthorization.toMap());
+    map.put("processes", processes);
+    map.put("approved_target_types", approvedTargetTypes);
+    map.put("verified_claims_schema", verifiedClaimsSchema);
+
+    return map;
   }
 }

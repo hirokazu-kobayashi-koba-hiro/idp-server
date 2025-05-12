@@ -2,6 +2,7 @@ package org.idp.server.usecases.control_plane;
 
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingContext;
 import org.idp.server.control_plane.management.onboarding.OnboardingContextCreator;
@@ -11,7 +12,6 @@ import org.idp.server.control_plane.management.onboarding.validator.OnboardingRe
 import org.idp.server.control_plane.management.onboarding.validator.OnboardingRequestValidator;
 import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerificationResult;
 import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerifier;
-import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
 import org.idp.server.core.identity.repository.UserCommandRepository;

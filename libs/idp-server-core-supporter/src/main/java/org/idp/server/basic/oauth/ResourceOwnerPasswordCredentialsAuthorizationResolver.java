@@ -30,7 +30,7 @@ public class ResourceOwnerPasswordCredentialsAuthorizationResolver
   public String resolve(OAuthAuthorizationConfiguration config) {
     try {
 
-      QueryParams queryParams = new QueryParams(config.toMap());
+      QueryParams queryParams = new QueryParams(config.toRequestValues());
 
       HttpRequest.Builder builder =
           HttpRequest.newBuilder()

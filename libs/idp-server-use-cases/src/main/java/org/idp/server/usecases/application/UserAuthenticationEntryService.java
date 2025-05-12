@@ -3,7 +3,7 @@ package org.idp.server.usecases.application;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.exception.UnauthorizedException;
 import org.idp.server.basic.type.extension.Pairs;
-import org.idp.server.control_plane.base.oidc.TokenIntrospectionCreator;
+import org.idp.server.control_plane.base.TokenIntrospectionCreator;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserAuthenticationApi;
 import org.idp.server.core.identity.UserIdentifier;
@@ -53,6 +53,11 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
     if (!introspectionResponse.isActive()) {
       throw new UnauthorizedException("error=invalid_token error_description=token is undefined");
     }
+
+    if (introspectionResponse.isClientCredentialsGrant()) {
+      return Pairs.of(User.notFound(), introspectionResponse.oAuthToken());
+    }
+
     UserIdentifier userIdentifier = new UserIdentifier(introspectionResponse.subject());
     User user = userQueryRepository.get(adminTenant, userIdentifier);
 

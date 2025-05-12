@@ -19,8 +19,42 @@ public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
     String sqlTemplate =
         """
                     INSERT INTO authorization_code_grant
-                    (authorization_request_id, tenant_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, expired_at, consent_claims)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    (
+                    authorization_request_id,
+                    tenant_id,
+                    authorization_code,
+                    user_id,
+                    user_payload,
+                    authentication,
+                    client_id,
+                    client_payload,
+                    grant_type,
+                    scopes,
+                    id_token_claims,
+                    userinfo_claims,
+                    custom_properties,
+                    authorization_details,
+                    expired_at,
+                    consent_claims
+                    )
+                    VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?
+                    );
                     """;
     List<Object> params = new ArrayList<>();
 
@@ -32,6 +66,7 @@ public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
     params.add(toJson(authorizationCodeGrant.authentication()));
     params.add(authorizationCodeGrant.clientId().value());
     params.add(toJson(authorizationCodeGrant.client()));
+    params.add(authorizationCodeGrant.authorizationGrant().grantType().name());
     params.add(authorizationCodeGrant.scopes().toStringValues());
 
     if (authorizationCodeGrant.authorizationGrant().hasIdTokenClaims()) {
@@ -74,7 +109,23 @@ public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                SELECT authorization_request_id, tenant_id, authorization_code, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, expired_at, consent_claims
+                SELECT
+                authorization_request_id,
+                tenant_id,
+                authorization_code,
+                user_id,
+                user_payload,
+                authentication,
+                client_id,
+                client_payload,
+                grant_type,
+                scopes,
+                id_token_claims,
+                userinfo_claims,
+                custom_properties,
+                authorization_details,
+                expired_at,
+                consent_claims
                 FROM authorization_code_grant
                 WHERE authorization_code = ?;
                 """;

@@ -46,4 +46,9 @@ public class SchemaReader {
     String json = ResourceReader.readClasspath("/schema/1.0/admin-user.json");
     return JsonSchemaDefinition.fromJson(json);
   }
+
+  public static JsonSchemaDefinition userSchema() {
+    String json = ResourceReader.readClasspath("/schema/1.0/user.json");
+    return JsonSchemaDefinition.fromJson(json);
+  }
 }

@@ -31,6 +31,7 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
                     authentication,
                     client_id,
                     client_payload,
+                    grant_type,
                     scopes,
                     id_token_claims,
                     userinfo_claims,
@@ -53,6 +54,7 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
                     ?,
                     ?,
                     ?,
+                    ?,
                     ?::jsonb,
                     ?::jsonb,
                     ?::jsonb
@@ -71,6 +73,7 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
     params.add(toJson(authorizationGrant.authentication()));
     params.add(authorizationGrant.requestedClientId().value());
     params.add(toJson(authorizationGrant.client()));
+    params.add(authorizationGrant.grantType().name());
     params.add(authorizationGrant.scopes().toStringValues());
 
     if (authorizationGrant.hasIdTokenClaims()) {
@@ -188,6 +191,7 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
                   authentication,
                   client_id,
                   client_payload,
+                  grant_type,
                   scopes,
                   id_token_claims,
                   userinfo_claims,

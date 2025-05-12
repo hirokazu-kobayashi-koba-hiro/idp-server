@@ -43,7 +43,7 @@ public class TokenIntrospectionResponse {
   }
 
   public String subject() {
-    return (String) response.get("sub");
+    return (String) response.getOrDefault("sub", "");
   }
 
   public boolean isExpired() {
@@ -56,6 +56,10 @@ public class TokenIntrospectionResponse {
 
   public boolean hasOAuthToken() {
     return oAuthToken != null && oAuthToken.exists();
+  }
+
+  public boolean isClientCredentialsGrant() {
+    return oAuthToken.isClientCredentialsGrant();
   }
 
   public DefaultSecurityEventType securityEventType() {

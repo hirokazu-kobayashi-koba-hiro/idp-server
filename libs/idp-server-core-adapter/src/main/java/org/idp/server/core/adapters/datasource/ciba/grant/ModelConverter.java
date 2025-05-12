@@ -10,6 +10,7 @@ import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.basic.type.ciba.Interval;
 import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.ciba.grant.CibaGrant;
@@ -45,6 +46,7 @@ class ModelConverter {
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);
     RequestedClientId requestedClientId = new RequestedClientId(stringMap.get("client_id"));
     Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
+    GrantType grantType = GrantType.of(stringMap.get("grant_type"));
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = new CustomProperties();
     GrantIdTokenClaims idTokenClaims = new GrantIdTokenClaims(stringMap.get("id_token_claims"));
@@ -61,6 +63,7 @@ class ModelConverter {
             authentication,
             requestedClientId,
             client,
+            grantType,
             scopes,
             idTokenClaims,
             userinfoClaims,

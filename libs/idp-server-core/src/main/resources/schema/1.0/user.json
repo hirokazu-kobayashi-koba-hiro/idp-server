@@ -1,0 +1,71 @@
+{
+  "type": "object",
+  "required": [
+    "sub",
+    "email",
+    "raw_password"
+  ],
+  "properties": {
+    "sub": { "type": "string", "format": "uuid" },
+    "provider_id": { "type": "string" },
+    "provider_user_id": { "type": "string" },
+    "name": { "type": "string" },
+    "given_name": { "type": "string" },
+    "family_name": { "type": "string" },
+    "middle_name": { "type": "string" },
+    "nickname": { "type": "string" },
+    "preferred_username": { "type": "string" },
+    "profile": { "type": "string", "format": "uri" },
+    "picture": { "type": "string", "format": "uri" },
+    "website": { "type": "string", "format": "uri" },
+    "email": { "type": "string", "format": "email" },
+    "email_verified": { "type": "boolean" },
+    "gender": {
+      "type": "string"
+    },
+    "birthdate": { "type": "string", "format": "date" },
+    "zoneinfo": { "type": "string" },
+    "locale": { "type": "string" },
+    "phone_number": { "type": "string" },
+    "phone_number_verified": { "type": "boolean" },
+    "address": {
+      "type": "object",
+      "properties": {
+        "street_address": { "type": "string" },
+        "locality": { "type": "string" },
+        "region": { "type": "string" },
+        "postal_code": { "type": "string" },
+        "country": { "type": "string" }
+      }
+    },
+    "multi_factor_authentication": {
+      "type": "object",
+      "properties": {
+        "fido_uaf": { "type": "boolean" }
+      }
+    },
+    "authentication_devices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "platform", "os", "model", "notification_channel", "notification_token"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "platform": { "type": "string" },
+          "os": { "type": "string" },
+          "model": { "type": "string" },
+          "notification_channel": { "type": "string", "enum": ["fcm", "apns"] },
+          "notification_token": { "type": "string" },
+          "preferred_for_notification": { "type": "boolean" }
+        }
+      }
+    },
+    "custom_properties": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "raw_password": { "type": "string", "minLength": 8 },
+    "role": { "type": "string" }
+  },
+  "additionalProperties": true
+}

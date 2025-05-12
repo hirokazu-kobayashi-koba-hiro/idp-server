@@ -1,8 +1,8 @@
 package org.idp.server.control_plane.management.onboarding.verifier;
 
-import org.idp.server.control_plane.management.onboarding.OnboardingContext;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.base.verifier.VerificationResult;
+import org.idp.server.control_plane.management.onboarding.OnboardingContext;
 
 public class OnboardingVerifier {
 

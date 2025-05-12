@@ -76,6 +76,6 @@ public class IdpServerStarterContext {
   public IdpServerStarterResponse toResponse() {
     Map<String, Object> contents =
         Map.of("organization", organization.toMap(), "tenant", tenant.toMap(), "dry_run", dryRun);
-    return new IdpServerStarterResponse(IdpServerStarterStatus.OK, contents);
+    return new IdpServerStarterResponse(IdpServerStarterStatus.CREATED, contents);
   }
 }

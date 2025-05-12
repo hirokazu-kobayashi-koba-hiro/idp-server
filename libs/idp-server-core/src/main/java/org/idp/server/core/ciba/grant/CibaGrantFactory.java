@@ -5,6 +5,7 @@ import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.basic.type.ciba.Interval;
 import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.ciba.CibaRequestContext;
@@ -46,7 +47,7 @@ public class CibaGrantFactory {
     Scopes scopes = context.scopes();
     // TODO authorization_details
     AuthorizationGrantBuilder builder =
-        new AuthorizationGrantBuilder(tenantIdentifier, requestedClientId, scopes)
+        new AuthorizationGrantBuilder(tenantIdentifier, requestedClientId, GrantType.ciba, scopes)
             .add(client)
             .add(user)
             .add(authentication);

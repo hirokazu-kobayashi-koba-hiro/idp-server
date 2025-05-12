@@ -98,7 +98,7 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
     return "Basic " + encodedAuth;
   }
 
-  public Map<String, String> toMap() {
+  public Map<String, String> toRequestValues() {
     Map<String, String> map = new HashMap<>();
 
     map.put("client_id", clientId);
@@ -115,5 +115,18 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
     map.put("scope", scope);
     map.put("grant_type", type);
     return map;
+  }
+
+  public Map<String, Object> toMap() {
+    HashMap<String, Object> result = new HashMap<>();
+    result.put("type", type);
+    result.put("token_endpoint", tokenEndpoint);
+    result.put("client_authentication_type", clientAuthenticationType);
+    result.put("client_id", clientId);
+    result.put("client_secret", clientSecret);
+    result.put("scope", scope);
+    result.put("username", username);
+    result.put("password", password);
+    return result;
   }
 }

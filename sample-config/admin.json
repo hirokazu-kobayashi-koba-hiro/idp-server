@@ -439,6 +439,7 @@
         "preferred_for_notification": true
       }
     ],
+    "verified_claims": {"claims": {"address": {"country": "UK", "locality": "Edinburgh", "postal_code": "EH1 9GP", "street_address": "122 Burns Crescent"}, "birthdate": "1976-03-11", "given_name": "Sarah", "family_name": "Meredyth", "place_of_birth": {"country": "UK"}}, "verification": {"evidence": [{"time": "2021-04-09T14:12Z", "type": "electronic_record", "record": {"type": "mortgage_account", "source": {"name": "TheCreditBureau"}}, "check_details": [{"txn": "kbv1-hf934hn09234ng03jj3", "check_method": "kbv", "organization": "TheCreditBureau"}]}, {"time": "2021-04-09T14:12Z", "type": "electronic_record", "record": {"type": "bank_account", "source": {"name": "TheBank"}}, "check_details": [{"txn": "kbv2-nm0f23u9459fj38u5j6", "check_method": "kbv", "organization": "OpenBankingTPP"}]}], "trust_framework": "eidas"}},
     "custom_properties": {
       "key": "value"
     },

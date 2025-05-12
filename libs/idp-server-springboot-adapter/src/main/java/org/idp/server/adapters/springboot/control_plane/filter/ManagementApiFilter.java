@@ -3,10 +3,11 @@ package org.idp.server.adapters.springboot.control_plane.filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.adapters.springboot.application.restapi.model.IdPScope;
-import org.idp.server.adapters.springboot.application.restapi.model.Operator;
+import org.idp.server.adapters.springboot.control_plane.model.IdpControlPlaneScope;
+import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.basic.exception.UnauthorizedException;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.extension.Pairs;
@@ -41,15 +42,24 @@ public class ManagementApiFilter extends OncePerRequestFilter {
       Pairs<User, OAuthToken> result =
           userAuthenticationApi.authenticate(adminTenantIdentifier, authorization);
 
-      Operator operator =
-          new Operator(
-              result.getLeft(),
-              result.getRight(),
-              List.of(
-                  IdPScope.tenant_management,
-                  IdPScope.user_management,
-                  IdPScope.client_management));
-      SecurityContextHolder.getContext().setAuthentication(operator);
+      User user = result.getLeft();
+      OAuthToken oAuthToken = result.getRight();
+
+      if (oAuthToken.isClientCredentialsGrant()) {
+        response.setHeader(
+            HttpHeaders.WWW_AUTHENTICATE,
+            "error=invalid_token, error_description=management api is not supported token type client credentials grant.");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        return;
+      }
+
+      List<IdpControlPlaneScope> scopes = new ArrayList<>();
+      for (String scope : oAuthToken.scopeAsList()) {
+        scopes.add(IdpControlPlaneScope.of(scope));
+      }
+
+      OperatorPrincipal operatorPrincipal = new OperatorPrincipal(user, oAuthToken, scopes);
+      SecurityContextHolder.getContext().setAuthentication(operatorPrincipal);
       filterChain.doFilter(request, response);
     } catch (UnauthorizedException e) {
       response.setHeader(HttpHeaders.WWW_AUTHENTICATE, e.getMessage());
@@ -59,11 +69,13 @@ public class ManagementApiFilter extends OncePerRequestFilter {
 
       logger.error(e.getMessage(), e);
       response.setHeader(
-          HttpHeaders.WWW_AUTHENTICATE, "error=invalid_token unexpected error occurred");
+          HttpHeaders.WWW_AUTHENTICATE,
+          "error=invalid_token, error_description=unexpected error occurred");
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
   }
 
+  @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
     return !request.getRequestURI().contains("/management/");
   }

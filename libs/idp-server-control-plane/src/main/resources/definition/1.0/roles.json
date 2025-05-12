@@ -4,6 +4,10 @@
     "name": "Administrator",
     "description": "administrator has all permissions",
     "permissions": [
+      "organization:create",
+      "organization:read",
+      "organization:update",
+      "organization:delete",
       "tenant:create",
       "tenant:read",
       "tenant:update",
@@ -16,6 +20,14 @@
       "user:read",
       "user:update",
       "user:delete",
+      "role:create",
+      "role:read",
+      "role:update",
+      "role:delete",
+      "permission:create",
+      "permission:read",
+      "permission:update",
+      "permission:delete",
       "payment:create",
       "payment:read",
       "payment:update",
@@ -27,6 +39,7 @@
     "name": "Editor",
     "description": "editor has permissions for edition",
     "permissions": [
+      "organization:read",
       "tenant:read",
       "tenant:update",
       "client:read",
@@ -34,7 +47,11 @@
       "user:read",
       "user:update",
       "payment:read",
-      "payment:update"
+      "payment:update",
+      "role:read",
+      "role:update",
+      "permission:read",
+      "permission:update"
     ]
   },
   {
@@ -42,10 +59,13 @@
     "name": "Viewer",
     "description": "viewer has permissions for view",
     "permissions": [
+      "organization:read",
       "tenant:read",
       "client:read",
       "user:read",
-      "payment:read"
+      "payment:read",
+      "role:read",
+      "permission:read"
     ]
   }
 ]

@@ -2,6 +2,7 @@ package org.idp.server.core.token.service;
 
 import java.util.UUID;
 import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
@@ -42,7 +43,10 @@ public class ClientCredentialsGrantService
     CustomProperties customProperties = context.customProperties();
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrantBuilder(
-                context.tenantIdentifier(), context.requestedClientId(), scopes)
+                context.tenantIdentifier(),
+                context.requestedClientId(),
+                GrantType.client_credentials,
+                scopes)
             .add(customProperties)
             .add(clientConfiguration.client())
             .build();

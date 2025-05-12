@@ -331,6 +331,7 @@ CREATE TABLE authorization_code_grant
     authentication           JSONB                   NOT NULL,
     client_id                VARCHAR(255)            NOT NULL,
     client_payload           JSONB                   NOT NULL,
+    grant_type               VARCHAR(255)            NOT NULL,
     scopes                   TEXT                    NOT NULL,
     id_token_claims          TEXT                    NOT NULL,
     userinfo_claims          TEXT                    NOT NULL,
@@ -366,6 +367,7 @@ CREATE TABLE oauth_token
     authentication                  JSONB                   NOT NULL,
     client_id                       VARCHAR(255)            NOT NULL,
     client_payload                  JSONB                   NOT NULL,
+    grant_type                      VARCHAR(255)            NOT NULL,
     scopes                          TEXT                    NOT NULL,
     id_token_claims                 TEXT                    NOT NULL,
     userinfo_claims                 TEXT                    NOT NULL,
@@ -442,6 +444,7 @@ CREATE TABLE ciba_grant
     authentication                        JSONB,
     client_id                             VARCHAR(255)            NOT NULL,
     client_payload                        JSONB                   NOT NULL,
+    grant_type                            VARCHAR(255)            NOT NULL,
     scopes                                TEXT                    NOT NULL,
     id_token_claims                       TEXT                    NOT NULL,
     userinfo_claims                       TEXT                    NOT NULL,
@@ -472,6 +475,7 @@ CREATE TABLE authorization_granted
     authentication        JSONB                   NOT NULL,
     client_id             VARCHAR(255)            NOT NULL,
     client_payload        JSONB                   NOT NULL,
+    grant_type            VARCHAR(255)            NOT NULL,
     scopes                TEXT                    NOT NULL,
     id_token_claims       TEXT                    NOT NULL,
     userinfo_claims       TEXT                    NOT NULL,
@@ -623,7 +627,8 @@ CREATE TABLE authentication_configuration
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    UNIQUE (tenant_id, type)
 );
 
 ALTER TABLE authentication_configuration ENABLE ROW LEVEL SECURITY;

@@ -33,4 +33,8 @@ public enum GrantType {
   public String value() {
     return value;
   }
+
+  public boolean isClientCredentials() {
+    return this == client_credentials;
+  }
 }
