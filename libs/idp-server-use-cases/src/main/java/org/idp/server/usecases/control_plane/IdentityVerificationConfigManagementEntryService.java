@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
-import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
-import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigRegistrationContext;
-import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigRegistrationContextCreator;
+import org.idp.server.control_plane.management.identity.verification.*;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
@@ -113,15 +111,16 @@ public class IdentityVerificationConfigManagementEntryService
     IdentityVerificationConfiguration configuration =
         identityVerificationConfigurationQueryRepository.get(tenant, identifier);
 
-    IdentityVerificationConfigRegistrationContextCreator contextCreator =
-        new IdentityVerificationConfigRegistrationContextCreator(tenant, request);
-    IdentityVerificationConfigRegistrationContext context = contextCreator.create();
+    IdentityVerificationConfigUpdateContextCreator contextCreator =
+        new IdentityVerificationConfigUpdateContextCreator(tenant, request, configuration);
+    IdentityVerificationConfigUpdateContext context = contextCreator.create();
+
     if (context.isDryRun()) {
       return context.toResponse();
     }
 
     identityVerificationConfigurationCommandRepository.update(
-        tenant, context.type(), context.identityVerificationConfiguration());
+        tenant, context.afterType(), context.after());
 
     return context.toResponse();
   }
