@@ -1,13 +1,11 @@
 package org.idp.server.core.adapters.datasource.authentication.config.command;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.authentication.AuthenticationConfiguration;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
-
-import java.util.ArrayList;
-import java.util.List;
-
 
 public class MysqlExecutor implements AuthenticationConfigCommandSqlExecutor {
 
@@ -16,7 +14,8 @@ public class MysqlExecutor implements AuthenticationConfigCommandSqlExecutor {
   @Override
   public void insert(Tenant tenant, AuthenticationConfiguration configuration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate = """
+    String sqlTemplate =
+        """
             INSERT INTO authentication_configuration (
             id,
             tenant_id,
@@ -35,7 +34,7 @@ public class MysqlExecutor implements AuthenticationConfigCommandSqlExecutor {
     params.add(configuration.id());
     params.add(tenant.identifierValue());
     params.add(configuration.type());
-    params.add(jsonConverter.write(configuration));
+    params.add(jsonConverter.write(configuration.payload()));
 
     sqlExecutor.execute(sqlTemplate, params);
   }
