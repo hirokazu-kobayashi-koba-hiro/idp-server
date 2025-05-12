@@ -2,7 +2,6 @@ package org.idp.server.core.adapters.datasource.oidc.configuration.client.comman
 
 import org.idp.server.basic.datasource.cache.CacheStore;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -39,11 +38,15 @@ public class ClientConfigurationCommandDataSource implements ClientConfiguration
   }
 
   @Override
-  public void delete(Tenant tenant, RequestedClientId requestedClientId) {
+  public void delete(Tenant tenant, ClientConfiguration clientConfiguration) {
     ClientConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.delete(tenant, requestedClientId);
-    String key = key(tenant.identifier(), requestedClientId.value());
+    executor.delete(tenant, clientConfiguration.clientIdentifier());
+    String key = key(tenant.identifier(), clientConfiguration.clientIdentifier().value());
     cacheStore.delete(key);
+    if (clientConfiguration.clientIdAlias() != null) {
+      String aliasKey = key(tenant.identifier(), clientConfiguration.clientIdAlias());
+      cacheStore.delete(aliasKey);
+    }
   }
 
   private String key(TenantIdentifier tenantIdentifier, String clientId) {

@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 
 public class PostgresqlExecutor implements ClientConfigCommandSqlExecutor {
@@ -60,7 +60,7 @@ public class PostgresqlExecutor implements ClientConfigCommandSqlExecutor {
   }
 
   @Override
-  public void delete(Tenant tenant, RequestedClientId requestedClientId) {
+  public void delete(Tenant tenant, ClientIdentifier clientIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -72,7 +72,7 @@ public class PostgresqlExecutor implements ClientConfigCommandSqlExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-    params.add(requestedClientId.value());
+    params.add(clientIdentifier.value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

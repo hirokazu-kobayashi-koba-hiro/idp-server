@@ -14,7 +14,8 @@ import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.base.definition.DefinitionReader;
 import org.idp.server.control_plane.base.schema.SchemaReader;
 import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
-import org.idp.server.control_plane.management.identity.UserManagementApi;
+import org.idp.server.control_plane.management.identity.user.UserManagementApi;
+import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.core.authentication.*;
@@ -57,6 +58,7 @@ import org.idp.server.core.identity.role.RoleCommandRepository;
 import org.idp.server.core.identity.verification.IdentityVerificationApi;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationQueryRepository;
+import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
@@ -107,6 +109,7 @@ public class IdpServerApplication {
   ClientManagementApi clientManagementApi;
   UserManagementApi userManagementApi;
   AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi;
+  IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi;
   UserAuthenticationApi userAuthenticationApi;
 
   public IdpServerApplication(
@@ -160,6 +163,8 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(AuthenticationTransactionCommandRepository.class);
     AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository =
         applicationComponentContainer.resolve(AuthenticationTransactionQueryRepository.class);
+    IdentityVerificationConfigurationCommandRepository identityVerificationConfigurationCommandRepository =
+            applicationComponentContainer.resolve(IdentityVerificationConfigurationCommandRepository.class);
     IdentityVerificationConfigurationQueryRepository
         identityVerificationConfigurationQueryRepository =
             applicationComponentContainer.resolve(
@@ -426,7 +431,8 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 userQueryRepository,
                 userCommandRepository,
-                passwordEncodeDelegation),
+                passwordEncodeDelegation,
+                userLifecycleEventPublisher),
             UserManagementApi.class,
             tenantDialectProvider);
 
@@ -436,6 +442,15 @@ public class IdpServerApplication {
                 authenticationConfigurationCommandRepository, tenantQueryRepository),
             AuthenticationConfigurationManagementApi.class,
             tenantDialectProvider);
+
+    this.identityVerificationConfigManagementApi = TenantAwareEntryServiceProxy.createProxy(
+            new IdentityVerificationConfigManagementEntryService(
+                    identityVerificationConfigurationCommandRepository,
+                    identityVerificationConfigurationQueryRepository,
+                    tenantQueryRepository),
+            IdentityVerificationConfigManagementApi.class,
+            tenantDialectProvider
+            );
 
     this.userAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -513,6 +528,10 @@ public class IdpServerApplication {
 
   public AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi() {
     return authenticationConfigurationManagementApi;
+  }
+
+  public IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi() {
+    return identityVerificationConfigManagementApi;
   }
 
   public UserAuthenticationApi operatorAuthenticationApi() {

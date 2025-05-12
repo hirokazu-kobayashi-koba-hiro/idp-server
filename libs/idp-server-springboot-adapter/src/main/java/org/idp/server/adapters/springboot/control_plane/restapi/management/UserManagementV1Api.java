@@ -1,16 +1,15 @@
 package org.idp.server.adapters.springboot.control_plane.restapi.management;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.basic.type.security.RequestAttributes;
-import org.idp.server.control_plane.management.identity.UserManagementApi;
-import org.idp.server.control_plane.management.identity.io.UserManagementResponse;
-import org.idp.server.control_plane.management.identity.io.UserRegistrationRequest;
-import org.idp.server.core.identity.User;
+import org.idp.server.control_plane.management.identity.user.UserManagementApi;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
+import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
+import org.idp.server.control_plane.management.identity.user.io.UserUpdateRequest;
 import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
@@ -61,8 +60,8 @@ public class UserManagementV1Api implements ParameterTransformable {
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
-    List<User> userList =
-        userManagementApi.find(
+    UserManagementResponse response =
+        userManagementApi.findList(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
@@ -70,7 +69,11 @@ public class UserManagementV1Api implements ParameterTransformable {
             Integer.parseInt(offsetValue),
             requestAttributes);
 
-    return new ResponseEntity<>(Map.of(), HttpStatus.OK);
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(
+        response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
   }
 
   @GetMapping("/{user-id}")
@@ -82,13 +85,44 @@ public class UserManagementV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    User user =
+    UserManagementResponse response =
         userManagementApi.get(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             userIdentifier,
             requestAttributes);
-    return new ResponseEntity<>(Map.of(), HttpStatus.OK);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(
+        response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PutMapping("/{user-id}")
+  public ResponseEntity<?> update(
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("user-id") UserIdentifier userIdentifier,
+      @RequestBody(required = false) Map<String, Object> body,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        userManagementApi.update(
+            tenantIdentifier,
+            operatorPrincipal.getUser(),
+            operatorPrincipal.getOAuthToken(),
+            userIdentifier,
+            new UserUpdateRequest(body),
+            requestAttributes);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(
+        response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
   }
 }

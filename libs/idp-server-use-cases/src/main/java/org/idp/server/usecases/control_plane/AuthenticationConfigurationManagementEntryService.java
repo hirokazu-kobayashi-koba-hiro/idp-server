@@ -7,7 +7,7 @@ import org.idp.server.control_plane.management.authentication.AuthenticationConf
 import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigRegistrationRequest;
-import org.idp.server.control_plane.management.identity.io.UserUpdateRequest;
+import org.idp.server.control_plane.management.identity.user.io.UserUpdateRequest;
 import org.idp.server.core.authentication.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationCommandRepository;
 import org.idp.server.core.identity.User;

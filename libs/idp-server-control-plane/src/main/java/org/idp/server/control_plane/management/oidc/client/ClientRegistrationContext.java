@@ -1,7 +1,7 @@
 package org.idp.server.control_plane.management.oidc.client;
 
 import java.util.Map;
-import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
+import org.idp.server.control_plane.management.oidc.client.io.ClientConfigurationManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -30,8 +30,8 @@ public class ClientRegistrationContext {
     return dryRun;
   }
 
-  public ClientManagementResponse toResponse() {
+  public ClientConfigurationManagementResponse toResponse() {
     Map<String, Object> contents = Map.of("client", clientConfiguration.toMap(), "dry_run", dryRun);
-    return new ClientManagementResponse(ClientManagementStatus.CREATED, contents);
+    return new ClientConfigurationManagementResponse(ClientManagementStatus.CREATED, contents);
   }
 }

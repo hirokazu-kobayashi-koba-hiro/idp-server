@@ -3,6 +3,7 @@ package org.idp.server.control_plane.management.oidc.client.io;
 public enum ClientManagementStatus {
   OK(200),
   CREATED(201),
+  NO_CONTENT(204),
   INVALID_REQUEST(400),
   UNAUTHORIZED(401),
   FORBIDDEN(403),

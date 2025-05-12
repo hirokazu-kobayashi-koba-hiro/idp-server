@@ -342,7 +342,48 @@ public class ClientConfiguration implements JsonReadable {
   }
 
   public Map<String, Object> toMap() {
-    HashMap<String, Object> map = new HashMap<>();
+    Map<String, Object> map = new HashMap<>();
+    map.put("client_id", clientId);
+    map.put("client_id_alias", clientIdAlias);
+    map.put("client_secret", clientSecret);
+    map.put("redirect_uris", redirectUris);
+    map.put("token_endpoint_auth_method", tokenEndpointAuthMethod);
+    map.put("grant_types", grantTypes);
+    map.put("response_types", responseTypes);
+    map.put("client_name", clientName);
+    map.put("client_uri", clientUri);
+    map.put("logo_uri", logoUri);
+    map.put("scope", scope);
+    map.put("contacts", contacts);
+    map.put("tos_uri", tosUri);
+    map.put("policy_uri", policyUri);
+    map.put("jwks_uri", jwksUri);
+    map.put("jwks", jwks);
+    map.put("software_id", softwareId);
+    map.put("software_version", softwareVersion);
+    map.put("request_uris", requestUris);
+    map.put("backchannel_token_delivery_mode", backchannelTokenDeliveryMode);
+    map.put("backchannel_client_notification_endpoint", backchannelClientNotificationEndpoint);
+    map.put(
+        "backchannel_authentication_request_signing_alg",
+        backchannelAuthenticationRequestSigningAlg);
+    map.put("backchannel_user_code_parameter", backchannelUserCodeParameter);
+    map.put("application_type", applicationType);
+    map.put("id_token_encrypted_response_alg", idTokenEncryptedResponseAlg);
+    map.put("id_token_encrypted_response_enc", idTokenEncryptedResponseEnc);
+    map.put("authorization_details_types", authorizationDetailsTypes);
+    map.put("tls_client_auth_subject_dn", tlsClientAuthSubjectDn);
+    map.put("tls_client_auth_san_dns", tlsClientAuthSanDns);
+    map.put("tls_client_auth_san_uri", tlsClientAuthSanUri);
+    map.put("tls_client_auth_san_ip", tlsClientAuthSanIp);
+    map.put("tls_client_auth_san_email", tlsClientAuthSanEmail);
+    map.put("tls_client_certificate_bound_access_tokens", tlsClientCertificateBoundAccessTokens);
+    map.put("authorization_signed_response_alg", authorizationSignedResponseAlg);
+    map.put("authorization_encrypted_response_alg", authorizationEncryptedResponseAlg);
+    map.put("authorization_encrypted_response_enc", authorizationEncryptedResponseEnc);
+    map.put("supported_jar", supportedJar);
+    map.put("tenant_id", tenantId);
+    map.put("issuer", issuer);
     return map;
   }
 }

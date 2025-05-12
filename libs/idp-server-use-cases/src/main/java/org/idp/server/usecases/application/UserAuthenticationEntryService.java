@@ -54,7 +54,7 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
       throw new UnauthorizedException("error=invalid_token error_description=token is undefined");
     }
 
-    if (!introspectionResponse.isClientCredentialsGrant()) {
+    if (introspectionResponse.isClientCredentialsGrant()) {
       return Pairs.of(User.notFound(), introspectionResponse.oAuthToken());
     }
 
