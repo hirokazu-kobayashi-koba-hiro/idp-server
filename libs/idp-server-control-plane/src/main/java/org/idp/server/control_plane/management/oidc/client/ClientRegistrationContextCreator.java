@@ -9,18 +9,19 @@ public class ClientRegistrationContextCreator {
 
   Tenant tenant;
   ClientRegistrationRequest request;
+  boolean dryRun;
   JsonConverter jsonConverter;
 
-  public ClientRegistrationContextCreator(Tenant tenant, ClientRegistrationRequest request) {
+  public ClientRegistrationContextCreator(Tenant tenant, ClientRegistrationRequest request, boolean dryRun) {
     this.tenant = tenant;
     this.request = request;
+    this.dryRun = dryRun;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   public ClientRegistrationContext create() {
     ClientConfiguration clientConfiguration =
-        jsonConverter.read(request.get("client"), ClientConfiguration.class);
-    boolean dryRun = request.isDryRun();
+        jsonConverter.read(request.toMap(), ClientConfiguration.class);
 
     return new ClientRegistrationContext(tenant, clientConfiguration, dryRun);
   }

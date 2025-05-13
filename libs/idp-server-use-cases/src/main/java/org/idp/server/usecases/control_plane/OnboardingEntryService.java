@@ -58,15 +58,16 @@ public class OnboardingEntryService implements OnboardingApi {
       TenantIdentifier adminTenantIdentifier,
       User operator,
       OnboardingRequest request,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
 
-    OnboardingRequestValidator validator = new OnboardingRequestValidator(request);
+    OnboardingRequestValidator validator = new OnboardingRequestValidator(request, dryRun);
     OnboardingRequestValidationResult validationResult = validator.validate();
     if (!validationResult.isValid()) {
       return validationResult.errorResponse();
     }
 
-    OnboardingContextCreator contextCreator = new OnboardingContextCreator(request, operator);
+    OnboardingContextCreator contextCreator = new OnboardingContextCreator(request, operator, dryRun);
     OnboardingContext context = contextCreator.create();
 
     OnboardingVerificationResult verificationResult = onboardingVerifier.verify(context);
@@ -74,7 +75,7 @@ public class OnboardingEntryService implements OnboardingApi {
       return verificationResult.errorResponse();
     }
 
-    if (request.isDryRun()) {
+    if (dryRun) {
       return context.toResponse();
     }
 

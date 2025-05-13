@@ -35,6 +35,7 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -45,7 +46,7 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             new IdentityVerificationConfigRegistrationRequest(body),
-            requestAttributes);
+            requestAttributes, dryRun);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
@@ -107,6 +108,7 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") IdentityVerificationConfigurationIdentifier identifier,
       @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -118,7 +120,8 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
             operatorPrincipal.getOAuthToken(),
             identifier,
             new IdentityVerificationConfigUpdateRequest(body),
-            requestAttributes);
+            requestAttributes,
+            dryRun);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
     return new ResponseEntity<>(
@@ -130,6 +133,7 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") IdentityVerificationConfigurationIdentifier identifier,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -140,7 +144,8 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             identifier,
-            requestAttributes);
+            requestAttributes,
+            dryRun);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");

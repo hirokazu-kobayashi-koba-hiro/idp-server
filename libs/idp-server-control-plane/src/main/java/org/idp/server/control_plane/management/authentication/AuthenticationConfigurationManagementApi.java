@@ -15,7 +15,8 @@ public interface AuthenticationConfigurationManagementApi {
       User operator,
       OAuthToken oAuthToken,
       AuthenticationConfigRegistrationRequest request,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 
   AuthenticationConfigManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -38,12 +39,14 @@ public interface AuthenticationConfigurationManagementApi {
       OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
       AuthenticationConfigRegistrationRequest request,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 
   AuthenticationConfigManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 }

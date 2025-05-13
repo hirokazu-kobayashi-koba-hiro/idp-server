@@ -18,10 +18,4 @@ public class TenantInitializationRequest {
     return values.get(key);
   }
 
-  public boolean isDryRun() {
-    if (!values.containsKey("dry_run")) {
-      return false;
-    }
-    return (boolean) values.get("dry_run");
-  }
 }

@@ -42,10 +42,11 @@ public class ClientManagementEntryService implements ClientManagementApi {
       User operator,
       OAuthToken oAuthToken,
       ClientRegistrationRequest request,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientRegistrationRequestValidator validator = new ClientRegistrationRequestValidator(request);
+    ClientRegistrationRequestValidator validator = new ClientRegistrationRequestValidator(request, dryRun);
     ClientRegistrationRequestValidationResult validate = validator.validate();
 
     if (!validate.isValid()) {
@@ -53,44 +54,13 @@ public class ClientManagementEntryService implements ClientManagementApi {
     }
 
     ClientRegistrationContextCreator contextCreator =
-        new ClientRegistrationContextCreator(tenant, request);
+        new ClientRegistrationContextCreator(tenant, request, dryRun);
     ClientRegistrationContext context = contextCreator.create();
-    if (context.isDryRun()) {
+    if (dryRun) {
       return context.toResponse();
     }
 
     clientConfigurationCommandRepository.register(tenant, context.clientConfiguration());
-
-    return context.toResponse();
-  }
-
-  @Override
-  public ClientConfigurationManagementResponse update(
-      TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      ClientIdentifier clientIdentifier,
-      ClientRegistrationRequest request,
-      RequestAttributes requestAttributes) {
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientConfiguration before = clientConfigurationQueryRepository.get(tenant, clientIdentifier);
-
-    ClientRegistrationRequestValidator validator = new ClientRegistrationRequestValidator(request);
-    ClientRegistrationRequestValidationResult validate = validator.validate();
-
-    if (!validate.isValid()) {
-      return validate.errorResponse();
-    }
-
-    ClientUpdateContextCreator contextCreator =
-        new ClientUpdateContextCreator(tenant, before, request);
-    ClientUpdateContext context = contextCreator.create();
-    if (context.isDryRun()) {
-      return context.toResponse();
-    }
-
-    clientConfigurationCommandRepository.update(tenant, context.after());
 
     return context.toResponse();
   }
@@ -133,12 +103,45 @@ public class ClientManagementEntryService implements ClientManagementApi {
   }
 
   @Override
+  public ClientConfigurationManagementResponse update(
+          TenantIdentifier tenantIdentifier,
+          User operator,
+          OAuthToken oAuthToken,
+          ClientIdentifier clientIdentifier,
+          ClientRegistrationRequest request,
+          RequestAttributes requestAttributes,
+          boolean dryRun) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    ClientConfiguration before = clientConfigurationQueryRepository.get(tenant, clientIdentifier);
+
+    ClientRegistrationRequestValidator validator = new ClientRegistrationRequestValidator(request, dryRun);
+    ClientRegistrationRequestValidationResult validate = validator.validate();
+
+    if (!validate.isValid()) {
+      return validate.errorResponse();
+    }
+
+    ClientUpdateContextCreator contextCreator =
+            new ClientUpdateContextCreator(tenant, before, request, dryRun);
+    ClientUpdateContext context = contextCreator.create();
+    if (dryRun) {
+      return context.toResponse();
+    }
+
+    clientConfigurationCommandRepository.update(tenant, context.after());
+
+    return context.toResponse();
+  }
+
+  @Override
   public ClientConfigurationManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
       ClientIdentifier clientIdentifier,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 

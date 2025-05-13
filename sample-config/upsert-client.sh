@@ -22,7 +22,7 @@ done
 [ ! -f "$JSON_FILE" ] && echo "❌ JSON file not found: $JSON_FILE" && exit 1
 [ -z "$ACCESS_TOKEN" ] && echo "❌ Access token required (-a)" && exit 1
 
-CLIENT_ID=$(jq -r .client.client_id "$JSON_FILE")
+CLIENT_ID=$(jq -r .client_id "$JSON_FILE")
 
 if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" == "null" ]; then
   echo "❌ Could not extract client_id from $JSON_FILE"

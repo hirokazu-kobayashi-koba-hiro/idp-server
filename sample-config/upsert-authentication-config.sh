@@ -23,10 +23,10 @@ done
 [ ! -f "$JSON_FILE" ] && echo "❌ JSON file not found: $JSON_FILE" && exit 1
 [ -z "$ACCESS_TOKEN" ] && echo "❌ Access token required (-a)" && exit 1
 
-CONFIG_ID=$(jq -r .config.id "$JSON_FILE")
+CONFIG_ID=$(jq -r .id "$JSON_FILE")
 echo "CONFIG_ID: ${CONFIG_ID}"
 if [ -z "$CONFIG_ID" ] || [ "$CONFIG_ID" == "null" ]; then
-  echo "❌ Could not extract config.id from $JSON_FILE"
+  echo "❌ Could not extract id from $JSON_FILE"
   exit 1
 fi
 

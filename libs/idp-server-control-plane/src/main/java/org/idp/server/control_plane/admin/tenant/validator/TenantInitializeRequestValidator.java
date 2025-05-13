@@ -14,8 +14,9 @@ public class TenantInitializeRequestValidator {
   JsonSchemaValidator authorizationServerSchemaValidator;
   JsonSchemaValidator adminUserSchemaValidator;
   JsonSchemaValidator clientSchemaValidator;
+  boolean dryRun;
 
-  public TenantInitializeRequestValidator(TenantInitializationRequest request) {
+  public TenantInitializeRequestValidator(TenantInitializationRequest request, boolean dryRun) {
     this.request = request;
     this.organizationSchemaValidator = new JsonSchemaValidator(SchemaReader.organizationSchema());
     this.tenantSchemaValidator = new JsonSchemaValidator(SchemaReader.tenantSchema());
@@ -23,6 +24,7 @@ public class TenantInitializeRequestValidator {
         new JsonSchemaValidator(SchemaReader.authorizationServerSchema());
     this.adminUserSchemaValidator = new JsonSchemaValidator(SchemaReader.adminUserSchema());
     this.clientSchemaValidator = new JsonSchemaValidator(SchemaReader.clientSchema());
+    this.dryRun = dryRun;
   }
 
   public TenantInitializeRequestValidationResult validate() {
@@ -49,7 +51,7 @@ public class TenantInitializeRequestValidator {
           authorizationServerResult,
           adminUserResult,
           clientResult,
-          request.isDryRun());
+          dryRun);
     }
 
     return TenantInitializeRequestValidationResult.success(
@@ -58,6 +60,6 @@ public class TenantInitializeRequestValidator {
         authorizationServerResult,
         adminUserResult,
         clientResult,
-        request.isDryRun());
+        dryRun);
   }
 }

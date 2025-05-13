@@ -47,13 +47,14 @@ public class IdentityVerificationConfigManagementEntryService
       User operator,
       OAuthToken oAuthToken,
       IdentityVerificationConfigRegistrationRequest request,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     IdentityVerificationConfigRegistrationContextCreator contextCreator =
-        new IdentityVerificationConfigRegistrationContextCreator(tenant, request);
+        new IdentityVerificationConfigRegistrationContextCreator(tenant, request, dryRun);
     IdentityVerificationConfigRegistrationContext context = contextCreator.create();
-    if (context.isDryRun()) {
+    if (dryRun) {
       return context.toResponse();
     }
 
@@ -106,13 +107,14 @@ public class IdentityVerificationConfigManagementEntryService
       OAuthToken oAuthToken,
       IdentityVerificationConfigurationIdentifier identifier,
       IdentityVerificationConfigUpdateRequest request,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration configuration =
         identityVerificationConfigurationQueryRepository.get(tenant, identifier);
 
     IdentityVerificationConfigUpdateContextCreator contextCreator =
-        new IdentityVerificationConfigUpdateContextCreator(tenant, request, configuration);
+        new IdentityVerificationConfigUpdateContextCreator(tenant, request, configuration, dryRun);
     IdentityVerificationConfigUpdateContext context = contextCreator.create();
 
     if (context.isDryRun()) {
@@ -131,10 +133,15 @@ public class IdentityVerificationConfigManagementEntryService
       User operator,
       OAuthToken oAuthToken,
       IdentityVerificationConfigurationIdentifier identifier,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration configuration =
         identityVerificationConfigurationQueryRepository.get(tenant, identifier);
+
+    if (dryRun) {
+      return new IdentityVerificationConfigManagementResponse(IdentityVerificationConfigManagementStatus.NO_CONTENT, Map.of());
+    }
 
     identityVerificationConfigurationCommandRepository.delete(
         tenant, configuration.type(), configuration);

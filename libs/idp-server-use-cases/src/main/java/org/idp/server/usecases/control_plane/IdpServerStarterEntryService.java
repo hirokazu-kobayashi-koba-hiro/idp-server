@@ -64,17 +64,18 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
   public IdpServerStarterResponse initialize(
       TenantIdentifier adminTenantIdentifier,
       IdpServerStarterRequest request,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
 
     IdpServerInitializeRequestValidator requestValidator =
-        new IdpServerInitializeRequestValidator(request);
+        new IdpServerInitializeRequestValidator(request, dryRun);
     IdpServerInitializeRequestValidationResult validated = requestValidator.validate();
     if (!validated.isValid()) {
       return validated.errorResponse();
     }
 
     IdpServerStarterContextCreator contextCreator =
-        new IdpServerStarterContextCreator(request, passwordEncodeDelegation);
+        new IdpServerStarterContextCreator(request, dryRun, passwordEncodeDelegation);
     IdpServerStarterContext context = contextCreator.create();
 
     IdpServerVerificationResult verificationResult = starterVerifier.verify(context);
@@ -82,7 +83,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
       return verificationResult.errorResponse();
     }
 
-    if (request.isDryRun()) {
+    if (dryRun) {
       return context.toResponse();
     }
 

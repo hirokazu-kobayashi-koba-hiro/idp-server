@@ -12,5 +12,6 @@ public interface OnboardingApi {
       TenantIdentifier adminTenantIdentifier,
       User operator,
       OnboardingRequest request,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 }

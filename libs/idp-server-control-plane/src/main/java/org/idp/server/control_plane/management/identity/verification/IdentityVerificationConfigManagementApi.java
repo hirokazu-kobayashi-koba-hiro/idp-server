@@ -16,7 +16,8 @@ public interface IdentityVerificationConfigManagementApi {
       User operator,
       OAuthToken oAuthToken,
       IdentityVerificationConfigRegistrationRequest request,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 
   IdentityVerificationConfigManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -39,12 +40,14 @@ public interface IdentityVerificationConfigManagementApi {
       OAuthToken oAuthToken,
       IdentityVerificationConfigurationIdentifier userIdentifier,
       IdentityVerificationConfigUpdateRequest request,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 
   IdentityVerificationConfigManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
       IdentityVerificationConfigurationIdentifier userIdentifier,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 }

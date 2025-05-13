@@ -43,11 +43,12 @@ public class AuthenticationConfigurationManagementEntryService
       User operator,
       OAuthToken oAuthToken,
       AuthenticationConfigRegistrationRequest request,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     AuthenticationConfigRegistrationContextCreator contextCreator =
-        new AuthenticationConfigRegistrationContextCreator(tenant, request);
+        new AuthenticationConfigRegistrationContextCreator(tenant, request, dryRun);
     AuthenticationConfigRegistrationContext context = contextCreator.create();
 
     if (context.isDryRun()) {
@@ -104,13 +105,14 @@ public class AuthenticationConfigurationManagementEntryService
       OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
       AuthenticationConfigRegistrationRequest request,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuthenticationConfiguration before =
         authenticationConfigurationQueryRepository.get(tenant, identifier);
 
     AuthenticationConfigUpdateContextCreator contextCreator =
-        new AuthenticationConfigUpdateContextCreator(tenant, before, request);
+        new AuthenticationConfigUpdateContextCreator(tenant, before, request, dryRun);
     AuthenticationConfigUpdateContext context = contextCreator.create();
 
     if (context.isDryRun()) {
@@ -128,7 +130,8 @@ public class AuthenticationConfigurationManagementEntryService
       User operator,
       OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     AuthenticationConfiguration configuration =

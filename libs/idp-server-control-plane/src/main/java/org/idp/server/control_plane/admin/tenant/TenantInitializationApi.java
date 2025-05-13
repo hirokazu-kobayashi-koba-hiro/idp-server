@@ -10,5 +10,6 @@ public interface TenantInitializationApi {
   TenantInitializationResponse initialize(
       TenantIdentifier adminTenantIdentifier,
       TenantInitializationRequest request,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 }

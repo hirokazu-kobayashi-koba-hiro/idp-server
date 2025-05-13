@@ -20,12 +20,14 @@ import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 public class IdpServerStarterContextCreator {
 
   IdpServerStarterRequest request;
+  boolean dryRun;
   PasswordEncodeDelegation passwordEncodeDelegation;
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   public IdpServerStarterContextCreator(
-      IdpServerStarterRequest request, PasswordEncodeDelegation passwordEncodeDelegation) {
+      IdpServerStarterRequest request, boolean dryRun, PasswordEncodeDelegation passwordEncodeDelegation) {
     this.request = request;
+    this.dryRun = dryRun;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
   }
 
@@ -69,6 +71,6 @@ public class IdpServerStarterContextCreator {
         roles,
         updatedUser,
         clientConfiguration,
-        request.isDryRun());
+        dryRun);
   }
 }

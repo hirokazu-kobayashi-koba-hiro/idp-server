@@ -13,14 +13,16 @@ public class OnboardingRequestValidator {
   JsonSchemaValidator tenantSchemaValidator;
   JsonSchemaValidator authorizationServerSchemaValidator;
   JsonSchemaValidator clientSchemaValidator;
+  boolean dryRun;
 
-  public OnboardingRequestValidator(OnboardingRequest request) {
+  public OnboardingRequestValidator(OnboardingRequest request, boolean dryRun) {
     this.request = request;
     this.organizationSchemaValidator = new JsonSchemaValidator(SchemaReader.organizationSchema());
     this.tenantSchemaValidator = new JsonSchemaValidator(SchemaReader.tenantSchema());
     this.authorizationServerSchemaValidator =
         new JsonSchemaValidator(SchemaReader.authorizationServerSchema());
     this.clientSchemaValidator = new JsonSchemaValidator(SchemaReader.clientSchema());
+    this.dryRun = dryRun;
   }
 
   public OnboardingRequestValidationResult validate() {
@@ -44,7 +46,7 @@ public class OnboardingRequestValidator {
           tenantResult,
           authorizationServerResult,
           clientResult,
-          request.isDryRun());
+          dryRun);
     }
 
     return OnboardingRequestValidationResult.success(
@@ -52,6 +54,6 @@ public class OnboardingRequestValidator {
         tenantResult,
         authorizationServerResult,
         clientResult,
-        request.isDryRun());
+        dryRun);
   }
 }

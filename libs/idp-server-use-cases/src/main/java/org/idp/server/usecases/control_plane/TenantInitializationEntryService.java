@@ -67,15 +67,16 @@ public class TenantInitializationEntryService implements TenantInitializationApi
   public TenantInitializationResponse initialize(
       TenantIdentifier adminTenantIdentifier,
       TenantInitializationRequest request,
-      RequestAttributes requestAttributes) {
-    TenantInitializeRequestValidator validator = new TenantInitializeRequestValidator(request);
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+    TenantInitializeRequestValidator validator = new TenantInitializeRequestValidator(request, dryRun);
     TenantInitializeRequestValidationResult validationResult = validator.validate();
     if (!validationResult.isValid()) {
       return validationResult.errorResponse();
     }
 
     TenantInitializationContextCreator contextCreator =
-        new TenantInitializationContextCreator(request, passwordEncodeDelegation);
+        new TenantInitializationContextCreator(request, dryRun, passwordEncodeDelegation);
     TenantInitializationContext context = contextCreator.create();
 
     TenantInitializationVerificationResult verificationResult =
@@ -85,7 +86,7 @@ public class TenantInitializationEntryService implements TenantInitializationApi
       return verificationResult.errorResponse();
     }
 
-    if (request.isDryRun()) {
+    if (dryRun) {
       return context.toResponse();
     }
 

@@ -15,7 +15,8 @@ public interface UserManagementApi {
       User operator,
       OAuthToken oAuthToken,
       UserRegistrationRequest request,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 
   UserManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -38,12 +39,14 @@ public interface UserManagementApi {
       OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserUpdateRequest request,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 
   UserManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 }

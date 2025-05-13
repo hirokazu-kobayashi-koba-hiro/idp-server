@@ -15,15 +15,8 @@ public interface ClientManagementApi {
       User operator,
       OAuthToken oAuthToken,
       ClientRegistrationRequest request,
-      RequestAttributes requestAttributes);
-
-  ClientConfigurationManagementResponse update(
-      TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      ClientIdentifier clientIdentifier,
-      ClientRegistrationRequest request,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 
   ClientConfigurationManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -40,10 +33,20 @@ public interface ClientManagementApi {
       ClientIdentifier clientIdentifier,
       RequestAttributes requestAttributes);
 
+  ClientConfigurationManagementResponse update(
+          TenantIdentifier tenantIdentifier,
+          User operator,
+          OAuthToken oAuthToken,
+          ClientIdentifier clientIdentifier,
+          ClientRegistrationRequest request,
+          RequestAttributes requestAttributes,
+          boolean dryRun);
+
   ClientConfigurationManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
       ClientIdentifier clientIdentifier,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 }

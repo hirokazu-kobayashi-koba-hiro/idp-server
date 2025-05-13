@@ -32,6 +32,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -42,7 +43,8 @@ public class ClientManagementV1Api implements ParameterTransformable {
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             new ClientRegistrationRequest(body),
-            requestAttributes);
+            requestAttributes,
+            dryRun);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
     return new ResponseEntity<>(
@@ -103,6 +105,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("client-id") ClientIdentifier clientIdentifier,
       @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -114,7 +117,8 @@ public class ClientManagementV1Api implements ParameterTransformable {
             operatorPrincipal.getOAuthToken(),
             clientIdentifier,
             new ClientRegistrationRequest(body),
-            requestAttributes);
+            requestAttributes,
+            dryRun);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
     return new ResponseEntity<>(
@@ -126,6 +130,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("client-id") ClientIdentifier clientIdentifier,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -136,7 +141,8 @@ public class ClientManagementV1Api implements ParameterTransformable {
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             clientIdentifier,
-            requestAttributes);
+            requestAttributes,
+            dryRun);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");

@@ -12,17 +12,19 @@ public class AuthenticationConfigRegistrationContextCreator {
 
   Tenant tenant;
   AuthenticationConfigRegistrationRequest request;
+  boolean dryRun;
   JsonConverter jsonConverter;
 
   public AuthenticationConfigRegistrationContextCreator(
-      Tenant tenant, AuthenticationConfigRegistrationRequest request) {
+      Tenant tenant, AuthenticationConfigRegistrationRequest request, boolean dryRun) {
     this.tenant = tenant;
     this.request = request;
+    this.dryRun = dryRun;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   public AuthenticationConfigRegistrationContext create() {
-    JsonNodeWrapper configJson = jsonConverter.readTree(request.get("config"));
+    JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
     String id =
         configJson.contains("id")
             ? configJson.getValueOrEmptyAsString("id")
@@ -32,8 +34,6 @@ public class AuthenticationConfigRegistrationContextCreator {
     Map<String, Object> payload = payloadJson.toMap();
 
     AuthenticationConfiguration configuration = new AuthenticationConfiguration(id, type, payload);
-
-    boolean dryRun = request.isDryRun();
 
     return new AuthenticationConfigRegistrationContext(tenant, configuration, dryRun);
   }

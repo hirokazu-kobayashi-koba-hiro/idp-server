@@ -13,10 +13,7 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/v1/admin/initialization")
@@ -31,13 +28,14 @@ public class AdminInitializationV1Api implements ParameterTransformable {
   @PostMapping
   public ResponseEntity<?> post(
       @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
     TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
     IdpServerStarterResponse response =
         idpServerStarterApi.initialize(
-            adminTenantIdentifier, new IdpServerStarterRequest(body), requestAttributes);
+            adminTenantIdentifier, new IdpServerStarterRequest(body), requestAttributes, dryRun);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

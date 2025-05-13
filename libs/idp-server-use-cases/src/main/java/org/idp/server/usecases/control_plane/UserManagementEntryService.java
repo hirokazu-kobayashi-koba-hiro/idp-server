@@ -60,17 +60,18 @@ public class UserManagementEntryService implements UserManagementApi {
       User operator,
       OAuthToken oAuthToken,
       UserRegistrationRequest request,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    UserRegistrationRequestValidator validator = new UserRegistrationRequestValidator(request);
+    UserRegistrationRequestValidator validator = new UserRegistrationRequestValidator(request, dryRun);
     UserRegistrationRequestValidationResult validate = validator.validate();
     if (!validate.isValid()) {
       return validate.errorResponse();
     }
 
     UserRegistrationContextCreator userRegistrationContextCreator =
-        new UserRegistrationContextCreator(tenant, request, passwordEncodeDelegation);
+        new UserRegistrationContextCreator(tenant, request, dryRun, passwordEncodeDelegation);
     UserRegistrationContext context = userRegistrationContextCreator.create();
 
     UserRegistrationVerificationResult verificationResult = verifier.verify(context);
@@ -78,7 +79,7 @@ public class UserManagementEntryService implements UserManagementApi {
       return verificationResult.errorResponse();
     }
 
-    if (context.isDryRun()) {
+    if (dryRun) {
       return context.toResponse();
     }
 
@@ -124,9 +125,13 @@ public class UserManagementEntryService implements UserManagementApi {
       OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserUpdateRequest request,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
+    if (dryRun) {
+      return new UserManagementResponse(UserManagementStatus.OK, request.toMap());
+    }
     userCommandRepository.update(tenant, operator);
 
     return new UserManagementResponse(UserManagementStatus.OK, request.toMap());
@@ -138,8 +143,13 @@ public class UserManagementEntryService implements UserManagementApi {
       User operator,
       OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    if (dryRun) {
+      return new UserManagementResponse(UserManagementStatus.OK, Map.of());
+    }
 
     User user = userQueryRepository.get(tenant, userIdentifier);
     userCommandRepository.delete(tenant, userIdentifier);

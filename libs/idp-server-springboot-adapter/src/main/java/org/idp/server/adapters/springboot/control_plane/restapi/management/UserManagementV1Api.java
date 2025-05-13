@@ -33,6 +33,7 @@ public class UserManagementV1Api implements ParameterTransformable {
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -43,7 +44,7 @@ public class UserManagementV1Api implements ParameterTransformable {
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             new UserRegistrationRequest(body),
-            requestAttributes);
+            requestAttributes, dryRun);
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
 
@@ -106,6 +107,7 @@ public class UserManagementV1Api implements ParameterTransformable {
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("user-id") UserIdentifier userIdentifier,
       @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -117,7 +119,8 @@ public class UserManagementV1Api implements ParameterTransformable {
             operatorPrincipal.getOAuthToken(),
             userIdentifier,
             new UserUpdateRequest(body),
-            requestAttributes);
+            requestAttributes,
+            dryRun);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

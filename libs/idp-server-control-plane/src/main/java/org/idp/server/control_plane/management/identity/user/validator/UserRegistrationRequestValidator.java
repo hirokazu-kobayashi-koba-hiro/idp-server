@@ -9,22 +9,24 @@ import org.idp.server.control_plane.management.identity.user.io.UserRegistration
 public class UserRegistrationRequestValidator {
 
   UserRegistrationRequest request;
+  boolean dryRun;
   JsonSchemaValidator userSchemaValidator;
 
-  public UserRegistrationRequestValidator(UserRegistrationRequest request) {
+  public UserRegistrationRequestValidator(UserRegistrationRequest request, boolean dryRun) {
     this.request = request;
+    this.dryRun = dryRun;
     this.userSchemaValidator = new JsonSchemaValidator(SchemaReader.adminUserSchema());
   }
 
   public UserRegistrationRequestValidationResult validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(request.toMap());
     JsonSchemaValidationResult userResult =
-        userSchemaValidator.validate(jsonNodeWrapper.getValueAsJsonNode("user"));
+        userSchemaValidator.validate(jsonNodeWrapper);
 
     if (!userResult.isValid()) {
-      return UserRegistrationRequestValidationResult.error(userResult, request.isDryRun());
+      return UserRegistrationRequestValidationResult.error(userResult, dryRun);
     }
 
-    return UserRegistrationRequestValidationResult.success(userResult, request.isDryRun());
+    return UserRegistrationRequestValidationResult.success(userResult, dryRun);
   }
 }
