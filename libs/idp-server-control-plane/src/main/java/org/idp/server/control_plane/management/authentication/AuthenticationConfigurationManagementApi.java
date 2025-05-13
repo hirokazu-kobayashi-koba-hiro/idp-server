@@ -18,7 +18,7 @@ public interface AuthenticationConfigurationManagementApi {
 
   default AdminPermissions getRequiredPermissions(String method) {
     Map<String, AdminPermissions> map = new HashMap<>();
-    map.put("register", new AdminPermissions(Set.of(AdminPermission.AUTHENTICATION_CONFIG_CREATE)));
+    map.put("create", new AdminPermissions(Set.of(AdminPermission.AUTHENTICATION_CONFIG_CREATE)));
     map.put("findList", new AdminPermissions(Set.of(AdminPermission.AUTHENTICATION_CONFIG_READ)));
     map.put("get", new AdminPermissions(Set.of(AdminPermission.AUTHENTICATION_CONFIG_READ)));
     map.put("update", new AdminPermissions(Set.of(AdminPermission.AUTHENTICATION_CONFIG_UPDATE)));
@@ -30,7 +30,7 @@ public interface AuthenticationConfigurationManagementApi {
     return adminPermissions;
   }
 
-  AuthenticationConfigManagementResponse register(
+  AuthenticationConfigManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,

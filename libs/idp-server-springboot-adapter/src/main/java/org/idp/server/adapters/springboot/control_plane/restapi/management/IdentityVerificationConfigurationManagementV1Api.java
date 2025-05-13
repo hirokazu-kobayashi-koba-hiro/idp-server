@@ -41,7 +41,7 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     IdentityVerificationConfigManagementResponse response =
-        identityVerificationConfigManagementApi.register(
+        identityVerificationConfigManagementApi.create(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),

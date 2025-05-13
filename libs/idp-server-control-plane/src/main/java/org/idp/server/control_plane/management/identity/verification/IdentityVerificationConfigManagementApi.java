@@ -20,7 +20,7 @@ public interface IdentityVerificationConfigManagementApi {
   default AdminPermissions getRequiredPermissions(String method) {
     Map<String, AdminPermissions> map = new HashMap<>();
     map.put(
-        "register",
+        "create",
         new AdminPermissions(Set.of(AdminPermission.IDENTITY_VERIFICATION_CONFIG_CREATE)));
     map.put(
         "findList",
@@ -39,7 +39,7 @@ public interface IdentityVerificationConfigManagementApi {
     return adminPermissions;
   }
 
-  IdentityVerificationConfigManagementResponse register(
+  IdentityVerificationConfigManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,

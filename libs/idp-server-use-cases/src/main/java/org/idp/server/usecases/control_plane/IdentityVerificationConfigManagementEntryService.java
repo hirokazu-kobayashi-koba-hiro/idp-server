@@ -44,7 +44,7 @@ public class IdentityVerificationConfigManagementEntryService
   }
 
   @Override
-  public IdentityVerificationConfigManagementResponse register(
+  public IdentityVerificationConfigManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,

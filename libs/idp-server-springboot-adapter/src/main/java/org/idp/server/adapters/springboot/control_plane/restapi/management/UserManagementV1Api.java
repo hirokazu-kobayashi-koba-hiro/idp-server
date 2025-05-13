@@ -39,7 +39,7 @@ public class UserManagementV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserManagementResponse response =
-        userManagementApi.register(
+        userManagementApi.create(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),

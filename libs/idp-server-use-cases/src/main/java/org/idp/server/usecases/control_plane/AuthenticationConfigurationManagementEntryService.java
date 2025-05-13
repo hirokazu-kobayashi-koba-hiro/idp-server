@@ -39,7 +39,7 @@ public class AuthenticationConfigurationManagementEntryService
   }
 
   @Override
-  public AuthenticationConfigManagementResponse register(
+  public AuthenticationConfigManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,

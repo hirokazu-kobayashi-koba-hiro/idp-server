@@ -39,7 +39,7 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationConfigManagementResponse response =
-        authenticationConfigurationManagementApi.register(
+        authenticationConfigurationManagementApi.create(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),

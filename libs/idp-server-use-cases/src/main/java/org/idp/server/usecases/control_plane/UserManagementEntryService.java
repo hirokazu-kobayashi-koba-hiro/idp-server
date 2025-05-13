@@ -57,7 +57,7 @@ public class UserManagementEntryService implements UserManagementApi {
   }
 
   @Override
-  public UserManagementResponse register(
+  public UserManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,

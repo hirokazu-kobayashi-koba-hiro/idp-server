@@ -38,7 +38,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
-  public ClientConfigurationManagementResponse register(
+  public ClientConfigurationManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,

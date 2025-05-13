@@ -38,7 +38,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     ClientConfigurationManagementResponse response =
-        clientManagementApi.register(
+        clientManagementApi.create(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),

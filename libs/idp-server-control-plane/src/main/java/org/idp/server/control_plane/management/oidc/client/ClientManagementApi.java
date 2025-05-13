@@ -18,7 +18,7 @@ public interface ClientManagementApi {
 
   default AdminPermissions getRequiredPermissions(String method) {
     Map<String, AdminPermissions> map = new HashMap<>();
-    map.put("register", new AdminPermissions(Set.of(AdminPermission.CLIENT_CREATE)));
+    map.put("create", new AdminPermissions(Set.of(AdminPermission.CLIENT_CREATE)));
     map.put("findList", new AdminPermissions(Set.of(AdminPermission.CLIENT_READ)));
     map.put("get", new AdminPermissions(Set.of(AdminPermission.CLIENT_READ)));
     map.put("update", new AdminPermissions(Set.of(AdminPermission.CLIENT_UPDATE)));
@@ -30,7 +30,7 @@ public interface ClientManagementApi {
     return adminPermissions;
   }
 
-  ClientConfigurationManagementResponse register(
+  ClientConfigurationManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
