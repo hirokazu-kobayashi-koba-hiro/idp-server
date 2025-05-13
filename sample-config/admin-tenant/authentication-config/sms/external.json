@@ -1,6 +1,7 @@
 {
   "dry_run": false,
   "config": {
+    "id": "0f12803e-37b6-437e-8ca9-5822bd852b74",
     "type": "sms",
     "payload": {
       "type": "external",

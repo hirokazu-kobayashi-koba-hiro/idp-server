@@ -5,4 +5,8 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationConfigurationCommandRepository {
   void register(Tenant tenant, AuthenticationConfiguration configuration);
+
+  void update(Tenant tenant, AuthenticationConfiguration configuration);
+
+  void delete(Tenant tenant, AuthenticationConfiguration configuration);
 }

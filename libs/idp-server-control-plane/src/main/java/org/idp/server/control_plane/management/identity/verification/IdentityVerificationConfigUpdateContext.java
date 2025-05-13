@@ -1,7 +1,6 @@
 package org.idp.server.control_plane.management.identity.verification;
 
 import java.util.Map;
-
 import org.idp.server.basic.json.JsonDiffCalculator;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
@@ -58,6 +57,6 @@ public class IdentityVerificationConfigUpdateContext {
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
     Map<String, Object> contents = Map.of("config", after.toMap(), "diff", diff, "dry_run", dryRun);
     return new IdentityVerificationConfigManagementResponse(
-        IdentityVerificationConfigManagementStatus.CREATED, contents);
+        IdentityVerificationConfigManagementStatus.OK, contents);
   }
 }

@@ -1,6 +1,7 @@
 {
   "dry_run": false,
   "config": {
+    "id": "609dfa45-b475-4b50-b981-59c2975db2b3",
     "type": "password",
     "payload": {
       "$id": "https://idp-server.example.com/schemas/user.schema.json",

@@ -12,7 +12,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationNotFoundException;
+import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 
 public class ClientConfigurationQueryDataSource implements ClientConfigurationQueryRepository {

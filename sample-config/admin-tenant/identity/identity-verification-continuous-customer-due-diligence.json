@@ -1,6 +1,7 @@
 {
   "dry_run": false,
   "config": {
+    "id": "d58a464d-c654-4d9a-a7d3-43e7420f7ebf",
     "type": "continuous-customer-due-diligence",
     "external_workflow_delegation": "mocky",
     "external_workflow_application_id_param": "application_id",

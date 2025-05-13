@@ -1,6 +1,7 @@
 {
   "dry_run": false,
   "config": {
+    "id": "6f5b0255-8faf-42cf-9f24-4f702386993f",
     "type": "email",
     "payload": {
       "type": "smtp",

@@ -1,6 +1,7 @@
 {
   "dry_run": false,
   "config": {
+    "id": "d06b2c01-e33c-454e-96b1-8cbea339fa65",
     "type": "authentication-device",
     "payload": {
       "channel": "fcm",

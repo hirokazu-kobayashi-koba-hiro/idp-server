@@ -21,4 +21,16 @@ public class AuthenticationConfigurationCommandDataSource
     AuthenticationConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, configuration);
   }
+
+  @Override
+  public void update(Tenant tenant, AuthenticationConfiguration configuration) {
+    AuthenticationConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
+    executor.update(tenant, configuration);
+  }
+
+  @Override
+  public void delete(Tenant tenant, AuthenticationConfiguration configuration) {
+    AuthenticationConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
+    executor.delete(tenant, configuration);
+  }
 }

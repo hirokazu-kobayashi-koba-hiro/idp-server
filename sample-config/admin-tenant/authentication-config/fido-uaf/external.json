@@ -1,6 +1,7 @@
 {
   "dry_run": false,
   "config": {
+    "id": "dd290cfa-e1f4-4a5f-88bf-e4958519ceac",
     "type": "fido-uaf",
     "payload": {
       "type": "external",

@@ -38,4 +38,40 @@ public class PostgresqlExecutor implements AuthenticationConfigCommandSqlExecuto
 
     sqlExecutor.execute(sqlTemplate, params);
   }
+
+  @Override
+  public void update(Tenant tenant, AuthenticationConfiguration configuration) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                UPDATE authentication_configuration
+                SET payload = ?::jsonb
+                WHERE id = ?::uuid
+                AND tenant_id = ?::uuid
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(jsonConverter.write(configuration.payload()));
+    params.add(configuration.id());
+    params.add(tenant.identifierValue());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void delete(Tenant tenant, AuthenticationConfiguration configuration) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                DELETE authentication_configuration
+                WHERE id = ?::uuid
+                AND tenant_id = ?::uuid
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(configuration.id());
+    params.add(tenant.identifierValue());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
 }

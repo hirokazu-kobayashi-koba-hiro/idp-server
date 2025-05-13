@@ -21,68 +21,68 @@ import java.util.Objects;
  */
 public class JsonDiffCalculator {
 
-    /**
-     * Calculates the deep differences between two JSON objects.
-     *
-     * @param before the original JSON structure wrapped in {@link JsonNodeWrapper}
-     * @param after the modified JSON structure wrapped in {@link JsonNodeWrapper}
-     * @return a flat {@code Map<String, Object>} representing changed fields. The keys represent
-     *     the full JSON path using dot notation.
-     */
-    public static Map<String, Object> deepDiff(JsonNodeWrapper before, JsonNodeWrapper after) {
-        Map<String, Object> diff = new HashMap<>();
-        diffRecursive("", before, after, diff);
-        return diff;
+  /**
+   * Calculates the deep differences between two JSON objects.
+   *
+   * @param before the original JSON structure wrapped in {@link JsonNodeWrapper}
+   * @param after the modified JSON structure wrapped in {@link JsonNodeWrapper}
+   * @return a flat {@code Map<String, Object>} representing changed fields. The keys represent the
+   *     full JSON path using dot notation.
+   */
+  public static Map<String, Object> deepDiff(JsonNodeWrapper before, JsonNodeWrapper after) {
+    Map<String, Object> diff = new HashMap<>();
+    diffRecursive("", before, after, diff);
+    return diff;
+  }
+
+  /**
+   * Recursively compares JSON nodes and accumulates differences in the given {@code diff} map.
+   *
+   * @param path the current JSON path (dot notation)
+   * @param before the original value at the path
+   * @param after the new value at the path
+   * @param diff accumulator map for differences
+   */
+  private static void diffRecursive(
+      String path, JsonNodeWrapper before, JsonNodeWrapper after, Map<String, Object> diff) {
+    if (before == null || !before.exists()) {
+      // Added field
+      diff.put(path, after.toMap());
+      return;
     }
 
-    /**
-     * Recursively compares JSON nodes and accumulates differences in the given {@code diff} map.
-     *
-     * @param path the current JSON path (dot notation)
-     * @param before the original value at the path
-     * @param after the new value at the path
-     * @param diff accumulator map for differences
-     */
-    private static void diffRecursive(
-            String path, JsonNodeWrapper before, JsonNodeWrapper after, Map<String, Object> diff) {
-        if (before == null || !before.exists()) {
-            // Added field
-            diff.put(path, after.toMap());
-            return;
-        }
-
-        if (before.nodeType() != after.nodeType()) {
-            if (after.isString()) {
-                diff.put(path, after.asText());
-            } else {
-                diff.put(path, after.toMap());
-            }
-            return;
-        }
-
-        switch (after.nodeType()) {
-            case OBJECT:
-                Iterator<String> fields = after.fieldNames();
-                while (fields.hasNext()) {
-                    String field = fields.next();
-                    String newPath = path.isEmpty() ? field : path + "." + field;
-                    JsonNodeWrapper beforeChild =
-                            before.contains(field) ? before.getValueAsJsonNode(field) : JsonNodeWrapper.empty();
-                    JsonNodeWrapper afterChild = after.getValueAsJsonNode(field);
-                    diffRecursive(newPath, beforeChild, afterChild, diff);
-                }
-                break;
-            case ARRAY:
-                // Shallow comparison for arrays
-                if (!before.node().equals(after.node())) {
-                    diff.put(path, after.toMap());
-                }
-                break;
-            default:
-                if (!Objects.equals(before.node(), after.node())) {
-                    diff.put(path, after.node());
-                }
-                break;
-        }
+    if (before.nodeType() != after.nodeType()) {
+      if (after.isString()) {
+        diff.put(path, after.asText());
+      } else {
+        diff.put(path, after.toMap());
+      }
+      return;
     }
+
+    switch (after.nodeType()) {
+      case OBJECT:
+        Iterator<String> fields = after.fieldNames();
+        while (fields.hasNext()) {
+          String field = fields.next();
+          String newPath = path.isEmpty() ? field : path + "." + field;
+          JsonNodeWrapper beforeChild =
+              before.contains(field) ? before.getValueAsJsonNode(field) : JsonNodeWrapper.empty();
+          JsonNodeWrapper afterChild = after.getValueAsJsonNode(field);
+          diffRecursive(newPath, beforeChild, afterChild, diff);
+        }
+        break;
+      case ARRAY:
+        // Shallow comparison for arrays
+        if (!before.node().equals(after.node())) {
+          diff.put(path, after.toMap());
+        }
+        break;
+      default:
+        if (!Objects.equals(before.node(), after.node())) {
+          diff.put(path, after.node());
+        }
+        break;
+    }
+  }
 }
