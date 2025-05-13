@@ -17,5 +17,4 @@ public class UserUpdateRequest {
   public Object get(String key) {
     return values.get(key);
   }
-
 }

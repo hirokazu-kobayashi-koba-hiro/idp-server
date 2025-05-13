@@ -14,7 +14,10 @@ public class ClientUpdateContextCreator {
   JsonConverter jsonConverter;
 
   public ClientUpdateContextCreator(
-      Tenant tenant, ClientConfiguration before, ClientRegistrationRequest request, boolean dryRun) {
+      Tenant tenant,
+      ClientConfiguration before,
+      ClientRegistrationRequest request,
+      boolean dryRun) {
     this.tenant = tenant;
     this.before = before;
     this.request = request;

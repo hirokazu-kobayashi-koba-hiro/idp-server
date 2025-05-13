@@ -69,7 +69,8 @@ public class TenantInitializationEntryService implements TenantInitializationApi
       TenantInitializationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    TenantInitializeRequestValidator validator = new TenantInitializeRequestValidator(request, dryRun);
+    TenantInitializeRequestValidator validator =
+        new TenantInitializeRequestValidator(request, dryRun);
     TenantInitializeRequestValidationResult validationResult = validator.validate();
     if (!validationResult.isValid()) {
       return validationResult.errorResponse();

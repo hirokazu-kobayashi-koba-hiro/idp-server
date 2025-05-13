@@ -17,5 +17,4 @@ public class IdpServerStarterRequest {
   public Object get(String key) {
     return values.get(key);
   }
-
 }

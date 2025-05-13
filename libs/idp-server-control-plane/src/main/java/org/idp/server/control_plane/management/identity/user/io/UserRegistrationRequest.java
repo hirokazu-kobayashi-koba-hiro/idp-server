@@ -17,5 +17,4 @@ public class UserRegistrationRequest {
   public Object get(String key) {
     return values.get(key);
   }
-
 }

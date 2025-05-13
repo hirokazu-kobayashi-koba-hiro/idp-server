@@ -62,7 +62,8 @@ public class AuthorizationServerConfiguration implements JsonReadable {
   VerifiableCredentialConfiguration credentialIssuerMetadata =
       new VerifiableCredentialConfiguration();
 
-  AuthorizationServerExtensionConfiguration extension;
+  AuthorizationServerExtensionConfiguration extension =
+      new AuthorizationServerExtensionConfiguration();
 
   public AuthorizationServerConfiguration() {}
 

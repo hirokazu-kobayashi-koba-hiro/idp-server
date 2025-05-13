@@ -25,7 +25,9 @@ public class TenantInitializationContextCreator {
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   public TenantInitializationContextCreator(
-      TenantInitializationRequest request, boolean dryRun, PasswordEncodeDelegation passwordEncodeDelegation) {
+      TenantInitializationRequest request,
+      boolean dryRun,
+      PasswordEncodeDelegation passwordEncodeDelegation) {
     this.request = request;
     this.dryRun = dryRun;
     this.passwordEncodeDelegation = passwordEncodeDelegation;

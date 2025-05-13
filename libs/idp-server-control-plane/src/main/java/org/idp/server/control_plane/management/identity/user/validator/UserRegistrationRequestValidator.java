@@ -20,8 +20,7 @@ public class UserRegistrationRequestValidator {
 
   public UserRegistrationRequestValidationResult validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(request.toMap());
-    JsonSchemaValidationResult userResult =
-        userSchemaValidator.validate(jsonNodeWrapper);
+    JsonSchemaValidationResult userResult = userSchemaValidator.validate(jsonNodeWrapper);
 
     if (!userResult.isValid()) {
       return UserRegistrationRequestValidationResult.error(userResult, dryRun);

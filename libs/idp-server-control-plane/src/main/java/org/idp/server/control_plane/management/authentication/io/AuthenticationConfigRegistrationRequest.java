@@ -17,5 +17,4 @@ public class AuthenticationConfigRegistrationRequest {
   public Object get(String key) {
     return values.get(key);
   }
-
 }

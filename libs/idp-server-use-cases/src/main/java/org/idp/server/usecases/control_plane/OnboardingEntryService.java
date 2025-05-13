@@ -67,7 +67,8 @@ public class OnboardingEntryService implements OnboardingApi {
       return validationResult.errorResponse();
     }
 
-    OnboardingContextCreator contextCreator = new OnboardingContextCreator(request, operator, dryRun);
+    OnboardingContextCreator contextCreator =
+        new OnboardingContextCreator(request, operator, dryRun);
     OnboardingContext context = contextCreator.create();
 
     OnboardingVerificationResult verificationResult = onboardingVerifier.verify(context);

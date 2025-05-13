@@ -284,7 +284,7 @@ export ENCRYPTION_KEY=xxx
 -e http://localhost:8080 \
 -c clientSecretPost \
 -s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
--d true
+-d false
  ```
 
 ### debug access token

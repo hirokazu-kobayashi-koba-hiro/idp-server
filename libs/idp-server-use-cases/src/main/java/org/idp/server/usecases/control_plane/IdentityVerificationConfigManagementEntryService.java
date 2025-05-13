@@ -140,7 +140,8 @@ public class IdentityVerificationConfigManagementEntryService
         identityVerificationConfigurationQueryRepository.get(tenant, identifier);
 
     if (dryRun) {
-      return new IdentityVerificationConfigManagementResponse(IdentityVerificationConfigManagementStatus.NO_CONTENT, Map.of());
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.NO_CONTENT, Map.of());
     }
 
     identityVerificationConfigurationCommandRepository.delete(

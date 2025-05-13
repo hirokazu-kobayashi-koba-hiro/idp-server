@@ -20,8 +20,7 @@ public class ClientRegistrationRequestValidator {
 
   public ClientRegistrationRequestValidationResult validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(request.toMap());
-    JsonSchemaValidationResult clientResult =
-        clientSchemaValidator.validate(jsonNodeWrapper);
+    JsonSchemaValidationResult clientResult = clientSchemaValidator.validate(jsonNodeWrapper);
 
     if (!clientResult.isValid()) {
       return ClientRegistrationRequestValidationResult.error(clientResult, dryRun);

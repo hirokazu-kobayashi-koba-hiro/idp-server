@@ -17,5 +17,4 @@ public class OnboardingRequest {
   public Object get(String key) {
     return values.get(key);
   }
-
 }

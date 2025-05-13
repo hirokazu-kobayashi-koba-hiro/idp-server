@@ -34,7 +34,10 @@ public class PublicTenantInitializationV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
     TenantInitializationResponse response =
         tenantInitializationApi.initialize(
-            adminTenantIdentifier, new TenantInitializationRequest(body), requestAttributes, dryRun);
+            adminTenantIdentifier,
+            new TenantInitializationRequest(body),
+            requestAttributes,
+            dryRun);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

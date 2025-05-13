@@ -42,18 +42,10 @@ public class OnboardingRequestValidator {
         || !authorizationServerResult.isValid()
         || !clientResult.isValid()) {
       return OnboardingRequestValidationResult.error(
-          organizationResult,
-          tenantResult,
-          authorizationServerResult,
-          clientResult,
-          dryRun);
+          organizationResult, tenantResult, authorizationServerResult, clientResult, dryRun);
     }
 
     return OnboardingRequestValidationResult.success(
-        organizationResult,
-        tenantResult,
-        authorizationServerResult,
-        clientResult,
-        dryRun);
+        organizationResult, tenantResult, authorizationServerResult, clientResult, dryRun);
   }
 }

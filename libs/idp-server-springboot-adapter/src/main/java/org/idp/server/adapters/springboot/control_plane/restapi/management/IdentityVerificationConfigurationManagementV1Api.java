@@ -46,7 +46,8 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             new IdentityVerificationConfigRegistrationRequest(body),
-            requestAttributes, dryRun);
+            requestAttributes,
+            dryRun);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");

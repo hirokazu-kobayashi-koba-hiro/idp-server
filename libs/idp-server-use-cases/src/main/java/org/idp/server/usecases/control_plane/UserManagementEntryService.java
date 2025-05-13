@@ -64,7 +64,8 @@ public class UserManagementEntryService implements UserManagementApi {
       boolean dryRun) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    UserRegistrationRequestValidator validator = new UserRegistrationRequestValidator(request, dryRun);
+    UserRegistrationRequestValidator validator =
+        new UserRegistrationRequestValidator(request, dryRun);
     UserRegistrationRequestValidationResult validate = validator.validate();
     if (!validate.isValid()) {
       return validate.errorResponse();

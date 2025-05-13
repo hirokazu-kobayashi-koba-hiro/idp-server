@@ -25,7 +25,9 @@ public class IdpServerStarterContextCreator {
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   public IdpServerStarterContextCreator(
-      IdpServerStarterRequest request, boolean dryRun, PasswordEncodeDelegation passwordEncodeDelegation) {
+      IdpServerStarterRequest request,
+      boolean dryRun,
+      PasswordEncodeDelegation passwordEncodeDelegation) {
     this.request = request;
     this.dryRun = dryRun;
     this.passwordEncodeDelegation = passwordEncodeDelegation;

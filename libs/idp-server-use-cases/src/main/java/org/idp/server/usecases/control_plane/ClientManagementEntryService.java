@@ -46,7 +46,8 @@ public class ClientManagementEntryService implements ClientManagementApi {
       boolean dryRun) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientRegistrationRequestValidator validator = new ClientRegistrationRequestValidator(request, dryRun);
+    ClientRegistrationRequestValidator validator =
+        new ClientRegistrationRequestValidator(request, dryRun);
     ClientRegistrationRequestValidationResult validate = validator.validate();
 
     if (!validate.isValid()) {
@@ -104,18 +105,19 @@ public class ClientManagementEntryService implements ClientManagementApi {
 
   @Override
   public ClientConfigurationManagementResponse update(
-          TenantIdentifier tenantIdentifier,
-          User operator,
-          OAuthToken oAuthToken,
-          ClientIdentifier clientIdentifier,
-          ClientRegistrationRequest request,
-          RequestAttributes requestAttributes,
-          boolean dryRun) {
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      ClientIdentifier clientIdentifier,
+      ClientRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     ClientConfiguration before = clientConfigurationQueryRepository.get(tenant, clientIdentifier);
 
-    ClientRegistrationRequestValidator validator = new ClientRegistrationRequestValidator(request, dryRun);
+    ClientRegistrationRequestValidator validator =
+        new ClientRegistrationRequestValidator(request, dryRun);
     ClientRegistrationRequestValidationResult validate = validator.validate();
 
     if (!validate.isValid()) {
@@ -123,7 +125,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
     }
 
     ClientUpdateContextCreator contextCreator =
-            new ClientUpdateContextCreator(tenant, before, request, dryRun);
+        new ClientUpdateContextCreator(tenant, before, request, dryRun);
     ClientUpdateContext context = contextCreator.create();
     if (dryRun) {
       return context.toResponse();

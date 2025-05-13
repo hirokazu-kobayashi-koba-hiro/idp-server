@@ -44,7 +44,8 @@ public class UserManagementV1Api implements ParameterTransformable {
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             new UserRegistrationRequest(body),
-            requestAttributes, dryRun);
+            requestAttributes,
+            dryRun);
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
 

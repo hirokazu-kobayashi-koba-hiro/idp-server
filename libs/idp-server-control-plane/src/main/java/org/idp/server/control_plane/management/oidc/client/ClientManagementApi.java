@@ -34,13 +34,13 @@ public interface ClientManagementApi {
       RequestAttributes requestAttributes);
 
   ClientConfigurationManagementResponse update(
-          TenantIdentifier tenantIdentifier,
-          User operator,
-          OAuthToken oAuthToken,
-          ClientIdentifier clientIdentifier,
-          ClientRegistrationRequest request,
-          RequestAttributes requestAttributes,
-          boolean dryRun);
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      ClientIdentifier clientIdentifier,
+      ClientRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 
   ClientConfigurationManagementResponse delete(
       TenantIdentifier tenantIdentifier,

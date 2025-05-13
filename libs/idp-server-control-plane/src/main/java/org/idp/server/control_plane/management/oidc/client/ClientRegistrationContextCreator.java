@@ -12,7 +12,8 @@ public class ClientRegistrationContextCreator {
   boolean dryRun;
   JsonConverter jsonConverter;
 
-  public ClientRegistrationContextCreator(Tenant tenant, ClientRegistrationRequest request, boolean dryRun) {
+  public ClientRegistrationContextCreator(
+      Tenant tenant, ClientRegistrationRequest request, boolean dryRun) {
     this.tenant = tenant;
     this.request = request;
     this.dryRun = dryRun;
