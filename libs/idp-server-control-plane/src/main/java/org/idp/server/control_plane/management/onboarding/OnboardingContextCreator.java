@@ -36,8 +36,7 @@ public class OnboardingContextCreator {
         jsonConverter.read(request.get("tenant"), TenantRegistrationRequest.class);
     AuthorizationServerConfiguration authorizationServerConfiguration =
         jsonConverter.read(
-            request.get("authorization_server_configuration"),
-            AuthorizationServerConfiguration.class);
+            request.get("authorization_server"), AuthorizationServerConfiguration.class);
     ClientConfiguration clientConfiguration =
         jsonConverter.read(request.get("client"), ClientConfiguration.class);
 

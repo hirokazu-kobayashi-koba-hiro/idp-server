@@ -23,6 +23,18 @@ ACCESS_TOKEN=$(./sample-config/get-access-token.sh -u "$USERNAME" -p "$PASSWORD"
 
 echo "$ACCESS_TOKEN"
 
+# tenant-1 onboarding
+
+echo "-------------------------------------------------"
+echo ""
+echo "tenant-1"
+
+./sample-config/onboarding.sh \
+  -t "${TENANT_ID}" \
+  -f "./sample-config/tenant-1/initial.json" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
 ##client
 
 echo "client"
@@ -101,14 +113,3 @@ for identity_verification_config_file in "${identity_verification_config_files[@
 sleep 1
 
 done
-
-# tenant-1
-
-echo "-------------------------------------------------"
-echo ""
-
-echo "tenant-1"
-curl -X POST "${IDP_SERVER_DOMAIN}v1/admin/public-tenant/initialization" \
--u "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" \
--H "Content-Type:application/json" \
---data @./sample-config/tenant-1/initial.json | jq

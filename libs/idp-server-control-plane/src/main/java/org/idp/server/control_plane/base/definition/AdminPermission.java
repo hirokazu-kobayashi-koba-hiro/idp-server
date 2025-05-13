@@ -34,7 +34,17 @@ public enum AdminPermission {
   ROLE_CREATE("role:create"),
   ROLE_READ("role:read"),
   ROLE_UPDATE("role:update"),
-  ROLE_DELETE("role:delete");
+  ROLE_DELETE("role:delete"),
+
+  AUTHENTICATION_CONFIG_CREATE("authentication-config:create"),
+  AUTHENTICATION_CONFIG_READ("authentication-config:read"),
+  AUTHENTICATION_CONFIG_UPDATE("authentication-config:update"),
+  AUTHENTICATION_CONFIG_DELETE("authentication-config:delete"),
+
+  IDENTITY_VERIFICATION_CONFIG_CREATE("identity-verification-config:create"),
+  IDENTITY_VERIFICATION_CONFIG_READ("identity-verification-config:read"),
+  IDENTITY_VERIFICATION_CONFIG_UPDATE("identity-verification-config:update"),
+  IDENTITY_VERIFICATION_CONFIG_DELETE("identity-verification-config:delete");
 
   private final String value;
 

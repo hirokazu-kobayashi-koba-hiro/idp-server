@@ -6,11 +6,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.adapters.springboot.control_plane.model.IdpControlPlaneScope;
+import org.idp.server.adapters.springboot.control_plane.model.IdpControlPlaneAuthority;
 import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.basic.exception.UnauthorizedException;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.extension.Pairs;
+import org.idp.server.control_plane.base.definition.IdpControlPlaneScope;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserAuthenticationApi;
 import org.idp.server.core.multi_tenancy.tenant.AdminTenantContext;
@@ -53,9 +54,21 @@ public class ManagementApiFilter extends OncePerRequestFilter {
         return;
       }
 
-      List<IdpControlPlaneScope> scopes = new ArrayList<>();
+      List<IdpControlPlaneAuthority> scopes = new ArrayList<>();
       for (String scope : oAuthToken.scopeAsList()) {
-        scopes.add(IdpControlPlaneScope.of(scope));
+        scopes.add(IdpControlPlaneAuthority.of(scope));
+      }
+
+      if (scopes.stream()
+          .noneMatch(
+              authority ->
+                  authority.getAuthority().equals(IdpControlPlaneScope.management.name()))) {
+
+        response.setHeader(
+            HttpHeaders.WWW_AUTHENTICATE,
+            "error=access_denied, error_description=scope api is not supported token type client credentials grant.");
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        return;
       }
 
       OperatorPrincipal operatorPrincipal = new OperatorPrincipal(user, oAuthToken, scopes);

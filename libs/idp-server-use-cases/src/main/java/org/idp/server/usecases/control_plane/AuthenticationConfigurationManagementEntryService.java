@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.*;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementStatus;
@@ -45,6 +46,20 @@ public class AuthenticationConfigurationManagementEntryService
       AuthenticationConfigRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("register");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     AuthenticationConfigRegistrationContextCreator contextCreator =
@@ -70,6 +85,19 @@ public class AuthenticationConfigurationManagementEntryService
       int offset,
       RequestAttributes requestAttributes) {
 
+    AdminPermissions permissions = getRequiredPermissions("findList");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     List<AuthenticationConfiguration> configurations =
@@ -89,6 +117,20 @@ public class AuthenticationConfigurationManagementEntryService
       OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
+
+    AdminPermissions permissions = getRequiredPermissions("get");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     AuthenticationConfiguration configuration =
@@ -107,6 +149,20 @@ public class AuthenticationConfigurationManagementEntryService
       AuthenticationConfigRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("update");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuthenticationConfiguration before =
         authenticationConfigurationQueryRepository.get(tenant, identifier);
@@ -132,6 +188,20 @@ public class AuthenticationConfigurationManagementEntryService
       AuthenticationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("delete");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     AuthenticationConfiguration configuration =

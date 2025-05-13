@@ -504,6 +504,14 @@ public class User implements JsonReadable, Serializable {
     return permissions;
   }
 
+  public Set<String> permissionsAsSet() {
+    return new HashSet<>(permissions);
+  }
+
+  public String permissionsAsString() {
+    return String.join(",", permissions);
+  }
+
   public User setPermissions(List<String> permissions) {
     this.permissions = permissions;
     return this;

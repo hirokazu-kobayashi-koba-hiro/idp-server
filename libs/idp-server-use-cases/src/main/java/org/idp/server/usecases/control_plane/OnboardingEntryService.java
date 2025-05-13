@@ -1,13 +1,17 @@
 package org.idp.server.usecases.control_plane;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingContext;
 import org.idp.server.control_plane.management.onboarding.OnboardingContextCreator;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
+import org.idp.server.control_plane.management.onboarding.io.OnboardingStatus;
 import org.idp.server.control_plane.management.onboarding.validator.OnboardingRequestValidationResult;
 import org.idp.server.control_plane.management.onboarding.validator.OnboardingRequestValidator;
 import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerificationResult;
@@ -60,6 +64,18 @@ public class OnboardingEntryService implements OnboardingApi {
       OnboardingRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("onboard");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new OnboardingResponse(OnboardingStatus.FORBIDDEN, response);
+    }
 
     OnboardingRequestValidator validator = new OnboardingRequestValidator(request, dryRun);
     OnboardingRequestValidationResult validationResult = validator.validate();

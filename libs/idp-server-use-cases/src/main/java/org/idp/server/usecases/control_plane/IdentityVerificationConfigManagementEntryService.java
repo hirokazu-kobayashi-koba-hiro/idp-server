@@ -1,9 +1,11 @@
 package org.idp.server.usecases.control_plane;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.identity.verification.*;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
@@ -49,6 +51,20 @@ public class IdentityVerificationConfigManagementEntryService
       IdentityVerificationConfigRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("register");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     IdentityVerificationConfigRegistrationContextCreator contextCreator =
@@ -72,6 +88,20 @@ public class IdentityVerificationConfigManagementEntryService
       int limit,
       int offset,
       RequestAttributes requestAttributes) {
+
+    AdminPermissions permissions = getRequiredPermissions("findList");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     List<IdentityVerificationConfiguration> configurations =
@@ -91,6 +121,20 @@ public class IdentityVerificationConfigManagementEntryService
       OAuthToken oAuthToken,
       IdentityVerificationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
+
+    AdminPermissions permissions = getRequiredPermissions("get");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     IdentityVerificationConfiguration configuration =
@@ -109,6 +153,20 @@ public class IdentityVerificationConfigManagementEntryService
       IdentityVerificationConfigUpdateRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("update");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration configuration =
         identityVerificationConfigurationQueryRepository.get(tenant, identifier);
@@ -135,6 +193,20 @@ public class IdentityVerificationConfigManagementEntryService
       IdentityVerificationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("delete");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration configuration =
         identityVerificationConfigurationQueryRepository.get(tenant, identifier);

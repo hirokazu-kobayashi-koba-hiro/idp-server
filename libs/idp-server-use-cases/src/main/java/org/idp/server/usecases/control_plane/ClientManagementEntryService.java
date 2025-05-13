@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.oidc.client.*;
 import org.idp.server.control_plane.management.oidc.client.io.ClientConfigurationManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
@@ -45,6 +46,18 @@ public class ClientManagementEntryService implements ClientManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    AdminPermissions permissions = getRequiredPermissions("register");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new ClientConfigurationManagementResponse(ClientManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     ClientRegistrationRequestValidator validator =
         new ClientRegistrationRequestValidator(request, dryRun);
@@ -75,6 +88,18 @@ public class ClientManagementEntryService implements ClientManagementApi {
       int offset,
       RequestAttributes requestAttributes) {
 
+    AdminPermissions permissions = getRequiredPermissions("findList");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new ClientConfigurationManagementResponse(ClientManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     List<ClientConfiguration> clientConfigurations =
@@ -92,6 +117,18 @@ public class ClientManagementEntryService implements ClientManagementApi {
       OAuthToken oAuthToken,
       ClientIdentifier clientIdentifier,
       RequestAttributes requestAttributes) {
+
+    AdminPermissions permissions = getRequiredPermissions("get");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new ClientConfigurationManagementResponse(ClientManagementStatus.FORBIDDEN, response);
+    }
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
@@ -112,6 +149,18 @@ public class ClientManagementEntryService implements ClientManagementApi {
       ClientRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("update");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new ClientConfigurationManagementResponse(ClientManagementStatus.FORBIDDEN, response);
+    }
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     ClientConfiguration before = clientConfigurationQueryRepository.get(tenant, clientIdentifier);
@@ -144,6 +193,18 @@ public class ClientManagementEntryService implements ClientManagementApi {
       ClientIdentifier clientIdentifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("delete");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new ClientConfigurationManagementResponse(ClientManagementStatus.FORBIDDEN, response);
+    }
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 

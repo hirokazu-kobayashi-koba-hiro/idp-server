@@ -1,9 +1,11 @@
 package org.idp.server.usecases.control_plane;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.UserVerifier;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.control_plane.management.identity.user.UserRegistrationContext;
@@ -62,6 +64,19 @@ public class UserManagementEntryService implements UserManagementApi {
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("register");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     UserRegistrationRequestValidator validator =
@@ -97,6 +112,19 @@ public class UserManagementEntryService implements UserManagementApi {
       int limit,
       int offset,
       RequestAttributes requestAttributes) {
+
+    AdminPermissions permissions = getRequiredPermissions("findList");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     List<User> users = userQueryRepository.findList(tenant, limit, offset);
@@ -112,6 +140,19 @@ public class UserManagementEntryService implements UserManagementApi {
       OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       RequestAttributes requestAttributes) {
+
+    AdminPermissions permissions = getRequiredPermissions("get");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     User user = userQueryRepository.get(tenant, userIdentifier);
@@ -128,6 +169,19 @@ public class UserManagementEntryService implements UserManagementApi {
       UserUpdateRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("update");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     if (dryRun) {
@@ -146,6 +200,19 @@ public class UserManagementEntryService implements UserManagementApi {
       UserIdentifier userIdentifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("delete");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     if (dryRun) {
