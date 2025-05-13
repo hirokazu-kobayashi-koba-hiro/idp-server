@@ -6,7 +6,7 @@ echo "get access token"
 echo "-------------------------------------------------"
 echo ""
 
-while getopts ":u:p:t:e:c:s:" opt; do
+while getopts ":u:p:t:e:c:s:d:" opt; do
   case $opt in
     u) USERNAME="$OPTARG" ;;
     p) PASSWORD="$OPTARG" ;;
@@ -14,7 +14,8 @@ while getopts ":u:p:t:e:c:s:" opt; do
     e) BASE_URL="$OPTARG" ;;
     c) CLIENT_ID="$OPTARG" ;;
     s) CLIENT_SECRET="$OPTARG" ;;
-    *) echo "Usage: $0 -u <username> -p <password> -t <tenant_id> -e <base_url> -c <client_id> -s <client_secret>" && exit 1 ;;
+    d) DRY_RUN="$OPTARG" ;;
+    *) echo "Usage: $0 -u <username> -p <password> -t <tenant_id> -e <base_url> -c <client_id> -s <client_secret> -d <dry_run> "&& exit 1 ;;
   esac
 done
 
@@ -44,7 +45,8 @@ for client_file in "${client_files[@]}"; do
 ./sample-config/upsert-client.sh \
   -t "${TENANT_ID}" \
   -f "./sample-config/admin-tenant/clients/${client_file}" \
-  -a "${ACCESS_TOKEN}"
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
 
 sleep 1
 
@@ -71,7 +73,8 @@ for authentication_config_file in "${authentication_config_files[@]}"; do
 ./sample-config/upsert-authentication-config.sh \
   -t "${TENANT_ID}" \
   -f "./sample-config/admin-tenant/authentication-config/${authentication_config_file}" \
-  -a "${ACCESS_TOKEN}"
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
 
 sleep 1
 done
@@ -92,7 +95,8 @@ for identity_verification_config_file in "${identity_verification_config_files[@
 ./sample-config/upsert-identity-verification-config.sh \
   -t "${TENANT_ID}" \
   -f "./sample-config/admin-tenant/identity/${identity_verification_config_file}" \
-  -a "${ACCESS_TOKEN}"
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
 
 sleep 1
 

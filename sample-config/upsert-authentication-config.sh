@@ -9,12 +9,13 @@ usage() {
 
 BASE_URL="http://localhost:8080"
 
-while getopts ":t:f:e:a:" opt; do
+while getopts ":t:f:e:a:d:" opt; do
   case $opt in
     t) TENANT_ID="$OPTARG" ;;
     f) JSON_FILE="$OPTARG" ;;
     e) BASE_URL="$OPTARG" ;;
     a) ACCESS_TOKEN="$OPTARG" ;;
+    d) DRY_RUN="$OPTARG" ;;
     *) usage ;;
   esac
 done
@@ -35,14 +36,24 @@ HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
   "${BASE_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations/${CONFIG_ID}" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}")
 
+
+if [ "$DRY_RUN" == true ]; then
+  echo ""
+  echo "DRY_RUN.........."
+  echo ""
+  DRY_RUN_PARM="?dry_run=true"
+else
+  DRY_RUN_PARM="?dry_run=false"
+fi
+
 if [ "$HTTP_CODE" == "200" ]; then
   echo "🔁 Config exists. Updating..."
   METHOD="PUT"
-  URL="${BASE_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations/${CONFIG_ID}"
+  URL="${BASE_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations/${CONFIG_ID}${DRY_RUN_PARM}"
 elif [ "$HTTP_CODE" == "404" ]; then
   echo "🆕 Config not found. Registering new one..."
   METHOD="POST"
-  URL="${BASE_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations"
+  URL="${BASE_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations${DRY_RUN_PARM}"
 else
   echo "❌ Unexpected response from GET: HTTP $HTTP_CODE"
   exit 1
