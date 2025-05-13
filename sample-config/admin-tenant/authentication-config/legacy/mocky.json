@@ -1,6 +1,7 @@
 {
   "dry_run": false,
   "config": {
+    "id": "5ee62e7d-e1f0-4f38-b714-0c5d6a28d8f1",
     "type": "legacy-authentication",
     "payload": {
       "type": "mock",

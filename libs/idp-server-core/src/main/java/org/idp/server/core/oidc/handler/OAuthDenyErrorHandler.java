@@ -3,7 +3,7 @@ package org.idp.server.core.oidc.handler;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationNotFoundException;
+import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oidc.io.OAuthDenyResponse;

@@ -27,3 +27,4 @@ org.idp.server.core.adapters.datasource.identity.verification.application.query.
 org.idp.server.core.adapters.datasource.identity.verification.result.command.IdentityVerificationResultCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.event.UserLifecycleEventResultCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.config.command.AuthenticationConfigurationCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.authentication.config.query.AuthenticationConfigurationDataSourceAppProvider

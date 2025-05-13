@@ -159,6 +159,8 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(TenantCommandRepository.class);
     AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository =
         applicationComponentContainer.resolve(AuthenticationConfigurationCommandRepository.class);
+    AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository =
+        applicationComponentContainer.resolve(AuthenticationConfigurationQueryRepository.class);
     AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository =
         applicationComponentContainer.resolve(AuthenticationTransactionCommandRepository.class);
     AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository =
@@ -441,7 +443,9 @@ public class IdpServerApplication {
     this.authenticationConfigurationManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuthenticationConfigurationManagementEntryService(
-                authenticationConfigurationCommandRepository, tenantQueryRepository),
+                authenticationConfigurationCommandRepository,
+                authenticationConfigurationQueryRepository,
+                tenantQueryRepository),
             AuthenticationConfigurationManagementApi.class,
             tenantDialectProvider);
 

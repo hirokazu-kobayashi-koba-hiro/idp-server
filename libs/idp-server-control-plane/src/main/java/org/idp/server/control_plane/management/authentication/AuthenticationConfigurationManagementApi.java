@@ -3,7 +3,6 @@ package org.idp.server.control_plane.management.authentication;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigRegistrationRequest;
-import org.idp.server.control_plane.management.identity.user.io.UserUpdateRequest;
 import org.idp.server.core.authentication.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
@@ -18,6 +17,14 @@ public interface AuthenticationConfigurationManagementApi {
       AuthenticationConfigRegistrationRequest request,
       RequestAttributes requestAttributes);
 
+  AuthenticationConfigManagementResponse findList(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      int limit,
+      int offset,
+      RequestAttributes requestAttributes);
+
   AuthenticationConfigManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -29,14 +36,14 @@ public interface AuthenticationConfigurationManagementApi {
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      UserUpdateRequest request,
+      AuthenticationConfigurationIdentifier identifier,
+      AuthenticationConfigRegistrationRequest request,
       RequestAttributes requestAttributes);
 
-  AuthenticationConfigManagementResponse find(
+  AuthenticationConfigManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      int limit,
-      int offset,
+      AuthenticationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes);
 }

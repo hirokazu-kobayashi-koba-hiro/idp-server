@@ -1,12 +1,28 @@
-#!/bin/zsh
+#!/bin/bash
 
 #admin
-curl -X POST "${IDP_SERVER_DOMAIN}v1/admin/public-tenant/initialization" \
--u "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" \
--H "Content-Type:application/json" \
---data @./sample-config/tenant1.json | jq
 
-#client
+echo "get access token"
+echo "-------------------------------------------------"
+echo ""
+
+while getopts ":u:p:t:e:c:s:" opt; do
+  case $opt in
+    u) USERNAME="$OPTARG" ;;
+    p) PASSWORD="$OPTARG" ;;
+    t) TENANT_ID="$OPTARG" ;;
+    e) BASE_URL="$OPTARG" ;;
+    c) CLIENT_ID="$OPTARG" ;;
+    s) CLIENT_SECRET="$OPTARG" ;;
+    *) echo "Usage: $0 -u <username> -p <password> -t <tenant_id> -e <base_url> -c <client_id> -s <client_secret>" && exit 1 ;;
+  esac
+done
+
+ACCESS_TOKEN=$(./sample-config/get-access-token.sh -u "$USERNAME" -p "$PASSWORD" -t "$TENANT_ID" -e "$BASE_URL" -c "$CLIENT_ID" -s "$CLIENT_SECRET")
+
+echo "$ACCESS_TOKEN"
+
+##client
 
 echo "client"
 
@@ -25,17 +41,18 @@ client_files=(
 for client_file in "${client_files[@]}"; do
   echo "🔧 Registering: $(basename "$client_file")"
 
-./sample-config/register-client.sh \
-  -u ito.ichiro@gmail.com \
-  -p successUserCode \
-  -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
-  -f ./sample-config/clients/${client_file}
+./sample-config/upsert-client.sh \
+  -t "${TENANT_ID}" \
+  -f "./sample-config/admin-tenant/clients/${client_file}" \
+  -a "${ACCESS_TOKEN}"
 
 sleep 1
 
 done
 
-#authentication-config
+##authentication-config
+echo "-------------------------------------------------"
+echo ""
 echo "authentication-config"
 
 authentication_config_files=(
@@ -51,16 +68,17 @@ authentication_config_files=(
 for authentication_config_file in "${authentication_config_files[@]}"; do
   echo "🔧 Registering: $(basename "$authentication_config_file")"
 
-./sample-config/register-authentication-config.sh \
-  -u ito.ichiro@gmail.com \
-  -p successUserCode \
-  -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
-  -f ./sample-config/authentication-config/${authentication_config_file}
+./sample-config/upsert-authentication-config.sh \
+  -t "${TENANT_ID}" \
+  -f "./sample-config/admin-tenant/authentication-config/${authentication_config_file}" \
+  -a "${ACCESS_TOKEN}"
 
 sleep 1
 done
 
 #identity-verification-config
+echo "-------------------------------------------------"
+echo ""
 echo "identity-verification-config"
 
 identity_verification_config_files=(
@@ -71,12 +89,22 @@ identity_verification_config_files=(
 for identity_verification_config_file in "${identity_verification_config_files[@]}"; do
   echo "🔧 Registering: $(basename "$identity_verification_config_file")"
 
-./sample-config/register-identity-verification-config.sh \
-  -u ito.ichiro@gmail.com \
-  -p successUserCode \
-  -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
-  -f ./sample-config/identity/${identity_verification_config_file}
+./sample-config/upsert-identity-verification-config.sh \
+  -t "${TENANT_ID}" \
+  -f "./sample-config/admin-tenant/identity/${identity_verification_config_file}" \
+  -a "${ACCESS_TOKEN}"
 
 sleep 1
 
 done
+
+# tenant-1
+
+echo "-------------------------------------------------"
+echo ""
+
+echo "tenant-1"
+curl -X POST "${IDP_SERVER_DOMAIN}v1/admin/public-tenant/initialization" \
+-u "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" \
+-H "Content-Type:application/json" \
+--data @./sample-config/tenant-1/initial.json | jq

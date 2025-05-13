@@ -5,9 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
-import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
-import org.idp.server.control_plane.management.oidc.client.ClientRegistrationContext;
-import org.idp.server.control_plane.management.oidc.client.ClientRegistrationContextCreator;
+import org.idp.server.control_plane.management.oidc.client.*;
 import org.idp.server.control_plane.management.oidc.client.io.ClientConfigurationManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
@@ -76,8 +74,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, clientIdentifier);
+    ClientConfiguration before = clientConfigurationQueryRepository.get(tenant, clientIdentifier);
 
     ClientRegistrationRequestValidator validator = new ClientRegistrationRequestValidator(request);
     ClientRegistrationRequestValidationResult validate = validator.validate();
@@ -86,14 +83,14 @@ public class ClientManagementEntryService implements ClientManagementApi {
       return validate.errorResponse();
     }
 
-    ClientRegistrationContextCreator contextCreator =
-        new ClientRegistrationContextCreator(tenant, request);
-    ClientRegistrationContext context = contextCreator.create();
+    ClientUpdateContextCreator contextCreator =
+        new ClientUpdateContextCreator(tenant, before, request);
+    ClientUpdateContext context = contextCreator.create();
     if (context.isDryRun()) {
       return context.toResponse();
     }
 
-    clientConfigurationCommandRepository.update(tenant, context.clientConfiguration());
+    clientConfigurationCommandRepository.update(tenant, context.after());
 
     return context.toResponse();
   }

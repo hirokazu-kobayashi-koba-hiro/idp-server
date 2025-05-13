@@ -6,7 +6,7 @@ import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationNotFoundException;
+import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.token.TokenErrorResponse;
 import org.idp.server.core.token.exception.TokenBadRequestException;

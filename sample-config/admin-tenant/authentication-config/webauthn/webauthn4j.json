@@ -1,6 +1,7 @@
 {
   "dry_run": false,
   "config": {
+    "id": "d804ede0-7bae-4a03-ab78-6ed622289ed7",
     "type": "webauthn",
     "payload": {
       "type": "webauthn4j",
