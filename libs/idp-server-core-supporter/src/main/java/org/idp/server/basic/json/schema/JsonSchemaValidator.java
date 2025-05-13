@@ -14,6 +14,11 @@ public class JsonSchemaValidator {
 
   public JsonSchemaValidationResult validate(JsonNodeWrapper target) {
     List<String> errors = new ArrayList<>();
+    if (!target.exists()) {
+      errors.add("Schema does not exist");
+      return JsonSchemaValidationResult.failure(errors);
+    }
+
     validateRequiredField(target, errors);
     validateType(target, errors);
 
