@@ -3,7 +3,7 @@
   "client": {
     "tenant_id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
     "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
-    "client_id": "ddaa4458-7d6c-4359-bd32-b8f094148d12",
+    "client_id": "c724cdaa-fd7a-4938-bb2c-dd604c1c9735",
     "client_id_alias": "selfSignedTlsClientAuth",
     "client_secret": "selfSignedTlsClientAuth1234567890123456789012345678901234567890123456789012345678901234567890",
     "client_id_issued_at": 2893256800,
