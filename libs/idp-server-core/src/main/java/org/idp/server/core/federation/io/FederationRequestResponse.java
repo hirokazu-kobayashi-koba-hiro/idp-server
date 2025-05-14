@@ -1,7 +1,7 @@
 package org.idp.server.core.federation.io;
 
-import org.idp.server.core.federation.oidc.OidcSsoConfiguration;
-import org.idp.server.core.federation.oidc.OidcSsoSession;
+import org.idp.server.core.federation.sso.oidc.OidcSsoConfiguration;
+import org.idp.server.core.federation.sso.oidc.OidcSsoSession;
 
 public class FederationRequestResponse {
 

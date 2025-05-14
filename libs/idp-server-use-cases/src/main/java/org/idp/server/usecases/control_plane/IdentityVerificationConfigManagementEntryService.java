@@ -138,7 +138,12 @@ public class IdentityVerificationConfigManagementEntryService
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     IdentityVerificationConfiguration configuration =
-        identityVerificationConfigurationQueryRepository.get(tenant, identifier);
+        identityVerificationConfigurationQueryRepository.find(tenant, identifier);
+
+    if (!configuration.exists()) {
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.NOT_FOUND, Map.of());
+    }
 
     return new IdentityVerificationConfigManagementResponse(
         IdentityVerificationConfigManagementStatus.OK, configuration.toMap());
@@ -169,7 +174,12 @@ public class IdentityVerificationConfigManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration configuration =
-        identityVerificationConfigurationQueryRepository.get(tenant, identifier);
+        identityVerificationConfigurationQueryRepository.find(tenant, identifier);
+
+    if (!configuration.exists()) {
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.NOT_FOUND, Map.of());
+    }
 
     IdentityVerificationConfigUpdateContextCreator contextCreator =
         new IdentityVerificationConfigUpdateContextCreator(tenant, request, configuration, dryRun);
@@ -209,7 +219,12 @@ public class IdentityVerificationConfigManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration configuration =
-        identityVerificationConfigurationQueryRepository.get(tenant, identifier);
+        identityVerificationConfigurationQueryRepository.find(tenant, identifier);
+
+    if (!configuration.exists()) {
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.NOT_FOUND, Map.of());
+    }
 
     if (dryRun) {
       return new IdentityVerificationConfigManagementResponse(

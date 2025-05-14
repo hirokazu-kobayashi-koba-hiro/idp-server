@@ -91,7 +91,7 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
   }
 
   @Override
-  public List<ClientConfiguration> find(Tenant tenant, int limit, int offset) {
+  public List<ClientConfiguration> findList(Tenant tenant, int limit, int offset) {
     ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> maps = executor.selectList(tenant, limit, offset);
 

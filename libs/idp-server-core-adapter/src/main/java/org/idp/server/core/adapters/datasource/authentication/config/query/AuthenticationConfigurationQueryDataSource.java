@@ -37,16 +37,13 @@ public class AuthenticationConfigurationQueryDataSource
   }
 
   @Override
-  public AuthenticationConfiguration get(
+  public AuthenticationConfiguration find(
       Tenant tenant, AuthenticationConfigurationIdentifier identifier) {
     AuthenticationConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {
-      throw new AuthenticationConfigurationNotFoundException(
-          String.format(
-              "Mfa Configuration is Not Found (%s) (%s)",
-              tenant.identifierValue(), identifier.value()));
+      return new AuthenticationConfiguration();
     }
 
     String id = result.get("id");

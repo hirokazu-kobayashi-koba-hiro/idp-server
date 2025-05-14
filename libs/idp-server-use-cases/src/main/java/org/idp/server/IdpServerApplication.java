@@ -14,6 +14,7 @@ import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.base.definition.DefinitionReader;
 import org.idp.server.control_plane.base.schema.SchemaReader;
 import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
+import org.idp.server.control_plane.management.federation.FederationConfigManagementApi;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
@@ -41,12 +42,14 @@ import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
 import org.idp.server.core.ciba.CibaFlowApi;
 import org.idp.server.core.ciba.CibaProtocol;
 import org.idp.server.core.ciba.CibaProtocols;
-import org.idp.server.core.federation.FederationDependencyContainer;
-import org.idp.server.core.federation.FederationDependencyContainerLoader;
-import org.idp.server.core.federation.FederationInteractorLoader;
 import org.idp.server.core.federation.FederationInteractors;
-import org.idp.server.core.federation.oidc.OidcSsoExecutorLoader;
-import org.idp.server.core.federation.oidc.OidcSsoExecutors;
+import org.idp.server.core.federation.factory.FederationDependencyContainer;
+import org.idp.server.core.federation.factory.FederationDependencyContainerLoader;
+import org.idp.server.core.federation.factory.FederationInteractorLoader;
+import org.idp.server.core.federation.repository.FederationConfigurationCommandRepository;
+import org.idp.server.core.federation.repository.FederationConfigurationQueryRepository;
+import org.idp.server.core.federation.sso.oidc.OidcSsoExecutorLoader;
+import org.idp.server.core.federation.sso.oidc.OidcSsoExecutors;
 import org.idp.server.core.identity.*;
 import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.identity.authentication.PasswordVerificationDelegation;
@@ -112,6 +115,7 @@ public class IdpServerApplication {
   ClientManagementApi clientManagementApi;
   UserManagementApi userManagementApi;
   AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi;
+  FederationConfigManagementApi federationConfigManagementApi;
   IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi;
   UserAuthenticationApi userAuthenticationApi;
 
@@ -190,6 +194,10 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(IdentityVerificationApplicationQueryRepository.class);
     IdentityVerificationResultCommandRepository identityVerificationResultCommandRepository =
         applicationComponentContainer.resolve(IdentityVerificationResultCommandRepository.class);
+    FederationConfigurationCommandRepository federationConfigurationCommandRepository =
+        applicationComponentContainer.resolve(FederationConfigurationCommandRepository.class);
+    FederationConfigurationQueryRepository federationConfigurationQueryRepository =
+        applicationComponentContainer.resolve(FederationConfigurationQueryRepository.class);
 
     RoleCommandRepository roleCommandRepository =
         applicationComponentContainer.resolve(RoleCommandRepository.class);
@@ -467,6 +475,15 @@ public class IdpServerApplication {
             AuthenticationConfigurationManagementApi.class,
             tenantDialectProvider);
 
+    this.federationConfigManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new FederationConfigManagementEntryService(
+                federationConfigurationQueryRepository,
+                federationConfigurationCommandRepository,
+                tenantQueryRepository) {},
+            FederationConfigManagementApi.class,
+            tenantDialectProvider);
+
     this.identityVerificationConfigManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new IdentityVerificationConfigManagementEntryService(
@@ -568,5 +585,9 @@ public class IdpServerApplication {
 
   public IdpServerStarterApi idpServerStarterApi() {
     return idpServerStarterApi;
+  }
+
+  public FederationConfigManagementApi federationConfigManagementApi() {
+    return federationConfigManagementApi;
   }
 }

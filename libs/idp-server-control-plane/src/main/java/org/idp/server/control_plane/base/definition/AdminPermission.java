@@ -46,6 +46,11 @@ public enum AdminPermission {
   AUTHENTICATION_CONFIG_UPDATE("authentication-config:update"),
   AUTHENTICATION_CONFIG_DELETE("authentication-config:delete"),
 
+  FEDERATION_CONFIG_CREATE("federation-config:create"),
+  FEDERATION_CONFIG_READ("federation-config:read"),
+  FEDERATION_CONFIG_UPDATE("federation-config:update"),
+  FEDERATION_CONFIG_DELETE("federation-config:delete"),
+
   IDENTITY_VERIFICATION_CONFIG_CREATE("identity-verification-config:create"),
   IDENTITY_VERIFICATION_CONFIG_READ("identity-verification-config:read"),
   IDENTITY_VERIFICATION_CONFIG_UPDATE("identity-verification-config:update"),

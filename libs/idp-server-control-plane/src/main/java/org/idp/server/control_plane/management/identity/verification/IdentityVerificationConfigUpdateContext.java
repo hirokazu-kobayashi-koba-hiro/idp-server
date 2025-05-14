@@ -55,7 +55,7 @@ public class IdentityVerificationConfigUpdateContext {
     JsonNodeWrapper beforeJson = JsonNodeWrapper.fromObject(before.toMap());
     JsonNodeWrapper afterJson = JsonNodeWrapper.fromObject(after.toMap());
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
-    Map<String, Object> contents = Map.of("config", after.toMap(), "diff", diff, "dry_run", dryRun);
+    Map<String, Object> contents = Map.of("result", after.toMap(), "diff", diff, "dry_run", dryRun);
     return new IdentityVerificationConfigManagementResponse(
         IdentityVerificationConfigManagementStatus.OK, contents);
   }

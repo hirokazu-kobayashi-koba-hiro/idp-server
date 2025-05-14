@@ -12,6 +12,7 @@ import org.idp.server.core.authentication.repository.AuthenticationTransactionQu
 import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.federation.io.FederationRequestResponse;
+import org.idp.server.core.federation.sso.SsoProvider;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
 import org.idp.server.core.identity.event.UserLifecycleEvent;

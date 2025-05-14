@@ -103,7 +103,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     List<ClientConfiguration> clientConfigurations =
-        clientConfigurationQueryRepository.find(tenant, limit, offset);
+        clientConfigurationQueryRepository.findList(tenant, limit, offset);
     Map<String, Object> response = new HashMap<>();
     response.put("list", clientConfigurations.stream().map(ClientConfiguration::toMap).toList());
 
@@ -133,11 +133,13 @@ public class ClientManagementEntryService implements ClientManagementApi {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, clientIdentifier);
-    Map<String, Object> response = new HashMap<>();
-    response.put("client", clientConfiguration.toMap());
+        clientConfigurationQueryRepository.find(tenant, clientIdentifier);
 
-    return new ClientManagementResponse(ClientManagementStatus.OK, response);
+    if (!clientConfiguration.exists()) {
+      return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());
+    }
+
+    return new ClientManagementResponse(ClientManagementStatus.OK, clientConfiguration.toMap());
   }
 
   @Override
@@ -163,7 +165,11 @@ public class ClientManagementEntryService implements ClientManagementApi {
     }
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientConfiguration before = clientConfigurationQueryRepository.get(tenant, clientIdentifier);
+    ClientConfiguration before = clientConfigurationQueryRepository.find(tenant, clientIdentifier);
+
+    if (!before.exists()) {
+      return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());
+    }
 
     ClientRegistrationRequestValidator validator =
         new ClientRegistrationRequestValidator(request, dryRun);
@@ -207,9 +213,13 @@ public class ClientManagementEntryService implements ClientManagementApi {
     }
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, clientIdentifier);
+        clientConfigurationQueryRepository.find(tenant, clientIdentifier);
+
+    if (!clientConfiguration.exists()) {
+      return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());
+    }
+
     clientConfigurationCommandRepository.delete(tenant, clientConfiguration);
 
     return new ClientManagementResponse(ClientManagementStatus.NO_CONTENT, Map.of());

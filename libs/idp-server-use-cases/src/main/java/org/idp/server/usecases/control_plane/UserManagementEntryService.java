@@ -155,7 +155,11 @@ public class UserManagementEntryService implements UserManagementApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    User user = userQueryRepository.get(tenant, userIdentifier);
+    User user = userQueryRepository.findById(tenant, userIdentifier);
+
+    if (!user.exists()) {
+      return new UserManagementResponse(UserManagementStatus.NOT_FOUND, Map.of());
+    }
 
     return new UserManagementResponse(UserManagementStatus.OK, user.toMap());
   }
@@ -183,6 +187,11 @@ public class UserManagementEntryService implements UserManagementApi {
     }
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    User before = userQueryRepository.findById(tenant, userIdentifier);
+
+    if (!before.exists()) {
+      return new UserManagementResponse(UserManagementStatus.NOT_FOUND, Map.of());
+    }
 
     if (dryRun) {
       return new UserManagementResponse(UserManagementStatus.OK, request.toMap());

@@ -8,7 +8,7 @@ import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
-import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigRegistrationRequest;
+import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigRequest;
 import org.idp.server.core.authentication.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
@@ -34,7 +34,7 @@ public interface AuthenticationConfigurationManagementApi {
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      AuthenticationConfigRegistrationRequest request,
+      AuthenticationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
@@ -58,7 +58,7 @@ public interface AuthenticationConfigurationManagementApi {
       User operator,
       OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
-      AuthenticationConfigRegistrationRequest request,
+      AuthenticationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 

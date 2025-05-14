@@ -7,6 +7,7 @@ import org.idp.server.adapters.springboot.application.restapi.ParameterTransform
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
+import org.idp.server.core.federation.sso.SsoProvider;
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

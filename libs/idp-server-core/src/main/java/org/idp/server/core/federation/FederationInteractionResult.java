@@ -2,7 +2,7 @@ package org.idp.server.core.federation;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.federation.oidc.OidcSsoSession;
+import org.idp.server.core.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;

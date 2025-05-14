@@ -2,8 +2,8 @@ package org.idp.server.core.federation.io;
 
 import java.util.Map;
 import org.idp.server.core.federation.FederationCallbackParameters;
-import org.idp.server.core.federation.SsoState;
-import org.idp.server.core.federation.SsoStateCoder;
+import org.idp.server.core.federation.sso.SsoState;
+import org.idp.server.core.federation.sso.SsoStateCoder;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public class FederationCallbackRequest {

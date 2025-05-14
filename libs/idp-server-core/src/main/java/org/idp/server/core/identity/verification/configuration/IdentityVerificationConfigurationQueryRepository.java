@@ -8,7 +8,7 @@ public interface IdentityVerificationConfigurationQueryRepository {
 
   IdentityVerificationConfiguration get(Tenant tenant, IdentityVerificationType type);
 
-  IdentityVerificationConfiguration get(
+  IdentityVerificationConfiguration find(
       Tenant tenant, IdentityVerificationConfigurationIdentifier identifier);
 
   List<IdentityVerificationConfiguration> findList(Tenant tenant, int limit, int offset);

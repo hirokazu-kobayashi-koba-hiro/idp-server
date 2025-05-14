@@ -13,7 +13,6 @@ import org.idp.server.control_plane.management.oidc.authorization.io.Authorizati
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerUpdateRequest;
 import org.idp.server.control_plane.management.oidc.authorization.validator.AuthorizationServerRequestValidationResult;
 import org.idp.server.control_plane.management.oidc.authorization.validator.AuthorizationServerRequestValidator;
-import org.idp.server.control_plane.management.oidc.client.*;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;

@@ -9,7 +9,7 @@ import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.*;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementStatus;
-import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigRegistrationRequest;
+import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigRequest;
 import org.idp.server.core.authentication.AuthenticationConfiguration;
 import org.idp.server.core.authentication.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationCommandRepository;
@@ -43,7 +43,7 @@ public class AuthenticationConfigurationManagementEntryService
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      AuthenticationConfigRegistrationRequest request,
+      AuthenticationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
@@ -134,7 +134,12 @@ public class AuthenticationConfigurationManagementEntryService
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     AuthenticationConfiguration configuration =
-        authenticationConfigurationQueryRepository.get(tenant, identifier);
+        authenticationConfigurationQueryRepository.find(tenant, identifier);
+
+    if (!configuration.exists()) {
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.NOT_FOUND, Map.of());
+    }
 
     return new AuthenticationConfigManagementResponse(
         AuthenticationConfigManagementStatus.OK, configuration.payload());
@@ -146,7 +151,7 @@ public class AuthenticationConfigurationManagementEntryService
       User operator,
       OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
-      AuthenticationConfigRegistrationRequest request,
+      AuthenticationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
@@ -165,7 +170,7 @@ public class AuthenticationConfigurationManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuthenticationConfiguration before =
-        authenticationConfigurationQueryRepository.get(tenant, identifier);
+        authenticationConfigurationQueryRepository.find(tenant, identifier);
 
     AuthenticationConfigUpdateContextCreator contextCreator =
         new AuthenticationConfigUpdateContextCreator(tenant, before, request, dryRun);
@@ -205,7 +210,14 @@ public class AuthenticationConfigurationManagementEntryService
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     AuthenticationConfiguration configuration =
-        authenticationConfigurationQueryRepository.get(tenant, identifier);
+        authenticationConfigurationQueryRepository.find(tenant, identifier);
+
+    if (configuration.exists()) {
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.NOT_FOUND, Map.of());
+    }
+
+    authenticationConfigurationCommandRepository.delete(tenant, configuration);
 
     return new AuthenticationConfigManagementResponse(
         AuthenticationConfigManagementStatus.OK, configuration.payload());

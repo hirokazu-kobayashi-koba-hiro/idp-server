@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.federation.SsoSessionIdentifier;
+import org.idp.server.core.federation.sso.SsoSessionIdentifier;
 
 public class PostgresqlExecutor implements SsoSessionCommandSqlExecutor {
 
