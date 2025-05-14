@@ -104,6 +104,7 @@ public class UserManagementEntryService implements UserManagementApi {
     return context.toResponse();
   }
 
+  @Transaction(readOnly = true)
   @Override
   public UserManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -133,6 +134,7 @@ public class UserManagementEntryService implements UserManagementApi {
     return new UserManagementResponse(UserManagementStatus.OK, response);
   }
 
+  @Transaction(readOnly = true)
   @Override
   public UserManagementResponse get(
       TenantIdentifier tenantIdentifier,

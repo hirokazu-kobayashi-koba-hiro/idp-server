@@ -14,12 +14,13 @@ import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.base.definition.DefinitionReader;
 import org.idp.server.control_plane.base.schema.SchemaReader;
 import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
-import org.idp.server.control_plane.management.federation.FederationConfigManagementApi;
+import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
+import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiers;
@@ -87,6 +88,7 @@ import org.idp.server.core.security.event.OAuthFlowEventPublisher;
 import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.security.hook.SecurityEventHooksLoader;
 import org.idp.server.core.security.repository.SecurityEventCommandRepository;
+import org.idp.server.core.security.repository.SecurityEventHookConfigurationCommandRepository;
 import org.idp.server.core.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.core.token.*;
@@ -115,8 +117,9 @@ public class IdpServerApplication {
   ClientManagementApi clientManagementApi;
   UserManagementApi userManagementApi;
   AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi;
-  FederationConfigManagementApi federationConfigManagementApi;
+  FederationConfigurationManagementApi federationConfigurationManagementApi;
   IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi;
+  SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi;
   UserAuthenticationApi userAuthenticationApi;
 
   public IdpServerApplication(
@@ -198,6 +201,10 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(FederationConfigurationCommandRepository.class);
     FederationConfigurationQueryRepository federationConfigurationQueryRepository =
         applicationComponentContainer.resolve(FederationConfigurationQueryRepository.class);
+    SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository =
+            applicationComponentContainer.resolve(SecurityEventHookConfigurationQueryRepository.class);
+    SecurityEventHookConfigurationCommandRepository securityEventHookConfigurationCommandRepository =
+            applicationComponentContainer.resolve(SecurityEventHookConfigurationCommandRepository.class);
 
     RoleCommandRepository roleCommandRepository =
         applicationComponentContainer.resolve(RoleCommandRepository.class);
@@ -475,14 +482,23 @@ public class IdpServerApplication {
             AuthenticationConfigurationManagementApi.class,
             tenantDialectProvider);
 
-    this.federationConfigManagementApi =
+    this.federationConfigurationManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new FederationConfigManagementEntryService(
+            new FederationConfigurationManagementEntryService(
                 federationConfigurationQueryRepository,
                 federationConfigurationCommandRepository,
-                tenantQueryRepository) {},
-            FederationConfigManagementApi.class,
+                tenantQueryRepository),
+            FederationConfigurationManagementApi.class,
             tenantDialectProvider);
+
+    this.securityEventHookConfigurationManagementApi =
+            TenantAwareEntryServiceProxy.createProxy(
+                    new SecurityEventHookConfigurationManagementEntryService(
+                            securityEventHookConfigurationCommandRepository,
+                            securityEventHookConfigurationQueryRepository,
+                            tenantQueryRepository),
+                    SecurityEventHookConfigurationManagementApi.class,
+                    tenantDialectProvider);
 
     this.identityVerificationConfigManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -587,7 +603,11 @@ public class IdpServerApplication {
     return idpServerStarterApi;
   }
 
-  public FederationConfigManagementApi federationConfigManagementApi() {
-    return federationConfigManagementApi;
+  public FederationConfigurationManagementApi federationConfigManagementApi() {
+    return federationConfigurationManagementApi;
+  }
+
+  public SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi() {
+    return securityEventHookConfigurationManagementApi;
   }
 }

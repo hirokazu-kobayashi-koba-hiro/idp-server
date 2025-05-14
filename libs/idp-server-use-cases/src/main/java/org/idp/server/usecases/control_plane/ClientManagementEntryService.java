@@ -74,11 +74,12 @@ public class ClientManagementEntryService implements ClientManagementApi {
       return context.toResponse();
     }
 
-    clientConfigurationCommandRepository.register(tenant, context.clientConfiguration());
+    clientConfigurationCommandRepository.register(tenant, context.configuration());
 
     return context.toResponse();
   }
 
+  @Transaction(readOnly = true)
   @Override
   public ClientManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -110,6 +111,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
     return new ClientManagementResponse(ClientManagementStatus.OK, response);
   }
 
+  @Transaction(readOnly = true)
   @Override
   public ClientManagementResponse get(
       TenantIdentifier tenantIdentifier,

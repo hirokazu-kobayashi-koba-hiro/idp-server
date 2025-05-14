@@ -14,7 +14,7 @@ import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
 
-public interface FederationConfigManagementApi {
+public interface FederationConfigurationManagementApi {
 
   default AdminPermissions getRequiredPermissions(String method) {
     Map<String, AdminPermissions> map = new HashMap<>();

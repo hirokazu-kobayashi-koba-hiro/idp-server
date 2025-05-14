@@ -75,11 +75,12 @@ public class IdentityVerificationConfigManagementEntryService
     }
 
     identityVerificationConfigurationCommandRepository.register(
-        tenant, context.type(), context.identityVerificationConfiguration());
+        tenant, context.type(), context.configuration());
 
     return context.toResponse();
   }
 
+  @Transaction(readOnly = true)
   @Override
   public IdentityVerificationConfigManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -114,6 +115,7 @@ public class IdentityVerificationConfigManagementEntryService
         IdentityVerificationConfigManagementStatus.OK, response);
   }
 
+  @Transaction(readOnly = true)
   @Override
   public IdentityVerificationConfigManagementResponse get(
       TenantIdentifier tenantIdentifier,

@@ -531,28 +531,29 @@ CREATE INDEX idx_events_user ON security_event (user_id);
 CREATE INDEX idx_events_created_at ON security_event (created_at);
 CREATE INDEX idx_events_detail_jsonb ON security_event USING GIN (detail);
 
-CREATE TABLE security_event_hook_configuration
+CREATE TABLE security_event_hook_configurations
 (
-    id              UUID    NOT NULL,
-    tenant_id       UUID    NOT NULL,
-    payload         JSONB   NOT NULL,
-    execution_order INTEGER NOT NULL DEFAULT 0,
-    enabled         BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at      TIMESTAMP        DEFAULT now() NOT NULL,
-    updated_at      TIMESTAMP        DEFAULT now() NOT NULL,
+    id              UUID         NOT NULL,
+    tenant_id       UUID         NOT NULL,
+    type            VARCHAR(255) NOT NULL,
+    payload         JSONB        NOT NULL,
+    execution_order INTEGER      NOT NULL DEFAULT 0,
+    enabled         BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMP             DEFAULT now() NOT NULL,
+    updated_at      TIMESTAMP             DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
-ALTER TABLE security_event_hook_configuration ENABLE ROW LEVEL SECURITY;
+ALTER TABLE security_event_hook_configurations ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_security_event_hook_configuration
-  ON security_event_hook_configuration
+POLICY rls_security_event_hook_configurations
+  ON security_event_hook_configurations
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
-ALTER TABLE security_event_hook_configuration FORCE ROW LEVEL SECURITY;
+ALTER TABLE security_event_hook_configurations FORCE ROW LEVEL SECURITY;
 
-CREATE INDEX idx_security_event_hook_configuration ON security_event_hook_configuration (tenant_id);
-CREATE INDEX idx_security_event_hook_configuration_order ON security_event_hook_configuration (tenant_id, execution_order);
+CREATE INDEX idx_security_event_hook_configurations ON security_event_hook_configurations (tenant_id);
+CREATE INDEX idx_security_event_hook_configurations_order ON security_event_hook_configurations (tenant_id, execution_order);
 
 CREATE TABLE security_event_hook_results
 (

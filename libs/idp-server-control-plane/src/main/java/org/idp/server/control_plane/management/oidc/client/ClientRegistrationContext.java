@@ -22,7 +22,7 @@ public class ClientRegistrationContext {
     return tenant;
   }
 
-  public ClientConfiguration clientConfiguration() {
+  public ClientConfiguration configuration() {
     return clientConfiguration;
   }
 

@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.security.hook;
+package org.idp.server.core.adapters.datasource.security.hook.result;
 
 import java.util.ArrayList;
 import java.util.List;

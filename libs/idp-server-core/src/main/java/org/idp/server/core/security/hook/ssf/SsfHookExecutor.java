@@ -43,7 +43,7 @@ public class SsfHookExecutor implements SecurityEventHookExecutor {
     SecurityEventTokenEntity securityEventTokenEntity = convertor.convert();
 
     SharedSignalFrameworkConfiguration ssfConfiguration =
-        jsonConverter.read(hookConfiguration.details(), SharedSignalFrameworkConfiguration.class);
+        jsonConverter.read(hookConfiguration.payload(), SharedSignalFrameworkConfiguration.class);
 
     log.info(
         String.format(

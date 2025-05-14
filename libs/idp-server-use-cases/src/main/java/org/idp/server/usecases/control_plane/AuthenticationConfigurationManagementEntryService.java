@@ -71,11 +71,12 @@ public class AuthenticationConfigurationManagementEntryService
     }
 
     authenticationConfigurationCommandRepository.register(
-        tenant, context.authenticationConfiguration());
+        tenant, context.configuration());
 
     return context.toResponse();
   }
 
+  @Transaction(readOnly = true)
   @Override
   public AuthenticationConfigManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -110,6 +111,7 @@ public class AuthenticationConfigurationManagementEntryService
         AuthenticationConfigManagementStatus.OK, response);
   }
 
+  @Transaction(readOnly = true)
   @Override
   public AuthenticationConfigManagementResponse get(
       TenantIdentifier tenantIdentifier,

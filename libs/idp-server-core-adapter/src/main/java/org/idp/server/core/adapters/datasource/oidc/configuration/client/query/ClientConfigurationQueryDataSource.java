@@ -85,9 +85,10 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
           String.format("unregistered client (%s)", clientIdentifier.value()), tenant);
     }
 
-    cacheStore.put(key, result);
+    ClientConfiguration converted = ModelConverter.convert(result);
+    cacheStore.put(key, converted);
 
-    return ModelConverter.convert(result);
+    return converted;
   }
 
   @Override
@@ -119,9 +120,10 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
       return new ClientConfiguration();
     }
 
-    cacheStore.put(key, result);
+    ClientConfiguration converted = ModelConverter.convert(result);
+    cacheStore.put(key, converted);
 
-    return ModelConverter.convert(result);
+    return converted;
   }
 
   private String key(TenantIdentifier tenantIdentifier, String clientId) {

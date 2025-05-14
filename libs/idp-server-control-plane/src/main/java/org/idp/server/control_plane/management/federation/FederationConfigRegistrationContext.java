@@ -24,7 +24,7 @@ public class FederationConfigRegistrationContext {
     return tenant;
   }
 
-  public FederationConfiguration federationConfiguration() {
+  public FederationConfiguration configuration() {
     return federationConfiguration;
   }
 
@@ -34,7 +34,7 @@ public class FederationConfigRegistrationContext {
 
   public FederationConfigManagementResponse toResponse() {
     Map<String, Object> response = new HashMap<>();
-    response.put("config", federationConfiguration.payload());
+    response.put("result", federationConfiguration.payload());
     response.put("dry_run", dryRun);
     return new FederationConfigManagementResponse(
         FederationConfigManagementStatus.CREATED, response);

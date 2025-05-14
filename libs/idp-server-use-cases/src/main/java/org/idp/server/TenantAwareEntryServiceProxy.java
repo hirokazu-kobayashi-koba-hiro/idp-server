@@ -26,7 +26,15 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         method.isAnnotationPresent(Transaction.class)
             || target.getClass().isAnnotationPresent(Transaction.class);
 
-    Transaction tx = method.getAnnotation(Transaction.class);
+    Transaction tx = method.getClass().getAnnotation(Transaction.class);
+    if (tx == null) {
+      try {
+        Method implMethod = target.getClass().getMethod(method.getName(), method.getParameterTypes());
+        tx = implMethod.getAnnotation(Transaction.class);
+      } catch (NoSuchMethodException e) {
+        log.error(e.getMessage(), e);
+      }
+    }
     if (tx == null) {
       tx = target.getClass().getAnnotation(Transaction.class);
     }

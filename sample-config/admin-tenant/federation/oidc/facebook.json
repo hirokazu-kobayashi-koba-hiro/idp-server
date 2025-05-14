@@ -1,0 +1,51 @@
+{
+  "identifier": "3be20da2-eea5-4420-9e1e-90215803b4a8",
+  "issuer": "https://www.facebook.com",
+  "issuer_name": "facebook",
+  "authorization_endpoint": "https://facebook.com/dialog/oauth/",
+  "token_endpoint": "https://graph.facebook.com/v19.0/oauth/access_token",
+  "jwks_uri": "https://www.facebook.com/.well-known/oauth/openid/jwks/",
+  "userinfo_endpoint": "https://graph.facebook.com/me",
+  "params_delimiter": ",",
+  "scopes_supported": [
+    "openid",
+    "email",
+    "public_profile"
+  ],
+  "response_types_supported": [
+    "id_token",
+    "token id_token"
+  ],
+  "subject_types_supported": [
+    "pairwise"
+  ],
+  "id_token_signing_alg_values_supported": [
+    "RS256"
+  ],
+  "claims_supported": [
+    "iss",
+    "aud",
+    "sub",
+    "iat",
+    "exp",
+    "jti",
+    "nonce",
+    "at_hash",
+    "name",
+    "given_name",
+    "middle_name",
+    "family_name",
+    "email",
+    "picture",
+    "user_friends",
+    "user_birthday",
+    "user_age_range",
+    "user_link",
+    "user_hometown",
+    "user_location",
+    "user_gender"
+  ],
+  "client_id": "949393364072577",
+  "client_secret": "xxx",
+  "redirect_uri": "https://idp-auth-frontend-ecru.vercel.app/signin/sso-callback"
+}

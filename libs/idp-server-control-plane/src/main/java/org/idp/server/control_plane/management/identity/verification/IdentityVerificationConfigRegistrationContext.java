@@ -26,7 +26,7 @@ public class IdentityVerificationConfigRegistrationContext {
     return null;
   }
 
-  public IdentityVerificationConfiguration identityVerificationConfiguration() {
+  public IdentityVerificationConfiguration configuration() {
     return identityVerificationConfiguration;
   }
 
@@ -40,7 +40,7 @@ public class IdentityVerificationConfigRegistrationContext {
 
   public IdentityVerificationConfigManagementResponse toResponse() {
     Map<String, Object> contents =
-        Map.of("config", identityVerificationConfiguration.toMap(), "dry_run", dryRun);
+        Map.of("result", identityVerificationConfiguration.toMap(), "dry_run", dryRun);
     return new IdentityVerificationConfigManagementResponse(
         IdentityVerificationConfigManagementStatus.CREATED, contents);
   }

@@ -1,25 +1,25 @@
-package org.idp.server.control_plane.management.authentication;
+package org.idp.server.control_plane.management.security.hook;
 
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.json.JsonDiffCalculator;
 import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
-import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementStatus;
-import org.idp.server.core.authentication.AuthenticationConfiguration;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.security.hook.SecurityEventHookConfiguration;
 
-public class AuthenticationConfigUpdateContext {
+public class SecurityEventHookConfigUpdateContext {
 
   Tenant tenant;
-  AuthenticationConfiguration before;
-  AuthenticationConfiguration after;
+  SecurityEventHookConfiguration before;
+  SecurityEventHookConfiguration after;
   boolean dryRun;
 
-  public AuthenticationConfigUpdateContext(
+  public SecurityEventHookConfigUpdateContext(
       Tenant tenant,
-      AuthenticationConfiguration before,
-      AuthenticationConfiguration after,
+      SecurityEventHookConfiguration before,
+      SecurityEventHookConfiguration after,
       boolean dryRun) {
     this.tenant = tenant;
     this.before = before;
@@ -31,11 +31,11 @@ public class AuthenticationConfigUpdateContext {
     return tenant;
   }
 
-  public AuthenticationConfiguration before() {
+  public SecurityEventHookConfiguration before() {
     return before;
   }
 
-  public AuthenticationConfiguration after() {
+  public SecurityEventHookConfiguration after() {
     return after;
   }
 
@@ -43,7 +43,7 @@ public class AuthenticationConfigUpdateContext {
     return dryRun;
   }
 
-  public AuthenticationConfigManagementResponse toResponse() {
+  public SecurityEventHookConfigManagementResponse toResponse() {
     JsonNodeWrapper beforeJson = JsonNodeWrapper.fromObject(before.payload());
     JsonNodeWrapper afterJson = JsonNodeWrapper.fromObject(after.payload());
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
@@ -51,7 +51,7 @@ public class AuthenticationConfigUpdateContext {
     response.put("result", after.payload());
     response.put("diff", diff);
     response.put("dry_run", dryRun);
-    return new AuthenticationConfigManagementResponse(
-        AuthenticationConfigManagementStatus.OK, response);
+    return new SecurityEventHookConfigManagementResponse(
+        SecurityEventHookConfigManagementStatus.OK, response);
   }
 }

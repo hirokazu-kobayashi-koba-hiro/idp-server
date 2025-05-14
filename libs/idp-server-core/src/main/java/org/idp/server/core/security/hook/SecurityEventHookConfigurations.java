@@ -24,4 +24,5 @@ public class SecurityEventHookConfigurations implements Iterable<SecurityEventHo
   public boolean exists() {
     return values != null && !values.isEmpty();
   }
+
 }

@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.security.event;
+package org.idp.server.core.adapters.datasource.security.hook.configuration.query;
 
 import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.basic.dependency.ApplicationComponentProvider;

@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.security.hook;
+package org.idp.server.core.adapters.datasource.security.hook.result;
 
 import java.util.List;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;

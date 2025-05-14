@@ -43,6 +43,7 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
         authorizationServerConfigurationCommandRepository;
   }
 
+  @Transaction(readOnly = true)
   @Override
   public AuthorizationServerManagementResponse get(
       TenantIdentifier tenantIdentifier,

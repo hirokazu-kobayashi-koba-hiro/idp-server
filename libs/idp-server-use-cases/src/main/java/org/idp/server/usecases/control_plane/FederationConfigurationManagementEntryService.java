@@ -21,13 +21,13 @@ import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.token.OAuthToken;
 
 @Transaction
-public class FederationConfigManagementEntryService implements FederationConfigManagementApi {
+public class FederationConfigurationManagementEntryService implements FederationConfigurationManagementApi {
 
   FederationConfigurationQueryRepository federationConfigurationQueryRepository;
   FederationConfigurationCommandRepository federationConfigurationCommandRepository;
   TenantQueryRepository tenantQueryRepository;
 
-  public FederationConfigManagementEntryService(
+  public FederationConfigurationManagementEntryService(
       FederationConfigurationQueryRepository federationConfigurationQueryRepository,
       FederationConfigurationCommandRepository federationConfigurationCommandRepository,
       TenantQueryRepository tenantQueryRepository) {
@@ -67,11 +67,12 @@ public class FederationConfigManagementEntryService implements FederationConfigM
       return context.toResponse();
     }
 
-    federationConfigurationCommandRepository.register(tenant, context.federationConfiguration());
+    federationConfigurationCommandRepository.register(tenant, context.configuration());
 
     return context.toResponse();
   }
 
+  @Transaction(readOnly = true)
   @Override
   public FederationConfigManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -103,6 +104,7 @@ public class FederationConfigManagementEntryService implements FederationConfigM
     return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
   }
 
+  @Transaction(readOnly = true)
   @Override
   public FederationConfigManagementResponse get(
       TenantIdentifier tenantIdentifier,

@@ -5,13 +5,11 @@ import org.idp.server.core.security.hook.SecurityEventHookConfiguration;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationIdentifier;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurations;
 
-import java.util.List;
+public interface SecurityEventHookConfigurationCommandRepository {
 
-public interface SecurityEventHookConfigurationQueryRepository {
+  void register(Tenant tenant, SecurityEventHookConfiguration configuration);
 
-  SecurityEventHookConfigurations find(Tenant tenant);
+  void update(Tenant tenant, SecurityEventHookConfiguration configuration);
 
-  SecurityEventHookConfiguration find(Tenant tenant, SecurityEventHookConfigurationIdentifier identifier);
-
-  List<SecurityEventHookConfiguration> findList(Tenant tenant, int limit, int offset);
+  void delete(Tenant tenant, SecurityEventHookConfiguration configuration);
 }

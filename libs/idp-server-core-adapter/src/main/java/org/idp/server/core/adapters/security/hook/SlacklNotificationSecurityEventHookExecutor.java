@@ -38,7 +38,7 @@ public class SlacklNotificationSecurityEventHookExecutor implements SecurityEven
       SecurityEventHookConfiguration hookConfiguration) {
 
     SlackSecurityEventHookConfiguration configuration =
-        jsonConverter.read(hookConfiguration.details(), SlackSecurityEventHookConfiguration.class);
+        jsonConverter.read(hookConfiguration.payload(), SlackSecurityEventHookConfiguration.class);
     String incomingWebhookUrl = configuration.incomingWebhookUrl(securityEvent.type());
     if (incomingWebhookUrl == null) {
       return SecurityEventHookResult.failure(

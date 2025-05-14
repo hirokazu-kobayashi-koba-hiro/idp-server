@@ -54,7 +54,12 @@ public enum AdminPermission {
   IDENTITY_VERIFICATION_CONFIG_CREATE("identity-verification-config:create"),
   IDENTITY_VERIFICATION_CONFIG_READ("identity-verification-config:read"),
   IDENTITY_VERIFICATION_CONFIG_UPDATE("identity-verification-config:update"),
-  IDENTITY_VERIFICATION_CONFIG_DELETE("identity-verification-config:delete");
+  IDENTITY_VERIFICATION_CONFIG_DELETE("identity-verification-config:delete"),
+
+  SECURITY_EVENT_HOOK_CONFIG_CREATE("security-event-hook-config:create"),
+  SECURITY_EVENT_HOOK_CONFIG_READ("security-event-hook-config:read"),
+  SECURITY_EVENT_HOOK_CONFIG_UPDATE("security-event-hook-config:update"),
+  SECURITY_EVENT_HOOK_CONFIG_DELETE("security-event-hook-config:delete");
 
   private final String value;
 

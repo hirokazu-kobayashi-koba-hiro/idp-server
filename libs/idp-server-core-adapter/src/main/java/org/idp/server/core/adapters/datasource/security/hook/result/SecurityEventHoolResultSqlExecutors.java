@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.security.hook;
+package org.idp.server.core.adapters.datasource.security.hook.result;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -60,8 +60,6 @@ for client_file in "${client_files[@]}"; do
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
 
-sleep 1
-
 done
 
 ##authentication-config
@@ -88,7 +86,6 @@ for authentication_config_file in "${authentication_config_files[@]}"; do
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
 
-sleep 1
 done
 
 #identity-verification-config
@@ -109,7 +106,5 @@ for identity_verification_config_file in "${identity_verification_config_files[@
   -f "./sample-config/admin-tenant/identity/${identity_verification_config_file}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
-
-sleep 1
 
 done
