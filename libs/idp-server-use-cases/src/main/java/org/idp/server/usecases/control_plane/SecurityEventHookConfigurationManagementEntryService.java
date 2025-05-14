@@ -171,6 +171,11 @@ public class SecurityEventHookConfigurationManagementEntryService
     SecurityEventHookConfiguration before =
         securityEventHookConfigurationQueryRepository.find(tenant, identifier);
 
+    if (!before.exists()) {
+      return new SecurityEventHookConfigManagementResponse(
+          SecurityEventHookConfigManagementStatus.NOT_FOUND, Map.of());
+    }
+
     SecurityEventHookConfigUpdateContextCreator contextCreator =
         new SecurityEventHookConfigUpdateContextCreator(tenant, before, request, dryRun);
     SecurityEventHookConfigUpdateContext context = contextCreator.create();

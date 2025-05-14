@@ -42,8 +42,7 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
         selectSql
             + """
                 WHERE tenant_id = ?::uuid
-                AND id = ?::uuid
-                ORDER BY execution_order;
+                AND id = ?::uuid;
                 """;
 
     List<Object> params = new ArrayList<>();

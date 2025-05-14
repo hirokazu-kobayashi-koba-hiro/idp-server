@@ -46,9 +46,7 @@ public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                    UPDATE security_event_hook_configurations (
-                    id,
-                    tenant_id,
+                    UPDATE security_event_hook_configurations
                     SET payload = ?::jsonb,
                     execution_order = ?
                     WHERE id = ?::uuid

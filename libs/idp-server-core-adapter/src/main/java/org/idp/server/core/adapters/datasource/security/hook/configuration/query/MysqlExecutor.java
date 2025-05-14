@@ -39,8 +39,8 @@ public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
-            selectSql
-                    + """
+        selectSql
+            + """
                 WHERE tenant_id = ?::uuid
                 AND id = ?::uuid
                 ORDER BY execution_order;

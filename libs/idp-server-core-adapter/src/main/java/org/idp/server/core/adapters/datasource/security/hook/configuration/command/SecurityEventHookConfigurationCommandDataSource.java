@@ -25,7 +25,7 @@ public class SecurityEventHookConfigurationCommandDataSource
   @Override
   public void update(Tenant tenant, SecurityEventHookConfiguration configuration) {
     SecurityEventHookConfigSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.delete(tenant, configuration);
+    executor.update(tenant, configuration);
   }
 
   @Override
