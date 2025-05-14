@@ -52,6 +52,12 @@ public class JsonNodeWrapper {
     return jsonNode.fieldNames();
   }
 
+  public List<String> fieldNamesAsList() {
+    List<String> names = new ArrayList<>();
+    fieldNames().forEachRemaining(names::add);
+    return names;
+  }
+
   public JsonNodeWrapper getValueAsJsonNode(String fieldName) {
     return new JsonNodeWrapper(jsonNode.get(fieldName));
   }
