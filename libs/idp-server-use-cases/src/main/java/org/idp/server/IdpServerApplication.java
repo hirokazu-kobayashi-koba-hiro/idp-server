@@ -93,6 +93,7 @@ import org.idp.server.core.security.repository.SecurityEventHookConfigurationQue
 import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.core.token.*;
 import org.idp.server.usecases.application.enduser.*;
+import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
 import org.idp.server.usecases.application.system.*;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerStarterEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.TenantInitializationEntryService;
