@@ -1,4 +1,4 @@
-package org.idp.server.usecases.application;
+package org.idp.server.usecases.application.system;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -92,8 +92,11 @@ import org.idp.server.core.security.repository.SecurityEventHookConfigurationCom
 import org.idp.server.core.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.core.token.*;
-import org.idp.server.usecases.application.*;
-import org.idp.server.usecases.control_plane.*;
+import org.idp.server.usecases.application.enduser.*;
+import org.idp.server.usecases.application.system.*;
+import org.idp.server.usecases.control_plane.system_administrator.IdpServerStarterEntryService;
+import org.idp.server.usecases.control_plane.system_administrator.TenantInitializationEntryService;
+import org.idp.server.usecases.control_plane.tenant_manager.*;
 
 /** IdpServerApplication */
 public class IdpServerApplication {
