@@ -130,7 +130,7 @@ public class JsonSchemaValidator {
     JsonSchemaProperty itemsSchema = schemaProperty.itemsSchema();
     for (JsonNodeWrapper element : elements) {
       if (itemsSchema.isStringType()) {
-        validateStringConstraints(field, element, schemaProperty, errors);
+        validateStringConstraints(field, element, itemsSchema, errors);
       }
     }
   }
