@@ -10,20 +10,24 @@ public class ClientUpdateContextCreator {
   Tenant tenant;
   ClientConfiguration before;
   ClientRegistrationRequest request;
+  boolean dryRun;
   JsonConverter jsonConverter;
 
   public ClientUpdateContextCreator(
-      Tenant tenant, ClientConfiguration before, ClientRegistrationRequest request) {
+      Tenant tenant,
+      ClientConfiguration before,
+      ClientRegistrationRequest request,
+      boolean dryRun) {
     this.tenant = tenant;
     this.before = before;
     this.request = request;
+    this.dryRun = dryRun;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   public ClientUpdateContext create() {
     ClientConfiguration clientConfiguration =
-        jsonConverter.read(request.get("client"), ClientConfiguration.class);
-    boolean dryRun = request.isDryRun();
+        jsonConverter.read(request.toMap(), ClientConfiguration.class);
 
     return new ClientUpdateContext(tenant, before, clientConfiguration, dryRun);
   }

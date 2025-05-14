@@ -14,8 +14,9 @@ public class IdpServerInitializeRequestValidator {
   JsonSchemaValidator authorizationServerSchemaValidator;
   JsonSchemaValidator adminUserSchemaValidator;
   JsonSchemaValidator clientSchemaValidator;
+  boolean dryRun;
 
-  public IdpServerInitializeRequestValidator(IdpServerStarterRequest request) {
+  public IdpServerInitializeRequestValidator(IdpServerStarterRequest request, boolean dryRun) {
     this.request = request;
     this.organizationSchemaValidator = new JsonSchemaValidator(SchemaReader.organizationSchema());
     this.tenantSchemaValidator = new JsonSchemaValidator(SchemaReader.tenantSchema());
@@ -23,6 +24,7 @@ public class IdpServerInitializeRequestValidator {
         new JsonSchemaValidator(SchemaReader.authorizationServerSchema());
     this.adminUserSchemaValidator = new JsonSchemaValidator(SchemaReader.adminUserSchema());
     this.clientSchemaValidator = new JsonSchemaValidator(SchemaReader.clientSchema());
+    this.dryRun = dryRun;
   }
 
   public IdpServerInitializeRequestValidationResult validate() {
@@ -49,7 +51,7 @@ public class IdpServerInitializeRequestValidator {
           authorizationServerResult,
           adminUserResult,
           clientResult,
-          request.isDryRun());
+          dryRun);
     }
 
     return IdpServerInitializeRequestValidationResult.success(
@@ -58,6 +60,6 @@ public class IdpServerInitializeRequestValidator {
         authorizationServerResult,
         adminUserResult,
         clientResult,
-        request.isDryRun());
+        dryRun);
   }
 }

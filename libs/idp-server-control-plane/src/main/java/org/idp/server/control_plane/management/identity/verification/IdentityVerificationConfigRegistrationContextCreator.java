@@ -11,24 +11,25 @@ public class IdentityVerificationConfigRegistrationContextCreator {
 
   Tenant tenant;
   IdentityVerificationConfigRegistrationRequest request;
+  boolean dryRun;
   JsonConverter jsonConverter;
 
   public IdentityVerificationConfigRegistrationContextCreator(
-      Tenant tenant, IdentityVerificationConfigRegistrationRequest request) {
+      Tenant tenant, IdentityVerificationConfigRegistrationRequest request, boolean dryRun) {
     this.tenant = tenant;
     this.request = request;
+    this.dryRun = dryRun;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   public IdentityVerificationConfigRegistrationContext create() {
     IdentityVerificationConfigurationRequest configurationRequest =
-        jsonConverter.read(request.get("config"), IdentityVerificationConfigurationRequest.class);
+        jsonConverter.read(request.toMap(), IdentityVerificationConfigurationRequest.class);
     String identifier =
         configurationRequest.hasId() ? configurationRequest.id() : UUID.randomUUID().toString();
 
     IdentityVerificationConfiguration configuration =
         configurationRequest.toConfiguration(identifier);
-    boolean dryRun = request.isDryRun();
 
     return new IdentityVerificationConfigRegistrationContext(tenant, configuration, dryRun);
   }

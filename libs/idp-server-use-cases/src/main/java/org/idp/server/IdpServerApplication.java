@@ -14,10 +14,13 @@ import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.base.definition.DefinitionReader;
 import org.idp.server.control_plane.base.schema.SchemaReader;
 import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
+import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
+import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
+import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiers;
@@ -40,12 +43,14 @@ import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
 import org.idp.server.core.ciba.CibaFlowApi;
 import org.idp.server.core.ciba.CibaProtocol;
 import org.idp.server.core.ciba.CibaProtocols;
-import org.idp.server.core.federation.FederationDependencyContainer;
-import org.idp.server.core.federation.FederationDependencyContainerLoader;
-import org.idp.server.core.federation.FederationInteractorLoader;
 import org.idp.server.core.federation.FederationInteractors;
-import org.idp.server.core.federation.oidc.OidcSsoExecutorLoader;
-import org.idp.server.core.federation.oidc.OidcSsoExecutors;
+import org.idp.server.core.federation.factory.FederationDependencyContainer;
+import org.idp.server.core.federation.factory.FederationDependencyContainerLoader;
+import org.idp.server.core.federation.factory.FederationInteractorLoader;
+import org.idp.server.core.federation.repository.FederationConfigurationCommandRepository;
+import org.idp.server.core.federation.repository.FederationConfigurationQueryRepository;
+import org.idp.server.core.federation.sso.oidc.OidcSsoExecutorLoader;
+import org.idp.server.core.federation.sso.oidc.OidcSsoExecutors;
 import org.idp.server.core.identity.*;
 import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.identity.authentication.PasswordVerificationDelegation;
@@ -67,7 +72,8 @@ import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.OAuthProtocol;
 import org.idp.server.core.oidc.OAuthProtocols;
 import org.idp.server.core.oidc.OAuthSessionDelegate;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.discovery.*;
@@ -82,6 +88,7 @@ import org.idp.server.core.security.event.OAuthFlowEventPublisher;
 import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.security.hook.SecurityEventHooksLoader;
 import org.idp.server.core.security.repository.SecurityEventCommandRepository;
+import org.idp.server.core.security.repository.SecurityEventHookConfigurationCommandRepository;
 import org.idp.server.core.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.core.token.*;
@@ -106,10 +113,13 @@ public class IdpServerApplication {
   UserLifecycleEventApi userLifecycleEventApi;
   OnboardingApi onboardingApi;
   TenantInitializationApi tenantInitializationApi;
+  AuthorizationServerManagementApi authorizationServerManagementApi;
   ClientManagementApi clientManagementApi;
   UserManagementApi userManagementApi;
   AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi;
+  FederationConfigurationManagementApi federationConfigurationManagementApi;
   IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi;
+  SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi;
   UserAuthenticationApi userAuthenticationApi;
 
   public IdpServerApplication(
@@ -137,8 +147,14 @@ public class IdpServerApplication {
         ApplicationComponentContainerLoader.load(dependencyContainer);
     applicationComponentContainer.register(OAuthSessionDelegate.class, oAuthSessionDelegate);
 
-    AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository =
-        applicationComponentContainer.resolve(AuthorizationServerConfigurationRepository.class);
+    AuthorizationServerConfigurationCommandRepository
+        authorizationServerConfigurationCommandRepository =
+            applicationComponentContainer.resolve(
+                AuthorizationServerConfigurationCommandRepository.class);
+    AuthorizationServerConfigurationQueryRepository
+        authorizationServerConfigurationQueryRepository =
+            applicationComponentContainer.resolve(
+                AuthorizationServerConfigurationQueryRepository.class);
     ClientConfigurationCommandRepository clientConfigurationCommandRepository =
         applicationComponentContainer.resolve(ClientConfigurationCommandRepository.class);
     ClientConfigurationQueryRepository clientConfigurationQueryRepository =
@@ -181,6 +197,16 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(IdentityVerificationApplicationQueryRepository.class);
     IdentityVerificationResultCommandRepository identityVerificationResultCommandRepository =
         applicationComponentContainer.resolve(IdentityVerificationResultCommandRepository.class);
+    FederationConfigurationCommandRepository federationConfigurationCommandRepository =
+        applicationComponentContainer.resolve(FederationConfigurationCommandRepository.class);
+    FederationConfigurationQueryRepository federationConfigurationQueryRepository =
+        applicationComponentContainer.resolve(FederationConfigurationQueryRepository.class);
+    SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository =
+        applicationComponentContainer.resolve(SecurityEventHookConfigurationQueryRepository.class);
+    SecurityEventHookConfigurationCommandRepository
+        securityEventHookConfigurationCommandRepository =
+            applicationComponentContainer.resolve(
+                SecurityEventHookConfigurationCommandRepository.class);
 
     RoleCommandRepository roleCommandRepository =
         applicationComponentContainer.resolve(RoleCommandRepository.class);
@@ -244,7 +270,7 @@ public class IdpServerApplication {
                 userCommandRepository,
                 permissionCommandRepository,
                 roleCommandRepository,
-                authorizationServerConfigurationRepository,
+                authorizationServerConfigurationCommandRepository,
                 clientConfigurationCommandRepository,
                 clientConfigurationQueryRepository,
                 passwordEncodeDelegation),
@@ -399,7 +425,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 userQueryRepository,
                 userCommandRepository,
-                authorizationServerConfigurationRepository,
+                authorizationServerConfigurationCommandRepository,
                 clientConfigurationCommandRepository,
                 clientConfigurationQueryRepository),
             OnboardingApi.class,
@@ -413,11 +439,20 @@ public class IdpServerApplication {
                 organizationRepository,
                 userQueryRepository,
                 userCommandRepository,
-                authorizationServerConfigurationRepository,
+                authorizationServerConfigurationCommandRepository,
                 clientConfigurationCommandRepository,
                 clientConfigurationQueryRepository,
                 passwordEncodeDelegation),
             TenantInitializationApi.class,
+            tenantDialectProvider);
+
+    this.authorizationServerManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AuthorizationServerManagementEntryService(
+                tenantQueryRepository,
+                authorizationServerConfigurationQueryRepository,
+                authorizationServerConfigurationCommandRepository),
+            AuthorizationServerManagementApi.class,
             tenantDialectProvider);
 
     this.clientManagementApi =
@@ -447,6 +482,24 @@ public class IdpServerApplication {
                 authenticationConfigurationQueryRepository,
                 tenantQueryRepository),
             AuthenticationConfigurationManagementApi.class,
+            tenantDialectProvider);
+
+    this.federationConfigurationManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new FederationConfigurationManagementEntryService(
+                federationConfigurationQueryRepository,
+                federationConfigurationCommandRepository,
+                tenantQueryRepository),
+            FederationConfigurationManagementApi.class,
+            tenantDialectProvider);
+
+    this.securityEventHookConfigurationManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new SecurityEventHookConfigurationManagementEntryService(
+                securityEventHookConfigurationCommandRepository,
+                securityEventHookConfigurationQueryRepository,
+                tenantQueryRepository),
+            SecurityEventHookConfigurationManagementApi.class,
             tenantDialectProvider);
 
     this.identityVerificationConfigManagementApi =
@@ -524,6 +577,10 @@ public class IdpServerApplication {
     return tenantInitializationApi;
   }
 
+  public AuthorizationServerManagementApi authorizationServerManagementApi() {
+    return authorizationServerManagementApi;
+  }
+
   public ClientManagementApi clientManagementApi() {
     return clientManagementApi;
   }
@@ -546,5 +603,13 @@ public class IdpServerApplication {
 
   public IdpServerStarterApi idpServerStarterApi() {
     return idpServerStarterApi;
+  }
+
+  public FederationConfigurationManagementApi federationConfigManagementApi() {
+    return federationConfigurationManagementApi;
+  }
+
+  public SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi() {
+    return securityEventHookConfigurationManagementApi;
   }
 }

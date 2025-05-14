@@ -8,7 +8,7 @@ import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
-import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigRegistrationRequest;
+import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigRequest;
 import org.idp.server.core.authentication.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
@@ -33,17 +33,19 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationConfigManagementResponse response =
-        authenticationConfigurationManagementApi.register(
+        authenticationConfigurationManagementApi.create(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
-            new AuthenticationConfigRegistrationRequest(body),
-            requestAttributes);
+            new AuthenticationConfigRequest(body),
+            requestAttributes,
+            dryRun);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
@@ -57,6 +59,7 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestParam(value = "limit", defaultValue = "20") String limitValue,
       @RequestParam(value = "offset", defaultValue = "0") String offsetValue,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -81,6 +84,7 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthenticationConfigurationIdentifier identifier,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -105,6 +109,7 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthenticationConfigurationIdentifier identifier,
       @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -115,8 +120,9 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             identifier,
-            new AuthenticationConfigRegistrationRequest(body),
-            requestAttributes);
+            new AuthenticationConfigRequest(body),
+            requestAttributes,
+            dryRun);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
     return new ResponseEntity<>(
@@ -128,6 +134,7 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthenticationConfigurationIdentifier identifier,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -138,7 +145,8 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             identifier,
-            requestAttributes);
+            requestAttributes,
+            dryRun);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");

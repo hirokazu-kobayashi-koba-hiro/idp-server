@@ -53,7 +53,21 @@ public class JsonSchemaDefinition {
         definition.getValueAsJsonNode("properties").getValueAsJsonNode(fieldName));
   }
 
-  public Iterator<String> propertyNames() {
-    return definition.fieldNames();
+  public JsonSchemaDefinition childJsonSchema(String childName) {
+    JsonNodeWrapper properties = definition.getValueAsJsonNode("properties");
+    JsonNodeWrapper jsonNodeWrapper = properties.getValueAsJsonNode(childName);
+    return new JsonSchemaDefinition(jsonNodeWrapper);
+  }
+
+  public List<String> propertiesFieldAsList() {
+    List<String> names = new ArrayList<>();
+    JsonNodeWrapper properties = definition.getValueAsJsonNode("properties");
+
+    if (!properties.exists()) {
+      return List.of();
+    }
+
+    properties.fieldNames().forEachRemaining(names::add);
+    return names;
   }
 }

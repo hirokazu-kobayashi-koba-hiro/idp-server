@@ -80,7 +80,9 @@ public class ServerConfigurationResponseCreator {
           authorizationServerConfiguration.requestObjectEncryptionAlgValuesSupported());
     }
     if (authorizationServerConfiguration.hasRequestObjectEncryptionEncValuesSupported()) {
-      map.put("", authorizationServerConfiguration.requestObjectEncryptionEncValuesSupported());
+      map.put(
+          "request_object_encryption_enc_values_supported",
+          authorizationServerConfiguration.requestObjectEncryptionEncValuesSupported());
     }
     if (authorizationServerConfiguration.hasTokenEndpointAuthMethodsSupported()) {
       map.put(

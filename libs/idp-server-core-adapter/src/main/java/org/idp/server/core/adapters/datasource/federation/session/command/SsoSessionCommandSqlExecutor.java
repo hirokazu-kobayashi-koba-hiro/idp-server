@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.datasource.federation.session.command;
 
-import org.idp.server.core.federation.SsoSessionIdentifier;
+import org.idp.server.core.federation.sso.SsoSessionIdentifier;
 
 public interface SsoSessionCommandSqlExecutor {
 

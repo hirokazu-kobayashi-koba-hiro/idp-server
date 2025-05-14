@@ -3,6 +3,7 @@ package org.idp.server.basic.json.schema;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.basic.json.JsonNodeWrapper;
+import org.idp.server.basic.json.schema.format.JsonPropertyFormat;
 
 public class JsonSchemaValidator {
 
@@ -14,8 +15,12 @@ public class JsonSchemaValidator {
 
   public JsonSchemaValidationResult validate(JsonNodeWrapper target) {
     List<String> errors = new ArrayList<>();
-    validateRequiredField(target, errors);
-    validateType(target, errors);
+    if (!target.exists()) {
+      errors.add("Schema does not exist");
+      return JsonSchemaValidationResult.failure(errors);
+    }
+
+    validateObjectConstraints("", target, schemaDefinition, errors);
 
     if (!errors.isEmpty()) {
       return JsonSchemaValidationResult.failure(errors);
@@ -24,51 +29,143 @@ public class JsonSchemaValidator {
     return JsonSchemaValidationResult.success();
   }
 
-  void validateRequiredField(JsonNodeWrapper target, List<String> errors) {
-    List<String> requiredFields = schemaDefinition.requiredFields();
+  void validateObjectConstraints(
+      String prefix,
+      JsonNodeWrapper target,
+      JsonSchemaDefinition jsonSchemaDefinition,
+      List<String> errors) {
+
+    if (!target.exists()) {
+      // validateRequiredField is covered
+      return;
+    }
+
+    validateRequiredField(prefix, target, jsonSchemaDefinition, errors);
+
+    for (String field : jsonSchemaDefinition.propertiesFieldAsList()) {
+      JsonNodeWrapper valueObject = target.getValueAsJsonNode(field);
+      JsonSchemaProperty childSchema = jsonSchemaDefinition.propertySchema(field);
+      if (childSchema == null || !childSchema.exists()) {
+        continue;
+      }
+
+      if (childSchema.isStringType()) {
+        validateStringConstraints(prefix, field, valueObject, childSchema, errors);
+      } else if (childSchema.isArrayType()) {
+        validateArrayConstraints(prefix, field, valueObject, childSchema, errors);
+      } else if (childSchema.isObjectType()) {
+        JsonNodeWrapper childObject = target.getValueAsJsonNode(field);
+        JsonSchemaDefinition childSchemaDefinition = jsonSchemaDefinition.childJsonSchema(field);
+        validateObjectConstraints(field, childObject, childSchemaDefinition, errors);
+      }
+    }
+  }
+
+  void validateRequiredField(
+      String prefix,
+      JsonNodeWrapper target,
+      JsonSchemaDefinition jsonSchemaDefinition,
+      List<String> errors) {
+    List<String> requiredFields = jsonSchemaDefinition.requiredFields();
     if (!requiredFields.isEmpty()) {
       for (String requiredField : requiredFields) {
         if (!target.contains(requiredField)) {
-          errors.add(requiredField + " is missing");
+          String composedFiledName = prefix + "." + requiredField;
+          errors.add(composedFiledName + " is missing");
         }
       }
     }
   }
 
-  void validateType(JsonNodeWrapper target, List<String> errors) {
-    target
-        .fieldNames()
-        .forEachRemaining(
-            field -> {
-              JsonNodeWrapper valueObject = target.getValueAsJsonNode(field);
-              JsonSchemaProperty schemaProperty = schemaDefinition.propertySchema(field);
-              if (!schemaProperty.exists()) {
-                return;
-              }
-              if (!valueObject.nodeTypeAsString().equals(schemaProperty.type())) {
-                errors.add(field + " type is " + schemaDefinition.propertySchema(field).type());
-              }
+  void validateStringConstraints(
+      String prefix,
+      String field,
+      JsonNodeWrapper valueObject,
+      JsonSchemaProperty schemaProperty,
+      List<String> errors) {
 
-              if (schemaProperty.hasMinLength()) {
-                if (valueObject.isString()
-                    && valueObject.asText().length() < schemaProperty.minLength()) {
-                  errors.add(field + " minLength is " + schemaProperty.minLength());
-                }
-              }
+    if (!valueObject.exists()) {
+      // validateRequiredField is covered
+      return;
+    }
 
-              if (schemaProperty.hasMaxLength()) {
-                if (valueObject.isString()
-                    && valueObject.asText().length() > schemaProperty.maxLength()) {
-                  errors.add(field + " maxLength is " + schemaProperty.maxLength());
-                }
-              }
+    String value = valueObject.asText();
+    String composedFiledName = composeFiledName(prefix, field);
 
-              if (schemaProperty.hasPattern()) {
-                if (valueObject.isString()
-                    && !valueObject.asText().matches(schemaProperty.pattern())) {
-                  errors.add(field + " pattern is " + schemaProperty.pattern());
-                }
-              }
-            });
+    if (schemaProperty.hasMinLength() && value.length() < schemaProperty.minLength()) {
+      errors.add(composedFiledName + " minLength is " + schemaProperty.minLength());
+    }
+
+    if (schemaProperty.hasMaxLength() && value.length() > schemaProperty.maxLength()) {
+      errors.add(composedFiledName + " maxLength is " + schemaProperty.maxLength());
+    }
+
+    if (schemaProperty.hasPattern() && !value.matches(schemaProperty.pattern())) {
+      errors.add(composedFiledName + " pattern is " + schemaProperty.pattern());
+    }
+
+    if (schemaProperty.hasFormat()) {
+      JsonPropertyFormat format = schemaProperty.format();
+      if (!format.match(value)) {
+        errors.add(
+            String.format(
+                "%s format is %s, but %s.", field, schemaProperty.formatAsString(), value));
+      }
+    }
+
+    if (schemaProperty.hasEnum() && !schemaProperty.enumValues().contains(value)) {
+      errors.add(
+          String.format(
+              "%s is not allowed enum value, input: %s, definition: %s",
+              field, value, schemaProperty.enumValuesAsString()));
+    }
+  }
+
+  void validateArrayConstraints(
+      String prefix,
+      String field,
+      JsonNodeWrapper valueObject,
+      JsonSchemaProperty schemaProperty,
+      List<String> errors) {
+
+    if (!valueObject.exists()) {
+      // validateRequiredField is covered
+      return;
+    }
+
+    List<JsonNodeWrapper> elements = valueObject.elements();
+    String composedFiledName = composeFiledName(prefix, field);
+
+    if (schemaProperty.hasMinItems() && elements.size() < schemaProperty.minItems()) {
+      errors.add(
+          composedFiledName + " must have at least " + schemaProperty.minItems() + " items.");
+    }
+
+    if (schemaProperty.hasMaxItems() && elements.size() > schemaProperty.maxItems()) {
+      errors.add(composedFiledName + " must have at most " + schemaProperty.maxItems() + " items.");
+    }
+
+    if (schemaProperty.uniqueItems()) {
+      List<String> seen = new ArrayList<>();
+      for (JsonNodeWrapper element : elements) {
+        String asString = element.asText();
+        if (seen.contains(asString)) {
+          errors.add(composedFiledName + " must not contain duplicate items.");
+          break;
+        }
+        seen.add(asString);
+      }
+    }
+
+    JsonSchemaProperty itemsSchema = schemaProperty.itemsSchema();
+    for (JsonNodeWrapper element : elements) {
+      if (itemsSchema.isStringType()) {
+        validateStringConstraints(prefix, field, element, itemsSchema, errors);
+      }
+    }
+  }
+
+  private String composeFiledName(String prefix, String field) {
+    return prefix + "." + field;
   }
 }

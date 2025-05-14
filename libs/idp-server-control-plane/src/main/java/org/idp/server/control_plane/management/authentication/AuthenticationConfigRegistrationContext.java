@@ -24,7 +24,7 @@ public class AuthenticationConfigRegistrationContext {
     return tenant;
   }
 
-  public AuthenticationConfiguration authenticationConfiguration() {
+  public AuthenticationConfiguration configuration() {
     return authenticationConfiguration;
   }
 
@@ -34,7 +34,7 @@ public class AuthenticationConfigRegistrationContext {
 
   public AuthenticationConfigManagementResponse toResponse() {
     Map<String, Object> response = new HashMap<>();
-    response.put("config", authenticationConfiguration.payload());
+    response.put("result", authenticationConfiguration.payload());
     response.put("dry_run", dryRun);
     return new AuthenticationConfigManagementResponse(
         AuthenticationConfigManagementStatus.CREATED, response);

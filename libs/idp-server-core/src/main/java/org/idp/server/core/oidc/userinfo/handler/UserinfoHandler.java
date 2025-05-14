@@ -4,7 +4,7 @@ import java.util.Map;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.userinfo.UserinfoClaimsCreator;
 import org.idp.server.core.oidc.userinfo.UserinfoResponse;
@@ -19,15 +19,17 @@ import org.idp.server.core.token.tokenintrospection.exception.TokenInvalidExcept
 public class UserinfoHandler {
 
   OAuthTokenRepository oAuthTokenRepository;
-  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
+  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public UserinfoHandler(
       OAuthTokenRepository oAuthTokenRepository,
-      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
+      AuthorizationServerConfigurationQueryRepository
+          authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
-    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
+    this.authorizationServerConfigurationQueryRepository =
+        authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 

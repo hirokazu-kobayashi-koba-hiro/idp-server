@@ -40,6 +40,26 @@
     "description": "Admin Delete tenant"
   },
   {
+    "id": "2cc4b3d3-6e3c-479e-8e23-7d2927ec0ba3",
+    "name": "authorization-server:create",
+    "description": "Admin Create a authorization-server"
+  },
+  {
+    "id": "a06953d0-c249-49d1-940d-f32d6a06838a",
+    "name": "authorization-server:read",
+    "description": "Admin Read authorization-server information"
+  },
+  {
+    "id": "1940bf56-4fa2-4e31-aa05-bc048af1f9ae",
+    "name": "authorization-server:update",
+    "description": "Admin Update authorization-server"
+  },
+  {
+    "id": "a85f28c7-02a9-4977-9e6c-a4b968dfde9f",
+    "name": "authorization-server:delete",
+    "description": "Admin Delete authorization-server"
+  },
+  {
     "id": "77c26d65-e4e0-4ddf-8f04-263d51f1a44e",
     "name": "client:create",
     "description": "Admin Create a client"
@@ -138,5 +158,45 @@
     "id": "46e33b99-daa3-44ef-9fe9-945aabc9ad3e",
     "name": "role:delete",
     "description": "Admin Delete role"
+  },
+  {
+    "id": "3ee109b4-ed6e-4dec-b541-2de7b47729bc",
+    "name": "authentication-config:create",
+    "description": "Admin Create a authentication-config"
+  },
+  {
+    "id": "c9d5256f-0df6-4698-b91a-dc67ffbbde18",
+    "name": "authentication-config:read",
+    "description": "Admin Read authentication-config information"
+  },
+  {
+    "id": "cf390318-f6dd-4a64-b7a3-94f9a795d420",
+    "name": "authentication-config:update",
+    "description": "Admin Update authentication-config"
+  },
+  {
+    "id": "4ffae163-0d50-45f1-865c-59704626aef2",
+    "name": "authentication-config:delete",
+    "description": "Admin Delete authentication-config"
+  },
+  {
+    "id": "73d96f0e-6971-468d-b97c-59b3789c9479",
+    "name": "identity-verification-config:create",
+    "description": "Admin Create a identity-verification-config"
+  },
+  {
+    "id": "c7719370-11e1-46b0-8e37-f58a125bafc1",
+    "name": "identity-verification-config:read",
+    "description": "Admin Read identity-verification-config information"
+  },
+  {
+    "id": "3514733f-6259-4630-a3ff-6f486daf0266",
+    "name": "identity-verification-config:update",
+    "description": "Admin Update identity-verification-config"
+  },
+  {
+    "id": "1052b34b-d045-498e-beda-97beab10661c",
+    "name": "identity-verification-config:delete",
+    "description": "Admin Delete identity-verification-config"
   }
 ]

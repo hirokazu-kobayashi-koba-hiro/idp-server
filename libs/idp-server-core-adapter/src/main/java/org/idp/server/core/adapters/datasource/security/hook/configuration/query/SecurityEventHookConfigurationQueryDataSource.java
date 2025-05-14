@@ -1,0 +1,59 @@
+package org.idp.server.core.adapters.datasource.security.hook.configuration.query;
+
+import java.util.List;
+import java.util.Map;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.security.hook.SecurityEventHookConfiguration;
+import org.idp.server.core.security.hook.SecurityEventHookConfigurationIdentifier;
+import org.idp.server.core.security.hook.SecurityEventHookConfigurations;
+import org.idp.server.core.security.repository.SecurityEventHookConfigurationQueryRepository;
+
+public class SecurityEventHookConfigurationQueryDataSource
+    implements SecurityEventHookConfigurationQueryRepository {
+
+  SecurityEventHookConfigSqlExecutors executors;
+
+  public SecurityEventHookConfigurationQueryDataSource() {
+    this.executors = new SecurityEventHookConfigSqlExecutors();
+  }
+
+  @Override
+  public SecurityEventHookConfigurations find(Tenant tenant) {
+    SecurityEventHookConfigSqlExecutor executor = executors.get(tenant.databaseType());
+    List<Map<String, String>> results = executor.selectListBy(tenant);
+
+    if (results == null || results.isEmpty()) {
+      return new SecurityEventHookConfigurations();
+    }
+
+    List<SecurityEventHookConfiguration> list =
+        results.stream().map(ModelConverter::convert).toList();
+
+    return new SecurityEventHookConfigurations(list);
+  }
+
+  @Override
+  public SecurityEventHookConfiguration find(
+      Tenant tenant, SecurityEventHookConfigurationIdentifier identifier) {
+    SecurityEventHookConfigSqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectOne(tenant, identifier);
+
+    if (result == null || result.isEmpty()) {
+      return new SecurityEventHookConfiguration();
+    }
+
+    return ModelConverter.convert(result);
+  }
+
+  @Override
+  public List<SecurityEventHookConfiguration> findList(Tenant tenant, int limit, int offset) {
+    SecurityEventHookConfigSqlExecutor executor = executors.get(tenant.databaseType());
+    List<Map<String, String>> results = executor.selectList(tenant, limit, offset);
+
+    if (results == null || results.isEmpty()) {
+      return List.of();
+    }
+
+    return results.stream().map(ModelConverter::convert).toList();
+  }
+}

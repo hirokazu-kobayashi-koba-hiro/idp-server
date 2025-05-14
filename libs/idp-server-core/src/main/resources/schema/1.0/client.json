@@ -11,7 +11,6 @@
     },
     "client_id_alias": {
       "type": "string",
-      "format": "uuid",
       "maxLength": "255"
     },
     "client_secret": {
@@ -113,6 +112,7 @@
     "id_token_signed_response_alg": {
       "type": "string",
       "enum": [
+        "none",
         "RS256",
         "ES256",
         "HS256"
@@ -129,12 +129,14 @@
       "type": "string",
       "enum": [
         "A128CBC-HS256",
-        "A128GCM"
+        "A128GCM",
+        "A256GCM"
       ]
     },
     "userinfo_signed_response_alg": {
       "type": "string",
       "enum": [
+        "none",
         "RS256",
         "ES256",
         "HS256"
@@ -151,12 +153,14 @@
       "type": "string",
       "enum": [
         "A128CBC-HS256",
-        "A128GCM"
+        "A128GCM",
+        "A256GCM"
       ]
     },
     "request_object_signing_alg": {
       "type": "string",
       "enum": [
+        "none",
         "RS256",
         "ES256",
         "HS256"
@@ -173,7 +177,8 @@
       "type": "string",
       "enum": [
         "A128CBC-HS256",
-        "A128GCM"
+        "A128GCM",
+        "A256GCM"
       ]
     },
     "token_endpoint_auth_method": {
@@ -184,12 +189,14 @@
         "client_secret_jwt",
         "private_key_jwt",
         "tls_client_auth",
-        "self_signed_tls_client_auth"
+        "self_signed_tls_client_auth",
+        "none"
       ]
     },
     "token_endpoint_auth_signing_alg": {
       "type": "string",
       "enum": [
+        "none",
         "RS256",
         "ES256",
         "HS256"

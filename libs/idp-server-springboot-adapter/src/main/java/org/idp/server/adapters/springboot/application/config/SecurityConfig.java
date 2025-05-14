@@ -51,15 +51,6 @@ public class SecurityConfig {
         (authorize) ->
             authorize
                 .requestMatchers(
-                    "/{tenant-id}/v1/management/tenants", "/{tenant-id}/v1/management/tenants/**")
-                .hasAuthority(IdPApplicationScope.tenant_management.name())
-                .requestMatchers(
-                    "/{tenant-id}/v1/management/clients", "/{tenant-id}/v1/management/clients/**")
-                .hasAuthority(IdPApplicationScope.client_management.name())
-                .requestMatchers(
-                    "/{tenant-id}/v1/management/users", "/{tenant-id}/v1/management/users/**")
-                .hasAuthority(IdPApplicationScope.user_management.name())
-                .requestMatchers(
                     "/{tenant-id}/v1/identity/{verification-type}/{verification-process}")
                 .hasAuthority(IdPApplicationScope.identity_verification_application.name())
                 .anyRequest()

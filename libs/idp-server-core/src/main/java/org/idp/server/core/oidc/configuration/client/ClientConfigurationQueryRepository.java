@@ -11,7 +11,7 @@ public interface ClientConfigurationQueryRepository {
 
   ClientConfiguration get(Tenant tenant, ClientIdentifier clientIdentifier);
 
-  List<ClientConfiguration> find(Tenant tenant, int limit, int offset);
+  List<ClientConfiguration> findList(Tenant tenant, int limit, int offset);
 
   ClientConfiguration find(Tenant tenant, ClientIdentifier clientIdentifier);
 }

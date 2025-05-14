@@ -8,7 +8,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 public interface AuthenticationConfigurationQueryRepository {
   <T> T get(Tenant tenant, String key, Class<T> clazz);
 
-  AuthenticationConfiguration get(Tenant tenant, AuthenticationConfigurationIdentifier identifier);
+  AuthenticationConfiguration find(Tenant tenant, AuthenticationConfigurationIdentifier identifier);
 
   List<AuthenticationConfiguration> findList(Tenant tenant, int limit, int offset);
 }

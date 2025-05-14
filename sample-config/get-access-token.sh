@@ -43,7 +43,7 @@ ACCESS_TOKEN=$(curl -s -X POST "${BASE_URL}/${TENANT_ID}/v1/tokens" \
   -d "client_secret=${CLIENT_SECRET}" \
   -d "username=${USERNAME}" \
   -d "password=${PASSWORD}" \
-  -d "scope=openid" | jq -r .access_token)
+  -d "scope=openid management phone email address offline_access" | jq -r .access_token)
 
 if [ "$ACCESS_TOKEN" == "null" ] || [ -z "$ACCESS_TOKEN" ]; then
   echo "❌ Failed to get access token"

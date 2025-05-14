@@ -7,9 +7,9 @@ import org.idp.server.core.authentication.AuthenticationInteractionRequestResult
 import org.idp.server.core.authentication.AuthenticationInteractionType;
 import org.idp.server.core.federation.FederationInteractionResult;
 import org.idp.server.core.federation.FederationType;
-import org.idp.server.core.federation.SsoProvider;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
 import org.idp.server.core.federation.io.FederationRequestResponse;
+import org.idp.server.core.federation.sso.SsoProvider;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;

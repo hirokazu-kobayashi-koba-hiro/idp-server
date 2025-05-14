@@ -22,7 +22,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantCommandRepository;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 
@@ -33,7 +33,8 @@ public class TenantInitializationEntryService implements TenantInitializationApi
   TenantQueryRepository tenantQueryRepository;
   OrganizationRepository organizationRepository;
   UserRegistrator userRegistrator;
-  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
+  AuthorizationServerConfigurationCommandRepository
+      authorizationServerConfigurationCommandRepository;
   ClientConfigurationCommandRepository clientConfigurationCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   TenantInitializationVerifier tenantInitializationVerifier;
@@ -45,7 +46,8 @@ public class TenantInitializationEntryService implements TenantInitializationApi
       OrganizationRepository organizationRepository,
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
-      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
+      AuthorizationServerConfigurationCommandRepository
+          authorizationServerConfigurationCommandRepository,
       ClientConfigurationCommandRepository clientConfigurationCommandRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       PasswordEncodeDelegation passwordEncodeDelegation) {
@@ -53,7 +55,8 @@ public class TenantInitializationEntryService implements TenantInitializationApi
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.userRegistrator = new UserRegistrator(userQueryRepository, userCommandRepository);
-    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
+    this.authorizationServerConfigurationCommandRepository =
+        authorizationServerConfigurationCommandRepository;
     this.clientConfigurationCommandRepository = clientConfigurationCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     TenantVerifier tenantVerifier = new TenantVerifier(tenantQueryRepository);
@@ -67,15 +70,17 @@ public class TenantInitializationEntryService implements TenantInitializationApi
   public TenantInitializationResponse initialize(
       TenantIdentifier adminTenantIdentifier,
       TenantInitializationRequest request,
-      RequestAttributes requestAttributes) {
-    TenantInitializeRequestValidator validator = new TenantInitializeRequestValidator(request);
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+    TenantInitializeRequestValidator validator =
+        new TenantInitializeRequestValidator(request, dryRun);
     TenantInitializeRequestValidationResult validationResult = validator.validate();
     if (!validationResult.isValid()) {
       return validationResult.errorResponse();
     }
 
     TenantInitializationContextCreator contextCreator =
-        new TenantInitializationContextCreator(request, passwordEncodeDelegation);
+        new TenantInitializationContextCreator(request, dryRun, passwordEncodeDelegation);
     TenantInitializationContext context = contextCreator.create();
 
     TenantInitializationVerificationResult verificationResult =
@@ -85,13 +90,13 @@ public class TenantInitializationEntryService implements TenantInitializationApi
       return verificationResult.errorResponse();
     }
 
-    if (request.isDryRun()) {
+    if (dryRun) {
       return context.toResponse();
     }
 
     Tenant tenant = context.tenant();
     tenantCommandRepository.register(tenant);
-    authorizationServerConfigurationRepository.register(
+    authorizationServerConfigurationCommandRepository.register(
         tenant, context.authorizationServerConfiguration());
     organizationRepository.register(tenant, context.organization());
     Tenant admin = tenantQueryRepository.getAdmin();

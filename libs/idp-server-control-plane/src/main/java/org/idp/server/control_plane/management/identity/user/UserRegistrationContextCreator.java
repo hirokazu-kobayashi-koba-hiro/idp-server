@@ -12,29 +12,30 @@ public class UserRegistrationContextCreator {
 
   Tenant tenant;
   UserRegistrationRequest request;
+  boolean dryRun;
   PasswordEncodeDelegation passwordEncodeDelegation;
   JsonConverter jsonConverter;
 
   public UserRegistrationContextCreator(
       Tenant tenant,
       UserRegistrationRequest request,
+      boolean dryRun,
       PasswordEncodeDelegation passwordEncodeDelegation) {
     this.tenant = tenant;
     this.request = request;
+    this.dryRun = dryRun;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   public UserRegistrationContext create() {
-    User user = jsonConverter.read(request.get("user"), User.class);
+    User user = jsonConverter.read(request.toMap(), User.class);
     if (!user.hasSub()) {
       user.setSub(UUID.randomUUID().toString());
     }
     String encoded = passwordEncodeDelegation.encode(user.rawPassword());
     user.setHashedPassword(encoded);
     user.setStatus(UserStatus.REGISTERED);
-
-    boolean dryRun = request.isDryRun();
 
     return new UserRegistrationContext(tenant, user, dryRun);
   }

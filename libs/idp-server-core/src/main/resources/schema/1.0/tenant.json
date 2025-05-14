@@ -1,9 +1,16 @@
 {
   "type": "object",
-  "required": ["id", "name", "domain", "authorization_provider", "database_type"],
+  "required": [
+    "id",
+    "name",
+    "domain",
+    "authorization_provider",
+    "database_type"
+  ],
   "properties": {
     "id": {
       "type": "string",
+      "format": "uuid",
       "minLength": 36,
       "maxLength": 36
     },
@@ -13,15 +20,25 @@
     },
     "domain": {
       "type": "string",
+      "format": "uri",
       "minLength": 1
     },
     "database_type": {
       "type": "string",
-      "enum": ["POSTGRESQL", "MYSQL", "SPANNER"]
+      "enum": [
+        "POSTGRESQL",
+        "MYSQL",
+        "SPANNER",
+        "postgresql",
+        "mysql",
+        "spanner"
+      ]
     },
     "authorization_provider": {
       "type": "string",
-      "enum": ["idp-server"]
+      "enum": [
+        "idp-server"
+      ]
     }
   }
 }

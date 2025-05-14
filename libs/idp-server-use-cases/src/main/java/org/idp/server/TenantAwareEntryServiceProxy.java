@@ -26,7 +26,16 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         method.isAnnotationPresent(Transaction.class)
             || target.getClass().isAnnotationPresent(Transaction.class);
 
-    Transaction tx = method.getAnnotation(Transaction.class);
+    Transaction tx = method.getClass().getAnnotation(Transaction.class);
+    if (tx == null) {
+      try {
+        Method implMethod =
+            target.getClass().getMethod(method.getName(), method.getParameterTypes());
+        tx = implMethod.getAnnotation(Transaction.class);
+      } catch (NoSuchMethodException e) {
+        log.error(e.getMessage(), e);
+      }
+    }
     if (tx == null) {
       tx = target.getClass().getAnnotation(Transaction.class);
     }
@@ -62,6 +71,8 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         log.error(
             "fail: " + target.getClass().getName() + ": " + method.getName() + ", cause: " + e);
         throw e;
+      } finally {
+        TransactionManager.closeConnection();
       }
     } else if (isTransactional && operationType == OperationType.WRITE) {
       try {
@@ -114,6 +125,8 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
                 + ", cause: "
                 + e);
         throw e;
+      } finally {
+        TransactionManager.closeConnection();
       }
     } else {
       return method.invoke(target, args);

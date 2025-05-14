@@ -85,13 +85,14 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
           String.format("unregistered client (%s)", clientIdentifier.value()), tenant);
     }
 
-    cacheStore.put(key, result);
+    ClientConfiguration converted = ModelConverter.convert(result);
+    cacheStore.put(key, converted);
 
-    return ModelConverter.convert(result);
+    return converted;
   }
 
   @Override
-  public List<ClientConfiguration> find(Tenant tenant, int limit, int offset) {
+  public List<ClientConfiguration> findList(Tenant tenant, int limit, int offset) {
     ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> maps = executor.selectList(tenant, limit, offset);
 
@@ -119,9 +120,10 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
       return new ClientConfiguration();
     }
 
-    cacheStore.put(key, result);
+    ClientConfiguration converted = ModelConverter.convert(result);
+    cacheStore.put(key, converted);
 
-    return ModelConverter.convert(result);
+    return converted;
   }
 
   private String key(TenantIdentifier tenantIdentifier, String clientId) {

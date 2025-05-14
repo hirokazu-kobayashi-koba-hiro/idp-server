@@ -10,5 +10,6 @@ public interface IdpServerStarterApi {
   IdpServerStarterResponse initialize(
       TenantIdentifier adminTenantIdentifier,
       IdpServerStarterRequest request,
-      RequestAttributes requestAttributes);
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 }

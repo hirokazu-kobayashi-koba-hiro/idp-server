@@ -62,7 +62,8 @@ public class AuthorizationServerConfiguration implements JsonReadable {
   VerifiableCredentialConfiguration credentialIssuerMetadata =
       new VerifiableCredentialConfiguration();
 
-  AuthorizationServerExtensionConfiguration extension;
+  AuthorizationServerExtensionConfiguration extension =
+      new AuthorizationServerExtensionConfiguration();
 
   public AuthorizationServerConfiguration() {}
 
@@ -510,5 +511,102 @@ public class AuthorizationServerConfiguration implements JsonReadable {
 
   public List<AuthenticationPolicy> authenticationPolicies() {
     return extension.authenticationPolicies();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("issuer", issuer);
+    map.put("authorization_endpoint", authorizationEndpoint);
+    if (hasTokenEndpoint()) {
+      map.put("token_endpoint", tokenEndpoint);
+    }
+    if (hasUserinfoEndpoint()) {
+      map.put("userinfo_endpoint", userinfoEndpoint());
+    }
+    if (hasRegistrationEndpoint()) {
+      map.put("registration_endpoint", registrationEndpoint());
+    }
+    map.put("jwks_uri", jwksUri());
+    if (hasScopesSupported()) {
+      map.put("scopes_supported", scopesSupported());
+    }
+    map.put("response_types_supported", responseTypesSupported());
+    if (hasResponseModesSupported()) {
+      map.put("response_modes_supported", responseModesSupported());
+    }
+    if (hasGrantTypesSupported()) {
+      map.put("grant_types_supported", grantTypesSupported());
+    }
+    if (hasAcrValuesSupported()) {
+      map.put("acr_values_supported", acrValuesSupported());
+    }
+    map.put("subject_types_supported", subjectTypesSupported());
+    map.put("id_token_signing_alg_values_supported", idTokenSigningAlgValuesSupported);
+    if (hasIdTokenEncryptionEncValuesSupported()) {
+      map.put("id_token_encryption_alg_values_supported", idTokenEncryptionEncValuesSupported);
+    }
+    if (hasIdTokenEncryptionEncValuesSupported()) {
+      map.put("id_token_encryption_enc_values_supported", idTokenEncryptionEncValuesSupported);
+    }
+    if (hasUserinfoSigningAlgValuesSupported()) {
+      map.put("userinfo_signing_alg_values_supported", userinfoSigningAlgValuesSupported);
+    }
+    if (hasUserinfoEncryptionAlgValuesSupported()) {
+      map.put("userinfo_encryption_alg_values_supported", userinfoEncryptionAlgValuesSupported);
+    }
+    if (hasUserinfoEncryptionEncValuesSupported()) {
+      map.put("userinfo_encryption_enc_values_supported", userinfoEncryptionEncValuesSupported);
+    }
+    if (hasRequestObjectSigningAlgValuesSupported()) {
+      map.put(
+          "request_object_signing_alg_values_supported", requestObjectSigningAlgValuesSupported);
+    }
+    if (hasRequestObjectEncryptionAlgValuesSupported()) {
+      map.put(
+          "request_object_encryption_alg_values_supported",
+          requestObjectEncryptionAlgValuesSupported);
+    }
+    if (hasRequestObjectEncryptionEncValuesSupported()) {
+      map.put(
+          "request_object_encryption_enc_values_supported",
+          requestObjectEncryptionEncValuesSupported);
+    }
+    if (hasTokenEndpointAuthMethodsSupported()) {
+      map.put("token_endpoint_auth_methods_supported", tokenEndpointAuthMethodsSupported);
+    }
+    if (hasTokenEndpointAuthSigningAlgValuesSupported()) {
+      map.put(
+          "token_endpoint_auth_signing_alg_values_supported", tokenEndpointAuthMethodsSupported);
+    }
+    if (hasDisplayValuesSupported()) {
+      map.put("display_values_supported", displayValuesSupported);
+    }
+    if (hasClaimTypesSupported()) {
+      map.put("claim_types_supported", claimTypesSupported);
+    }
+    if (hasClaimsSupported()) {
+      map.put("claims_supported", claimsSupported);
+    }
+    map.put("claims_parameter_supported", claimsParameterSupported);
+    map.put("request_parameter_supported", requestParameterSupported);
+    map.put("request_uri_parameter_supported", requestUriParameterSupported);
+    map.put("require_request_uri_registration", requireRequestUriRegistration);
+
+    if (hasBackchannelTokenDeliveryModesSupported()) {
+      map.put(
+          "backchannel_token_delivery_modes_supported", backchannelTokenDeliveryModesSupported());
+    }
+    if (hasBackchannelAuthenticationEndpoint()) {
+      map.put("backchannel_authentication_endpoint", hasBackchannelAuthenticationEndpoint());
+    }
+    if (hasBackchannelAuthenticationRequestSigningAlgValuesSupported()) {
+      map.put(
+          "backchannel_authentication_request_signing_alg_values_supported",
+          backchannelAuthenticationRequestSigningAlgValuesSupported);
+    }
+    if (hasBackchannelUserCodeParameterSupported()) {
+      map.put("backchannel_user_code_parameter_supported", backchannelUserCodeParameterSupported);
+    }
+    return null;
   }
 }

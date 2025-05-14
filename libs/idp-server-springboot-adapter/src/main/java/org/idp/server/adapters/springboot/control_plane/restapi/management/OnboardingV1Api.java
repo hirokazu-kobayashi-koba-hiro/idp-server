@@ -31,6 +31,7 @@ public class OnboardingV1Api implements ParameterTransformable {
   public ResponseEntity<?> post(
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @RequestBody Map<String, Object> request,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
@@ -40,10 +41,11 @@ public class OnboardingV1Api implements ParameterTransformable {
             adminTenantIdentifier,
             operatorPrincipal.getUser(),
             new OnboardingRequest(request),
-            requestAttributes);
+            requestAttributes,
+            dryRun);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
-    return new ResponseEntity<>(response, headers, HttpStatus.OK);
+    return new ResponseEntity<>(response.contents(), headers, HttpStatus.OK);
   }
 }

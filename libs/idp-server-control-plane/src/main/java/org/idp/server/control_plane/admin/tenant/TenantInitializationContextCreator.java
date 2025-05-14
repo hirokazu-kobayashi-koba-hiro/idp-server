@@ -20,12 +20,16 @@ import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 public class TenantInitializationContextCreator {
 
   TenantInitializationRequest request;
+  boolean dryRun;
   PasswordEncodeDelegation passwordEncodeDelegation;
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   public TenantInitializationContextCreator(
-      TenantInitializationRequest request, PasswordEncodeDelegation passwordEncodeDelegation) {
+      TenantInitializationRequest request,
+      boolean dryRun,
+      PasswordEncodeDelegation passwordEncodeDelegation) {
     this.request = request;
+    this.dryRun = dryRun;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
   }
 
@@ -69,6 +73,6 @@ public class TenantInitializationContextCreator {
         roles,
         updatedUser,
         clientConfiguration,
-        request.isDryRun());
+        dryRun);
   }
 }

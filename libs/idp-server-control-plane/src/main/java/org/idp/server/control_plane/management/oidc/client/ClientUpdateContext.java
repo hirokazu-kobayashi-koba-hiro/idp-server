@@ -3,7 +3,7 @@ package org.idp.server.control_plane.management.oidc.client;
 import java.util.Map;
 import org.idp.server.basic.json.JsonDiffCalculator;
 import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.control_plane.management.oidc.client.io.ClientConfigurationManagementResponse;
+import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -38,11 +38,11 @@ public class ClientUpdateContext {
     return dryRun;
   }
 
-  public ClientConfigurationManagementResponse toResponse() {
+  public ClientManagementResponse toResponse() {
     JsonNodeWrapper beforeJson = JsonNodeWrapper.fromObject(before.toMap());
     JsonNodeWrapper afterJson = JsonNodeWrapper.fromObject(after.toMap());
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
-    Map<String, Object> contents = Map.of("diff", diff, "dry_run", dryRun);
-    return new ClientConfigurationManagementResponse(ClientManagementStatus.OK, contents);
+    Map<String, Object> contents = Map.of("result", after.toMap(), "diff", diff, "dry_run", dryRun);
+    return new ClientManagementResponse(ClientManagementStatus.OK, contents);
   }
 }

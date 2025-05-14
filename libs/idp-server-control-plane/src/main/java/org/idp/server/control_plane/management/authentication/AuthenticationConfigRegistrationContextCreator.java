@@ -4,25 +4,27 @@ import java.util.Map;
 import java.util.UUID;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigRegistrationRequest;
+import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigRequest;
 import org.idp.server.core.authentication.AuthenticationConfiguration;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationConfigRegistrationContextCreator {
 
   Tenant tenant;
-  AuthenticationConfigRegistrationRequest request;
+  AuthenticationConfigRequest request;
+  boolean dryRun;
   JsonConverter jsonConverter;
 
   public AuthenticationConfigRegistrationContextCreator(
-      Tenant tenant, AuthenticationConfigRegistrationRequest request) {
+      Tenant tenant, AuthenticationConfigRequest request, boolean dryRun) {
     this.tenant = tenant;
     this.request = request;
+    this.dryRun = dryRun;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   public AuthenticationConfigRegistrationContext create() {
-    JsonNodeWrapper configJson = jsonConverter.readTree(request.get("config"));
+    JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
     String id =
         configJson.contains("id")
             ? configJson.getValueOrEmptyAsString("id")
@@ -32,8 +34,6 @@ public class AuthenticationConfigRegistrationContextCreator {
     Map<String, Object> payload = payloadJson.toMap();
 
     AuthenticationConfiguration configuration = new AuthenticationConfiguration(id, type, payload);
-
-    boolean dryRun = request.isDryRun();
 
     return new AuthenticationConfigRegistrationContext(tenant, configuration, dryRun);
   }

@@ -8,12 +8,13 @@ usage() {
 
 BASE_URL="http://localhost:8080"
 
-while getopts ":t:f:e:a:" opt; do
+while getopts ":t:f:e:a:d:" opt; do
   case $opt in
     t) TENANT_ID="$OPTARG" ;;
     f) JSON_FILE="$OPTARG" ;;
     e) BASE_URL="$OPTARG" ;;
     a) ACCESS_TOKEN="$OPTARG" ;;
+    d) DRY_RUN="$OPTARG" ;;
     *) usage ;;
   esac
 done
@@ -22,7 +23,7 @@ done
 [ ! -f "$JSON_FILE" ] && echo "❌ JSON file not found: $JSON_FILE" && exit 1
 [ -z "$ACCESS_TOKEN" ] && echo "❌ Access token required (-a)" && exit 1
 
-CLIENT_ID=$(jq -r .client.client_id "$JSON_FILE")
+CLIENT_ID=$(jq -r .client_id "$JSON_FILE")
 
 if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" == "null" ]; then
   echo "❌ Could not extract client_id from $JSON_FILE"
@@ -34,14 +35,24 @@ HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
   "${BASE_URL}/v1/management/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}")
 
+
+if [ "$DRY_RUN" == true ]; then
+  echo ""
+  echo "DRY_RUN.........."
+  echo ""
+  DRY_RUN_PARM="?dry_run=true"
+else
+  DRY_RUN_PARM="?dry_run=false"
+fi
+
 if [ "$HTTP_CODE" == "200" ]; then
   echo "🔁 Client exists. Updating..."
   METHOD="PUT"
-  URL="${BASE_URL}/v1/management/tenants/${TENANT_ID}/clients/${CLIENT_ID}"
+  URL="${BASE_URL}/v1/management/tenants/${TENANT_ID}/clients/${CLIENT_ID}${DRY_RUN_PARM}"
 elif [ "$HTTP_CODE" == "404" ]; then
   echo "🆕 Client not found. Registering new one..."
   METHOD="POST"
-  URL="${BASE_URL}/v1/management/tenants/${TENANT_ID}/clients"
+  URL="${BASE_URL}/v1/management/tenants/${TENANT_ID}/clients${DRY_RUN_PARM}"
 else
   echo "❌ Unexpected response from GET clients/${CLIENT_ID}: HTTP $HTTP_CODE"
   exit 1

@@ -6,7 +6,7 @@ echo "get access token"
 echo "-------------------------------------------------"
 echo ""
 
-while getopts ":u:p:t:e:c:s:" opt; do
+while getopts ":u:p:t:e:c:s:d:" opt; do
   case $opt in
     u) USERNAME="$OPTARG" ;;
     p) PASSWORD="$OPTARG" ;;
@@ -14,13 +14,26 @@ while getopts ":u:p:t:e:c:s:" opt; do
     e) BASE_URL="$OPTARG" ;;
     c) CLIENT_ID="$OPTARG" ;;
     s) CLIENT_SECRET="$OPTARG" ;;
-    *) echo "Usage: $0 -u <username> -p <password> -t <tenant_id> -e <base_url> -c <client_id> -s <client_secret>" && exit 1 ;;
+    d) DRY_RUN="$OPTARG" ;;
+    *) echo "Usage: $0 -u <username> -p <password> -t <tenant_id> -e <base_url> -c <client_id> -s <client_secret> -d <dry_run> "&& exit 1 ;;
   esac
 done
 
 ACCESS_TOKEN=$(./sample-config/get-access-token.sh -u "$USERNAME" -p "$PASSWORD" -t "$TENANT_ID" -e "$BASE_URL" -c "$CLIENT_ID" -s "$CLIENT_SECRET")
 
 echo "$ACCESS_TOKEN"
+
+# tenant-1 onboarding
+
+echo "-------------------------------------------------"
+echo ""
+echo "tenant-1"
+
+./sample-config/onboarding.sh \
+  -t "${TENANT_ID}" \
+  -f "./sample-config/tenant-1/initial.json" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
 
 ##client
 
@@ -44,9 +57,8 @@ for client_file in "${client_files[@]}"; do
 ./sample-config/upsert-client.sh \
   -t "${TENANT_ID}" \
   -f "./sample-config/admin-tenant/clients/${client_file}" \
-  -a "${ACCESS_TOKEN}"
-
-sleep 1
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
 
 done
 
@@ -71,9 +83,9 @@ for authentication_config_file in "${authentication_config_files[@]}"; do
 ./sample-config/upsert-authentication-config.sh \
   -t "${TENANT_ID}" \
   -f "./sample-config/admin-tenant/authentication-config/${authentication_config_file}" \
-  -a "${ACCESS_TOKEN}"
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
 
-sleep 1
 done
 
 #identity-verification-config
@@ -92,19 +104,49 @@ for identity_verification_config_file in "${identity_verification_config_files[@
 ./sample-config/upsert-identity-verification-config.sh \
   -t "${TENANT_ID}" \
   -f "./sample-config/admin-tenant/identity/${identity_verification_config_file}" \
-  -a "${ACCESS_TOKEN}"
-
-sleep 1
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
 
 done
 
-# tenant-1
-
+#federation-oidc
 echo "-------------------------------------------------"
 echo ""
+echo "federation-config oidc"
 
-echo "tenant-1"
-curl -X POST "${IDP_SERVER_DOMAIN}v1/admin/public-tenant/initialization" \
--u "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" \
--H "Content-Type:application/json" \
---data @./sample-config/tenant-1/initial.json | jq
+federation_config_files=(
+  facebook.json
+  google.json
+)
+
+for federation_config_file in "${federation_config_files[@]}"; do
+  echo "🔧 Registering: $(basename "$federation_config_file")"
+
+./sample-config/upsert-federation-config.sh \
+  -t "${TENANT_ID}" \
+  -f "./sample-config/admin-tenant/federation/oidc/${federation_config_file}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+done
+
+#federation-oidc
+echo "-------------------------------------------------"
+echo ""
+echo "federation-config oidc"
+
+security_event_hook_config_files=(
+  slack.json
+  ssf.json
+)
+
+for security_event_hook_config_file in "${security_event_hook_config_files[@]}"; do
+  echo "🔧 Registering: $(basename "$security_event_hook_config_file")"
+
+./sample-config/upsert-security-event-hook-config.sh \
+  -t "${TENANT_ID}" \
+  -f "./sample-config/admin-tenant/security-event-hook/${security_event_hook_config_file}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+done

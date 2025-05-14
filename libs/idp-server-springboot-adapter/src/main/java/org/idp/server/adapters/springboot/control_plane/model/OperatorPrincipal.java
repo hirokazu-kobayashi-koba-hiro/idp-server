@@ -12,8 +12,8 @@ public class OperatorPrincipal extends AbstractAuthenticationToken {
   OAuthToken oauthToken;
 
   public OperatorPrincipal(
-      User user, OAuthToken oAuthToken, List<IdpControlPlaneScope> idpControlPlaneScopes) {
-    super(idpControlPlaneScopes);
+      User user, OAuthToken oAuthToken, List<IdpControlPlaneAuthority> idpControlPlaneAuthorities) {
+    super(idpControlPlaneAuthorities);
     this.user = user;
     this.oauthToken = oAuthToken;
   }

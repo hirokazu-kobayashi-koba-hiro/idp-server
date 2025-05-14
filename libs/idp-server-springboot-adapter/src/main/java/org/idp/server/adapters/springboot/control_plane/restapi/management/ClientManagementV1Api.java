@@ -7,7 +7,7 @@ import org.idp.server.adapters.springboot.application.restapi.ParameterTransform
 import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
-import org.idp.server.control_plane.management.oidc.client.io.ClientConfigurationManagementResponse;
+import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.client.ClientIdentifier;
@@ -32,17 +32,19 @@ public class ClientManagementV1Api implements ParameterTransformable {
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    ClientConfigurationManagementResponse response =
-        clientManagementApi.register(
+    ClientManagementResponse response =
+        clientManagementApi.create(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             new ClientRegistrationRequest(body),
-            requestAttributes);
+            requestAttributes,
+            dryRun);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
     return new ResponseEntity<>(
@@ -59,7 +61,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    ClientConfigurationManagementResponse response =
+    ClientManagementResponse response =
         clientManagementApi.findList(
             tenantIdentifier,
             operatorPrincipal.getUser(),
@@ -83,7 +85,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    ClientConfigurationManagementResponse response =
+    ClientManagementResponse response =
         clientManagementApi.get(
             tenantIdentifier,
             operatorPrincipal.getUser(),
@@ -103,18 +105,20 @@ public class ClientManagementV1Api implements ParameterTransformable {
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("client-id") ClientIdentifier clientIdentifier,
       @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    ClientConfigurationManagementResponse response =
+    ClientManagementResponse response =
         clientManagementApi.update(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             clientIdentifier,
             new ClientRegistrationRequest(body),
-            requestAttributes);
+            requestAttributes,
+            dryRun);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
     return new ResponseEntity<>(
@@ -126,17 +130,19 @@ public class ClientManagementV1Api implements ParameterTransformable {
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("client-id") ClientIdentifier clientIdentifier,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    ClientConfigurationManagementResponse response =
+    ClientManagementResponse response =
         clientManagementApi.delete(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             clientIdentifier,
-            requestAttributes);
+            requestAttributes,
+            dryRun);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");

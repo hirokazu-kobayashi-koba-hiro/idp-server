@@ -256,7 +256,7 @@ describe("The OAuth 2.0 Authorization Framework implicit", () => {
       expect(authorizationResponse.errorDescription).toEqual("The resource owner or authorization server denied the request.");
     });
 
-    xit("unsupported_response_type The authorization server does not support obtaining an authorization code using this method.", async () => {
+    it("unsupported_response_type The authorization server does not support obtaining an authorization code using this method.", async () => {
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: unsupportedServerConfig.authorizationEndpoint,
         clientId: unsupportedClient.clientId,

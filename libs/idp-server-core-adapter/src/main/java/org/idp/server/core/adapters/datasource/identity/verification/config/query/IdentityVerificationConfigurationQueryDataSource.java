@@ -39,17 +39,14 @@ public class IdentityVerificationConfigurationQueryDataSource
   }
 
   @Override
-  public IdentityVerificationConfiguration get(
+  public IdentityVerificationConfiguration find(
       Tenant tenant, IdentityVerificationConfigurationIdentifier identifier) {
     IdentityVerificationConfigSqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {
-      throw new IdentityVerificationConfigurationNotFoundException(
-          String.format(
-              "IdentityVerification Configuration is Not Found (%s) (%s)",
-              tenant.identifierValue(), identifier.value()));
+      return new IdentityVerificationConfiguration();
     }
 
     return jsonConverter.read(result.get("payload"), IdentityVerificationConfiguration.class);

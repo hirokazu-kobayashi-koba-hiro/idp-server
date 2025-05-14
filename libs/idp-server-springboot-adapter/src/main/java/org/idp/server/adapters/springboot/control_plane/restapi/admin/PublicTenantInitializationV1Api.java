@@ -26,13 +26,18 @@ public class PublicTenantInitializationV1Api implements ParameterTransformable {
 
   @PostMapping
   public ResponseEntity<?> post(
-      @RequestBody Map<String, Object> body, HttpServletRequest httpServletRequest) {
+      @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
 
     TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
     RequestAttributes requestAttributes = transform(httpServletRequest);
     TenantInitializationResponse response =
         tenantInitializationApi.initialize(
-            adminTenantIdentifier, new TenantInitializationRequest(body), requestAttributes);
+            adminTenantIdentifier,
+            new TenantInitializationRequest(body),
+            requestAttributes,
+            dryRun);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");

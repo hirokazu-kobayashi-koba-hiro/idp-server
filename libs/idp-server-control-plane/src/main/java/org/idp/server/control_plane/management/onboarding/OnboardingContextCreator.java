@@ -19,11 +19,13 @@ public class OnboardingContextCreator {
 
   OnboardingRequest request;
   User user;
+  boolean dryRun;
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
-  public OnboardingContextCreator(OnboardingRequest request, User user) {
+  public OnboardingContextCreator(OnboardingRequest request, User user, boolean dryRun) {
     this.request = request;
     this.user = user;
+    this.dryRun = dryRun;
   }
 
   public OnboardingContext create() {
@@ -34,8 +36,7 @@ public class OnboardingContextCreator {
         jsonConverter.read(request.get("tenant"), TenantRegistrationRequest.class);
     AuthorizationServerConfiguration authorizationServerConfiguration =
         jsonConverter.read(
-            request.get("authorization_server_configuration"),
-            AuthorizationServerConfiguration.class);
+            request.get("authorization_server"), AuthorizationServerConfiguration.class);
     ClientConfiguration clientConfiguration =
         jsonConverter.read(request.get("client"), ClientConfiguration.class);
 
@@ -64,6 +65,6 @@ public class OnboardingContextCreator {
         roles,
         updatedUser,
         clientConfiguration,
-        request.isDryRun());
+        dryRun);
   }
 }

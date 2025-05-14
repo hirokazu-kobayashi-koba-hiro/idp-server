@@ -1,44 +1,41 @@
 {
-  "dry_run": false,
-  "config": {
-    "id": "5ee62e7d-e1f0-4f38-b714-0c5d6a28d8f1",
-    "type": "legacy-authentication",
-    "payload": {
-      "type": "mock",
-      "provider_name": "mocky",
-      "details": {
-        "authentication": {
-          "url": "https://run.mocky.io/v3/de9612ca-2550-4ac4-b648-99a9607e8081",
-          "method": "POST",
-          "headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
-          "dynamic_body_keys": ["username", "password"],
-          "static_body": {}
+  "id": "5ee62e7d-e1f0-4f38-b714-0c5d6a28d8f1",
+  "type": "legacy-authentication",
+  "payload": {
+    "type": "mock",
+    "provider_name": "mocky",
+    "details": {
+      "authentication": {
+        "url": "https://run.mocky.io/v3/de9612ca-2550-4ac4-b648-99a9607e8081",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer dummy-token"
         },
-        "userinfo": {
-          "url": "https://run.mocky.io/v3/de9612ca-2550-4ac4-b648-99a9607e8081",
-          "method": "GET",
-          "headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
-          "dynamic_body_keys": ["username"],
-          "static_body": {},
-          "userinfo_mapping_rules": [
-            { "from": "sub", "to": "provider_user_id", "type": "string" },
-            { "from": "name", "to": "name", "type": "string" },
-            { "from": "given_name", "to": "given_name", "type": "string" },
-            { "from": "family_name", "to": "family_name", "type": "string" },
-            { "from": "email", "to": "email", "type": "string" },
-            { "from": "email_verified", "to": "email_verified", "type": "boolean" },
-            { "from": "preferred_username", "to": "preferred_username", "type": "string" },
-            { "from": "roles", "to": "roles", "type": "list.string" },
-            { "from": "permissions", "to": "permissions", "type": "list.string" },
-            { "from": "address", "to": "address", "type": "address" }
-          ]
-        }
+        "dynamic_body_keys": ["username", "password"],
+        "static_body": {}
+      },
+      "userinfo": {
+        "url": "https://run.mocky.io/v3/de9612ca-2550-4ac4-b648-99a9607e8081",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer dummy-token"
+        },
+        "dynamic_body_keys": ["username"],
+        "static_body": {},
+        "userinfo_mapping_rules": [
+          { "from": "sub", "to": "provider_user_id", "type": "string" },
+          { "from": "name", "to": "name", "type": "string" },
+          { "from": "given_name", "to": "given_name", "type": "string" },
+          { "from": "family_name", "to": "family_name", "type": "string" },
+          { "from": "email", "to": "email", "type": "string" },
+          { "from": "email_verified", "to": "email_verified", "type": "boolean" },
+          { "from": "preferred_username", "to": "preferred_username", "type": "string" },
+          { "from": "roles", "to": "roles", "type": "list.string" },
+          { "from": "permissions", "to": "permissions", "type": "list.string" },
+          { "from": "address", "to": "address", "type": "address" }
+        ]
       }
     }
   }

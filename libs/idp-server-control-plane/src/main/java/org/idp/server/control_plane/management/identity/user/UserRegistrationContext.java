@@ -8,16 +8,18 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class UserRegistrationContext {
 
+  Tenant tenant;
   User user;
   boolean dryRun;
 
   public UserRegistrationContext(Tenant tenant, User user, boolean dryRun) {
+    this.tenant = tenant;
     this.user = user;
     this.dryRun = dryRun;
   }
 
   public Tenant tenant() {
-    return null;
+    return tenant;
   }
 
   public User user() {
@@ -29,7 +31,7 @@ public class UserRegistrationContext {
   }
 
   public UserManagementResponse toResponse() {
-    Map<String, Object> contents = Map.of("user", user.toMap(), "dry_run", dryRun);
+    Map<String, Object> contents = Map.of("result", user.toMap(), "dry_run", dryRun);
     return new UserManagementResponse(UserManagementStatus.CREATED, contents);
   }
 }

@@ -30,4 +30,8 @@ public class AuthenticationConfiguration {
   public Map<String, Object> payload() {
     return payload;
   }
+
+  public boolean exists() {
+    return id != null && !id.isEmpty();
+  }
 }

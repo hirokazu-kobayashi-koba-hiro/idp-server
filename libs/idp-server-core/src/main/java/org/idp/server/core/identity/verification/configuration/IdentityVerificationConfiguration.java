@@ -130,4 +130,8 @@ public class IdentityVerificationConfiguration implements JsonReadable {
 
     return map;
   }
+
+  public boolean exists() {
+    return id != null && !id.isEmpty();
+  }
 }

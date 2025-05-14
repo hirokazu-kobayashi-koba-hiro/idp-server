@@ -1,13 +1,17 @@
 package org.idp.server.usecases.control_plane;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingContext;
 import org.idp.server.control_plane.management.onboarding.OnboardingContextCreator;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
+import org.idp.server.control_plane.management.onboarding.io.OnboardingStatus;
 import org.idp.server.control_plane.management.onboarding.validator.OnboardingRequestValidationResult;
 import org.idp.server.control_plane.management.onboarding.validator.OnboardingRequestValidator;
 import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerificationResult;
@@ -18,7 +22,7 @@ import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.multi_tenancy.organization.*;
 import org.idp.server.core.multi_tenancy.tenant.*;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 
@@ -29,7 +33,8 @@ public class OnboardingEntryService implements OnboardingApi {
   TenantQueryRepository tenantQueryRepository;
   OrganizationRepository organizationRepository;
   UserRegistrator userRegistrator;
-  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
+  AuthorizationServerConfigurationCommandRepository
+      authorizationServerConfigurationCommandRepository;
   ClientConfigurationCommandRepository clientConfigurationCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   OnboardingVerifier onboardingVerifier;
@@ -40,14 +45,16 @@ public class OnboardingEntryService implements OnboardingApi {
       OrganizationRepository organizationRepository,
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
-      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
+      AuthorizationServerConfigurationCommandRepository
+          authorizationServerConfigurationCommandRepository,
       ClientConfigurationCommandRepository clientConfigurationCommandRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.tenantCommandRepository = tenantCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.userRegistrator = new UserRegistrator(userQueryRepository, userCommandRepository);
-    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
+    this.authorizationServerConfigurationCommandRepository =
+        authorizationServerConfigurationCommandRepository;
     this.clientConfigurationCommandRepository = clientConfigurationCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     TenantVerifier tenantVerifier = new TenantVerifier(tenantQueryRepository);
@@ -58,15 +65,29 @@ public class OnboardingEntryService implements OnboardingApi {
       TenantIdentifier adminTenantIdentifier,
       User operator,
       OnboardingRequest request,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
 
-    OnboardingRequestValidator validator = new OnboardingRequestValidator(request);
+    AdminPermissions permissions = getRequiredPermissions("onboard");
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      return new OnboardingResponse(OnboardingStatus.FORBIDDEN, response);
+    }
+
+    OnboardingRequestValidator validator = new OnboardingRequestValidator(request, dryRun);
     OnboardingRequestValidationResult validationResult = validator.validate();
     if (!validationResult.isValid()) {
       return validationResult.errorResponse();
     }
 
-    OnboardingContextCreator contextCreator = new OnboardingContextCreator(request, operator);
+    OnboardingContextCreator contextCreator =
+        new OnboardingContextCreator(request, operator, dryRun);
     OnboardingContext context = contextCreator.create();
 
     OnboardingVerificationResult verificationResult = onboardingVerifier.verify(context);
@@ -74,13 +95,13 @@ public class OnboardingEntryService implements OnboardingApi {
       return verificationResult.errorResponse();
     }
 
-    if (request.isDryRun()) {
+    if (dryRun) {
       return context.toResponse();
     }
 
     Tenant tenant = context.tenant();
     tenantCommandRepository.register(tenant);
-    authorizationServerConfigurationRepository.register(
+    authorizationServerConfigurationCommandRepository.register(
         tenant, context.authorizationServerConfiguration());
     organizationRepository.register(tenant, context.organization());
     Tenant admin = tenantQueryRepository.getAdmin();
