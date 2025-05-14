@@ -1,12 +1,10 @@
-package org.idp.server.core.adapters.datasource.oidc.configuration.server;
+package org.idp.server.core.adapters.datasource.oidc.configuration.server.command;
 
-import java.util.Map;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 
 public interface ServerConfigSqlExecutor {
   void insert(Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration);
 
-  Map<String, String> selectOne(TenantIdentifier tenantIdentifier);
+  void update(Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration);
 }

@@ -23,7 +23,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 
@@ -45,7 +45,7 @@ public class CibaRequestHandler {
   CibaGrantRepository cibaGrantRepository;
   CibaContextCreators contextCreators;
   ClientAuthenticatorHandler clientAuthenticatorHandler;
-  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
+  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   /**
@@ -54,7 +54,7 @@ public class CibaRequestHandler {
    * @param backchannelAuthenticationRequestRepository the repository to register backchannel
    *     authentication requests
    * @param cibaGrantRepository the repository to store CIBA grants
-   * @param authorizationServerConfigurationRepository the repository to retrieve server
+   * @param authorizationServerConfigurationQueryRepository the repository to retrieve server
    *     configuration details
    * @param clientConfigurationQueryRepository the repository to retrieve client configuration
    *     details
@@ -62,13 +62,15 @@ public class CibaRequestHandler {
   public CibaRequestHandler(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
       CibaGrantRepository cibaGrantRepository,
-      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
+      AuthorizationServerConfigurationQueryRepository
+          authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.backchannelAuthenticationRequestRepository = backchannelAuthenticationRequestRepository;
     this.cibaGrantRepository = cibaGrantRepository;
     this.contextCreators = new CibaContextCreators();
     this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
-    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
+    this.authorizationServerConfigurationQueryRepository =
+        authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
@@ -77,7 +79,7 @@ public class CibaRequestHandler {
     Tenant tenant = request.tenant();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =
-        authorizationServerConfigurationRepository.get(tenant);
+        authorizationServerConfigurationQueryRepository.get(tenant);
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, request.clientId());
     CibaRequestPattern pattern = parameters.analyze();

@@ -6,7 +6,7 @@ import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.vc.Credential;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.token.AccessToken;
@@ -26,7 +26,7 @@ import org.idp.server.core.verifiable_credential.verifier.VerifiableCredentialVe
 public class CredentialHandler {
 
   OAuthTokenRepository oAuthTokenRepository;
-  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
+  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   VerifiableCredentialTransactionRepository verifiableCredentialTransactionRepository;
   VerifiableCredentialCreators creators;
@@ -34,12 +34,14 @@ public class CredentialHandler {
   public CredentialHandler(
       OAuthTokenRepository oAuthTokenRepository,
       VerifiableCredentialTransactionRepository verifiableCredentialTransactionRepository,
-      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
+      AuthorizationServerConfigurationQueryRepository
+          authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       VerifiableCredentialCreators creators) {
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.verifiableCredentialTransactionRepository = verifiableCredentialTransactionRepository;
-    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
+    this.authorizationServerConfigurationQueryRepository =
+        authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.creators = creators;
   }
@@ -49,7 +51,7 @@ public class CredentialHandler {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
     Tenant tenant = request.tenant();
     AuthorizationServerConfiguration authorizationServerConfiguration =
-        authorizationServerConfigurationRepository.get(tenant);
+        authorizationServerConfigurationQueryRepository.get(tenant);
     OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     CredentialRequestParameters parameters = request.toParameters();
 
@@ -99,7 +101,7 @@ public class CredentialHandler {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
     Tenant tenant = request.tenant();
     AuthorizationServerConfiguration authorizationServerConfiguration =
-        authorizationServerConfigurationRepository.get(tenant);
+        authorizationServerConfigurationQueryRepository.get(tenant);
     OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     BatchCredentialRequestParameters parameters = request.toParameters();
 
@@ -163,7 +165,7 @@ public class CredentialHandler {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
     Tenant tenant = request.tenant();
     AuthorizationServerConfiguration authorizationServerConfiguration =
-        authorizationServerConfigurationRepository.get(tenant);
+        authorizationServerConfigurationQueryRepository.get(tenant);
     OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
     DeferredCredentialRequestParameters parameters = request.toParameters();
 

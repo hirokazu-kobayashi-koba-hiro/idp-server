@@ -7,7 +7,7 @@ import org.idp.server.basic.exception.UnSupportedException;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.oidc.client.io.ClientConfigurationManagementResponse;
+import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
@@ -30,7 +30,7 @@ public interface ClientManagementApi {
     return adminPermissions;
   }
 
-  ClientConfigurationManagementResponse create(
+  ClientManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
@@ -38,7 +38,7 @@ public interface ClientManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun);
 
-  ClientConfigurationManagementResponse findList(
+  ClientManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
@@ -46,14 +46,14 @@ public interface ClientManagementApi {
       int offset,
       RequestAttributes requestAttributes);
 
-  ClientConfigurationManagementResponse get(
+  ClientManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
       ClientIdentifier clientIdentifier,
       RequestAttributes requestAttributes);
 
-  ClientConfigurationManagementResponse update(
+  ClientManagementResponse update(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
@@ -62,7 +62,7 @@ public interface ClientManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun);
 
-  ClientConfigurationManagementResponse delete(
+  ClientManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,

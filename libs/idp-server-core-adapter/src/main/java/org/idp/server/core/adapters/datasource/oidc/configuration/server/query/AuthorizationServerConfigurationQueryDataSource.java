@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.oidc.configuration.server;
+package org.idp.server.core.adapters.datasource.oidc.configuration.server.query;
 
 import java.util.Map;
 import java.util.Objects;
@@ -8,27 +8,20 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
 
-public class AuthorizationServerConfigurationDataSource
-    implements AuthorizationServerConfigurationRepository {
+public class AuthorizationServerConfigurationQueryDataSource
+    implements AuthorizationServerConfigurationQueryRepository {
 
   ServerConfigSqlExecutors executors;
   JsonConverter jsonConverter;
   CacheStore cacheStore;
 
-  public AuthorizationServerConfigurationDataSource(CacheStore cacheStore) {
+  public AuthorizationServerConfigurationQueryDataSource(CacheStore cacheStore) {
     this.executors = new ServerConfigSqlExecutors();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
     this.cacheStore = cacheStore;
-  }
-
-  @Override
-  public void register(
-      Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration) {
-    ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.insert(tenant, authorizationServerConfiguration);
   }
 
   @Override

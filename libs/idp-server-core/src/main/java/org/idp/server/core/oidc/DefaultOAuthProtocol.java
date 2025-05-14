@@ -4,7 +4,7 @@ import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.gateway.RequestObjectHttpClient;
 import org.idp.server.core.oidc.handler.*;
@@ -29,7 +29,8 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
 
   public DefaultOAuthProtocol(
       AuthorizationRequestRepository authorizationRequestRepository,
-      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
+      AuthorizationServerConfigurationQueryRepository
+          authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
@@ -38,7 +39,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
     this.requestHandler =
         new OAuthRequestHandler(
             authorizationRequestRepository,
-            authorizationServerConfigurationRepository,
+            authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository,
             new RequestObjectHttpClient(),
             authorizationGrantedRepository);
@@ -47,17 +48,17 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
             authorizationRequestRepository,
             authorizationCodeGrantRepository,
             oAuthTokenRepository,
-            authorizationServerConfigurationRepository,
+            authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.oAuthDenyHandler =
         new OAuthDenyHandler(
             authorizationRequestRepository,
-            authorizationServerConfigurationRepository,
+            authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.oAuthHandler =
         new OAuthHandler(
             authorizationRequestRepository,
-            authorizationServerConfigurationRepository,
+            authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.oAuthRequestErrorHandler = new OAuthRequestErrorHandler();
     this.authAuthorizeErrorHandler = new OAuthAuthorizeErrorHandler();

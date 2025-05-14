@@ -8,21 +8,23 @@ import org.idp.server.core.ciba.handler.io.CibaDenyStatus;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 
 public class CibaDenyHandler {
 
   CibaGrantRepository cibaGrantRepository;
-  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
+  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public CibaDenyHandler(
       CibaGrantRepository cibaGrantRepository,
-      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
+      AuthorizationServerConfigurationQueryRepository
+          authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.cibaGrantRepository = cibaGrantRepository;
-    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
+    this.authorizationServerConfigurationQueryRepository =
+        authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
@@ -30,7 +32,7 @@ public class CibaDenyHandler {
     BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier =
         request.backchannelAuthenticationRequestIdentifier();
     Tenant tenant = request.tenant();
-    authorizationServerConfigurationRepository.get(tenant);
+    authorizationServerConfigurationQueryRepository.get(tenant);
 
     CibaGrant cibaGrant =
         cibaGrantRepository.get(tenant, backchannelAuthenticationRequestIdentifier);

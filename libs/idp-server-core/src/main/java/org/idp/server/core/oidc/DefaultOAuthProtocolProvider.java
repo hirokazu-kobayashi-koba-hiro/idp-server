@@ -3,7 +3,7 @@ package org.idp.server.core.oidc;
 import org.idp.server.basic.dependency.ApplicationComponentContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolProvider;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
@@ -20,8 +20,9 @@ public class DefaultOAuthProtocolProvider implements ProtocolProvider<OAuthProto
   public OAuthProtocol provide(ApplicationComponentContainer container) {
     AuthorizationRequestRepository authorizationRequestRepository =
         container.resolve(AuthorizationRequestRepository.class);
-    AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository =
-        container.resolve(AuthorizationServerConfigurationRepository.class);
+    AuthorizationServerConfigurationQueryRepository
+        authorizationServerConfigurationQueryRepository =
+            container.resolve(AuthorizationServerConfigurationQueryRepository.class);
     ClientConfigurationQueryRepository clientConfigurationQueryRepository =
         container.resolve(ClientConfigurationQueryRepository.class);
     AuthorizationGrantedRepository authorizationGrantedRepository =
@@ -32,7 +33,7 @@ public class DefaultOAuthProtocolProvider implements ProtocolProvider<OAuthProto
     OAuthSessionDelegate oAuthSessionDelegate = container.resolve(OAuthSessionDelegate.class);
     return new DefaultOAuthProtocol(
         authorizationRequestRepository,
-        authorizationServerConfigurationRepository,
+        authorizationServerConfigurationQueryRepository,
         clientConfigurationQueryRepository,
         authorizationGrantedRepository,
         authorizationCodeGrantRepository,

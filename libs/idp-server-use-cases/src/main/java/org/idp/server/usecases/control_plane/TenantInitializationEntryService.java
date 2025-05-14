@@ -22,7 +22,7 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantCommandRepository;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 
@@ -33,7 +33,8 @@ public class TenantInitializationEntryService implements TenantInitializationApi
   TenantQueryRepository tenantQueryRepository;
   OrganizationRepository organizationRepository;
   UserRegistrator userRegistrator;
-  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
+  AuthorizationServerConfigurationCommandRepository
+      authorizationServerConfigurationCommandRepository;
   ClientConfigurationCommandRepository clientConfigurationCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   TenantInitializationVerifier tenantInitializationVerifier;
@@ -45,7 +46,8 @@ public class TenantInitializationEntryService implements TenantInitializationApi
       OrganizationRepository organizationRepository,
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
-      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
+      AuthorizationServerConfigurationCommandRepository
+          authorizationServerConfigurationCommandRepository,
       ClientConfigurationCommandRepository clientConfigurationCommandRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       PasswordEncodeDelegation passwordEncodeDelegation) {
@@ -53,7 +55,8 @@ public class TenantInitializationEntryService implements TenantInitializationApi
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.userRegistrator = new UserRegistrator(userQueryRepository, userCommandRepository);
-    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
+    this.authorizationServerConfigurationCommandRepository =
+        authorizationServerConfigurationCommandRepository;
     this.clientConfigurationCommandRepository = clientConfigurationCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     TenantVerifier tenantVerifier = new TenantVerifier(tenantQueryRepository);
@@ -93,7 +96,7 @@ public class TenantInitializationEntryService implements TenantInitializationApi
 
     Tenant tenant = context.tenant();
     tenantCommandRepository.register(tenant);
-    authorizationServerConfigurationRepository.register(
+    authorizationServerConfigurationCommandRepository.register(
         tenant, context.authorizationServerConfiguration());
     organizationRepository.register(tenant, context.organization());
     Tenant admin = tenantQueryRepository.getAdmin();

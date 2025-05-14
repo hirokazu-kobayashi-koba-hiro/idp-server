@@ -18,7 +18,7 @@ import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.role.RoleCommandRepository;
 import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.core.multi_tenancy.tenant.*;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 
@@ -30,7 +30,8 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
   UserCommandRepository userCommandRepository;
   PermissionCommandRepository permissionCommandRepository;
   RoleCommandRepository roleCommandRepository;
-  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
+  AuthorizationServerConfigurationCommandRepository
+      authorizationServerConfigurationCommandRepository;
   ClientConfigurationCommandRepository clientConfigurationCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   PasswordEncodeDelegation passwordEncodeDelegation;
@@ -43,7 +44,8 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
       UserCommandRepository userCommandRepository,
       PermissionCommandRepository permissionCommandRepository,
       RoleCommandRepository roleCommandRepository,
-      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
+      AuthorizationServerConfigurationCommandRepository
+          authorizationServerConfigurationCommandRepository,
       ClientConfigurationCommandRepository clientConfigurationCommandRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       PasswordEncodeDelegation passwordEncodeDelegation) {
@@ -52,7 +54,8 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     this.userCommandRepository = userCommandRepository;
     this.permissionCommandRepository = permissionCommandRepository;
     this.roleCommandRepository = roleCommandRepository;
-    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
+    this.authorizationServerConfigurationCommandRepository =
+        authorizationServerConfigurationCommandRepository;
     this.clientConfigurationCommandRepository = clientConfigurationCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
@@ -89,7 +92,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
 
     Tenant tenant = context.tenant();
     tenantCommandRepository.register(tenant);
-    authorizationServerConfigurationRepository.register(
+    authorizationServerConfigurationCommandRepository.register(
         tenant, context.authorizationServerConfiguration());
     organizationRepository.register(tenant, context.organization());
     permissionCommandRepository.bulkRegister(tenant, context.permissions());

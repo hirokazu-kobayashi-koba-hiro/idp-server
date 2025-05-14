@@ -62,6 +62,8 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         log.error(
             "fail: " + target.getClass().getName() + ": " + method.getName() + ", cause: " + e);
         throw e;
+      } finally {
+        TransactionManager.closeConnection();
       }
     } else if (isTransactional && operationType == OperationType.WRITE) {
       try {
@@ -114,6 +116,8 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
                 + ", cause: "
                 + e);
         throw e;
+      } finally {
+        TransactionManager.closeConnection();
       }
     } else {
       return method.invoke(target, args);

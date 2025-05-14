@@ -11,6 +11,11 @@ public enum AdminPermission {
   TENANT_UPDATE("tenant:update"),
   TENANT_DELETE("tenant:delete"),
 
+  AUTHORIZATION_SERVER_CREATE("authorization-server:create"),
+  AUTHORIZATION_SERVER_READ("authorization-server:read"),
+  AUTHORIZATION_SERVER_UPDATE("authorization-server:update"),
+  AUTHORIZATION_SERVER_DELETE("authorization-server:delete"),
+
   CLIENT_CREATE("client:create"),
   CLIENT_READ("client:read"),
   CLIENT_UPDATE("client:update"),

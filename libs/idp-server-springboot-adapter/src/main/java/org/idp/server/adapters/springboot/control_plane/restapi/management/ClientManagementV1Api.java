@@ -7,7 +7,7 @@ import org.idp.server.adapters.springboot.application.restapi.ParameterTransform
 import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
-import org.idp.server.control_plane.management.oidc.client.io.ClientConfigurationManagementResponse;
+import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.client.ClientIdentifier;
@@ -37,7 +37,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    ClientConfigurationManagementResponse response =
+    ClientManagementResponse response =
         clientManagementApi.create(
             tenantIdentifier,
             operatorPrincipal.getUser(),
@@ -61,7 +61,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    ClientConfigurationManagementResponse response =
+    ClientManagementResponse response =
         clientManagementApi.findList(
             tenantIdentifier,
             operatorPrincipal.getUser(),
@@ -85,7 +85,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    ClientConfigurationManagementResponse response =
+    ClientManagementResponse response =
         clientManagementApi.get(
             tenantIdentifier,
             operatorPrincipal.getUser(),
@@ -110,7 +110,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    ClientConfigurationManagementResponse response =
+    ClientManagementResponse response =
         clientManagementApi.update(
             tenantIdentifier,
             operatorPrincipal.getUser(),
@@ -135,7 +135,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    ClientConfigurationManagementResponse response =
+    ClientManagementResponse response =
         clientManagementApi.delete(
             tenantIdentifier,
             operatorPrincipal.getUser(),

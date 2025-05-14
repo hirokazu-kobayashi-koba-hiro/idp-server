@@ -2,12 +2,11 @@ package org.idp.server.control_plane.management.oidc.client.io;
 
 import java.util.Map;
 
-public class ClientConfigurationManagementResponse {
+public class ClientManagementResponse {
   ClientManagementStatus status;
   Map<String, Object> contents;
 
-  public ClientConfigurationManagementResponse(
-      ClientManagementStatus status, Map<String, Object> contents) {
+  public ClientManagementResponse(ClientManagementStatus status, Map<String, Object> contents) {
     this.status = status;
     this.contents = contents;
   }

@@ -7,7 +7,7 @@ import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
@@ -43,7 +43,8 @@ public class DefaultTokenProtocol implements TokenProtocol {
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
       CibaGrantRepository cibaGrantRepository,
       OAuthTokenRepository oAuthTokenRepository,
-      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
+      AuthorizationServerConfigurationQueryRepository
+          authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
     this.tokenRequestHandler =
@@ -54,14 +55,14 @@ public class DefaultTokenProtocol implements TokenProtocol {
             backchannelAuthenticationRequestRepository,
             cibaGrantRepository,
             oAuthTokenRepository,
-            authorizationServerConfigurationRepository,
+            authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.errorHandler = new TokenRequestErrorHandler();
     this.tokenIntrospectionHandler = new TokenIntrospectionHandler(oAuthTokenRepository);
     this.tokenRevocationHandler =
         new TokenRevocationHandler(
             oAuthTokenRepository,
-            authorizationServerConfigurationRepository,
+            authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
   }

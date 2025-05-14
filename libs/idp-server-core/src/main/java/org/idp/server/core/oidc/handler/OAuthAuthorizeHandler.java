@@ -10,7 +10,7 @@ import org.idp.server.core.oidc.OAuthSessionDelegate;
 import org.idp.server.core.oidc.OAuthSessionKey;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
@@ -32,19 +32,21 @@ public class OAuthAuthorizeHandler {
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
   OAuthTokenRepository oAuthTokenRepository;
-  AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository;
+  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public OAuthAuthorizeHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
       OAuthTokenRepository oAuthTokenRepository,
-      AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository,
+      AuthorizationServerConfigurationQueryRepository
+          authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
     this.oAuthTokenRepository = oAuthTokenRepository;
-    this.authorizationServerConfigurationRepository = authorizationServerConfigurationRepository;
+    this.authorizationServerConfigurationQueryRepository =
+        authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.creators = new AuthorizationResponseCreators();
   }
@@ -67,7 +69,7 @@ public class OAuthAuthorizeHandler {
         authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
     RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
     AuthorizationServerConfiguration authorizationServerConfiguration =
-        authorizationServerConfigurationRepository.get(tenant);
+        authorizationServerConfigurationQueryRepository.get(tenant);
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, requestedClientId);
 

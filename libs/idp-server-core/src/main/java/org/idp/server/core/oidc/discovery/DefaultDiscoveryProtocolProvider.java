@@ -2,7 +2,7 @@ package org.idp.server.core.oidc.discovery;
 
 import org.idp.server.basic.dependency.ApplicationComponentContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolProvider;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 
 public class DefaultDiscoveryProtocolProvider implements ProtocolProvider<DiscoveryProtocol> {
 
@@ -14,8 +14,9 @@ public class DefaultDiscoveryProtocolProvider implements ProtocolProvider<Discov
   @Override
   public DiscoveryProtocol provide(ApplicationComponentContainer container) {
 
-    AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository =
-        container.resolve(AuthorizationServerConfigurationRepository.class);
-    return new DefaultDiscoveryProtocol(authorizationServerConfigurationRepository);
+    AuthorizationServerConfigurationQueryRepository
+        authorizationServerConfigurationQueryRepository =
+            container.resolve(AuthorizationServerConfigurationQueryRepository.class);
+    return new DefaultDiscoveryProtocol(authorizationServerConfigurationQueryRepository);
   }
 }

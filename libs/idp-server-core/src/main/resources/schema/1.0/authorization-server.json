@@ -115,6 +115,7 @@
       "items": {
         "type": "string",
         "enum": [
+          "none",
           "RS256",
           "ES256",
           "HS256"
@@ -137,7 +138,8 @@
         "type": "string",
         "enum": [
           "A128CBC-HS256",
-          "A128GCM"
+          "A128GCM",
+          "A256GCM"
         ]
       }
     },
@@ -146,6 +148,7 @@
       "items": {
         "type": "string",
         "enum": [
+          "none",
           "RS256",
           "ES256",
           "HS256"
@@ -168,7 +171,8 @@
         "type": "string",
         "enum": [
           "A128CBC-HS256",
-          "A128GCM"
+          "A128GCM",
+          "A256GCM"
         ]
       }
     },
@@ -200,7 +204,8 @@
         "type": "string",
         "enum": [
           "A128CBC-HS256",
-          "A128GCM"
+          "A128GCM",
+          "A256GCM"
         ]
       }
     },
@@ -223,6 +228,7 @@
       "items": {
         "type": "string",
         "enum": [
+          "none",
           "RS256",
           "ES256",
           "HS256"
@@ -251,33 +257,33 @@
     "claims_supported": {
       "type": "array",
       "items": {
-        "type": "string",
-        "enum": [
-          "sub",
-          "iss",
-          "auth_time",
-          "acr",
-          "name",
-          "given_name",
-          "family_name",
-          "nickname",
-          "profile",
-          "picture",
-          "website",
-          "email",
-          "email_verified",
-          "locale",
-          "zoneinfo",
-          "birthdate",
-          "gender",
-          "preferred_username",
-          "middle_name",
-          "updated_at",
-          "address",
-          "phone_number",
-          "phone_number_verified"
-        ]
-      }
+        "type": "string"
+      },
+      "default": [
+        "sub",
+        "iss",
+        "auth_time",
+        "acr",
+        "name",
+        "given_name",
+        "family_name",
+        "nickname",
+        "profile",
+        "picture",
+        "website",
+        "email",
+        "email_verified",
+        "locale",
+        "zoneinfo",
+        "birthdate",
+        "gender",
+        "preferred_username",
+        "middle_name",
+        "updated_at",
+        "address",
+        "phone_number",
+        "phone_number_verified"
+      ]
     },
     "service_documentation": {
       "type": "string",
@@ -336,6 +342,7 @@
       "items": {
         "type": "string",
         "enum": [
+          "none",
           "RS256",
           "ES256",
           "HS256"
@@ -351,6 +358,7 @@
       "items": {
         "type": "string",
         "enum": [
+          "none",
           "RS256",
           "ES256",
           "HS256"
@@ -362,6 +370,7 @@
       "items": {
         "type": "string",
         "enum": [
+          "none",
           "RS256",
           "ES256",
           "HS256"

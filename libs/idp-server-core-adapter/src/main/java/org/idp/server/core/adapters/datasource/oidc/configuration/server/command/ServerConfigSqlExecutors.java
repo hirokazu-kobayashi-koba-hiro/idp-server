@@ -1,4 +1,4 @@
-package org.idp.server.core.adapters.datasource.oidc.configuration.server;
+package org.idp.server.core.adapters.datasource.oidc.configuration.server.command;
 
 import java.util.HashMap;
 import java.util.Map;

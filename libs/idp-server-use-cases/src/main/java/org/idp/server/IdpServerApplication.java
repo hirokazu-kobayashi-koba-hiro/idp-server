@@ -16,6 +16,7 @@ import org.idp.server.control_plane.base.schema.SchemaReader;
 import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
+import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.core.authentication.*;
@@ -67,7 +68,8 @@ import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.OAuthProtocol;
 import org.idp.server.core.oidc.OAuthProtocols;
 import org.idp.server.core.oidc.OAuthSessionDelegate;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.discovery.*;
@@ -106,6 +108,7 @@ public class IdpServerApplication {
   UserLifecycleEventApi userLifecycleEventApi;
   OnboardingApi onboardingApi;
   TenantInitializationApi tenantInitializationApi;
+  AuthorizationServerManagementApi authorizationServerManagementApi;
   ClientManagementApi clientManagementApi;
   UserManagementApi userManagementApi;
   AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi;
@@ -137,8 +140,14 @@ public class IdpServerApplication {
         ApplicationComponentContainerLoader.load(dependencyContainer);
     applicationComponentContainer.register(OAuthSessionDelegate.class, oAuthSessionDelegate);
 
-    AuthorizationServerConfigurationRepository authorizationServerConfigurationRepository =
-        applicationComponentContainer.resolve(AuthorizationServerConfigurationRepository.class);
+    AuthorizationServerConfigurationCommandRepository
+        authorizationServerConfigurationCommandRepository =
+            applicationComponentContainer.resolve(
+                AuthorizationServerConfigurationCommandRepository.class);
+    AuthorizationServerConfigurationQueryRepository
+        authorizationServerConfigurationQueryRepository =
+            applicationComponentContainer.resolve(
+                AuthorizationServerConfigurationQueryRepository.class);
     ClientConfigurationCommandRepository clientConfigurationCommandRepository =
         applicationComponentContainer.resolve(ClientConfigurationCommandRepository.class);
     ClientConfigurationQueryRepository clientConfigurationQueryRepository =
@@ -244,7 +253,7 @@ public class IdpServerApplication {
                 userCommandRepository,
                 permissionCommandRepository,
                 roleCommandRepository,
-                authorizationServerConfigurationRepository,
+                authorizationServerConfigurationCommandRepository,
                 clientConfigurationCommandRepository,
                 clientConfigurationQueryRepository,
                 passwordEncodeDelegation),
@@ -399,7 +408,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 userQueryRepository,
                 userCommandRepository,
-                authorizationServerConfigurationRepository,
+                authorizationServerConfigurationCommandRepository,
                 clientConfigurationCommandRepository,
                 clientConfigurationQueryRepository),
             OnboardingApi.class,
@@ -413,11 +422,20 @@ public class IdpServerApplication {
                 organizationRepository,
                 userQueryRepository,
                 userCommandRepository,
-                authorizationServerConfigurationRepository,
+                authorizationServerConfigurationCommandRepository,
                 clientConfigurationCommandRepository,
                 clientConfigurationQueryRepository,
                 passwordEncodeDelegation),
             TenantInitializationApi.class,
+            tenantDialectProvider);
+
+    this.authorizationServerManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AuthorizationServerManagementEntryService(
+                tenantQueryRepository,
+                authorizationServerConfigurationQueryRepository,
+                authorizationServerConfigurationCommandRepository),
+            AuthorizationServerManagementApi.class,
             tenantDialectProvider);
 
     this.clientManagementApi =
@@ -522,6 +540,10 @@ public class IdpServerApplication {
 
   public TenantInitializationApi tenantInitializationApi() {
     return tenantInitializationApi;
+  }
+
+  public AuthorizationServerManagementApi authorizationServerManagementApi() {
+    return authorizationServerManagementApi;
   }
 
   public ClientManagementApi clientManagementApi() {

@@ -3,7 +3,7 @@ package org.idp.server.control_plane.management.oidc.client.validator;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
-import org.idp.server.control_plane.management.oidc.client.io.ClientConfigurationManagementResponse;
+import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 
 public class ClientRegistrationRequestValidationResult {
@@ -33,7 +33,7 @@ public class ClientRegistrationRequestValidationResult {
     return isValid;
   }
 
-  public ClientConfigurationManagementResponse errorResponse() {
+  public ClientManagementResponse errorResponse() {
     Map<String, Object> response = new HashMap<>();
     response.put("dry_run", dryRun);
     response.put("error", "invalid_request");
@@ -43,7 +43,6 @@ public class ClientRegistrationRequestValidationResult {
       details.put("client", clientResult.errors());
     }
     response.put("details", details);
-    return new ClientConfigurationManagementResponse(
-        ClientManagementStatus.INVALID_REQUEST, response);
+    return new ClientManagementResponse(ClientManagementStatus.INVALID_REQUEST, response);
   }
 }
