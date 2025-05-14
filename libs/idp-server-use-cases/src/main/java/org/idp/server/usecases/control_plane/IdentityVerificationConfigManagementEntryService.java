@@ -52,7 +52,7 @@ public class IdentityVerificationConfigManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("register");
+    AdminPermissions permissions = getRequiredPermissions("create");
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");

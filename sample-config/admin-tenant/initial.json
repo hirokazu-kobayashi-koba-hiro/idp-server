@@ -61,9 +61,7 @@
       "code token id_token",
       "token id_token",
       "code id_token",
-      "none",
-      "vp_token",
-      "vp_token id_token"
+      "none"
     ],
     "response_modes_supported": [
       "query",
@@ -113,8 +111,7 @@
       "popup"
     ],
     "claim_types_supported": [
-      "normal",
-      "distributed"
+      "normal"
     ],
     "claims_supported": [
       "sub",
@@ -471,9 +468,7 @@
       "code token id_token",
       "token id_token",
       "code id_token",
-      "none",
-      "vp_token",
-      "vp_token id_token"
+      "none"
     ],
     "grant_types": [
       "authorization_code",

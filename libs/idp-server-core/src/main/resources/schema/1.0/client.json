@@ -156,6 +156,7 @@
     "request_object_signing_alg": {
       "type": "string",
       "enum": [
+        "none",
         "RS256",
         "ES256",
         "HS256"

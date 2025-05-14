@@ -93,8 +93,7 @@
       "popup"
     ],
     "claim_types_supported": [
-      "normal",
-      "distributed"
+      "normal"
     ],
     "claims_supported": [
       "sub",

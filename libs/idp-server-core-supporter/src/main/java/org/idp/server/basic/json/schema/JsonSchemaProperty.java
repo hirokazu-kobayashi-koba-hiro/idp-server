@@ -12,6 +12,10 @@ public class JsonSchemaProperty {
     this.propertySchema = propertySchema;
   }
 
+  public static JsonSchemaProperty from(JsonNodeWrapper wrapper) {
+    return new JsonSchemaProperty(wrapper);
+  }
+
   public String key() {
     return "";
   }
@@ -104,6 +108,17 @@ public class JsonSchemaProperty {
 
   public boolean isArrayType() {
     return "array".equals(type());
+  }
+
+  public boolean isObjectType() {
+    return "object".equals(type());
+  }
+
+  public JsonSchemaProperty objectSchema(String propertyName) {
+    if (!isObjectType()) {
+      return new JsonSchemaProperty(JsonNodeWrapper.empty());
+    }
+    return new JsonSchemaProperty(propertySchema.getValueAsJsonNode(propertyName));
   }
 
   public JsonSchemaProperty itemsSchema() {

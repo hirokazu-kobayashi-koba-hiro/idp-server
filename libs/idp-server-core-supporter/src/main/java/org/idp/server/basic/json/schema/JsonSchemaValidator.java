@@ -20,8 +20,7 @@ public class JsonSchemaValidator {
       return JsonSchemaValidationResult.failure(errors);
     }
 
-    validateRequiredField(target, errors);
-    validateType(target, errors);
+    validateObjectConstraints("", target, schemaDefinition, errors);
 
     if (!errors.isEmpty()) {
       return JsonSchemaValidationResult.failure(errors);
@@ -30,56 +29,79 @@ public class JsonSchemaValidator {
     return JsonSchemaValidationResult.success();
   }
 
-  void validateRequiredField(JsonNodeWrapper target, List<String> errors) {
-    List<String> requiredFields = schemaDefinition.requiredFields();
+  void validateObjectConstraints(
+      String prefix,
+      JsonNodeWrapper target,
+      JsonSchemaDefinition jsonSchemaDefinition,
+      List<String> errors) {
+
+    if (!target.exists()) {
+      // validateRequiredField is covered
+      return;
+    }
+
+    validateRequiredField(prefix, target, jsonSchemaDefinition, errors);
+
+    for (String field : jsonSchemaDefinition.propertiesFieldAsList()) {
+      JsonNodeWrapper valueObject = target.getValueAsJsonNode(field);
+      JsonSchemaProperty childSchema = jsonSchemaDefinition.propertySchema(field);
+      if (childSchema == null || !childSchema.exists()) {
+        continue;
+      }
+
+      if (childSchema.isStringType()) {
+        validateStringConstraints(prefix, field, valueObject, childSchema, errors);
+      } else if (childSchema.isArrayType()) {
+        validateArrayConstraints(prefix, field, valueObject, childSchema, errors);
+      } else if (childSchema.isObjectType()) {
+        JsonNodeWrapper childObject = target.getValueAsJsonNode(field);
+        JsonSchemaDefinition childSchemaDefinition = jsonSchemaDefinition.childJsonSchema(field);
+        validateObjectConstraints(field, childObject, childSchemaDefinition, errors);
+      }
+    }
+  }
+
+  void validateRequiredField(
+      String prefix,
+      JsonNodeWrapper target,
+      JsonSchemaDefinition jsonSchemaDefinition,
+      List<String> errors) {
+    List<String> requiredFields = jsonSchemaDefinition.requiredFields();
     if (!requiredFields.isEmpty()) {
       for (String requiredField : requiredFields) {
         if (!target.contains(requiredField)) {
-          errors.add(requiredField + " is missing");
+          String composedFiledName = prefix + "." + requiredField;
+          errors.add(composedFiledName + " is missing");
         }
       }
     }
   }
 
-  void validateType(JsonNodeWrapper target, List<String> errors) {
-    for (String field : target.fieldNamesAsList()) {
-
-      JsonNodeWrapper valueObject = target.getValueAsJsonNode(field);
-      JsonSchemaProperty schemaProperty = schemaDefinition.propertySchema(field);
-      if (!schemaProperty.exists()) {
-        return;
-      }
-      if (!valueObject.nodeTypeAsString().equals(schemaProperty.type())) {
-        errors.add(field + " type is " + schemaDefinition.propertySchema(field).type());
-      }
-
-      if (schemaProperty.isStringType()) {
-        validateStringConstraints(field, valueObject, schemaProperty, errors);
-      }
-
-      if (schemaProperty.isArrayType()) {
-        validateArrayConstraints(field, valueObject, schemaProperty, errors);
-      }
-    }
-  }
-
   void validateStringConstraints(
+      String prefix,
       String field,
       JsonNodeWrapper valueObject,
       JsonSchemaProperty schemaProperty,
       List<String> errors) {
+
+    if (!valueObject.exists()) {
+      // validateRequiredField is covered
+      return;
+    }
+
     String value = valueObject.asText();
+    String composedFiledName = composeFiledName(prefix, field);
 
     if (schemaProperty.hasMinLength() && value.length() < schemaProperty.minLength()) {
-      errors.add(field + " minLength is " + schemaProperty.minLength());
+      errors.add(composedFiledName + " minLength is " + schemaProperty.minLength());
     }
 
     if (schemaProperty.hasMaxLength() && value.length() > schemaProperty.maxLength()) {
-      errors.add(field + " maxLength is " + schemaProperty.maxLength());
+      errors.add(composedFiledName + " maxLength is " + schemaProperty.maxLength());
     }
 
     if (schemaProperty.hasPattern() && !value.matches(schemaProperty.pattern())) {
-      errors.add(field + " pattern is " + schemaProperty.pattern());
+      errors.add(composedFiledName + " pattern is " + schemaProperty.pattern());
     }
 
     if (schemaProperty.hasFormat()) {
@@ -100,19 +122,27 @@ public class JsonSchemaValidator {
   }
 
   void validateArrayConstraints(
+      String prefix,
       String field,
       JsonNodeWrapper valueObject,
       JsonSchemaProperty schemaProperty,
       List<String> errors) {
 
+    if (!valueObject.exists()) {
+      // validateRequiredField is covered
+      return;
+    }
+
     List<JsonNodeWrapper> elements = valueObject.elements();
+    String composedFiledName = composeFiledName(prefix, field);
 
     if (schemaProperty.hasMinItems() && elements.size() < schemaProperty.minItems()) {
-      errors.add(field + " must have at least " + schemaProperty.minItems() + " items.");
+      errors.add(
+          composedFiledName + " must have at least " + schemaProperty.minItems() + " items.");
     }
 
     if (schemaProperty.hasMaxItems() && elements.size() > schemaProperty.maxItems()) {
-      errors.add(field + " must have at most " + schemaProperty.maxItems() + " items.");
+      errors.add(composedFiledName + " must have at most " + schemaProperty.maxItems() + " items.");
     }
 
     if (schemaProperty.uniqueItems()) {
@@ -120,7 +150,7 @@ public class JsonSchemaValidator {
       for (JsonNodeWrapper element : elements) {
         String asString = element.asText();
         if (seen.contains(asString)) {
-          errors.add(field + " must not contain duplicate items.");
+          errors.add(composedFiledName + " must not contain duplicate items.");
           break;
         }
         seen.add(asString);
@@ -130,8 +160,12 @@ public class JsonSchemaValidator {
     JsonSchemaProperty itemsSchema = schemaProperty.itemsSchema();
     for (JsonNodeWrapper element : elements) {
       if (itemsSchema.isStringType()) {
-        validateStringConstraints(field, element, itemsSchema, errors);
+        validateStringConstraints(prefix, field, element, itemsSchema, errors);
       }
     }
+  }
+
+  private String composeFiledName(String prefix, String field) {
+    return prefix + "." + field;
   }
 }

@@ -177,6 +177,7 @@
       "items": {
         "type": "string",
         "enum": [
+          "none",
           "RS256",
           "ES256",
           "HS256"
