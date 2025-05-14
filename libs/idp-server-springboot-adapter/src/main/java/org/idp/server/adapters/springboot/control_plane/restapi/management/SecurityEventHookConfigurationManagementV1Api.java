@@ -1,6 +1,7 @@
 package org.idp.server.adapters.springboot.control_plane.restapi.management;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
@@ -16,8 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/v1/management/tenants/{tenant-id}/security-event-hook-configurations")
 public class SecurityEventHookConfigurationManagementV1Api implements ParameterTransformable {
@@ -25,7 +24,8 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
   SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi;
 
   public SecurityEventHookConfigurationManagementV1Api(IdpServerApplication idpServerApplication) {
-    this.securityEventHookConfigurationManagementApi = idpServerApplication.securityEventHookConfigurationManagementApi();
+    this.securityEventHookConfigurationManagementApi =
+        idpServerApplication.securityEventHookConfigurationManagementApi();
   }
 
   @PostMapping
@@ -39,7 +39,7 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     SecurityEventHookConfigManagementResponse response =
-            securityEventHookConfigurationManagementApi.create(
+        securityEventHookConfigurationManagementApi.create(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
@@ -64,7 +64,7 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     SecurityEventHookConfigManagementResponse response =
-            securityEventHookConfigurationManagementApi.findList(
+        securityEventHookConfigurationManagementApi.findList(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
@@ -88,7 +88,7 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     SecurityEventHookConfigManagementResponse response =
-            securityEventHookConfigurationManagementApi.get(
+        securityEventHookConfigurationManagementApi.get(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
@@ -113,7 +113,7 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     SecurityEventHookConfigManagementResponse response =
-            securityEventHookConfigurationManagementApi.update(
+        securityEventHookConfigurationManagementApi.update(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
@@ -138,7 +138,7 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     SecurityEventHookConfigManagementResponse response =
-            securityEventHookConfigurationManagementApi.delete(
+        securityEventHookConfigurationManagementApi.delete(
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),

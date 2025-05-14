@@ -13,7 +13,7 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
 
   String selectSql =
       """
-            SELECT id, type, sso_provider_name, payload
+            SELECT id, type, sso_provider, payload
              FROM federation_configurations \n
           """;
 
@@ -26,7 +26,7 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
             + """
                 WHERE tenant_id = ?::uuid
                 AND type = ?
-                AND sso_provider_name = ?
+                AND sso_provider = ?
                 """;
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());

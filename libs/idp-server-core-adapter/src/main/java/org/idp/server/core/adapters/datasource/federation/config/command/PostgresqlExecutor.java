@@ -20,7 +20,7 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
             id,
             tenant_id,
             type,
-            sso_provider_name,
+            sso_provider,
             payload
             ) VALUES (
             ?::uuid,

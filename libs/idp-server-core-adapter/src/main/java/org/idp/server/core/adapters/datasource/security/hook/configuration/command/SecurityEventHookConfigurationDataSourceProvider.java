@@ -13,7 +13,8 @@ public class SecurityEventHookConfigurationDataSourceProvider
   }
 
   @Override
-  public SecurityEventHookConfigurationCommandRepository provide(ApplicationComponentDependencyContainer container) {
+  public SecurityEventHookConfigurationCommandRepository provide(
+      ApplicationComponentDependencyContainer container) {
     return new SecurityEventHookConfigurationCommandDataSource();
   }
 }

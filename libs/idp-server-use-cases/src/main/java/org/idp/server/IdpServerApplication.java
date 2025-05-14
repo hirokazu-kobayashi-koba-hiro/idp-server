@@ -202,9 +202,11 @@ public class IdpServerApplication {
     FederationConfigurationQueryRepository federationConfigurationQueryRepository =
         applicationComponentContainer.resolve(FederationConfigurationQueryRepository.class);
     SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository =
-            applicationComponentContainer.resolve(SecurityEventHookConfigurationQueryRepository.class);
-    SecurityEventHookConfigurationCommandRepository securityEventHookConfigurationCommandRepository =
-            applicationComponentContainer.resolve(SecurityEventHookConfigurationCommandRepository.class);
+        applicationComponentContainer.resolve(SecurityEventHookConfigurationQueryRepository.class);
+    SecurityEventHookConfigurationCommandRepository
+        securityEventHookConfigurationCommandRepository =
+            applicationComponentContainer.resolve(
+                SecurityEventHookConfigurationCommandRepository.class);
 
     RoleCommandRepository roleCommandRepository =
         applicationComponentContainer.resolve(RoleCommandRepository.class);
@@ -492,13 +494,13 @@ public class IdpServerApplication {
             tenantDialectProvider);
 
     this.securityEventHookConfigurationManagementApi =
-            TenantAwareEntryServiceProxy.createProxy(
-                    new SecurityEventHookConfigurationManagementEntryService(
-                            securityEventHookConfigurationCommandRepository,
-                            securityEventHookConfigurationQueryRepository,
-                            tenantQueryRepository),
-                    SecurityEventHookConfigurationManagementApi.class,
-                    tenantDialectProvider);
+        TenantAwareEntryServiceProxy.createProxy(
+            new SecurityEventHookConfigurationManagementEntryService(
+                securityEventHookConfigurationCommandRepository,
+                securityEventHookConfigurationQueryRepository,
+                tenantQueryRepository),
+            SecurityEventHookConfigurationManagementApi.class,
+            tenantDialectProvider);
 
     this.identityVerificationConfigManagementApi =
         TenantAwareEntryServiceProxy.createProxy(

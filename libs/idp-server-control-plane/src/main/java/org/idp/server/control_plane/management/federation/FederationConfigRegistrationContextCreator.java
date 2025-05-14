@@ -30,10 +30,12 @@ public class FederationConfigRegistrationContextCreator {
             ? configJson.getValueOrEmptyAsString("id")
             : UUID.randomUUID().toString();
     String type = configJson.getValueOrEmptyAsString("type");
+    String ssoProvider = configJson.getValueOrEmptyAsString("sso_provider");
     JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
     Map<String, Object> payload = payloadJson.toMap();
 
-    FederationConfiguration configuration = new FederationConfiguration(id, type, payload);
+    FederationConfiguration configuration =
+        new FederationConfiguration(id, type, ssoProvider, payload);
 
     return new FederationConfigRegistrationContext(tenant, configuration, dryRun);
   }

@@ -58,6 +58,17 @@ public class JsonNodeWrapper {
     return names;
   }
 
+  public List<String> toList() {
+    List<String> list = new ArrayList<>();
+    if (jsonNode.isArray()) {
+      Iterator<JsonNode> iterator = jsonNode.elements();
+      while (iterator.hasNext()) {
+        list.add(iterator.next().asText());
+      }
+    }
+    return list;
+  }
+
   public JsonNodeWrapper getValueAsJsonNode(String fieldName) {
     return new JsonNodeWrapper(jsonNode.get(fieldName));
   }

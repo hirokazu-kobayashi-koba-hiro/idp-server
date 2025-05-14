@@ -1,17 +1,16 @@
 package org.idp.server.core.adapters.datasource.security.hook.configuration.query;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationIdentifier;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
 
   String selectSql =
-          """
+      """
                 SELECT id, type, payload, execution_order, enabled
                 FROM security_event_hook_configurations \n
                 """;
@@ -21,8 +20,8 @@ public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
-            selectSql
-                    + """
+        selectSql
+            + """
                 WHERE tenant_id = ?
                 AND enabled = true
                 ORDER BY execution_order;
@@ -35,19 +34,21 @@ public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectOne(Tenant tenant, SecurityEventHookConfigurationIdentifier identifier) {
+  public Map<String, String> selectOne(
+      Tenant tenant, SecurityEventHookConfigurationIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
             selectSql
                     + """
-                WHERE tenant_id = ?
-                AND enabled = true
+                WHERE tenant_id = ?::uuid
+                AND id = ?::uuid
                 ORDER BY execution_order;
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
+    params.add(identifier.value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -57,8 +58,8 @@ public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
-            selectSql
-                    + """
+        selectSql
+            + """
                 WHERE tenant_id = ?
                 ORDER BY execution_order
                 LIMIT ? OFFSET ?;

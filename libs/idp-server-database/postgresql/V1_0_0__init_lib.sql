@@ -578,15 +578,15 @@ ALTER TABLE security_event_hook_results FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE federation_configurations
 (
-    id                UUID                    NOT NULL,
-    tenant_id         UUID                    NOT NULL,
-    type              VARCHAR(255)            NOT NULL,
-    sso_provider_name VARCHAR(255)            NOt NULL,
-    payload           JSONB                   NOT NULL,
-    created_at        TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at        TIMESTAMP DEFAULT now() NOT NULL,
+    id           UUID                    NOT NULL,
+    tenant_id    UUID                    NOT NULL,
+    type         VARCHAR(255)            NOT NULL,
+    sso_provider VARCHAR(255)            NOt NULL,
+    payload      JSONB                   NOT NULL,
+    created_at   TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at   TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
-    CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider_name),
+    CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
@@ -598,7 +598,7 @@ POLICY rls_federation_configurations
 ALTER TABLE federation_configurations FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_federation_configurations_tenant ON federation_configurations (tenant_id);
-CREATE INDEX idx_federation_configurations_type_sso_provider_name ON federation_configurations (tenant_id, type, sso_provider_name);
+CREATE INDEX idx_federation_configurations_type_sso_provider ON federation_configurations (tenant_id, type, sso_provider);
 
 CREATE TABLE federation_sso_session
 (

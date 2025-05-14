@@ -1,4 +1,5 @@
 {
+  "id": "00fbb076-a287-404e-a053-8b6c9f1d758f",
   "type": "SSF",
   "triggers": [
     "user_signup",
@@ -46,6 +47,7 @@
     "subscription_change",
     "subscription_add"
   ],
+  "execution_order": 2,
   "payload": {
     "base": {
       "description": "ssf base",

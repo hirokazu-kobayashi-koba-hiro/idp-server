@@ -35,11 +35,13 @@ public class SecurityEventHookConfigUpdateContextCreator {
     String type = configJson.getValueOrEmptyAsString("type");
     List<JsonNodeWrapper> triggersJson = configJson.getValueAsJsonNodeList("triggers");
     List<String> triggers = triggersJson.stream().map(JsonNodeWrapper::asText).toList();
+    int executionOrder = configJson.getValueAsInt("execution_order");
+    boolean enabled = configJson.optValueAsBoolean("enabled", false);
     JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
     Map<String, Object> payload = payloadJson.toMap();
 
     SecurityEventHookConfiguration after =
-        new SecurityEventHookConfiguration(id, type, triggers, payload);
+        new SecurityEventHookConfiguration(id, type, triggers, executionOrder, enabled, payload);
 
     return new SecurityEventHookConfigUpdateContext(tenant, before, after, dryRun);
   }

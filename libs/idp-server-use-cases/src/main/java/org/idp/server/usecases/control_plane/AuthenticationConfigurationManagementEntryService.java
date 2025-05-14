@@ -70,8 +70,7 @@ public class AuthenticationConfigurationManagementEntryService
       return context.toResponse();
     }
 
-    authenticationConfigurationCommandRepository.register(
-        tenant, context.configuration());
+    authenticationConfigurationCommandRepository.register(tenant, context.configuration());
 
     return context.toResponse();
   }

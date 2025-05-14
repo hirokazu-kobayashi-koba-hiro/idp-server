@@ -1,5 +1,6 @@
 package org.idp.server.core.federation;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.federation.sso.SsoProvider;
 
@@ -11,9 +12,11 @@ public class FederationConfiguration {
 
   public FederationConfiguration() {}
 
-  public FederationConfiguration(String id, String type, Map<String, Object> payload) {
+  public FederationConfiguration(
+      String id, String type, String ssoProvider, Map<String, Object> payload) {
     this.id = id;
     this.type = type;
+    this.ssoProvider = ssoProvider;
     this.payload = payload;
   }
 
@@ -35,5 +38,13 @@ public class FederationConfiguration {
 
   public boolean exists() {
     return id != null && !id.isEmpty();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> result = new HashMap<>();
+    result.put("id", id);
+    result.put("type", type);
+    result.put("payload", payload);
+    return result;
   }
 }

@@ -24,7 +24,8 @@ public class FederationConfigurationManagementV1Api implements ParameterTransfor
   FederationConfigurationManagementApi federationConfigurationManagementApi;
 
   public FederationConfigurationManagementV1Api(IdpServerApplication idpServerApplication) {
-    this.federationConfigurationManagementApi = idpServerApplication.federationConfigManagementApi();
+    this.federationConfigurationManagementApi =
+        idpServerApplication.federationConfigManagementApi();
   }
 
   @PostMapping

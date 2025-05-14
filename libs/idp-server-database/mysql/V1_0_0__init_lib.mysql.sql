@@ -494,18 +494,18 @@ CREATE TABLE federation_configurations
     id                CHAR(36)                           NOT NULL,
     tenant_id         CHAR(36)                           NOT NULL,
     type              VARCHAR(255)                       NOT NULL,
-    sso_provider_name VARCHAR(255)                       NOt NULL,
+    sso_provider VARCHAR(255)                       NOt NULL,
     payload           JSON                               NOT NULL,
     created_at        DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at        DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
-    CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider_name),
+    CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_federation_configurations_tenant ON federation_configurations (tenant_id);
 
-CREATE INDEX idx_federation_configurations_type_sso_provider_name ON federation_configurations (tenant_id, type, sso_provider_name);
+CREATE INDEX idx_federation_configurations_type_sso_provider ON federation_configurations (tenant_id, type, sso_provider);
 
 CREATE TABLE federation_sso_session
 (

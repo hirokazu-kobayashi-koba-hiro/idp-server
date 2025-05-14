@@ -108,3 +108,45 @@ for identity_verification_config_file in "${identity_verification_config_files[@
   -d "${DRY_RUN}"
 
 done
+
+#federation-oidc
+echo "-------------------------------------------------"
+echo ""
+echo "federation-config oidc"
+
+federation_config_files=(
+  facebook.json
+  google.json
+)
+
+for federation_config_file in "${federation_config_files[@]}"; do
+  echo "🔧 Registering: $(basename "$federation_config_file")"
+
+./sample-config/upsert-federation-config.sh \
+  -t "${TENANT_ID}" \
+  -f "./sample-config/admin-tenant/federation/oidc/${federation_config_file}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+done
+
+#federation-oidc
+echo "-------------------------------------------------"
+echo ""
+echo "federation-config oidc"
+
+security_event_hook_config_files=(
+  slack.json
+  ssf.json
+)
+
+for security_event_hook_config_file in "${security_event_hook_config_files[@]}"; do
+  echo "🔧 Registering: $(basename "$security_event_hook_config_file")"
+
+./sample-config/upsert-security-event-hook-config.sh \
+  -t "${TENANT_ID}" \
+  -f "./sample-config/admin-tenant/security-event-hook/${security_event_hook_config_file}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+done

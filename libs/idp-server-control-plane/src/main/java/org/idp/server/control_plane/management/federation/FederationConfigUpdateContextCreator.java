@@ -31,10 +31,11 @@ public class FederationConfigUpdateContextCreator {
     JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
     String id = configJson.getValueOrEmptyAsString("id");
     String type = configJson.getValueOrEmptyAsString("type");
+    String ssoProvider = configJson.getValueOrEmptyAsString("sso_provider");
     JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
     Map<String, Object> payload = payloadJson.toMap();
 
-    FederationConfiguration after = new FederationConfiguration(id, type, payload);
+    FederationConfiguration after = new FederationConfiguration(id, type, ssoProvider, payload);
 
     return new FederationConfigUpdateContext(tenant, before, after, dryRun);
   }

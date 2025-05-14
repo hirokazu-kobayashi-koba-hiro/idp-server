@@ -48,7 +48,7 @@ public class FederationConfigUpdateContext {
     JsonNodeWrapper afterJson = JsonNodeWrapper.fromObject(after.payload());
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
     Map<String, Object> response = new HashMap<>();
-    response.put("result", after.payload());
+    response.put("result", after.toMap());
     response.put("diff", diff);
     response.put("dry_run", dryRun);
     return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);

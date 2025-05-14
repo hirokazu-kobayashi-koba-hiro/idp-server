@@ -9,10 +9,11 @@ class ModelConverter {
   static FederationConfiguration convert(Map<String, String> result) {
     String id = result.get("id");
     String type = result.get("type");
+    String ssoProvider = result.get("sso_provider");
     String payloadJson = result.get("payload");
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(payloadJson);
     Map<String, Object> payload = jsonNodeWrapper.toMap();
 
-    return new FederationConfiguration(id, type, payload);
+    return new FederationConfiguration(id, type, ssoProvider, payload);
   }
 }

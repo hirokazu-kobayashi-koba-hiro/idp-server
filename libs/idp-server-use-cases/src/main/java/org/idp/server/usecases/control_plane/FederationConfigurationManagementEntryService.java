@@ -21,7 +21,8 @@ import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.token.OAuthToken;
 
 @Transaction
-public class FederationConfigurationManagementEntryService implements FederationConfigurationManagementApi {
+public class FederationConfigurationManagementEntryService
+    implements FederationConfigurationManagementApi {
 
   FederationConfigurationQueryRepository federationConfigurationQueryRepository;
   FederationConfigurationCommandRepository federationConfigurationCommandRepository;
@@ -130,6 +131,11 @@ public class FederationConfigurationManagementEntryService implements Federation
     FederationConfiguration configuration =
         federationConfigurationQueryRepository.find(tenant, identifier);
 
+    if (!configuration.exists()) {
+      return new FederationConfigManagementResponse(
+          FederationConfigManagementStatus.NOT_FOUND, Map.of());
+    }
+
     return new FederationConfigManagementResponse(
         FederationConfigManagementStatus.OK, configuration.payload());
   }
@@ -160,7 +166,7 @@ public class FederationConfigurationManagementEntryService implements Federation
     FederationConfiguration before =
         federationConfigurationQueryRepository.find(tenant, identifier);
 
-    if (before.exists()) {
+    if (!before.exists()) {
       return new FederationConfigManagementResponse(
           FederationConfigManagementStatus.NOT_FOUND, Map.of());
     }

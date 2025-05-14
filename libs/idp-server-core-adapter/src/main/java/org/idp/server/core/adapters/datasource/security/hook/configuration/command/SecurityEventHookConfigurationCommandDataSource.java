@@ -5,7 +5,8 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.security.hook.SecurityEventHookConfiguration;
 import org.idp.server.core.security.repository.SecurityEventHookConfigurationCommandRepository;
 
-public class SecurityEventHookConfigurationCommandDataSource implements SecurityEventHookConfigurationCommandRepository {
+public class SecurityEventHookConfigurationCommandDataSource
+    implements SecurityEventHookConfigurationCommandRepository {
 
   SecurityEventHookConfigSqlExecutors executors;
   JsonConverter converter;

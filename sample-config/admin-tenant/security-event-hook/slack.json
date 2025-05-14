@@ -1,8 +1,10 @@
 {
+  "id": "00e9d1bd-c73c-42e9-bf67-2d8625b733e1",
   "type": "SLACK",
   "triggers": [
     "user_signup"
   ],
+  "execution_order": 1,
   "payload": {
     "base": {
       "description": "slack common notification",

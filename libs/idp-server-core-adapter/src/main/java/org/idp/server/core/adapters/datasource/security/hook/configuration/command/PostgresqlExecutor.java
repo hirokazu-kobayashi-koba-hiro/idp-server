@@ -15,16 +15,18 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
   public void insert(Tenant tenant, SecurityEventHookConfiguration configuration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
-            """
+        """
                     INSERT INTO security_event_hook_configurations (
                     id,
                     tenant_id,
+                    type,
                     payload,
                     execution_order
                     )
                     VALUES (
                     ?::uuid,
                     ?::uuid,
+                    ?,
                     ?::jsonb,
                     ?
                     ) ON CONFLICT DO NOTHING;
@@ -43,13 +45,13 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
   public void update(Tenant tenant, SecurityEventHookConfiguration configuration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
-            """
+        """
                     UPDATE security_event_hook_configurations (
                     id,
                     tenant_id,
                     SET payload = ?::jsonb,
                     execution_order = ?
-                    WHERE id = ?::uuid;
+                    WHERE id = ?::uuid
                     AND tenant_id = ?::uuid;
                     """;
     List<Object> params = new ArrayList<>();
@@ -65,9 +67,9 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
   public void delete(Tenant tenant, SecurityEventHookConfiguration configuration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
-            """
+        """
                     DELETE FROM security_event_hook_configurations
-                    WHERE id = ?::uuid;
+                    WHERE id = ?::uuid
                     AND tenant_id = ?::uuid;
                     """;
     List<Object> params = new ArrayList<>();
@@ -76,5 +78,4 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
 
     sqlExecutor.execute(sqlTemplate, params);
   }
-
 }

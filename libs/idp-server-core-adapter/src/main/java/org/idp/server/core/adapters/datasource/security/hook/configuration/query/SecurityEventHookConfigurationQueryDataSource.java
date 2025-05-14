@@ -11,7 +11,6 @@ import org.idp.server.core.security.repository.SecurityEventHookConfigurationQue
 public class SecurityEventHookConfigurationQueryDataSource
     implements SecurityEventHookConfigurationQueryRepository {
 
-
   SecurityEventHookConfigSqlExecutors executors;
 
   public SecurityEventHookConfigurationQueryDataSource() {
@@ -28,15 +27,14 @@ public class SecurityEventHookConfigurationQueryDataSource
     }
 
     List<SecurityEventHookConfiguration> list =
-        results.stream()
-            .map(ModelConverter::convert)
-            .toList();
+        results.stream().map(ModelConverter::convert).toList();
 
     return new SecurityEventHookConfigurations(list);
   }
 
   @Override
-  public SecurityEventHookConfiguration find(Tenant tenant, SecurityEventHookConfigurationIdentifier identifier) {
+  public SecurityEventHookConfiguration find(
+      Tenant tenant, SecurityEventHookConfigurationIdentifier identifier) {
     SecurityEventHookConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
@@ -56,9 +54,6 @@ public class SecurityEventHookConfigurationQueryDataSource
       return List.of();
     }
 
-    return
-            results.stream()
-                    .map(ModelConverter::convert)
-                    .toList();
+    return results.stream().map(ModelConverter::convert).toList();
   }
 }
