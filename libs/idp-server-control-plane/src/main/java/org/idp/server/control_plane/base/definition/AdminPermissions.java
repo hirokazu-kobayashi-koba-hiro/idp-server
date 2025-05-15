@@ -19,6 +19,6 @@ public class AdminPermissions {
   }
 
   public boolean includesAll(Set<String> userPermissions) {
-    return valuesAsSetString().containsAll(userPermissions);
+    return userPermissions.containsAll(valuesAsSetString());
   }
 }

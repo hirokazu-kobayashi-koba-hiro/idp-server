@@ -17,12 +17,24 @@ public class UserCommandDataSource implements UserCommandRepository {
   public void register(Tenant tenant, User user) {
     UserCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, user);
+    if (user.hasRoles()) {
+      executor.upsertRoles(tenant, user);
+    }
+    if (user.hasAssignedTenants()) {
+      executor.upsertAssignedTenants(tenant, user);
+    }
   }
 
   @Override
   public void update(Tenant tenant, User user) {
     UserCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, user);
+    if (user.hasRoles()) {
+      executor.upsertRoles(tenant, user);
+    }
+    if (user.hasAssignedTenants()) {
+      executor.upsertAssignedTenants(tenant, user);
+    }
   }
 
   @Override

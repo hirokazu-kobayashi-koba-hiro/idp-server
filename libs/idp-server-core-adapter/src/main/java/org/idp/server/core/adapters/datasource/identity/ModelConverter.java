@@ -3,9 +3,12 @@ package org.idp.server.core.adapters.datasource.identity;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserRole;
 import org.idp.server.core.identity.UserStatus;
 import org.idp.server.core.identity.address.Address;
 import org.idp.server.core.identity.device.AuthenticationDevice;
@@ -51,15 +54,17 @@ class ModelConverter {
 
     if (stringMap.containsKey("multi_factor_authentication")
         && !stringMap.get("multi_factor_authentication").isEmpty()) {
-      HashMap<String, Object> customProps =
-          jsonConverter.read(stringMap.get("multi_factor_authentication"), HashMap.class);
-      user.setMultiFactorAuthentication(customProps);
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(stringMap.get("multi_factor_authentication"));
+      HashMap<String, Object> mfaProps =
+          new HashMap<>(jsonNodeWrapper.toMap());
+      user.setMultiFactorAuthentication(mfaProps);
     }
 
     if (stringMap.containsKey("custom_properties")
         && !stringMap.get("custom_properties").isEmpty()) {
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(stringMap.get("custom_properties"));
       HashMap<String, Object> customProps =
-          jsonConverter.read(stringMap.get("custom_properties"), HashMap.class);
+              new HashMap<>(jsonNodeWrapper.toMap());
       user.setCustomProperties(customProps);
     }
 
@@ -69,13 +74,22 @@ class ModelConverter {
       user.setCredentials(credentials);
     }
     if (stringMap.containsKey("roles") && !stringMap.get("roles").equals("[]")) {
-      List<String> roles = jsonConverter.read(stringMap.get("roles"), List.class);
-      List<String> filtered = roles.stream().filter(Objects::nonNull).toList();
-      user.setRoles(filtered);
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(stringMap.get("roles"));
+      Collection<UserRole> distinctRoles = jsonNodeWrapper.elements().stream()
+              .map(node -> new UserRole(
+                      node.getValueOrEmptyAsString("role_id"),
+                      node.getValueOrEmptyAsString("role_name")
+              ))
+              .collect(Collectors.toCollection(() ->
+                      new TreeSet<>(Comparator.comparing(UserRole::roleId)))
+              );
+      List<UserRole> roles = new ArrayList<>(distinctRoles);
+      user.setRoles(roles);
     }
 
     if (stringMap.containsKey("permissions") && !stringMap.get("permissions").equals("[]")) {
-      List<String> permissions = jsonConverter.read(stringMap.get("permissions"), List.class);
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(stringMap.get("permissions"));
+      List<String> permissions = jsonNodeWrapper.toList();
       List<String> filtered = permissions.stream().filter(Objects::nonNull).toList();
       user.setPermissions(filtered);
     }
@@ -109,8 +123,9 @@ class ModelConverter {
     }
 
     if (stringMap.containsKey("verified_claims") && !stringMap.get("verified_claims").isEmpty()) {
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(stringMap.get("verified_claims"));
       HashMap<String, Object> verifiedClaims =
-          jsonConverter.read(stringMap.get("verified_claims"), HashMap.class);
+         new HashMap<>(jsonNodeWrapper.toMap());
       user.setVerifiedClaims(verifiedClaims);
     }
 

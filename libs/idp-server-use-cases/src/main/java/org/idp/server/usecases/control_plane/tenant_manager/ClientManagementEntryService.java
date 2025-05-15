@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.oidc.client.*;
@@ -28,6 +29,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
   TenantQueryRepository tenantQueryRepository;
   ClientConfigurationCommandRepository clientConfigurationCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  LoggerWrapper log = LoggerWrapper.getLogger(ClientManagementEntryService.class);
 
   public ClientManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -55,6 +57,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
     }
 
@@ -98,6 +101,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
     }
 
@@ -129,6 +133,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
     }
 
@@ -163,6 +168,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
     }
 
@@ -211,6 +217,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
     }
 

@@ -6,6 +6,8 @@ import org.idp.server.core.multi_tenancy.organization.OrganizationDescription;
 import org.idp.server.core.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.core.multi_tenancy.organization.OrganizationName;
 
+import java.util.UUID;
+
 public class OrganizationRegistrationRequest implements JsonReadable {
 
   String id;
@@ -13,6 +15,10 @@ public class OrganizationRegistrationRequest implements JsonReadable {
   String description;
 
   public OrganizationRegistrationRequest() {}
+
+  public boolean hasId() {
+    return id != null && !id.isEmpty();
+  }
 
   public String id() {
     return id;
@@ -23,10 +29,11 @@ public class OrganizationRegistrationRequest implements JsonReadable {
   }
 
   public Organization toOrganization() {
-    OrganizationIdentifier identifier = new OrganizationIdentifier(id);
+    String identifier = hasId() ? id : UUID.randomUUID().toString();
+    OrganizationIdentifier organizationIdentifier = new OrganizationIdentifier(identifier);
     OrganizationName organizationName = new OrganizationName(name);
     OrganizationDescription organizationDescription = new OrganizationDescription(description);
 
-    return new Organization(identifier, organizationName, organizationDescription);
+    return new Organization(organizationIdentifier, organizationName, organizationDescription);
   }
 }

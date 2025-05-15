@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.UserVerifier;
@@ -40,6 +41,7 @@ public class UserManagementEntryService implements UserManagementApi {
   PasswordEncodeDelegation passwordEncodeDelegation;
   UserRegistrationVerifier verifier;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
+  LoggerWrapper log = LoggerWrapper.getLogger(UserManagementEntryService.class);
 
   public UserManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -74,6 +76,7 @@ public class UserManagementEntryService implements UserManagementApi {
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
     }
 
@@ -123,6 +126,7 @@ public class UserManagementEntryService implements UserManagementApi {
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
     }
 
@@ -152,6 +156,7 @@ public class UserManagementEntryService implements UserManagementApi {
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
     }
 
@@ -185,6 +190,7 @@ public class UserManagementEntryService implements UserManagementApi {
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
     }
 
@@ -221,6 +227,7 @@ public class UserManagementEntryService implements UserManagementApi {
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
     }
 

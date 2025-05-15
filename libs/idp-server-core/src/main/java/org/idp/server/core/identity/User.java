@@ -42,8 +42,9 @@ public class User implements JsonReadable, Serializable {
   HashMap<String, Object> customProperties = new HashMap<>();
   List<HashMap<String, Object>> credentials = new ArrayList<>();
   HashMap<String, Object> multiFactorAuthentication = new HashMap<>();
-  List<String> roles = new ArrayList<>();
+  List<UserRole> roles = new ArrayList<>();
   List<String> permissions = new ArrayList<>();
+  List<String> assignedTenants = new ArrayList<>();
   HashMap<String, Object> verifiedClaims = new HashMap<>();
   UserStatus status = UserStatus.UNREGISTERED;
 
@@ -487,11 +488,11 @@ public class User implements JsonReadable, Serializable {
     return multiFactorAuthentication != null && !multiFactorAuthentication.isEmpty();
   }
 
-  public List<String> roles() {
+  public List<UserRole> roles() {
     return roles;
   }
 
-  public User setRoles(List<String> roles) {
+  public User setRoles(List<UserRole> roles) {
     this.roles = roles;
     return this;
   }
@@ -523,6 +524,19 @@ public class User implements JsonReadable, Serializable {
 
   public boolean hasAuthenticationDevices() {
     return authenticationDevices != null && !authenticationDevices.isEmpty();
+  }
+
+  public List<String> assignedTenants() {
+    return assignedTenants;
+  }
+
+  public User setAssignedTenants(List<String> assignedTenants) {
+    this.assignedTenants = assignedTenants;
+    return this;
+  }
+
+  public boolean hasAssignedTenants() {
+    return assignedTenants != null && !assignedTenants.isEmpty();
   }
 
   public UserStatus status() {

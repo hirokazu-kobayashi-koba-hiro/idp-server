@@ -7,6 +7,8 @@ import org.idp.server.core.multi_tenancy.tenant.TenantDomain;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantName;
 
+import java.util.UUID;
+
 public class TenantRegistrationRequest implements JsonReadable {
 
   String id;
@@ -17,8 +19,15 @@ public class TenantRegistrationRequest implements JsonReadable {
 
   public TenantRegistrationRequest() {}
 
+  public boolean hasId() {
+    return id != null && !id.isEmpty();
+  }
+
   public TenantIdentifier tenantIdentifier() {
-    return new TenantIdentifier(id);
+    if (hasId()) {
+      return new TenantIdentifier(id);
+    }
+    return new TenantIdentifier(UUID.randomUUID().toString());
   }
 
   public TenantName tenantName() {

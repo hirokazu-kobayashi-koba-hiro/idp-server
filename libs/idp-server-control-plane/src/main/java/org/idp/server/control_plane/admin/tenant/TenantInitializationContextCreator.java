@@ -2,7 +2,8 @@ package org.idp.server.control_plane.admin.tenant;
 
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.control_plane.admin.tenant.io.TenantInitializationRequest;
-import org.idp.server.control_plane.base.definition.DefinitionReader;
+import org.idp.server.control_plane.base.definition.AdminPermission;
+import org.idp.server.control_plane.base.definition.AdminRole;
 import org.idp.server.control_plane.management.onboarding.io.OrganizationRegistrationRequest;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
 import org.idp.server.core.identity.User;
@@ -45,8 +46,8 @@ public class TenantInitializationContextCreator {
     ClientConfiguration clientConfiguration =
         jsonConverter.read(request.get("client"), ClientConfiguration.class);
 
-    Permissions permissions = DefinitionReader.permissions();
-    Roles roles = DefinitionReader.roles();
+    Permissions permissions = AdminPermission.toPermissions();
+    Roles roles = AdminRole.toRoles();
 
     User user = jsonConverter.read(request.get("user"), User.class);
     String encode = passwordEncodeDelegation.encode(user.rawPassword());

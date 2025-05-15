@@ -32,4 +32,8 @@ public class Roles implements Iterable<Role> {
   public List<String> toStringList() {
     return values.stream().map(Role::name).toList();
   }
+
+  public List<Role> toList() {
+    return values;
+  }
 }
