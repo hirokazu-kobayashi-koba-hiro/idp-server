@@ -12,6 +12,7 @@ import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.authentication.evaluator.MfaConditionEvaluator;
 import org.idp.server.core.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
+import org.idp.server.core.federation.FederationInteractionResult;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
@@ -117,6 +118,33 @@ public class AuthenticationTransaction {
       AuthenticationInteractionResult result =
           new AuthenticationInteractionResult(1, successCount, failureCount);
       resultMap.put(interactionRequestResult.interactionTypeName(), result);
+    }
+
+    AuthenticationInteractionResults updatedResults =
+        new AuthenticationInteractionResults(resultMap);
+    return new AuthenticationTransaction(
+        identifier, updatedRequest, authenticationPolicy, updatedResults);
+  }
+
+  public AuthenticationTransaction updateWith(FederationInteractionResult result) {
+    Map<String, AuthenticationInteractionResult> resultMap = interactionResults.toMap();
+    AuthenticationRequest updatedRequest = request.updateWithUser(result);
+
+    if (interactionResults.contains(result.interactionTypeName())) {
+
+      AuthenticationInteractionResult foundResult =
+          interactionResults.get(result.interactionTypeName());
+      AuthenticationInteractionResult updatedInteraction = foundResult.updateWith(result);
+      resultMap.remove(result.interactionTypeName());
+      resultMap.put(result.interactionTypeName(), updatedInteraction);
+
+    } else {
+
+      int successCount = result.isSuccess() ? 1 : 0;
+      int failureCount = result.isSuccess() ? 0 : 1;
+      AuthenticationInteractionResult authenticationInteractionResult =
+          new AuthenticationInteractionResult(1, successCount, failureCount);
+      resultMap.put(result.interactionTypeName(), authenticationInteractionResult);
     }
 
     AuthenticationInteractionResults updatedResults =

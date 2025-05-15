@@ -100,7 +100,7 @@ public class OidcFederationInteractor implements FederationInteractor {
 
     sessionCommandRepository.delete(tenant, session.ssoSessionIdentifier());
 
-    return FederationInteractionResult.success(session, user);
+    return FederationInteractionResult.success(federationType, ssoProvider, session, user);
   }
 
   private JoseContext verifyAndParseIdToken(

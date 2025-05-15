@@ -240,6 +240,14 @@
               {
                 "type": "fido-uaf-authentication",
                 "success_count": 1
+              },
+              {
+                "type": "oidc-google",
+                "success_count": 1
+              },
+              {
+                "type": "oidc-facebook",
+                "success_count": 1
               }
             ]
           },
