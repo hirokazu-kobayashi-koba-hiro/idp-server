@@ -211,14 +211,12 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, result.authorizationRequestIdentifier());
 
-    OAuthSession oAuthSession =
-        OAuthSession.create(
-            authorizationRequest.sessionKey(),
-            result.user(),
-            result.authentication(),
-            authorizationRequest.maxAge());
+    AuthenticationTransaction authenticationTransaction =
+        authenticationTransactionQueryRepository.get(
+            tenant, result.authorizationRequestIdentifier().toAuthorizationIdentifier());
 
-    oAuthSessionDelegate.updateSession(oAuthSession);
+    AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
+    authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     eventPublisher.publish(
         tenant, authorizationRequest, result.user(), result.eventType(), requestAttributes);

@@ -2,6 +2,7 @@ package org.idp.server.core.federation;
 
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.federation.sso.SsoProvider;
 import org.idp.server.core.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
@@ -11,6 +12,8 @@ import org.idp.server.core.security.event.DefaultSecurityEventType;
 
 public class FederationInteractionResult {
 
+  FederationType federationType;
+  SsoProvider ssoProvider;
   AuthorizationRequestIdentifier authorizationRequestIdentifier;
   TenantIdentifier tenantIdentifier;
   FederationInteractionStatus status;
@@ -19,24 +22,8 @@ public class FederationInteractionResult {
   Map<String, Object> response;
   DefaultSecurityEventType eventType;
 
-  private FederationInteractionResult(
-      AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      TenantIdentifier tenantIdentifier,
-      FederationInteractionStatus status,
-      User user,
-      Authentication authentication,
-      Map<String, Object> response,
-      DefaultSecurityEventType eventType) {
-    this.authorizationRequestIdentifier = authorizationRequestIdentifier;
-    this.tenantIdentifier = tenantIdentifier;
-    this.status = status;
-    this.user = user;
-    this.authentication = authentication;
-    this.response = response;
-    this.eventType = eventType;
-  }
-
-  public static FederationInteractionResult success(OidcSsoSession session, User user) {
+  public static FederationInteractionResult success(
+      FederationType federationType, SsoProvider ssoProvider, OidcSsoSession session, User user) {
     AuthorizationRequestIdentifier authorizationRequestIdentifier =
         new AuthorizationRequestIdentifier(session.authorizationRequestId());
     FederationInteractionStatus status = FederationInteractionStatus.SUCCESS;
@@ -47,6 +34,8 @@ public class FederationInteractionResult {
     TenantIdentifier tenantIdentifier = new TenantIdentifier(session.tenantId());
     DefaultSecurityEventType eventType = DefaultSecurityEventType.federation_success;
     return new FederationInteractionResult(
+        federationType,
+        ssoProvider,
         authorizationRequestIdentifier,
         tenantIdentifier,
         status,
@@ -54,6 +43,27 @@ public class FederationInteractionResult {
         authentication,
         response,
         eventType);
+  }
+
+  private FederationInteractionResult(
+      FederationType federationType,
+      SsoProvider ssoProvider,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      TenantIdentifier tenantIdentifier,
+      FederationInteractionStatus status,
+      User user,
+      Authentication authentication,
+      Map<String, Object> response,
+      DefaultSecurityEventType eventType) {
+    this.federationType = federationType;
+    this.ssoProvider = ssoProvider;
+    this.authorizationRequestIdentifier = authorizationRequestIdentifier;
+    this.tenantIdentifier = tenantIdentifier;
+    this.status = status;
+    this.user = user;
+    this.authentication = authentication;
+    this.response = response;
+    this.eventType = eventType;
   }
 
   public FederationInteractionStatus status() {
@@ -98,5 +108,10 @@ public class FederationInteractionResult {
 
   public TenantIdentifier tenantIdentifier() {
     return tenantIdentifier;
+  }
+
+  // TODO more consider
+  public String interactionTypeName() {
+    return federationType.name() + "-" + ssoProvider.name();
   }
 }
