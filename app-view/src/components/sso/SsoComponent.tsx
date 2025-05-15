@@ -22,18 +22,18 @@ const idpConfigs = [
     label: "Google",
     logo: "/logos/google.svg",
   },
-  {
-    type: "oidc",
-    name: "facebook",
-    label: "Facebook",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg",
-  },
-  {
-    type: "oidc",
-    name: "yahoo",
-    label: "Yahoo! JAPAN ID",
-    logo: "/logos/yahoo_japan_icon_64.png",
-  },
+  // {
+  //   type: "oidc",
+  //   name: "facebook",
+  //   label: "Facebook",
+  //   logo: "https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg",
+  // },
+  // {
+  //   type: "oidc",
+  //   name: "yahoo",
+  //   label: "Yahoo! JAPAN ID",
+  //   logo: "/logos/yahoo_japan_icon_64.png",
+  // },
 ] as IdpConfigs;
 
 export const SsoComponent = () => {
