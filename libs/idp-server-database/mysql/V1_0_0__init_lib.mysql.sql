@@ -510,6 +510,7 @@ CREATE INDEX idx_federation_configurations_type_sso_provider ON federation_confi
 CREATE TABLE federation_sso_session
 (
     id         CHAR(36)                           NOT NULL,
+    tenant_id  CHAR(36)                           NOT NULL,
     payload    JSON                               NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,

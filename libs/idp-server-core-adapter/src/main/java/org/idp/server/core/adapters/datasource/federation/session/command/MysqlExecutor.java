@@ -5,19 +5,28 @@ import java.util.List;
 import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.federation.sso.SsoSessionIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class MysqlExecutor implements SsoSessionCommandSqlExecutor {
 
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
-  public <T> void insert(SsoSessionIdentifier identifier, T payload) {
+  public <T> void insert(Tenant tenant, SsoSessionIdentifier identifier, T payload) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
-                INSERT INTO federation_sso_session (id, payload)
-                VALUES (?, ?::jsonb)
+                INSERT INTO federation_sso_session (
+                id,
+                tenant_id,
+                payload
+                )
+                VALUES (
+                ?,
+                ?,
+                ?
+                )
                 ON DUPLICATE KEY
                 UPDATE payload = ?, updated_at = now();
                 """;
@@ -32,17 +41,19 @@ public class MysqlExecutor implements SsoSessionCommandSqlExecutor {
   }
 
   @Override
-  public void delete(SsoSessionIdentifier identifier) {
+  public void delete(Tenant tenant, SsoSessionIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
                 DELETE FROM federation_sso_session
-                WHERE id = ?;
+                WHERE id = ?
+                AND tenant_id = ?;
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
+    params.add(tenant.identifierValue());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
