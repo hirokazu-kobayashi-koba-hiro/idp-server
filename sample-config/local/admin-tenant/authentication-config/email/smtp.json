@@ -1,0 +1,32 @@
+{
+  "id": "6f5b0255-8faf-42cf-9f24-4f702386993f",
+  "type": "email",
+  "payload": {
+    "type": "smtp",
+    "settings": {
+      "smtp": {
+        "host": "smtp.gmail.com",
+        "port": 587,
+        "username": "test@gmail.com",
+        "password": "test",
+        "auth": true,
+        "starttls": {
+          "enable": true
+        }
+      }
+    },
+    "sender": "test@gmail.com",
+    "templates": {
+      "registration": {
+        "subject": "[ID Verification] Your signup confirmation code",
+        "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+      },
+      "authentication": {
+        "subject": "[ID Verification] Your login confirmation code",
+        "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+      }
+    },
+    "retry_count_limitation": 5,
+    "expire_seconds": 300
+  }
+}

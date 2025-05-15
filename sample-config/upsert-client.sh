@@ -8,11 +8,11 @@ usage() {
 
 BASE_URL="http://localhost:8080"
 
-while getopts ":t:f:e:a:d:" opt; do
+while getopts ":t:f:b:a:d:" opt; do
   case $opt in
     t) TENANT_ID="$OPTARG" ;;
     f) JSON_FILE="$OPTARG" ;;
-    e) BASE_URL="$OPTARG" ;;
+    b) BASE_URL="$OPTARG" ;;
     a) ACCESS_TOKEN="$OPTARG" ;;
     d) DRY_RUN="$OPTARG" ;;
     *) usage ;;
