@@ -18,7 +18,7 @@ const SsoCallback = () => {
       console.log(query);
 
       const response = await fetch(
-        `${backendUrl}/v1/authorizations/federations/callback`,
+        `${backendUrl}/v1/authorizations/federations/oidc/callback`,
         {
           method: "POST",
           credentials: "include",
