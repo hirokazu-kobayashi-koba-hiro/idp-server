@@ -4,7 +4,6 @@ idp:
    apiKey: ${IDP_SERVER_API_KEY}
    apiSecret: ${IDP_SERVER_API_SECRET}
    encryptionKey: ${ENCRYPTION_KEY}
-   serverUrl: "${IDP_SERVER_DOMAIN:http://localhost:8080/}"
   datasource:
     postgresql:
       writer:
@@ -42,7 +41,7 @@ idp:
           maximum-pool-size: 3
           minimum-idle: 1
   cache:
-    enabled: true
+    enabled: ${CACHE_ENABLE:true}
     timeToLiveSecond: ${CACHE_TIME_TO_LIVE_SECOND:300}
     redis:
       host: "${REDIS_HOST:localhost}"
