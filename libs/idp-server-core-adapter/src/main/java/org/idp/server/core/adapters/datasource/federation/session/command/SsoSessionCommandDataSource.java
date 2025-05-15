@@ -18,12 +18,12 @@ public class SsoSessionCommandDataSource implements SsoSessionCommandRepository 
   @Override
   public <T> void register(Tenant tenant, SsoSessionIdentifier identifier, T payload) {
     SsoSessionCommandSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.insert(identifier, payload);
+    executor.insert(tenant, identifier, payload);
   }
 
   @Override
   public void delete(Tenant tenant, SsoSessionIdentifier identifier) {
     SsoSessionCommandSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.delete(identifier);
+    executor.delete(tenant, identifier);
   }
 }
