@@ -1,0 +1,77 @@
+{
+  "id": "dd290cfa-e1f4-4a5f-88bf-e4958519ceac",
+  "type": "fido-uaf",
+  "payload": {
+    "type": "external",
+    "description": "mocky",
+    "oauth_authorization": {
+      "type": "password",
+      "token_endpoint": "https://run.mocky.io/v3/04646fc3-8cce-44c8-bc59-5c64df51bf82",
+      "client_id": "your-client-id",
+      "username": "username",
+      "password": "password",
+      "scope": "application"
+    },
+    "device_id_param": "user_id",
+    "details": {
+      "external": {
+        "executions": {
+          "facets": {
+            "url": "https://run.mocky.io/v3/35c7931b-85ce-4d4d-81b5-3e041e67214b",
+            "method": "GET",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "dynamic_body_keys": [],
+            "static_body": {}
+          },
+          "registration-challenge": {
+            "url": "https://run.mocky.io/v3/c47110bf-0c92-42ea-b725-4c56f21696c8",
+            "method": "POST",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "dynamic_body_keys": [],
+            "static_body": {}
+          },
+          "registration": {
+            "url": "https://run.mocky.io/v3/c47110bf-0c92-42ea-b725-4c56f21696c8",
+            "method": "POST",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "dynamic_body_keys": [],
+            "static_body": {}
+          },
+          "authentication-challenge": {
+            "url": "https://run.mocky.io/v3/57d41fba-4490-4e88-99fa-197db5c0c5a8",
+            "method": "POST",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "dynamic_body_keys": [],
+            "static_body": {}
+          },
+          "authentication": {
+            "url": "https://run.mocky.io/v3/35e6b282-354e-4bc5-8a36-98c54de61796",
+            "method": "POST",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "dynamic_body_keys": [],
+            "static_body": {}
+          },
+          "delete-key": {
+            "url": "https://run.mocky.io/v3/35e6b282-354e-4bc5-8a36-98c54de61796",
+            "method": "POST",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "dynamic_body_keys": [],
+            "static_body": {}
+          }
+        }
+      }
+    }
+  }
+}

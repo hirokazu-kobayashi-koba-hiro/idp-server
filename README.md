@@ -262,6 +262,7 @@ export IDP_SERVER_DOMAIN=http://localhost:8080/
 export IDP_SERVER_API_KEY=xxx
 export IDP_SERVER_API_SECRET=xxx
 export ENCRYPTION_KEY=xxx
+export ENV=local or develop or ...
 ```
 
 ### bootRun
@@ -273,15 +274,17 @@ export ENCRYPTION_KEY=xxx
 ### setup configuration
 
 ```shell
+export ENV=local 
 ./setup.sh
 ```
 
 ```shell
 ./sample-config/test-data.sh \
+-e "local" \
 -u ito.ichiro@gmail.com \
 -p successUserCode \
 -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
--e http://localhost:8080 \
+-b http://localhost:8080 \
 -c clientSecretPost \
 -s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
 -d false
