@@ -24,10 +24,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
 @EnableAsync
-@EnableRedisHttpSession
 @EnableScheduling
 @Configuration
 @EnableConfigurationProperties(DatabaseConfigProperties.class)
