@@ -7,12 +7,14 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 public class SsoState implements Serializable, JsonReadable {
   String sessionId;
   String tenantId;
+  String provider;
 
   public SsoState() {}
 
-  public SsoState(String sessionId, String tenantId) {
+  public SsoState(String sessionId, String tenantId, String provider) {
     this.sessionId = sessionId;
     this.tenantId = tenantId;
+    this.provider = provider;
   }
 
   public SsoSessionIdentifier ssoSessionIdentifier() {
@@ -21,5 +23,9 @@ public class SsoState implements Serializable, JsonReadable {
 
   public TenantIdentifier tenantIdentifier() {
     return new TenantIdentifier(tenantId);
+  }
+
+  public SsoProvider ssoProvider() {
+    return new SsoProvider(provider);
   }
 }

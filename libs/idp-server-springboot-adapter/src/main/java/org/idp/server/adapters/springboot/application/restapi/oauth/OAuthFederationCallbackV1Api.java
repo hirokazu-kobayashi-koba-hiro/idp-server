@@ -7,7 +7,6 @@ import org.idp.server.adapters.springboot.application.restapi.ParameterTransform
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.federation.*;
 import org.idp.server.core.federation.io.FederationCallbackRequest;
-import org.idp.server.core.federation.sso.SsoProvider;
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,10 +24,9 @@ public class OAuthFederationCallbackV1Api implements ParameterTransformable {
     this.oAuthFlowApi = idpServerApplication.oAuthFlowApi();
   }
 
-  @PostMapping("/v1/authorizations/federations/{federation-type}/{sso-provider-name}/callback")
+  @PostMapping("/v1/authorizations/federations/{federation-type}/callback")
   public ResponseEntity<?> callbackFederation(
       @PathVariable("federation-type") FederationType federationType,
-      @PathVariable("sso-provider-name") SsoProvider ssoProvider,
       @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
 
@@ -40,7 +38,7 @@ public class OAuthFederationCallbackV1Api implements ParameterTransformable {
         oAuthFlowApi.callbackFederation(
             federationCallbackRequest.tenantIdentifier(),
             federationType,
-            ssoProvider,
+            federationCallbackRequest.ssoProvider(),
             federationCallbackRequest,
             requestAttributes);
 
