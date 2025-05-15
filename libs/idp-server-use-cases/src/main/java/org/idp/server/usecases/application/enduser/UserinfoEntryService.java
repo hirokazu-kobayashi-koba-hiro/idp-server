@@ -1,4 +1,4 @@
-package org.idp.server.usecases.application;
+package org.idp.server.usecases.application.enduser;
 
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.oauth.Subject;

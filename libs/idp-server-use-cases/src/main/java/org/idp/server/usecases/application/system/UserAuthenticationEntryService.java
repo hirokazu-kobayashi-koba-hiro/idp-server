@@ -1,4 +1,4 @@
-package org.idp.server.usecases.application;
+package org.idp.server.usecases.application.system;
 
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.exception.UnauthorizedException;

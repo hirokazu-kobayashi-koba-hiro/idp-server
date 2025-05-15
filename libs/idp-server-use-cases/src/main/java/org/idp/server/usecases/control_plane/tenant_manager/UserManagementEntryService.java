@@ -1,4 +1,4 @@
-package org.idp.server.usecases.control_plane;
+package org.idp.server.usecases.control_plane.tenant_manager;
 
 import java.util.HashMap;
 import java.util.List;

@@ -1,4 +1,4 @@
-package org.idp.server.usecases.application;
+package org.idp.server.usecases.application.enduser;
 
 import java.util.HashMap;
 import java.util.Map;
