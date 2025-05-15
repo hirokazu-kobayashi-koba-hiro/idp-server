@@ -11,6 +11,6 @@ public enum StandardSupportedFederationType {
   }
 
   public FederationType toFederationType() {
-    return new FederationType(name());
+    return new FederationType(type);
   }
 }
