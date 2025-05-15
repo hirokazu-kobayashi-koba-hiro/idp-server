@@ -115,6 +115,9 @@ public class OAuthSession implements Serializable {
   }
 
   public boolean isExpire(LocalDateTime now) {
+    if (Objects.isNull(expiredAt)) {
+      return false;
+    }
     return expiredAt.isBefore(now);
   }
 
