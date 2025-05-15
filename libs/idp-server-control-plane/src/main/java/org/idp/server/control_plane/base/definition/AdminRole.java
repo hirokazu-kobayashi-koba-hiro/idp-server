@@ -1,20 +1,31 @@
 package org.idp.server.control_plane.base.definition;
 
-import org.idp.server.core.identity.permission.Permission;
-import org.idp.server.core.identity.role.Role;
-import org.idp.server.core.identity.role.Roles;
-
 import static org.idp.server.control_plane.base.definition.AdminPermission.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.idp.server.core.identity.permission.Permission;
+import org.idp.server.core.identity.role.Role;
+import org.idp.server.core.identity.role.Roles;
 
 public enum AdminRole {
-  ADMINISTRATOR("c6df7aaa-ab0f-4c31-839d-49b6874de144", "administrator", "administrator has all permissions", AdminPermission.getAll()),
-  EDITOR("46a97eba-feb5-47a0-9b29-d17dca2e5b00", "editor", "editor has permissions for edition", createEditorPermissions()),
-  VIEWER("c393adc2-f58b-47d5-b351-24b9615c8dc0", "viewer", "viewer has permissions for view", AdminPermission.findReadPermissions());
+  ADMINISTRATOR(
+      "c6df7aaa-ab0f-4c31-839d-49b6874de144",
+      "administrator",
+      "administrator has all permissions",
+      AdminPermission.getAll()),
+  EDITOR(
+      "46a97eba-feb5-47a0-9b29-d17dca2e5b00",
+      "editor",
+      "editor has permissions for edition",
+      createEditorPermissions()),
+  VIEWER(
+      "c393adc2-f58b-47d5-b351-24b9615c8dc0",
+      "viewer",
+      "viewer has permissions for view",
+      AdminPermission.findReadPermissions());
 
   private final String id;
   private final String name;
@@ -29,7 +40,8 @@ public enum AdminRole {
   }
 
   public Role toRole() {
-    List<Permission> permissions = this.permissions.stream().map(AdminPermission::toPermission).toList();
+    List<Permission> permissions =
+        this.permissions.stream().map(AdminPermission::toPermission).toList();
     return new Role(id, name, description, permissions);
   }
 
@@ -59,5 +71,4 @@ public enum AdminRole {
     editorPermissions.addAll(updatePermissions);
     return editorPermissions;
   }
-
 }

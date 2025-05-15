@@ -39,7 +39,7 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
       Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
-            """
+        """
                         UPDATE authorization_server_configuration
                         SET payload = ?,
                         token_issuer = ?
@@ -52,6 +52,5 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
     params.add(tenant.identifierValue());
 
     sqlExecutor.execute(sqlTemplate, params);
-
   }
 }

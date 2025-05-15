@@ -30,7 +30,8 @@ public class IdentityVerificationConfigManagementEntryService
       identityVerificationConfigurationCommandRepository;
   IdentityVerificationConfigurationQueryRepository identityVerificationConfigurationQueryRepository;
   TenantQueryRepository tenantQueryRepository;
-  LoggerWrapper log = LoggerWrapper.getLogger(IdentityVerificationConfigManagementEntryService.class);
+  LoggerWrapper log =
+      LoggerWrapper.getLogger(IdentityVerificationConfigManagementEntryService.class);
 
   public IdentityVerificationConfigManagementEntryService(
       IdentityVerificationConfigurationCommandRepository

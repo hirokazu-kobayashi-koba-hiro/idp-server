@@ -28,7 +28,8 @@ public class SecurityEventHookConfigurationManagementEntryService
   SecurityEventHookConfigurationCommandRepository securityEventHookConfigurationCommandRepository;
   SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
   TenantQueryRepository tenantQueryRepository;
-  LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHookConfigurationManagementEntryService.class);
+  LoggerWrapper log =
+      LoggerWrapper.getLogger(SecurityEventHookConfigurationManagementEntryService.class);
 
   public SecurityEventHookConfigurationManagementEntryService(
       SecurityEventHookConfigurationCommandRepository

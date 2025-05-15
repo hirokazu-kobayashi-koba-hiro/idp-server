@@ -31,7 +31,7 @@ public class ClientRegistrationContext {
   }
 
   public ClientManagementResponse toResponse() {
-    Map<String, Object> contents = Map.of("client", clientConfiguration.toMap(), "dry_run", dryRun);
+    Map<String, Object> contents = Map.of("result", clientConfiguration.toMap(), "dry_run", dryRun);
     return new ClientManagementResponse(ClientManagementStatus.CREATED, contents);
   }
 }

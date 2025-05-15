@@ -1,25 +1,24 @@
 package org.idp.server.core.identity;
 
+import java.io.Serializable;
 import org.idp.server.basic.json.JsonReadable;
 
-import java.io.Serializable;
-
 public class UserRole implements Serializable, JsonReadable {
-    String roleId;
-    String roleName;
+  String roleId;
+  String roleName;
 
-    public UserRole() {}
+  public UserRole() {}
 
-    public UserRole(String roleId, String roleName) {
-        this.roleId = roleId;
-        this.roleName = roleName;
-    }
+  public UserRole(String roleId, String roleName) {
+    this.roleId = roleId;
+    this.roleName = roleName;
+  }
 
-    public String roleId() {
-        return roleId;
-    }
+  public String roleId() {
+    return roleId;
+  }
 
-    public String roleName() {
-        return roleName;
-    }
+  public String roleName() {
+    return roleName;
+  }
 }

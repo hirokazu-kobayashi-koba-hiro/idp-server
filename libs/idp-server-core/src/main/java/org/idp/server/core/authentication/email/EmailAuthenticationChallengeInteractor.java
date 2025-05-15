@@ -58,7 +58,8 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
     OneTimePassword oneTimePassword = OneTimePasswordGenerator.generate();
     String sender = emailAuthenticationConfiguration.sender();
     EmailVerificationTemplate emailVerificationTemplate =
-        emailAuthenticationConfiguration.findTemplate(request.optValueAsString("email_template", "authentication"));
+        emailAuthenticationConfiguration.findTemplate(
+            request.optValueAsString("email_template", "authentication"));
     String subject = emailVerificationTemplate.subject();
     int retryCountLimitation = emailAuthenticationConfiguration.retryCountLimitation();
     int expireSeconds = emailAuthenticationConfiguration.expireSeconds();

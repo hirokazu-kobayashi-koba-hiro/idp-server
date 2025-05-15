@@ -92,7 +92,7 @@ public class UserInfoMapper {
         case "phone_number" -> user.setPhoneNumber(mappedValue.toString());
         case "phone_number_verified" -> user.setPhoneNumberVerified((Boolean) mappedValue);
         case "address" -> user.setAddress((Address) mappedValue);
-//        case "roles" -> user.setRoles((List<String>) mappedValue);
+          //        case "roles" -> user.setRoles((List<String>) mappedValue);
         case "permissions" -> user.setPermissions((List<String>) mappedValue);
         default -> user.customPropertiesValue().put(rule.getTo(), mappedValue);
       }

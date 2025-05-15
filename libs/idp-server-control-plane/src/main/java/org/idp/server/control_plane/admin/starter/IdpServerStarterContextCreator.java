@@ -1,9 +1,9 @@
 package org.idp.server.control_plane.admin.starter;
 
+import java.util.List;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.control_plane.admin.starter.io.IdpServerStarterRequest;
 import org.idp.server.control_plane.base.definition.AdminPermission;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.AdminRole;
 import org.idp.server.control_plane.management.onboarding.io.OrganizationRegistrationRequest;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
@@ -20,8 +20,6 @@ import org.idp.server.core.multi_tenancy.tenant.TenantAttributes;
 import org.idp.server.core.multi_tenancy.tenant.TenantType;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-
-import java.util.List;
 
 public class IdpServerStarterContextCreator {
 
@@ -70,9 +68,11 @@ public class IdpServerStarterContextCreator {
     String encode = passwordEncodeDelegation.encode(user.rawPassword());
 
     List<Role> rolesList = roles.toList();
-    List<UserRole> userRoles = rolesList.stream().map(role -> new UserRole(role.id(), role.name())).toList();
+    List<UserRole> userRoles =
+        rolesList.stream().map(role -> new UserRole(role.id(), role.name())).toList();
     user.setHashedPassword(encode);
-    User updatedUser = user.transitStatus(UserStatus.REGISTERED)
+    User updatedUser =
+        user.transitStatus(UserStatus.REGISTERED)
             .setRoles(userRoles)
             .setAssignedTenants(List.of(tenant.identifierValue()));
 

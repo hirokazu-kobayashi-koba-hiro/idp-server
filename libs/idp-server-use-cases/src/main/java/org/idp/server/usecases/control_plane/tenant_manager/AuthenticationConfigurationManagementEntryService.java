@@ -28,7 +28,8 @@ public class AuthenticationConfigurationManagementEntryService
   AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository;
   AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository;
   TenantQueryRepository tenantQueryRepository;
-  LoggerWrapper log = LoggerWrapper.getLogger(AuthenticationConfigurationManagementEntryService.class);
+  LoggerWrapper log =
+      LoggerWrapper.getLogger(AuthenticationConfigurationManagementEntryService.class);
 
   public AuthenticationConfigurationManagementEntryService(
       AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository,

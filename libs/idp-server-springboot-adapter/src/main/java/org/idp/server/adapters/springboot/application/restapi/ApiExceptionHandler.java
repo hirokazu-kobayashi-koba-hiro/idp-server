@@ -1,10 +1,12 @@
 package org.idp.server.adapters.springboot.application.restapi;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.basic.exception.*;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -48,6 +50,15 @@ public class ApiExceptionHandler {
   public ResponseEntity<?> handleException(ConflictException exception) {
     log.warn(exception.getMessage());
     return new ResponseEntity<>(HttpStatus.CONFLICT);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<?> handleException(
+      HttpMediaTypeNotSupportedException exception, HttpServletRequest httpServletRequest) {
+    log.warn(exception.getMessage(), exception);
+    return new ResponseEntity<>(
+        Map.of("error", "client_error", "error_description", "please check media type"),
+        HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   @ExceptionHandler

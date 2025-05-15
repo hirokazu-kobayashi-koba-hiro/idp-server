@@ -13,7 +13,7 @@ public class AuthenticationInteractionRequest {
   }
 
   public AuthenticationInteractionRequest(Map<String, Object> values) {
-      this.values = Objects.requireNonNullElseGet(values, Map::of);
+    this.values = Objects.requireNonNullElseGet(values, Map::of);
   }
 
   public Map<String, Object> toMap() {

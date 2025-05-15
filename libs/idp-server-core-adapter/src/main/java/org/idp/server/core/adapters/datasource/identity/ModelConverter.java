@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.User;
@@ -54,17 +53,17 @@ class ModelConverter {
 
     if (stringMap.containsKey("multi_factor_authentication")
         && !stringMap.get("multi_factor_authentication").isEmpty()) {
-      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(stringMap.get("multi_factor_authentication"));
-      HashMap<String, Object> mfaProps =
-          new HashMap<>(jsonNodeWrapper.toMap());
+      JsonNodeWrapper jsonNodeWrapper =
+          JsonNodeWrapper.fromString(stringMap.get("multi_factor_authentication"));
+      HashMap<String, Object> mfaProps = new HashMap<>(jsonNodeWrapper.toMap());
       user.setMultiFactorAuthentication(mfaProps);
     }
 
     if (stringMap.containsKey("custom_properties")
         && !stringMap.get("custom_properties").isEmpty()) {
-      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(stringMap.get("custom_properties"));
-      HashMap<String, Object> customProps =
-              new HashMap<>(jsonNodeWrapper.toMap());
+      JsonNodeWrapper jsonNodeWrapper =
+          JsonNodeWrapper.fromString(stringMap.get("custom_properties"));
+      HashMap<String, Object> customProps = new HashMap<>(jsonNodeWrapper.toMap());
       user.setCustomProperties(customProps);
     }
 
@@ -75,14 +74,16 @@ class ModelConverter {
     }
     if (stringMap.containsKey("roles") && !stringMap.get("roles").equals("[]")) {
       JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(stringMap.get("roles"));
-      Collection<UserRole> distinctRoles = jsonNodeWrapper.elements().stream()
-              .map(node -> new UserRole(
-                      node.getValueOrEmptyAsString("role_id"),
-                      node.getValueOrEmptyAsString("role_name")
-              ))
-              .collect(Collectors.toCollection(() ->
-                      new TreeSet<>(Comparator.comparing(UserRole::roleId)))
-              );
+      Collection<UserRole> distinctRoles =
+          jsonNodeWrapper.elements().stream()
+              .map(
+                  node ->
+                      new UserRole(
+                          node.getValueOrEmptyAsString("role_id"),
+                          node.getValueOrEmptyAsString("role_name")))
+              .collect(
+                  Collectors.toCollection(
+                      () -> new TreeSet<>(Comparator.comparing(UserRole::roleId))));
       List<UserRole> roles = new ArrayList<>(distinctRoles);
       user.setRoles(roles);
     }
@@ -93,6 +94,16 @@ class ModelConverter {
       List<String> filtered = permissions.stream().filter(Objects::nonNull).toList();
       user.setPermissions(filtered);
     }
+
+    if (stringMap.containsKey("assigned_tenants")
+        && !stringMap.get("assigned_tenants").equals("[]")) {
+      JsonNodeWrapper jsonNodeWrapper =
+          JsonNodeWrapper.fromString(stringMap.get("assigned_tenants"));
+      List<String> assignedTenants = jsonNodeWrapper.toList();
+      List<String> filtered = assignedTenants.stream().filter(Objects::nonNull).toList();
+      user.setAssignedTenants(filtered);
+    }
+
     if (stringMap.containsKey("authentication_devices")
         && stringMap.get("authentication_devices") != null
         && !stringMap.get("authentication_devices").equals("[]")) {
@@ -123,9 +134,9 @@ class ModelConverter {
     }
 
     if (stringMap.containsKey("verified_claims") && !stringMap.get("verified_claims").isEmpty()) {
-      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(stringMap.get("verified_claims"));
-      HashMap<String, Object> verifiedClaims =
-         new HashMap<>(jsonNodeWrapper.toMap());
+      JsonNodeWrapper jsonNodeWrapper =
+          JsonNodeWrapper.fromString(stringMap.get("verified_claims"));
+      HashMap<String, Object> verifiedClaims = new HashMap<>(jsonNodeWrapper.toMap());
       user.setVerifiedClaims(verifiedClaims);
     }
 

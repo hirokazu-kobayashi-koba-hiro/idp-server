@@ -185,7 +185,7 @@
     "id_token_signed_key_id": "id_token_nextauth",
     "access_token_duration": 3600,
     "id_token_duration": 3600,
-    "id_token_strict_mode": true,
+    "id_token_strict_mode": false,
     "default_max_age": 86400,
     "fapi_baseline_scopes": [
       "read"

@@ -205,7 +205,7 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(
-            """
+        """
                         INSERT INTO idp_user_roles (tenant_id, user_id, role_id)
                         VALUES
                         """);
@@ -215,16 +215,16 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
 
     List<UserRole> userRoles = user.roles();
     userRoles.forEach(
-            userRole -> {
-              sqlValues.add("(?::uuid, ?::uuid, ?::uuid)");
-              params.add(tenant.identifierValue());
-              params.add(user.sub());
-              params.add(userRole.roleId());
-            });
+        userRole -> {
+          sqlValues.add("(?::uuid, ?::uuid, ?::uuid)");
+          params.add(tenant.identifierValue());
+          params.add(user.sub());
+          params.add(userRole.roleId());
+        });
 
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(
-            """
+        """
             ON CONFLICT (user_id, role_id) DO NOTHING;
             """);
     sqlTemplateBuilder.append(";");
@@ -237,7 +237,7 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(
-            """
+        """
                         INSERT INTO idp_user_assigned_tenants (tenant_id, user_id)
                         VALUES
                         """);
@@ -247,14 +247,14 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
 
     List<String> assignedTenants = user.assignedTenants();
     assignedTenants.forEach(
-            assignedTenant -> {
-              sqlValues.add("(?::uuid, ?::uuid)");
-              params.add(assignedTenant);
-              params.add(user.sub());
-            });
+        assignedTenant -> {
+          sqlValues.add("(?::uuid, ?::uuid)");
+          params.add(assignedTenant);
+          params.add(user.sub());
+        });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(
-            """
+        """
             ON CONFLICT (tenant_id, user_id) DO NOTHING;
             """);
     sqlTemplateBuilder.append(";");

@@ -492,6 +492,10 @@ public class User implements JsonReadable, Serializable {
     return roles;
   }
 
+  public List<String> roleNameAsListString() {
+    return roles.stream().map(UserRole::roleName).toList();
+  }
+
   public User setRoles(List<UserRole> roles) {
     this.roles = roles;
     return this;

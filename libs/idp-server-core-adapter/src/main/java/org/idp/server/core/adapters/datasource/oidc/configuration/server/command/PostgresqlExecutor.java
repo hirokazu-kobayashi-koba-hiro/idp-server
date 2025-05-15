@@ -43,7 +43,7 @@ public class PostgresqlExecutor implements ServerConfigSqlExecutor {
       Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
-            """
+        """
                         UPDATE authorization_server_configuration
                         SET payload = ?::jsonb,
                         token_issuer = ?
