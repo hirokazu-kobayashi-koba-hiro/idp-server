@@ -5,6 +5,8 @@
   "payload": {
     "issuer": "https://accounts.google.com",
     "issuer_name": "google",
+    "type": "standard",
+    "provider": "standard",
     "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
     "device_authorization_endpoint": "https://oauth2.googleapis.com/device/code",
     "token_endpoint": "https://oauth2.googleapis.com/token",
@@ -61,6 +63,6 @@
     ],
     "client_id": "600343036716-h6kaq8hlgdlqh7fcqg285dlrr4ssbp6p.apps.googleusercontent.com",
     "client_secret": "xxx",
-    "redirect_uri": "https://idp-auth-frontend-ecru.vercel.app/signin/sso-callback"
+    "redirect_uri": "http://localhost:8080/signin/sso-callback/index.html"
   }
 }

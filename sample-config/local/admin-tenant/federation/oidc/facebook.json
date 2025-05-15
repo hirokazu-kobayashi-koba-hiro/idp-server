@@ -5,6 +5,8 @@
   "payload": {
     "issuer": "https://www.facebook.com",
     "issuer_name": "facebook",
+    "type": "facebook",
+    "provider": "facebook",
     "authorization_endpoint": "https://facebook.com/dialog/oauth/",
     "token_endpoint": "https://graph.facebook.com/v19.0/oauth/access_token",
     "jwks_uri": "https://www.facebook.com/.well-known/oauth/openid/jwks/",
@@ -50,6 +52,6 @@
     ],
     "client_id": "949393364072577",
     "client_secret": "xxx",
-    "redirect_uri": "https://idp-auth-frontend-ecru.vercel.app/signin/sso-callback"
+    "redirect_uri": "http://localhost:8080/signin/sso-callback/index.html"
   }
 }
