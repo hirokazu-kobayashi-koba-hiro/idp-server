@@ -2,6 +2,7 @@ package org.idp.server.core.federation.io;
 
 import java.util.Map;
 import org.idp.server.core.federation.FederationCallbackParameters;
+import org.idp.server.core.federation.sso.SsoProvider;
 import org.idp.server.core.federation.sso.SsoState;
 import org.idp.server.core.federation.sso.SsoStateCoder;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
@@ -36,5 +37,12 @@ public class FederationCallbackRequest {
 
   public TenantIdentifier tenantIdentifier() {
     return ssoState().tenantIdentifier();
+  }
+
+  public SsoProvider ssoProvider() {
+    if (parameters().hasState()) {
+      return ssoState().ssoProvider();
+    }
+    return new SsoProvider();
   }
 }
