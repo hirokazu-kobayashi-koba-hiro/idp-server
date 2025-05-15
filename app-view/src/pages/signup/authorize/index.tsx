@@ -28,7 +28,7 @@ export default function AuthorizePage() {
     queryFn: async () => {
       if (!router.isReady || Object.keys(router.query).length === 0) return;
       const response = await fetch(
-        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/view-data`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/view-data`,
         { credentials: "include" },
       );
       if (!response.ok) throw new Error(response.status.toString());
@@ -38,7 +38,7 @@ export default function AuthorizePage() {
 
   const handleCancel = async () => {
     const response = await fetch(
-      `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/deny`,
+      `${backendUrl}/${tenantId}/v1/authorizations/${id}/deny`,
       {
         method: "POST",
         credentials: "include",
@@ -51,7 +51,7 @@ export default function AuthorizePage() {
 
   const handleApprove = async () => {
     const response = await fetch(
-      `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/authorize`,
+      `${backendUrl}/${tenantId}/v1/authorizations/${id}/authorize`,
       {
         method: "POST",
         credentials: "include",

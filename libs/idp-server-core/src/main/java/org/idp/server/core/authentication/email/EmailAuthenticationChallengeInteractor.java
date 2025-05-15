@@ -55,22 +55,10 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
           DefaultSecurityEventType.email_verification_failure);
     }
 
-    if (!request.containsKey("email_template")) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_request");
-      response.put("error_description", "session is invalid. email is not specified");
-
-      return new AuthenticationInteractionRequestResult(
-          AuthenticationInteractionStatus.CLIENT_ERROR,
-          type,
-          response,
-          DefaultSecurityEventType.email_verification_failure);
-    }
-
     OneTimePassword oneTimePassword = OneTimePasswordGenerator.generate();
     String sender = emailAuthenticationConfiguration.sender();
     EmailVerificationTemplate emailVerificationTemplate =
-        emailAuthenticationConfiguration.findTemplate(request.getValueAsString("email_template"));
+        emailAuthenticationConfiguration.findTemplate(request.optValueAsString("email_template", "authentication"));
     String subject = emailVerificationTemplate.subject();
     int retryCountLimitation = emailAuthenticationConfiguration.retryCountLimitation();
     int expireSeconds = emailAuthenticationConfiguration.expireSeconds();

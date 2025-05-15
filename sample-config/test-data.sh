@@ -35,6 +35,19 @@ echo "tenant-1"
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
 
+# admin-tenant
+## authorization-server
+
+echo "-------------------------------------------------"
+echo ""
+echo "authorization-server"
+
+./sample-config/upsert-authorization-server.sh \
+  -t "${TENANT_ID}" \
+  -f "./sample-config/admin-tenant/authorization-server/idp-server.json" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
 ##client
 
 echo "client"

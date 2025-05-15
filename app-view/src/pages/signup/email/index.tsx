@@ -15,13 +15,14 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { useRouter } from "next/router";
-import { backendUrl } from "@/pages/_app";
+import { backendUrl, useAppContext } from "@/pages/_app";
 import { useState } from "react";
 import { SignupStepper } from "@/components/SignupStepper";
 import { Email } from "@mui/icons-material";
 
 export default function EmailVerificationPage() {
   const router = useRouter();
+  const { email } = useAppContext()
   const [verificationCode, setVerificationCode] = useState("");
   const [message, setMessage] = useState("");
   const { id, tenant_id: tenantId } = router.query;
@@ -29,10 +30,12 @@ export default function EmailVerificationPage() {
 
   const handleReSend = async () => {
     const response = await fetch(
-      `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/email-verification/challenge`,
+      `${backendUrl}/${tenantId}/v1/authorizations/${id}/email-authentication-challenge`,
       {
         method: "POST",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email }),
       },
     );
     if (!response.ok) {
@@ -42,7 +45,7 @@ export default function EmailVerificationPage() {
 
   const handleNext = async () => {
     const response = await fetch(
-      `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/email-verification/verify`,
+      `${backendUrl}/${tenantId}/v1/authorizations/${id}/email-authentication`,
       {
         method: "POST",
         credentials: "include",

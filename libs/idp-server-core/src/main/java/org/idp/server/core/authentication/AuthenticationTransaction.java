@@ -229,6 +229,7 @@ public class AuthenticationTransaction {
     return request.context();
   }
 
+  //TODO
   public Authentication authentication() {
     LocalDateTime time = SystemDateTime.now();
     List<String> methods = new ArrayList<>();

@@ -26,9 +26,9 @@ public class AuthorizationServerUpdateContextCreator {
   }
 
   public AuthorizationServerUpdateContext create() {
-    AuthorizationServerConfiguration clientConfiguration =
+    AuthorizationServerConfiguration configuration =
         jsonConverter.read(request.toMap(), AuthorizationServerConfiguration.class);
 
-    return new AuthorizationServerUpdateContext(tenant, before, clientConfiguration, dryRun);
+    return new AuthorizationServerUpdateContext(tenant, before, configuration, dryRun);
   }
 }

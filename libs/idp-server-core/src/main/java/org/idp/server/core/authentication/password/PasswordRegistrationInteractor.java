@@ -40,7 +40,7 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
       AuthenticationTransaction transaction,
       UserQueryRepository userQueryRepository) {
 
-    Map json = configurationQueryRepository.get(tenant, "signup", Map.class);
+    Map json = configurationQueryRepository.get(tenant, "password", Map.class);
     JsonNodeWrapper definition = jsonConverter.readTree(json);
     JsonSchemaDefinition jsonSchemaDefinition = new JsonSchemaDefinition(definition);
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);

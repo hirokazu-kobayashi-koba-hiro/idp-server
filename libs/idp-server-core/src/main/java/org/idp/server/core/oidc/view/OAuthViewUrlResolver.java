@@ -11,10 +11,10 @@ public class OAuthViewUrlResolver {
     String base = context.tenant().domain().value();
 
     if (context.isPromptCreate()) {
-      return buildUrl(base, "signup", context);
+      return buildUrl(base, "signup/index.html", context);
     }
 
-    return buildUrl(base, "signin", context);
+    return buildUrl(base, "signin/index.html", context);
   }
 
   public static String resolveError(Tenant tenant, Error error, ErrorDescription errorDescription) {
@@ -26,7 +26,7 @@ public class OAuthViewUrlResolver {
 
   private static String buildUrl(String base, String path, OAuthRequestContext context) {
     return String.format(
-        "%s%s/?id=%s&tenant_id=%s",
+        "%s/%s/?id=%s&tenant_id=%s",
         base,
         path,
         context.authorizationRequestIdentifier().value(),

@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @ControllerAdvice
 public class ApiExceptionHandler {
@@ -33,6 +34,12 @@ public class ApiExceptionHandler {
 
   @ExceptionHandler(NotFoundException.class)
   public ResponseEntity<?> handleException(NotFoundException exception) {
+    log.warn(exception.getMessage());
+    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<?> handleException(NoResourceFoundException exception) {
     log.warn(exception.getMessage());
     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
   }

@@ -607,6 +607,6 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     if (hasBackchannelUserCodeParameterSupported()) {
       map.put("backchannel_user_code_parameter_supported", backchannelUserCodeParameterSupported);
     }
-    return null;
+    return map;
   }
 }

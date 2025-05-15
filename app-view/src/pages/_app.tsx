@@ -15,6 +15,8 @@ interface AppContextType {
   tenantId: string | null;
   setTenantId: (id: string) => void;
   userId: string | null;
+  email: string | null;
+  setEmail: (email: string) => void;
   setUserId: (id: string) => void;
 }
 
@@ -32,11 +34,12 @@ export default function App({ Component, pageProps }: AppProps) {
   const [id, setId] = useState<string>("");
   const [tenantId, setTenantId] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
 
   return (
     <>
       <AppContext.Provider
-        value={{ id, setId, tenantId, setTenantId, userId, setUserId }}
+        value={{ id, setId, tenantId, setTenantId, userId, setUserId,  email, setEmail }}
       >
         <CssBaseline />
         <QueryClientProvider client={queryClient}>

@@ -33,8 +33,9 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
 
     String username = request.optValueAsString("username", "");
     String password = request.optValueAsString("password", "");
+    String providerId = request.optValueAsString("provider_id", "idp-server");
 
-    User user = userQueryRepository.findByEmail(tenant, username, "idp-server");
+    User user = userQueryRepository.findByEmail(tenant, username, providerId);
     if (!passwordVerificationDelegation.verify(password, user.hashedPassword())) {
 
       Map<String, Object> response = new HashMap<>();
