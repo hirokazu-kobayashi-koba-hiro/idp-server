@@ -77,11 +77,15 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     }
 
     if (!idTokenStrictMode && user.hasRoles()) {
-      claims.put("roles", user.roles());
+      claims.put("roles", user.roleNameAsListString());
     }
 
     if (!idTokenStrictMode && user.hasPermissions()) {
       claims.put("permissions", user.permissions());
+    }
+
+    if (!idTokenStrictMode && user.hasAssignedTenants()) {
+      claims.put("assigned_tenants", user.assignedTenants());
     }
 
     if (!idTokenStrictMode && user.hasCustomProperties()) {
@@ -220,11 +224,15 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
     }
 
     if (user.hasRoles()) {
-      claims.put("roles", user.roles());
+      claims.put("roles", user.roleNameAsListString());
     }
 
     if (user.hasPermissions()) {
       claims.put("permissions", user.permissions());
+    }
+
+    if (user.hasAssignedTenants()) {
+      claims.put("assigned_tenants", user.assignedTenants());
     }
 
     if (user.hasCustomProperties()) {

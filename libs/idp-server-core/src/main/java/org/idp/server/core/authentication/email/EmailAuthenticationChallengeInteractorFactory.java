@@ -12,7 +12,7 @@ public class EmailAuthenticationChallengeInteractorFactory
 
   @Override
   public AuthenticationInteractionType type() {
-    return StandardAuthenticationInteraction.EMAIL_VERIFICATION_CHALLENGE.toType();
+    return StandardAuthenticationInteraction.EMAIL_AUTHENTICATION_CHALLENGE.toType();
   }
 
   @Override

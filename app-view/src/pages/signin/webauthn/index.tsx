@@ -34,7 +34,7 @@ export default function Login() {
       }
 
       const response = await fetch(
-        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/view-data`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/view-data`,
         {
           credentials: "include",
         },
@@ -53,7 +53,7 @@ export default function Login() {
 
     try {
       const res = await fetch(
-        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/webauthn/authentication/challenge`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/webauthn/authentication/challenge`,
         {
           credentials: "include",
         },
@@ -72,7 +72,7 @@ export default function Login() {
       });
 
       const loginRes = await fetch(
-        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/webauthn/authentication/response`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/webauthn/authentication/response`,
         {
           method: "POST",
           credentials: "include",
@@ -83,7 +83,7 @@ export default function Login() {
 
       if (loginRes.ok) {
         const authorizeResponse = await fetch(
-          `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/authorize`,
+          `${backendUrl}/${tenantId}/v1/authorizations/${id}/authorize`,
           {
             method: "POST",
             credentials: "include",
@@ -114,7 +114,7 @@ export default function Login() {
 
   const handleCancel = async () => {
     const response = await fetch(
-      `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/deny`,
+      `${backendUrl}/${tenantId}/v1/authorizations/${id}/deny`,
       {
         method: "POST",
         credentials: "include",
@@ -133,7 +133,7 @@ export default function Login() {
   useEffect(() => {
     const execute = async () => {
       const response = await fetch(
-        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/authorize-with-session`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/authorize-with-session`,
         {
           method: "POST",
           credentials: "include",

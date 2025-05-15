@@ -70,7 +70,7 @@ public class JsonSchemaValidator {
     if (!requiredFields.isEmpty()) {
       for (String requiredField : requiredFields) {
         if (!target.contains(requiredField)) {
-          String composedFiledName = prefix + "." + requiredField;
+          String composedFiledName = composeFiledName(prefix, requiredField);
           errors.add(composedFiledName + " is missing");
         }
       }
@@ -166,6 +166,9 @@ public class JsonSchemaValidator {
   }
 
   private String composeFiledName(String prefix, String field) {
+    if (prefix.isEmpty()) {
+      return field;
+    }
     return prefix + "." + field;
   }
 }

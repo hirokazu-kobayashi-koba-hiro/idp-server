@@ -187,6 +187,19 @@ ALTER TABLE idp_user FORCE ROW LEVEL SECURITY;
 CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_id, provider_user_id);
 CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
 
+-- no rls
+CREATE TABLE idp_user_assigned_tenants
+(
+    id          UUID      DEFAULT gen_random_uuid(),
+    tenant_id   UUID                    NOT NULL,
+    user_id     UUID                    NOT NULL,
+    assigned_at TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
+    UNIQUE (tenant_id, user_id)
+);
+
 CREATE TABLE idp_user_roles
 (
     id          UUID      DEFAULT gen_random_uuid(),

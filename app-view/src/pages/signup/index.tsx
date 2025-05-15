@@ -24,7 +24,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loading } from "@/components/Loading";
 
 export default function SignUpPage() {
-  const [email, setEmail] = useState("");
+  const { email, setEmail } = useAppContext();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
@@ -41,7 +41,7 @@ export default function SignUpPage() {
     queryFn: async () => {
       if (!router.isReady || Object.keys(router.query).length === 0) return;
       const response = await fetch(
-        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/view-data`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/view-data`,
         { credentials: "include" },
       );
       if (!response.ok) throw new Error(response.status.toString());
@@ -65,12 +65,12 @@ export default function SignUpPage() {
     if (!validate()) return;
 
     const response = await fetch(
-      `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/signup`,
+      `${backendUrl}/${tenantId}/v1/authorizations/${id}/password-registration`,
       {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: email, password }),
+        body: JSON.stringify({ name: email, email: email, password }),
       },
     );
 
@@ -84,10 +84,12 @@ export default function SignUpPage() {
     setUserId(body.id);
 
     const sendingEmailResponse = await fetch(
-      `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/email-verification/challenge`,
+      `${backendUrl}/${tenantId}/v1/authorizations/${id}/email-authentication-challenge`,
       {
         method: "POST",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email }),
       },
     );
 

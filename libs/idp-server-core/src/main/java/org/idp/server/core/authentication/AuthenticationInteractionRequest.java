@@ -1,6 +1,7 @@
 package org.idp.server.core.authentication;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public class AuthenticationInteractionRequest {
@@ -12,7 +13,7 @@ public class AuthenticationInteractionRequest {
   }
 
   public AuthenticationInteractionRequest(Map<String, Object> values) {
-    this.values = values;
+    this.values = Objects.requireNonNullElseGet(values, Map::of);
   }
 
   public Map<String, Object> toMap() {

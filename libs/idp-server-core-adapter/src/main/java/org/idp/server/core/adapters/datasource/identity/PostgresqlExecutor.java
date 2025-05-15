@@ -164,19 +164,25 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                                idp_user.created_at,
                                idp_user.updated_at,
                                COALESCE(
-                                 JSON_AGG(DISTINCT role.name)
-                                 FILTER (WHERE role.name IS NOT NULL),
+                                 JSON_AGG(JSON_BUILD_OBJECT('role_id', role.id, 'role_name', role.name))
+                                 FILTER (WHERE role.id IS NOT NULL),
                                  '[]'
                                ) AS roles,
                                COALESCE(
                                  JSON_AGG(DISTINCT user_effective_permissions_view.permission_name)
                                  FILTER (WHERE user_effective_permissions_view.permission_name IS NOT NULL),
                                  '[]'
-                               ) AS permissions
+                               ) AS permissions,
+                                COALESCE(
+                                 JSON_AGG(DISTINCT idp_user_assigned_tenants.tenant_id)
+                                 FILTER (WHERE idp_user_assigned_tenants.tenant_id IS NOT NULL),
+                                 '[]'
+                               ) AS assigned_tenants
                              FROM idp_user
                              LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
                              LEFT JOIN role ON idp_user_roles.role_id = role.id
                              LEFT JOIN user_effective_permissions_view ON idp_user.id = user_effective_permissions_view.user_id
+                             LEFT JOIN idp_user_assigned_tenants ON idp_user.id = idp_user_assigned_tenants.user_id
                              %s
                              GROUP BY
                                idp_user.id,

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.federation.*;
@@ -27,6 +28,7 @@ public class FederationConfigurationManagementEntryService
   FederationConfigurationQueryRepository federationConfigurationQueryRepository;
   FederationConfigurationCommandRepository federationConfigurationCommandRepository;
   TenantQueryRepository tenantQueryRepository;
+  LoggerWrapper log = LoggerWrapper.getLogger(FederationConfigurationManagementEntryService.class);
 
   public FederationConfigurationManagementEntryService(
       FederationConfigurationQueryRepository federationConfigurationQueryRepository,
@@ -54,6 +56,7 @@ public class FederationConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new FederationConfigManagementResponse(
           FederationConfigManagementStatus.FORBIDDEN, response);
     }
@@ -91,6 +94,7 @@ public class FederationConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new FederationConfigManagementResponse(
           FederationConfigManagementStatus.FORBIDDEN, response);
     }
@@ -122,6 +126,7 @@ public class FederationConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new FederationConfigManagementResponse(
           FederationConfigManagementStatus.FORBIDDEN, response);
     }
@@ -158,6 +163,7 @@ public class FederationConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new FederationConfigManagementResponse(
           FederationConfigManagementStatus.FORBIDDEN, response);
     }
@@ -201,6 +207,7 @@ public class FederationConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new FederationConfigManagementResponse(
           FederationConfigManagementStatus.FORBIDDEN, response);
     }

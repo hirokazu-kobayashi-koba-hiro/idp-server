@@ -11,7 +11,6 @@ import org.idp.server.basic.dependency.protocol.ProtocolContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolContainerLoader;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
-import org.idp.server.control_plane.base.definition.DefinitionReader;
 import org.idp.server.control_plane.base.schema.SchemaReader;
 import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
@@ -295,7 +294,6 @@ public class IdpServerApplication {
         FederationInteractorLoader.load(federationDependencyContainer);
 
     SchemaReader.initialValidate();
-    DefinitionReader.initialValidate();
 
     this.oAuthFlowApi =
         TenantAwareEntryServiceProxy.createProxy(

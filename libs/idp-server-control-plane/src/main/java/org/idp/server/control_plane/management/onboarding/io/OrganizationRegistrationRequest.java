@@ -1,5 +1,6 @@
 package org.idp.server.control_plane.management.onboarding.io;
 
+import java.util.UUID;
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.multi_tenancy.organization.Organization;
 import org.idp.server.core.multi_tenancy.organization.OrganizationDescription;
@@ -14,6 +15,10 @@ public class OrganizationRegistrationRequest implements JsonReadable {
 
   public OrganizationRegistrationRequest() {}
 
+  public boolean hasId() {
+    return id != null && !id.isEmpty();
+  }
+
   public String id() {
     return id;
   }
@@ -23,10 +28,11 @@ public class OrganizationRegistrationRequest implements JsonReadable {
   }
 
   public Organization toOrganization() {
-    OrganizationIdentifier identifier = new OrganizationIdentifier(id);
+    String identifier = hasId() ? id : UUID.randomUUID().toString();
+    OrganizationIdentifier organizationIdentifier = new OrganizationIdentifier(identifier);
     OrganizationName organizationName = new OrganizationName(name);
     OrganizationDescription organizationDescription = new OrganizationDescription(description);
 
-    return new Organization(identifier, organizationName, organizationDescription);
+    return new Organization(organizationIdentifier, organizationName, organizationDescription);
   }
 }

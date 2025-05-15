@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.security.hook.*;
@@ -27,6 +28,8 @@ public class SecurityEventHookConfigurationManagementEntryService
   SecurityEventHookConfigurationCommandRepository securityEventHookConfigurationCommandRepository;
   SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
   TenantQueryRepository tenantQueryRepository;
+  LoggerWrapper log =
+      LoggerWrapper.getLogger(SecurityEventHookConfigurationManagementEntryService.class);
 
   public SecurityEventHookConfigurationManagementEntryService(
       SecurityEventHookConfigurationCommandRepository
@@ -57,6 +60,7 @@ public class SecurityEventHookConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new SecurityEventHookConfigManagementResponse(
           SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
     }
@@ -94,6 +98,7 @@ public class SecurityEventHookConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new SecurityEventHookConfigManagementResponse(
           SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
     }
@@ -127,6 +132,7 @@ public class SecurityEventHookConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new SecurityEventHookConfigManagementResponse(
           SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
     }
@@ -163,6 +169,7 @@ public class SecurityEventHookConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new SecurityEventHookConfigManagementResponse(
           SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
     }
@@ -206,6 +213,7 @@ public class SecurityEventHookConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new SecurityEventHookConfigManagementResponse(
           SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
     }

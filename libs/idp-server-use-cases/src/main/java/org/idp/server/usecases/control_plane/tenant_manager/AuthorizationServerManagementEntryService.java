@@ -3,6 +3,7 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
@@ -29,6 +30,7 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   AuthorizationServerConfigurationCommandRepository
       authorizationServerConfigurationCommandRepository;
+  LoggerWrapper log = LoggerWrapper.getLogger(AuthorizationServerManagementEntryService.class);
 
   public AuthorizationServerManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -60,6 +62,7 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new AuthorizationServerManagementResponse(
           AuthorizationServerManagementStatus.FORBIDDEN, response);
     }
@@ -91,6 +94,7 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new AuthorizationServerManagementResponse(
           AuthorizationServerManagementStatus.FORBIDDEN, response);
     }

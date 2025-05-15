@@ -10,7 +10,7 @@ public class EmailAuthenticationInteractorFactory implements AuthenticationInter
 
   @Override
   public AuthenticationInteractionType type() {
-    return StandardAuthenticationInteraction.EMAIL_VERIFICATION.toType();
+    return StandardAuthenticationInteraction.EMAIL_AUTHENTICATION.toType();
   }
 
   @Override

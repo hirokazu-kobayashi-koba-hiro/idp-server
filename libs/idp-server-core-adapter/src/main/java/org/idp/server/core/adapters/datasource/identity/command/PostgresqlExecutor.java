@@ -6,6 +6,7 @@ import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserIdentifier;
+import org.idp.server.core.identity.UserRole;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements UserCommandSqlExecutor {
@@ -197,5 +198,67 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     params.add(userIdentifier.value());
 
     sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void upsertRoles(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    StringBuilder sqlTemplateBuilder = new StringBuilder();
+    sqlTemplateBuilder.append(
+        """
+                        INSERT INTO idp_user_roles (tenant_id, user_id, role_id)
+                        VALUES
+                        """);
+
+    List<String> sqlValues = new ArrayList<>();
+    List<Object> params = new ArrayList<>();
+
+    List<UserRole> userRoles = user.roles();
+    userRoles.forEach(
+        userRole -> {
+          sqlValues.add("(?::uuid, ?::uuid, ?::uuid)");
+          params.add(tenant.identifierValue());
+          params.add(user.sub());
+          params.add(userRole.roleId());
+        });
+
+    sqlTemplateBuilder.append(String.join(",", sqlValues));
+    sqlTemplateBuilder.append(
+        """
+            ON CONFLICT (user_id, role_id) DO NOTHING;
+            """);
+    sqlTemplateBuilder.append(";");
+
+    sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
+  }
+
+  @Override
+  public void upsertAssignedTenants(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    StringBuilder sqlTemplateBuilder = new StringBuilder();
+    sqlTemplateBuilder.append(
+        """
+                        INSERT INTO idp_user_assigned_tenants (tenant_id, user_id)
+                        VALUES
+                        """);
+
+    List<String> sqlValues = new ArrayList<>();
+    List<Object> params = new ArrayList<>();
+
+    List<String> assignedTenants = user.assignedTenants();
+    assignedTenants.forEach(
+        assignedTenant -> {
+          sqlValues.add("(?::uuid, ?::uuid)");
+          params.add(assignedTenant);
+          params.add(user.sub());
+        });
+    sqlTemplateBuilder.append(String.join(",", sqlValues));
+    sqlTemplateBuilder.append(
+        """
+            ON CONFLICT (tenant_id, user_id) DO NOTHING;
+            """);
+    sqlTemplateBuilder.append(";");
+
+    sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
   }
 }

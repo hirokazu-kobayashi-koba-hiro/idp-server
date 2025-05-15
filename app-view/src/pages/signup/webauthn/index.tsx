@@ -32,7 +32,7 @@ export default function WebAuthnRegistrationPage() {
 
     try {
       const res = await fetch(
-        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/webauthn/registration/challenge`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/webauthn/registration/challenge`,
         {
           credentials: "include",
         },
@@ -60,7 +60,7 @@ export default function WebAuthnRegistrationPage() {
       });
 
       const registerRes = await fetch(
-        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/webauthn/registration/response`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/webauthn/registration/response`,
         {
           method: "POST",
           credentials: "include",

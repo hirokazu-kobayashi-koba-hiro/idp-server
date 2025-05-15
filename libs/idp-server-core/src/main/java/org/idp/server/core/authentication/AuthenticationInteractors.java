@@ -2,7 +2,7 @@ package org.idp.server.core.authentication;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.authentication.exception.MfaInteractorUnSupportedException;
+import org.idp.server.core.authentication.exception.AuthenticationInteractorUnSupportedException;
 
 public class AuthenticationInteractors {
 
@@ -17,7 +17,7 @@ public class AuthenticationInteractors {
     AuthenticationInteractor interactor = values.get(type);
 
     if (Objects.isNull(interactor)) {
-      throw new MfaInteractorUnSupportedException(
+      throw new AuthenticationInteractorUnSupportedException(
           "No OAuthInteractor found for type " + type.name());
     }
 

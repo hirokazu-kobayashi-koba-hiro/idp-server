@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.*;
@@ -27,6 +28,8 @@ public class AuthenticationConfigurationManagementEntryService
   AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository;
   AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository;
   TenantQueryRepository tenantQueryRepository;
+  LoggerWrapper log =
+      LoggerWrapper.getLogger(AuthenticationConfigurationManagementEntryService.class);
 
   public AuthenticationConfigurationManagementEntryService(
       AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository,
@@ -56,6 +59,7 @@ public class AuthenticationConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new AuthenticationConfigManagementResponse(
           AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
@@ -94,6 +98,7 @@ public class AuthenticationConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new AuthenticationConfigManagementResponse(
           AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
@@ -128,6 +133,7 @@ public class AuthenticationConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new AuthenticationConfigManagementResponse(
           AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
@@ -165,6 +171,7 @@ public class AuthenticationConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new AuthenticationConfigManagementResponse(
           AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
@@ -204,6 +211,7 @@ public class AuthenticationConfigurationManagementEntryService
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new AuthenticationConfigManagementResponse(
           AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }

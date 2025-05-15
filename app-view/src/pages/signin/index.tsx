@@ -47,7 +47,7 @@ export default function SignIn() {
       console.log(ua, parsedUA);
 
       const response = await fetch(
-        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/view-data`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/view-data`,
         {
           credentials: "include",
         },
@@ -63,7 +63,7 @@ export default function SignIn() {
 
   const handleCancel = async () => {
     const response = await fetch(
-      `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/deny`,
+      `${backendUrl}/${tenantId}/v1/authorizations/${id}/deny`,
       {
         method: "POST",
         credentials: "include",
@@ -81,7 +81,7 @@ export default function SignIn() {
 
   const handleNext = async () => {
     const response = await fetch(
-      `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/password-authentication`,
+      `${backendUrl}/${tenantId}/v1/authorizations/${id}/password-authentication`,
       {
         method: "POST",
         credentials: "include",
@@ -102,7 +102,7 @@ export default function SignIn() {
   useEffect(() => {
     const execute = async () => {
       const response = await fetch(
-        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/authorize-with-session`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/authorize-with-session`,
         {
           method: "POST",
           credentials: "include",

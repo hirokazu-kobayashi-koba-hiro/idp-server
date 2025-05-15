@@ -22,7 +22,7 @@ public interface OnboardingApi {
             Set.of(
                 AdminPermission.ORGANIZATION_CREATE,
                 AdminPermission.TENANT_CREATE,
-                AdminPermission.USER_CREATE)));
+                AdminPermission.CLIENT_CREATE)));
     AdminPermissions adminPermissions = map.get(method);
 
     if (adminPermissions == null) {

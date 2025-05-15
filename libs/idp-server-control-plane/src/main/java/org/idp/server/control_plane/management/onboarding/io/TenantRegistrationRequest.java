@@ -1,5 +1,6 @@
 package org.idp.server.control_plane.management.onboarding.io;
 
+import java.util.UUID;
 import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.json.JsonReadable;
@@ -17,8 +18,15 @@ public class TenantRegistrationRequest implements JsonReadable {
 
   public TenantRegistrationRequest() {}
 
+  public boolean hasId() {
+    return id != null && !id.isEmpty();
+  }
+
   public TenantIdentifier tenantIdentifier() {
-    return new TenantIdentifier(id);
+    if (hasId()) {
+      return new TenantIdentifier(id);
+    }
+    return new TenantIdentifier(UUID.randomUUID().toString());
   }
 
   public TenantName tenantName() {

@@ -36,5 +36,21 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
 
   @Override
   public void update(
-      Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration) {}
+      Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                        UPDATE authorization_server_configuration
+                        SET payload = ?,
+                        token_issuer = ?
+                        WHERE tenant_id = ?;
+                        """;
+    String payload = jsonConverter.write(authorizationServerConfiguration);
+    List<Object> params = new ArrayList<>();
+    params.add(payload);
+    params.add(authorizationServerConfiguration.tokenIssuer().value());
+    params.add(tenant.identifierValue());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
 }

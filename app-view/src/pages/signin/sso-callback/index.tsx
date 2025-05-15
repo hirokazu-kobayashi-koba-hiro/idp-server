@@ -18,7 +18,7 @@ const SsoCallback = () => {
       console.log(query);
 
       const response = await fetch(
-        `${backendUrl}/api/v1/authorizations/federations/callback`,
+        `${backendUrl}/v1/authorizations/federations/callback`,
         {
           method: "POST",
           credentials: "include",
@@ -38,7 +38,7 @@ const SsoCallback = () => {
       const { id, tenant_id: tenantId } = await response.json();
 
       const authorizeResponse = await fetch(
-        `${backendUrl}/${tenantId}/api/v1/authorizations/${id}/authorize`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/authorize`,
         {
           method: "POST",
           credentials: "include",

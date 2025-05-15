@@ -19,8 +19,7 @@
     "redirect_uris": {
       "type": "array",
       "items": {
-        "type": "string",
-        "format": "uri"
+        "type": "string"
       }
     },
     "response_types": {

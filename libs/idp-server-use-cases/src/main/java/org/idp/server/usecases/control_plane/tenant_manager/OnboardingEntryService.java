@@ -3,6 +3,7 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
@@ -38,6 +39,7 @@ public class OnboardingEntryService implements OnboardingApi {
   ClientConfigurationCommandRepository clientConfigurationCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   OnboardingVerifier onboardingVerifier;
+  LoggerWrapper log = LoggerWrapper.getLogger(OnboardingEntryService.class);
 
   public OnboardingEntryService(
       TenantCommandRepository tenantCommandRepository,
@@ -77,6 +79,7 @@ public class OnboardingEntryService implements OnboardingApi {
           String.format(
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
       return new OnboardingResponse(OnboardingStatus.FORBIDDEN, response);
     }
 
