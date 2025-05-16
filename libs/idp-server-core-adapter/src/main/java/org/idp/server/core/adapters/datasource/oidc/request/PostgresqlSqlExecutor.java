@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
@@ -12,7 +13,7 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
   PostgresqlSqlExecutor() {}
 
   @Override
-  public void insert(AuthorizationRequest authorizationRequest) {
+  public void insert(Tenant tenant, AuthorizationRequest authorizationRequest) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -42,7 +43,9 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
                     code_challenge,
                     code_challenge_method,
                     authorization_details,
-                    custom_params
+                    custom_params,
+                    expires_in,
+                    expires_at
                     )
                     VALUES (
                     ?::uuid,
@@ -69,7 +72,9 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
                     ?,
                     ?,
                     ?::jsonb,
-                    ?::jsonb);
+                    ?::jsonb,
+                    ?,
+                    ?);
                     """;
 
     List<Object> params = InsertSqlCreator.createInsert(authorizationRequest);
@@ -78,11 +83,12 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
 
   @Override
   public Map<String, String> selectOne(
-      AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+      Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                SELECT id,
+                SELECT
+                id,
                 tenant_id,
                 profile,
                 scopes,
@@ -106,12 +112,16 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
                 code_challenge,
                 code_challenge_method,
                 authorization_details,
-                custom_params
+                custom_params,
+                expires_in,
+                expires_at
                 FROM authorization_request
-                WHERE id = ?::uuid;
+                WHERE id = ?::uuid
+                AND tenant_id = ?::uuid;
                 """;
     List<Object> params = new ArrayList<>();
     params.add(authorizationRequestIdentifier.value());
+    params.add(tenant.identifierValue());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

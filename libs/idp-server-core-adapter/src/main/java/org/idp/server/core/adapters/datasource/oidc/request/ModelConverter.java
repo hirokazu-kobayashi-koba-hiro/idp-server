@@ -3,6 +3,7 @@ package org.idp.server.core.adapters.datasource.oidc.request;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.*;
 import org.idp.server.basic.type.pkce.CodeChallenge;
@@ -49,6 +50,8 @@ class ModelConverter {
     builder.add(CodeChallengeMethod.of(stringMap.get("code_challenge_method")));
     builder.add(convertAuthorizationDetails(stringMap.get("authorization_details")));
     builder.add(convertCustomParams(stringMap.get("custom_params")));
+    builder.add(new ExpiresIn(stringMap.get("expires_in")));
+    builder.add(new ExpiredAt(stringMap.get("expires_at")));
     return builder.build();
   }
 

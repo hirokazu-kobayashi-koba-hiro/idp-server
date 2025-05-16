@@ -4,12 +4,14 @@ import org.idp.server.core.grant_management.AuthorizationGranted;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.*;
+import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.context.*;
 import org.idp.server.core.oidc.gateway.RequestObjectGateway;
+import org.idp.server.core.oidc.io.OAuthPushedRequest;
 import org.idp.server.core.oidc.io.OAuthRequest;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
@@ -21,6 +23,7 @@ public class OAuthRequestHandler {
 
   OAuthRequestContextCreators oAuthRequestContextCreators;
   OAuthRequestVerifier verifier;
+  ClientAuthenticatorHandler clientAuthenticatorHandler;
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
@@ -33,8 +36,10 @@ public class OAuthRequestHandler {
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       RequestObjectGateway requestObjectGateway,
       AuthorizationGrantedRepository grantedRepository) {
-    this.oAuthRequestContextCreators = new OAuthRequestContextCreators(requestObjectGateway);
+    this.oAuthRequestContextCreators =
+        new OAuthRequestContextCreators(requestObjectGateway, authorizationRequestRepository);
     this.verifier = new OAuthRequestVerifier();
+    this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
@@ -42,7 +47,41 @@ public class OAuthRequestHandler {
     this.grantedRepository = grantedRepository;
   }
 
-  public OAuthRequestContext handle(OAuthRequest oAuthRequest, OAuthSessionDelegate delegate) {
+  public OAuthPushedRequestContext handlePushedRequest(OAuthPushedRequest pushedRequest) {
+    OAuthRequestParameters requestParameters = pushedRequest.toOAuthRequestParameters();
+    Tenant tenant = pushedRequest.tenant();
+    OAuthRequestValidator validator = new OAuthRequestValidator(tenant, requestParameters);
+    validator.validate();
+
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        authorizationServerConfigurationQueryRepository.get(tenant);
+    ClientConfiguration clientConfiguration =
+        clientConfigurationQueryRepository.get(tenant, requestParameters.clientId());
+
+    OAuthRequestPattern oAuthRequestPattern = requestParameters.analyzePattern();
+    OAuthRequestContextCreator oAuthRequestContextCreator =
+        oAuthRequestContextCreators.get(oAuthRequestPattern);
+
+    OAuthRequestContext context =
+        oAuthRequestContextCreator.create(
+            tenant, requestParameters, authorizationServerConfiguration, clientConfiguration);
+    verifier.verify(context);
+
+    OAuthPushedRequestContext oAuthPushedRequestContext =
+        new OAuthPushedRequestContext(
+            context,
+            pushedRequest.clientSecretBasic(),
+            pushedRequest.toClientCert(),
+            pushedRequest.toBackchannelParameters());
+    clientAuthenticatorHandler.authenticate(oAuthPushedRequestContext);
+
+    authorizationRequestRepository.register(tenant, context.authorizationRequest());
+
+    return oAuthPushedRequestContext;
+  }
+
+  public OAuthRequestContext handleRequest(
+      OAuthRequest oAuthRequest, OAuthSessionDelegate delegate) {
     OAuthRequestParameters parameters = oAuthRequest.toParameters();
     Tenant tenant = oAuthRequest.tenant();
     OAuthRequestValidator validator = new OAuthRequestValidator(tenant, parameters);
@@ -62,7 +101,9 @@ public class OAuthRequestHandler {
             tenant, parameters, authorizationServerConfiguration, clientConfiguration);
     verifier.verify(context);
 
-    authorizationRequestRepository.register(tenant, context.authorizationRequest());
+    if (!context.isPushedRequest()) {
+      authorizationRequestRepository.register(tenant, context.authorizationRequest());
+    }
 
     OAuthSession session = delegate.find(context.sessionKey());
 

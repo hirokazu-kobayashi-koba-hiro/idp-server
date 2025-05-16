@@ -44,6 +44,7 @@ public class OAuthRequestResponse {
     this.authorizationServerConfiguration = context.serverConfiguration();
     this.clientConfiguration = context.clientConfiguration();
     this.session = session;
+    // FIXME bad code
     this.contents = Map.of("id", context.identifier().value());
     this.sessionKey = context.sessionKeyValue();
     this.frontUrl = frontUrl;
@@ -134,6 +135,7 @@ public class OAuthRequestResponse {
     return authorizationServerConfiguration.authenticationPolicies();
   }
 
+  // FIXME bad code
   public AuthenticationPolicy findSatisfiedAuthenticationPolicy() {
     List<AuthenticationPolicy> authenticationPolicies =
         authorizationServerConfiguration.authenticationPolicies();

@@ -322,6 +322,8 @@ CREATE TABLE authorization_request
     code_challenge_method VARCHAR(10),
     authorization_details JSONB,
     custom_params         JSONB                   NOT NULL,
+    expires_in            TEXT                    NOT NULL,
+    expires_at            TEXT                    NOT NULL,
     created_at            TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE

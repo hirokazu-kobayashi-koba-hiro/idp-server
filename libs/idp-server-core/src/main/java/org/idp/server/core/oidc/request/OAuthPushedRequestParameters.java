@@ -13,20 +13,20 @@ import org.idp.server.basic.type.pkce.CodeChallenge;
 import org.idp.server.basic.type.pkce.CodeChallengeMethod;
 import org.idp.server.basic.type.rar.AuthorizationDetailsEntity;
 import org.idp.server.core.oidc.OAuthRequestPattern;
+import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
 
-/** OAuthRequestParameters */
-public class OAuthRequestParameters {
+public class OAuthPushedRequestParameters implements BackchannelRequestParameters {
   ArrayValueMap values;
 
-  public OAuthRequestParameters() {
+  public OAuthPushedRequestParameters() {
     this.values = new ArrayValueMap();
   }
 
-  public OAuthRequestParameters(ArrayValueMap values) {
+  public OAuthPushedRequestParameters(ArrayValueMap values) {
     this.values = values;
   }
 
-  public OAuthRequestParameters(Map<String, String[]> values) {
+  public OAuthPushedRequestParameters(Map<String, String[]> values) {
     this.values = new ArrayValueMap(values);
   }
 
@@ -50,12 +50,44 @@ public class OAuthRequestParameters {
     return contains(response_type);
   }
 
+  @Override
   public RequestedClientId clientId() {
     return new RequestedClientId(getValueOrEmpty(client_id));
   }
 
+  @Override
   public boolean hasClientId() {
     return contains(client_id);
+  }
+
+  @Override
+  public ClientSecret clientSecret() {
+    return new ClientSecret(getValueOrEmpty(client_secret));
+  }
+
+  @Override
+  public boolean hasClientSecret() {
+    return contains(client_secret);
+  }
+
+  @Override
+  public ClientAssertion clientAssertion() {
+    return new ClientAssertion(getValueOrEmpty(client_assertion));
+  }
+
+  @Override
+  public boolean hasClientAssertion() {
+    return contains(client_assertion);
+  }
+
+  @Override
+  public ClientAssertionType clientAssertionType() {
+    return ClientAssertionType.of(getValueOrEmpty(client_assertion_type));
+  }
+
+  @Override
+  public boolean hasClientAssertionType() {
+    return contains(client_assertion_type);
   }
 
   public RedirectUri redirectUri() {

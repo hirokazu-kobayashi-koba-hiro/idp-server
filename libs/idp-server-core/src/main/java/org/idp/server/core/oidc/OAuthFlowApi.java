@@ -15,6 +15,14 @@ import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
 public interface OAuthFlowApi {
+
+  OAuthPushedRequestResponse push(
+      TenantIdentifier tenantIdentifier,
+      Map<String, String[]> params,
+      String authorizationHeader,
+      String clientCert,
+      RequestAttributes requestAttributes);
+
   OAuthRequestResponse request(
       TenantIdentifier tenantIdentifier,
       Map<String, String[]> params,

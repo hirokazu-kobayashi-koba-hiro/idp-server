@@ -3,7 +3,7 @@ package org.idp.server.core.oidc.repository;
 import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.OAuthSessionKey;
 
-public interface OAuthHttpSessionRepository {
+public interface OAuthSessionRepository {
 
   void register(OAuthSession oAuthSession);
 

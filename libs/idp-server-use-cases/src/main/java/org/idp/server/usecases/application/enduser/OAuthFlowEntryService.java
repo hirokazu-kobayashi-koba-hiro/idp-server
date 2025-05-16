@@ -71,6 +71,22 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
   }
 
+  @Override
+  public OAuthPushedRequestResponse push(
+      TenantIdentifier tenantIdentifier,
+      Map<String, String[]> params,
+      String authorizationHeader,
+      String clientCert,
+      RequestAttributes requestAttributes) {
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    OAuthPushedRequest pushedRequest = new OAuthPushedRequest(tenant, authorizationHeader, params);
+    pushedRequest.setClientCert(clientCert);
+
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
+
+    return oAuthProtocol.push(pushedRequest);
+  }
+
   public OAuthRequestResponse request(
       TenantIdentifier tenantIdentifier,
       Map<String, String[]> params,
