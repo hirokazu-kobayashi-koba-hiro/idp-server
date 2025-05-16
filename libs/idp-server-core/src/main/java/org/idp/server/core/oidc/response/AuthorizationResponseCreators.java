@@ -21,8 +21,6 @@ public class AuthorizationResponseCreators {
     values.put(code_token_id_token, new AuthorizationResponseCodeTokenIdTokenCreator());
     values.put(code_id_token, new AuthorizationResponseCodeIdTokenCreator());
     values.put(token_id_token, new AuthorizationResponseTokenIdTokenCreator());
-    values.put(vp_token, new AuthorizationResponseVpTokenCreator());
-    values.put(vp_token_id_token, new AuthorizationResponseVpTokenIdTokenCreator());
     values.put(none, new AuthorizationResponseNoneCreator());
   }
 
