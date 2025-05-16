@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.datasource.SqlExecutor;
+import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
@@ -12,14 +13,68 @@ public class MysqlSqlExecutor implements AuthorizationRequestSqlExecutor {
   MysqlSqlExecutor() {}
 
   @Override
-  public void insert(AuthorizationRequest authorizationRequest) {
+  public void insert(Tenant tenant, AuthorizationRequest authorizationRequest) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
                     INSERT INTO authorization_request
-                    (id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, custom_params)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    (id,
+                    tenant_id,
+                    profile,
+                    scopes,
+                    response_type,
+                    client_id,
+                    client_payload,
+                    redirect_uri,
+                    state,
+                    response_mode,
+                    nonce,
+                    display,
+                    prompts,
+                    max_age,
+                    ui_locales,
+                    id_token_hint,
+                    login_hint,
+                    acr_values,
+                    claims_value,
+                    request_object,
+                    request_uri,
+                    code_challenge,
+                    code_challenge_method,
+                    authorization_details,
+                    custom_params,
+                    expires_in,
+                    expires_at
+                    )
+                    VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?);
                     """;
 
     List<Object> params = InsertSqlCreator.createInsert(authorizationRequest);
@@ -28,16 +83,45 @@ public class MysqlSqlExecutor implements AuthorizationRequestSqlExecutor {
 
   @Override
   public Map<String, String> selectOne(
-      AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+      Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                SELECT id, tenant_id, profile, scopes, response_type, client_id, client_payload, redirect_uri, state, response_mode, nonce, display, prompts, max_age, ui_locales, id_token_hint, login_hint, acr_values, claims_value, request_object, request_uri, code_challenge, code_challenge_method, authorization_details, custom_params
+                SELECT
+                id,
+                tenant_id,
+                profile,
+                scopes,
+                response_type,
+                client_id,
+                client_payload,
+                redirect_uri,
+                state,
+                response_mode,
+                nonce,
+                display,
+                prompts,
+                max_age,
+                ui_locales,
+                id_token_hint,
+                login_hint,
+                acr_values,
+                claims_value,
+                request_object,
+                request_uri,
+                code_challenge,
+                code_challenge_method,
+                authorization_details,
+                custom_params,
+                expires_in,
+                expires_at
                 FROM authorization_request
-                WHERE id = ?;
+                WHERE id = ?
+                AND tenant_id = ?;
                 """;
     List<Object> params = new ArrayList<>();
     params.add(authorizationRequestIdentifier.value());
+    params.add(tenant.identifierValue());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

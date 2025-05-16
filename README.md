@@ -274,7 +274,6 @@ export ENV=local or develop or ...
 ### setup configuration
 
 ```shell
-export ENV=local 
 ./setup.sh
 ```
 

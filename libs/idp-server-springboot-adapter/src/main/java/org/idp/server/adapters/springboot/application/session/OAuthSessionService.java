@@ -3,15 +3,15 @@ package org.idp.server.adapters.springboot.application.session;
 import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.OAuthSessionDelegate;
 import org.idp.server.core.oidc.OAuthSessionKey;
-import org.idp.server.core.oidc.repository.OAuthHttpSessionRepository;
+import org.idp.server.core.oidc.repository.OAuthSessionRepository;
 import org.springframework.stereotype.Service;
 
 @Service
 public class OAuthSessionService implements OAuthSessionDelegate {
 
-  OAuthHttpSessionRepository httpSessionRepository;
+  OAuthSessionRepository httpSessionRepository;
 
-  public OAuthSessionService(OAuthHttpSessionRepository httpSessionRepository) {
+  public OAuthSessionService(OAuthSessionRepository httpSessionRepository) {
     this.httpSessionRepository = httpSessionRepository;
   }
 

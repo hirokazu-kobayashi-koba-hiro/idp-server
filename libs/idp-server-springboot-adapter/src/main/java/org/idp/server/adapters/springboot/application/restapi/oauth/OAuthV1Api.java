@@ -13,10 +13,7 @@ import org.idp.server.core.federation.io.FederationRequestResponse;
 import org.idp.server.core.federation.sso.SsoProvider;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.OAuthFlowApi;
-import org.idp.server.core.oidc.io.OAuthAuthorizeResponse;
-import org.idp.server.core.oidc.io.OAuthDenyResponse;
-import org.idp.server.core.oidc.io.OAuthRequestResponse;
-import org.idp.server.core.oidc.io.OAuthViewDataResponse;
+import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -34,16 +31,37 @@ public class OAuthV1Api implements ParameterTransformable {
     this.oAuthFlowApi = idpServerApplication.oAuthFlowApi();
   }
 
-  @GetMapping
-  public ResponseEntity<?> get(
-      HttpServletRequest httpServletRequest,
+  @PostMapping("/push")
+  public ResponseEntity<?> push(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
+      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @RequestParam(required = false) MultiValueMap<String, String> request,
-      @PathVariable("tenant-id") TenantIdentifier tenantId) {
+      HttpServletRequest httpServletRequest) {
 
     Map<String, String[]> params = transform(request);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    OAuthRequestResponse response = oAuthFlowApi.request(tenantId, params, requestAttributes);
+    OAuthPushedRequestResponse response =
+        oAuthFlowApi.push(
+            tenantIdentifier, params, authorizationHeader, clientCert, requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(response.contents(), httpHeaders, HttpStatus.OK);
+  }
+
+  @GetMapping
+  public ResponseEntity<?> get(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestParam(required = false) MultiValueMap<String, String> request,
+      HttpServletRequest httpServletRequest) {
+
+    Map<String, String[]> params = transform(request);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    OAuthRequestResponse response =
+        oAuthFlowApi.request(tenantIdentifier, params, requestAttributes);
 
     switch (response.status()) {
       case OK, OK_SESSION_ENABLE, OK_ACCOUNT_CREATION -> {
@@ -70,13 +88,14 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @GetMapping("/{id}/view-data")
   public ResponseEntity<?> getViewData(
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
     OAuthViewDataResponse viewDataResponse =
-        oAuthFlowApi.getViewData(tenantId, authorizationRequestIdentifier, requestAttributes);
+        oAuthFlowApi.getViewData(
+            tenantIdentifier, authorizationRequestIdentifier, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -120,7 +139,7 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/{mfa-interaction-type}")
   public ResponseEntity<?> interact(
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
       @PathVariable("mfa-interaction-type")
           AuthenticationInteractionType authenticationInteractionType,
@@ -131,7 +150,7 @@ public class OAuthV1Api implements ParameterTransformable {
 
     AuthenticationInteractionRequestResult result =
         oAuthFlowApi.interact(
-            tenantId,
+            tenantIdentifier,
             authorizationRequestIdentifier,
             authenticationInteractionType,
             new AuthenticationInteractionRequest(params),
@@ -156,7 +175,7 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/authorize-with-session")
   public ResponseEntity<?> authorizeWithSession(
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
       HttpServletRequest httpServletRequest) {
 
@@ -164,7 +183,7 @@ public class OAuthV1Api implements ParameterTransformable {
 
     OAuthAuthorizeResponse authAuthorizeResponse =
         oAuthFlowApi.authorizeWithSession(
-            tenantId, authorizationRequestIdentifier, requestAttributes);
+            tenantIdentifier, authorizationRequestIdentifier, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -186,13 +205,13 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/authorize")
   public ResponseEntity<?> authorize(
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
     OAuthAuthorizeResponse authAuthorizeResponse =
-        oAuthFlowApi.authorize(tenantId, authorizationRequestIdentifier, requestAttributes);
+        oAuthFlowApi.authorize(tenantIdentifier, authorizationRequestIdentifier, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -214,13 +233,13 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/{id}/deny")
   public ResponseEntity<?> deny(
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
     OAuthDenyResponse oAuthDenyResponse =
-        oAuthFlowApi.deny(tenantId, authorizationRequestIdentifier, requestAttributes);
+        oAuthFlowApi.deny(tenantIdentifier, authorizationRequestIdentifier, requestAttributes);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
 

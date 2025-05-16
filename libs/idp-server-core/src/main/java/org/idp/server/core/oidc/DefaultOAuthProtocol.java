@@ -71,6 +71,19 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
     return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
   }
 
+  @Override
+  public OAuthPushedRequestResponse push(OAuthPushedRequest oAuthPushedRequest) {
+    try {
+
+      OAuthPushedRequestContext context = requestHandler.handlePushedRequest(oAuthPushedRequest);
+
+      return context.createResponse();
+    } catch (Exception exception) {
+
+      return oAuthRequestErrorHandler.handlePushedRequest(exception);
+    }
+  }
+
   /**
    * request
    *
@@ -83,7 +96,8 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
 
     try {
 
-      OAuthRequestContext context = requestHandler.handle(oAuthRequest, oAuthSessionDelegate);
+      OAuthRequestContext context =
+          requestHandler.handleRequest(oAuthRequest, oAuthSessionDelegate);
 
       if (context.canAutomaticallyAuthorize()) {
 

@@ -128,6 +128,8 @@ public class InsertSqlCreator {
     } else {
       params.add("{}");
     }
+    params.add(authorizationRequest.expiresIn().toStringValue());
+    params.add(authorizationRequest.expiredAt().toStringValue());
 
     return params;
   }

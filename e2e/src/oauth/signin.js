@@ -1,17 +1,15 @@
 import {
-  authorize,
-  createAuthorizationRequest,
+  authorize, createParams,
   deny,
   getAuthorizations,
   postAuthentication
 } from "../api/oauthClient";
 import { serverConfig } from "../testConfig";
 import { convertNextAction, convertToAuthorizationResponse, convertToSnake } from "../lib/util";
-import puppeteer from "puppeteer-core";
 import { createHash, X509Certificate } from "node:crypto";
 import { encodeBuffer } from "../lib/bas64";
 import { getClientCert } from "../api/cert/clientCert";
-import { get } from "../lib/http";
+import { get, post } from "../lib/http";
 
 export const requestAuthorizations = async ({
   endpoint,
@@ -35,7 +33,6 @@ export const requestAuthorizations = async ({
   codeChallenge,
   codeChallengeMethod,
   authorizationDetails,
-  presentationDefinition,
   customParams,
   action = "authorize",
   user = {
@@ -44,95 +41,6 @@ export const requestAuthorizations = async ({
   },
   mfa,
 }) => {
-  if (serverConfig.enabledSsr) {
-    const requestUrl = createAuthorizationRequest({
-      endpoint,
-      scope,
-      responseType,
-      clientId,
-      redirectUri,
-      state,
-      responseMode,
-      nonce,
-      display,
-      prompt,
-      maxAge,
-      uiLocales,
-      idTokenHint,
-      loginHint,
-      acrValues,
-      claims,
-      request,
-      requestUri,
-      codeChallenge,
-      codeChallengeMethod,
-      authorizationDetails,
-      presentationDefinition,
-      customParams,
-    });
-    const browser = await puppeteer.launch({ headless: false });
-    const page = await browser.newPage();
-
-    await page.goto(requestUrl);
-
-    // Wait and click on first result
-    try {
-
-      const buttonSelector = action === "authorize" ? "#authorize-button" : "#deny-button";
-      const button = await page.waitForSelector(buttonSelector, {
-        timeout: 100
-      });
-      await button.click();
-      console.log("click");
-      await page.waitForNavigation({
-        timeout: 1000,
-      });
-      const url = page.url();
-      console.log(url);
-
-      const authorizationResponse = convertToAuthorizationResponse(
-        url,
-      );
-      return {
-        status: 302,
-        authorizationResponse,
-      };
-    } catch (e) {
-      try {
-        console.log("error");
-        const errorElement = await page.waitForSelector("#error", {
-          timeout: 100
-        });
-        console.log("errorDescription");
-        const errorDescriptionElement = await page.waitForSelector("#errorDescription", {
-          timeout: 100
-        });
-        console.log("jsonValue");
-        const error = await (await errorElement.getProperty("textContent")).jsonValue();
-        const errorDescription = await ((await errorDescriptionElement.getProperty("textContent")).jsonValue());
-        return {
-          status: 400,
-          error: {
-            error,
-            error_description: errorDescription,
-          }
-        };
-      } catch (e) {
-        const url = page.url();
-        console.log(url);
-        const authorizationResponse = convertToAuthorizationResponse(
-          url,
-        );
-        return {
-          status: 302,
-          authorizationResponse,
-        };
-      }
-    } finally {
-      console.log("finally");
-      await browser.close();
-    }
-  } else {
     const response = await getAuthorizations({
       endpoint,
       scope,
@@ -155,7 +63,6 @@ export const requestAuthorizations = async ({
       codeChallenge,
       codeChallengeMethod,
       authorizationDetails,
-      presentationDefinition,
       customParams,
     });
 
@@ -292,7 +199,69 @@ export const requestAuthorizations = async ({
         authorizationResponse,
       };
     }
-  }
+};
+
+export const pushAuthorizations = async ({
+   endpoint,
+   scope,
+   responseType,
+   clientId,
+   redirectUri,
+   state,
+   responseMode,
+   nonce,
+   display,
+   prompt,
+   maxAge,
+   uiLocales,
+   idTokenHint,
+   loginHint,
+   acrValues,
+   claims,
+   request,
+   requestUri,
+   codeChallenge,
+   codeChallengeMethod,
+   authorizationDetails,
+   customParams,
+   clientSecret,
+   clientAssertion,
+   clientAssertionType,
+  }) => {
+  const params = createParams({
+    endpoint,
+    scope,
+    responseType,
+    clientId,
+    redirectUri,
+    state,
+    responseMode,
+    nonce,
+    display,
+    prompt,
+    maxAge,
+    uiLocales,
+    idTokenHint,
+    loginHint,
+    acrValues,
+    claims,
+    request,
+    requestUri,
+    codeChallenge,
+    codeChallengeMethod,
+    authorizationDetails,
+    customParams,
+    clientSecret,
+    clientAssertion,
+    clientAssertionType,
+  });
+  console.log(params);
+
+  return await post({
+    url: endpoint,
+    headers: {},
+    body: params,
+  });
 };
 
 export const requestLogout = async ({ endpoint, clientId}) => {

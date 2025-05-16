@@ -10,6 +10,8 @@ public interface OAuthProtocol {
 
   AuthorizationProvider authorizationProtocolProvider();
 
+  OAuthPushedRequestResponse push(OAuthPushedRequest oAuthPushedRequest);
+
   OAuthRequestResponse request(OAuthRequest oAuthRequest);
 
   OAuthViewDataResponse getViewData(OAuthViewDataRequest request);

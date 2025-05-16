@@ -4,16 +4,16 @@ import jakarta.servlet.http.HttpSession;
 import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.OAuthSessionKey;
-import org.idp.server.core.oidc.repository.OAuthHttpSessionRepository;
+import org.idp.server.core.oidc.repository.OAuthSessionRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class OAuthHttpSessionDataSource implements OAuthHttpSessionRepository {
+public class OAuthSessionDataSource implements OAuthSessionRepository {
 
   HttpSession httpSession;
-  LoggerWrapper log = LoggerWrapper.getLogger(OAuthHttpSessionDataSource.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(OAuthSessionDataSource.class);
 
-  public OAuthHttpSessionDataSource(HttpSession httpSession) {
+  public OAuthSessionDataSource(HttpSession httpSession) {
     this.httpSession = httpSession;
   }
 

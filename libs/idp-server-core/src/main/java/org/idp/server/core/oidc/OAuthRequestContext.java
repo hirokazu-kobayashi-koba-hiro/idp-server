@@ -389,4 +389,12 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   public TenantIdentifier tenantIdentifier() {
     return authorizationRequest.tenantIdentifier();
   }
+
+  public boolean isPushedRequest() {
+    return pattern.isPushed();
+  }
+
+  public ExpiresIn expiresIn() {
+    return authorizationRequest.expiresIn();
+  }
 }
