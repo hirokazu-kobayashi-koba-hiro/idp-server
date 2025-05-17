@@ -99,6 +99,16 @@ describe("rfc9126 OAuth 2.0 Pushed Authorization Requests", () => {
       jwks: jwksResponse.data,
     });
     console.log(decodedIdToken);
+
+    const { authorizationResponse: reusedResponse } = await requestAuthorizations({
+      endpoint: serverConfig.authorizationEndpoint,
+      clientId: clientSecretPostClient.clientId,
+      requestUri: request_uri
+    });
+
+    console.log(reusedResponse);
+    expect(reusedResponse.code).toBeNull();
+
   });
 
   it("success pattern request object", async () => {

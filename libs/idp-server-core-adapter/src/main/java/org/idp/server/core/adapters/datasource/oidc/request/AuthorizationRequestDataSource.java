@@ -50,4 +50,10 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
 
     return ModelConverter.convert(stringMap);
   }
+
+  @Override
+  public void delete(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+    AuthorizationRequestSqlExecutor executor = executors.get(tenant.databaseType());
+    executor.delete(tenant, authorizationRequestIdentifier);
+  }
 }

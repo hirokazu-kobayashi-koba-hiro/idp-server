@@ -11,4 +11,6 @@ public interface AuthorizationRequestSqlExecutor {
 
   Map<String, String> selectOne(
       Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier);
+
+  void delete(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier);
 }
