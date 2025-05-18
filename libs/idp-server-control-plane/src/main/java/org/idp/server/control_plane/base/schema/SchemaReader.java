@@ -20,6 +20,8 @@ public class SchemaReader {
     log.info("Client Schema is valid");
     adminUserSchema();
     log.info("Admin User Schema is valid");
+    organizationInvitationSchema();
+    log.info("Organization Invitation Schema is valid");
   }
 
   public static JsonSchemaDefinition organizationSchema() {
@@ -49,6 +51,11 @@ public class SchemaReader {
 
   public static JsonSchemaDefinition userSchema() {
     String json = ResourceReader.readClasspath("/schema/1.0/user.json");
+    return JsonSchemaDefinition.fromJson(json);
+  }
+
+  public static JsonSchemaDefinition organizationInvitationSchema() {
+    String json = ResourceReader.readClasspath("/schema/1.0/organization_invitation.json");
     return JsonSchemaDefinition.fromJson(json);
   }
 }

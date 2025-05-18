@@ -20,6 +20,23 @@ public enum AdminPermission {
   ORGANIZATION_DELETE(
       "91973295-6104-45e6-a288-7499840d02c3", "organization:delete", "Admin Delete organization"),
 
+  TENANT_INVITATION_CREATE(
+      "598ee28f-bafe-4ec3-9fc7-babd2441ba54",
+      "tenant-invitation:create",
+      "Admin Create a tenant-invitation"),
+  TENANT_INVITATION_READ(
+      "d2726fc3-c338-4ef4-b84e-bb4ae279dc90",
+      "tenant-invitation:read",
+      "Admin Read tenant-invitation information"),
+  TENANT_INVITATION_UPDATE(
+      "bb4cf988-0d3c-4fbb-b9b9-9cb0f20c743c",
+      "tenant-invitation:update",
+      "Admin Update tenant-invitation"),
+  TENANT_INVITATION_DELETE(
+      "66a31e20-1dad-44d0-835d-8608572f5386",
+      "tenant-invitation:delete",
+      "Admin Delete tenant-invitation"),
+
   TENANT_CREATE("87cb7a53-0fde-4e92-a685-59aa67b47829", "tenant:create", "Admin Create a tenant"),
   TENANT_READ(
       "fdebbb38-05b1-4d14-8029-aaf7819b41e8", "tenant:read", "Admin Read tenant information"),

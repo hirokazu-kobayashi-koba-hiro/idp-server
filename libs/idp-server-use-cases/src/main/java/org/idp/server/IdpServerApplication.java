@@ -11,6 +11,7 @@ import org.idp.server.basic.dependency.protocol.ProtocolContainer;
 import org.idp.server.basic.dependency.protocol.ProtocolContainerLoader;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
+import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.control_plane.base.schema.SchemaReader;
 import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
@@ -19,6 +20,7 @@ import org.idp.server.control_plane.management.identity.verification.IdentityVer
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
+import org.idp.server.control_plane.management.organization.invitation.TenantInvitationManagementApi;
 import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
@@ -67,6 +69,9 @@ import org.idp.server.core.identity.verification.configuration.IdentityVerificat
 import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.core.multi_tenancy.tenant.*;
+import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitationCommandRepository;
+import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitationMetaDataApi;
+import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitationQueryRepository;
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.OAuthProtocol;
 import org.idp.server.core.oidc.OAuthProtocols;
@@ -94,6 +99,7 @@ import org.idp.server.core.token.*;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
 import org.idp.server.usecases.application.system.*;
+import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMetaDataEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerStarterEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.TenantInitializationEntryService;
 import org.idp.server.usecases.control_plane.tenant_manager.*;
@@ -112,6 +118,7 @@ public class IdpServerApplication {
   IdentityVerificationApi identityVerificationApi;
   SecurityEventApi securityEventApi;
   TenantMetaDataApi tenantMetaDataApi;
+  TenantInvitationMetaDataApi tenantInvitationMetaDataApi;
   UserOperationApi userOperationApi;
   UserLifecycleEventApi userLifecycleEventApi;
   OnboardingApi onboardingApi;
@@ -124,9 +131,11 @@ public class IdpServerApplication {
   IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi;
   SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi;
   UserAuthenticationApi userAuthenticationApi;
+  TenantInvitationManagementApi tenantInvitationManagementApi;
 
   public IdpServerApplication(
       String adminTenantId,
+      AdminDashboardUrl adminDashboardUrl,
       DbConnectionProvider dbConnectionProvider,
       String encryptionKey,
       CacheStore cacheStore,
@@ -210,6 +219,10 @@ public class IdpServerApplication {
         securityEventHookConfigurationCommandRepository =
             applicationComponentContainer.resolve(
                 SecurityEventHookConfigurationCommandRepository.class);
+    TenantInvitationCommandRepository tenantInvitationCommandRepository =
+        applicationComponentContainer.resolve(TenantInvitationCommandRepository.class);
+    TenantInvitationQueryRepository tenantInvitationQueryRepository =
+        applicationComponentContainer.resolve(TenantInvitationQueryRepository.class);
 
     RoleCommandRepository roleCommandRepository =
         applicationComponentContainer.resolve(RoleCommandRepository.class);
@@ -402,6 +415,13 @@ public class IdpServerApplication {
             TenantMetaDataApi.class,
             tenantDialectProvider);
 
+    this.tenantInvitationMetaDataApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new TenantInvitationMetaDataEntryService(
+                tenantInvitationQueryRepository, tenantQueryRepository),
+            TenantInvitationMetaDataApi.class,
+            tenantDialectProvider);
+
     this.userOperationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new UserOperationEntryService(
@@ -521,6 +541,17 @@ public class IdpServerApplication {
                 userQueryRepository),
             UserAuthenticationApi.class,
             tenantDialectProvider);
+
+    this.tenantInvitationManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new TenantInvitationManagementEntryService(
+                tenantInvitationCommandRepository,
+                tenantInvitationQueryRepository,
+                tenantQueryRepository,
+                emailSenders,
+                adminDashboardUrl),
+            TenantInvitationManagementApi.class,
+            tenantDialectProvider);
   }
 
   public OAuthFlowApi oAuthFlowApi() {
@@ -561,6 +592,10 @@ public class IdpServerApplication {
 
   public TenantMetaDataApi tenantMetadataApi() {
     return tenantMetaDataApi;
+  }
+
+  public TenantInvitationMetaDataApi tenantInvitationMetaDataApi() {
+    return tenantInvitationMetaDataApi;
   }
 
   public UserOperationApi userOperationApi() {
@@ -613,5 +648,9 @@ public class IdpServerApplication {
 
   public SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi() {
     return securityEventHookConfigurationManagementApi;
+  }
+
+  public TenantInvitationManagementApi tenantInvitationManagementApi() {
+    return tenantInvitationManagementApi;
   }
 }

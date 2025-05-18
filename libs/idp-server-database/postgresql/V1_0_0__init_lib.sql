@@ -25,6 +25,28 @@ CREATE TABLE tenant
 
 CREATE UNIQUE INDEX unique_admin_tenant ON tenant (type) WHERE type = 'ADMIN';
 
+CREATE TABLE tenant_invitation
+(
+    id            UUID         NOT NULL,
+    tenant_id     UUID         NOT NULL,
+    tenant_name   VARCHAR(255) NOT NULL,
+    email         VARCHAR(255) NOT NULL,
+    role          VARCHAR(255) NOT NULL,
+    url           TEXT         NOT NULL,
+    expires_in    TEXT         NOT NULL,
+    created_at    TEXT         NOT NULL,
+    expires_at    TEXT         NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+);
+
+ALTER TABLE tenant_invitation ENABLE ROW LEVEL SECURITY;
+CREATE
+POLICY rls_tenant_invitation
+  ON tenant_invitation
+  USING (tenant_id = current_setting('app.tenant_id')::uuid);
+ALTER TABLE tenant_invitation FORCE ROW LEVEL SECURITY;
+
 CREATE TABLE organization_tenants
 (
     id              UUID      DEFAULT gen_random_uuid() NOT NULL,

@@ -13,6 +13,7 @@ import org.idp.server.basic.datasource.DatabaseType;
 import org.idp.server.basic.datasource.DbConfig;
 import org.idp.server.basic.datasource.cache.CacheConfiguration;
 import org.idp.server.basic.datasource.cache.CacheStore;
+import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
 import org.idp.server.core.adapters.datasource.cache.NoOperationCacheStore;
 import org.idp.server.core.adapters.datasource.config.HikariConnectionProvider;
@@ -33,6 +34,9 @@ public class IdPServerConfiguration {
 
   @Value("${idp.configurations.adminTenantId}")
   String adminTenantId;
+
+  @Value("${idp.configurations.adminDashboardUrl}")
+  String adminDashboardUrl;
 
   @Value("${idp.configurations.encryptionKey}")
   String encryptionKey;
@@ -88,9 +92,11 @@ public class IdPServerConfiguration {
     BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
     PasswordEncoder passwordEncoder = new PasswordEncoder(bCryptPasswordEncoder);
     PasswordVerification passwordVerification = new PasswordVerification(bCryptPasswordEncoder);
+    AdminDashboardUrl adminDashboardUrl1 = new AdminDashboardUrl(adminDashboardUrl);
 
     return new IdpServerApplication(
         adminTenantId,
+        adminDashboardUrl1,
         dbConnectionProvider,
         encryptionKey,
         cacheStore,
