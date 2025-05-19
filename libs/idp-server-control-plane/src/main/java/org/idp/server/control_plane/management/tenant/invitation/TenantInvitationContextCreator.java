@@ -40,10 +40,12 @@ public class TenantInvitationContextCreator {
     queryParams.add("invitation_id", id);
     queryParams.add("invitation_tenant_id", tenantId);
     String url = adminDashboardUrl.value() + "/invitation/?" + queryParams.params();
+    String status = "created";
     // 1 week
     int expiresIn = 604800;
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt = createdAt.plusSeconds(expiresIn);
+    LocalDateTime updatedAt = SystemDateTime.now();
 
     TenantInvitation tenantInvitation =
         new TenantInvitation(
@@ -54,9 +56,11 @@ public class TenantInvitationContextCreator {
             roleId,
             roleName,
             url,
+            status,
             expiresIn,
             createdAt,
-            expiredAt);
+            expiredAt,
+            updatedAt);
 
     return new TenantInvitationContext(tenantInvitation, dryRun);
   }

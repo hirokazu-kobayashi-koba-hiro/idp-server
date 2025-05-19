@@ -34,9 +34,11 @@ CREATE TABLE tenant_invitation
     role_id     CHAR(36)     NOT NULL,
     role_name   VARCHAR(255) NOT NULL,
     url         TEXT         NOT NULL,
+    status      VARCHAR(255) NOT NULL,
     expires_in  TEXT         NOT NULL,
     created_at  TEXT         NOT NULL,
     expires_at  TEXT         NOT NULL,
+    updated_at  TEXT         NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -579,4 +581,17 @@ CREATE TABLE authentication_interactions
     PRIMARY KEY (authorization_id, interaction_type),
     FOREIGN KEY (authorization_id) REFERENCES authentication_transaction (authorization_id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE idp_user_lifecycle_event_result
+(
+    id             CHAR(36)         NOT NULL,
+    tenant_id      CHAR(36)          NOT NULL,
+    user_id        CHAR(36)          NOT NULL,
+    lifecycle_type VARCHAR(255)  NOT NULL,
+    executor_name  VARCHAR(255) NOT NULL,
+    status         VARCHAR(16)  NOT NULL,
+    payload        JSON,
+    created_at     TIMESTAMP DEFAULT now(),
+    PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -6,5 +6,7 @@ public interface TenantInvitationCommandRepository {
 
   void register(Tenant tenant, TenantInvitation tenantInvitation);
 
+  void update(Tenant tenant, TenantInvitation tenantInvitation);
+
   void delete(Tenant tenant, TenantInvitation tenantInvitation);
 }

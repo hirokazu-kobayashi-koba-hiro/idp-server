@@ -19,6 +19,12 @@ public class TenantInvitationCommandDataSource implements TenantInvitationComman
   }
 
   @Override
+  public void update(Tenant tenant, TenantInvitation tenantInvitation) {
+    TenantInvitationSqlExecutor executor = executors.get(tenant.databaseType());
+    executor.update(tenant, tenantInvitation);
+  }
+
+  @Override
   public void delete(Tenant tenant, TenantInvitation tenantInvitation) {
     TenantInvitationSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, tenantInvitation);

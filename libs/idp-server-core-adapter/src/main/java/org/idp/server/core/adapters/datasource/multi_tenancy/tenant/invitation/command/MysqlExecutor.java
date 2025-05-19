@@ -14,31 +14,35 @@ public class MysqlExecutor implements TenantInvitationSqlExecutor {
 
     String sqlOrganizationTemplate =
         """
-                INSERT INTO tenant_invitation (
-                id,
-                tenant_id,
-                tenant_name,
-                email,
-                role_id,
-                role_name,
-                url,
-                expires_in,
-                created_at,
-                expires_at
-                )
-                VALUES (
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?
-                );
-                """;
+                        INSERT INTO tenant_invitation (
+                        id,
+                        tenant_id,
+                        tenant_name,
+                        email,
+                        role_id,
+                        role_name,
+                        url,
+                        status,
+                        expires_in,
+                        created_at,
+                        expires_at,
+                        updated_at
+                        )
+                        VALUES (
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?
+                        );
+                        """;
     List<Object> params = new ArrayList<>();
     params.add(invitation.id());
     params.add(invitation.tenantId());
@@ -47,11 +51,36 @@ public class MysqlExecutor implements TenantInvitationSqlExecutor {
     params.add(invitation.roleId());
     params.add(invitation.roleName());
     params.add(invitation.url());
+    params.add(invitation.status());
     params.add(invitation.expiresIn());
     params.add(invitation.createdAt().toString());
     params.add(invitation.expiresAt().toString());
+    params.add(invitation.updatedAt().toString());
 
     sqlExecutor.execute(sqlOrganizationTemplate, params);
+  }
+
+  @Override
+  public void update(Tenant tenant, TenantInvitation invitation) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+                        UPDATE tenant_invitation
+                        SET status = ?,
+                        updated_at = ?
+                        WHERE
+                        id = ?
+                        AND tenant_id = ?
+                        """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(invitation.status());
+    params.add(invitation.updatedAt().toString());
+    params.add(invitation.id());
+    params.add(invitation.tenantId());
+
+    sqlExecutor.execute(sqlTemplate, params);
   }
 
   @Override
@@ -60,16 +89,16 @@ public class MysqlExecutor implements TenantInvitationSqlExecutor {
 
     String sqlTemplate =
         """
-                DELETE FROM tenant_invitation
-                WHERE
-                id = ?
-                AND tenant_id = ?
-                """;
+                        DELETE FROM tenant_invitation
+                        WHERE
+                        id = ?
+                        AND tenant_id = ?
+                        """;
 
-    List<Object> organizationParams = new ArrayList<>();
-    organizationParams.add(invitation.id());
-    organizationParams.add(invitation.tenantId());
+    List<Object> params = new ArrayList<>();
+    params.add(invitation.id());
+    params.add(invitation.tenantId());
 
-    sqlExecutor.execute(sqlTemplate, organizationParams);
+    sqlExecutor.execute(sqlTemplate, params);
   }
 }

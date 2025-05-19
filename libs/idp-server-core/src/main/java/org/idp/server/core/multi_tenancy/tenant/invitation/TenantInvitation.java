@@ -3,6 +3,7 @@ package org.idp.server.core.multi_tenancy.tenant.invitation;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.basic.date.SystemDateTime;
 
 public class TenantInvitation {
 
@@ -13,9 +14,11 @@ public class TenantInvitation {
   String roleId;
   String roleName;
   String url;
+  String status;
   int expiresIn;
   LocalDateTime createdAt;
   LocalDateTime expiresAt;
+  LocalDateTime updatedAt;
 
   public TenantInvitation() {}
 
@@ -27,9 +30,11 @@ public class TenantInvitation {
       String roleId,
       String roleName,
       String url,
+      String status,
       int expiresIn,
       LocalDateTime createdAt,
-      LocalDateTime expiresAt) {
+      LocalDateTime expiresAt,
+      LocalDateTime updatedAt) {
     this.id = id;
     this.tenantId = tenantId;
     this.tenantName = tenantName;
@@ -37,9 +42,27 @@ public class TenantInvitation {
     this.roleId = roleId;
     this.roleName = roleName;
     this.url = url;
+    this.status = status;
     this.expiresIn = expiresIn;
     this.createdAt = createdAt;
     this.expiresAt = expiresAt;
+    this.updatedAt = updatedAt;
+  }
+
+  public TenantInvitation updateWithStatus(String status) {
+    return new TenantInvitation(
+        id,
+        tenantId,
+        tenantName,
+        email,
+        roleId,
+        roleName,
+        url,
+        status,
+        expiresIn,
+        createdAt,
+        expiresAt,
+        SystemDateTime.now());
   }
 
   public String id() {
@@ -70,6 +93,10 @@ public class TenantInvitation {
     return url;
   }
 
+  public String status() {
+    return status;
+  }
+
   public int expiresIn() {
     return expiresIn;
   }
@@ -82,6 +109,10 @@ public class TenantInvitation {
     return expiresAt;
   }
 
+  public LocalDateTime updatedAt() {
+    return updatedAt;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);
@@ -91,9 +122,11 @@ public class TenantInvitation {
     map.put("role_id", roleId);
     map.put("role_name", roleName);
     map.put("url", url);
+    map.put("status", status);
     map.put("expires_in", expiresIn);
     map.put("created_at", createdAt.toString());
     map.put("expires_at", expiresAt.toString());
+    map.put("updated_at", updatedAt.toString());
 
     return map;
   }

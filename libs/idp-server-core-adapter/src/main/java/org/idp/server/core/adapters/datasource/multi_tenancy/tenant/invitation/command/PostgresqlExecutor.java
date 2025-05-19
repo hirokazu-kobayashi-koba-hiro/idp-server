@@ -22,9 +22,11 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
                     role_id,
                     role_name,
                     url,
+                    status,
                     expires_in,
                     created_at,
-                    expires_at
+                    expires_at,
+                    updated_at
                     )
                     VALUES (
                     ?::uuid,
@@ -32,6 +34,8 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
                     ?,
                     ?,
                     ?::uuid,
+                    ?,
+                    ?,
                     ?,
                     ?,
                     ?,
@@ -47,11 +51,36 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
     params.add(invitation.roleId());
     params.add(invitation.roleName());
     params.add(invitation.url());
+    params.add(invitation.status());
     params.add(invitation.expiresIn());
     params.add(invitation.createdAt().toString());
     params.add(invitation.expiresAt().toString());
+    params.add(invitation.updatedAt().toString());
 
     sqlExecutor.execute(sqlOrganizationTemplate, params);
+  }
+
+  @Override
+  public void update(Tenant tenant, TenantInvitation invitation) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+                        UPDATE tenant_invitation
+                        SET status = ?,
+                        updated_at = ?
+                        WHERE
+                        id = ?::uuid
+                        AND tenant_id = ?::uuid
+                        """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(invitation.status());
+    params.add(invitation.updatedAt().toString());
+    params.add(invitation.id());
+    params.add(invitation.tenantId());
+
+    sqlExecutor.execute(sqlTemplate, params);
   }
 
   @Override
@@ -66,10 +95,10 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
                     AND tenant_id = ?::uuid
                     """;
 
-    List<Object> organizationParams = new ArrayList<>();
-    organizationParams.add(invitation.id());
-    organizationParams.add(invitation.tenantId());
+    List<Object> params = new ArrayList<>();
+    params.add(invitation.id());
+    params.add(invitation.tenantId());
 
-    sqlExecutor.execute(sqlTemplate, organizationParams);
+    sqlExecutor.execute(sqlTemplate, params);
   }
 }

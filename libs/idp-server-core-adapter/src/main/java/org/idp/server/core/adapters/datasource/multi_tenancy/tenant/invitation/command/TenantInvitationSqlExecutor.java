@@ -7,4 +7,6 @@ public interface TenantInvitationSqlExecutor {
   void insert(Tenant tenant, TenantInvitation tenantInvitation);
 
   void delete(Tenant tenant, TenantInvitation tenantInvitation);
+
+  void update(Tenant tenant, TenantInvitation tenantInvitation);
 }

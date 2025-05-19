@@ -22,4 +22,8 @@ public class CustomParams {
   public boolean exists() {
     return Objects.nonNull(values) && !values.isEmpty();
   }
+
+  public String getValueAsStringOrEmpty(String key) {
+    return values.getOrDefault(key, "");
+  }
 }

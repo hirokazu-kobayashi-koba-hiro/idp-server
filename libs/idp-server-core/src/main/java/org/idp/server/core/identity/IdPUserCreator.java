@@ -2,8 +2,6 @@ package org.idp.server.core.identity;
 
 import java.util.List;
 import java.util.UUID;
-
-import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.core.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
@@ -104,7 +102,7 @@ public class IdPUserCreator {
       user.setHashedPassword(hashedPassword);
     }
 
-    //TODO multi role
+    // TODO multi role
     if (definition.hasProperty("roles") && request.containsKey("role_id")) {
       String roleId = request.getValueAsString("role_id");
       String toleName = request.getValueAsString("role_name");

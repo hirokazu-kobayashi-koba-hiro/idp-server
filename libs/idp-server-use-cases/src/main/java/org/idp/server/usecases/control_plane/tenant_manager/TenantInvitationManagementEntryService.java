@@ -120,6 +120,37 @@ public class TenantInvitationManagementEntryService implements TenantInvitationM
   }
 
   @Override
+  public TenantInvitationManagementResponse update(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      TenantInvitationIdentifier identifier,
+      TenantInvitationManagementRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    OrganizationInvitationRequestValidator validator =
+        new OrganizationInvitationRequestValidator(request, dryRun);
+    OrganizationInvitationRequestValidationResult validate = validator.validate();
+    if (!validate.isValid()) {
+      return validate.errorResponse();
+    }
+
+    TenantInvitationContextCreator contextCreator =
+        new TenantInvitationContextCreator(tenant, request, adminDashboardUrl, dryRun);
+    TenantInvitationContext context = contextCreator.create();
+
+    if (dryRun) {
+      return context.toResponse();
+    }
+
+    tenantInvitationCommandRepository.update(tenant, context.tenantInvitation());
+
+    return context.toResponse();
+  }
+
+  @Override
   public TenantInvitationManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,

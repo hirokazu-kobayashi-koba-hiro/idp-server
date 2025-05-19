@@ -34,9 +34,11 @@ CREATE TABLE tenant_invitation
     role_id     UUID         NOT NULL,
     role_name   VARCHAR(255) NOT NULL,
     url         TEXT         NOT NULL,
+    status      VARCHAR(255) NOT NULL,
     expires_in  TEXT         NOT NULL,
     created_at  TEXT         NOT NULL,
     expires_at  TEXT         NOT NULL,
+    updated_at  TEXT         NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
@@ -813,7 +815,7 @@ CREATE TABLE idp_user_lifecycle_event_result
     id             UUID         NOT NULL,
     tenant_id      UUID         NOT NULL,
     user_id        UUID         NOT NULL,
-    lifecycle_type VARCHAR(32)  NOT NULL,
+    lifecycle_type VARCHAR(255)  NOT NULL,
     executor_name  VARCHAR(255) NOT NULL,
     status         VARCHAR(16)  NOT NULL,
     payload        JSONB,

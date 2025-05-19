@@ -19,9 +19,11 @@ public class MysqlExecutor implements TenantInvitationSqlExecutor {
                 role_id,
                 role_name,
                 url,
+                status,
                 expires_in,
                 created_at,
-                expires_at
+                expires_at,
+                updated_at
           FROM tenant_invitation \n
           """;
 

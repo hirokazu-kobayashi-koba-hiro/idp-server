@@ -52,6 +52,15 @@ public interface TenantInvitationManagementApi {
       TenantInvitationIdentifier identifier,
       RequestAttributes requestAttributes);
 
+  TenantInvitationManagementResponse update(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      TenantInvitationIdentifier identifier,
+      TenantInvitationManagementRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
   TenantInvitationManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,

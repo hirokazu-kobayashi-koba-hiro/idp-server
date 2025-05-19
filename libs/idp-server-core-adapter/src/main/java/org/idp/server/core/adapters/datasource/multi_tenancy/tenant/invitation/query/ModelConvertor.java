@@ -14,10 +14,23 @@ class ModelConvertor {
     String roleId = result.get("role_id");
     String roleName = result.get("role_name");
     String url = result.get("url");
+    String status = result.get("status");
     int expiresIn = Integer.parseInt(result.get("expires_in"));
     LocalDateTime createdAt = LocalDateTime.parse(result.get("created_at"));
     LocalDateTime expiresAt = LocalDateTime.parse(result.get("expires_at"));
+    LocalDateTime updatedAt = LocalDateTime.parse(result.get("updated_at"));
     return new TenantInvitation(
-        id, tenantId, tenantName, email, roleId, roleName, url, expiresIn, createdAt, expiresAt);
+        id,
+        tenantId,
+        tenantName,
+        email,
+        roleId,
+        roleName,
+        url,
+        status,
+        expiresIn,
+        createdAt,
+        expiresAt,
+        updatedAt);
   }
 }
