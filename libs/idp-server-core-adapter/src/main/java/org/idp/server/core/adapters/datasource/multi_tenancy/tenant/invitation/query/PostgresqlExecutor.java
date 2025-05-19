@@ -16,7 +16,8 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
                 tenant_id,
                 tenant_name,
                 email,
-                role,
+                role_id,
+                role_name,
                 url,
                 expires_in,
                 created_at,
@@ -28,7 +29,8 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
   public Map<String, String> selectOne(Tenant tenant, TenantInvitationIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
-        selectSql + """
+        selectSql
+            + """
             WHERE id = ?::uuid
             AND tenant_id = ?::uuid;
             """;

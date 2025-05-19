@@ -2,11 +2,13 @@
   "type": "object",
   "required": [
     "email",
-    "role"
+    "role_id",
+    "role_name"
   ],
   "properties": {
     "email": { "type": "string" },
-    "role": { "type": "string" }
+    "role_id": { "type": "string", "format": "uuid" },
+    "role_name": { "type": "string" }
   },
   "additionalProperties": false
 }

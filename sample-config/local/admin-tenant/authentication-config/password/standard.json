@@ -24,6 +24,20 @@
       "roles": {
         "type": "array",
         "items": {
+          "type": "object",
+          "properties": {
+            "role_id": {
+              "type": "string"
+            },
+            "role_name": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "assigned_tenants": {
+        "type": "array",
+        "items": {
           "type": "string"
         }
       },
@@ -35,8 +49,35 @@
         "type": "string",
         "maxLength": 255
       },
-      "address": {
-        "$ref": "#/$defs/address"
+      "address":{
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "locality": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "formatted": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "postal_code": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "street_address": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "additionalProperties": false
       },
       "picture": {
         "type": "string",
@@ -108,38 +149,6 @@
         "type": "boolean"
       }
     },
-    "additionalProperties": false,
-    "$defs": {
-      "address": {
-        "type": "object",
-        "properties": {
-          "region": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "country": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "locality": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "formatted": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "postal_code": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "street_address": {
-            "type": "string",
-            "maxLength": 255
-          }
-        },
-        "additionalProperties": false
-      }
-    }
+    "additionalProperties": false
   }
 }

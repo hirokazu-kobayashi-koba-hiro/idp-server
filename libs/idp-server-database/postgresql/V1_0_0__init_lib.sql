@@ -27,15 +27,16 @@ CREATE UNIQUE INDEX unique_admin_tenant ON tenant (type) WHERE type = 'ADMIN';
 
 CREATE TABLE tenant_invitation
 (
-    id            UUID         NOT NULL,
-    tenant_id     UUID         NOT NULL,
-    tenant_name   VARCHAR(255) NOT NULL,
-    email         VARCHAR(255) NOT NULL,
-    role          VARCHAR(255) NOT NULL,
-    url           TEXT         NOT NULL,
-    expires_in    TEXT         NOT NULL,
-    created_at    TEXT         NOT NULL,
-    expires_at    TEXT         NOT NULL,
+    id          UUID         NOT NULL,
+    tenant_id   UUID         NOT NULL,
+    tenant_name VARCHAR(255) NOT NULL,
+    email       VARCHAR(255) NOT NULL,
+    role_id     UUID         NOT NULL,
+    role_name   VARCHAR(255) NOT NULL,
+    url         TEXT         NOT NULL,
+    expires_in  TEXT         NOT NULL,
+    created_at  TEXT         NOT NULL,
+    expires_at  TEXT         NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );

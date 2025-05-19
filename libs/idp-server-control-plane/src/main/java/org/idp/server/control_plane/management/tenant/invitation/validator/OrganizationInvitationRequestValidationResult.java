@@ -1,15 +1,15 @@
-package org.idp.server.control_plane.management.organization.invitation.validator;
+package org.idp.server.control_plane.management.tenant.invitation.validator;
 
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
-import org.idp.server.control_plane.management.organization.invitation.io.TenantInvitationManagementResponse;
-import org.idp.server.control_plane.management.organization.invitation.io.TenantInvitationManagementStatus;
+import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementResponse;
+import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementStatus;
 
 public class OrganizationInvitationRequestValidationResult {
 
   boolean isValid;
-  JsonSchemaValidationResult organizationResult;
+  JsonSchemaValidationResult tenantInvitationResult;
   boolean dryRun;
 
   public static OrganizationInvitationRequestValidationResult success(
@@ -23,9 +23,9 @@ public class OrganizationInvitationRequestValidationResult {
   }
 
   private OrganizationInvitationRequestValidationResult(
-      boolean isValid, JsonSchemaValidationResult organizationResult, boolean dryRun) {
+      boolean isValid, JsonSchemaValidationResult tenantInvitationResult, boolean dryRun) {
     this.isValid = isValid;
-    this.organizationResult = organizationResult;
+    this.tenantInvitationResult = tenantInvitationResult;
     this.dryRun = dryRun;
   }
 
@@ -39,8 +39,8 @@ public class OrganizationInvitationRequestValidationResult {
     response.put("error", "invalid_request");
     response.put("error_description", "Invalid request");
     Map<String, Object> details = new HashMap<>();
-    if (!organizationResult.isValid()) {
-      details.put("organization", organizationResult.errors());
+    if (!tenantInvitationResult.isValid()) {
+      details.put("tenant_invitation", tenantInvitationResult.errors());
     }
 
     response.put("details", details);

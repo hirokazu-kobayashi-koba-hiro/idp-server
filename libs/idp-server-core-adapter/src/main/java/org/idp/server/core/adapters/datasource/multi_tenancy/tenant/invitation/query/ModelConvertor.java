@@ -11,12 +11,13 @@ class ModelConvertor {
     String tenantId = result.get("tenant_id");
     String tenantName = result.get("tenant_name");
     String email = result.get("email");
-    String role = result.get("role");
+    String roleId = result.get("role_id");
+    String roleName = result.get("role_name");
     String url = result.get("url");
     int expiresIn = Integer.parseInt(result.get("expires_in"));
     LocalDateTime createdAt = LocalDateTime.parse(result.get("created_at"));
     LocalDateTime expiresAt = LocalDateTime.parse(result.get("expires_at"));
     return new TenantInvitation(
-        id, tenantId, tenantName, email, role, url, expiresIn, createdAt, expiresAt);
+        id, tenantId, tenantName, email, roleId, roleName, url, expiresIn, createdAt, expiresAt);
   }
 }

@@ -6,14 +6,14 @@ import java.util.Map;
 import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
-import org.idp.server.control_plane.management.organization.invitation.OrganizationInvitationContext;
-import org.idp.server.control_plane.management.organization.invitation.OrganizationInvitationContextCreator;
-import org.idp.server.control_plane.management.organization.invitation.TenantInvitationManagementApi;
-import org.idp.server.control_plane.management.organization.invitation.io.TenantInvitationManagementRequest;
-import org.idp.server.control_plane.management.organization.invitation.io.TenantInvitationManagementResponse;
-import org.idp.server.control_plane.management.organization.invitation.io.TenantInvitationManagementStatus;
-import org.idp.server.control_plane.management.organization.invitation.validator.OrganizationInvitationRequestValidationResult;
-import org.idp.server.control_plane.management.organization.invitation.validator.OrganizationInvitationRequestValidator;
+import org.idp.server.control_plane.management.tenant.invitation.TenantInvitationContext;
+import org.idp.server.control_plane.management.tenant.invitation.TenantInvitationContextCreator;
+import org.idp.server.control_plane.management.tenant.invitation.TenantInvitationManagementApi;
+import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementRequest;
+import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementResponse;
+import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementStatus;
+import org.idp.server.control_plane.management.tenant.invitation.validator.OrganizationInvitationRequestValidationResult;
+import org.idp.server.control_plane.management.tenant.invitation.validator.OrganizationInvitationRequestValidator;
 import org.idp.server.core.authentication.notification.EmailSenders;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
@@ -64,9 +64,9 @@ public class TenantInvitationManagementEntryService implements TenantInvitationM
       return validate.errorResponse();
     }
 
-    OrganizationInvitationContextCreator contextCreator =
-        new OrganizationInvitationContextCreator(tenant, request, adminDashboardUrl, dryRun);
-    OrganizationInvitationContext context = contextCreator.create();
+    TenantInvitationContextCreator contextCreator =
+        new TenantInvitationContextCreator(tenant, request, adminDashboardUrl, dryRun);
+    TenantInvitationContext context = contextCreator.create();
 
     if (dryRun) {
       return context.toResponse();

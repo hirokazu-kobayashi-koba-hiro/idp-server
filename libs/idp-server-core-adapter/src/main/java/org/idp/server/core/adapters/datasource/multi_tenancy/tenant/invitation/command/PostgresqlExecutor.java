@@ -19,7 +19,8 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
                     tenant_id,
                     tenant_name,
                     email,
-                    role,
+                    role_id,
+                    role_name,
                     url,
                     expires_in,
                     created_at,
@@ -30,6 +31,7 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
                     ?::uuid,
                     ?,
                     ?,
+                    ?::uuid,
                     ?,
                     ?,
                     ?,
@@ -37,18 +39,19 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
                     ?
                     );
                     """;
-    List<Object> organizationParams = new ArrayList<>();
-    organizationParams.add(invitation.id());
-    organizationParams.add(invitation.tenantId());
-    organizationParams.add(invitation.tenantName());
-    organizationParams.add(invitation.email());
-    organizationParams.add(invitation.role());
-    organizationParams.add(invitation.url());
-    organizationParams.add(invitation.expiresIn());
-    organizationParams.add(invitation.createdAt().toString());
-    organizationParams.add(invitation.expiresAt().toString());
+    List<Object> params = new ArrayList<>();
+    params.add(invitation.id());
+    params.add(invitation.tenantId());
+    params.add(invitation.tenantName());
+    params.add(invitation.email());
+    params.add(invitation.roleId());
+    params.add(invitation.roleName());
+    params.add(invitation.url());
+    params.add(invitation.expiresIn());
+    params.add(invitation.createdAt().toString());
+    params.add(invitation.expiresAt().toString());
 
-    sqlExecutor.execute(sqlOrganizationTemplate, organizationParams);
+    sqlExecutor.execute(sqlOrganizationTemplate, params);
   }
 
   @Override

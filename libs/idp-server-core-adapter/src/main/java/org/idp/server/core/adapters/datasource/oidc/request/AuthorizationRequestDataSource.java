@@ -3,7 +3,7 @@ package org.idp.server.core.adapters.datasource.oidc.request;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.oidc.exception.OAuthException;
+import org.idp.server.core.oidc.exception.OAuthRequestNotFoundException;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
@@ -30,7 +30,7 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
     Map<String, String> stringMap = executor.selectOne(tenant, authorizationRequestIdentifier);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
-      throw new OAuthException(
+      throw new OAuthRequestNotFoundException(
           "invalid_request",
           String.format("not found oauth request (%s)", authorizationRequestIdentifier.value()));
     }

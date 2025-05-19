@@ -1,19 +1,19 @@
-package org.idp.server.control_plane.management.organization.invitation;
+package org.idp.server.control_plane.management.tenant.invitation;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.control_plane.management.organization.invitation.io.TenantInvitationManagementResponse;
-import org.idp.server.control_plane.management.organization.invitation.io.TenantInvitationManagementStatus;
+import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementResponse;
+import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementStatus;
 import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitation;
 
-public class OrganizationInvitationContext {
+public class TenantInvitationContext {
 
   TenantInvitation tenantInvitation;
   boolean dryRun;
 
-  public OrganizationInvitationContext() {}
+  public TenantInvitationContext() {}
 
-  public OrganizationInvitationContext(TenantInvitation tenantInvitation, boolean dryRun) {
+  public TenantInvitationContext(TenantInvitation tenantInvitation, boolean dryRun) {
     this.tenantInvitation = tenantInvitation;
     this.dryRun = dryRun;
   }

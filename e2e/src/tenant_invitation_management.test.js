@@ -28,7 +28,8 @@ describe("tenant invitation management api", () => {
         },
         body: {
           "email": "test@gmail.com",
-          "role": "admin",
+          "role_id": "c6df7aaa-ab0f-4c31-839d-49b6874de144",
+          "role_name": "administrator",
         }
       });
 

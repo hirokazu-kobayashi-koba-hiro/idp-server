@@ -10,7 +10,8 @@ public class TenantInvitation {
   String tenantId;
   String tenantName;
   String email;
-  String role;
+  String roleId;
+  String roleName;
   String url;
   int expiresIn;
   LocalDateTime createdAt;
@@ -23,7 +24,8 @@ public class TenantInvitation {
       String tenantId,
       String tenantName,
       String email,
-      String role,
+      String roleId,
+      String roleName,
       String url,
       int expiresIn,
       LocalDateTime createdAt,
@@ -32,7 +34,8 @@ public class TenantInvitation {
     this.tenantId = tenantId;
     this.tenantName = tenantName;
     this.email = email;
-    this.role = role;
+    this.roleId = roleId;
+    this.roleName = roleName;
     this.url = url;
     this.expiresIn = expiresIn;
     this.createdAt = createdAt;
@@ -55,8 +58,12 @@ public class TenantInvitation {
     return email;
   }
 
-  public String role() {
-    return role;
+  public String roleId() {
+    return roleId;
+  }
+
+  public String roleName() {
+    return roleName;
   }
 
   public String url() {
@@ -81,7 +88,8 @@ public class TenantInvitation {
     map.put("tenant_id", tenantId);
     map.put("tenant_name", tenantName);
     map.put("email", email);
-    map.put("role", role);
+    map.put("role_id", roleId);
+    map.put("role_name", roleName);
     map.put("url", url);
     map.put("expires_in", expiresIn);
     map.put("created_at", createdAt.toString());

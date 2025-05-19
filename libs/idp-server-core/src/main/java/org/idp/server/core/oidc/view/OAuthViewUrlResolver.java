@@ -1,5 +1,7 @@
 package org.idp.server.core.oidc.view;
 
+import org.idp.server.basic.http.QueryParams;
+import org.idp.server.basic.type.oauth.CustomParams;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
@@ -25,11 +27,11 @@ public class OAuthViewUrlResolver {
   }
 
   private static String buildUrl(String base, String path, OAuthRequestContext context) {
-    return String.format(
-        "%s/%s/?id=%s&tenant_id=%s",
-        base,
-        path,
-        context.authorizationRequestIdentifier().value(),
-        context.tenantIdentifier().value());
+    CustomParams customParams = context.authorizationRequest().customParams();
+    QueryParams queryParams = new QueryParams(customParams.values());
+    queryParams.add("id", context.authorizationRequestIdentifier().value());
+    queryParams.add("tenant_id", context.tenantIdentifier().value());
+    String params = queryParams.params();
+    return String.format("%s/%s/?%s", base, path, params);
   }
 }

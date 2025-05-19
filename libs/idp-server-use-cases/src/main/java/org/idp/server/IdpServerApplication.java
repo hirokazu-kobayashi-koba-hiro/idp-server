@@ -20,8 +20,8 @@ import org.idp.server.control_plane.management.identity.verification.IdentityVer
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
-import org.idp.server.control_plane.management.organization.invitation.TenantInvitationManagementApi;
 import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
+import org.idp.server.control_plane.management.tenant.invitation.TenantInvitationManagementApi;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiers;

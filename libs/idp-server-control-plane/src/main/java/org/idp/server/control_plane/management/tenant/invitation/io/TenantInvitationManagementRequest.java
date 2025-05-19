@@ -1,4 +1,4 @@
-package org.idp.server.control_plane.management.organization.invitation.io;
+package org.idp.server.control_plane.management.tenant.invitation.io;
 
 import java.util.Map;
 

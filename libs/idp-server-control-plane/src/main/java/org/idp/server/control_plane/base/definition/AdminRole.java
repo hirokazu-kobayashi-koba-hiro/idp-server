@@ -1,7 +1,5 @@
 package org.idp.server.control_plane.base.definition;
 
-import static org.idp.server.control_plane.base.definition.AdminPermission.*;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
