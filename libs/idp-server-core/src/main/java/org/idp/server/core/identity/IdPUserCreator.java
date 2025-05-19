@@ -1,5 +1,6 @@
 package org.idp.server.core.identity;
 
+import java.util.List;
 import java.util.UUID;
 import org.idp.server.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.core.authentication.AuthenticationInteractionRequest;
@@ -99,6 +100,20 @@ public class IdPUserCreator {
       String password = request.getValueAsString("password");
       String hashedPassword = passwordEncodeDelegation.encode(password);
       user.setHashedPassword(hashedPassword);
+    }
+
+    // TODO multi role
+    if (definition.hasProperty("roles") && request.containsKey("role_id")) {
+      String roleId = request.getValueAsString("role_id");
+      String toleName = request.getValueAsString("role_name");
+      List<UserRole> roles = List.of(new UserRole(roleId, toleName));
+      user.setRoles(roles);
+    }
+
+    if (definition.hasProperty("assigned_tenants") && request.containsKey("tenant_id")) {
+      String tenantId = request.getValueAsString("tenant_id");
+      List<String> assignedTenants = List.of(tenantId);
+      user.setAssignedTenants(assignedTenants);
     }
 
     user.transitStatus(UserStatus.REGISTERED);

@@ -8,13 +8,23 @@ public class UserLifecycleEvent {
   Tenant tenant;
   User user;
   UserLifecycleType lifecycleOperation;
+  UserLifecycleEventPayload payload;
 
   public UserLifecycleEvent() {}
 
   public UserLifecycleEvent(Tenant tenant, User user, UserLifecycleType lifecycleOperation) {
+    this(tenant, user, lifecycleOperation, new UserLifecycleEventPayload());
+  }
+
+  public UserLifecycleEvent(
+      Tenant tenant,
+      User user,
+      UserLifecycleType lifecycleOperation,
+      UserLifecycleEventPayload payload) {
     this.tenant = tenant;
     this.user = user;
     this.lifecycleOperation = lifecycleOperation;
+    this.payload = payload;
   }
 
   public Tenant tenant() {
@@ -27,6 +37,10 @@ public class UserLifecycleEvent {
 
   public UserLifecycleType lifecycleType() {
     return lifecycleOperation;
+  }
+
+  public UserLifecycleEventPayload payload() {
+    return payload;
   }
 
   public TenantIdentifier tenantIdentifier() {

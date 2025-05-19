@@ -40,12 +40,37 @@ export default function SignUpPage() {
     queryKey: ["fetchViewData", router.query],
     queryFn: async () => {
       if (!router.isReady || Object.keys(router.query).length === 0) return;
+
       const response = await fetch(
         `${backendUrl}/${tenantId}/v1/authorizations/${id}/view-data`,
         { credentials: "include" },
       );
+
       if (!response.ok) throw new Error(response.status.toString());
-      return await response.json();
+
+      const viewData = await response.json();
+
+      const { custom_params: customParams } = viewData;
+      console.log(customParams);
+
+      if (customParams && customParams.invitation_id && customParams.invitation_tenant_id) {
+        const invitationResponse = await fetch(
+          `${backendUrl}/${customParams.invitation_tenant_id}/v1/invitations/${customParams.invitation_id}`,
+          {
+            credentials: "include",
+          },
+        );
+        const invitationData = await invitationResponse.json();
+
+        setEmail(invitationData.email);
+
+        return {
+          ...viewData,
+          invitation: invitationData,
+        };
+      }
+
+      return viewData;
     },
   });
 
@@ -64,13 +89,17 @@ export default function SignUpPage() {
   const handleClick = async () => {
     if (!validate()) return;
 
+    const roleId = data?.invitation?.role_id || "";
+    const roleName = data?.invitation?.role_name || "";
+    const invitationTenantId = data?.invitation?.tenant_id || "";
+
     const response = await fetch(
       `${backendUrl}/${tenantId}/v1/authorizations/${id}/password-registration`,
       {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: email, email: email, password }),
+        body: JSON.stringify({ name: email, email: email, password, role_id: roleId, role_name: roleName, tenant_id: invitationTenantId }),
       },
     );
 
@@ -126,11 +155,23 @@ export default function SignUpPage() {
         <Typography variant="h5" fontWeight={600} gutterBottom>
           IdP Server Sign Up
         </Typography>
-        <Typography variant="body2" color="text.secondary" mb={4}>
-          {
-            "Create your account to continue. You'll verify your email in the next step."
-          }
-        </Typography>
+        {data.invitation ? (
+          <>
+            <Typography variant="body2" color="text.secondary" mb={4}>
+              {
+                `You have been invited to join the ${data.invitation.tenant_name}. Please enter your password to continue.`
+              }
+            </Typography>
+        </>
+        ): (
+         <>
+           <Typography variant="body2" color="text.secondary" mb={4}>
+             {
+               "Create your account to continue. You'll verify your email in the next step."
+             }
+           </Typography>
+         </>
+        )}
 
         <Stack spacing={3}>
           <SignupStepper activeStep={0} />
@@ -141,6 +182,7 @@ export default function SignUpPage() {
             placeholder="you@example.com"
             inputMode="email"
             value={email}
+            disabled={!!data?.invitation}
             required
             error={Boolean(errors.email)}
             helperText={errors.email}

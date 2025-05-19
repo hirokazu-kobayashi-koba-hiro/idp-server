@@ -125,4 +125,20 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
+
+  @Override
+  public void delete(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqpTemplate =
+        """
+            DELETE FROM authorization_request
+            WHERE id = ?::uuid
+            AND tenant_id = ?::uuid;
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(authorizationRequestIdentifier.value());
+    params.add(tenant.identifierValue());
+
+    sqlExecutor.execute(sqpTemplate, params);
+  }
 }

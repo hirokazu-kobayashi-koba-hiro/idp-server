@@ -178,6 +178,8 @@ public class AuthorizationCodeGrantService
 
     oAuthTokenRepository.register(tenant, oAuthToken);
     authorizationCodeGrantRepository.delete(tokenRequestContext.tenant(), authorizationCodeGrant);
+    authorizationRequestRepository.delete(
+        tokenRequestContext.tenant(), authorizationCodeGrant.authorizationRequestIdentifier());
 
     return oAuthToken;
   }

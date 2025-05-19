@@ -57,9 +57,9 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
           response, type, DefaultSecurityEventType.user_signup_failure);
     }
 
-    User existingUser =
-        userQueryRepository.findByEmail(
-            tenant, request.optValueAsString("email", ""), "idp-server");
+    String email = request.optValueAsString("email", "");
+    String providerId = request.optValueAsString("provider_id", "idp-server");
+    User existingUser = userQueryRepository.findByEmail(tenant, email, providerId);
 
     if (existingUser.exists()) {
 

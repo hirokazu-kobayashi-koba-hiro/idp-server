@@ -32,3 +32,5 @@ org.idp.server.core.adapters.datasource.authentication.config.command.Authentica
 org.idp.server.core.adapters.datasource.authentication.config.query.AuthenticationConfigurationDataSourceAppProvider
 org.idp.server.core.adapters.datasource.federation.config.query.FederationConfigurationQueryDataSourceAppProvider
 org.idp.server.core.adapters.datasource.federation.config.command.FederationConfigurationCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.command.TenantInvitationDataSourceProvider
+org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.query.TenantInvitationQueryDataSourceProvider

@@ -25,6 +25,24 @@ CREATE TABLE tenant
 
 -- CREATE UNIQUE INDEX unique_admin_tenant ON tenant (type) WHERE type = 'ADMIN';
 
+CREATE TABLE tenant_invitation
+(
+    id          CHAR(36)     NOT NULL,
+    tenant_id   CHAR(36)     NOT NULL,
+    tenant_name VARCHAR(255) NOT NULL,
+    email       VARCHAR(255) NOT NULL,
+    role_id     CHAR(36)     NOT NULL,
+    role_name   VARCHAR(255) NOT NULL,
+    url         TEXT         NOT NULL,
+    status      VARCHAR(255) NOT NULL,
+    expires_in  TEXT         NOT NULL,
+    created_at  TEXT         NOT NULL,
+    expires_at  TEXT         NOT NULL,
+    updated_at  TEXT         NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE organization_tenants
 (
     id              CHAR(36)               NOT NULL,
@@ -491,13 +509,13 @@ CREATE INDEX idx_security_event_hook_configuration_order ON security_event_hook_
 
 CREATE TABLE federation_configurations
 (
-    id                CHAR(36)                           NOT NULL,
-    tenant_id         CHAR(36)                           NOT NULL,
-    type              VARCHAR(255)                       NOT NULL,
+    id           CHAR(36)                           NOT NULL,
+    tenant_id    CHAR(36)                           NOT NULL,
+    type         VARCHAR(255)                       NOT NULL,
     sso_provider VARCHAR(255)                       NOt NULL,
-    payload           JSON                               NOT NULL,
-    created_at        DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at        DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    payload      JSON                               NOT NULL,
+    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
@@ -563,4 +581,17 @@ CREATE TABLE authentication_interactions
     PRIMARY KEY (authorization_id, interaction_type),
     FOREIGN KEY (authorization_id) REFERENCES authentication_transaction (authorization_id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE idp_user_lifecycle_event_result
+(
+    id             CHAR(36)         NOT NULL,
+    tenant_id      CHAR(36)          NOT NULL,
+    user_id        CHAR(36)          NOT NULL,
+    lifecycle_type VARCHAR(255)  NOT NULL,
+    executor_name  VARCHAR(255) NOT NULL,
+    status         VARCHAR(16)  NOT NULL,
+    payload        JSON,
+    created_at     TIMESTAMP DEFAULT now(),
+    PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

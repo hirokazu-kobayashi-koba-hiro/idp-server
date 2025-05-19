@@ -13,4 +13,6 @@ public interface AuthorizationRequestRepository {
 
   AuthorizationRequest find(
       Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier);
+
+  void delete(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier);
 }

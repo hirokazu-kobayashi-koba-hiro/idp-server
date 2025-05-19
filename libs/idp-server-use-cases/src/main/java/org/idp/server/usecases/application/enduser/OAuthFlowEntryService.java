@@ -16,6 +16,7 @@ import org.idp.server.core.federation.sso.SsoProvider;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
 import org.idp.server.core.identity.event.UserLifecycleEvent;
+import org.idp.server.core.identity.event.UserLifecycleEventPayload;
 import org.idp.server.core.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.identity.event.UserLifecycleType;
 import org.idp.server.core.identity.repository.UserCommandRepository;
@@ -268,6 +269,20 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     if (authorize.isOk()) {
       userRegistrator.registerOrUpdate(tenant, user);
+
+      String invitationId =
+          authorizationRequest.customParams().getValueAsStringOrEmpty("invitation_id");
+      if (invitationId != null && !invitationId.isEmpty()) {
+        Map<String, Object> payload = Map.of("invitation_id", invitationId, "status", "accepted");
+        UserLifecycleEvent event =
+            new UserLifecycleEvent(
+                tenant,
+                user,
+                UserLifecycleType.INVITE_COMPLETE,
+                new UserLifecycleEventPayload(payload));
+        userLifecycleEventPublisher.publish(event);
+      }
+
       eventPublisher.publish(
           tenant,
           authorizationRequest,
