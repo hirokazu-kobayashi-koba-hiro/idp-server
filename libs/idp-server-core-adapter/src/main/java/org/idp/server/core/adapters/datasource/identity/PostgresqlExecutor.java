@@ -131,88 +131,100 @@ public class PostgresqlExecutor implements UserSqlExecutor {
 
   String selectSql =
       """
-                  SELECT
-                               idp_user.id,
-                               idp_user.provider_id,
-                               idp_user.provider_user_id,
-                               idp_user.provider_user_original_payload,
-                               idp_user.name,
-                               idp_user.given_name,
-                               idp_user.family_name,
-                               idp_user.middle_name,
-                               idp_user.nickname,
-                               idp_user.preferred_username,
-                               idp_user.profile,
-                               idp_user.picture,
-                               idp_user.website,
-                               idp_user.email,
-                               idp_user.email_verified,
-                               idp_user.gender,
-                               idp_user.birthdate,
-                               idp_user.zoneinfo,
-                               idp_user.locale,
-                               idp_user.phone_number,
-                               idp_user.phone_number_verified,
-                               idp_user.address,
-                               idp_user.custom_properties,
-                               idp_user.credentials,
-                               idp_user.hashed_password,
-                               idp_user.multi_factor_authentication,
-                               idp_user.authentication_devices,
-                               idp_user.verified_claims,
-                               idp_user.status,
-                               idp_user.created_at,
-                               idp_user.updated_at,
-                               COALESCE(
-                                 JSON_AGG(JSON_BUILD_OBJECT('role_id', role.id, 'role_name', role.name))
-                                 FILTER (WHERE role.id IS NOT NULL),
-                                 '[]'
-                               ) AS roles,
-                               COALESCE(
-                                 JSON_AGG(DISTINCT user_effective_permissions_view.permission_name)
-                                 FILTER (WHERE user_effective_permissions_view.permission_name IS NOT NULL),
-                                 '[]'
-                               ) AS permissions,
-                                COALESCE(
-                                 JSON_AGG(DISTINCT idp_user_assigned_tenants.tenant_id)
-                                 FILTER (WHERE idp_user_assigned_tenants.tenant_id IS NOT NULL),
-                                 '[]'
-                               ) AS assigned_tenants
-                             FROM idp_user
-                             LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
-                             LEFT JOIN role ON idp_user_roles.role_id = role.id
-                             LEFT JOIN user_effective_permissions_view ON idp_user.id = user_effective_permissions_view.user_id
-                             LEFT JOIN idp_user_assigned_tenants ON idp_user.id = idp_user_assigned_tenants.user_id
-                             %s
-                             GROUP BY
-                               idp_user.id,
-                               idp_user.provider_id,
-                               idp_user.provider_user_id,
-                               idp_user.provider_user_original_payload,
-                               idp_user.name,
-                               idp_user.given_name,
-                               idp_user.family_name,
-                               idp_user.middle_name,
-                               idp_user.nickname,
-                               idp_user.preferred_username,
-                               idp_user.profile,
-                               idp_user.picture,
-                               idp_user.website,
-                               idp_user.email,
-                               idp_user.email_verified,
-                               idp_user.gender,
-                               idp_user.birthdate,
-                               idp_user.zoneinfo,
-                               idp_user.locale,
-                               idp_user.phone_number,
-                               idp_user.phone_number_verified,
-                               idp_user.address,
-                               idp_user.custom_properties,
-                               idp_user.credentials,
-                               idp_user.hashed_password,
-                               idp_user.multi_factor_authentication,
-                               idp_user.status,
-                               idp_user.created_at,
-                               idp_user.updated_at
+              SELECT
+                  idp_user.id,
+                  idp_user.provider_id,
+                  idp_user.provider_user_id,
+                  idp_user.provider_user_original_payload,
+                  idp_user.name,
+                  idp_user.given_name,
+                  idp_user.family_name,
+                  idp_user.middle_name,
+                  idp_user.nickname,
+                  idp_user.preferred_username,
+                  idp_user.profile,
+                  idp_user.picture,
+                  idp_user.website,
+                  idp_user.email,
+                  idp_user.email_verified,
+                  idp_user.gender,
+                  idp_user.birthdate,
+                  idp_user.zoneinfo,
+                  idp_user.locale,
+                  idp_user.phone_number,
+                  idp_user.phone_number_verified,
+                  idp_user.address,
+                  idp_user.custom_properties,
+                  idp_user.credentials,
+                  idp_user.hashed_password,
+                  idp_user.multi_factor_authentication,
+                  idp_user.authentication_devices,
+                  idp_user.verified_claims,
+                  idp_user.status,
+                  idp_user.created_at,
+                  idp_user.updated_at,
+                  COALESCE(
+                                  JSON_AGG(JSON_BUILD_OBJECT('role_id', role.id, 'role_name', role.name))
+                                  FILTER (WHERE role.id IS NOT NULL),
+                                  '[]'
+                  ) AS roles,
+                  COALESCE(
+                                  JSON_AGG(DISTINCT user_effective_permissions_view.permission_name)
+                                  FILTER (WHERE user_effective_permissions_view.permission_name IS NOT NULL),
+                                  '[]'
+                  ) AS permissions,
+                  COALESCE(
+                                  JSON_AGG(DISTINCT idp_user_assigned_tenants.tenant_id)
+                                  FILTER (WHERE idp_user_assigned_tenants.tenant_id IS NOT NULL),
+                                  '[]'
+                  ) AS assigned_tenants,
+                  idp_user_current_tenant.tenant_id AS current_tenant_id,
+                  COALESCE(
+                                  JSON_AGG(DISTINCT idp_user_assigned_organizations.organization_id)
+                                  FILTER (WHERE idp_user_assigned_organizations.organization_id IS NOT NULL),
+                                  '[]'
+                  ) AS assigned_organizations,
+                  idp_user_current_organization.organization_id AS current_organization_id
+              FROM idp_user
+                       LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
+                       LEFT JOIN role ON idp_user_roles.role_id = role.id
+                       LEFT JOIN user_effective_permissions_view ON idp_user.id = user_effective_permissions_view.user_id
+                       LEFT JOIN idp_user_assigned_tenants ON idp_user.id = idp_user_assigned_tenants.user_id
+                       LEFT JOIN idp_user_current_tenant ON idp_user.id = idp_user_current_tenant.user_id
+                       LEFT JOIN idp_user_assigned_organizations ON idp_user.id = idp_user_assigned_organizations.user_id
+                       LEFT JOIN idp_user_current_organization ON idp_user.id = idp_user_current_organization.user_id
+               %s
+               GROUP BY
+               idp_user.id,
+               idp_user.provider_id,
+               idp_user.provider_user_id,
+               idp_user.provider_user_original_payload,
+               idp_user.name,
+               idp_user.given_name,
+               idp_user.family_name,
+               idp_user.middle_name,
+               idp_user.nickname,
+               idp_user.preferred_username,
+               idp_user.profile,
+               idp_user.picture,
+               idp_user.website,
+               idp_user.email,
+               idp_user.email_verified,
+               idp_user.gender,
+               idp_user.birthdate,
+               idp_user.zoneinfo,
+               idp_user.locale,
+               idp_user.phone_number,
+               idp_user.phone_number_verified,
+               idp_user.address,
+               idp_user.custom_properties,
+               idp_user.credentials,
+               idp_user.hashed_password,
+               idp_user.multi_factor_authentication,
+               idp_user.status,
+               idp_user.created_at,
+               idp_user.updated_at,
+               idp_user_current_tenant.tenant_id,
+               idp_user_current_organization.organization_id
                   """;
 }

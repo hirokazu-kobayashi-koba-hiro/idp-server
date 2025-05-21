@@ -55,6 +55,18 @@ CREATE TABLE organization_tenants
     FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE idp_user_assigned_organizations
+(
+    id              CHAR(36)       DEFAULT gen_random_uuid(),
+    organization_id CHAR(36)                     NOT NULL,
+    user_id         CHAR(36)                     NOT NULL,
+    assigned_at     TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
+    UNIQUE (organization_id, user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE authorization_server_configuration
 (
     tenant_id    CHAR(36)                           NOT NULL,

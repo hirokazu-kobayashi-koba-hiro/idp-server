@@ -21,6 +21,7 @@ import org.idp.server.control_plane.management.oidc.authorization.AuthorizationS
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
+import org.idp.server.control_plane.management.tenant.TenantManagementApi;
 import org.idp.server.control_plane.management.tenant.invitation.TenantInvitationManagementApi;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
@@ -123,6 +124,8 @@ public class IdpServerApplication {
   UserLifecycleEventApi userLifecycleEventApi;
   OnboardingApi onboardingApi;
   TenantInitializationApi tenantInitializationApi;
+  TenantManagementApi tenantManagementApi;
+  TenantInvitationManagementApi tenantInvitationManagementApi;
   AuthorizationServerManagementApi authorizationServerManagementApi;
   ClientManagementApi clientManagementApi;
   UserManagementApi userManagementApi;
@@ -131,7 +134,6 @@ public class IdpServerApplication {
   IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi;
   SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi;
   UserAuthenticationApi userAuthenticationApi;
-  TenantInvitationManagementApi tenantInvitationManagementApi;
 
   public IdpServerApplication(
       String adminTenantId,
@@ -468,6 +470,24 @@ public class IdpServerApplication {
             TenantInitializationApi.class,
             tenantDialectProvider);
 
+    this.tenantManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new TenantManagementEntryService(
+                tenantCommandRepository, tenantQueryRepository, organizationRepository, authorizationServerConfigurationCommandRepository),
+            TenantManagementApi.class,
+            tenantDialectProvider);
+
+    this.tenantInvitationManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new TenantInvitationManagementEntryService(
+                tenantInvitationCommandRepository,
+                tenantInvitationQueryRepository,
+                tenantQueryRepository,
+                emailSenders,
+                adminDashboardUrl),
+            TenantInvitationManagementApi.class,
+            tenantDialectProvider);
+
     this.authorizationServerManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuthorizationServerManagementEntryService(
@@ -541,17 +561,6 @@ public class IdpServerApplication {
                 userQueryRepository),
             UserAuthenticationApi.class,
             tenantDialectProvider);
-
-    this.tenantInvitationManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new TenantInvitationManagementEntryService(
-                tenantInvitationCommandRepository,
-                tenantInvitationQueryRepository,
-                tenantQueryRepository,
-                emailSenders,
-                adminDashboardUrl),
-            TenantInvitationManagementApi.class,
-            tenantDialectProvider);
   }
 
   public OAuthFlowApi oAuthFlowApi() {
@@ -614,6 +623,14 @@ public class IdpServerApplication {
     return tenantInitializationApi;
   }
 
+  public TenantManagementApi tenantManagementApi() {
+    return tenantManagementApi;
+  }
+
+  public TenantInvitationManagementApi tenantInvitationManagementApi() {
+    return tenantInvitationManagementApi;
+  }
+
   public AuthorizationServerManagementApi authorizationServerManagementApi() {
     return authorizationServerManagementApi;
   }
@@ -648,9 +665,5 @@ public class IdpServerApplication {
 
   public SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi() {
     return securityEventHookConfigurationManagementApi;
-  }
-
-  public TenantInvitationManagementApi tenantInvitationManagementApi() {
-    return tenantInvitationManagementApi;
   }
 }

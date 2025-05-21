@@ -225,6 +225,43 @@ CREATE TABLE idp_user_assigned_tenants
     UNIQUE (tenant_id, user_id)
 );
 
+-- no rls
+CREATE TABLE idp_user_current_tenant
+(
+    user_id    UUID                                NOT NULL,
+    tenant_id  UUID                                NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (user_id),
+    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+);
+
+-- no rls
+CREATE TABLE idp_user_assigned_organizations
+(
+    id              UUID      DEFAULT gen_random_uuid(),
+    user_id         UUID                    NOT NULL,
+    organization_id UUID                    NOT NULL,
+    assigned_at     TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (user_id, organization_id),
+    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
+    FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
+);
+
+-- no rls
+CREATE TABLE idp_user_current_organization
+(
+    user_id         UUID                                NOT NULL,
+    organization_id UUID                                NOT NULL,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (user_id),
+    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
+    FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
+);
+
 CREATE TABLE idp_user_roles
 (
     id          UUID      DEFAULT gen_random_uuid(),
@@ -815,7 +852,7 @@ CREATE TABLE idp_user_lifecycle_event_result
     id             UUID         NOT NULL,
     tenant_id      UUID         NOT NULL,
     user_id        UUID         NOT NULL,
-    lifecycle_type VARCHAR(255)  NOT NULL,
+    lifecycle_type VARCHAR(255) NOT NULL,
     executor_name  VARCHAR(255) NOT NULL,
     status         VARCHAR(16)  NOT NULL,
     payload        JSONB,

@@ -12,6 +12,7 @@ import org.idp.server.core.identity.UserRole;
 import org.idp.server.core.identity.permission.Permissions;
 import org.idp.server.core.identity.role.Role;
 import org.idp.server.core.identity.role.Roles;
+import org.idp.server.core.multi_tenancy.organization.AssignedTenant;
 import org.idp.server.core.multi_tenancy.organization.Organization;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantAttributes;
@@ -56,8 +57,10 @@ public class OnboardingContextCreator {
             tenantRequest.tenantDomain(),
             tenantRequest.authorizationProvider(),
             tenantRequest.databaseType(),
-            TenantAttributes.createDefaultType());
-    organization.assign(tenant);
+            new TenantAttributes());
+
+    AssignedTenant assignedTenant = new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
+    Organization assigned = organization.updateWithTenant(assignedTenant);
 
     List<Role> rolesList = roles.toList();
     List<UserRole> userRoles =
@@ -68,7 +71,7 @@ public class OnboardingContextCreator {
     return new OnboardingContext(
         tenant,
         authorizationServerConfiguration,
-        organization,
+        assigned,
         permissions,
         roles,
         updatedUser,

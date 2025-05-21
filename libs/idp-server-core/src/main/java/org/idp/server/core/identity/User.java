@@ -11,6 +11,8 @@ import org.idp.server.basic.vc.Credential;
 import org.idp.server.core.identity.address.Address;
 import org.idp.server.core.identity.device.AuthenticationDevice;
 import org.idp.server.core.identity.device.AuthenticationDevices;
+import org.idp.server.core.multi_tenancy.organization.OrganizationIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 public class User implements JsonReadable, Serializable {
   String sub;
@@ -44,7 +46,10 @@ public class User implements JsonReadable, Serializable {
   HashMap<String, Object> multiFactorAuthentication = new HashMap<>();
   List<UserRole> roles = new ArrayList<>();
   List<String> permissions = new ArrayList<>();
+  String currentTenant;
   List<String> assignedTenants = new ArrayList<>();
+  String currentOrganizationId;
+  List<String> assignedOrganizations = new ArrayList<>();
   HashMap<String, Object> verifiedClaims = new HashMap<>();
   UserStatus status = UserStatus.UNREGISTERED;
 
@@ -530,12 +535,36 @@ public class User implements JsonReadable, Serializable {
     return authenticationDevices != null && !authenticationDevices.isEmpty();
   }
 
+  public TenantIdentifier currentTenantIdentifier() {
+    return new TenantIdentifier(currentTenant);
+  }
+
+  public boolean hasCurrentTenantId() {
+    return currentTenant != null && !currentTenant.isEmpty();
+  }
+
   public List<String> assignedTenants() {
     return assignedTenants;
   }
 
+  public List<TenantIdentifier> assignedTenantsAsTenantIdentifiers() {
+    return assignedTenants.stream().map(TenantIdentifier::new).toList();
+  }
+
   public User setAssignedTenants(List<String> assignedTenants) {
     this.assignedTenants = assignedTenants;
+    return this;
+  }
+
+  public User addAssignedTenant(TenantIdentifier tenantIdentifier) {
+    List<String> newAssignedTenants = new ArrayList<>(this.assignedTenants);
+    newAssignedTenants.add(tenantIdentifier.value());
+    this.assignedTenants = newAssignedTenants;
+    return this;
+  }
+
+  public User setCurrentTenantId(TenantIdentifier tenantIdentifier) {
+    this.currentTenant = tenantIdentifier.value();
     return this;
   }
 
@@ -553,6 +582,39 @@ public class User implements JsonReadable, Serializable {
 
   public User setStatus(UserStatus status) {
     this.status = status;
+    return this;
+  }
+
+  public boolean hasCurrentOrganizationId() {
+    return currentOrganizationId != null && !currentOrganizationId.isEmpty();
+  }
+
+  public OrganizationIdentifier currentOrganizationIdentifier() {
+    return new OrganizationIdentifier(currentOrganizationId);
+  }
+
+  public User setCurrentOrganizationId(OrganizationIdentifier currentOrganizationId) {
+    this.currentOrganizationId = currentOrganizationId.value();
+    return this;
+  }
+
+  public List<String> assignedOrganizations() {
+    return assignedOrganizations;
+  }
+
+  public boolean hasAssignedOrganizations() {
+    return assignedOrganizations != null && !assignedOrganizations.isEmpty();
+  }
+
+  public User setAssignedOrganizations(List<String> assignedOrganizations) {
+    this.assignedOrganizations = assignedOrganizations;
+    return this;
+  }
+
+  public User addAssignedOrganizations(OrganizationIdentifier organizationIdentifier) {
+    List<String> newAssignedOrganizations = new ArrayList<>(this.assignedOrganizations);
+    newAssignedOrganizations.add(organizationIdentifier.value());
+    this.assignedOrganizations = newAssignedOrganizations;
     return this;
   }
 
@@ -589,6 +651,10 @@ public class User implements JsonReadable, Serializable {
     if (hasRoles()) map.put("roles", roles);
     if (hasPermissions()) map.put("permissions", permissions);
     if (hasAuthenticationDevices()) map.put("authentication_devices", authenticationDevices);
+    if (hasCurrentTenantId()) map.put("current_tenant_id", currentTenant);
+    if (hasAssignedTenants()) map.put("assigned_tenants", assignedTenants);
+    if (hasCurrentOrganizationId()) map.put("current_organization_id", currentOrganizationId);
+    if (hasAssignedOrganizations()) map.put("assigned_organizations", assignedOrganizations);
     if (hasVerifiedClaims()) map.put("verified_claims", verifiedClaims);
     if (exists()) map.put("status", status.name());
 

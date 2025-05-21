@@ -3,17 +3,9 @@ package org.idp.server.core.multi_tenancy.tenant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import org.idp.server.basic.datasource.DatabaseType;
-import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
-import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
 
 public class TenantAttributes {
   Map<String, Object> values;
-
-  public static TenantAttributes createDefaultType() {
-    return new TenantAttributes(
-        Map.of("authorization_provider", "idp_server", "database_type", "postgresql"));
-  }
 
   public TenantAttributes() {
     this.values = new HashMap<>();
@@ -50,19 +42,8 @@ public class TenantAttributes {
     return values != null && !values.isEmpty();
   }
 
-  public AuthorizationProvider authorizationProtocolProvider() {
-    if (!values.containsKey("authorization_protocol_provider")) {
-      return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
-    }
-
-    return new AuthorizationProvider(getValueAsString("authorization_protocol_provider"));
-  }
-
-  public DatabaseType databaseType() {
-    if (!values.containsKey("database_type")) {
-      return DatabaseType.POSTGRESQL;
-    }
-
-    return DatabaseType.of(getValueAsString("database_type"));
+  public TenantAttributes updateWith(TenantAttributes other) {
+    values.putAll(other.values);
+    return new TenantAttributes(values);
   }
 }

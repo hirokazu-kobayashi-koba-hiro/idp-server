@@ -16,12 +16,18 @@ public class OrganizationDataSource implements OrganizationRepository {
   public void register(Tenant tenant, Organization organization) {
     OrganizationSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(organization);
+    if (organization.hasAssignedTenants()) {
+      executor.upsertAssignedTenants(organization);
+    }
   }
 
   @Override
   public void update(Tenant tenant, Organization organization) {
     OrganizationSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(organization);
+    if (organization.hasAssignedTenants()) {
+      executor.upsertAssignedTenants(organization);
+    }
   }
 
   @Override
@@ -33,11 +39,6 @@ public class OrganizationDataSource implements OrganizationRepository {
       throw new OrganizationNotFoundException("Organization not found");
     }
 
-    OrganizationName name = new OrganizationName(result.getOrDefault("name", ""));
-    OrganizationDescription description =
-        new OrganizationDescription(result.getOrDefault("description", ""));
-
-    // TODO
-    return new Organization(identifier, name, description, new AssignedTenants());
+    return ModelConvertor.convert(result);
   }
 }
