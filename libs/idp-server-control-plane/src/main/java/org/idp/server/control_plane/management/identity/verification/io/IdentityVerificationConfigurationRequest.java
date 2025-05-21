@@ -5,11 +5,11 @@ import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
-import org.idp.server.core.identity.verification.IdentityVerificationType;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
-import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDelegation;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
 
 public class IdentityVerificationConfigurationRequest implements JsonReadable {
   String id;

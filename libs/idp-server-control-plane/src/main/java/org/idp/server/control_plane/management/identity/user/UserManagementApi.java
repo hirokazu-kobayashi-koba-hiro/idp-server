@@ -3,17 +3,17 @@ package org.idp.server.control_plane.management.identity.user;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.control_plane.management.identity.user.io.UserUpdateRequest;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserIdentifier;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public interface UserManagementApi {
 

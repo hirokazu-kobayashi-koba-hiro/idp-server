@@ -7,7 +7,7 @@ import org.idp.server.basic.crypto.EncryptedData;
 import org.idp.server.basic.crypto.HmacHasher;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.oidc.token.OAuthToken;
 
 class InsertSqlParamsCreator {
 

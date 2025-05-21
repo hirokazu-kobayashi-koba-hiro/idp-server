@@ -1,0 +1,13 @@
+package org.idp.server.security.event.hooks.datadog;
+
+import org.idp.server.platform.exception.InvalidConfigurationException;
+
+public class DatadogConfigurationInvalidException extends InvalidConfigurationException {
+  public DatadogConfigurationInvalidException(String message) {
+    super(message);
+  }
+
+  public DatadogConfigurationInvalidException(String message, Throwable cause) {
+    super(message, cause);
+  }
+}

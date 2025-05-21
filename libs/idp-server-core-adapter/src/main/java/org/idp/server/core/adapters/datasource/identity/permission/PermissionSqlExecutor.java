@@ -1,7 +1,7 @@
 package org.idp.server.core.adapters.datasource.identity.permission;
 
-import org.idp.server.core.identity.permission.Permission;
-import org.idp.server.core.identity.permission.Permissions;
+import org.idp.server.core.oidc.identity.permission.Permission;
+import org.idp.server.core.oidc.identity.permission.Permissions;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface PermissionSqlExecutor {

@@ -11,7 +11,7 @@ import org.idp.server.basic.type.rar.AuthorizationDetailsEntity;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.identity.RequestedClaimsPayload;
+import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
 import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.request.AuthorizationRequest;

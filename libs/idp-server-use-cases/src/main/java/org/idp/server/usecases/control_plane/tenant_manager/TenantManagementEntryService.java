@@ -3,7 +3,6 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.management.tenant.*;
@@ -12,9 +11,9 @@ import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.control_plane.management.tenant.verifier.TenantManagementVerificationResult;
 import org.idp.server.control_plane.management.tenant.verifier.TenantManagementVerifier;
-import org.idp.server.core.identity.User;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -24,6 +23,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class TenantManagementEntryService implements TenantManagementApi {

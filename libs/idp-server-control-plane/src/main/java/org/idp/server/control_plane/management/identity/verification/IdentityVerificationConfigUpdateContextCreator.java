@@ -4,7 +4,7 @@ import java.util.UUID;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigurationRequest;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationConfigUpdateContextCreator {

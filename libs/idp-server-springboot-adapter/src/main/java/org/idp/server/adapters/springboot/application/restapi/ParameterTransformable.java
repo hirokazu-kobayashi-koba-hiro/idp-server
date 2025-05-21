@@ -2,7 +2,7 @@ package org.idp.server.adapters.springboot.application.restapi;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
-import org.idp.server.basic.type.security.RequestAttributes;
+import org.idp.server.platform.security.type.RequestAttributes;
 import org.springframework.util.MultiValueMap;
 
 public interface ParameterTransformable {

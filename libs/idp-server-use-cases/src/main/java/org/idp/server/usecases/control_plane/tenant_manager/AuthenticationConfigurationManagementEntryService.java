@@ -3,23 +3,23 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.*;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementStatus;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigRequest;
-import org.idp.server.core.authentication.AuthenticationConfiguration;
-import org.idp.server.core.authentication.AuthenticationConfigurationIdentifier;
-import org.idp.server.core.authentication.repository.AuthenticationConfigurationCommandRepository;
-import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.AuthenticationConfigurationIdentifier;
+import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationCommandRepository;
+import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class AuthenticationConfigurationManagementEntryService

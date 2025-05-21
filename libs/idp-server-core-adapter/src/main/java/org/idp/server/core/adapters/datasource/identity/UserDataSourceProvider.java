@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.datasource.identity;
 
-import org.idp.server.core.identity.repository.UserQueryRepository;
+import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 

@@ -2,7 +2,6 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
@@ -15,17 +14,18 @@ import org.idp.server.control_plane.management.onboarding.validator.OnboardingRe
 import org.idp.server.control_plane.management.onboarding.validator.OnboardingRequestValidator;
 import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerificationResult;
 import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerifier;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRegistrator;
-import org.idp.server.core.identity.repository.UserCommandRepository;
-import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserRegistrator;
+import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
+import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.*;
 import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class OnboardingEntryService implements OnboardingApi {

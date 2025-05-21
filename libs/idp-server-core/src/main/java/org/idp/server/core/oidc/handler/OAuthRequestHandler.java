@@ -1,7 +1,5 @@
 package org.idp.server.core.oidc.handler;
 
-import org.idp.server.core.grant_management.AuthorizationGranted;
-import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.*;
 import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
@@ -10,6 +8,8 @@ import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.context.*;
 import org.idp.server.core.oidc.gateway.RequestObjectGateway;
+import org.idp.server.core.oidc.grant_management.AuthorizationGranted;
+import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.io.OAuthPushedRequest;
 import org.idp.server.core.oidc.io.OAuthRequest;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;

@@ -2,10 +2,10 @@ package org.idp.server.core.adapters.datasource.identity.verification.applicatio
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.verification.application.*;
-import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
-import org.idp.server.core.identity.verification.exception.IdentityVerificationApplicationNotFoundException;
+import org.idp.server.core.extension.identity.verification.application.*;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.exception.IdentityVerificationApplicationNotFoundException;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationApplicationQueryDataSource

@@ -4,7 +4,7 @@ import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
-import org.idp.server.core.federation.FederationConfiguration;
+import org.idp.server.core.oidc.federation.FederationConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class FederationConfigUpdateContextCreator {

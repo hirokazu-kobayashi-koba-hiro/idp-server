@@ -3,8 +3,8 @@ package org.idp.server.core.extension.ciba.token;
 import java.time.LocalDateTime;
 import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.token.TokenRequestContext;
-import org.idp.server.core.token.exception.TokenBadRequestException;
+import org.idp.server.core.oidc.token.TokenRequestContext;
+import org.idp.server.core.oidc.token.exception.TokenBadRequestException;
 import org.idp.server.platform.date.SystemDateTime;
 
 /**

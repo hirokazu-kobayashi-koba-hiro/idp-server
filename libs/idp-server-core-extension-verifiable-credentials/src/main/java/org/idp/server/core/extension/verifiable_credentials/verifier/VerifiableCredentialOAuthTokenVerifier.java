@@ -10,8 +10,8 @@ import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprintCalculator;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.token.AccessToken;
-import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.token.tokenintrospection.exception.TokenInvalidException;
+import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.oidc.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.platform.date.SystemDateTime;
 
 public class VerifiableCredentialOAuthTokenVerifier {

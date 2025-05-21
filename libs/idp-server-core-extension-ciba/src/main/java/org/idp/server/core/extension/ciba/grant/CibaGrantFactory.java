@@ -10,11 +10,11 @@ import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponse;
-import org.idp.server.core.identity.User;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.AuthorizationGrantBuilder;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 

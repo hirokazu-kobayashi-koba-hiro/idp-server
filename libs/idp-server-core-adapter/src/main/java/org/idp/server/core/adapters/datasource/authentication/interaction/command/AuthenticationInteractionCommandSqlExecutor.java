@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.datasource.authentication.interaction.command;
 
-import org.idp.server.core.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationInteractionCommandSqlExecutor {

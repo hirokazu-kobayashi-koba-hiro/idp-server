@@ -2,32 +2,33 @@ package org.idp.server.usecases.application.enduser;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.type.security.RequestAttributes;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserStatus;
-import org.idp.server.core.identity.repository.UserCommandRepository;
-import org.idp.server.core.identity.repository.UserQueryRepository;
-import org.idp.server.core.identity.verification.*;
-import org.idp.server.core.identity.verification.application.*;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
-import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplyingResult;
-import org.idp.server.core.identity.verification.handler.IdentityVerificationHandler;
-import org.idp.server.core.identity.verification.io.IdentityVerificationDynamicResponseMapper;
-import org.idp.server.core.identity.verification.io.IdentityVerificationResponse;
-import org.idp.server.core.identity.verification.result.IdentityVerificationResult;
-import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
-import org.idp.server.core.identity.verification.validation.IdentityVerificationRequestValidator;
-import org.idp.server.core.identity.verification.validation.IdentityVerificationValidationResult;
-import org.idp.server.core.security.event.DefaultSecurityEventType;
-import org.idp.server.core.security.event.TokenEventPublisher;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.extension.identity.verification.*;
+import org.idp.server.core.extension.identity.verification.application.*;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingResult;
+import org.idp.server.core.extension.identity.verification.handler.IdentityVerificationHandler;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationDynamicResponseMapper;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
+import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
+import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultCommandRepository;
+import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationRequestValidator;
+import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationValidationResult;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserStatus;
+import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
+import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.oidc.token.TokenEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.event.SecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class IdentityVerificationEntryService implements IdentityVerificationApi {
@@ -179,7 +180,10 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     IdentityVerificationApplication updated =
         application.updateProcess(process, request, applyingResult, verificationConfiguration);
     applicationCommandRepository.update(tenant, updated);
-    eventPublisher.publish(tenant, oAuthToken, type, process, true, requestAttributes);
+    SecurityEventType securityEventType =
+        new SecurityEventType(type.name() + "_" + process.name() + "_" + "success");
+
+    eventPublisher.publish(tenant, oAuthToken, securityEventType, requestAttributes);
 
     Map<String, Object> response =
         IdentityVerificationDynamicResponseMapper.buildDynamicResponse(

@@ -4,9 +4,9 @@ import org.idp.server.basic.type.extension.JarmPayload;
 import org.idp.server.basic.type.extension.ResponseModeValue;
 import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.core.oidc.OAuthAuthorizeContext;
-import org.idp.server.core.oidc.identity.IdTokenCreatable;
-import org.idp.server.core.oidc.identity.IdTokenCustomClaims;
-import org.idp.server.core.oidc.identity.IdTokenCustomClaimsBuilder;
+import org.idp.server.core.oidc.id_token.IdTokenCreatable;
+import org.idp.server.core.oidc.id_token.IdTokenCustomClaims;
+import org.idp.server.core.oidc.id_token.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 
 public class AuthorizationResponseIdTokenCreator

@@ -8,9 +8,9 @@ import org.idp.server.basic.type.pkce.CodeChallengeMethod;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthSessionKey;
 import org.idp.server.core.oidc.client.Client;
-import org.idp.server.core.oidc.identity.RequestedClaimsPayload;
-import org.idp.server.core.oidc.identity.RequestedIdTokenClaims;
-import org.idp.server.core.oidc.identity.RequestedUserinfoClaims;
+import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
+import org.idp.server.core.oidc.id_token.RequestedIdTokenClaims;
+import org.idp.server.core.oidc.id_token.RequestedUserinfoClaims;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 

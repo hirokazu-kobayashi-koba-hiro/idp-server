@@ -13,21 +13,21 @@ import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.basic.type.verifiablecredential.CNonce;
 import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;
-import org.idp.server.core.identity.User;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.GrantIdTokenClaims;
 import org.idp.server.core.oidc.grant.GrantUserinfoClaims;
 import org.idp.server.core.oidc.grant.consent.ConsentClaims;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.token.AccessToken;
+import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.oidc.token.OAuthTokenBuilder;
+import org.idp.server.core.oidc.token.OAuthTokenIdentifier;
 import org.idp.server.core.oidc.token.RefreshToken;
-import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.token.OAuthTokenBuilder;
-import org.idp.server.core.token.OAuthTokenIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {

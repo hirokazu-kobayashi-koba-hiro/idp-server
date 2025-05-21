@@ -10,9 +10,9 @@ import org.idp.server.adapters.springboot.control_plane.model.IdpControlPlaneAut
 import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.control_plane.base.definition.IdpControlPlaneScope;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserAuthenticationApi;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserAuthenticationApi;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.AdminTenantContext;

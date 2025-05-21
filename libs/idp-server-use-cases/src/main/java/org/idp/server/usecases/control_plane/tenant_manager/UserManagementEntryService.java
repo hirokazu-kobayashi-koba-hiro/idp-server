@@ -3,7 +3,6 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.UserVerifier;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
@@ -17,20 +16,21 @@ import org.idp.server.control_plane.management.identity.user.validator.UserRegis
 import org.idp.server.control_plane.management.identity.user.validator.UserRegistrationRequestValidator;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerificationResult;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerifier;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserIdentifier;
-import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
-import org.idp.server.core.identity.event.UserLifecycleEvent;
-import org.idp.server.core.identity.event.UserLifecycleEventPublisher;
-import org.idp.server.core.identity.event.UserLifecycleType;
-import org.idp.server.core.identity.repository.UserCommandRepository;
-import org.idp.server.core.identity.repository.UserQueryRepository;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.oidc.identity.event.UserLifecycleEvent;
+import org.idp.server.core.oidc.identity.event.UserLifecycleEventPublisher;
+import org.idp.server.core.oidc.identity.event.UserLifecycleType;
+import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
+import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class UserManagementEntryService implements UserManagementApi {

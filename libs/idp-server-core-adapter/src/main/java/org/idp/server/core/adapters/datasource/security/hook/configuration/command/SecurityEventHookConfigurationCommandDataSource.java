@@ -1,9 +1,9 @@
 package org.idp.server.core.adapters.datasource.security.hook.configuration.command;
 
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.security.hook.SecurityEventHookConfiguration;
-import org.idp.server.core.security.repository.SecurityEventHookConfigurationCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
+import org.idp.server.platform.security.repository.SecurityEventHookConfigurationCommandRepository;
 
 public class SecurityEventHookConfigurationCommandDataSource
     implements SecurityEventHookConfigurationCommandRepository {

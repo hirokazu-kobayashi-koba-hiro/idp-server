@@ -2,8 +2,8 @@ package org.idp.server.core.adapters.datasource.identity.role;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.identity.role.Role;
-import org.idp.server.core.identity.role.Roles;
+import org.idp.server.core.oidc.identity.role.Role;
+import org.idp.server.core.oidc.identity.role.Roles;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

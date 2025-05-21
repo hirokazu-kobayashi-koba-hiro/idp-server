@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
-import org.idp.server.core.security.hook.SecurityEventHookConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
 
 public class SecurityEventHookConfigRegistrationContext {
 

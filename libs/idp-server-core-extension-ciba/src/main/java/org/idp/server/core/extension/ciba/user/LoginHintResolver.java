@@ -2,9 +2,9 @@ package org.idp.server.core.extension.ciba.user;
 
 import java.util.List;
 import org.idp.server.basic.type.extension.Pairs;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserIdentifier;
-import org.idp.server.core.identity.repository.UserQueryRepository;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class LoginHintResolver implements UserHintResolver {

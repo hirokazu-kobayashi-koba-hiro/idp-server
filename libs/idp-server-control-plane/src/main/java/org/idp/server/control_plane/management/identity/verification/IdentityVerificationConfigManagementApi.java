@@ -3,17 +3,17 @@ package org.idp.server.control_plane.management.identity.verification;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public interface IdentityVerificationConfigManagementApi {
 

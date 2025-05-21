@@ -1,22 +1,22 @@
 package org.idp.server.usecases.application.enduser;
 
 import java.util.Map;
-import org.idp.server.basic.type.security.RequestAttributes;
-import org.idp.server.core.identity.repository.UserQueryRepository;
-import org.idp.server.core.security.event.TokenEventPublisher;
-import org.idp.server.core.token.TokenApi;
-import org.idp.server.core.token.TokenProtocol;
-import org.idp.server.core.token.TokenProtocols;
-import org.idp.server.core.token.handler.token.io.TokenRequest;
-import org.idp.server.core.token.handler.token.io.TokenRequestResponse;
-import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
-import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
-import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationRequest;
-import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationResponse;
+import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.core.oidc.token.TokenApi;
+import org.idp.server.core.oidc.token.TokenEventPublisher;
+import org.idp.server.core.oidc.token.TokenProtocol;
+import org.idp.server.core.oidc.token.TokenProtocols;
+import org.idp.server.core.oidc.token.handler.token.io.TokenRequest;
+import org.idp.server.core.oidc.token.handler.token.io.TokenRequestResponse;
+import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
+import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
+import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationRequest;
+import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class TokenEntryService implements TokenApi {

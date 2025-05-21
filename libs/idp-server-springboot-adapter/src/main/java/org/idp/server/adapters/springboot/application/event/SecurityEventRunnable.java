@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.application.event;
 
 import java.util.function.Consumer;
-import org.idp.server.core.security.SecurityEvent;
+import org.idp.server.platform.security.SecurityEvent;
 
 public class SecurityEventRunnable implements Runnable {
 

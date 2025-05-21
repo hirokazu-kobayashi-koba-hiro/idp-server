@@ -6,12 +6,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserIdentifier;
-import org.idp.server.core.identity.UserRole;
-import org.idp.server.core.identity.UserStatus;
-import org.idp.server.core.identity.address.Address;
-import org.idp.server.core.identity.device.AuthenticationDevice;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.UserRole;
+import org.idp.server.core.oidc.identity.UserStatus;
+import org.idp.server.core.oidc.identity.address.Address;
+import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 

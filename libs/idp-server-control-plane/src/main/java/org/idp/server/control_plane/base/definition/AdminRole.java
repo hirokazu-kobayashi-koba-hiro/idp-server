@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.idp.server.core.identity.permission.Permission;
-import org.idp.server.core.identity.role.Role;
-import org.idp.server.core.identity.role.Roles;
+import org.idp.server.core.oidc.identity.permission.Permission;
+import org.idp.server.core.oidc.identity.role.Role;
+import org.idp.server.core.oidc.identity.role.Roles;
 
 public enum AdminRole {
   ADMINISTRATOR(

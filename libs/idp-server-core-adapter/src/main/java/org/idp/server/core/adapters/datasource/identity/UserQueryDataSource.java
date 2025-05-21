@@ -6,11 +6,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserIdentifier;
-import org.idp.server.core.identity.exception.UserNotFoundException;
-import org.idp.server.core.identity.exception.UserTooManyFoundResultException;
-import org.idp.server.core.identity.repository.UserQueryRepository;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.exception.UserNotFoundException;
+import org.idp.server.core.oidc.identity.exception.UserTooManyFoundResultException;
+import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.datasource.SqlTooManyResultsException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

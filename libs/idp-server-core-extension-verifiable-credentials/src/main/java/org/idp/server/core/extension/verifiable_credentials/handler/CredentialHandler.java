@@ -17,8 +17,8 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQu
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.token.AccessToken;
-import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CredentialHandler {

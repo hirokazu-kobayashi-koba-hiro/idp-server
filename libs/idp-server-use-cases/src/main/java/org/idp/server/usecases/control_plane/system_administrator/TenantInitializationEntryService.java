@@ -1,6 +1,5 @@
 package org.idp.server.usecases.control_plane.system_administrator;
 
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationContext;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationContextCreator;
@@ -12,19 +11,20 @@ import org.idp.server.control_plane.admin.tenant.verifier.TenantInitializationVe
 import org.idp.server.control_plane.admin.tenant.verifier.TenantInitializationVerifier;
 import org.idp.server.control_plane.base.verifier.ClientVerifier;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
-import org.idp.server.core.identity.UserRegistrator;
-import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
-import org.idp.server.core.identity.repository.UserCommandRepository;
-import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.oidc.identity.UserRegistrator;
+import org.idp.server.core.oidc.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
+import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class TenantInitializationEntryService implements TenantInitializationApi {

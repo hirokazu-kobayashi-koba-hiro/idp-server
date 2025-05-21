@@ -1,7 +1,7 @@
 package org.idp.server.notification.push.fcm;
 
 import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.core.authentication.notification.device.NotificationTemplate;
+import org.idp.server.core.oidc.identity.device.NotificationTemplate;
 
 import java.util.Map;
 

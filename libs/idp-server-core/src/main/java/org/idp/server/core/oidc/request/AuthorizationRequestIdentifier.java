@@ -1,7 +1,7 @@
 package org.idp.server.core.oidc.request;
 
 import java.util.Objects;
-import org.idp.server.core.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 
 /** AuthorizationRequestIdentifier */
 public class AuthorizationRequestIdentifier {

@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.application.event;
 
-import org.idp.server.core.identity.event.UserLifecycleEvent;
-import org.idp.server.core.identity.event.UserLifecycleEventPublisher;
+import org.idp.server.core.oidc.identity.event.UserLifecycleEvent;
+import org.idp.server.core.oidc.identity.event.UserLifecycleEventPublisher;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 

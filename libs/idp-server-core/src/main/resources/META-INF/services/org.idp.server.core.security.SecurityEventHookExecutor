@@ -1,2 +1,0 @@
-org.idp.server.core.security.hook.webhook.WebHookExecutor
-org.idp.server.core.security.hook.ssf.SsfHookExecutor

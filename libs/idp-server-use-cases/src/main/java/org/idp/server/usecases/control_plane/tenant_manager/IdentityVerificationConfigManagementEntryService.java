@@ -3,24 +3,24 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.identity.verification.*;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationCommandRepository;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationCommandRepository;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class IdentityVerificationConfigManagementEntryService
