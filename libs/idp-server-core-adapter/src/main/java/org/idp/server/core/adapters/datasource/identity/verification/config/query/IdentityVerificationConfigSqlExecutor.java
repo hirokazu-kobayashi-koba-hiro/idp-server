@@ -2,8 +2,8 @@ package org.idp.server.core.adapters.datasource.identity.verification.config.que
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.identity.verification.IdentityVerificationType;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface IdentityVerificationConfigSqlExecutor {

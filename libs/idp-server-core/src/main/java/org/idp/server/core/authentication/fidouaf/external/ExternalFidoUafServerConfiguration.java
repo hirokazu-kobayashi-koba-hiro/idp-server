@@ -4,7 +4,7 @@ import java.util.Map;
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.core.authentication.fidouaf.FidoUafExecutorType;
-import org.idp.server.core.identity.verification.exception.IdentityVerificationApplicationConfigurationNotFoundException;
+import org.idp.server.platform.exception.NotFoundException;
 
 public class ExternalFidoUafServerConfiguration implements JsonReadable {
   String type;
@@ -39,7 +39,7 @@ public class ExternalFidoUafServerConfiguration implements JsonReadable {
 
   public ExternalFidoUafServerExecutionConfiguration getExecutionConfig(String executionType) {
     if (!executions.containsKey(executionType)) {
-      throw new IdentityVerificationApplicationConfigurationNotFoundException(
+      throw new NotFoundException(
           "invalid configuration. type: " + executionType + " is unregistered.");
     }
     return executions.get(executionType);

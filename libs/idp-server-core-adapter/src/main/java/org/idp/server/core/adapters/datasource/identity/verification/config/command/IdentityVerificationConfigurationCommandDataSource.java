@@ -1,9 +1,9 @@
 package org.idp.server.core.adapters.datasource.identity.verification.config.command;
 
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.identity.verification.IdentityVerificationType;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationCommandRepository;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationConfigurationCommandDataSource

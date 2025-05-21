@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.datasource.identity.verification.application.query;
 
-import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationQueryRepository;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationQueryRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 

@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationQueries;
-import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationQueries;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

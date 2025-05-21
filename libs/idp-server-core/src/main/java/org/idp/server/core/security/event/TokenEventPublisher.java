@@ -1,8 +1,6 @@
 package org.idp.server.core.security.event;
 
 import org.idp.server.basic.type.security.RequestAttributes;
-import org.idp.server.core.identity.verification.IdentityVerificationProcess;
-import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.SecurityEventPublisher;
 import org.idp.server.core.token.OAuthToken;
@@ -30,14 +28,8 @@ public class TokenEventPublisher {
   public void publish(
       Tenant tenant,
       OAuthToken oAuthToken,
-      IdentityVerificationType type,
-      IdentityVerificationProcess identityVerificationProcess,
-      boolean result,
+      SecurityEventType securityEventType,
       RequestAttributes requestAttributes) {
-    String resultString = result ? "success" : "failure";
-    SecurityEventType securityEventType =
-        new SecurityEventType(
-            type.name() + "_" + identityVerificationProcess.name() + "_" + resultString);
     SecurityEventDescription securityEventDescription =
         new SecurityEventDescription(securityEventType.value());
     TokenEventCreator eventCreator =
