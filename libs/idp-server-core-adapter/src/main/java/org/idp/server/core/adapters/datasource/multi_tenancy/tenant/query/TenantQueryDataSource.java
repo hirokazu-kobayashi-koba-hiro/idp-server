@@ -1,5 +1,6 @@
 package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.query;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -93,6 +94,19 @@ public class TenantQueryDataSource implements TenantQueryRepository {
     }
 
     return ModelConverter.convert(result);
+  }
+
+  @Override
+  public List<Tenant> findList(List<TenantIdentifier> tenantIdentifiers) {
+    TenantQuerySqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
+
+    List<Map<String, String>> results = executor.selectList(tenantIdentifiers);
+
+    if (Objects.isNull(results) || results.isEmpty()) {
+      return List.of();
+    }
+
+    return results.stream().map(ModelConverter::convert).toList();
   }
 
   private String key(TenantIdentifier tenantIdentifier) {

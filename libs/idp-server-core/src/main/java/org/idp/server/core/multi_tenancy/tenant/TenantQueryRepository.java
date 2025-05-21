@@ -1,5 +1,7 @@
 package org.idp.server.core.multi_tenancy.tenant;
 
+import java.util.List;
+
 public interface TenantQueryRepository {
 
   Tenant get(TenantIdentifier tenantIdentifier);
@@ -9,4 +11,6 @@ public interface TenantQueryRepository {
   Tenant getAdmin();
 
   Tenant findAdmin();
+
+  List<Tenant> findList(List<TenantIdentifier> tenantIdentifiers);
 }

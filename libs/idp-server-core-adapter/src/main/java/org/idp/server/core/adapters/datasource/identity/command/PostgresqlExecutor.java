@@ -261,4 +261,80 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
 
     sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
   }
+
+  @Override
+  public void upsertCurrentTenant(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+            INSERT INTO idp_user_current_tenant (
+            tenant_id,
+            user_id
+            )
+            VALUES (
+            ?::uuid,
+            ?::uuid
+            )
+            ON CONFLICT (user_id) DO
+            UPDATE SET tenant_id = EXCLUDED.tenant_id, updated_at = now()
+            ;
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(user.currentTenantIdentifier().value());
+    params.add(user.sub());
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void upsertAssignedOrganizations(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    StringBuilder sqlTemplateBuilder = new StringBuilder();
+    sqlTemplateBuilder.append(
+        """
+                            INSERT INTO idp_user_assigned_organizations (organization_id, user_id)
+                            VALUES
+                            """);
+
+    List<String> sqlValues = new ArrayList<>();
+    List<Object> params = new ArrayList<>();
+
+    List<String> assignedOrganizations = user.assignedOrganizations();
+    assignedOrganizations.forEach(
+        assignedOrganization -> {
+          sqlValues.add("(?::uuid, ?::uuid)");
+          params.add(assignedOrganization);
+          params.add(user.sub());
+        });
+    sqlTemplateBuilder.append(String.join(",", sqlValues));
+    sqlTemplateBuilder.append(
+        """
+                ON CONFLICT (organization_id, user_id) DO NOTHING;
+                """);
+    sqlTemplateBuilder.append(";");
+
+    sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
+  }
+
+  @Override
+  public void upsertCurrentOrganization(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+            INSERT INTO idp_user_current_organization (
+            organization_id,
+            user_id
+            )
+            VALUES (
+            ?::uuid,
+            ?::uuid
+            )
+            ON CONFLICT (user_id) DO
+            UPDATE SET organization_id = EXCLUDED.organization_id, updated_at = now()
+            ;
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(user.currentOrganizationIdentifier().value());
+    params.add(user.sub());
+    sqlExecutor.execute(sqlTemplate, params);
+  }
 }

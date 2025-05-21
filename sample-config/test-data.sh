@@ -37,7 +37,20 @@ echo "tenant-1"
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
 
-# admin-tenant
+ admin-tenant
+
+## tenant-a
+
+echo "-------------------------------------------------"
+echo ""
+echo "tenant-a"
+
+./sample-config/upsert-tenant.sh \
+  -f "./sample-config/${ENV}/admin-tenant/tenants/tenant-a.json" \
+  -b "${BASE_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
 ## authorization-server
 
 echo "-------------------------------------------------"

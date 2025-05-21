@@ -14,6 +14,7 @@ import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.identity.permission.Permissions;
 import org.idp.server.core.identity.role.Role;
 import org.idp.server.core.identity.role.Roles;
+import org.idp.server.core.multi_tenancy.organization.AssignedTenant;
 import org.idp.server.core.multi_tenancy.organization.Organization;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantAttributes;
@@ -61,8 +62,10 @@ public class IdpServerStarterContextCreator {
             tenantRequest.tenantDomain(),
             tenantRequest.authorizationProvider(),
             tenantRequest.databaseType(),
-            TenantAttributes.createDefaultType());
-    organization.assign(tenant);
+            new TenantAttributes());
+
+    AssignedTenant assignedTenant = new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
+    Organization updatedWithTenant = organization.updateWithTenant(assignedTenant);
 
     User user = jsonConverter.read(request.get("user"), User.class);
     String encode = passwordEncodeDelegation.encode(user.rawPassword());
@@ -74,12 +77,15 @@ public class IdpServerStarterContextCreator {
     User updatedUser =
         user.transitStatus(UserStatus.REGISTERED)
             .setRoles(userRoles)
-            .setAssignedTenants(List.of(tenant.identifierValue()));
+            .setAssignedTenants(List.of(tenant.identifierValue()))
+            .setCurrentTenantId(tenant.identifier())
+            .setAssignedOrganizations(List.of(organization.identifier().value()))
+            .setCurrentOrganizationId(organization.identifier());
 
     return new IdpServerStarterContext(
         tenant,
         authorizationServerConfiguration,
-        organization,
+        updatedWithTenant,
         permissions,
         roles,
         updatedUser,

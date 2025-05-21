@@ -46,14 +46,9 @@ public class Organization implements JsonReadable {
     return assignedTenants;
   }
 
-  public Organization assign(Tenant tenant) {
-    AssignedTenants addedTenants = assignedTenants.add(tenant);
+  public Organization updateWithTenant(AssignedTenant assignedTenant) {
+    AssignedTenants addedTenants = assignedTenants.add(assignedTenant);
     return new Organization(identifier, name, description, addedTenants);
-  }
-
-  public Organization remove(Tenant tenant) {
-    AssignedTenants removedTenants = assignedTenants.remove(tenant);
-    return new Organization(identifier, name, description, removedTenants);
   }
 
   public HashMap<String, Object> toMap() {
@@ -63,5 +58,9 @@ public class Organization implements JsonReadable {
     result.put("description", description.value());
     result.put("assigned_tenants", assignedTenants.toMapList());
     return result;
+  }
+
+  public boolean hasAssignedTenants() {
+    return assignedTenants != null && assignedTenants.exists();
   }
 }

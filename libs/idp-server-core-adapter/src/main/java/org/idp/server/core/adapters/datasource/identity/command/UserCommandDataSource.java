@@ -23,6 +23,15 @@ public class UserCommandDataSource implements UserCommandRepository {
     if (user.hasAssignedTenants()) {
       executor.upsertAssignedTenants(tenant, user);
     }
+    if (user.hasCurrentTenantId()) {
+      executor.upsertCurrentTenant(tenant, user);
+    }
+    if (user.hasAssignedOrganizations()) {
+      executor.upsertAssignedOrganizations(tenant, user);
+    }
+    if (user.hasCurrentOrganizationId()) {
+      executor.upsertCurrentOrganization(tenant, user);
+    }
   }
 
   @Override
@@ -34,6 +43,15 @@ public class UserCommandDataSource implements UserCommandRepository {
     }
     if (user.hasAssignedTenants()) {
       executor.upsertAssignedTenants(tenant, user);
+    }
+    if (user.hasCurrentTenantId()) {
+      executor.upsertCurrentTenant(tenant, user);
+    }
+    if (user.hasAssignedOrganizations()) {
+      executor.upsertAssignedOrganizations(tenant, user);
+    }
+    if (user.hasCurrentOrganizationId()) {
+      executor.upsertCurrentOrganization(tenant, user);
     }
   }
 

@@ -14,4 +14,10 @@ public interface UserCommandSqlExecutor {
   void upsertRoles(Tenant tenant, User user);
 
   void upsertAssignedTenants(Tenant tenant, User user);
+
+  void upsertCurrentTenant(Tenant tenant, User user);
+
+  void upsertAssignedOrganizations(Tenant tenant, User user);
+
+  void upsertCurrentOrganization(Tenant tenant, User user);
 }

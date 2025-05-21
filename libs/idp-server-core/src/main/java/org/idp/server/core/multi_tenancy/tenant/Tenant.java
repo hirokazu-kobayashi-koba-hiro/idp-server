@@ -120,4 +120,19 @@ public class Tenant implements JsonReadable {
   public Map<String, Object> attributesAsMap() {
     return attributes.toMap();
   }
+
+  public TenantFeatures features() {
+    return features;
+  }
+
+  public Tenant updateDomain(TenantDomain domain) {
+
+    return new Tenant(
+        identifier, name, type, domain, authorizationProvider, databaseType, attributes);
+  }
+
+  public Tenant updateWithAttributes(TenantAttributes attributes) {
+    return new Tenant(
+        identifier, name, type, domain, authorizationProvider, databaseType, attributes);
+  }
 }

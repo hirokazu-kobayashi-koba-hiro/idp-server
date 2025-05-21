@@ -11,6 +11,8 @@ import org.idp.server.core.identity.UserRole;
 import org.idp.server.core.identity.UserStatus;
 import org.idp.server.core.identity.address.Address;
 import org.idp.server.core.identity.device.AuthenticationDevice;
+import org.idp.server.core.multi_tenancy.organization.OrganizationIdentifier;
+import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {
 
@@ -102,6 +104,29 @@ class ModelConverter {
       List<String> assignedTenants = jsonNodeWrapper.toList();
       List<String> filtered = assignedTenants.stream().filter(Objects::nonNull).toList();
       user.setAssignedTenants(filtered);
+    }
+
+    if (stringMap.containsKey("current_tenant_id")
+        && stringMap.get("current_tenant_id") != null
+        && !stringMap.get("current_tenant_id").isEmpty()) {
+      String tenant = stringMap.get("current_tenant_id");
+      user.setCurrentTenantId(new TenantIdentifier(tenant));
+    }
+
+    if (stringMap.containsKey("assigned_organizations")
+        && !stringMap.get("assigned_organizations").equals("[]")) {
+      JsonNodeWrapper jsonNodeWrapper =
+          JsonNodeWrapper.fromString(stringMap.get("assigned_organizations"));
+      List<String> assignedTenants = jsonNodeWrapper.toList();
+      List<String> filtered = assignedTenants.stream().filter(Objects::nonNull).toList();
+      user.setAssignedOrganizations(filtered);
+    }
+
+    if (stringMap.containsKey("current_organization_id")
+        && stringMap.get("current_organization_id") != null
+        && !stringMap.get("current_organization_id").isEmpty()) {
+      String currentOrganization = stringMap.get("current_organization_id");
+      user.setCurrentOrganizationId(new OrganizationIdentifier(currentOrganization));
     }
 
     if (stringMap.containsKey("authentication_devices")

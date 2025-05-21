@@ -8,6 +8,19 @@ import org.idp.server.core.multi_tenancy.tenant.*;
 
 public class PostgresqlExecutor implements TenantQuerySqlExecutor {
 
+  String selectSql =
+      """
+              SELECT
+                id,
+                name,
+                type,
+                domain,
+                authorization_provider,
+                database_type,
+                attributes
+                FROM tenant
+              """;
+
   @Override
   public Map<String, String> selectOne(TenantIdentifier tenantIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
@@ -35,16 +48,28 @@ public class PostgresqlExecutor implements TenantQuerySqlExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
-  String selectSql =
-      """
-          SELECT
-            id,
-            name,
-            type,
-            domain,
-            authorization_provider,
-            database_type,
-            attributes
-            FROM tenant
-          """;
+  @Override
+  public List<Map<String, String>> selectList(List<TenantIdentifier> tenantIdentifiers) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder sqlTemplateBuilder =
+        new StringBuilder(selectSql + " " + """
+            WHERE id IN (
+            """);
+
+    List<Object> params = new ArrayList<>();
+    for (TenantIdentifier tenantIdentifier : tenantIdentifiers) {
+
+      if (!params.isEmpty()) {
+        sqlTemplateBuilder.append(", ");
+      }
+      sqlTemplateBuilder.append("?::uuid");
+      params.add(tenantIdentifier.value());
+    }
+
+    sqlTemplateBuilder.append(" )");
+    String sqlTemplate = sqlTemplateBuilder.toString();
+
+    return sqlExecutor.selectList(sqlTemplate, params);
+  }
 }
