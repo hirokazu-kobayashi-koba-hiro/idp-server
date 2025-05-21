@@ -2,7 +2,7 @@ package org.idp.server.core.authentication.fidouaf.deletion;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.authentication.fidouaf.*;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.identity.User;

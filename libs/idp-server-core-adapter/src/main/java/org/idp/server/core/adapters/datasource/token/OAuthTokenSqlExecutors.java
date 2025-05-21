@@ -2,8 +2,8 @@ package org.idp.server.core.adapters.datasource.token;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.datasource.DatabaseType;
-import org.idp.server.basic.exception.UnSupportedException;
+import org.idp.server.platform.datasource.DatabaseType;
+import org.idp.server.platform.exception.UnSupportedException;
 
 public class OAuthTokenSqlExecutors {
 

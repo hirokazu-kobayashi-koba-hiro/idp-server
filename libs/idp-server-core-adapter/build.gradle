@@ -11,6 +11,7 @@ repositories {
 }
 
 dependencies {
+	implementation project(':libs:idp-server-platform')
 	implementation project(':libs:idp-server-core')
 	implementation project(':libs:idp-server-core-supporter')
 

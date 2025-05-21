@@ -1,6 +1,6 @@
 package org.idp.server.core.multi_tenancy.organization;
 
-import org.idp.server.basic.exception.NotFoundException;
+import org.idp.server.platform.exception.NotFoundException;
 
 public class OrganizationNotFoundException extends NotFoundException {
   public OrganizationNotFoundException(String message) {

@@ -1,7 +1,7 @@
 package org.idp.server.core.adapters.datasource.cache;
 
 import java.util.Optional;
-import org.idp.server.basic.datasource.cache.CacheStore;
+import org.idp.server.platform.datasource.cache.CacheStore;
 
 public class NoOperationCacheStore implements CacheStore {
 

@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import org.idp.server.basic.datasource.cache.CacheStore;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.uuid.UuidMatcher;

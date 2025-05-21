@@ -12,7 +12,7 @@ import org.idp.server.basic.http.HttpClientFactory;
 import org.idp.server.basic.http.HttpNetworkErrorException;
 import org.idp.server.basic.http.QueryParams;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.federation.sso.SsoProvider;
 
 public class StandardOidcExecutor implements OidcSsoExecutor {

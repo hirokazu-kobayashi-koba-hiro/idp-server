@@ -1,6 +1,6 @@
 package org.idp.server.core.ciba;
 
-import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.core.ciba.handler.io.*;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;

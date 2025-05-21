@@ -1,6 +1,6 @@
 package org.idp.server.core.authentication.notification.exception;
 
-import org.idp.server.basic.exception.ServerMaintenanceException;
+import org.idp.server.platform.exception.ServerMaintenanceException;
 
 public class EmailSendingMaintenanceException extends ServerMaintenanceException {
 

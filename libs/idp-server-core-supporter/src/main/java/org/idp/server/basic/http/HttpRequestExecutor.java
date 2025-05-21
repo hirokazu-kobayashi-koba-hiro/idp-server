@@ -7,10 +7,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
-import org.idp.server.basic.exception.InvalidConfigurationException;
+import org.idp.server.platform.exception.InvalidConfigurationException;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class HttpRequestExecutor {
 

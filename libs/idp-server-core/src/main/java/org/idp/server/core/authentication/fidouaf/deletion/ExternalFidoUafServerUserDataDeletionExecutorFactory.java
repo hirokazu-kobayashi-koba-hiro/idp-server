@@ -1,6 +1,6 @@
 package org.idp.server.core.authentication.fidouaf.deletion;
 
-import org.idp.server.basic.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.core.authentication.factory.AuthenticationDependencyContainer;
 import org.idp.server.core.authentication.fidouaf.FidoUafExecutors;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;

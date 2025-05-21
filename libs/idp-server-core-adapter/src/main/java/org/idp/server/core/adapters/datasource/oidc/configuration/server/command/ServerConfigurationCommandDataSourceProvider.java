@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.oidc.configuration.server.command;
 
-import org.idp.server.basic.datasource.cache.CacheStore;
-import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
-import org.idp.server.basic.dependency.ApplicationComponentProvider;
+import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.ApplicationComponentProvider;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 
 public class ServerConfigurationCommandDataSourceProvider

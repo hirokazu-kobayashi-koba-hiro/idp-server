@@ -1,6 +1,6 @@
 package org.idp.server.core.multi_tenancy.tenant;
 
-import org.idp.server.basic.exception.NotFoundException;
+import org.idp.server.platform.exception.NotFoundException;
 
 public class TenantNotFoundException extends NotFoundException {
 

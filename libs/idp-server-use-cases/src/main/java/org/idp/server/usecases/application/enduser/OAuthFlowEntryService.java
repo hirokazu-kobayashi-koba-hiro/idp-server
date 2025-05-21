@@ -2,7 +2,7 @@ package org.idp.server.usecases.application.enduser;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.extension.OAuthDenyReason;
 import org.idp.server.basic.type.security.RequestAttributes;

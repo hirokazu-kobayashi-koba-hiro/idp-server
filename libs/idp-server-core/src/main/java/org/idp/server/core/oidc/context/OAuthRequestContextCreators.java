@@ -3,7 +3,7 @@ package org.idp.server.core.oidc.context;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.exception.UnSupportedException;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.core.oidc.OAuthRequestPattern;
 import org.idp.server.core.oidc.gateway.RequestObjectGateway;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;

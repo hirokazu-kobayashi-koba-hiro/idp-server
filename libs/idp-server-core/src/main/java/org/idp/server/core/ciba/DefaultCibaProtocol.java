@@ -1,8 +1,8 @@
 package org.idp.server.core.ciba;
 
-import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
-import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.ciba.clientnotification.NotificationClient;
 import org.idp.server.core.ciba.handler.CibaAuthorizeHandler;
 import org.idp.server.core.ciba.handler.CibaDenyHandler;

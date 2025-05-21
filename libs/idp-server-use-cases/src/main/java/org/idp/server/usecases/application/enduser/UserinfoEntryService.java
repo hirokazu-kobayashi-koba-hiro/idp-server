@@ -1,6 +1,6 @@
 package org.idp.server.usecases.application.enduser;
 
-import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.basic.type.oauth.Subject;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;

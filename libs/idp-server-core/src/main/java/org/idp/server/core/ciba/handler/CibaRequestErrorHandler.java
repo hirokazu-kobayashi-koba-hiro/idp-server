@@ -1,6 +1,6 @@
 package org.idp.server.core.ciba.handler;
 
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.ciba.exception.BackchannelAuthenticationBadRequestException;

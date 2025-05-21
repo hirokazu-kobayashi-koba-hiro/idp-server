@@ -1,6 +1,6 @@
 package org.idp.server.usecases.application.relying_party;
 
-import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;

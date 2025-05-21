@@ -11,7 +11,7 @@ import org.idp.server.basic.http.HttpNetworkErrorException;
 import org.idp.server.basic.http.QueryParams;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class ClientCredentialsAuthorizationResolver implements OAuthAuthorizationResolver {
 

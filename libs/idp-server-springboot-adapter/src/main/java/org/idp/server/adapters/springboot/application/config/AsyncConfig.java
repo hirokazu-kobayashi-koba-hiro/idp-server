@@ -4,7 +4,7 @@ import org.idp.server.adapters.springboot.application.event.SecurityEventRetrySc
 import org.idp.server.adapters.springboot.application.event.SecurityEventRunnable;
 import org.idp.server.adapters.springboot.application.event.UserLifecycleEventRetryScheduler;
 import org.idp.server.adapters.springboot.application.event.UserLifecycleEventRunnable;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.identity.event.UserLifecycleEvent;
 import org.idp.server.core.security.SecurityEvent;
 import org.springframework.context.annotation.Bean;

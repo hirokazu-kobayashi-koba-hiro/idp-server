@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.application.session;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.idp.server.basic.exception.UnSupportedException;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantMetaDataApi;

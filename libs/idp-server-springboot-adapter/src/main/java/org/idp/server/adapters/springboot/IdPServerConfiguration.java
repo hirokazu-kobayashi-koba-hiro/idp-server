@@ -8,11 +8,11 @@ import org.idp.server.adapters.springboot.application.event.SecurityEventPublish
 import org.idp.server.adapters.springboot.application.event.UserLifecycleEventPublisherService;
 import org.idp.server.adapters.springboot.application.property.DatabaseConfigProperties;
 import org.idp.server.adapters.springboot.application.session.OAuthSessionService;
-import org.idp.server.basic.datasource.DatabaseConfig;
-import org.idp.server.basic.datasource.DatabaseType;
-import org.idp.server.basic.datasource.DbConfig;
-import org.idp.server.basic.datasource.cache.CacheConfiguration;
-import org.idp.server.basic.datasource.cache.CacheStore;
+import org.idp.server.platform.datasource.DatabaseConfig;
+import org.idp.server.platform.datasource.DatabaseType;
+import org.idp.server.platform.datasource.DbConfig;
+import org.idp.server.platform.datasource.cache.CacheConfiguration;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
 import org.idp.server.core.adapters.datasource.cache.NoOperationCacheStore;

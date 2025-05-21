@@ -1,6 +1,6 @@
 package org.idp.server.core.authentication.webauthn;
 
-import org.idp.server.basic.exception.NotFoundException;
+import org.idp.server.platform.exception.NotFoundException;
 
 public class WebAuthnCredentialNotFoundException extends NotFoundException {
   public WebAuthnCredentialNotFoundException(String message) {

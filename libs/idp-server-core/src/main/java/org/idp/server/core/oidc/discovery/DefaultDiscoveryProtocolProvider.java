@@ -1,7 +1,7 @@
 package org.idp.server.core.oidc.discovery;
 
-import org.idp.server.basic.dependency.ApplicationComponentContainer;
-import org.idp.server.basic.dependency.protocol.ProtocolProvider;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.dependency.protocol.ProtocolProvider;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 
 public class DefaultDiscoveryProtocolProvider implements ProtocolProvider<DiscoveryProtocol> {

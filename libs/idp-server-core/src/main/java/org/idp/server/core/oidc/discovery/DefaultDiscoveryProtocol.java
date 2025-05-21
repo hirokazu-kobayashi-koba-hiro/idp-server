@@ -1,8 +1,8 @@
 package org.idp.server.core.oidc.discovery;
 
 import java.util.Map;
-import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
-import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.discovery.handler.DiscoveryHandler;

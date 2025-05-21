@@ -3,7 +3,7 @@ package org.idp.server.control_plane.management.security.hook;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.basic.exception.UnSupportedException;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;

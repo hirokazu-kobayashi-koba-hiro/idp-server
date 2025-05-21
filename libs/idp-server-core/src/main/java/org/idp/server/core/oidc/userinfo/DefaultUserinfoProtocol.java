@@ -1,8 +1,8 @@
 package org.idp.server.core.oidc.userinfo;
 
-import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
-import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;

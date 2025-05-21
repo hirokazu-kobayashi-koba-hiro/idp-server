@@ -1,8 +1,8 @@
 package org.idp.server.core.identity.event;
 
 import java.util.*;
-import org.idp.server.basic.dependency.ApplicationComponentContainer;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.authentication.factory.AuthenticationDependencyContainer;
 
 public class UserLifecycleEventExecutorLoader {

@@ -2,7 +2,7 @@ package org.idp.server.usecases.application.enduser;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserStatus;

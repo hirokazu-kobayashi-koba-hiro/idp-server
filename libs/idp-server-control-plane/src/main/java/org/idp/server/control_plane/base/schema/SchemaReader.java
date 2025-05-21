@@ -1,7 +1,7 @@
 package org.idp.server.control_plane.base.schema;
 
 import org.idp.server.basic.json.schema.JsonSchemaDefinition;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.control_plane.base.schema.resource.ResourceReader;
 
 public class SchemaReader {

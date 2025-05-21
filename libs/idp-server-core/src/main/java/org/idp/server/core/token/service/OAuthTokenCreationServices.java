@@ -6,7 +6,7 @@ import static org.idp.server.basic.type.oauth.GrantType.ciba;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.exception.UnSupportedException;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;

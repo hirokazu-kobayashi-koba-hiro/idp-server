@@ -10,3 +10,6 @@ include 'libs:idp-server-database'
 include 'libs:idp-server-springboot-adapter'
 include 'libs:idp-server-webauthn4j-adapter'
 include 'libs:idp-server-fcm-adapter'
+
+include 'libs:idp-server-core-extension-pkce'
+include 'libs:idp-server-platform'

@@ -3,7 +3,7 @@ package org.idp.server.core.adapters.datasource.verifiable_credential;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.datasource.SqlExecutor;
+import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.basic.type.verifiablecredential.TransactionId;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.verifiable_credential.VerifiableCredentialTransaction;

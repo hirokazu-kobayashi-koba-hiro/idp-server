@@ -1,6 +1,6 @@
 package org.idp.server.adapters.springboot.application.property;
 
-import org.idp.server.basic.datasource.DbConfig;
+import org.idp.server.platform.datasource.DbConfig;
 
 public class DbConfigProperty {
   String url;

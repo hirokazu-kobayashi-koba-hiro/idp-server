@@ -2,7 +2,7 @@ package org.idp.server.core.token.handler.token;
 
 import static org.idp.server.core.token.handler.token.io.TokenRequestStatus.*;
 
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;

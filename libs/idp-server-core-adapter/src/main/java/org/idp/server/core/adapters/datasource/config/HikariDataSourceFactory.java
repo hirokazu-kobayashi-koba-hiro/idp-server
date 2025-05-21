@@ -4,8 +4,8 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.datasource.DatabaseType;
-import org.idp.server.basic.datasource.DbConfig;
+import org.idp.server.platform.datasource.DatabaseType;
+import org.idp.server.platform.datasource.DbConfig;
 
 public class HikariDataSourceFactory {
 

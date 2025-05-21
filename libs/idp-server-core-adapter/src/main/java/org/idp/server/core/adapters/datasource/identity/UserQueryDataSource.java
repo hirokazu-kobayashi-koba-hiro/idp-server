@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.idp.server.basic.datasource.SqlTooManyResultsException;
+import org.idp.server.platform.datasource.SqlTooManyResultsException;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserIdentifier;

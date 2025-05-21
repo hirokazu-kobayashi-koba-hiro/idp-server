@@ -2,8 +2,8 @@ package org.idp.server.adapters.springboot.application.restapi;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
-import org.idp.server.basic.exception.*;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.exception.*;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotSupportedException;

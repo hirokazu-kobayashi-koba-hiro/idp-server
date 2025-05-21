@@ -76,7 +76,7 @@ back.
 
 ## 7. Implementation Classes
 
-- `@Transaction` annotation: in `org.idp.server.basic.datasource`
+- `@Transaction` annotation: in `org.idp.server.platform.datasource`
 - Adapter entrypoints: e.g., `TenantAwareEntryServiceProxy`
 - Repository interface: designed for command/query separation (`register()`, `update()`)
 

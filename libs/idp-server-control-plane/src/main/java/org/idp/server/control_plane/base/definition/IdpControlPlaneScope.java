@@ -1,6 +1,6 @@
 package org.idp.server.control_plane.base.definition;
 
-import org.idp.server.basic.exception.UnSupportedException;
+import org.idp.server.platform.exception.UnSupportedException;
 
 public enum IdpControlPlaneScope {
   management;

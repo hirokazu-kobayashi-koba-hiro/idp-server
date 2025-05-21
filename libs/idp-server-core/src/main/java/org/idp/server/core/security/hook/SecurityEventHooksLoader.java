@@ -3,7 +3,7 @@ package org.idp.server.core.security.hook;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.security.SecurityEventHookExecutor;
 import org.idp.server.core.security.SecurityEventHooks;
 

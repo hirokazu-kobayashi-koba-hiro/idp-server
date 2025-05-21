@@ -3,7 +3,7 @@ package org.idp.server.adapters.springboot.application.event;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.identity.event.UserLifecycleEvent;
 import org.idp.server.core.identity.event.UserLifecycleEventApi;
 import org.springframework.scheduling.annotation.Scheduled;

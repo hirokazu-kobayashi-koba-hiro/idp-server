@@ -1,6 +1,6 @@
 package org.idp.server.usecases.application.enduser;
 
-import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.core.authentication.AuthenticationMetaDataApi;
 import org.idp.server.core.authentication.fidouaf.*;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;

@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.datasource.oidc.configuration.client.command;
 
-import org.idp.server.basic.datasource.cache.CacheStore;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;

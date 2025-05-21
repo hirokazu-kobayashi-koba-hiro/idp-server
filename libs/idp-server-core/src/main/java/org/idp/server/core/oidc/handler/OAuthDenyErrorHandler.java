@@ -1,6 +1,6 @@
 package org.idp.server.core.oidc.handler;
 
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;

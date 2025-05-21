@@ -3,7 +3,7 @@ package org.idp.server.core.adapters.datasource.multi_tenancy.organization;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.datasource.SqlExecutor;
+import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.core.multi_tenancy.organization.Organization;
 import org.idp.server.core.multi_tenancy.organization.OrganizationIdentifier;
 

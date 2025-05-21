@@ -1,9 +1,9 @@
 package org.idp.server.core.token;
 
 import java.util.Map;
-import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
-import org.idp.server.basic.dependency.protocol.DefaultAuthorizationProvider;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;

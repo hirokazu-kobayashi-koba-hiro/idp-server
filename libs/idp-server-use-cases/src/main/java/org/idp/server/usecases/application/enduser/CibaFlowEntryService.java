@@ -1,7 +1,7 @@
 package org.idp.server.usecases.application.enduser;
 
 import java.util.Map;
-import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.basic.type.security.RequestAttributes;

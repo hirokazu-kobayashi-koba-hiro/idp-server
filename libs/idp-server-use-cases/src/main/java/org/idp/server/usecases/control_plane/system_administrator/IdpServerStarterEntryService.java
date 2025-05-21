@@ -1,6 +1,6 @@
 package org.idp.server.usecases.control_plane.system_administrator;
 
-import org.idp.server.basic.datasource.Transaction;
+import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterContext;
