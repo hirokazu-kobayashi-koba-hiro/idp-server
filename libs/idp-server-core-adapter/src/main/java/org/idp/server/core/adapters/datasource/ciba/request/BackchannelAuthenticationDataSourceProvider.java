@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.datasource.ciba.request;
 
-import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
+import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 

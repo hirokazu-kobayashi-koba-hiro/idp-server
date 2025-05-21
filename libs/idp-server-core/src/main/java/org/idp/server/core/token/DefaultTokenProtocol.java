@@ -1,8 +1,7 @@
 package org.idp.server.core.token;
 
 import java.util.Map;
-import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
-import org.idp.server.core.ciba.repository.CibaGrantRepository;
+import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
@@ -21,6 +20,7 @@ import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationReque
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationRequestStatus;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.core.token.service.OAuthTokenCreationService;
 import org.idp.server.core.token.tokenintrospection.TokenIntrospectionContentsCreator;
 import org.idp.server.core.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
@@ -40,23 +40,21 @@ public class DefaultTokenProtocol implements TokenProtocol {
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
-      BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
-      CibaGrantRepository cibaGrantRepository,
       OAuthTokenRepository oAuthTokenRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
-      PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
+      PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
+      Map<GrantType, OAuthTokenCreationService> extensionOAuthTokenCreationServices) {
     this.tokenRequestHandler =
         new TokenRequestHandler(
             authorizationRequestRepository,
             authorizationCodeGrantRepository,
             authorizationGrantedRepository,
-            backchannelAuthenticationRequestRepository,
-            cibaGrantRepository,
             oAuthTokenRepository,
             authorizationServerConfigurationQueryRepository,
-            clientConfigurationQueryRepository);
+            clientConfigurationQueryRepository,
+            extensionOAuthTokenCreationServices);
     this.errorHandler = new TokenRequestErrorHandler();
     this.tokenIntrospectionHandler = new TokenIntrospectionHandler(oAuthTokenRepository);
     this.tokenRevocationHandler =

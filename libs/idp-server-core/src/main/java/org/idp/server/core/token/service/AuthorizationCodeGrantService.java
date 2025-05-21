@@ -101,6 +101,11 @@ public class AuthorizationCodeGrantService
   }
 
   @Override
+  public GrantType grantType() {
+    return GrantType.authorization_code;
+  }
+
+  @Override
   public OAuthToken create(
       TokenRequestContext tokenRequestContext, ClientCredentials clientCredentials) {
     TokenRequestCodeGrantValidator validator =

@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.datasource.ciba.grant;
 
-import org.idp.server.core.ciba.repository.CibaGrantRepository;
+import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 

@@ -1,7 +1,6 @@
 package org.idp.server.core.authentication;
 
 import java.util.Objects;
-import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 
 public class AuthorizationIdentifier {
@@ -11,11 +10,6 @@ public class AuthorizationIdentifier {
 
   public AuthorizationIdentifier(AuthorizationRequestIdentifier authorizationRequestIdentifier) {
     this.value = authorizationRequestIdentifier.value();
-  }
-
-  public AuthorizationIdentifier(
-      BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
-    this.value = backchannelAuthenticationRequestIdentifier.value();
   }
 
   public AuthorizationIdentifier(String value) {

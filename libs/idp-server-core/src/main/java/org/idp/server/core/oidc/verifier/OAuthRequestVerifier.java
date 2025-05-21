@@ -3,11 +3,11 @@ package org.idp.server.core.oidc.verifier;
 import java.util.*;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
+import org.idp.server.core.oidc.plugin.*;
 import org.idp.server.core.oidc.verifier.extension.JarmVerifier;
 import org.idp.server.core.oidc.verifier.extension.OAuthAuthorizationDetailsVerifier;
 import org.idp.server.core.oidc.verifier.extension.OAuthVerifiableCredentialVerifier;
 import org.idp.server.core.oidc.verifier.extension.RequestObjectVerifier;
-import org.idp.server.core.oidc.verifier.plugin.*;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.log.LoggerWrapper;
 

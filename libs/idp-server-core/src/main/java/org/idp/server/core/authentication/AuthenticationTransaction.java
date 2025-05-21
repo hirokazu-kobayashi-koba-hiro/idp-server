@@ -7,11 +7,8 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.AuthorizationFlow;
-import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.authentication.evaluator.MfaConditionEvaluator;
-import org.idp.server.core.ciba.handler.io.CibaIssueResponse;
-import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.federation.FederationInteractionResult;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
@@ -37,17 +34,6 @@ public class AuthenticationTransaction {
     return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicy);
   }
 
-  public static AuthenticationTransaction createOnCibaFlow(
-      Tenant tenant, CibaIssueResponse cibaIssueResponse) {
-    AuthorizationIdentifier identifier =
-        new AuthorizationIdentifier(cibaIssueResponse.backchannelAuthenticationRequestIdentifier());
-    AuthenticationRequest authenticationRequest =
-        toAuthenticationRequest(tenant, cibaIssueResponse);
-    AuthenticationPolicy authenticationPolicy =
-        cibaIssueResponse.findSatisfiedAuthenticationPolicy();
-    return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicy);
-  }
-
   private static AuthenticationRequest toAuthenticationRequest(
       Tenant tenant, OAuthRequestResponse requestResponse) {
     AuthorizationRequest authorizationRequest = requestResponse.authorizationRequest();
@@ -61,29 +47,6 @@ public class AuthenticationTransaction {
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt =
         createdAt.plusSeconds(requestResponse.oauthAuthorizationRequestExpiresIn());
-    return new AuthenticationRequest(
-        authorizationFlow,
-        tenantIdentifier,
-        requestedClientId,
-        user,
-        context,
-        createdAt,
-        expiredAt);
-  }
-
-  private static AuthenticationRequest toAuthenticationRequest(
-      Tenant tenant, CibaIssueResponse cibaIssueResponse) {
-    BackchannelAuthenticationRequest backchannelAuthenticationRequest = cibaIssueResponse.request();
-    ExpiresIn expiresIn = cibaIssueResponse.expiresIn();
-    AuthorizationFlow authorizationFlow = AuthorizationFlow.CIBA;
-    TenantIdentifier tenantIdentifier = tenant.identifier();
-
-    RequestedClientId requestedClientId = backchannelAuthenticationRequest.requestedClientId();
-    User user = cibaIssueResponse.user();
-    AuthenticationContext context =
-        new AuthenticationContext(cibaIssueResponse.acrValues(), cibaIssueResponse.scopes());
-    LocalDateTime createdAt = SystemDateTime.now();
-    LocalDateTime expiredAt = createdAt.plusSeconds(expiresIn.value());
     return new AuthenticationRequest(
         authorizationFlow,
         tenantIdentifier,
@@ -155,7 +118,7 @@ public class AuthenticationTransaction {
 
   public AuthenticationTransaction() {}
 
-  AuthenticationTransaction(
+  public AuthenticationTransaction(
       AuthorizationIdentifier identifier,
       AuthenticationRequest request,
       AuthenticationPolicy authenticationPolicy) {

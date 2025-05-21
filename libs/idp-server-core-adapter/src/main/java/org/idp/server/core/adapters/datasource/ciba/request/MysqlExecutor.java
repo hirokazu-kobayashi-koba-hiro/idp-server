@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
+import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 
 public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecutor {

@@ -2,4 +2,4 @@ org.idp.server.core.oidc.discovery.DefaultDiscoveryProtocolProvider
 org.idp.server.core.oidc.DefaultOAuthProtocolProvider
 org.idp.server.core.token.DefaultTokenProtocolProvider
 org.idp.server.core.oidc.userinfo.DefaultUserinfoProtocolProvider
-org.idp.server.core.ciba.DefaultCibaProtocolProvider
+org.idp.server.core.extension.ciba.DefaultCibaProtocolProvider

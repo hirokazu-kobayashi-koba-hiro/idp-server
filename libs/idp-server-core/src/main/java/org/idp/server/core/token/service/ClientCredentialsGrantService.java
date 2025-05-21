@@ -26,6 +26,11 @@ public class ClientCredentialsGrantService
   }
 
   @Override
+  public GrantType grantType() {
+    return GrantType.client_credentials;
+  }
+
+  @Override
   public OAuthToken create(TokenRequestContext context, ClientCredentials clientCredentials) {
     ClientCredentialsGrantValidator validator = new ClientCredentialsGrantValidator(context);
     validator.validate();

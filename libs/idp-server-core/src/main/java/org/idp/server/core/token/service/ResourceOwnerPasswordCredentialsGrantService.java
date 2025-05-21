@@ -54,6 +54,11 @@ public class ResourceOwnerPasswordCredentialsGrantService
   }
 
   @Override
+  public GrantType grantType() {
+    return GrantType.password;
+  }
+
+  @Override
   public OAuthToken create(TokenRequestContext context, ClientCredentials clientCredentials) {
     ResourceOwnerPasswordGrantValidator validator =
         new ResourceOwnerPasswordGrantValidator(context);
