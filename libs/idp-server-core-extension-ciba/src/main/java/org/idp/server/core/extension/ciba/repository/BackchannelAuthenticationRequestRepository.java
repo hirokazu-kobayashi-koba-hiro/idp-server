@@ -2,7 +2,7 @@ package org.idp.server.core.extension.ciba.repository;
 
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface BackchannelAuthenticationRequestRepository {
 

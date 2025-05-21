@@ -4,8 +4,8 @@ import org.idp.server.basic.http.QueryParams;
 import org.idp.server.basic.type.oauth.CustomParams;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.OAuthRequestContext;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthViewUrlResolver {
 

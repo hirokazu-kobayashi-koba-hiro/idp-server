@@ -21,13 +21,13 @@ import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResp
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponseBuilder;
 import org.idp.server.core.extension.ciba.verifier.CibaRequestVerifier;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * Handles CIBA (Client Initiated Backchannel Authentication) requests.

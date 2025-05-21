@@ -10,12 +10,12 @@ import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRe
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CibaAuthorizeHandler {
 

@@ -9,8 +9,8 @@ import org.idp.server.core.identity.event.UserLifecycleEvent;
 import org.idp.server.core.identity.event.UserLifecycleEventExecutor;
 import org.idp.server.core.identity.event.UserLifecycleEventResult;
 import org.idp.server.core.identity.event.UserLifecycleType;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class ExternalFidoUafServerUserDataDeletionExecutor implements UserLifecycleEventExecutor {
 

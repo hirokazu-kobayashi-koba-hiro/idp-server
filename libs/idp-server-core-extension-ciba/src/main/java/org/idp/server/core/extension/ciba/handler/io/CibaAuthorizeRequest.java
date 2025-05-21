@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class CibaAuthorizeRequest {
   Tenant tenant;

@@ -6,10 +6,10 @@ import org.idp.server.control_plane.admin.tenant.io.TenantInitializationStatus;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.permission.Permissions;
 import org.idp.server.core.identity.role.Roles;
-import org.idp.server.core.multi_tenancy.organization.Organization;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.platform.multi_tenancy.organization.Organization;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TenantInitializationContext {
 

@@ -1,9 +1,9 @@
 package org.idp.server.core.token.tokenintrospection.verifier;
 
 import java.time.LocalDateTime;
-import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequestStatus;
+import org.idp.server.platform.date.SystemDateTime;
 
 public class TokenIntrospectionVerifier {
 

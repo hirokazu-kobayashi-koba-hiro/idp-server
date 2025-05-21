@@ -6,7 +6,7 @@ import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.grant_management.AuthorizationGranted;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepository {
 

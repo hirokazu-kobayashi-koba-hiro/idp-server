@@ -9,9 +9,9 @@ import org.idp.server.basic.type.oidc.*;
 import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestObjectParameters;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * RequestObjectPatternFactory

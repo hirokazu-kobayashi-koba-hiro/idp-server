@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitation;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitation;
 
 class ModelConvertor {
 

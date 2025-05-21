@@ -10,9 +10,9 @@ import org.idp.server.control_plane.management.federation.io.FederationConfigMan
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
 import org.idp.server.core.federation.FederationConfigurationIdentifier;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public interface FederationConfigurationManagementApi {
 

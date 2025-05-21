@@ -7,7 +7,7 @@ import org.idp.server.core.extension.ciba.exception.CibaGrantNotFoundException;
 import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CibaGrantDataSource implements CibaGrantRepository {
 

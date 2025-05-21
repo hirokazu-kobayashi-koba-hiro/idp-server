@@ -21,13 +21,13 @@ import org.idp.server.core.identity.verification.result.IdentityVerificationResu
 import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.identity.verification.validation.IdentityVerificationRequestValidator;
 import org.idp.server.core.identity.verification.validation.IdentityVerificationValidationResult;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 
 @Transaction
 public class IdentityVerificationEntryService implements IdentityVerificationApi {

@@ -2,7 +2,7 @@ package org.idp.server.core.federation.sso;
 
 import java.io.Serializable;
 import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class SsoState implements Serializable, JsonReadable {
   String sessionId;

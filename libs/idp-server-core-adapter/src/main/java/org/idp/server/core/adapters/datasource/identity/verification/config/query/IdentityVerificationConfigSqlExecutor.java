@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface IdentityVerificationConfigSqlExecutor {
   Map<String, String> selectOne(Tenant tenant, IdentityVerificationType key);

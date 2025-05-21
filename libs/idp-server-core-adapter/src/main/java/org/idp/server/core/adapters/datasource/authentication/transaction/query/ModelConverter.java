@@ -8,8 +8,8 @@ import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class ModelConverter {
 

@@ -1,7 +1,6 @@
 package org.idp.server.core.extension.ciba.grant;
 
 import java.time.LocalDateTime;
-import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.basic.type.ciba.Interval;
 import org.idp.server.basic.type.extension.ExpiredAt;
@@ -12,11 +11,12 @@ import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.AuthorizationGrantBuilder;
+import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class CibaGrantFactory {
 

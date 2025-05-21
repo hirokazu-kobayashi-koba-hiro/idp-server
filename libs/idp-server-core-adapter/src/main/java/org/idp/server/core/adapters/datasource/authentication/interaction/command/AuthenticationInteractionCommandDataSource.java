@@ -3,7 +3,7 @@ package org.idp.server.core.adapters.datasource.authentication.interaction.comma
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.authentication.repository.AuthenticationInteractionCommandRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationInteractionCommandDataSource
     implements AuthenticationInteractionCommandRepository {

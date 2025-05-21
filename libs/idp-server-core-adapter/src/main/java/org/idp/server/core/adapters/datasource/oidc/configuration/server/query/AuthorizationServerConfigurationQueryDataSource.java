@@ -4,12 +4,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class AuthorizationServerConfigurationQueryDataSource
     implements AuthorizationServerConfigurationQueryRepository {

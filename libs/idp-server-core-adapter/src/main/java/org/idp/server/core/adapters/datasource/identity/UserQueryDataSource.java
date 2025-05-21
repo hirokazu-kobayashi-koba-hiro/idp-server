@@ -10,8 +10,8 @@ import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.exception.UserNotFoundException;
 import org.idp.server.core.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.identity.repository.UserQueryRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.datasource.SqlTooManyResultsException;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserQueryDataSource implements UserQueryRepository {
 

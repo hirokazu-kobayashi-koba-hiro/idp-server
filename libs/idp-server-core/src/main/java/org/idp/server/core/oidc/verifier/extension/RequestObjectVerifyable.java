@@ -1,12 +1,12 @@
 package org.idp.server.core.oidc.verifier.extension;
 
 import java.util.Date;
-import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.exception.RequestObjectInvalidException;
+import org.idp.server.platform.date.SystemDateTime;
 
 public interface RequestObjectVerifyable {
 

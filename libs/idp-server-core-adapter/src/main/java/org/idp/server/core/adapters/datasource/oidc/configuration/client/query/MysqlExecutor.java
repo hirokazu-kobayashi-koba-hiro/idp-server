@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class MysqlExecutor implements ClientConfigSqlExecutor {
 

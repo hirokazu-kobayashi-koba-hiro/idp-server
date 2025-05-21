@@ -4,10 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /** OAuthAuthorizeRequest */
 public class OAuthAuthorizeRequest {

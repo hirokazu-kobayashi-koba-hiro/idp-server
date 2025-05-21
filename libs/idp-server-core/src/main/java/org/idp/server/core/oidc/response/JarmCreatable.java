@@ -3,7 +3,6 @@ package org.idp.server.core.oidc.response;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.basic.jose.JsonWebKeyInvalidException;
 import org.idp.server.basic.jose.JsonWebSignature;
@@ -14,6 +13,7 @@ import org.idp.server.basic.type.extension.JarmPayload;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.exception.ConfigurationInvalidException;
+import org.idp.server.platform.date.SystemDateTime;
 
 public interface JarmCreatable {
 

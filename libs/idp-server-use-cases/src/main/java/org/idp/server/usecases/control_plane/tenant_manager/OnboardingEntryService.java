@@ -19,13 +19,13 @@ import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserRegistrator;
 import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.repository.UserQueryRepository;
-import org.idp.server.core.multi_tenancy.organization.*;
-import org.idp.server.core.multi_tenancy.tenant.*;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.organization.*;
+import org.idp.server.platform.multi_tenancy.tenant.*;
 
 @Transaction
 public class OnboardingEntryService implements OnboardingApi {

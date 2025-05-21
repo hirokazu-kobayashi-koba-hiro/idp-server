@@ -2,11 +2,11 @@ package org.idp.server.core.adapters.datasource.oidc.request;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.exception.OAuthRequestNotFoundException;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthorizationRequestDataSource implements AuthorizationRequestRepository {
 

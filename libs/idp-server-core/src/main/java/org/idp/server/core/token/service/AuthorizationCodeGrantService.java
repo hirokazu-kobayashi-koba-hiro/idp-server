@@ -8,7 +8,6 @@ import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;
 import org.idp.server.core.grant_management.AuthorizationGranted;
 import org.idp.server.core.grant_management.AuthorizationGrantedIdentifier;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -27,6 +26,7 @@ import org.idp.server.core.token.exception.TokenBadRequestException;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.TokenRequestCodeGrantValidator;
 import org.idp.server.core.token.verifier.AuthorizationCodeGrantVerifier;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * 4.1.3. Access Token Request authorization code handling

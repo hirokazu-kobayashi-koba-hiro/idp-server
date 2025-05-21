@@ -4,7 +4,7 @@ import java.util.List;
 import org.idp.server.core.identity.event.UserLifecycleEvent;
 import org.idp.server.core.identity.event.UserLifecycleEventResult;
 import org.idp.server.core.identity.event.UserLifecycleEventResultCommandRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserLifecycleEventResultCommandDataSource
     implements UserLifecycleEventResultCommandRepository {

@@ -6,7 +6,7 @@ import org.idp.server.adapters.springboot.application.filter.ProtectedResourceAp
 import org.idp.server.adapters.springboot.application.restapi.model.IdPApplicationScope;
 import org.idp.server.adapters.springboot.application.session.DynamicCookieSerializer;
 import org.idp.server.adapters.springboot.control_plane.filter.ManagementApiFilter;
-import org.idp.server.core.multi_tenancy.tenant.TenantMetaDataApi;
+import org.idp.server.platform.multi_tenancy.tenant.TenantMetaDataApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;

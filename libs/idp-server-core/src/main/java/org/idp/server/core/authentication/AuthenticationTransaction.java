@@ -5,19 +5,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.authentication.evaluator.MfaConditionEvaluator;
 import org.idp.server.core.federation.FederationInteractionResult;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationResultConditions;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
+import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class AuthenticationTransaction {
   AuthorizationIdentifier identifier;

@@ -1,7 +1,7 @@
 package org.idp.server.core.oidc.configuration.exception;
 
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.exception.NotFoundException;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** ServerConfigurationNotFoundException */
 public class ServerConfigurationNotFoundException extends NotFoundException {

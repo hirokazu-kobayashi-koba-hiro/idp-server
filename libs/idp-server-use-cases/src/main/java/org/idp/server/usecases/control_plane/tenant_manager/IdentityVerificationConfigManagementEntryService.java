@@ -15,12 +15,12 @@ import org.idp.server.core.identity.verification.configuration.IdentityVerificat
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 
 @Transaction
 public class IdentityVerificationConfigManagementEntryService

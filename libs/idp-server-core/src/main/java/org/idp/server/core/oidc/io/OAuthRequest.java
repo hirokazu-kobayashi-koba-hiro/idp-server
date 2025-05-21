@@ -2,8 +2,8 @@ package org.idp.server.core.oidc.io;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** OAuthRequest */
 public class OAuthRequest {

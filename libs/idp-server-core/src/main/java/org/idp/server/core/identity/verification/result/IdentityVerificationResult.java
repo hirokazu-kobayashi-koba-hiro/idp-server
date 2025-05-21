@@ -2,7 +2,6 @@ package org.idp.server.core.identity.verification.result;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
@@ -11,7 +10,8 @@ import org.idp.server.core.identity.verification.application.IdentityVerificatio
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.core.identity.verification.verified.claims.VerifiedClaims;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class IdentityVerificationResult {
 

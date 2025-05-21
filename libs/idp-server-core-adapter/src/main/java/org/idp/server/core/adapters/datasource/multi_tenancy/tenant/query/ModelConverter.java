@@ -3,9 +3,9 @@ package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.query;
 import java.util.Map;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.core.multi_tenancy.tenant.*;
 import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.multi_tenancy.tenant.*;
 
 class ModelConverter {
 

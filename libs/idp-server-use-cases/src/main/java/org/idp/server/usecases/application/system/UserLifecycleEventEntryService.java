@@ -3,9 +3,9 @@ package org.idp.server.usecases.application.system;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.core.identity.event.*;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 @Transaction
 public class UserLifecycleEventEntryService implements UserLifecycleEventApi {

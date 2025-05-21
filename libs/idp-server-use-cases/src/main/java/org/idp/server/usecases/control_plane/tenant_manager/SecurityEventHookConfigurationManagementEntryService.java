@@ -10,9 +10,6 @@ import org.idp.server.control_plane.management.security.hook.io.SecurityEventHoo
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigRequest;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.security.hook.SecurityEventHookConfiguration;
 import org.idp.server.core.security.hook.SecurityEventHookConfigurationIdentifier;
 import org.idp.server.core.security.repository.SecurityEventHookConfigurationCommandRepository;
@@ -20,6 +17,9 @@ import org.idp.server.core.security.repository.SecurityEventHookConfigurationQue
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 
 @Transaction
 public class SecurityEventHookConfigurationManagementEntryService

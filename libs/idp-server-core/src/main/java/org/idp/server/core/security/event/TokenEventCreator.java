@@ -3,9 +3,9 @@ package org.idp.server.core.security.event;
 import java.util.HashMap;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.token.OAuthToken;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenEventCreator {
 
@@ -48,7 +48,7 @@ public class TokenEventCreator {
 
     SecurityEventTenant securityEventTenant =
         new SecurityEventTenant(
-            tenant.identifier().value(), tenant.tokenIssuer().value(), tenant.name().value());
+            tenant.identifier().value(), tenant.tokenIssuer(), tenant.name().value());
     builder.add(securityEventTenant);
 
     SecurityEventClient securityEventClient =

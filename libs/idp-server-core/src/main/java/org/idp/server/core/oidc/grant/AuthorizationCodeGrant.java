@@ -5,11 +5,11 @@ import java.util.Objects;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /** AuthorizationCodeGrant */
 public class AuthorizationCodeGrant {

@@ -7,9 +7,9 @@ import org.idp.server.basic.type.oauth.ClientSecretBasic;
 import org.idp.server.core.extension.ciba.*;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.NormalRequestFactory;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** NormalPatternContextService */
 public class NormalPatternContextCreator implements CibaRequestContextCreator {

@@ -1,8 +1,8 @@
 package org.idp.server.core.token.handler.tokenintrospection.io;
 
 import java.util.Map;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.tokenintrospection.TokenIntrospectionRequestParameters;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenIntrospectionRequest {
   Tenant tenant;

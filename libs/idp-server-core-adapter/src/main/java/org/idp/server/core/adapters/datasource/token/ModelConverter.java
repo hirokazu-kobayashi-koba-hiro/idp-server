@@ -14,7 +14,6 @@ import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.basic.type.verifiablecredential.CNonce;
 import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
@@ -29,6 +28,7 @@ import org.idp.server.core.oidc.token.RefreshToken;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.OAuthTokenBuilder;
 import org.idp.server.core.token.OAuthTokenIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {
 

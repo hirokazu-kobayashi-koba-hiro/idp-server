@@ -12,9 +12,6 @@ import org.idp.server.control_plane.management.oidc.client.io.ClientRegistration
 import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidationResult;
 import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidator;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
@@ -22,6 +19,9 @@ import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRep
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 
 @Transaction
 public class ClientManagementEntryService implements ClientManagementApi {

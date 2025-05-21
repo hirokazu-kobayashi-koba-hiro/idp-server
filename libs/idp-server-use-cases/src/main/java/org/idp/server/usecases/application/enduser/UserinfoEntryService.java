@@ -5,9 +5,6 @@ import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.repository.UserQueryRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.oidc.userinfo.UserinfoApi;
 import org.idp.server.core.oidc.userinfo.UserinfoProtocol;
 import org.idp.server.core.oidc.userinfo.UserinfoProtocols;
@@ -17,6 +14,9 @@ import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 
 @Transaction(readOnly = true)
 public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {

@@ -2,8 +2,8 @@ package org.idp.server.core.token.repository;
 
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.type.oauth.RefreshTokenEntity;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.OAuthToken;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface OAuthTokenRepository {
 

@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementResponse;
 import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementStatus;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitation;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitation;
 
 public class TenantInvitationContext {
 

@@ -2,11 +2,11 @@ package org.idp.server.control_plane.management.onboarding.io;
 
 import java.util.UUID;
 import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.core.multi_tenancy.tenant.TenantDomain;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantName;
 import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.multi_tenancy.tenant.TenantDomain;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantName;
 
 public class TenantRegistrationRequest implements JsonReadable {
 

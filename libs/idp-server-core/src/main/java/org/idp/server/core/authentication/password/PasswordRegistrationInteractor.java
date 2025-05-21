@@ -13,9 +13,9 @@ import org.idp.server.core.identity.IdPUserCreator;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.identity.repository.UserQueryRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class PasswordRegistrationInteractor implements AuthenticationInteractor {
 

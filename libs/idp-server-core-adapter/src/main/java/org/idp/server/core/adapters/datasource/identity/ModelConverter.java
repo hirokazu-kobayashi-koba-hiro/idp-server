@@ -11,8 +11,8 @@ import org.idp.server.core.identity.UserRole;
 import org.idp.server.core.identity.UserStatus;
 import org.idp.server.core.identity.address.Address;
 import org.idp.server.core.identity.device.AuthenticationDevice;
-import org.idp.server.core.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {
 

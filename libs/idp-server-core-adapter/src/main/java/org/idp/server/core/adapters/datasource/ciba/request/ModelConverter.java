@@ -14,9 +14,9 @@ import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestBuilder;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {
 

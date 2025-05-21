@@ -14,12 +14,12 @@ import org.idp.server.core.authentication.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationCommandRepository;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 
 @Transaction
 public class AuthenticationConfigurationManagementEntryService

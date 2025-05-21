@@ -6,8 +6,8 @@ import java.util.Map;
 import org.idp.server.core.federation.FederationConfigurationIdentifier;
 import org.idp.server.core.federation.FederationType;
 import org.idp.server.core.federation.sso.SsoProvider;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class MysqlExecutor implements FederationConfigurationSqlExecutor {
 

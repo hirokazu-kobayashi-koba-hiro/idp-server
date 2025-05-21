@@ -15,12 +15,12 @@ import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.identity.repository.UserCommandRepository;
 import org.idp.server.core.identity.role.RoleCommandRepository;
-import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.core.multi_tenancy.tenant.*;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
+import org.idp.server.platform.multi_tenancy.tenant.*;
 
 @Transaction
 public class IdpServerStarterEntryService implements IdpServerStarterApi {

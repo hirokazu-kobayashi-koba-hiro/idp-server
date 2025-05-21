@@ -3,10 +3,10 @@ package org.idp.server.core.security.hook.ssf;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.jose.JsonWebKeyInvalidException;
 import org.idp.server.basic.jose.JsonWebSignature;
 import org.idp.server.basic.jose.JsonWebSignatureFactory;
+import org.idp.server.platform.date.SystemDateTime;
 
 public class SecurityEventTokenCreator {
 

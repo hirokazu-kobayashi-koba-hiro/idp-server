@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.vc.Credential;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -22,6 +21,7 @@ import org.idp.server.core.verifiable_credential.verifier.BatchVerifiableCredent
 import org.idp.server.core.verifiable_credential.verifier.DeferredVerifiableCredentialRequestVerifier;
 import org.idp.server.core.verifiable_credential.verifier.DeferredVerifiableCredentialVerifier;
 import org.idp.server.core.verifiable_credential.verifier.VerifiableCredentialVerifier;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CredentialHandler {
 

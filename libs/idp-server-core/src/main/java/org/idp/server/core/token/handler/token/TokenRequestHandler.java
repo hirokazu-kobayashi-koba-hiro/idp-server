@@ -7,7 +7,6 @@ import org.idp.server.basic.type.oauth.ClientSecretBasic;
 import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
@@ -26,6 +25,7 @@ import org.idp.server.core.token.handler.token.io.TokenRequestStatus;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.service.*;
 import org.idp.server.core.token.validator.TokenRequestValidator;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenRequestHandler {
 

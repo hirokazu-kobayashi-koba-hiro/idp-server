@@ -3,7 +3,7 @@ package org.idp.server.core.extension.ciba.repository;
 import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface CibaGrantRepository {
 

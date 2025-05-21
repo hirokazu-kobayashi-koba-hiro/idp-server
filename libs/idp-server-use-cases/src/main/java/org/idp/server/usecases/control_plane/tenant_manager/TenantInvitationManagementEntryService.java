@@ -11,19 +11,19 @@ import org.idp.server.control_plane.management.tenant.invitation.TenantInvitatio
 import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementRequest;
 import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementResponse;
 import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementStatus;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitation;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationCommandRepository;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationIdentifier;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationQueryRepository;
 import org.idp.server.control_plane.management.tenant.invitation.validator.OrganizationInvitationRequestValidationResult;
 import org.idp.server.control_plane.management.tenant.invitation.validator.OrganizationInvitationRequestValidator;
 import org.idp.server.core.authentication.notification.EmailSenders;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitation;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitationCommandRepository;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitationIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitationQueryRepository;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 
 @Transaction
 public class TenantInvitationManagementEntryService implements TenantInvitationManagementApi {

@@ -11,11 +11,11 @@ import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwne
 import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserAuthenticationApi;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;

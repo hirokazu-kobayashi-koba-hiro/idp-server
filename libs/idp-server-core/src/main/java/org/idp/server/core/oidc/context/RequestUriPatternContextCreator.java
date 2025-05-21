@@ -5,7 +5,6 @@ import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JoseHandler;
 import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.basic.type.oidc.RequestObject;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.OAuthRequestPattern;
@@ -16,6 +15,7 @@ import org.idp.server.core.oidc.factory.AuthorizationRequestFactory;
 import org.idp.server.core.oidc.gateway.RequestObjectGateway;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** RequestUriPatternContextService */
 public class RequestUriPatternContextCreator implements OAuthRequestContextCreator {

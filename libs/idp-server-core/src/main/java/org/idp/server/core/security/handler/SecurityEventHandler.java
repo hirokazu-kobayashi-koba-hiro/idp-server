@@ -2,13 +2,13 @@ package org.idp.server.core.security.handler;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.security.*;
 import org.idp.server.core.security.hook.*;
 import org.idp.server.core.security.repository.SecurityEventCommandRepository;
 import org.idp.server.core.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class SecurityEventHandler {
 

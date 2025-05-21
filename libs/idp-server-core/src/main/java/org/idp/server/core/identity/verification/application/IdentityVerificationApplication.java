@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserIdentifier;
@@ -19,8 +18,9 @@ import org.idp.server.core.identity.verification.delegation.ExternalWorkflowAppl
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.identity.verification.delegation.ExternalWorkflowDelegation;
 import org.idp.server.core.identity.verification.trustframework.TrustFramework;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class IdentityVerificationApplication {
 

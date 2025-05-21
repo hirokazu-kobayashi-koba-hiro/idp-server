@@ -13,17 +13,17 @@ import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.control_plane.management.tenant.verifier.TenantManagementVerificationResult;
 import org.idp.server.control_plane.management.tenant.verifier.TenantManagementVerifier;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.organization.Organization;
-import org.idp.server.core.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantCommandRepository;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.organization.Organization;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantCommandRepository;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 
 @Transaction
 public class TenantManagementEntryService implements TenantManagementApi {

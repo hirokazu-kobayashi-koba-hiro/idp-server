@@ -13,7 +13,6 @@ import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationReque
 import org.idp.server.core.grant_management.AuthorizationGranted;
 import org.idp.server.core.grant_management.AuthorizationGrantedIdentifier;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
@@ -27,6 +26,7 @@ import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.OAuthTokenBuilder;
 import org.idp.server.core.token.OAuthTokenIdentifier;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 // FIXME consider. this is bad code.
 public class ClientNotificationService

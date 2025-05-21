@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.multi_tenancy.organization;
 
 import java.util.Map;
-import org.idp.server.core.multi_tenancy.organization.*;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.organization.*;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OrganizationDataSource implements OrganizationRepository {
 

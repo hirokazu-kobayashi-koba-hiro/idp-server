@@ -10,8 +10,8 @@ import org.idp.server.basic.type.oidc.RequestObject;
 import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.user.UserHint;
 import org.idp.server.core.extension.ciba.user.UserHintType;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class BackchannelAuthenticationRequest {
   BackchannelAuthenticationRequestIdentifier identifier;

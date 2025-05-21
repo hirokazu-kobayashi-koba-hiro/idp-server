@@ -7,8 +7,8 @@ import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.event.UserLifecycleEvent;
 import org.idp.server.core.identity.event.UserLifecycleEventResult;
 import org.idp.server.core.identity.event.UserLifecycleType;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements UserLifecycleEventResultSqlExecutor {
 

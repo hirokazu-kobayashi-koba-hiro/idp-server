@@ -5,7 +5,7 @@ import org.idp.server.control_plane.management.identity.verification.io.Identity
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.core.identity.verification.IdentityVerificationType;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationConfigRegistrationContext {
 

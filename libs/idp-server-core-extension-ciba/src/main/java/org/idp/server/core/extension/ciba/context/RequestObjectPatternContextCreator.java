@@ -10,9 +10,9 @@ import org.idp.server.core.extension.ciba.*;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.RequestObjectPatternFactory;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** RequestObjectPatternContextService */
 public class RequestObjectPatternContextCreator implements CibaRequestContextCreator {

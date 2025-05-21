@@ -4,13 +4,11 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.ResponseMode;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
@@ -25,6 +23,8 @@ import org.idp.server.core.oidc.identity.RequestedIdTokenClaims;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.response.ResponseModeDecidable;
+import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /** OAuthAuthorizeContext */
 public class OAuthAuthorizeContext implements ResponseModeDecidable {

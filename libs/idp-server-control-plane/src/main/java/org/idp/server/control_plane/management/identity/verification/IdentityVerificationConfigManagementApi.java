@@ -11,9 +11,9 @@ import org.idp.server.control_plane.management.identity.verification.io.Identity
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public interface IdentityVerificationConfigManagementApi {
 

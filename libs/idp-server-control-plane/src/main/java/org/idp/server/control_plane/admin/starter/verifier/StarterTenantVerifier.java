@@ -3,8 +3,8 @@ package org.idp.server.control_plane.admin.starter.verifier;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.control_plane.base.verifier.VerificationResult;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 
 public class StarterTenantVerifier {
 
