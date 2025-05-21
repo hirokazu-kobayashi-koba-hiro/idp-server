@@ -1,10 +1,10 @@
 package org.idp.server.core.token.verifier;
 
 import java.time.LocalDateTime;
-import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.TokenRequestContext;
 import org.idp.server.core.token.exception.TokenBadRequestException;
+import org.idp.server.platform.date.SystemDateTime;
 
 public class RefreshTokenVerifier {
   TokenRequestContext context;

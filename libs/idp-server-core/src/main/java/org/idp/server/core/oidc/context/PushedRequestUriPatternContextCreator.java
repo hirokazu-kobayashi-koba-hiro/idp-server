@@ -2,7 +2,6 @@ package org.idp.server.core.oidc.context;
 
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.type.oauth.RequestUri;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.OAuthRequestPattern;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
@@ -12,6 +11,7 @@ import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** PushedRequestUriPatternContextService */
 public class PushedRequestUriPatternContextCreator implements OAuthRequestContextCreator {

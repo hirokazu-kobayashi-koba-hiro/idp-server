@@ -9,7 +9,7 @@ import org.idp.server.core.authentication.AuthenticationConfiguration;
 import org.idp.server.core.authentication.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.authentication.exception.AuthenticationConfigurationNotFoundException;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationConfigurationQueryDataSource
     implements AuthenticationConfigurationQueryRepository {

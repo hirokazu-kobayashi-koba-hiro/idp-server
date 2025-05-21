@@ -2,13 +2,6 @@ package org.idp.server;
 
 import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.HmacHasher;
-import org.idp.server.basic.datasource.*;
-import org.idp.server.basic.datasource.cache.CacheStore;
-import org.idp.server.basic.dependency.ApplicationComponentContainer;
-import org.idp.server.basic.dependency.ApplicationComponentContainerLoader;
-import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
-import org.idp.server.basic.dependency.protocol.ProtocolContainer;
-import org.idp.server.basic.dependency.protocol.ProtocolContainerLoader;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
@@ -23,6 +16,9 @@ import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
 import org.idp.server.control_plane.management.tenant.TenantManagementApi;
 import org.idp.server.control_plane.management.tenant.invitation.TenantInvitationManagementApi;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationCommandRepository;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationMetaDataApi;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationQueryRepository;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotifiers;
@@ -42,9 +38,9 @@ import org.idp.server.core.authentication.sms.SmsAuthenticationExecutorLoader;
 import org.idp.server.core.authentication.sms.SmsAuthenticationExecutors;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutorLoader;
 import org.idp.server.core.authentication.webauthn.WebAuthnExecutors;
-import org.idp.server.core.ciba.CibaFlowApi;
-import org.idp.server.core.ciba.CibaProtocol;
-import org.idp.server.core.ciba.CibaProtocols;
+import org.idp.server.core.extension.ciba.CibaFlowApi;
+import org.idp.server.core.extension.ciba.CibaProtocol;
+import org.idp.server.core.extension.ciba.CibaProtocols;
 import org.idp.server.core.federation.FederationInteractors;
 import org.idp.server.core.federation.factory.FederationDependencyContainer;
 import org.idp.server.core.federation.factory.FederationDependencyContainerLoader;
@@ -68,11 +64,6 @@ import org.idp.server.core.identity.verification.application.IdentityVerificatio
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.identity.verification.result.IdentityVerificationResultCommandRepository;
-import org.idp.server.core.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.core.multi_tenancy.tenant.*;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitationCommandRepository;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitationMetaDataApi;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitationQueryRepository;
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.OAuthProtocol;
 import org.idp.server.core.oidc.OAuthProtocols;
@@ -88,7 +79,6 @@ import org.idp.server.core.oidc.userinfo.UserinfoProtocols;
 import org.idp.server.core.security.SecurityEventApi;
 import org.idp.server.core.security.SecurityEventHooks;
 import org.idp.server.core.security.SecurityEventPublisher;
-import org.idp.server.core.security.event.CibaFlowEventPublisher;
 import org.idp.server.core.security.event.OAuthFlowEventPublisher;
 import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.security.hook.SecurityEventHooksLoader;
@@ -97,7 +87,17 @@ import org.idp.server.core.security.repository.SecurityEventHookConfigurationCom
 import org.idp.server.core.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.core.token.*;
+import org.idp.server.platform.datasource.*;
+import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.dependency.ApplicationComponentContainerLoader;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.protocol.ProtocolContainer;
+import org.idp.server.platform.dependency.protocol.ProtocolContainerLoader;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
+import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.usecases.application.enduser.*;
+import org.idp.server.usecases.application.enduser.CibaFlowEventPublisher;
 import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
 import org.idp.server.usecases.application.system.*;
 import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMetaDataEntryService;
@@ -473,7 +473,10 @@ public class IdpServerApplication {
     this.tenantManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new TenantManagementEntryService(
-                tenantCommandRepository, tenantQueryRepository, organizationRepository, authorizationServerConfigurationCommandRepository),
+                tenantCommandRepository,
+                tenantQueryRepository,
+                organizationRepository,
+                authorizationServerConfigurationCommandRepository),
             TenantManagementApi.class,
             tenantDialectProvider);
 

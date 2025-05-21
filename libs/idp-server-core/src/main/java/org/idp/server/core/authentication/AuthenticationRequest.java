@@ -9,7 +9,7 @@ import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.core.federation.FederationInteractionResult;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class AuthenticationRequest {
 

@@ -3,7 +3,6 @@ package org.idp.server.core.token.handler.tokenrevocation;
 import java.util.Map;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.type.oauth.RefreshTokenEntity;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
@@ -17,6 +16,7 @@ import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.tokenrevocation.TokenRevocationRequestContext;
 import org.idp.server.core.token.tokenrevocation.TokenRevocationRequestParameters;
 import org.idp.server.core.token.tokenrevocation.validator.TokenRevocationValidator;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenRevocationHandler {
   OAuthTokenRepository oAuthTokenRepository;

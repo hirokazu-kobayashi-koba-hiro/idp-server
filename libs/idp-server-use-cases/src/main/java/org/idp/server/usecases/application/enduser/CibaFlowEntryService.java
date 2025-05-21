@@ -1,30 +1,32 @@
 package org.idp.server.usecases.application.enduser;
 
 import java.util.Map;
-import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.authentication.repository.AuthenticationTransactionQueryRepository;
-import org.idp.server.core.ciba.*;
-import org.idp.server.core.ciba.handler.io.*;
-import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.ciba.response.BackchannelAuthenticationErrorResponse;
-import org.idp.server.core.ciba.user.UserHintResolver;
-import org.idp.server.core.ciba.user.UserHintResolvers;
+import org.idp.server.core.extension.ciba.CibaAuthenticationTransactionCreator;
+import org.idp.server.core.extension.ciba.CibaFlowApi;
+import org.idp.server.core.extension.ciba.CibaProtocol;
+import org.idp.server.core.extension.ciba.CibaProtocols;
+import org.idp.server.core.extension.ciba.handler.io.*;
+import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
+import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErrorResponse;
+import org.idp.server.core.extension.ciba.user.UserHintResolver;
+import org.idp.server.core.extension.ciba.user.UserHintResolvers;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.event.UserLifecycleEvent;
 import org.idp.server.core.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.identity.event.UserLifecycleType;
 import org.idp.server.core.identity.repository.UserQueryRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.core.security.event.CibaFlowEventPublisher;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 
 @Transaction
 public class CibaFlowEntryService implements CibaFlowApi {
@@ -113,7 +115,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
         requestAttributes);
 
     AuthenticationTransaction authenticationTransaction =
-        AuthenticationTransaction.createOnCibaFlow(tenant, issueResponse);
+        CibaAuthenticationTransactionCreator.create(tenant, issueResponse);
     authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
 
     AuthenticationInteractionType authenticationInteractionType =

@@ -2,10 +2,10 @@ package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitation;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitationIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitationQueryRepository;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitation;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationIdentifier;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationQueryRepository;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TenantInvitationQueryDataSource implements TenantInvitationQueryRepository {
 

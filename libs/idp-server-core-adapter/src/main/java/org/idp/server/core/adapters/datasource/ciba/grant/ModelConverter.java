@@ -13,11 +13,10 @@ import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
-import org.idp.server.core.ciba.grant.CibaGrant;
-import org.idp.server.core.ciba.grant.CibaGrantStatus;
-import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.extension.ciba.grant.CibaGrant;
+import org.idp.server.core.extension.ciba.grant.CibaGrantStatus;
+import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
@@ -27,6 +26,7 @@ import org.idp.server.core.oidc.grant.consent.ConsentClaim;
 import org.idp.server.core.oidc.grant.consent.ConsentClaims;
 import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {
 

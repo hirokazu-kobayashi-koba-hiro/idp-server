@@ -12,13 +12,13 @@ import org.idp.server.core.identity.UserRole;
 import org.idp.server.core.identity.permission.Permissions;
 import org.idp.server.core.identity.role.Role;
 import org.idp.server.core.identity.role.Roles;
-import org.idp.server.core.multi_tenancy.organization.AssignedTenant;
-import org.idp.server.core.multi_tenancy.organization.Organization;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantAttributes;
-import org.idp.server.core.multi_tenancy.tenant.TenantType;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.platform.multi_tenancy.organization.AssignedTenant;
+import org.idp.server.platform.multi_tenancy.organization.Organization;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
+import org.idp.server.platform.multi_tenancy.tenant.TenantType;
 
 public class OnboardingContextCreator {
 
@@ -59,7 +59,8 @@ public class OnboardingContextCreator {
             tenantRequest.databaseType(),
             new TenantAttributes());
 
-    AssignedTenant assignedTenant = new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
+    AssignedTenant assignedTenant =
+        new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
     Organization assigned = organization.updateWithTenant(assignedTenant);
 
     List<Role> rolesList = roles.toList();

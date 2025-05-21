@@ -3,9 +3,9 @@ package org.idp.server.core.security.event;
 import java.util.HashMap;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.security.SecurityEvent;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthFlowEventCreator {
 
@@ -51,7 +51,7 @@ public class OAuthFlowEventCreator {
 
     SecurityEventTenant securityEventTenant =
         new SecurityEventTenant(
-            tenant.identifier().value(), tenant.tokenIssuer().value(), tenant.name().value());
+            tenant.identifier().value(), tenant.tokenIssuer(), tenant.name().value());
     builder.add(securityEventTenant);
 
     SecurityEventClient securityEventClient =

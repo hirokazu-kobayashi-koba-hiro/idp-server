@@ -1,8 +1,8 @@
 package org.idp.server.core.authentication.device;
 
 import java.util.Map;
-import org.idp.server.basic.exception.UnSupportedException;
 import org.idp.server.core.authentication.notification.device.NotificationChannel;
+import org.idp.server.platform.exception.UnSupportedException;
 
 public class AuthenticationDeviceNotifiers {
 

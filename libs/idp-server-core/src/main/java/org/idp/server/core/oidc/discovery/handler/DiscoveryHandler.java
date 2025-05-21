@@ -1,7 +1,6 @@
 package org.idp.server.core.oidc.discovery.handler;
 
 import java.util.Map;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.discovery.JwksResponseCreator;
@@ -10,6 +9,7 @@ import org.idp.server.core.oidc.discovery.handler.io.JwksRequestResponse;
 import org.idp.server.core.oidc.discovery.handler.io.JwksRequestStatus;
 import org.idp.server.core.oidc.discovery.handler.io.ServerConfigurationRequestResponse;
 import org.idp.server.core.oidc.discovery.handler.io.ServerConfigurationRequestStatus;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class DiscoveryHandler {
 

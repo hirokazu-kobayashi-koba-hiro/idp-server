@@ -4,7 +4,7 @@ import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationApplicationCommandDataSource
     implements IdentityVerificationApplicationCommandRepository {

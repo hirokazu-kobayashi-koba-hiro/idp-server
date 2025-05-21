@@ -5,7 +5,7 @@ import java.util.Map;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementStatus;
 import org.idp.server.core.authentication.AuthenticationConfiguration;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationConfigRegistrationContext {
 

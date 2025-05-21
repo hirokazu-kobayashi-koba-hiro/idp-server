@@ -3,7 +3,6 @@ package org.idp.server.core.oidc.handler;
 import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.OAuthAuthorizeContext;
 import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.OAuthSessionDelegate;
@@ -24,6 +23,7 @@ import org.idp.server.core.oidc.response.*;
 import org.idp.server.core.oidc.validator.OAuthAuthorizeRequestValidator;
 import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** OAuthAuthorizeHandler */
 public class OAuthAuthorizeHandler {

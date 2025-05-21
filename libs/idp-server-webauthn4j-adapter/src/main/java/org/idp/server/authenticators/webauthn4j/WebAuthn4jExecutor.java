@@ -7,7 +7,7 @@ import org.idp.server.core.authentication.AuthorizationIdentifier;
 import org.idp.server.core.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.authentication.webauthn.*;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class WebAuthn4jExecutor implements WebAuthnExecutor {
 

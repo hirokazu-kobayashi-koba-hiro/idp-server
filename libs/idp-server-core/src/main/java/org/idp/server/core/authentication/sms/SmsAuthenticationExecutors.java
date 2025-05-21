@@ -1,7 +1,7 @@
 package org.idp.server.core.authentication.sms;
 
 import java.util.Map;
-import org.idp.server.basic.exception.UnSupportedException;
+import org.idp.server.platform.exception.UnSupportedException;
 
 public class SmsAuthenticationExecutors {
 

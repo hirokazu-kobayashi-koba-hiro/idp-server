@@ -1,10 +1,10 @@
 package org.idp.server.adapters.springboot.application.session.datasource;
 
 import jakarta.servlet.http.HttpSession;
-import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.OAuthSessionKey;
 import org.idp.server.core.oidc.repository.OAuthSessionRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.springframework.stereotype.Repository;
 
 @Repository

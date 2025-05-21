@@ -1,6 +1,7 @@
 package org.idp.server.core.oidc.verifier.extension;
 
 import org.idp.server.core.oidc.OAuthRequestContext;
+import org.idp.server.core.oidc.verifier.AuthorizationRequestExtensionVerifier;
 
 public class JarmVerifier implements AuthorizationRequestExtensionVerifier {
 

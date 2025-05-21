@@ -8,8 +8,8 @@ import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwne
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserOperationApi;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

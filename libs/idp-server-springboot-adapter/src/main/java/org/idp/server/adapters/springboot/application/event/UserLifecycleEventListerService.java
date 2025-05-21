@@ -1,9 +1,9 @@
 package org.idp.server.adapters.springboot.application.event;
 
 import org.idp.server.IdpServerApplication;
-import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.identity.event.UserLifecycleEvent;
 import org.idp.server.core.identity.event.UserLifecycleEventApi;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.task.TaskExecutor;

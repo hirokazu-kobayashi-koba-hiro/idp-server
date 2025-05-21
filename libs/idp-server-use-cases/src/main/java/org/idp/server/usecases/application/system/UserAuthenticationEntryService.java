@@ -1,21 +1,21 @@
 package org.idp.server.usecases.application.system;
 
-import org.idp.server.basic.datasource.Transaction;
-import org.idp.server.basic.exception.UnauthorizedException;
 import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.control_plane.base.TokenIntrospectionCreator;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserAuthenticationApi;
 import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.repository.UserQueryRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.TokenProtocol;
 import org.idp.server.core.token.TokenProtocols;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
+import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.exception.UnauthorizedException;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 
 @Transaction
 public class UserAuthenticationEntryService implements UserAuthenticationApi {

@@ -1,15 +1,17 @@
 package org.idp.server.core.token;
 
-import org.idp.server.basic.dependency.ApplicationComponentContainer;
-import org.idp.server.basic.dependency.protocol.ProtocolProvider;
-import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
-import org.idp.server.core.ciba.repository.CibaGrantRepository;
+import java.util.Map;
+import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
+import org.idp.server.core.token.plugin.OAuthTokenCreationServiceLoader;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.core.token.service.OAuthTokenCreationService;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.dependency.protocol.ProtocolProvider;
 
 public class DefaultTokenProtocolProvider implements ProtocolProvider<TokenProtocol> {
 
@@ -33,21 +35,19 @@ public class DefaultTokenProtocolProvider implements ProtocolProvider<TokenProto
     AuthorizationCodeGrantRepository authorizationCodeGrantRepository =
         container.resolve(AuthorizationCodeGrantRepository.class);
     OAuthTokenRepository oAuthTokenRepository = container.resolve(OAuthTokenRepository.class);
-    BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository =
-        container.resolve(BackchannelAuthenticationRequestRepository.class);
-    CibaGrantRepository cibaGrantRepository = container.resolve(CibaGrantRepository.class);
     PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate =
         container.resolve(PasswordCredentialsGrantDelegate.class);
+    Map<GrantType, OAuthTokenCreationService> extentions =
+        OAuthTokenCreationServiceLoader.load(container);
 
     return new DefaultTokenProtocol(
         authorizationRequestRepository,
         authorizationCodeGrantRepository,
         authorizationGrantedRepository,
-        backchannelAuthenticationRequestRepository,
-        cibaGrantRepository,
         oAuthTokenRepository,
         authorizationServerConfigurationQueryRepository,
         clientConfigurationQueryRepository,
-        passwordCredentialsGrantDelegate);
+        passwordCredentialsGrantDelegate,
+        extentions);
   }
 }

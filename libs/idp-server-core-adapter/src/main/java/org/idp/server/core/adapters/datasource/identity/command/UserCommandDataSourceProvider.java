@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.identity.command;
 
-import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
-import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.identity.repository.UserCommandRepository;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
 public class UserCommandDataSourceProvider
     implements ApplicationComponentProvider<UserCommandRepository> {

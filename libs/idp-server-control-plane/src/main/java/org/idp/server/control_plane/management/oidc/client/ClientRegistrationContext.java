@@ -3,8 +3,8 @@ package org.idp.server.control_plane.management.oidc.client;
 import java.util.Map;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class ClientRegistrationContext {
   Tenant tenant;

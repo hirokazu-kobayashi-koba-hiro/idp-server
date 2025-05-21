@@ -1,9 +1,9 @@
 package org.idp.server.core.adapters.datasource.security.event;
 
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.security.SecurityEvent;
 import org.idp.server.core.security.repository.SecurityEventCommandRepository;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class SecurityEventCommandDataSource implements SecurityEventCommandRepository {
 

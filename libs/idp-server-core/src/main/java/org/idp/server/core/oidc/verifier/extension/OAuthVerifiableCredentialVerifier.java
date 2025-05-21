@@ -4,6 +4,7 @@ import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oidc.rar.AuthorizationDetailsInvalidException;
 import org.idp.server.core.oidc.vc.VerifiableCredentialInvalidException;
+import org.idp.server.core.oidc.verifier.AuthorizationRequestExtensionVerifier;
 
 public class OAuthVerifiableCredentialVerifier implements AuthorizationRequestExtensionVerifier {
 

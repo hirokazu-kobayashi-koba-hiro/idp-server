@@ -1,6 +1,6 @@
 package org.idp.server.core.authentication.notification;
 
-import org.idp.server.basic.exception.UnSupportedException;
+import org.idp.server.platform.exception.UnSupportedException;
 
 public enum EmailSenderType {
   SMTP("smtp"),

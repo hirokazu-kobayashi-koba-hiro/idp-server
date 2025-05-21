@@ -2,7 +2,7 @@ package org.idp.server.core.adapters.datasource.security.hook.result;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.datasource.DatabaseType;
+import org.idp.server.platform.datasource.DatabaseType;
 
 public class SecurityEventHoolResultSqlExecutors {
 

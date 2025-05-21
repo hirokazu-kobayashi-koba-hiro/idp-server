@@ -8,7 +8,7 @@ import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.admin.tenant.io.TenantInitializationRequest;
 import org.idp.server.control_plane.admin.tenant.io.TenantInitializationResponse;
-import org.idp.server.core.multi_tenancy.tenant.*;
+import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

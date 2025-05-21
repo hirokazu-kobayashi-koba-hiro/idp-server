@@ -2,7 +2,7 @@ package org.idp.server.core.oidc.exception;
 
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** OAuthBadRequestException */
 public class OAuthBadRequestException extends RuntimeException {

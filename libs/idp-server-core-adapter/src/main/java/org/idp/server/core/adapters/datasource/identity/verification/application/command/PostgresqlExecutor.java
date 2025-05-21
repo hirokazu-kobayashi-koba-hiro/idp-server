@@ -2,12 +2,12 @@ package org.idp.server.core.adapters.datasource.identity.verification.applicatio
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.basic.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements IdentityVerificationApplicationCommandSqlExecutor {
 

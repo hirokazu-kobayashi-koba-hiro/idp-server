@@ -4,12 +4,12 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.organization.AssignedTenant;
-import org.idp.server.core.multi_tenancy.organization.Organization;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantAttributes;
-import org.idp.server.core.multi_tenancy.tenant.TenantType;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.platform.multi_tenancy.organization.AssignedTenant;
+import org.idp.server.platform.multi_tenancy.organization.Organization;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
+import org.idp.server.platform.multi_tenancy.tenant.TenantType;
 
 public class TenantManagementRegistrationContextCreator {
   Tenant adminTenant;
@@ -49,7 +49,8 @@ public class TenantManagementRegistrationContextCreator {
             tenantRequest.authorizationProvider(),
             tenantRequest.databaseType(),
             new TenantAttributes());
-    AssignedTenant assignedTenant = new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
+    AssignedTenant assignedTenant =
+        new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
     Organization assigned = organization.updateWithTenant(assignedTenant);
     user.addAssignedTenant(tenant.identifier());
 

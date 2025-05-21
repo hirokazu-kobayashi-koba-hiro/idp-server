@@ -1,24 +1,33 @@
 package org.idp.server.core.oidc.verifier;
 
 import java.util.*;
-import org.idp.server.basic.exception.UnSupportedException;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
-import org.idp.server.core.oidc.verifier.base.AuthorizationRequestVerifier;
-import org.idp.server.core.oidc.verifier.extension.*;
+import org.idp.server.core.oidc.plugin.*;
+import org.idp.server.core.oidc.verifier.extension.JarmVerifier;
+import org.idp.server.core.oidc.verifier.extension.OAuthAuthorizationDetailsVerifier;
+import org.idp.server.core.oidc.verifier.extension.OAuthVerifiableCredentialVerifier;
+import org.idp.server.core.oidc.verifier.extension.RequestObjectVerifier;
+import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 
 /** OAuthRequestVerifier */
 public class OAuthRequestVerifier {
 
-  static Map<AuthorizationProfile, AuthorizationRequestVerifier> baseVerifiers = new HashMap<>();
-  static List<AuthorizationRequestExtensionVerifier> extensionVerifiers = new ArrayList<>();
+  Map<AuthorizationProfile, AuthorizationRequestVerifier> baseVerifiers = new HashMap<>();
+  List<AuthorizationRequestExtensionVerifier> extensionVerifiers = new ArrayList<>();
+  LoggerWrapper log = LoggerWrapper.getLogger(OAuthRequestVerifier.class);
 
-  static {
+  public OAuthRequestVerifier() {
     baseVerifiers.put(AuthorizationProfile.OAUTH2, new OAuth2RequestVerifier());
     baseVerifiers.put(AuthorizationProfile.OIDC, new OidcRequestVerifier());
-    baseVerifiers.put(AuthorizationProfile.FAPI_BASELINE, new FapiBaselineVerifier());
-    baseVerifiers.put(AuthorizationProfile.FAPI_ADVANCE, new FapiAdvanceVerifier());
-    extensionVerifiers.add(new PckeVerifier());
+    Map<AuthorizationProfile, AuthorizationRequestVerifier> loadedVerifiers =
+        AuthorizationRequestVerifierLoader.load();
+    baseVerifiers.putAll(loadedVerifiers);
+
+    List<AuthorizationRequestExtensionVerifier> loadedExtensionVerifiers =
+        AuthorizationRequestExtensionVerifierLoader.load();
+    extensionVerifiers.addAll(loadedExtensionVerifiers);
     extensionVerifiers.add(new RequestObjectVerifier());
     extensionVerifiers.add(new OAuthAuthorizationDetailsVerifier());
     extensionVerifiers.add(new JarmVerifier());

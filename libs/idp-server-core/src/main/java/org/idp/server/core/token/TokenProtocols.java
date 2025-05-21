@@ -3,8 +3,8 @@ package org.idp.server.core.token;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.basic.dependency.protocol.AuthorizationProvider;
-import org.idp.server.basic.exception.UnSupportedException;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.exception.UnSupportedException;
 
 public class TokenProtocols {
 

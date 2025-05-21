@@ -1,19 +1,19 @@
 package org.idp.server.core.oidc.factory;
 
 import java.util.Set;
-import org.idp.server.basic.date.SystemDateTime;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.MaxAge;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
+import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** NormalRequestFactory */
 public class NormalRequestFactory implements AuthorizationRequestFactory {

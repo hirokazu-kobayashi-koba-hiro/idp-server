@@ -3,7 +3,7 @@ package org.idp.server.core.authentication.notification;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class EmailSenderLoader {
 

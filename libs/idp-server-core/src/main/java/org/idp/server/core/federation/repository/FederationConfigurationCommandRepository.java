@@ -1,7 +1,7 @@
 package org.idp.server.core.federation.repository;
 
 import org.idp.server.core.federation.FederationConfiguration;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface FederationConfigurationCommandRepository {
   void register(Tenant tenant, FederationConfiguration configuration);

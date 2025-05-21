@@ -6,7 +6,6 @@ import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
@@ -25,6 +24,7 @@ import org.idp.server.core.token.*;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
 import org.idp.server.core.token.validator.ResourceOwnerPasswordGrantValidator;
 import org.idp.server.core.token.verifier.ResourceOwnerPasswordGrantVerifier;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * ResourceOwnerPasswordCredentialsGrantService
@@ -51,6 +51,11 @@ public class ResourceOwnerPasswordCredentialsGrantService
 
   public ResourceOwnerPasswordCredentialsGrantService(OAuthTokenRepository oAuthTokenRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
+  }
+
+  @Override
+  public GrantType grantType() {
+    return GrantType.password;
   }
 
   @Override

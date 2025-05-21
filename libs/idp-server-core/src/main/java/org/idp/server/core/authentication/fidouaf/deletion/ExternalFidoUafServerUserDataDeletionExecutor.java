@@ -2,7 +2,6 @@ package org.idp.server.core.authentication.fidouaf.deletion;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.log.LoggerWrapper;
 import org.idp.server.core.authentication.fidouaf.*;
 import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.identity.User;
@@ -10,7 +9,8 @@ import org.idp.server.core.identity.event.UserLifecycleEvent;
 import org.idp.server.core.identity.event.UserLifecycleEventExecutor;
 import org.idp.server.core.identity.event.UserLifecycleEventResult;
 import org.idp.server.core.identity.event.UserLifecycleType;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class ExternalFidoUafServerUserDataDeletionExecutor implements UserLifecycleEventExecutor {
 

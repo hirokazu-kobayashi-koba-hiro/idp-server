@@ -1,7 +1,7 @@
 package org.idp.server.core.identity.event;
 
 import java.util.List;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface UserLifecycleEventResultCommandRepository {
 

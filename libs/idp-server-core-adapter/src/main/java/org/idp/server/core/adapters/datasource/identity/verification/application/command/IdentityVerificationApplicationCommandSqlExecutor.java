@@ -3,7 +3,7 @@ package org.idp.server.core.adapters.datasource.identity.verification.applicatio
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface IdentityVerificationApplicationCommandSqlExecutor {
   void insert(Tenant tenant, IdentityVerificationApplication application);

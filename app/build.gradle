@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-
+	implementation project(':libs:idp-server-platform')
 	implementation project(':libs:idp-server-core')
 	implementation project(':libs:idp-server-core-adapter')
 	implementation project(':libs:idp-server-webauthn4j-adapter')

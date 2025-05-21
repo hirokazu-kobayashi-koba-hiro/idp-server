@@ -2,9 +2,9 @@ package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.basic.datasource.SqlExecutor;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.invitation.TenantInvitation;
+import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitation;
+import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class MysqlExecutor implements TenantInvitationSqlExecutor {
 

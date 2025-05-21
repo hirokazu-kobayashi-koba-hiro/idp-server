@@ -1,6 +1,6 @@
 package org.idp.server.core.authentication.exception;
 
-import org.idp.server.basic.exception.NotFoundException;
+import org.idp.server.platform.exception.NotFoundException;
 
 public class AuthenticationTransactionNotFoundException extends NotFoundException {
 

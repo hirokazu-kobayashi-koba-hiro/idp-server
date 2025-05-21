@@ -2,9 +2,9 @@ package org.idp.server.control_plane.base;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.token.AuthorizationHeaderHandlerable;
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenIntrospectionCreator implements AuthorizationHeaderHandlerable {
 

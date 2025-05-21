@@ -1,12 +1,8 @@
 package org.idp.server.usecases.application.enduser;
 
 import java.util.Map;
-import org.idp.server.basic.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.identity.repository.UserQueryRepository;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.security.event.TokenEventPublisher;
 import org.idp.server.core.token.TokenApi;
 import org.idp.server.core.token.TokenProtocol;
@@ -17,6 +13,10 @@ import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectio
 import org.idp.server.core.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.token.handler.tokenrevocation.io.TokenRevocationResponse;
+import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 
 @Transaction
 public class TokenEntryService implements TokenApi {

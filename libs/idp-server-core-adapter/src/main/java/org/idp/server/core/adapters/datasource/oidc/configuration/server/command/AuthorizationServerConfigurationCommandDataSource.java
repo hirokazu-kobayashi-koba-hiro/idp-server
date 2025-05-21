@@ -1,11 +1,11 @@
 package org.idp.server.core.adapters.datasource.oidc.configuration.server.command;
 
-import org.idp.server.basic.datasource.cache.CacheStore;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
+import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class AuthorizationServerConfigurationCommandDataSource
     implements AuthorizationServerConfigurationCommandRepository {

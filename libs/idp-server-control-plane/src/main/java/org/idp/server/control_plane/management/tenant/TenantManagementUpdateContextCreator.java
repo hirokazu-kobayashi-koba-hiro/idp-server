@@ -5,9 +5,9 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
-import org.idp.server.core.multi_tenancy.tenant.TenantAttributes;
-import org.idp.server.core.multi_tenancy.tenant.TenantDomain;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
+import org.idp.server.platform.multi_tenancy.tenant.TenantDomain;
 
 public class TenantManagementUpdateContextCreator {
   Tenant adminTenant;

@@ -1,6 +1,6 @@
 package org.idp.server.basic.type;
 
-import org.idp.server.basic.exception.UnSupportedException;
+import org.idp.server.platform.exception.UnSupportedException;
 
 public enum AuthorizationFlow {
   OAUTH("oauth"),

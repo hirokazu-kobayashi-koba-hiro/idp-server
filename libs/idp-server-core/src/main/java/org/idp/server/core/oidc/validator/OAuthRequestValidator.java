@@ -1,9 +1,9 @@
 package org.idp.server.core.oidc.validator;
 
 import java.util.List;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * validator

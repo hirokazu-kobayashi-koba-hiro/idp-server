@@ -12,7 +12,7 @@ import java.security.PrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.text.ParseException;
 import java.util.Map;
-import org.idp.server.basic.exception.UnSupportedException;
+import org.idp.server.platform.exception.UnSupportedException;
 
 // FIXME refactor
 public class JsonWebSignatureFactory {

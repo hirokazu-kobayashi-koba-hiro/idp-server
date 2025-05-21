@@ -4,8 +4,8 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
-import org.idp.server.basic.datasource.*;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.datasource.*;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class HikariConnectionProvider implements DbConnectionProvider {
 

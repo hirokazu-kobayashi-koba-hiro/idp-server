@@ -8,7 +8,6 @@ import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.*;
 import org.idp.server.basic.type.pkce.CodeChallenge;
 import org.idp.server.basic.type.pkce.CodeChallengeMethod;
-import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.identity.RequestedClaimsPayload;
@@ -17,6 +16,7 @@ import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {
 

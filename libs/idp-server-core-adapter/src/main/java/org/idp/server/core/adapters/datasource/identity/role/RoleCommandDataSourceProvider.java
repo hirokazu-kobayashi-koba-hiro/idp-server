@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.identity.role;
 
-import org.idp.server.basic.dependency.ApplicationComponentDependencyContainer;
-import org.idp.server.basic.dependency.ApplicationComponentProvider;
 import org.idp.server.core.identity.role.RoleCommandRepository;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
 public class RoleCommandDataSourceProvider
     implements ApplicationComponentProvider<RoleCommandRepository> {

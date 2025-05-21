@@ -1,8 +1,8 @@
 package org.idp.server.core.federation.sso.oidc;
 
 import java.util.Map;
-import org.idp.server.basic.exception.UnSupportedException;
 import org.idp.server.core.federation.sso.SsoProvider;
+import org.idp.server.platform.exception.UnSupportedException;
 
 public class OidcSsoExecutors {
 

@@ -6,8 +6,8 @@ import static org.idp.server.basic.type.oauth.ResponseType.none;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.exception.UnSupportedException;
 import org.idp.server.basic.type.oauth.ResponseType;
+import org.idp.server.platform.exception.UnSupportedException;
 
 public class AuthorizationResponseCreators {
   Map<ResponseType, AuthorizationResponseCreator> values;

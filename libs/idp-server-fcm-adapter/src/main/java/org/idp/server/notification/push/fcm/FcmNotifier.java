@@ -6,14 +6,14 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
-import org.idp.server.basic.log.LoggerWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotificationConfiguration;
 import org.idp.server.core.authentication.device.AuthenticationDeviceNotifier;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.authentication.notification.device.NotificationChannel;
 import org.idp.server.core.authentication.notification.device.NotificationTemplate;
 import org.idp.server.core.identity.device.AuthenticationDevice;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
