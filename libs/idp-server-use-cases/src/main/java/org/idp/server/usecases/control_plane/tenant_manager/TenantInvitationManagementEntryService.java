@@ -3,6 +3,8 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.idp.server.authentication.interactors.notification.EmailSenders;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.control_plane.management.tenant.invitation.TenantInvitationContext;
 import org.idp.server.control_plane.management.tenant.invitation.TenantInvitationContextCreator;
@@ -16,9 +18,8 @@ import org.idp.server.control_plane.management.tenant.invitation.operation.Tenan
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationQueryRepository;
 import org.idp.server.control_plane.management.tenant.invitation.validator.OrganizationInvitationRequestValidationResult;
 import org.idp.server.control_plane.management.tenant.invitation.validator.OrganizationInvitationRequestValidator;
-import org.idp.server.core.authentication.notification.EmailSenders;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

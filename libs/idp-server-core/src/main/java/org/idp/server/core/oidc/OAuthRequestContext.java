@@ -11,7 +11,7 @@ import org.idp.server.basic.type.extension.RegisteredRedirectUris;
 import org.idp.server.basic.type.extension.ResponseModeValue;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.ResponseMode;
-import org.idp.server.core.grant_management.AuthorizationGranted;
+import org.idp.server.core.oidc.grant_management.AuthorizationGranted;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;

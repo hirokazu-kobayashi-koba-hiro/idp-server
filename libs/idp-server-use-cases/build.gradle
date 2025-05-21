@@ -21,6 +21,7 @@ dependencies {
 	implementation project(':libs:idp-server-core-extension-verifiable-credentials')
 	implementation project(':libs:idp-server-security-event-framework')
 	implementation project(':libs:idp-server-security-event-hooks')
+	implementation project(':libs:idp-server-authentication-interactors')
 	implementation project(':libs:idp-server-control-plane')
 
 	testImplementation platform('org.junit:junit-bom:5.10.0')

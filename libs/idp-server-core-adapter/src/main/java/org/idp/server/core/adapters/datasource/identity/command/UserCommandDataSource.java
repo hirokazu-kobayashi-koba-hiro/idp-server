@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.identity.command;
 
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserIdentifier;
-import org.idp.server.core.identity.repository.UserCommandRepository;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserCommandDataSource implements UserCommandRepository {

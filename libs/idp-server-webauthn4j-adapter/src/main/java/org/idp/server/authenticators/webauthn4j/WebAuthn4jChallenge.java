@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
-import org.idp.server.core.authentication.webauthn.WebAuthnChallenge;
+import org.idp.server.authentication.interactors.webauthn.WebAuthnChallenge;
 
 public class WebAuthn4jChallenge implements Challenge {
   byte[] value;

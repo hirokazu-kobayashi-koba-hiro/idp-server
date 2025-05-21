@@ -3,8 +3,8 @@ package org.idp.server.core.extension.identity.verification;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationQueries;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 

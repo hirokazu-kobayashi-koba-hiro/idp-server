@@ -9,7 +9,7 @@ import org.idp.server.core.oidc.userinfo.handler.UserinfoHandler;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequest;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestStatus;
-import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.platform.log.LoggerWrapper;

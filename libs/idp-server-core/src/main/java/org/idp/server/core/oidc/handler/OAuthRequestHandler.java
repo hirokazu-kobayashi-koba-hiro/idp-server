@@ -1,7 +1,7 @@
 package org.idp.server.core.oidc.handler;
 
-import org.idp.server.core.grant_management.AuthorizationGranted;
-import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
+import org.idp.server.core.oidc.grant_management.AuthorizationGranted;
+import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.*;
 import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;

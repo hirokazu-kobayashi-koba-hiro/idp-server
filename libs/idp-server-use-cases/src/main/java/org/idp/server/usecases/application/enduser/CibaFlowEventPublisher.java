@@ -1,7 +1,7 @@
 package org.idp.server.usecases.application.enduser;
 
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.identity.User;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventPublisher;

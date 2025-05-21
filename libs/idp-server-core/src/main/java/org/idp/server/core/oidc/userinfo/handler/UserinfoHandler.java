@@ -2,7 +2,7 @@ package org.idp.server.core.oidc.userinfo.handler;
 
 import java.util.Map;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
-import org.idp.server.core.identity.User;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.userinfo.UserinfoClaimsCreator;
@@ -11,9 +11,9 @@ import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequest;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestStatus;
 import org.idp.server.core.oidc.userinfo.verifier.UserinfoVerifier;
-import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.token.repository.OAuthTokenRepository;
-import org.idp.server.core.token.tokenintrospection.exception.TokenInvalidException;
+import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserinfoHandler {

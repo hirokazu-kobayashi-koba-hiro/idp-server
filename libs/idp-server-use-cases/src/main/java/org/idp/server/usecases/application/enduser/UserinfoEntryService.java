@@ -1,16 +1,16 @@
 package org.idp.server.usecases.application.enduser;
 
 import org.idp.server.basic.type.oauth.Subject;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserIdentifier;
-import org.idp.server.core.identity.repository.UserQueryRepository;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.userinfo.UserinfoApi;
 import org.idp.server.core.oidc.userinfo.UserinfoProtocol;
 import org.idp.server.core.oidc.userinfo.UserinfoProtocols;
 import org.idp.server.core.oidc.userinfo.handler.UserinfoDelegate;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequest;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
-import org.idp.server.core.token.TokenEventPublisher;
+import org.idp.server.core.oidc.token.TokenEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

@@ -7,7 +7,7 @@ import org.idp.server.basic.type.oauth.ClientSecretBasic;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.request.OAuthPushedRequestParameters;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
-import org.idp.server.core.token.AuthorizationHeaderHandlerable;
+import org.idp.server.core.oidc.token.AuthorizationHeaderHandlerable;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {

@@ -1,2 +1,0 @@
-org.idp.server.core.authentication.fidouaf.deletion.ExternalFidoUafServerUserDataDeletionExecutorFactory
-org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationCompletionExecutorFactory

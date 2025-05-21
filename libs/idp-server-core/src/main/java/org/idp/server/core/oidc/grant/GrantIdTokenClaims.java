@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import org.idp.server.basic.type.oauth.ResponseType;
 import org.idp.server.basic.type.oauth.Scopes;
-import org.idp.server.core.oidc.identity.RequestedIdTokenClaims;
+import org.idp.server.core.oidc.id_token.RequestedIdTokenClaims;
 
 public class GrantIdTokenClaims implements Iterable<String> {
 

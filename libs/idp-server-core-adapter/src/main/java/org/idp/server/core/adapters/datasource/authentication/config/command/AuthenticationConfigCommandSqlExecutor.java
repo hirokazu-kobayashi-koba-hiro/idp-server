@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.datasource.authentication.config.command;
 
-import org.idp.server.core.authentication.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationConfigCommandSqlExecutor {

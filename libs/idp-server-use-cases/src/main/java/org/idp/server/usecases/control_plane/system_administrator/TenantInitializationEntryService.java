@@ -11,10 +11,10 @@ import org.idp.server.control_plane.admin.tenant.verifier.TenantInitializationVe
 import org.idp.server.control_plane.admin.tenant.verifier.TenantInitializationVerifier;
 import org.idp.server.control_plane.base.verifier.ClientVerifier;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
-import org.idp.server.core.identity.UserRegistrator;
-import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
-import org.idp.server.core.identity.repository.UserCommandRepository;
-import org.idp.server.core.identity.repository.UserQueryRepository;
+import org.idp.server.core.oidc.identity.UserRegistrator;
+import org.idp.server.core.oidc.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
+import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;

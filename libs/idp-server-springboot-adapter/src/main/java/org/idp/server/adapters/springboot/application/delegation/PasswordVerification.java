@@ -1,6 +1,6 @@
 package org.idp.server.adapters.springboot.application.delegation;
 
-import org.idp.server.core.identity.authentication.PasswordVerificationDelegation;
+import org.idp.server.core.oidc.identity.authentication.PasswordVerificationDelegation;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 public class PasswordVerification implements PasswordVerificationDelegation {

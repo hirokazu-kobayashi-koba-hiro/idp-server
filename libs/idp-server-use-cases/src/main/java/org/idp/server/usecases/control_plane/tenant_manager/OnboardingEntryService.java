@@ -14,10 +14,10 @@ import org.idp.server.control_plane.management.onboarding.validator.OnboardingRe
 import org.idp.server.control_plane.management.onboarding.validator.OnboardingRequestValidator;
 import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerificationResult;
 import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerifier;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserRegistrator;
-import org.idp.server.core.identity.repository.UserCommandRepository;
-import org.idp.server.core.identity.repository.UserQueryRepository;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserRegistrator;
+import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
+import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;

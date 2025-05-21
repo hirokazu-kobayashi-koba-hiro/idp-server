@@ -1,9 +1,9 @@
 package org.idp.server.core.oidc.userinfo;
 
 import java.util.Map;
-import org.idp.server.core.identity.User;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
-import org.idp.server.core.oidc.identity.IndividualClaimsCreatable;
+import org.idp.server.core.oidc.id_token.IndividualClaimsCreatable;
 
 public class UserinfoClaimsCreator implements IndividualClaimsCreatable {
 

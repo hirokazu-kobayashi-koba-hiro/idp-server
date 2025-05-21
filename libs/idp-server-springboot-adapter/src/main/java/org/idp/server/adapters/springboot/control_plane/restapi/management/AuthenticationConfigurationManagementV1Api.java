@@ -8,7 +8,7 @@ import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigRequest;
-import org.idp.server.core.authentication.AuthenticationConfigurationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationConfigurationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;

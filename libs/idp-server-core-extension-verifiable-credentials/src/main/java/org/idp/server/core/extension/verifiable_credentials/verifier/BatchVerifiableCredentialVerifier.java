@@ -7,7 +7,7 @@ import org.idp.server.core.extension.verifiable_credentials.request.BatchCredent
 import org.idp.server.core.extension.verifiable_credentials.request.BatchCredentialRequests;
 import org.idp.server.core.extension.verifiable_credentials.request.VerifiableCredentialRequestTransformable;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.oidc.token.OAuthToken;
 
 public class BatchVerifiableCredentialVerifier implements VerifiableCredentialRequestTransformable {
 

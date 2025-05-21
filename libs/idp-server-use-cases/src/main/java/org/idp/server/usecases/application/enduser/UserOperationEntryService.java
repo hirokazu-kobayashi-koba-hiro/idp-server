@@ -1,12 +1,12 @@
 package org.idp.server.usecases.application.enduser;
 
-import org.idp.server.core.identity.*;
-import org.idp.server.core.identity.event.UserLifecycleEvent;
-import org.idp.server.core.identity.event.UserLifecycleEventPublisher;
-import org.idp.server.core.identity.event.UserLifecycleType;
-import org.idp.server.core.identity.repository.UserCommandRepository;
-import org.idp.server.core.token.OAuthToken;
-import org.idp.server.core.token.TokenEventPublisher;
+import org.idp.server.core.oidc.identity.*;
+import org.idp.server.core.oidc.identity.event.UserLifecycleEvent;
+import org.idp.server.core.oidc.identity.event.UserLifecycleEventPublisher;
+import org.idp.server.core.oidc.identity.event.UserLifecycleType;
+import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
+import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.oidc.token.TokenEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

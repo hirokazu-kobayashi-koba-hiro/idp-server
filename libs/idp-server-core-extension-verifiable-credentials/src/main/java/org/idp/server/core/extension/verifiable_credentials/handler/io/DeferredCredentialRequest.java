@@ -5,7 +5,7 @@ import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.type.verifiablecredential.TransactionId;
 import org.idp.server.core.extension.verifiable_credentials.request.DeferredCredentialRequestParameters;
-import org.idp.server.core.token.AuthorizationHeaderHandlerable;
+import org.idp.server.core.oidc.token.AuthorizationHeaderHandlerable;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class DeferredCredentialRequest implements AuthorizationHeaderHandlerable {

@@ -17,6 +17,7 @@ dependencies {
 	implementation project(':libs:idp-server-core-extension-ida')
 	implementation project(':libs:idp-server-core-extension-verifiable-credentials')
 	implementation project(':libs:idp-server-core-supporter')
+	implementation project(':libs:idp-server-authentication-interactors')
 	implementation project(':libs:idp-server-control-plane')
 
 	//database

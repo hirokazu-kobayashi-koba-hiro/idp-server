@@ -2,10 +2,10 @@ package org.idp.server.core.extension.ciba.token;
 
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
-import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.token.plugin.OAuthTokenCreationServiceFactory;
-import org.idp.server.core.token.repository.OAuthTokenRepository;
-import org.idp.server.core.token.service.OAuthTokenCreationService;
+import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
+import org.idp.server.core.oidc.token.plugin.OAuthTokenCreationServiceFactory;
+import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.service.OAuthTokenCreationService;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 
 public class CibaGrantServiceFactory implements OAuthTokenCreationServiceFactory {

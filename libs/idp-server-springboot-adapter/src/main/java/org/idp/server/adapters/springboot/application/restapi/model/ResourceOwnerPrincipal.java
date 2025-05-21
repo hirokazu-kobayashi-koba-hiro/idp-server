@@ -2,8 +2,8 @@ package org.idp.server.adapters.springboot.application.restapi.model;
 
 import java.util.List;
 import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 public class ResourceOwnerPrincipal extends AbstractAuthenticationToken {

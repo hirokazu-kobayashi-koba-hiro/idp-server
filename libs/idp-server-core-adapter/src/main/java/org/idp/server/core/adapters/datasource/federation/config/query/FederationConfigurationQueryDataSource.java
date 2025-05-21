@@ -5,12 +5,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.core.federation.FederationConfiguration;
-import org.idp.server.core.federation.FederationConfigurationIdentifier;
-import org.idp.server.core.federation.FederationConfigurationNotFoundException;
-import org.idp.server.core.federation.FederationType;
-import org.idp.server.core.federation.repository.FederationConfigurationQueryRepository;
-import org.idp.server.core.federation.sso.SsoProvider;
+import org.idp.server.core.oidc.federation.FederationConfiguration;
+import org.idp.server.core.oidc.federation.FederationConfigurationIdentifier;
+import org.idp.server.core.oidc.federation.FederationConfigurationNotFoundException;
+import org.idp.server.core.oidc.federation.FederationType;
+import org.idp.server.core.oidc.federation.repository.FederationConfigurationQueryRepository;
+import org.idp.server.core.oidc.federation.sso.SsoProvider;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class FederationConfigurationQueryDataSource

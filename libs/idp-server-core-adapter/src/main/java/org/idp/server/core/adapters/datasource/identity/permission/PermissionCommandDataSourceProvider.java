@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.datasource.identity.permission;
 
-import org.idp.server.core.identity.permission.PermissionCommandRepository;
+import org.idp.server.core.oidc.identity.permission.PermissionCommandRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 

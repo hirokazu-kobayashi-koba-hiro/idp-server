@@ -1,7 +1,7 @@
 package org.idp.server.core.oidc.userinfo;
 
 import java.util.Map;
-import org.idp.server.core.identity.User;
+import org.idp.server.core.oidc.identity.User;
 
 public class UserinfoResponse {
 

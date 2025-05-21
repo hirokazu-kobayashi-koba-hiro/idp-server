@@ -1,7 +1,7 @@
 package org.idp.server.core.adapters.datasource.authentication.interaction.query;
 
-import org.idp.server.core.authentication.factory.AuthenticationDependencyProvider;
-import org.idp.server.core.authentication.repository.AuthenticationInteractionQueryRepository;
+import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyProvider;
+import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
 
 public class AuthenticationInteractionQueryDataSourceProvider
     implements AuthenticationDependencyProvider<AuthenticationInteractionQueryRepository> {

@@ -13,7 +13,7 @@ import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationReque
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponse;
-import org.idp.server.core.identity.User;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 
 // TODO to be more readable name

@@ -6,7 +6,7 @@ import org.idp.server.basic.type.extension.CreatedAt;
 import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.*;
-import org.idp.server.core.identity.User;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;

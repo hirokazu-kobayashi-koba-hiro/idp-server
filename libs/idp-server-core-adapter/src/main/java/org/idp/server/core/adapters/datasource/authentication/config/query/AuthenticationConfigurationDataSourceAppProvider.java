@@ -1,6 +1,6 @@
 package org.idp.server.core.adapters.datasource.authentication.config.query;
 
-import org.idp.server.core.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 

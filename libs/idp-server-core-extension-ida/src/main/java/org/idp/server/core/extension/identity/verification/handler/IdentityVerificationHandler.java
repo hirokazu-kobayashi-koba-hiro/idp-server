@@ -21,7 +21,7 @@ import org.idp.server.core.extension.identity.verification.validation.IdentityVe
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationValidationResult;
 import org.idp.server.core.extension.identity.verification.verifier.IdentityVerificationRequestVerificationResult;
 import org.idp.server.core.extension.identity.verification.verifier.IdentityVerificationRequestVerifiers;
-import org.idp.server.core.identity.User;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationHandler {

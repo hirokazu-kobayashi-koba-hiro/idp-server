@@ -16,8 +16,8 @@ import org.idp.server.core.extension.identity.verification.delegation.ExternalWo
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
 import org.idp.server.core.extension.identity.verification.trustframework.TrustFramework;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

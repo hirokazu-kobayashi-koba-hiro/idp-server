@@ -95,7 +95,7 @@ AuthorizationRequest authorizationRequest =
 ## Code Reference
 
 - API Entry: `OAuthFlowEntryService.interact(...)`
-- Interactors: `org.idp.server.core.authentication.*.*Interactor`
+- Interactors: `org.idp.server.core.oidc.authentication.*.*Interactor`
 - Transaction management: `AuthenticationTransaction.update(...)`
 - Session update: `OAuthSession.didAuthentication(...)`
 - Events: `SecurityEventPublisher.publish(...)`

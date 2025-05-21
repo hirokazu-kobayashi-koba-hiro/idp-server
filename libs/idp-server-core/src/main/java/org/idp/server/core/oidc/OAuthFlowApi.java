@@ -1,14 +1,14 @@
 package org.idp.server.core.oidc;
 
 import java.util.Map;
-import org.idp.server.core.authentication.AuthenticationInteractionRequest;
-import org.idp.server.core.authentication.AuthenticationInteractionRequestResult;
-import org.idp.server.core.authentication.AuthenticationInteractionType;
-import org.idp.server.core.federation.FederationInteractionResult;
-import org.idp.server.core.federation.FederationType;
-import org.idp.server.core.federation.io.FederationCallbackRequest;
-import org.idp.server.core.federation.io.FederationRequestResponse;
-import org.idp.server.core.federation.sso.SsoProvider;
+import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequest;
+import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequestResult;
+import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
+import org.idp.server.core.oidc.federation.FederationInteractionResult;
+import org.idp.server.core.oidc.federation.FederationType;
+import org.idp.server.core.oidc.federation.io.FederationCallbackRequest;
+import org.idp.server.core.oidc.federation.io.FederationRequestResponse;
+import org.idp.server.core.oidc.federation.sso.SsoProvider;
 import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

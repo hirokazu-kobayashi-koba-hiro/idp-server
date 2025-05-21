@@ -6,8 +6,8 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.core.authentication.*;
-import org.idp.server.core.identity.User;
+import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 

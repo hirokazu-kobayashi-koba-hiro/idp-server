@@ -1,0 +1,117 @@
+package org.idp.server.core.oidc.id_token;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.basic.jose.*;
+import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oidc.IdToken;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.authentication.Authentication;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.configuration.exception.ConfigurationInvalidException;
+import org.idp.server.core.oidc.grant.AuthorizationGrant;
+import org.idp.server.platform.date.SystemDateTime;
+
+public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashable {
+
+  default IdToken createIdToken(
+      User user,
+      Authentication authentication,
+      AuthorizationGrant authorizationGrant,
+      IdTokenCustomClaims customClaims,
+      RequestedClaimsPayload requestedClaimsPayload,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration) {
+    try {
+
+      Map<String, Object> claims =
+          createClaims(
+              user,
+              authentication,
+              customClaims,
+              authorizationGrant,
+              requestedClaimsPayload,
+              authorizationServerConfiguration.tokenIssuer(),
+              authorizationServerConfiguration.idTokenDuration(),
+              authorizationServerConfiguration.isIdTokenStrictMode());
+
+      JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
+      JsonWebSignature jsonWebSignature =
+          jsonWebSignatureFactory.createWithAsymmetricKey(
+              claims,
+              Map.of(),
+              authorizationServerConfiguration.jwks(),
+              authorizationServerConfiguration.tokenSignedKeyId());
+
+      if (clientConfiguration.hasEncryptedIdTokenMeta()) {
+
+        NestedJsonWebEncryptionCreator nestedJsonWebEncryptionCreator =
+            new NestedJsonWebEncryptionCreator(
+                jsonWebSignature,
+                clientConfiguration.idTokenEncryptedResponseAlg(),
+                clientConfiguration.idTokenEncryptedResponseEnc(),
+                clientConfiguration.jwks());
+        String jwe = nestedJsonWebEncryptionCreator.create();
+        return new IdToken(jwe);
+      }
+
+      return new IdToken(jsonWebSignature.serialize());
+    } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
+      throw new ConfigurationInvalidException(exception);
+    }
+  }
+
+  private Map<String, Object> createClaims(
+      User user,
+      Authentication authentication,
+      IdTokenCustomClaims idTokenCustomClaims,
+      AuthorizationGrant authorizationGrant,
+      RequestedClaimsPayload requestedClaimsPayload,
+      TokenIssuer tokenIssuer,
+      long idTokenDuration,
+      boolean idTokenStrictMode) {
+
+    LocalDateTime now = SystemDateTime.now();
+    ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(idTokenDuration));
+    HashMap<String, Object> claims = new HashMap<>();
+    claims.put("iss", tokenIssuer.value());
+    claims.put("aud", authorizationGrant.requestedClientId().value());
+    claims.put("exp", expiredAt.toEpochSecondWithUtc());
+    claims.put("iat", now.toEpochSecond(SystemDateTime.zoneOffset));
+
+    if (idTokenCustomClaims.hasNonce()) {
+      claims.put("nonce", idTokenCustomClaims.nonce().value());
+    }
+    if (idTokenCustomClaims.hasState()) {
+      State state = idTokenCustomClaims.state();
+      claims.put("s_hash", hash(state.value(), "ES256"));
+    }
+    if (idTokenCustomClaims.hasAuthorizationCode()) {
+      claims.put("c_hash", hash(idTokenCustomClaims.authorizationCode().value(), "ES256"));
+    }
+    if (idTokenCustomClaims.hasAccessTokenValue()) {
+      claims.put("at_hash", hash(idTokenCustomClaims.accessTokenValue().value(), "ES256"));
+    }
+    if (authentication.hasAuthenticationTime()) {
+      claims.put("auth_time", authentication.time().toEpochSecond(SystemDateTime.zoneOffset));
+    }
+    if (authentication.hasMethod()) {
+      claims.put("amr", authentication.methods());
+    }
+    if (authentication.hasAcrValues()) {
+      claims.put("acr", authentication.toAcr());
+    }
+
+    Map<String, Object> individualClaims =
+        createIndividualClaims(
+            user,
+            authorizationGrant.idTokenClaims(),
+            idTokenStrictMode,
+            requestedClaimsPayload.idToken());
+    claims.putAll(individualClaims);
+    return claims;
+  }
+}

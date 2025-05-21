@@ -6,7 +6,7 @@ import org.idp.server.core.extension.verifiable_credentials.exception.Verifiable
 import org.idp.server.core.extension.verifiable_credentials.request.DeferredCredentialRequestParameters;
 import org.idp.server.core.extension.verifiable_credentials.request.VerifiableCredentialRequestTransformable;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.token.OAuthToken;
+import org.idp.server.core.oidc.token.OAuthToken;
 
 public class DeferredVerifiableCredentialRequestVerifier
     implements VerifiableCredentialRequestTransformable {

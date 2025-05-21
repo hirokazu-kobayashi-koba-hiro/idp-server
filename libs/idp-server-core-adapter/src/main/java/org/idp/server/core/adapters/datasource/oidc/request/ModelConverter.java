@@ -10,7 +10,7 @@ import org.idp.server.basic.type.pkce.CodeChallenge;
 import org.idp.server.basic.type.pkce.CodeChallengeMethod;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.client.Client;
-import org.idp.server.core.oidc.identity.RequestedClaimsPayload;
+import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
 import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.request.AuthorizationRequest;

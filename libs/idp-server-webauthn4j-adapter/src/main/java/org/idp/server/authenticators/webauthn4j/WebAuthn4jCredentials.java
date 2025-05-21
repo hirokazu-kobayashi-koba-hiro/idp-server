@@ -3,7 +3,7 @@ package org.idp.server.authenticators.webauthn4j;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import org.idp.server.core.authentication.webauthn.WebAuthnCredentialNotFoundException;
+import org.idp.server.authentication.interactors.webauthn.WebAuthnCredentialNotFoundException;
 
 public class WebAuthn4jCredentials implements Iterable<WebAuthn4jCredential> {
 

@@ -3,7 +3,7 @@ package org.idp.server.control_plane.management.tenant;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
-import org.idp.server.core.identity.User;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.platform.multi_tenancy.organization.AssignedTenant;
 import org.idp.server.platform.multi_tenancy.organization.Organization;

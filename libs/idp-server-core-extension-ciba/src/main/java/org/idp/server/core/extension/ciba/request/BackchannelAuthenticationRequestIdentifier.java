@@ -1,7 +1,7 @@
 package org.idp.server.core.extension.ciba.request;
 
 import java.util.Objects;
-import org.idp.server.core.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 
 public class BackchannelAuthenticationRequestIdentifier {
   String value;

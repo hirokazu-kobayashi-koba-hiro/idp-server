@@ -10,10 +10,10 @@ import org.idp.server.control_plane.admin.starter.validator.IdpServerInitializeR
 import org.idp.server.control_plane.admin.starter.verifier.IdpServerStarterVerifier;
 import org.idp.server.control_plane.admin.starter.verifier.IdpServerVerificationResult;
 import org.idp.server.control_plane.admin.starter.verifier.StarterTenantVerifier;
-import org.idp.server.core.identity.authentication.PasswordEncodeDelegation;
-import org.idp.server.core.identity.permission.PermissionCommandRepository;
-import org.idp.server.core.identity.repository.UserCommandRepository;
-import org.idp.server.core.identity.role.RoleCommandRepository;
+import org.idp.server.core.oidc.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.oidc.identity.permission.PermissionCommandRepository;
+import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
+import org.idp.server.core.oidc.identity.role.RoleCommandRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
