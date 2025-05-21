@@ -1,7 +1,7 @@
 package org.idp.server.adapters.springboot.application.event;
 
-import org.idp.server.core.security.SecurityEvent;
-import org.idp.server.core.security.SecurityEventPublisher;
+import org.idp.server.platform.security.SecurityEvent;
+import org.idp.server.platform.security.SecurityEventPublisher;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,5 @@
 package org.idp.server.usecases.control_plane.system_administrator;
 
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterContext;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterContextCreator;
@@ -21,6 +20,7 @@ import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRep
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class IdpServerStarterEntryService implements IdpServerStarterApi {

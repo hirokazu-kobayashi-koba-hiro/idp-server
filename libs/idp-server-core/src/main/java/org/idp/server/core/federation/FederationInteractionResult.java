@@ -7,8 +7,8 @@ import org.idp.server.core.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 public class FederationInteractionResult {
 

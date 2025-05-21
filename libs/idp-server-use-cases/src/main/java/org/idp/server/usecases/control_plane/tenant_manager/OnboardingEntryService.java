@@ -2,7 +2,6 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
@@ -26,6 +25,7 @@ import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.*;
 import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class OnboardingEntryService implements OnboardingApi {

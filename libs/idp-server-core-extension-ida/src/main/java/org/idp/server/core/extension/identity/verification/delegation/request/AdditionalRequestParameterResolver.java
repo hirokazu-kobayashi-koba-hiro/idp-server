@@ -1,12 +1,12 @@
 package org.idp.server.core.extension.identity.verification.delegation.request;
 
 import java.util.Map;
-import org.idp.server.core.identity.User;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AdditionalRequestParameterResolver {

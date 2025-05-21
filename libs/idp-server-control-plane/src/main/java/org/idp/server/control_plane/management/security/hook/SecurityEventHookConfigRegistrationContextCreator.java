@@ -6,8 +6,8 @@ import java.util.UUID;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigRequest;
-import org.idp.server.core.security.hook.SecurityEventHookConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
 
 public class SecurityEventHookConfigRegistrationContextCreator {
 

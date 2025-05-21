@@ -3,7 +3,6 @@ package org.idp.server.usecases.application.enduser;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.type.extension.OAuthDenyReason;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.authentication.*;
 import org.idp.server.core.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.authentication.repository.AuthenticationTransactionQueryRepository;
@@ -24,13 +23,13 @@ import org.idp.server.core.oidc.exception.OAuthAuthorizeBadRequestException;
 import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.security.event.DefaultSecurityEventType;
-import org.idp.server.core.security.event.OAuthFlowEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class OAuthFlowEntryService implements OAuthFlowApi {

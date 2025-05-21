@@ -5,7 +5,6 @@ import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApi;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
@@ -14,6 +13,7 @@ import org.idp.server.core.extension.identity.verification.application.IdentityV
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationQueries;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.security.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

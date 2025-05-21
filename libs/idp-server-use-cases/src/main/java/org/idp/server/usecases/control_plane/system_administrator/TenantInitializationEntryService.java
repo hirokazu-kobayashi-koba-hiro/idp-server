@@ -1,6 +1,5 @@
 package org.idp.server.usecases.control_plane.system_administrator;
 
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationContext;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationContextCreator;
@@ -25,6 +24,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class TenantInitializationEntryService implements TenantInitializationApi {

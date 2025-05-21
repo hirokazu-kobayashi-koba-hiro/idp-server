@@ -1,6 +1,5 @@
 package org.idp.server.usecases.application.enduser;
 
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.authentication.AuthenticationTransaction;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationTransactionFindingResponse;
@@ -10,6 +9,7 @@ import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction(readOnly = true)
 public class AuthenticationDeviceEntryService implements AuthenticationDeviceApi {

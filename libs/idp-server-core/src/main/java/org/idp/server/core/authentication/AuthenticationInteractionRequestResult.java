@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 public class AuthenticationInteractionRequestResult {
 

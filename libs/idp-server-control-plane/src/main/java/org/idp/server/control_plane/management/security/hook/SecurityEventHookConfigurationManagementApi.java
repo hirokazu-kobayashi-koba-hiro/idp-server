@@ -3,16 +3,16 @@ package org.idp.server.control_plane.management.security.hook;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigRequest;
 import org.idp.server.core.identity.User;
-import org.idp.server.core.security.hook.SecurityEventHookConfigurationIdentifier;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.security.hook.SecurityEventHookConfigurationIdentifier;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public interface SecurityEventHookConfigurationManagementApi {
   default AdminPermissions getRequiredPermissions(String method) {

@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.security.event;
 
-import org.idp.server.core.security.SecurityEvent;
-import org.idp.server.core.security.SecurityEvents;
-import org.idp.server.core.security.event.SecurityEventSearchCriteria;
+import org.idp.server.platform.security.SecurityEvent;
+import org.idp.server.platform.security.SecurityEvents;
+import org.idp.server.platform.security.event.SecurityEventSearchCriteria;
 
 public interface SecurityEventSqlExecutor {
   void insert(SecurityEvent securityEvent);

@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.core.extension.identity.verification.application.*;
-import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.*;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationDetails;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
 import org.idp.server.core.extension.identity.verification.trustframework.TrustFramework;
+import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class ModelConverter {

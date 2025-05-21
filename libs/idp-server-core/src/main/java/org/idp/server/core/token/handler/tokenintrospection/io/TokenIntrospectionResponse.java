@@ -1,8 +1,8 @@
 package org.idp.server.core.token.handler.tokenintrospection.io;
 
 import java.util.Map;
-import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.token.OAuthToken;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 public class TokenIntrospectionResponse {
   TokenIntrospectionRequestStatus status;

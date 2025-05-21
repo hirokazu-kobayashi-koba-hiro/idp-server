@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.core.identity.User;
-import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
@@ -18,6 +16,8 @@ import org.idp.server.core.extension.identity.verification.delegation.ExternalWo
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
 import org.idp.server.core.extension.identity.verification.trustframework.TrustFramework;
+import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

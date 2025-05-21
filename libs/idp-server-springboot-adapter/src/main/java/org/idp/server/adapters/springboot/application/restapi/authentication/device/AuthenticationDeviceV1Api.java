@@ -3,11 +3,11 @@ package org.idp.server.adapters.springboot.application.restapi.authentication.de
 import jakarta.servlet.http.HttpServletRequest;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.authentication.device.AuthenticationDeviceApi;
 import org.idp.server.core.authentication.device.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.security.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

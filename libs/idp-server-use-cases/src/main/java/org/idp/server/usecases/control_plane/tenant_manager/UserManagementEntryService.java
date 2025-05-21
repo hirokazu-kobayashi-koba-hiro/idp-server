@@ -3,7 +3,6 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.UserVerifier;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
@@ -31,6 +30,7 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
 public class UserManagementEntryService implements UserManagementApi {

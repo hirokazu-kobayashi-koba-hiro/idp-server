@@ -2,11 +2,11 @@ package org.idp.server.core.token.handler.token.io;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.TokenErrorResponse;
 import org.idp.server.core.token.TokenResponse;
 import org.idp.server.core.token.TokenResponseBuilder;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 public class TokenRequestResponse {
   TokenRequestStatus status;

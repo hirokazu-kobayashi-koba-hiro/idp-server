@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.security.event;
 
-import org.idp.server.core.security.repository.SecurityEventCommandRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
+import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
 
 public class SecurityEventDataSourceProvider
     implements ApplicationComponentProvider<SecurityEventCommandRepository> {

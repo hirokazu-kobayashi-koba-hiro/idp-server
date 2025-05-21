@@ -6,22 +6,22 @@ import org.idp.server.basic.http.*;
 import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.basic.oauth.OAuthAuthorizationResolver;
 import org.idp.server.basic.oauth.OAuthAuthorizationResolvers;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingExecutionResult;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingResult;
-import org.idp.server.core.identity.User;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingExecutionResult;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.extension.identity.verification.delegation.request.AdditionalRequestParameterResolvers;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationRequestValidator;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationResponseValidator;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationValidationResult;
 import org.idp.server.core.extension.identity.verification.verifier.IdentityVerificationRequestVerificationResult;
 import org.idp.server.core.extension.identity.verification.verifier.IdentityVerificationRequestVerifiers;
+import org.idp.server.core.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationHandler {

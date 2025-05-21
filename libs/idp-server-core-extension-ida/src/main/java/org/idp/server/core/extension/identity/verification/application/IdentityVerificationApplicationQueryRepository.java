@@ -1,7 +1,7 @@
 package org.idp.server.core.extension.identity.verification.application;
 
-import org.idp.server.core.identity.User;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
+import org.idp.server.core.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface IdentityVerificationApplicationQueryRepository {

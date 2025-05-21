@@ -2,14 +2,14 @@ package org.idp.server.core.extension.identity.verification.result;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.claims.VerifiedClaims;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.claims.VerifiedClaims;
+import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 

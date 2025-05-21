@@ -6,8 +6,8 @@ import org.idp.server.core.authentication.repository.AuthenticationConfiguration
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 public class FidoUafAuthenticationChallengeInteractor implements AuthenticationInteractor {
 
