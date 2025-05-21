@@ -1,36 +1,37 @@
-package org.idp.server.core.oidc.userinfo.verifier;
+package org.idp.server.core.extension.verifiable_credentials.verifier;
 
 import java.time.LocalDateTime;
 import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.basic.x509.X509CertInvalidException;
-import org.idp.server.core.identity.User;
+import org.idp.server.core.extension.verifiable_credentials.exception.VerifiableCredentialTokenInvalidException;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.mtls.ClientCertification;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprintCalculator;
+import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.token.AccessToken;
 import org.idp.server.core.token.OAuthToken;
 import org.idp.server.core.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.platform.date.SystemDateTime;
 
-public class UserinfoVerifier {
-
+public class VerifiableCredentialOAuthTokenVerifier {
   OAuthToken oAuthToken;
   ClientCert clientCert;
-  User user;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
 
-  public UserinfoVerifier(OAuthToken oAuthToken, ClientCert clientCert, User user) {
+  public VerifiableCredentialOAuthTokenVerifier(
+      OAuthToken oAuthToken,
+      ClientCert clientCert,
+      AuthorizationServerConfiguration authorizationServerConfiguration) {
     this.oAuthToken = oAuthToken;
     this.clientCert = clientCert;
-    this.user = user;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
   }
 
   public void verify() {
     throwExceptionIfNotFoundToken();
     throwExceptionIfUnMatchClientCert();
-    // FIXME
-    if (!user.exists()) {
-      throw new TokenInvalidException("not found user");
-    }
+    throwExceptionIfNotGranted();
   }
 
   void throwExceptionIfNotFoundToken() {
@@ -48,7 +49,7 @@ public class UserinfoVerifier {
       return;
     }
     if (!clientCert.exists()) {
-      throw new TokenInvalidException(
+      throw new VerifiableCredentialTokenInvalidException(
           "access token is sender constrained, but mtls client cert does not exists");
     }
     try {
@@ -58,11 +59,25 @@ public class UserinfoVerifier {
       ClientCertificationThumbprint thumbprint = calculator.calculate();
       AccessToken accessToken = oAuthToken.accessToken();
       if (!accessToken.matchThumbprint(thumbprint)) {
-        throw new TokenInvalidException("access token and mtls client cert is unmatch");
+        throw new VerifiableCredentialTokenInvalidException(
+            "access token and mtls client cert is unmatch");
       }
     } catch (X509CertInvalidException e) {
-      throw new TokenInvalidException(
+      throw new VerifiableCredentialTokenInvalidException(
           "access token is sender constrained, but mtls client cert is invalid format", e);
+    }
+  }
+
+  void throwExceptionIfNotGranted() {
+    AccessToken accessToken = oAuthToken.accessToken();
+    if (!accessToken.hasAuthorizationDetails()) {
+      throw new VerifiableCredentialTokenInvalidException(
+          "access token have to contain authorization details at credential endpoint");
+    }
+    AuthorizationDetails authorizationDetails = accessToken.authorizationDetails();
+    if (!authorizationDetails.hasVerifiableCredential()) {
+      throw new VerifiableCredentialTokenInvalidException(
+          "access token have to contain authorization details at credential endpoint");
     }
   }
 }
