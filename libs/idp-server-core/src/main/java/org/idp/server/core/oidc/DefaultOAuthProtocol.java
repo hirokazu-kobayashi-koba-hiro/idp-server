@@ -1,9 +1,9 @@
 package org.idp.server.core.oidc;
 
-import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.gateway.RequestObjectHttpClient;
+import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.handler.*;
 import org.idp.server.core.oidc.io.*;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;

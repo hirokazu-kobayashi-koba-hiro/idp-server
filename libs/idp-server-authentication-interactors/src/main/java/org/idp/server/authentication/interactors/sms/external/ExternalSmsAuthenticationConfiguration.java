@@ -1,11 +1,11 @@
 package org.idp.server.authentication.interactors.sms.external;
 
 import java.util.Map;
-import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutorType;
 import org.idp.server.authentication.interactors.sms.SmsTemplate;
 import org.idp.server.authentication.interactors.sms.exception.SmsAuthenticationExecutionConfigNotFoundException;
+import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
 
 public class ExternalSmsAuthenticationConfiguration implements JsonReadable {
   String type;

@@ -1,7 +1,6 @@
 package org.idp.server.authentication.interactors.sms;
 
 import java.util.Map;
-
 import org.idp.server.authentication.interactors.sms.exception.SmsAuthenticationDetailsConfigNotFoundException;
 import org.idp.server.basic.json.JsonReadable;
 

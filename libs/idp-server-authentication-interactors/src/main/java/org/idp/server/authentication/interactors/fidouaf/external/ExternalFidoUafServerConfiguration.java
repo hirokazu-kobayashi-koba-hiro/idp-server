@@ -1,9 +1,9 @@
 package org.idp.server.authentication.interactors.fidouaf.external;
 
 import java.util.Map;
+import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutorType;
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
-import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutorType;
 import org.idp.server.platform.exception.NotFoundException;
 
 public class ExternalFidoUafServerConfiguration implements JsonReadable {

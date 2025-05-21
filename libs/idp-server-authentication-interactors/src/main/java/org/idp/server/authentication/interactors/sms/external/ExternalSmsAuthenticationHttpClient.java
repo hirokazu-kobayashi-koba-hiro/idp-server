@@ -2,11 +2,11 @@ package org.idp.server.authentication.interactors.sms.external;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.authentication.interactors.sms.SmsAuthenticationExecutionRequest;
 import org.idp.server.basic.http.*;
 import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.basic.oauth.OAuthAuthorizationResolver;
 import org.idp.server.basic.oauth.OAuthAuthorizationResolvers;
-import org.idp.server.authentication.interactors.sms.SmsAuthenticationExecutionRequest;
 
 public class ExternalSmsAuthenticationHttpClient {
 

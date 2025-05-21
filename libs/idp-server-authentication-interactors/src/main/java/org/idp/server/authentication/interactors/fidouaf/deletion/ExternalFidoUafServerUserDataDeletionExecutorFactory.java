@@ -1,7 +1,7 @@
 package org.idp.server.authentication.interactors.fidouaf.deletion;
 
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutors;
+import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.event.UserLifecycleEventExecutor;
 import org.idp.server.core.oidc.identity.event.UserLifecycleEventExecutorFactory;

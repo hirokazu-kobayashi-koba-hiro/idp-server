@@ -1,7 +1,6 @@
 package org.idp.server.authentication.interactors.device;
 
 import java.util.Map;
-
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

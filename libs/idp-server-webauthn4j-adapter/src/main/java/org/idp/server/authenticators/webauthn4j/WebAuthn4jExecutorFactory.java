@@ -1,10 +1,10 @@
 package org.idp.server.authenticators.webauthn4j;
 
+import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutor;
+import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutorFactory;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
-import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutor;
-import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutorFactory;
 
 public class WebAuthn4jExecutorFactory implements WebAuthnExecutorFactory {
 

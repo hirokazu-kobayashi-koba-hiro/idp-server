@@ -3,11 +3,11 @@ package org.idp.server.control_plane.admin.tenant;
 import java.util.Map;
 import org.idp.server.control_plane.admin.tenant.io.TenantInitializationResponse;
 import org.idp.server.control_plane.admin.tenant.io.TenantInitializationStatus;
+import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.permission.Permissions;
 import org.idp.server.core.oidc.identity.role.Roles;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

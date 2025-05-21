@@ -2,9 +2,8 @@ package org.idp.server.authentication.interactors.sms;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.date.SystemDateTime;

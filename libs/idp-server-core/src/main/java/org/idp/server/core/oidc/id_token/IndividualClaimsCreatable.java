@@ -3,9 +3,9 @@ package org.idp.server.core.oidc.id_token;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.grant.GrantIdTokenClaims;
 import org.idp.server.core.oidc.grant.GrantUserinfoClaims;
+import org.idp.server.core.oidc.identity.User;
 
 public interface IndividualClaimsCreatable extends ClaimHashable {
 

@@ -7,12 +7,12 @@ import org.idp.server.basic.jose.*;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.IdToken;
-import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.exception.ConfigurationInvalidException;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.date.SystemDateTime;
 
 public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashable {

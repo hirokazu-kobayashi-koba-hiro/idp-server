@@ -1,10 +1,9 @@
 package org.idp.server.authentication.interactors.email;
 
 import java.util.*;
-
+import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
-import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.date.SystemDateTime;

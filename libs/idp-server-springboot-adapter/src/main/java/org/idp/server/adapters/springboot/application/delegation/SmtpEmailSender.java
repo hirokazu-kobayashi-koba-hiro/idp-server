@@ -3,13 +3,11 @@ package org.idp.server.adapters.springboot.application.delegation;
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import java.util.Properties;
 import org.idp.server.authentication.interactors.email.EmailSenderSetting;
 import org.idp.server.authentication.interactors.notification.EmailSender;
 import org.idp.server.authentication.interactors.notification.EmailSenderType;
 import org.idp.server.authentication.interactors.notification.EmailSendingRequest;
-
-import java.util.Properties;
-
 
 public class SmtpEmailSender implements EmailSender {
 
