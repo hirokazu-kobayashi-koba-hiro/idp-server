@@ -18,4 +18,8 @@ public interface UserSqlExecutor {
   Map<String, String> selectByProvider(Tenant tenant, String providerId, String providerUserId);
 
   Map<String, String> selectByAuthenticationDevice(Tenant tenant, String deviceId);
+
+  Map<String, String> selectAssignedOrganization(Tenant tenant, UserIdentifier userIdentifier);
+
+  Map<String, String> selectAssignedTenant(Tenant tenant, UserIdentifier userIdentifier);
 }

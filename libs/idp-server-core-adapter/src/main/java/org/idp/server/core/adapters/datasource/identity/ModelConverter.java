@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.identity.User;
+import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.UserRole;
 import org.idp.server.core.identity.UserStatus;
 import org.idp.server.core.identity.address.Address;
@@ -169,6 +170,11 @@ class ModelConverter {
     user.setStatus(userStatus);
 
     return user;
+  }
+
+  static UserIdentifier extractUserIdentifier(Map<String, String> stringMap) {
+    String id = stringMap.get("id");
+    return new UserIdentifier(id);
   }
 
   static LocalDateTime parseDateTime(String dateTime) {

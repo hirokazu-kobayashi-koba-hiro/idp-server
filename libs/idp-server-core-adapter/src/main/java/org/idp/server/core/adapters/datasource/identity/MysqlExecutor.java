@@ -130,6 +130,62 @@ public class MysqlExecutor implements UserSqlExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
+  @Override
+  public Map<String, String> selectAssignedOrganization(
+      Tenant tenant, UserIdentifier userIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+      SELECT
+      COALESCE(
+       JSON_AGG(idp_user_assigned_organizations.organization_id)
+       FILTER (WHERE idp_user_assigned_organizations.organization_id IS NOT NULL),
+       '[]'
+     ) AS assigned_organizations,
+     idp_user_current_organization.organization_id AS current_organization_id
+      FROM idp_user_assigned_organizations
+      JOIN idp_user_current_organization
+       ON idp_user_assigned_organizations.user_id = idp_user_current_organization.user_id
+      WHERE idp_user_assigned_organizations.user_id = ?:: uuid
+      GROUP BY
+      idp_user_assigned_organizations.user_id,
+      idp_user_current_organization.organization_id
+      """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(userIdentifier.value());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
+  public Map<String, String> selectAssignedTenant(Tenant tenant, UserIdentifier userIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+      SELECT
+        COALESCE(
+        JSON_AGG(idp_user_assigned_tenants.tenant_id)
+        FILTER (WHERE idp_user_assigned_tenants.tenant_id IS NOT NULL),
+        '[]'
+      ) AS assigned_tenants,
+      idp_user_current_tenant.tenant_id AS current_tenant_id
+      FROM idp_user_assigned_tenants
+      JOIN idp_user_current_tenant
+       ON idp_user_assigned_tenants.user_id = idp_user_current_tenant.user_id
+      WHERE user_id = ?::uuid
+      GROUP BY
+
+      """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(userIdentifier.value());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
   String selectSql =
       """
                   SELECT

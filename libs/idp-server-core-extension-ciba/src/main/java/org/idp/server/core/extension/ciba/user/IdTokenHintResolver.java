@@ -6,11 +6,13 @@ import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.repository.UserQueryRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class IdTokenHintResolver implements UserHintResolver {
 
   JoseHandler joseHandler = new JoseHandler();
+  LoggerWrapper log = LoggerWrapper.getLogger(IdTokenHintResolver.class);
 
   @Override
   public User resolve(
@@ -33,7 +35,7 @@ public class IdTokenHintResolver implements UserHintResolver {
 
       return userQueryRepository.get(tenant, userIdentifier);
     } catch (Exception e) {
-
+      log.error("invalid id_token_hint: " + e.getMessage());
       return User.notFound();
     }
   }

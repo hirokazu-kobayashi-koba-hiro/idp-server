@@ -262,6 +262,12 @@ CREATE TABLE idp_user_current_organization
     FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
 );
 
+CREATE INDEX idx_idp_user_assigned_tenants_user_id_tenant_id
+    ON idp_user_assigned_tenants (user_id, tenant_id);
+
+CREATE INDEX idx_idp_user_assigned_organizations_user_id_organization_id
+    ON idp_user_assigned_organizations (user_id, organization_id);
+
 CREATE TABLE idp_user_roles
 (
     id          UUID      DEFAULT gen_random_uuid(),

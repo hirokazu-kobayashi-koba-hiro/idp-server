@@ -1,5 +1,6 @@
 package org.idp.server.core.adapters.datasource.identity;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,7 +33,7 @@ public class UserQueryDataSource implements UserQueryRepository {
       throw new UserNotFoundException(String.format("not found user (%s)", userIdentifier.value()));
     }
 
-    return ModelConverter.convert(result);
+    return collectAssignedDataAndConvert(tenant, userIdentifier, executor, result);
   }
 
   @Override
@@ -44,7 +45,14 @@ public class UserQueryDataSource implements UserQueryRepository {
       return User.notFound();
     }
 
-    return ModelConverter.convert(result);
+    HashMap<String, String> mergedResult = new HashMap<>(result);
+    Map<String, String> assignedOrganization =
+        executor.selectAssignedOrganization(tenant, userIdentifier);
+    Map<String, String> assignedTenant = executor.selectAssignedTenant(tenant, userIdentifier);
+    mergedResult.putAll(assignedOrganization);
+    mergedResult.putAll(assignedTenant);
+
+    return ModelConverter.convert(mergedResult);
   }
 
   @Override
@@ -57,7 +65,8 @@ public class UserQueryDataSource implements UserQueryRepository {
         return new User();
       }
 
-      return ModelConverter.convert(result);
+      UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
+      return collectAssignedDataAndConvert(tenant, userIdentifier, executor, result);
     } catch (SqlTooManyResultsException exception) {
 
       throw new UserTooManyFoundResultException(exception.getMessage());
@@ -74,7 +83,8 @@ public class UserQueryDataSource implements UserQueryRepository {
         return new User();
       }
 
-      return ModelConverter.convert(result);
+      UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
+      return collectAssignedDataAndConvert(tenant, userIdentifier, executor, result);
     } catch (SqlTooManyResultsException exception) {
 
       throw new UserTooManyFoundResultException(exception.getMessage());
@@ -102,7 +112,8 @@ public class UserQueryDataSource implements UserQueryRepository {
       return new User();
     }
 
-    return ModelConverter.convert(result);
+    UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
+    return collectAssignedDataAndConvert(tenant, userIdentifier, executor, result);
   }
 
   @Override
@@ -114,6 +125,22 @@ public class UserQueryDataSource implements UserQueryRepository {
       return new User();
     }
 
-    return ModelConverter.convert(result);
+    UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
+    return collectAssignedDataAndConvert(tenant, userIdentifier, executor, result);
+  }
+
+  private User collectAssignedDataAndConvert(
+      Tenant tenant,
+      UserIdentifier userIdentifier,
+      UserSqlExecutor executor,
+      Map<String, String> result) {
+    HashMap<String, String> mergedResult = new HashMap<>(result);
+    Map<String, String> assignedOrganization =
+        executor.selectAssignedOrganization(tenant, userIdentifier);
+    Map<String, String> assignedTenant = executor.selectAssignedTenant(tenant, userIdentifier);
+    mergedResult.putAll(assignedOrganization);
+    mergedResult.putAll(assignedTenant);
+
+    return ModelConverter.convert(mergedResult);
   }
 }
