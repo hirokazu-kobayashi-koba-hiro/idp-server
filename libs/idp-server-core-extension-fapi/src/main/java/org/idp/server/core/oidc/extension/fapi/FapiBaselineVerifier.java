@@ -1,13 +1,14 @@
-package org.idp.server.core.oidc.verifier;
+package org.idp.server.core.oidc.extension.fapi;
 
 import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 import org.idp.server.basic.type.oauth.RedirectUri;
+import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
-import org.idp.server.core.oidc.verifier.base.AuthorizationRequestVerifier;
+import org.idp.server.core.oidc.verifier.AuthorizationRequestVerifier;
 import org.idp.server.core.oidc.verifier.base.OAuthRequestBaseVerifier;
 import org.idp.server.core.oidc.verifier.base.OidcRequestBaseVerifier;
 
@@ -15,6 +16,10 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
 
   OAuthRequestBaseVerifier oAuthRequestBaseVerifier = new OAuthRequestBaseVerifier();
   OidcRequestBaseVerifier oidcRequestBaseVerifier = new OidcRequestBaseVerifier();
+
+  public AuthorizationProfile profile() {
+    return AuthorizationProfile.FAPI_BASELINE;
+  }
 
   @Override
   public void verify(OAuthRequestContext context) {

@@ -1,12 +1,12 @@
 package org.idp.server.usecases.application.tenant_invitator;
 
 import java.util.Map;
-import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.multi_tenancy.tenant.invitation.*;
+import org.idp.server.platform.datasource.Transaction;
 
 @Transaction(readOnly = true)
 public class TenantInvitationMetaDataEntryService implements TenantInvitationMetaDataApi {

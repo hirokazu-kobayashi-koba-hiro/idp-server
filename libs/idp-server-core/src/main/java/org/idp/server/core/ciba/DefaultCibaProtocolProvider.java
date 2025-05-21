@@ -1,7 +1,5 @@
 package org.idp.server.core.ciba;
 
-import org.idp.server.platform.dependency.ApplicationComponentContainer;
-import org.idp.server.platform.dependency.protocol.ProtocolProvider;
 import org.idp.server.core.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
@@ -9,6 +7,8 @@ import org.idp.server.core.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.dependency.protocol.ProtocolProvider;
 
 public class DefaultCibaProtocolProvider implements ProtocolProvider<CibaProtocol> {
 

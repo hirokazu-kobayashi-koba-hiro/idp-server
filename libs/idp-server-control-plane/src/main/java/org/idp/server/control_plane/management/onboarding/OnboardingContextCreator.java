@@ -59,7 +59,8 @@ public class OnboardingContextCreator {
             tenantRequest.databaseType(),
             new TenantAttributes());
 
-    AssignedTenant assignedTenant = new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
+    AssignedTenant assignedTenant =
+        new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
     Organization assigned = organization.updateWithTenant(assignedTenant);
 
     List<Role> rolesList = roles.toList();

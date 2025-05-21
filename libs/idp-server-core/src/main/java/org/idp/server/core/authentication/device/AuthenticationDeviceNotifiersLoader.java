@@ -3,8 +3,8 @@ package org.idp.server.core.authentication.device;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.authentication.notification.device.NotificationChannel;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class AuthenticationDeviceNotifiersLoader {
 

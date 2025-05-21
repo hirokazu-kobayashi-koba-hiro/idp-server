@@ -3,8 +3,6 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
@@ -22,9 +20,10 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantCommandRepository;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.token.OAuthToken;
+import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.log.LoggerWrapper;
 
 @Transaction
 public class TenantManagementEntryService implements TenantManagementApi {
@@ -32,7 +31,8 @@ public class TenantManagementEntryService implements TenantManagementApi {
   TenantCommandRepository tenantCommandRepository;
   TenantQueryRepository tenantQueryRepository;
   OrganizationRepository organizationRepository;
-  AuthorizationServerConfigurationCommandRepository authorizationServerConfigurationCommandRepository;
+  AuthorizationServerConfigurationCommandRepository
+      authorizationServerConfigurationCommandRepository;
   TenantManagementVerifier tenantManagementVerifier;
 
   LoggerWrapper log = LoggerWrapper.getLogger(TenantManagementEntryService.class);
@@ -41,11 +41,13 @@ public class TenantManagementEntryService implements TenantManagementApi {
       TenantCommandRepository tenantCommandRepository,
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
-      AuthorizationServerConfigurationCommandRepository authorizationServerConfigurationCommandRepository) {
+      AuthorizationServerConfigurationCommandRepository
+          authorizationServerConfigurationCommandRepository) {
     this.tenantCommandRepository = tenantCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
-    this.authorizationServerConfigurationCommandRepository = authorizationServerConfigurationCommandRepository;
+    this.authorizationServerConfigurationCommandRepository =
+        authorizationServerConfigurationCommandRepository;
     TenantVerifier tenantVerifier = new TenantVerifier(tenantQueryRepository);
     this.tenantManagementVerifier = new TenantManagementVerifier(tenantVerifier);
   }
@@ -92,7 +94,8 @@ public class TenantManagementEntryService implements TenantManagementApi {
 
     tenantCommandRepository.register(context.newTenant());
     organizationRepository.update(adminTenant, context.organization());
-    authorizationServerConfigurationCommandRepository.register(context.newTenant(), context.authorizationServerConfiguration());
+    authorizationServerConfigurationCommandRepository.register(
+        context.newTenant(), context.authorizationServerConfiguration());
 
     return context.toResponse();
   }

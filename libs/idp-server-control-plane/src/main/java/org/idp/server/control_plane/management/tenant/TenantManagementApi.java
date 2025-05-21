@@ -3,7 +3,6 @@ package org.idp.server.control_plane.management.tenant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.basic.type.security.RequestAttributes;
 import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
@@ -12,6 +11,7 @@ import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.token.OAuthToken;
+import org.idp.server.platform.exception.UnSupportedException;
 
 public interface TenantManagementApi {
   default AdminPermissions getRequiredPermissions(String method) {

@@ -1,9 +1,9 @@
 package org.idp.server.core.multi_tenancy.tenant.invitation;
 
-import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.core.authentication.factory.AuthenticationDependencyContainer;
 import org.idp.server.core.identity.event.UserLifecycleEventExecutor;
 import org.idp.server.core.identity.event.UserLifecycleEventExecutorFactory;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
 
 public class TenantInvitationCompletionExecutorFactory
     implements UserLifecycleEventExecutorFactory {

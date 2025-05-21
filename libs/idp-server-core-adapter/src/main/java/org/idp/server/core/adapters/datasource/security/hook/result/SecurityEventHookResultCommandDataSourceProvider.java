@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.security.hook.result;
 
+import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
-import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 
 public class SecurityEventHookResultCommandDataSourceProvider
     implements ApplicationComponentProvider<SecurityEventHookResultCommandRepository> {

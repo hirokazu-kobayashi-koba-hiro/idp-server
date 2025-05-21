@@ -1,9 +1,9 @@
 package org.idp.server.core.adapters.datasource.cache;
 
 import java.util.Optional;
+import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.platform.datasource.cache.CacheConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;

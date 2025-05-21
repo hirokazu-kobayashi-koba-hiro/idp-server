@@ -1,10 +1,10 @@
 package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.command;
 
-import org.idp.server.platform.datasource.DatabaseType;
-import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantCommandRepository;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.datasource.DatabaseType;
+import org.idp.server.platform.datasource.cache.CacheStore;
 
 public class TenantCommandDataSource implements TenantCommandRepository {
 

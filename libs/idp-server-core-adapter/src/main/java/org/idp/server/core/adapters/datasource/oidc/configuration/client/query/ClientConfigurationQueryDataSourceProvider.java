@@ -1,9 +1,9 @@
 package org.idp.server.core.adapters.datasource.oidc.configuration.client.query;
 
+import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 
 public class ClientConfigurationQueryDataSourceProvider
     implements ApplicationComponentProvider<ClientConfigurationQueryRepository> {

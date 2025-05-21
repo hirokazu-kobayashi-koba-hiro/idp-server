@@ -3,8 +3,8 @@ package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.query;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.core.multi_tenancy.tenant.*;
+import org.idp.server.platform.datasource.SqlExecutor;
 
 public class PostgresqlExecutor implements TenantQuerySqlExecutor {
 

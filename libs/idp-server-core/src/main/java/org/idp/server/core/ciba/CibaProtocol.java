@@ -1,10 +1,10 @@
 package org.idp.server.core.ciba;
 
-import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.core.ciba.handler.io.*;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 
 public interface CibaProtocol {
 

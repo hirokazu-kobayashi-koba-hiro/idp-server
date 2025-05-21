@@ -3,6 +3,7 @@ package org.idp.server.core.oidc.verifier.extension;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oidc.exception.RequestObjectInvalidException;
+import org.idp.server.core.oidc.verifier.AuthorizationRequestExtensionVerifier;
 
 public class RequestObjectVerifier
     implements AuthorizationRequestExtensionVerifier, RequestObjectVerifyable {

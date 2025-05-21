@@ -2,13 +2,6 @@ package org.idp.server;
 
 import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.HmacHasher;
-import org.idp.server.platform.datasource.*;
-import org.idp.server.platform.datasource.cache.CacheStore;
-import org.idp.server.platform.dependency.ApplicationComponentContainer;
-import org.idp.server.platform.dependency.ApplicationComponentContainerLoader;
-import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
-import org.idp.server.platform.dependency.protocol.ProtocolContainer;
-import org.idp.server.platform.dependency.protocol.ProtocolContainerLoader;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
@@ -97,6 +90,13 @@ import org.idp.server.core.security.repository.SecurityEventHookConfigurationCom
 import org.idp.server.core.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.core.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.core.token.*;
+import org.idp.server.platform.datasource.*;
+import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.dependency.ApplicationComponentContainerLoader;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.protocol.ProtocolContainer;
+import org.idp.server.platform.dependency.protocol.ProtocolContainerLoader;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
 import org.idp.server.usecases.application.system.*;
@@ -473,7 +473,10 @@ public class IdpServerApplication {
     this.tenantManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new TenantManagementEntryService(
-                tenantCommandRepository, tenantQueryRepository, organizationRepository, authorizationServerConfigurationCommandRepository),
+                tenantCommandRepository,
+                tenantQueryRepository,
+                organizationRepository,
+                authorizationServerConfigurationCommandRepository),
             TenantManagementApi.class,
             tenantDialectProvider);
 

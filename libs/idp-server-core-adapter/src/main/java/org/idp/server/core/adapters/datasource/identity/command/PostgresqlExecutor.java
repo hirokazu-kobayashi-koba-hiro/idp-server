@@ -2,12 +2,12 @@ package org.idp.server.core.adapters.datasource.identity.command;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.identity.User;
 import org.idp.server.core.identity.UserIdentifier;
 import org.idp.server.core.identity.UserRole;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.datasource.SqlExecutor;
 
 public class PostgresqlExecutor implements UserCommandSqlExecutor {
 

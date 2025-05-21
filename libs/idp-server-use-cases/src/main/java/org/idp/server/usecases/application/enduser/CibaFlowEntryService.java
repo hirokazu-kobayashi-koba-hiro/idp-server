@@ -1,7 +1,6 @@
 package org.idp.server.usecases.application.enduser;
 
 import java.util.Map;
-import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.basic.type.security.RequestAttributes;
@@ -25,6 +24,7 @@ import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.core.security.event.CibaFlowEventPublisher;
 import org.idp.server.core.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.datasource.Transaction;
 
 @Transaction
 public class CibaFlowEntryService implements CibaFlowApi {

@@ -1,16 +1,17 @@
-package org.idp.server.core.oidc.verifier;
+package org.idp.server.core.oidc.extension.fapi;
 
 import java.util.Date;
 import java.util.List;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.basic.type.oauth.ClientAuthenticationType;
+import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
-import org.idp.server.core.oidc.verifier.base.AuthorizationRequestVerifier;
+import org.idp.server.core.oidc.verifier.AuthorizationRequestVerifier;
 import org.idp.server.core.oidc.verifier.base.OAuthRequestBaseVerifier;
 import org.idp.server.core.oidc.verifier.base.OidcRequestBaseVerifier;
 
@@ -18,6 +19,10 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
 
   OAuthRequestBaseVerifier oAuthRequestBaseVerifier = new OAuthRequestBaseVerifier();
   OidcRequestBaseVerifier oidcRequestBaseVerifier = new OidcRequestBaseVerifier();
+
+  public AuthorizationProfile profile() {
+    return AuthorizationProfile.FAPI_ADVANCE;
+  }
 
   @Override
   public void verify(OAuthRequestContext context) {

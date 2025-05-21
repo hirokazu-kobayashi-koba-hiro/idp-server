@@ -1,8 +1,5 @@
 package org.idp.server.core.ciba;
 
-import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
-import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.ciba.clientnotification.NotificationClient;
 import org.idp.server.core.ciba.handler.CibaAuthorizeHandler;
 import org.idp.server.core.ciba.handler.CibaDenyHandler;
@@ -19,6 +16,9 @@ import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class DefaultCibaProtocol implements CibaProtocol {
 

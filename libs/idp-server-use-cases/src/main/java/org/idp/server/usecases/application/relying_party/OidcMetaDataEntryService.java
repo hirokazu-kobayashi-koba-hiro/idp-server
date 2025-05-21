@@ -1,6 +1,5 @@
 package org.idp.server.usecases.application.relying_party;
 
-import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.core.multi_tenancy.tenant.TenantQueryRepository;
@@ -9,6 +8,7 @@ import org.idp.server.core.oidc.discovery.DiscoveryProtocols;
 import org.idp.server.core.oidc.discovery.OidcMetaDataApi;
 import org.idp.server.core.oidc.discovery.handler.io.JwksRequestResponse;
 import org.idp.server.core.oidc.discovery.handler.io.ServerConfigurationRequestResponse;
+import org.idp.server.platform.datasource.Transaction;
 
 @Transaction(readOnly = true)
 public class OidcMetaDataEntryService implements OidcMetaDataApi {

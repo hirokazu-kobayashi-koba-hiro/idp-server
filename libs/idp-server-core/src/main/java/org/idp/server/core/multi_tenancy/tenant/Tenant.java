@@ -3,10 +3,10 @@ package org.idp.server.core.multi_tenancy.tenant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.platform.datasource.DatabaseType;
-import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.basic.type.oauth.TokenIssuer;
+import org.idp.server.platform.datasource.DatabaseType;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 
 public class Tenant implements JsonReadable {
   TenantIdentifier identifier;

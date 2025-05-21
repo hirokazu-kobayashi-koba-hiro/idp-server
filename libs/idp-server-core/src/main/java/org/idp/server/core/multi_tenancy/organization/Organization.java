@@ -2,7 +2,6 @@ package org.idp.server.core.multi_tenancy.organization;
 
 import java.util.HashMap;
 import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class Organization implements JsonReadable {
   OrganizationIdentifier identifier;

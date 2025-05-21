@@ -3,8 +3,8 @@ package org.idp.server.core.authentication.webauthn;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.authentication.factory.AuthenticationDependencyContainer;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class WebAuthnExecutorLoader {
 

@@ -3,10 +3,10 @@ package org.idp.server.core.federation.factory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.core.federation.FederationInteractor;
 import org.idp.server.core.federation.FederationInteractors;
 import org.idp.server.core.federation.FederationType;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class FederationInteractorLoader {
 

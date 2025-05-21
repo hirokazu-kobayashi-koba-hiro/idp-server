@@ -1,19 +1,37 @@
 plugins {
-    id 'java'
+	id 'java'
+	id "com.diffplug.spotless" version "6.24.0"
 }
 
 group = 'org.idp.server'
 version = 'unspecified'
 
 repositories {
-    mavenCentral()
+	mavenCentral()
 }
 
 dependencies {
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+	implementation project(':libs:idp-server-platform')
+	implementation project(':libs:idp-server-core')
+	implementation project(':libs:idp-server-core-supporter')
+	testImplementation platform('org.junit:junit-bom:5.10.0')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
 test {
-    useJUnitPlatform()
+	useJUnitPlatform()
+}
+
+spotless {
+	java {
+		target 'src/*/java/**/*.java'
+		importOrder()
+		removeUnusedImports()
+		googleJavaFormat()
+		toggleOffOn()
+	}
+	groovyGradle {
+		target '*.gradle'
+		greclipse()
+	}
 }

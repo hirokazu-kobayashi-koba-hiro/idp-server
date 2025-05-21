@@ -1,7 +1,5 @@
 package org.idp.server.core.oidc;
 
-import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
-import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.core.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
@@ -15,6 +13,8 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.response.AuthorizationResponse;
 import org.idp.server.core.token.repository.OAuthTokenRepository;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
 
 /** OAuthApi */
 public class DefaultOAuthProtocol implements OAuthProtocol {

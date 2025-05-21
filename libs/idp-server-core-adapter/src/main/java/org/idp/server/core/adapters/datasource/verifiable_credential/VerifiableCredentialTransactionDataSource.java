@@ -2,11 +2,11 @@ package org.idp.server.core.adapters.datasource.verifiable_credential;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.basic.type.verifiablecredential.TransactionId;
 import org.idp.server.core.multi_tenancy.tenant.Tenant;
 import org.idp.server.core.verifiable_credential.VerifiableCredentialTransaction;
 import org.idp.server.core.verifiable_credential.repository.VerifiableCredentialTransactionRepository;
+import org.idp.server.platform.exception.NotFoundException;
 
 public class VerifiableCredentialTransactionDataSource
     implements VerifiableCredentialTransactionRepository {

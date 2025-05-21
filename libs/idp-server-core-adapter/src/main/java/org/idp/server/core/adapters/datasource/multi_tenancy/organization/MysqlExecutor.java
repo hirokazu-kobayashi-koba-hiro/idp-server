@@ -3,9 +3,9 @@ package org.idp.server.core.adapters.datasource.multi_tenancy.organization;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.core.multi_tenancy.organization.Organization;
 import org.idp.server.core.multi_tenancy.organization.OrganizationIdentifier;
+import org.idp.server.platform.datasource.SqlExecutor;
 
 public class MysqlExecutor implements OrganizationSqlExecutor {
 
@@ -30,8 +30,8 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
   public void upsertAssignedTenants(Organization organization) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     StringBuilder sqlTemplateBuilder =
-            new StringBuilder(
-                    """
+        new StringBuilder(
+            """
                                  INSERT INTO organization_tenants(
                                  organization_id,
                                  tenant_id
@@ -42,16 +42,16 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
     List<Object> tenantParams = new ArrayList<>();
 
     organization
-            .assignedTenants()
-            .forEach(
-                    organizationTenant -> {
-                      sqlValues.add("(?, ?)");
-                      tenantParams.add(organization.identifier().value());
-                      tenantParams.add(organizationTenant.id());
-                    });
+        .assignedTenants()
+        .forEach(
+            organizationTenant -> {
+              sqlValues.add("(?, ?)");
+              tenantParams.add(organization.identifier().value());
+              tenantParams.add(organizationTenant.id());
+            });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(
-            """
+        """
               ON DUPLICATE KEY UPDATE assigned_at = now();
             """);
     sqlTemplateBuilder.append(";");

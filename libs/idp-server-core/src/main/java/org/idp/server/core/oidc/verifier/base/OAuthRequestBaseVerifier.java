@@ -3,8 +3,10 @@ package org.idp.server.core.oidc.verifier.base;
 import org.idp.server.basic.type.OAuthRequestKey;
 import org.idp.server.basic.type.oauth.ResponseType;
 import org.idp.server.basic.type.oauth.Scopes;
+import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
+import org.idp.server.core.oidc.verifier.AuthorizationRequestVerifier;
 
 /**
  * oauth2.0 base verifier
@@ -12,6 +14,11 @@ import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
  * @see <a href="https://www.rfc-editor.org/rfc/rfc6749">RFC6749</a>
  */
 public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
+
+  @Override
+  public AuthorizationProfile profile() {
+    return AuthorizationProfile.OAUTH2;
+  }
 
   @Override
   public void verify(OAuthRequestContext context) {

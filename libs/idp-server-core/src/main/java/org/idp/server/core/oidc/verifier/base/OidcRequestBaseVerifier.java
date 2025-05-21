@@ -2,10 +2,12 @@ package org.idp.server.core.oidc.verifier.base;
 
 import org.idp.server.basic.type.OAuthRequestKey;
 import org.idp.server.basic.type.oidc.Prompts;
+import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
+import org.idp.server.core.oidc.verifier.AuthorizationRequestVerifier;
 
 /**
  * 3.1.2.2. Authentication Request Validation
@@ -36,6 +38,11 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
 
   OAuthRequestBaseVerifier baseVerifier = new OAuthRequestBaseVerifier();
+
+  @Override
+  public AuthorizationProfile profile() {
+    return AuthorizationProfile.OIDC;
+  }
 
   @Override
   public void verify(OAuthRequestContext context) {

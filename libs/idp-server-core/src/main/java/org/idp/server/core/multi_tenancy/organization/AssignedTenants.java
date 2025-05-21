@@ -1,7 +1,6 @@
 package org.idp.server.core.multi_tenancy.organization;
 
 import java.util.*;
-import org.idp.server.core.multi_tenancy.tenant.Tenant;
 
 public class AssignedTenants implements Iterable<AssignedTenant> {
 

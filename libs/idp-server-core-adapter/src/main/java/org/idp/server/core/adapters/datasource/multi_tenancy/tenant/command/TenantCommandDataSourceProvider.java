@@ -1,9 +1,9 @@
 package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.command;
 
+import org.idp.server.core.multi_tenancy.tenant.TenantCommandRepository;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
-import org.idp.server.core.multi_tenancy.tenant.TenantCommandRepository;
 
 public class TenantCommandDataSourceProvider
     implements ApplicationComponentProvider<TenantCommandRepository> {

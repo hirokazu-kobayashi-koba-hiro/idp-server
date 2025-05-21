@@ -64,7 +64,8 @@ public class IdpServerStarterContextCreator {
             tenantRequest.databaseType(),
             new TenantAttributes());
 
-    AssignedTenant assignedTenant = new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
+    AssignedTenant assignedTenant =
+        new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
     Organization updatedWithTenant = organization.updateWithTenant(assignedTenant);
 
     User user = jsonConverter.read(request.get("user"), User.class);

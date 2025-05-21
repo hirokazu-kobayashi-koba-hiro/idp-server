@@ -49,7 +49,8 @@ public class TenantManagementRegistrationContextCreator {
             tenantRequest.authorizationProvider(),
             tenantRequest.databaseType(),
             new TenantAttributes());
-    AssignedTenant assignedTenant = new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
+    AssignedTenant assignedTenant =
+        new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
     Organization assigned = organization.updateWithTenant(assignedTenant);
     user.addAssignedTenant(tenant.identifier());
 

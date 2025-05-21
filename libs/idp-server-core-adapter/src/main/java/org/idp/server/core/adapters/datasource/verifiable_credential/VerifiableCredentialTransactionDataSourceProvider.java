@@ -1,8 +1,8 @@
 package org.idp.server.core.adapters.datasource.verifiable_credential;
 
+import org.idp.server.core.verifiable_credential.repository.VerifiableCredentialTransactionRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
-import org.idp.server.core.verifiable_credential.repository.VerifiableCredentialTransactionRepository;
 
 public class VerifiableCredentialTransactionDataSourceProvider
     implements ApplicationComponentProvider<VerifiableCredentialTransactionRepository> {
