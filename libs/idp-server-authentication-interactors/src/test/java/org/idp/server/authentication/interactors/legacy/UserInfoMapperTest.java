@@ -1,12 +1,9 @@
-package org.idp.server.authentication;
+package org.idp.server.authentication.interactors.legacy;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.core.oidc.authentication.legacy.UserInfoMapper;
-import org.idp.server.core.oidc.authentication.legacy.UserInfoMappingRule;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.address.Address;
 import org.junit.jupiter.api.Test;
@@ -17,8 +14,7 @@ public class UserInfoMapperTest {
   public void testBasicUserMapping() throws Exception {
     String json =
         "{\"email\": \"test@example.com\", \"name\": \"Test User\", \"email_verified\": true}";
-    ObjectMapper mapper = new ObjectMapper();
-    JsonNodeWrapper body = new JsonNodeWrapper(mapper.readTree(json));
+    JsonNodeWrapper body = JsonNodeWrapper.fromString(json);
 
     List<UserInfoMappingRule> rules =
         List.of(
@@ -38,8 +34,7 @@ public class UserInfoMapperTest {
   public void testAddressMapping() throws Exception {
     String json =
         "{\"address\": {\"formatted\": \"123 Main St\", \"street_address\": \"123 Main St\", \"locality\": \"Springfield\", \"region\": \"IL\", \"postal_code\": \"62704\", \"country\": \"USA\"}}";
-    ObjectMapper mapper = new ObjectMapper();
-    JsonNodeWrapper body = new JsonNodeWrapper(mapper.readTree(json));
+    JsonNodeWrapper body = JsonNodeWrapper.fromString(json);
 
     List<UserInfoMappingRule> rules =
         List.of(new UserInfoMappingRule("address", "address", "address"));
