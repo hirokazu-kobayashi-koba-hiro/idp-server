@@ -129,6 +129,63 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
+  @Override
+  public Map<String, String> selectAssignedOrganization(
+      Tenant tenant, UserIdentifier userIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+      SELECT
+      COALESCE(
+       JSON_AGG(idp_user_assigned_organizations.organization_id)
+       FILTER (WHERE idp_user_assigned_organizations.organization_id IS NOT NULL),
+       '[]'
+     ) AS assigned_organizations,
+     idp_user_current_organization.organization_id AS current_organization_id
+      FROM idp_user_assigned_organizations
+      JOIN idp_user_current_organization
+       ON idp_user_assigned_organizations.user_id = idp_user_current_organization.user_id
+      WHERE idp_user_assigned_organizations.user_id = ?:: uuid
+      GROUP BY
+      idp_user_assigned_organizations.user_id,
+      idp_user_current_organization.organization_id
+      """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(userIdentifier.value());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
+  public Map<String, String> selectAssignedTenant(Tenant tenant, UserIdentifier userIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+            SELECT
+                COALESCE(
+                    JSON_AGG(idp_user_assigned_tenants.tenant_id)
+                    FILTER (WHERE idp_user_assigned_tenants.tenant_id IS NOT NULL),
+                    '[]'
+                ) AS assigned_tenants,
+                idp_user_current_tenant.tenant_id AS current_tenant_id
+            FROM idp_user_assigned_tenants
+                     JOIN idp_user_current_tenant
+                          ON idp_user_assigned_tenants.user_id = idp_user_current_tenant.user_id
+            WHERE idp_user_current_tenant.user_id = ?::uuid
+            GROUP BY
+                idp_user_assigned_tenants.user_id,
+                idp_user_current_tenant.tenant_id
+      """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(userIdentifier.value());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
   String selectSql =
       """
               SELECT
@@ -169,30 +226,14 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                                   '[]'
                   ) AS roles,
                   COALESCE(
-                                  JSON_AGG(DISTINCT user_effective_permissions_view.permission_name)
+                                  JSON_AGG(user_effective_permissions_view.permission_name)
                                   FILTER (WHERE user_effective_permissions_view.permission_name IS NOT NULL),
                                   '[]'
-                  ) AS permissions,
-                  COALESCE(
-                                  JSON_AGG(DISTINCT idp_user_assigned_tenants.tenant_id)
-                                  FILTER (WHERE idp_user_assigned_tenants.tenant_id IS NOT NULL),
-                                  '[]'
-                  ) AS assigned_tenants,
-                  idp_user_current_tenant.tenant_id AS current_tenant_id,
-                  COALESCE(
-                                  JSON_AGG(DISTINCT idp_user_assigned_organizations.organization_id)
-                                  FILTER (WHERE idp_user_assigned_organizations.organization_id IS NOT NULL),
-                                  '[]'
-                  ) AS assigned_organizations,
-                  idp_user_current_organization.organization_id AS current_organization_id
+                  ) AS permissions
               FROM idp_user
                        LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
                        LEFT JOIN role ON idp_user_roles.role_id = role.id
                        LEFT JOIN user_effective_permissions_view ON idp_user.id = user_effective_permissions_view.user_id
-                       LEFT JOIN idp_user_assigned_tenants ON idp_user.id = idp_user_assigned_tenants.user_id
-                       LEFT JOIN idp_user_current_tenant ON idp_user.id = idp_user_current_tenant.user_id
-                       LEFT JOIN idp_user_assigned_organizations ON idp_user.id = idp_user_assigned_organizations.user_id
-                       LEFT JOIN idp_user_current_organization ON idp_user.id = idp_user_current_organization.user_id
                %s
                GROUP BY
                idp_user.id,
@@ -223,8 +264,6 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                idp_user.multi_factor_authentication,
                idp_user.status,
                idp_user.created_at,
-               idp_user.updated_at,
-               idp_user_current_tenant.tenant_id,
-               idp_user_current_organization.organization_id
-                  """;
+               idp_user.updated_at
+            """;
 }
