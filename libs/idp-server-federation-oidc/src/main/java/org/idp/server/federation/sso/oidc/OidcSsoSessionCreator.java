@@ -1,4 +1,4 @@
-package org.idp.server.core.oidc.federation.sso.oidc;
+package org.idp.server.federation.sso.oidc;
 
 import java.util.UUID;
 import org.idp.server.basic.http.QueryParams;
@@ -6,6 +6,7 @@ import org.idp.server.core.oidc.federation.FederationType;
 import org.idp.server.core.oidc.federation.sso.SsoProvider;
 import org.idp.server.core.oidc.federation.sso.SsoState;
 import org.idp.server.core.oidc.federation.sso.SsoStateCoder;
+import org.idp.server.core.oidc.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

@@ -125,10 +125,7 @@ public class OAuthV1Api implements ParameterTransformable {
 
     switch (requestResponse.status()) {
       case REDIRECABLE_OK, REDIRECABLE_BAD_REQUEST -> {
-        return new ResponseEntity<>(
-            Map.of("redirect_uri", requestResponse.authorizationRequestUrl()),
-            headers,
-            HttpStatus.OK);
+        return new ResponseEntity<>(requestResponse.contents(), headers, HttpStatus.OK);
       }
       default -> {
         return new ResponseEntity<>(

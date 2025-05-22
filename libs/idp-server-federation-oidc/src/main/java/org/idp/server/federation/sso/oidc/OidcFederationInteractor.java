@@ -1,15 +1,15 @@
-package org.idp.server.core.oidc.federation.sso.oidc;
+package org.idp.server.federation.sso.oidc;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JoseHandler;
 import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.core.oidc.federation.*;
 import org.idp.server.core.oidc.federation.io.*;
 import org.idp.server.core.oidc.federation.repository.FederationConfigurationQueryRepository;
-import org.idp.server.core.oidc.federation.sso.SsoProvider;
-import org.idp.server.core.oidc.federation.sso.SsoSessionCommandRepository;
-import org.idp.server.core.oidc.federation.sso.SsoSessionQueryRepository;
-import org.idp.server.core.oidc.federation.sso.SsoState;
+import org.idp.server.core.oidc.federation.sso.*;
+import org.idp.server.core.oidc.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
@@ -55,8 +55,9 @@ public class OidcFederationInteractor implements FederationInteractor {
     sessionCommandRepository.register(
         tenant, oidcSsoSession.ssoSessionIdentifier(), oidcSsoSession);
 
-    return new FederationRequestResponse(
-        FederationRequestStatus.REDIRECABLE_OK, oidcSsoSession, oidcSsoConfiguration);
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("redirect_uri", oidcSsoSession.authorizationRequestUri());
+    return new FederationRequestResponse(FederationRequestStatus.REDIRECABLE_OK, contents);
   }
 
   public FederationInteractionResult callback(

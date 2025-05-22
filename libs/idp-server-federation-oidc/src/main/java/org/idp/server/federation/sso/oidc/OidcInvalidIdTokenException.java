@@ -1,4 +1,4 @@
-package org.idp.server.core.oidc.federation.sso.oidc;
+package org.idp.server.federation.sso.oidc;
 
 public class OidcInvalidIdTokenException extends RuntimeException {
   public OidcInvalidIdTokenException(String message) {

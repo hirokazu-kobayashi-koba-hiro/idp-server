@@ -1,4 +1,4 @@
-package org.idp.server.core.oidc.federation.sso.oidc;
+package org.idp.server.federation.sso.oidc;
 
 import java.util.Map;
 import org.idp.server.core.oidc.federation.sso.SsoProvider;

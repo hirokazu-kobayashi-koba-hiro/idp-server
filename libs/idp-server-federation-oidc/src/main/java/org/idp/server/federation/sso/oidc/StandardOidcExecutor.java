@@ -1,4 +1,4 @@
-package org.idp.server.core.oidc.federation.sso.oidc;
+package org.idp.server.federation.sso.oidc;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,20 +15,20 @@ import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.oidc.federation.sso.SsoProvider;
 import org.idp.server.platform.log.LoggerWrapper;
 
-public class FacebookOidcExecutor implements OidcSsoExecutor {
+public class StandardOidcExecutor implements OidcSsoExecutor {
 
-  LoggerWrapper log = LoggerWrapper.getLogger(FacebookOidcExecutor.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(StandardOidcExecutor.class);
   HttpClient httpClient;
   JsonConverter jsonConverter;
 
-  public FacebookOidcExecutor() {
+  public StandardOidcExecutor() {
     this.httpClient = HttpClientFactory.defaultClient();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
   public SsoProvider type() {
-    return SupportedOidcProvider.Facebook.toSsoProvider();
+    return new SsoProvider("standard");
   }
 
   @Override
@@ -97,14 +97,13 @@ public class FacebookOidcExecutor implements OidcSsoExecutor {
   public OidcUserinfoResponse requestUserInfo(OidcUserinfoRequest oidcUserinfoRequest) {
     try {
 
-      QueryParams queryParams = new QueryParams();
-      queryParams.add("fields", "id,name,email,picture");
-      queryParams.add("access_token", oidcUserinfoRequest.accessToken());
       HttpRequest request =
           HttpRequest.newBuilder()
-              .uri(new URI(oidcUserinfoRequest.endpoint() + "?" + queryParams.params()))
+              .uri(new URI(oidcUserinfoRequest.endpoint()))
               .header("Content-Type", "application/json")
               .header("Accept", "application/json")
+              .header(
+                  "Authorization", String.format("Bearer %s", oidcUserinfoRequest.accessToken()))
               .GET()
               .build();
 
