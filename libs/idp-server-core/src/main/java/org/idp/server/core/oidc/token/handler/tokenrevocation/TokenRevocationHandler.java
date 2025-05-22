@@ -3,7 +3,7 @@ package org.idp.server.core.oidc.token.handler.tokenrevocation;
 import java.util.Map;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.type.oauth.RefreshTokenEntity;
-import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
+import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -22,7 +22,7 @@ public class TokenRevocationHandler {
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
-  ClientAuthenticatorHandler clientAuthenticatorHandler;
+  ClientAuthenticationHandler clientAuthenticationHandler;
 
   public TokenRevocationHandler(
       OAuthTokenRepository oAuthTokenRepository,
@@ -33,7 +33,7 @@ public class TokenRevocationHandler {
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
-    this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
+    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
   }
 
   public TokenRevocationResponse handle(TokenRevocationRequest request) {
@@ -52,7 +52,7 @@ public class TokenRevocationHandler {
             request.toParameters(),
             authorizationServerConfiguration,
             clientConfiguration);
-    clientAuthenticatorHandler.authenticate(tokenRevocationRequestContext);
+    clientAuthenticationHandler.authenticate(tokenRevocationRequestContext);
 
     OAuthToken oAuthToken = find(request);
     if (oAuthToken.exists()) {

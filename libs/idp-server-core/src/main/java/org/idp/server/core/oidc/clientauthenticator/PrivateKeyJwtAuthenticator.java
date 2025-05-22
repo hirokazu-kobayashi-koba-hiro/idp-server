@@ -7,6 +7,7 @@ import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 import org.idp.server.basic.type.oauth.ClientSecret;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticator;
 import org.idp.server.core.oidc.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.oidc.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
@@ -17,6 +18,11 @@ class PrivateKeyJwtAuthenticator
     implements ClientAuthenticator, ClientAuthenticationJwtValidatable {
 
   JoseHandler joseHandler = new JoseHandler();
+
+  @Override
+  public ClientAuthenticationType type() {
+    return ClientAuthenticationType.private_key_jwt;
+  }
 
   @Override
   public ClientCredentials authenticate(BackchannelRequestContext context) {

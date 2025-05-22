@@ -11,6 +11,8 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.factory.AuthorizationRequestFactory;
+import org.idp.server.core.oidc.factory.RequestObjectFactories;
+import org.idp.server.core.oidc.factory.RequestObjectFactoryType;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
 import org.idp.server.core.oidc.validator.RequestObjectValidator;
@@ -18,6 +20,12 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** RequestObjectPatternContextService */
 public class RequestObjectPatternContextCreator implements OAuthRequestContextCreator {
+
+  RequestObjectFactories requestObjectFactories;
+
+  public RequestObjectPatternContextCreator(RequestObjectFactories requestObjectFactories) {
+    this.requestObjectFactories = requestObjectFactories;
+  }
 
   @Override
   public OAuthRequestContext create(
@@ -44,9 +52,12 @@ public class RequestObjectPatternContextCreator implements OAuthRequestContextCr
       Set<String> filteredScopes =
           filterScopes(pattern, parameters, joseContext, clientConfiguration);
       AuthorizationProfile profile = analyze(filteredScopes, authorizationServerConfiguration);
+
+      RequestObjectFactoryType requestObjectFactoryType =
+          selectRequestObjectType(profile, authorizationServerConfiguration, clientConfiguration);
       AuthorizationRequestFactory requestFactory =
-          selectAuthorizationRequestFactory(
-              profile, authorizationServerConfiguration, clientConfiguration);
+          requestObjectFactories.get(requestObjectFactoryType);
+
       AuthorizationRequest authorizationRequest =
           requestFactory.create(
               tenant,

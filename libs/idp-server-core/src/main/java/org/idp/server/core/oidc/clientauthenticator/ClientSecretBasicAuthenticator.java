@@ -5,6 +5,7 @@ import org.idp.server.basic.type.oauth.ClientSecret;
 import org.idp.server.basic.type.oauth.ClientSecretBasic;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticator;
 import org.idp.server.core.oidc.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.oidc.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
@@ -28,6 +29,11 @@ import org.idp.server.core.oidc.mtls.ClientCertification;
  * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-2.3.1">2.3.1. Client Password</a>
  */
 class ClientSecretBasicAuthenticator implements ClientAuthenticator {
+
+  @Override
+  public ClientAuthenticationType type() {
+    return ClientAuthenticationType.client_secret_basic;
+  }
 
   @Override
   public ClientCredentials authenticate(BackchannelRequestContext context) {

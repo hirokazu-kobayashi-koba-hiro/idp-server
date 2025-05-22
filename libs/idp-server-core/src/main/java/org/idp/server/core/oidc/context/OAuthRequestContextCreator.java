@@ -9,9 +9,7 @@ import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.OAuthRequestPattern;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.factory.AuthorizationRequestFactory;
-import org.idp.server.core.oidc.factory.FapiAdvanceRequestObjectPatternFactory;
-import org.idp.server.core.oidc.factory.RequestObjectPatternFactory;
+import org.idp.server.core.oidc.factory.RequestObjectFactoryType;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -55,13 +53,13 @@ public interface OAuthRequestContextCreator {
     return clientConfiguration.filteredScope(targetScope);
   }
 
-  default AuthorizationRequestFactory selectAuthorizationRequestFactory(
+  default RequestObjectFactoryType selectRequestObjectType(
       AuthorizationProfile profile,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     if (profile.isFapiAdvance()) {
-      return new FapiAdvanceRequestObjectPatternFactory();
+      return RequestObjectFactoryType.FAPI;
     }
-    return new RequestObjectPatternFactory();
+    return RequestObjectFactoryType.DEFAULT;
   }
 }

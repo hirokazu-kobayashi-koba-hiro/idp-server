@@ -1,12 +1,13 @@
 package org.idp.server.core.oidc.handler;
 
 import org.idp.server.core.oidc.*;
-import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
+import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.context.*;
+import org.idp.server.core.oidc.factory.RequestObjectFactories;
 import org.idp.server.core.oidc.gateway.RequestObjectGateway;
 import org.idp.server.core.oidc.grant_management.AuthorizationGranted;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
@@ -23,7 +24,7 @@ public class OAuthRequestHandler {
 
   OAuthRequestContextCreators oAuthRequestContextCreators;
   OAuthRequestVerifier verifier;
-  ClientAuthenticatorHandler clientAuthenticatorHandler;
+  ClientAuthenticationHandler clientAuthenticationHandler;
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
@@ -35,11 +36,13 @@ public class OAuthRequestHandler {
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       RequestObjectGateway requestObjectGateway,
+      RequestObjectFactories requestObjectFactories,
       AuthorizationGrantedRepository grantedRepository) {
     this.oAuthRequestContextCreators =
-        new OAuthRequestContextCreators(requestObjectGateway, authorizationRequestRepository);
+        new OAuthRequestContextCreators(
+            requestObjectGateway, authorizationRequestRepository, requestObjectFactories);
     this.verifier = new OAuthRequestVerifier();
-    this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
+    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
@@ -73,7 +76,7 @@ public class OAuthRequestHandler {
             pushedRequest.clientSecretBasic(),
             pushedRequest.toClientCert(),
             pushedRequest.toBackchannelParameters());
-    clientAuthenticatorHandler.authenticate(oAuthPushedRequestContext);
+    clientAuthenticationHandler.authenticate(oAuthPushedRequestContext);
 
     authorizationRequestRepository.register(tenant, context.authorizationRequest());
 

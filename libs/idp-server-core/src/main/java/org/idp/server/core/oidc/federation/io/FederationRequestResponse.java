@@ -1,40 +1,26 @@
 package org.idp.server.core.oidc.federation.io;
 
-import org.idp.server.core.oidc.federation.sso.oidc.OidcSsoConfiguration;
-import org.idp.server.core.oidc.federation.sso.oidc.OidcSsoSession;
+import java.util.Map;
 
 public class FederationRequestResponse {
 
   FederationRequestStatus status;
-  OidcSsoSession oidcSsoSession;
-  OidcSsoConfiguration oidcSsoConfiguration;
+  Map<String, Object> contents;
 
   public FederationRequestResponse(FederationRequestStatus status) {
     this.status = status;
   }
 
-  public FederationRequestResponse(
-      FederationRequestStatus status,
-      OidcSsoSession oidcSsoSession,
-      OidcSsoConfiguration oidcSsoConfiguration) {
+  public FederationRequestResponse(FederationRequestStatus status, Map<String, Object> contents) {
     this.status = status;
-    this.oidcSsoSession = oidcSsoSession;
-    this.oidcSsoConfiguration = oidcSsoConfiguration;
+    this.contents = contents;
   }
 
   public FederationRequestStatus status() {
     return status;
   }
 
-  public OidcSsoSession federationSession() {
-    return oidcSsoSession;
-  }
-
-  public OidcSsoConfiguration federatableIdProviderConfiguration() {
-    return oidcSsoConfiguration;
-  }
-
-  public String authorizationRequestUrl() {
-    return oidcSsoSession.authorizationRequestUri();
+  public Map<String, Object> contents() {
+    return contents;
   }
 }

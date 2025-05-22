@@ -32,7 +32,12 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  * the request the normal manner for the flow being used, as specified in Sections 3.1.2.2, 3.2.2.2,
  * or 3.3.2.2.
  */
-public class RequestObjectPatternFactory implements AuthorizationRequestFactory {
+public class RequestObjectPatternFactory implements AuthorizationRequestObjectFactory {
+
+  @Override
+  public RequestObjectFactoryType type() {
+    return RequestObjectFactoryType.DEFAULT;
+  }
 
   @Override
   public AuthorizationRequest create(

@@ -1,0 +1,2 @@
+org.idp.server.federation.sso.oidc.StandardOidcExecutor
+org.idp.server.federation.sso.oidc.FacebookOidcExecutor
