@@ -6,7 +6,7 @@ import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.basic.type.oauth.ClientSecretBasic;
 import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
+import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
@@ -30,7 +30,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class TokenRequestHandler {
 
   OAuthTokenCreationServices oAuthTokenCreationServices;
-  ClientAuthenticatorHandler clientAuthenticatorHandler;
+  ClientAuthenticationHandler clientAuthenticationHandler;
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
@@ -51,7 +51,7 @@ public class TokenRequestHandler {
             authorizationGrantedRepository,
             oAuthTokenRepository,
             extensionOAuthTokenCreationServices);
-    this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
+    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
@@ -87,7 +87,7 @@ public class TokenRequestHandler {
             clientConfiguration);
 
     ClientCredentials clientCredentials =
-        clientAuthenticatorHandler.authenticate(tokenRequestContext);
+        clientAuthenticationHandler.authenticate(tokenRequestContext);
 
     OAuthTokenCreationService oAuthTokenCreationService =
         oAuthTokenCreationServices.get(tokenRequestContext.grantType());

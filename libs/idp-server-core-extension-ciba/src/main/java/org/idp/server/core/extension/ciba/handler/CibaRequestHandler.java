@@ -21,7 +21,7 @@ import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResp
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponseBuilder;
 import org.idp.server.core.extension.ciba.verifier.CibaRequestVerifier;
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticatorHandler;
+import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -46,7 +46,7 @@ public class CibaRequestHandler {
   BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
   CibaGrantRepository cibaGrantRepository;
   CibaContextCreators contextCreators;
-  ClientAuthenticatorHandler clientAuthenticatorHandler;
+  ClientAuthenticationHandler clientAuthenticationHandler;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
@@ -70,7 +70,7 @@ public class CibaRequestHandler {
     this.backchannelAuthenticationRequestRepository = backchannelAuthenticationRequestRepository;
     this.cibaGrantRepository = cibaGrantRepository;
     this.contextCreators = new CibaContextCreators();
-    this.clientAuthenticatorHandler = new ClientAuthenticatorHandler();
+    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
@@ -98,7 +98,7 @@ public class CibaRequestHandler {
 
     CibaRequestVerifier verifier = new CibaRequestVerifier(context);
     verifier.verify();
-    clientAuthenticatorHandler.authenticate(context);
+    clientAuthenticationHandler.authenticate(context);
 
     return context;
   }

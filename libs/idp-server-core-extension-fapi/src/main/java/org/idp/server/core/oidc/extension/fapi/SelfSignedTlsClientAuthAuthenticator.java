@@ -1,4 +1,4 @@
-package org.idp.server.core.oidc.clientauthenticator;
+package org.idp.server.core.oidc.extension.fapi;
 
 import java.util.List;
 import org.idp.server.basic.jose.JsonWebKey;
@@ -11,13 +11,20 @@ import org.idp.server.basic.type.oauth.ClientSecret;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.x509.X509CertInvalidException;
 import org.idp.server.basic.x509.X509Certification;
+import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticator;
 import org.idp.server.core.oidc.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.oidc.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.mtls.ClientCertification;
 
-class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator {
+public class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator {
+
+  @Override
+  public ClientAuthenticationType type() {
+    return ClientAuthenticationType.self_signed_tls_client_auth;
+  }
 
   @Override
   public ClientCredentials authenticate(BackchannelRequestContext context) {
