@@ -1,4 +1,4 @@
-package org.idp.server.authentication.interactors.notification.exception;
+package org.idp.server.platform.notification.exception;
 
 import org.idp.server.platform.exception.TimeoutException;
 

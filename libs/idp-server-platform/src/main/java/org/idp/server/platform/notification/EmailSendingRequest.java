@@ -1,4 +1,4 @@
-package org.idp.server.authentication.interactors.notification;
+package org.idp.server.platform.notification;
 
 public class EmailSendingRequest {
   String from;

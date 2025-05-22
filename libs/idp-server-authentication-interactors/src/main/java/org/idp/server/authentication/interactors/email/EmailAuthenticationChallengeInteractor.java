@@ -2,15 +2,15 @@ package org.idp.server.authentication.interactors.email;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.authentication.interactors.notification.EmailSender;
-import org.idp.server.authentication.interactors.notification.EmailSenders;
-import org.idp.server.authentication.interactors.notification.EmailSendingRequest;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.notification.EmailSender;
+import org.idp.server.platform.notification.EmailSenders;
+import org.idp.server.platform.notification.EmailSendingRequest;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 public class EmailAuthenticationChallengeInteractor implements AuthenticationInteractor {

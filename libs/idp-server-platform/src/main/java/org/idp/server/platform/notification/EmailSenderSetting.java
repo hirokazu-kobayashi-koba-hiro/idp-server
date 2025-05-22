@@ -1,4 +1,4 @@
-package org.idp.server.authentication.interactors.email;
+package org.idp.server.platform.notification;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
