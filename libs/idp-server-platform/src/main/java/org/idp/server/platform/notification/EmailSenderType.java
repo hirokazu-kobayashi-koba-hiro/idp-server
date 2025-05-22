@@ -1,4 +1,4 @@
-package org.idp.server.authentication.interactors.notification;
+package org.idp.server.platform.notification;
 
 import org.idp.server.platform.exception.UnSupportedException;
 

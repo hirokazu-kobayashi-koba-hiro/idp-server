@@ -6,8 +6,6 @@ import org.idp.server.authentication.interactors.device.AuthenticationDeviceNoti
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutorLoader;
 import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutors;
-import org.idp.server.authentication.interactors.notification.EmailSenders;
-import org.idp.server.authentication.interactors.notification.plugin.EmailSenderPluginLoader;
 import org.idp.server.authentication.interactors.sms.SmsAuthenticationExecutorLoader;
 import org.idp.server.authentication.interactors.sms.SmsAuthenticationExecutors;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
@@ -84,6 +82,8 @@ import org.idp.server.platform.dependency.protocol.ProtocolContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolContainerLoader;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.idp.server.platform.notification.EmailSenders;
+import org.idp.server.platform.plugin.EmailSenderPluginLoader;
 import org.idp.server.platform.plugin.SecurityEventHooksPluginLoader;
 import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.SecurityEventHooks;

@@ -1,8 +1,9 @@
 package org.idp.server.authentication.interactors.email;
 
 import java.util.Map;
-import org.idp.server.authentication.interactors.notification.EmailSenderType;
 import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.notification.EmailSenderSetting;
+import org.idp.server.platform.notification.EmailSenderType;
 
 public class EmailAuthenticationConfiguration implements JsonReadable {
   String sender;
