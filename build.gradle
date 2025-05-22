@@ -8,6 +8,8 @@ task stage(dependsOn: ['clean',':app:bootJar']) {
 	}
 }
 
+import java.nio.file.Files
+
 subprojects {
 
 	tasks.register('addApacheLicenseHeader') {
@@ -16,7 +18,7 @@ subprojects {
 
 		doLast {
 			def rootDirPath = project.projectDir.toPath()
-			java.nio.file.Files.walk(rootDirPath)
+            Files.walk(rootDirPath)
 					.filter { it.toString().endsWith('.java') }
 					.forEach { file ->
 						def content = file.toFile().getText('UTF-8')
@@ -49,4 +51,37 @@ tasks.register('addLicenseAll') {
 	group = 'license'
 	description = 'Run addApacheLicenseHeader on all subprojects'
 	dependsOn subprojects.collect { it.tasks.named('addApacheLicenseHeader') }
+}
+
+
+tasks.register('checkLicenseHeader') {
+	group = 'license'
+	description = 'Check that all .java files contain the Apache 2.0 license header'
+
+	doLast {
+		def excludeDirs = ['node_modules', '.gradle', 'build', 'out', 'target', '.idea']
+		def missing = []
+
+		def rootDirPath = project.projectDir.toPath()
+		Files.walk(rootDirPath)
+				.filter { file ->
+					def pathStr = file.toString()
+					return pathStr.endsWith('.java') &&
+							!excludeDirs.any { pathStr.contains("/${it}/") || pathStr.endsWith("/${it}") }
+				}
+				.forEach { file ->
+					def content = file.toFile().getText('UTF-8')
+					if (!content.contains('Licensed under the Apache License')) {
+						missing << file.toAbsolutePath().toString()
+					}
+				}
+
+		if (!missing.isEmpty()) {
+			println "\n❌ Missing license header in the following files:"
+			missing.each { println "- $it" }
+			throw new GradleException("License header check failed: ${missing.size()} file(s) missing headers.")
+		} else {
+			println "✅ All .java files have Apache license headers."
+		}
+	}
 }
