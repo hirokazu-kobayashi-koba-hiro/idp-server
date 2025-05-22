@@ -205,25 +205,6 @@ Swap out mechanisms with minimal code.
 |                     | Custom Branding                             | ⚠️        | ❌    | ❌     | ✅            | Enables UI customization for authentication pages, emails, and error messages.                                                                                                                                                                                                                          |
 | **Infra**           | Multi Database                              | ✅         | ❌    | ❌     | ✅            | Supports databaseType routing per tenant. now is supported PostgreSQL, MySQL                                                                                                                                                                                                                            |
 
-## Account lifecycle
-
-```mermaid
-stateDiagram-v2
-    [*] --> UNREGISTERED
-    UNREGISTERED --> REGISTERED: Sign-up
-    REGISTERED --> VERIFIED: Email verification
-    VERIFIED --> ACTIVE: First login / account use
-    ACTIVE --> LOCKED: Login failed / MFA failed
-    LOCKED --> ACTIVE: Unlock (auto or manual)
-    ACTIVE --> DISABLED: User or admin disables
-    DISABLED --> ACTIVE: Re-enable
-    ACTIVE --> SUSPENDED: Admin suspends
-    SUSPENDED --> ACTIVE: Reinstated
-    ACTIVE --> DEACTIVATED: User requests delete
-    DEACTIVATED --> DELETED_PENDING: Time lapse (e.g. 30 days)
-    DELETED_PENDING --> DELETED: Purge
-
-```
 
 ## Getting Started
 
@@ -309,46 +290,24 @@ npm install
 npm test
 ```
 
-## supported spec
-
-1. RFC6749 The OAuth 2.0 Authorization Framework
-    1. authorization code grant
-    2. implicit grant
-    3. resource owner password credentials grant
-    4. client credentials grant
-2. OpenID Connect Core 1.0 incorporating errata set 1
-    1. authorization code flow
-    2. implicit flow
-    3. hybrid flow
-    4. request object
-        1. signature
-        2. encryption
-        3. signature none
-    5. userinfo
-3. OpenID Connect Discovery 1.0 incorporating errata set 1
-4. OpenID Connect RP-Initiated Logout 1.0
-5. OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0
-    1. poll mode
-    2. ping mode
-    3. push mode
-6. RFC7009 OAuth 2.0 Token Revocation
-7. RFC7636 Proof Key for Code Exchange by OAuth Public Clients
-8. RFC7662 OAuth 2.0 Token Introspection
-9. Financial-grade API Security Profile 1.0 - Part 1: Baseline
-10. Financial-grade API Security Profile 1.0 - Part 2: Advanced
-
-## supported client authentication
-
-1. client_secret_post
-2. client_secret_basic
-3. client_secret_jwt
-4. private_key_jwt
-5. tls_client_auth
-6. self_signed_tls_client_auth
-
 ## License
 
 Apache License, Version 2.0
+
+## Contributing
+
+Please read our [Contributing Guidelines](./CONTRIBUTING.md) before submitting changes.
+
+## Security Policy
+
+If you discover a security vulnerability, please refer to our [Security Policy](./SECURITY.md)  
+or report it privately via [GitHub Security Advisories](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/security/advisories).
+
+## Contributing
+
+Contributions are welcome – whether it's code, feedback, or questions!
+
+Before participating, please check out our [Code of Conduct](./CODE_OF_CONDUCT.md) to help keep our community open, safe, and respectful.
 
 # verifiable-credentials
 
@@ -361,10 +320,3 @@ Apache License, Version 2.0
 3. create apikey of sepolia at alchemy
 4. send eth to wallet
     1. https://sepoliafaucet.com/
-
-### library
-
-* jwt
-    * https://connect2id.com/products/nimbus-jose-jwt
-* webauthn
-    * https://github.com/webauthn4j/webauthn4j
