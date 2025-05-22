@@ -6,12 +6,12 @@ import org.idp.server.authentication.interactors.device.AuthenticationDeviceNoti
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutorLoader;
 import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutors;
-import org.idp.server.authentication.interactors.notification.EmailSenderLoader;
 import org.idp.server.authentication.interactors.notification.EmailSenders;
+import org.idp.server.authentication.interactors.notification.plugin.EmailSenderPluginLoader;
 import org.idp.server.authentication.interactors.sms.SmsAuthenticationExecutorLoader;
 import org.idp.server.authentication.interactors.sms.SmsAuthenticationExecutors;
-import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutorLoader;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
+import org.idp.server.authentication.interactors.webauthn.plugin.WebAuthnExecutorPluginLoader;
 import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.HmacHasher;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
@@ -56,7 +56,6 @@ import org.idp.server.core.oidc.discovery.*;
 import org.idp.server.core.oidc.federation.FederationInteractors;
 import org.idp.server.core.oidc.federation.plugin.FederationDependencyContainer;
 import org.idp.server.core.oidc.federation.plugin.FederationDependencyContainerLoader;
-import org.idp.server.core.oidc.federation.plugin.FederationInteractorLoader;
 import org.idp.server.core.oidc.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.oidc.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.oidc.federation.sso.oidc.OidcSsoExecutorLoader;
@@ -71,6 +70,7 @@ import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.identity.role.RoleCommandRepository;
 import org.idp.server.core.oidc.plugin.authentication.AuthenticationInteractorPluginLoader;
+import org.idp.server.core.oidc.plugin.authentication.FederationInteractorPluginLoader;
 import org.idp.server.core.oidc.token.*;
 import org.idp.server.core.oidc.userinfo.UserinfoApi;
 import org.idp.server.core.oidc.userinfo.UserinfoProtocol;
@@ -84,10 +84,10 @@ import org.idp.server.platform.dependency.protocol.ProtocolContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolContainerLoader;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.idp.server.platform.plugin.SecurityEventHooksPluginLoader;
 import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.SecurityEventHooks;
 import org.idp.server.platform.security.SecurityEventPublisher;
-import org.idp.server.platform.security.hook.SecurityEventHooksLoader;
 import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
@@ -238,7 +238,7 @@ public class IdpServerApplication {
     ProtocolContainer protocolContainer =
         ProtocolContainerLoader.load(applicationComponentContainer);
 
-    SecurityEventHooks securityEventHooks = SecurityEventHooksLoader.load();
+    SecurityEventHooks securityEventHooks = SecurityEventHooksPluginLoader.load();
 
     // create mfa instance
     AuthenticationDependencyContainer authenticationDependencyContainer =
@@ -247,10 +247,10 @@ public class IdpServerApplication {
         PasswordEncodeDelegation.class, passwordEncodeDelegation);
     authenticationDependencyContainer.register(
         PasswordVerificationDelegation.class, passwordVerificationDelegation);
-    EmailSenders emailSenders = EmailSenderLoader.load();
+    EmailSenders emailSenders = EmailSenderPluginLoader.load();
     authenticationDependencyContainer.register(EmailSenders.class, emailSenders);
     WebAuthnExecutors webAuthnExecutors =
-        WebAuthnExecutorLoader.load(authenticationDependencyContainer);
+        WebAuthnExecutorPluginLoader.load(authenticationDependencyContainer);
     authenticationDependencyContainer.register(WebAuthnExecutors.class, webAuthnExecutors);
     AuthenticationDeviceNotifiers authenticationDeviceNotifiers =
         AuthenticationDeviceNotifiersLoader.load();
@@ -302,7 +302,7 @@ public class IdpServerApplication {
         FederationDependencyContainerLoader.load();
     federationDependencyContainer.register(OidcSsoExecutors.class, oidcSsoExecutors);
     FederationInteractors federationInteractors =
-        FederationInteractorLoader.load(federationDependencyContainer);
+        FederationInteractorPluginLoader.load(federationDependencyContainer);
 
     SchemaReader.initialValidate();
 

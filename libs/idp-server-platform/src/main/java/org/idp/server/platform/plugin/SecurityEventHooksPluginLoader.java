@@ -1,4 +1,4 @@
-package org.idp.server.platform.security.hook;
+package org.idp.server.platform.plugin;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,10 +6,11 @@ import java.util.ServiceLoader;
 import org.idp.server.platform.security.SecurityEventHookExecutor;
 import org.idp.server.platform.security.SecurityEventHooks;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.security.hook.SecurityEventHookType;
 
-public class SecurityEventHooksLoader {
+public class SecurityEventHooksPluginLoader {
 
-  private static final LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHooksLoader.class);
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHooksPluginLoader.class);
 
   public static SecurityEventHooks load() {
     Map<SecurityEventHookType, SecurityEventHookExecutor> hookExecutors = new HashMap<>();

@@ -1,13 +1,16 @@
-package org.idp.server.authentication.interactors.notification;
+package org.idp.server.authentication.interactors.notification.plugin;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
+import org.idp.server.authentication.interactors.notification.EmailSender;
+import org.idp.server.authentication.interactors.notification.EmailSenderType;
+import org.idp.server.authentication.interactors.notification.EmailSenders;
 import org.idp.server.platform.log.LoggerWrapper;
 
-public class EmailSenderLoader {
+public class EmailSenderPluginLoader {
 
-  private static final LoggerWrapper log = LoggerWrapper.getLogger(EmailSenderLoader.class);
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(EmailSenderPluginLoader.class);
 
   public static EmailSenders load() {
 
