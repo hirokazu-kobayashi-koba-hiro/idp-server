@@ -1,9 +1,10 @@
-package org.idp.server.core.oidc.clientauthenticator.plugin;
+package org.idp.server.core.oidc.plugin.clientauthenticator;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 import org.idp.server.basic.type.oauth.ClientAuthenticationType;
+import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticator;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class ClientAuthenticationPluginLoader {

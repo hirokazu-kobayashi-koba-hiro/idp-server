@@ -1,4 +1,4 @@
-package org.idp.server.core.oidc.authentication.plugin;
+package org.idp.server.core.oidc.plugin.authentication;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,12 +6,14 @@ import java.util.ServiceLoader;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractor;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractors;
+import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
+import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFactory;
 import org.idp.server.platform.log.LoggerWrapper;
 
-public class AuthenticationInteractorLoader {
+public class AuthenticationInteractorPluginLoader {
 
   private static final LoggerWrapper log =
-      LoggerWrapper.getLogger(AuthenticationInteractorLoader.class);
+      LoggerWrapper.getLogger(AuthenticationInteractorPluginLoader.class);
 
   public static AuthenticationInteractors load(AuthenticationDependencyContainer container) {
 

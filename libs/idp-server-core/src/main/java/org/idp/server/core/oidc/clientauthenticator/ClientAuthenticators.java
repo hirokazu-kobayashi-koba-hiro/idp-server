@@ -5,8 +5,8 @@ import static org.idp.server.basic.type.oauth.ClientAuthenticationType.*;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.type.oauth.ClientAuthenticationType;
-import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticationPluginLoader;
 import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticator;
+import org.idp.server.core.oidc.plugin.clientauthenticator.ClientAuthenticationPluginLoader;
 import org.idp.server.platform.exception.UnSupportedException;
 
 public class ClientAuthenticators {

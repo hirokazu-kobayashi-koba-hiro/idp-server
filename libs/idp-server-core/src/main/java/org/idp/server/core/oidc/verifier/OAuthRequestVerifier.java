@@ -3,7 +3,8 @@ package org.idp.server.core.oidc.verifier;
 import java.util.*;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
-import org.idp.server.core.oidc.plugin.*;
+import org.idp.server.core.oidc.plugin.request.AuthorizationRequestExtensionVerifierPluginLoader;
+import org.idp.server.core.oidc.plugin.request.AuthorizationRequestVerifierPluginLoader;
 import org.idp.server.core.oidc.verifier.extension.JarmVerifier;
 import org.idp.server.core.oidc.verifier.extension.OAuthAuthorizationDetailsVerifier;
 import org.idp.server.core.oidc.verifier.extension.OAuthVerifiableCredentialVerifier;
@@ -22,11 +23,11 @@ public class OAuthRequestVerifier {
     baseVerifiers.put(AuthorizationProfile.OAUTH2, new OAuth2RequestVerifier());
     baseVerifiers.put(AuthorizationProfile.OIDC, new OidcRequestVerifier());
     Map<AuthorizationProfile, AuthorizationRequestVerifier> loadedVerifiers =
-        AuthorizationRequestVerifierLoader.load();
+        AuthorizationRequestVerifierPluginLoader.load();
     baseVerifiers.putAll(loadedVerifiers);
 
     List<AuthorizationRequestExtensionVerifier> loadedExtensionVerifiers =
-        AuthorizationRequestExtensionVerifierLoader.load();
+        AuthorizationRequestExtensionVerifierPluginLoader.load();
     extensionVerifiers.addAll(loadedExtensionVerifiers);
     extensionVerifiers.add(new RequestObjectVerifier());
     extensionVerifiers.add(new OAuthAuthorizationDetailsVerifier());

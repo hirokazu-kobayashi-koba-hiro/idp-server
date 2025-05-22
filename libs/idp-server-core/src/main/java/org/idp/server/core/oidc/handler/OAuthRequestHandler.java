@@ -7,6 +7,7 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQu
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.context.*;
+import org.idp.server.core.oidc.factory.RequestObjectFactories;
 import org.idp.server.core.oidc.gateway.RequestObjectGateway;
 import org.idp.server.core.oidc.grant_management.AuthorizationGranted;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
@@ -35,9 +36,11 @@ public class OAuthRequestHandler {
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       RequestObjectGateway requestObjectGateway,
+      RequestObjectFactories requestObjectFactories,
       AuthorizationGrantedRepository grantedRepository) {
     this.oAuthRequestContextCreators =
-        new OAuthRequestContextCreators(requestObjectGateway, authorizationRequestRepository);
+        new OAuthRequestContextCreators(
+            requestObjectGateway, authorizationRequestRepository, requestObjectFactories);
     this.verifier = new OAuthRequestVerifier();
     this.clientAuthenticationHandler = new ClientAuthenticationHandler();
     this.authorizationRequestRepository = authorizationRequestRepository;

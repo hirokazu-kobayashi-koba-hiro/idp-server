@@ -1,4 +1,4 @@
-package org.idp.server.core.oidc.plugin;
+package org.idp.server.core.oidc.plugin.request;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,10 +6,10 @@ import java.util.ServiceLoader;
 import org.idp.server.core.oidc.verifier.AuthorizationRequestExtensionVerifier;
 import org.idp.server.platform.log.LoggerWrapper;
 
-public class AuthorizationRequestExtensionVerifierLoader {
+public class AuthorizationRequestExtensionVerifierPluginLoader {
 
   private static final LoggerWrapper log =
-      LoggerWrapper.getLogger(AuthorizationRequestExtensionVerifierLoader.class);
+      LoggerWrapper.getLogger(AuthorizationRequestExtensionVerifierPluginLoader.class);
 
   public static List<AuthorizationRequestExtensionVerifier> load() {
     List<AuthorizationRequestExtensionVerifier> extensionVerifiers = new ArrayList<>();

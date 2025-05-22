@@ -1,4 +1,4 @@
-package org.idp.server.core.oidc.factory;
+package org.idp.server.core.oidc.extension.fapi;
 
 import java.util.Set;
 import org.idp.server.basic.jose.JoseContext;
@@ -12,6 +12,8 @@ import org.idp.server.basic.type.rar.AuthorizationDetailsEntity;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.factory.AuthorizationRequestObjectFactory;
+import org.idp.server.core.oidc.factory.RequestObjectFactoryType;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
@@ -23,7 +25,12 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  * shall only use the parameters included in the signed request object passed via the request or
  * request_uri parameter;
  */
-public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequestFactory {
+public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequestObjectFactory {
+
+  @Override
+  public RequestObjectFactoryType type() {
+    return RequestObjectFactoryType.FAPI;
+  }
 
   @Override
   public AuthorizationRequest create(

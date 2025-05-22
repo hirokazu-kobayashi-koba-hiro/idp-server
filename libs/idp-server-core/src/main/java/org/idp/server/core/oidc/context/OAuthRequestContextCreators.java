@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.oidc.OAuthRequestPattern;
+import org.idp.server.core.oidc.factory.RequestObjectFactories;
 import org.idp.server.core.oidc.gateway.RequestObjectGateway;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.platform.exception.UnSupportedException;
@@ -13,12 +14,16 @@ public class OAuthRequestContextCreators {
 
   public OAuthRequestContextCreators(
       RequestObjectGateway requestObjectGateway,
-      AuthorizationRequestRepository authorizationRequestRepository) {
+      AuthorizationRequestRepository authorizationRequestRepository,
+      RequestObjectFactories requestObjectFactories) {
     values = new HashMap<>();
     values.put(OAuthRequestPattern.NORMAL, new NormalPatternContextCreator());
-    values.put(OAuthRequestPattern.REQUEST_OBJECT, new RequestObjectPatternContextCreator());
     values.put(
-        OAuthRequestPattern.REQUEST_URI, new RequestUriPatternContextCreator(requestObjectGateway));
+        OAuthRequestPattern.REQUEST_OBJECT,
+        new RequestObjectPatternContextCreator(requestObjectFactories));
+    values.put(
+        OAuthRequestPattern.REQUEST_URI,
+        new RequestUriPatternContextCreator(requestObjectGateway, requestObjectFactories));
     values.put(
         OAuthRequestPattern.PUSHED_REQUEST_URI,
         new PushedRequestUriPatternContextCreator(authorizationRequestRepository));

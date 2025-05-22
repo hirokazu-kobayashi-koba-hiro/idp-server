@@ -44,7 +44,6 @@ import org.idp.server.core.oidc.*;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractors;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainerLoader;
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorLoader;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationCommandRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionCommandRepository;
@@ -71,6 +70,7 @@ import org.idp.server.core.oidc.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.identity.role.RoleCommandRepository;
+import org.idp.server.core.oidc.plugin.authentication.AuthenticationInteractorPluginLoader;
 import org.idp.server.core.oidc.token.*;
 import org.idp.server.core.oidc.userinfo.UserinfoApi;
 import org.idp.server.core.oidc.userinfo.UserinfoProtocol;
@@ -267,7 +267,7 @@ public class IdpServerApplication {
         SmsAuthenticationExecutors.class, smsAuthenticationExecutors);
 
     AuthenticationInteractors authenticationInteractors =
-        AuthenticationInteractorLoader.load(authenticationDependencyContainer);
+        AuthenticationInteractorPluginLoader.load(authenticationDependencyContainer);
 
     UserLifecycleEventExecutorsMap userLifecycleEventExecutorsMap =
         UserLifecycleEventExecutorLoader.load(
