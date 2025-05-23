@@ -90,4 +90,14 @@ public class Scopes implements Iterable<String> {
   public Iterator<String> iterator() {
     return values.iterator();
   }
+
+  public boolean hasScopeMatchedPrefix(String prefix) {
+    return values.stream().anyMatch(value -> value.startsWith(prefix));
+  }
+
+  public Scopes filterMatchedPrefix(String prefix) {
+    Set<String> filteredValues =
+        values.stream().filter(value -> value.startsWith(prefix)).collect(Collectors.toSet());
+    return new Scopes(filteredValues);
+  }
 }

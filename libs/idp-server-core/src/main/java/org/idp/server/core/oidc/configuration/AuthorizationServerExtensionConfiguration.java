@@ -41,6 +41,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   int backchannelAuthPollingInterval = 5;
   int oauthAuthorizationRequestExpiresIn = 1800;
   List<AuthenticationPolicy> authenticationPolicies = new ArrayList<>();
+  boolean enabledCustomClaimsScopeMapping = false;
 
   public AuthorizationServerExtensionConfiguration() {}
 
@@ -122,5 +123,9 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   public List<AuthenticationPolicy> authenticationPolicies() {
     return authenticationPolicies;
+  }
+
+  public boolean enabledCustomClaimsScopeMapping() {
+    return enabledCustomClaimsScopeMapping;
   }
 }

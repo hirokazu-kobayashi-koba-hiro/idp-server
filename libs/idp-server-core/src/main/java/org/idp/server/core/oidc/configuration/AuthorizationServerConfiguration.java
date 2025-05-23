@@ -533,6 +533,10 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     return extension.authenticationPolicies();
   }
 
+  public boolean enabledCustomClaimsScopeMapping() {
+    return extension.enabledCustomClaimsScopeMapping();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("issuer", issuer);

@@ -29,7 +29,7 @@ import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant_management.AuthorizationGranted;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedIdentifier;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.oidc.id_token.IdTokenCreatable;
+import org.idp.server.core.oidc.id_token.IdTokenCreator;
 import org.idp.server.core.oidc.id_token.IdTokenCustomClaims;
 import org.idp.server.core.oidc.id_token.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
@@ -96,13 +96,13 @@ public class AuthorizationCodeGrantService
     implements OAuthTokenCreationService,
         AccessTokenCreatable,
         RefreshTokenCreatable,
-        IdTokenCreatable,
         CNonceCreatable {
 
   AuthorizationRequestRepository authorizationRequestRepository;
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
+  IdTokenCreator idTokenCreator;
 
   public AuthorizationCodeGrantService(
       AuthorizationRequestRepository authorizationRequestRepository,
@@ -113,6 +113,7 @@ public class AuthorizationCodeGrantService
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
     this.authorizationGrantedRepository = authorizationGrantedRepository;
+    this.idTokenCreator = IdTokenCreator.getInstance();
   }
 
   @Override
@@ -174,7 +175,7 @@ public class AuthorizationCodeGrantService
               .add(authorizationRequest.state())
               .build();
       IdToken idToken =
-          createIdToken(
+          idTokenCreator.createIdToken(
               authorizationGrant.user(),
               authorizationCodeGrant.authentication(),
               authorizationGrant,

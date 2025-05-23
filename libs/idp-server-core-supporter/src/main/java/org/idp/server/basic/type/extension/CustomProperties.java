@@ -41,4 +41,16 @@ public class CustomProperties {
   public String getValueAsStringOrEmpty(String key) {
     return (String) values.getOrDefault(key, "");
   }
+
+  public Object getValue(String key) {
+    return values.get(key);
+  }
+
+  public void setValue(String key, Object value) {
+    values.put(key, value);
+  }
+
+  public boolean contains(String claimName) {
+    return values.containsKey(claimName);
+  }
 }

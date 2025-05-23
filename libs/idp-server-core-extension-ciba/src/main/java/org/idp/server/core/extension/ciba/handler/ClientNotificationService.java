@@ -33,10 +33,7 @@ import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.grant_management.AuthorizationGranted;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedIdentifier;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.oidc.id_token.IdTokenCreatable;
-import org.idp.server.core.oidc.id_token.IdTokenCustomClaims;
-import org.idp.server.core.oidc.id_token.IdTokenCustomClaimsBuilder;
-import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
+import org.idp.server.core.oidc.id_token.*;
 import org.idp.server.core.oidc.token.*;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.OAuthTokenBuilder;
@@ -45,13 +42,13 @@ import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 // FIXME consider. this is bad code.
-public class ClientNotificationService
-    implements AccessTokenCreatable, IdTokenCreatable, RefreshTokenCreatable {
+public class ClientNotificationService implements AccessTokenCreatable, RefreshTokenCreatable {
 
   BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
   OAuthTokenRepository oAuthTokenRepository;
   ClientNotificationGateway clientNotificationGateway;
+  IdTokenCreator idTokenCreator;
 
   public ClientNotificationService(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
@@ -62,6 +59,7 @@ public class ClientNotificationService
     this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.clientNotificationGateway = clientNotificationGateway;
+    this.idTokenCreator = IdTokenCreator.getInstance();
   }
 
   public void notify(
@@ -97,7 +95,7 @@ public class ClientNotificationService
 
       IdTokenCustomClaims idTokenCustomClaims = new IdTokenCustomClaimsBuilder().build();
       IdToken idToken =
-          createIdToken(
+          idTokenCreator.createIdToken(
               cibaGrant.user(),
               new Authentication(),
               cibaGrant.authorizationGrant(),

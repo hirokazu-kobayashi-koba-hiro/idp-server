@@ -27,10 +27,7 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.AuthorizationGrantBuilder;
-import org.idp.server.core.oidc.id_token.IdTokenCreatable;
-import org.idp.server.core.oidc.id_token.IdTokenCustomClaims;
-import org.idp.server.core.oidc.id_token.IdTokenCustomClaimsBuilder;
-import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
+import org.idp.server.core.oidc.id_token.*;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.*;
 import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
@@ -55,14 +52,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  *     Request</a>
  */
 public class ResourceOwnerPasswordCredentialsGrantService
-    implements OAuthTokenCreationService,
-        AccessTokenCreatable,
-        IdTokenCreatable,
-        RefreshTokenCreatable {
+    implements OAuthTokenCreationService, AccessTokenCreatable, RefreshTokenCreatable {
   OAuthTokenRepository oAuthTokenRepository;
+
+  IdTokenCreator idTokenCreator;
 
   public ResourceOwnerPasswordCredentialsGrantService(OAuthTokenRepository oAuthTokenRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
+    this.idTokenCreator = IdTokenCreator.getInstance();
   }
 
   @Override
@@ -115,7 +112,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
     if (authorizationGrant.hasOpenidScope()) {
       IdTokenCustomClaims idTokenCustomClaims = new IdTokenCustomClaimsBuilder().build();
       IdToken idToken =
-          createIdToken(
+          idTokenCreator.createIdToken(
               authorizationGrant.user(),
               new Authentication(),
               authorizationGrant,

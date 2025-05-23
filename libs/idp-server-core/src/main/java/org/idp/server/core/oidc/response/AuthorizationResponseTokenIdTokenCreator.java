@@ -23,7 +23,7 @@ import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.core.oidc.OAuthAuthorizeContext;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
-import org.idp.server.core.oidc.id_token.IdTokenCreatable;
+import org.idp.server.core.oidc.id_token.IdTokenCreator;
 import org.idp.server.core.oidc.id_token.IdTokenCustomClaims;
 import org.idp.server.core.oidc.id_token.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
@@ -33,9 +33,14 @@ import org.idp.server.core.oidc.token.AccessTokenCreatable;
 public class AuthorizationResponseTokenIdTokenCreator
     implements AuthorizationResponseCreator,
         AccessTokenCreatable,
-        IdTokenCreatable,
         RedirectUriDecidable,
         JarmCreatable {
+
+  IdTokenCreator idTokenCreator;
+
+  public AuthorizationResponseTokenIdTokenCreator() {
+    this.idTokenCreator = IdTokenCreator.getInstance();
+  }
 
   @Override
   public AuthorizationResponse create(OAuthAuthorizeContext context) {
@@ -57,7 +62,7 @@ public class AuthorizationResponseTokenIdTokenCreator
             .build();
 
     IdToken idToken =
-        createIdToken(
+        idTokenCreator.createIdToken(
             context.user(),
             context.authentication(),
             context.authorize(),
