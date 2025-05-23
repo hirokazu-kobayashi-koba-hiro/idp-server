@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.id_token;
 
 import org.idp.server.basic.type.extension.CustomProperties;

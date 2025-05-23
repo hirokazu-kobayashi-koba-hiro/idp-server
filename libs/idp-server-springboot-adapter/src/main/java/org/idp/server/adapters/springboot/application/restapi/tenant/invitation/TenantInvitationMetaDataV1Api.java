@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.adapters.springboot.application.restapi.tenant.invitation;
 
 import jakarta.servlet.http.HttpServletRequest;

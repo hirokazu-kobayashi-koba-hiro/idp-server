@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.basic.json.schema;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;

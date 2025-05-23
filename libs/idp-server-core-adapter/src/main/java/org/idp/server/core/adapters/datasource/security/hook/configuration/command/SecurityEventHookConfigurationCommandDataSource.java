@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.adapters.datasource.security.hook.configuration.command;
 
 import org.idp.server.basic.json.JsonConverter;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.control_plane.base.definition;
 
 import java.util.ArrayList;

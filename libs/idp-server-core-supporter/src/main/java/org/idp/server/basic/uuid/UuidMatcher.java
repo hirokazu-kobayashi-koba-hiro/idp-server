@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.basic.uuid;
 
 import java.util.UUID;

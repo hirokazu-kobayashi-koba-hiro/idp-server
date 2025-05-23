@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.userinfo;
 
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;

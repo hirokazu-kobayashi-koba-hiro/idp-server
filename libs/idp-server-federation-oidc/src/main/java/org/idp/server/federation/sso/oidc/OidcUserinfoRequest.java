@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.federation.sso.oidc;
 
 public class OidcUserinfoRequest {

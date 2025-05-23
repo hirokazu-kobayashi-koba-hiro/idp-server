@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.configuration.exception;
 
 import org.idp.server.platform.exception.NotFoundException;

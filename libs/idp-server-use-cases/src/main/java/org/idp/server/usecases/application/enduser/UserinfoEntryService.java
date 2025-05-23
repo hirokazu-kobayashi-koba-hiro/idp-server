@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.usecases.application.enduser;
 
 import org.idp.server.basic.type.oauth.Subject;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.adapters.datasource.federation.config.query;
 
 import java.util.HashMap;

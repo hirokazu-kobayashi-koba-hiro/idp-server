@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.control_plane.management.tenant.invitation.operation;
 
 public enum TenantInvitationMetaDataStatus {

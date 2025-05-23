@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.adapters.springboot.application.restapi.authentication.device;
 
 import jakarta.servlet.http.HttpServletRequest;

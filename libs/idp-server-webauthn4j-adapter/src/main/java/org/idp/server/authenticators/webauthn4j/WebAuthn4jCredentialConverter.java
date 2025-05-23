@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.authenticators.webauthn4j;
 
 import com.webauthn4j.converter.AttestedCredentialDataConverter;

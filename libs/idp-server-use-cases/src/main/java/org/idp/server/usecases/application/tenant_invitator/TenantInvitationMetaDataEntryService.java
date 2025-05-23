@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.usecases.application.tenant_invitator;
 
 import java.util.Map;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.extension.ciba.response;
 
 import java.util.HashMap;

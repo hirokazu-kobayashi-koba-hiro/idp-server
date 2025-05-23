@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.adapters.springboot.application.property;
 
 import org.idp.server.platform.datasource.DbConfig;

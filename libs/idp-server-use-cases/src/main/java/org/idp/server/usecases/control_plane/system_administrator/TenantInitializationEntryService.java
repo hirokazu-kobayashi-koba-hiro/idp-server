@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.usecases.control_plane.system_administrator;
 
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.extension.identity.verification.result;
 
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

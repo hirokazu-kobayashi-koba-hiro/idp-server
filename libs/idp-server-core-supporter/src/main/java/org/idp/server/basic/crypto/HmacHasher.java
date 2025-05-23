@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.basic.crypto;
 
 import java.security.InvalidKeyException;

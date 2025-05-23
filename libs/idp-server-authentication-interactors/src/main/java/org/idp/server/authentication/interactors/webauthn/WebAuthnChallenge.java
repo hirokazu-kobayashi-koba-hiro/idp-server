@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.authentication.interactors.webauthn;
 
 import java.io.Serializable;

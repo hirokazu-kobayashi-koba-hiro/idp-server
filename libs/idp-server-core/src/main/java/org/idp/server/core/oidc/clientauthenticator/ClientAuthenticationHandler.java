@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.clientauthenticator;
 
 import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticator;

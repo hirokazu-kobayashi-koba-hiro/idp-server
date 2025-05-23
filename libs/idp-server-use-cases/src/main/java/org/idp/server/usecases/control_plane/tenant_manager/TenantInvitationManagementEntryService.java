@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.usecases.control_plane.tenant_manager;
 
 import java.util.HashMap;

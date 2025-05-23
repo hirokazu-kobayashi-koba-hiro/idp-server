@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.adapters.datasource.oidc.code;
 
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;

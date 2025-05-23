@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.basic.x509;
 
 public class X509CertInvalidException extends Exception {

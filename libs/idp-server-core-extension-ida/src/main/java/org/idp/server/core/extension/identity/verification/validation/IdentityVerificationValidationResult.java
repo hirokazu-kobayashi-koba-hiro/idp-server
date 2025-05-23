@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.extension.identity.verification.validation;
 
 import java.util.HashMap;

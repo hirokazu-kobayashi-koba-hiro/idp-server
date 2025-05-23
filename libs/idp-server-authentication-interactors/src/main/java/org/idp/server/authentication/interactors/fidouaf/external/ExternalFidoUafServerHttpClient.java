@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.authentication.interactors.fidouaf.external;
 
 import java.util.HashMap;

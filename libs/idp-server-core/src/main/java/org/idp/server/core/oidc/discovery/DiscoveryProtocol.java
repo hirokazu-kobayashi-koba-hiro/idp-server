@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.discovery;
 
 import org.idp.server.core.oidc.discovery.handler.io.JwksRequestResponse;

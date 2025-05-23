@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.control_plane.admin.starter.validator;
 
 import org.idp.server.basic.json.JsonNodeWrapper;

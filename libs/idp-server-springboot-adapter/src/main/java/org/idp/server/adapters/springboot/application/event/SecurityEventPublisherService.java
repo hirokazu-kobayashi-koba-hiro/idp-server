@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.adapters.springboot.application.event;
 
 import org.idp.server.platform.security.SecurityEvent;

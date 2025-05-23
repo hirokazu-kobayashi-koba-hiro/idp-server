@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.adapters.datasource.verifiable_credentials;
 
 import org.idp.server.core.extension.verifiable_credentials.repository.VerifiableCredentialTransactionRepository;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.adapters.datasource.identity.permission;
 
 import org.idp.server.core.oidc.identity.permission.Permission;

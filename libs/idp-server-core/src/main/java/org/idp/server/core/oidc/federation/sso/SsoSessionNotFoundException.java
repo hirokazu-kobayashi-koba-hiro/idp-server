@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.federation.sso;
 
 public class SsoSessionNotFoundException extends RuntimeException {

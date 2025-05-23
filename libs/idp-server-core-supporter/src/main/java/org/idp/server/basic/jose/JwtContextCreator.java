@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.basic.jose;
 
 public class JwtContextCreator implements JoseContextCreator {

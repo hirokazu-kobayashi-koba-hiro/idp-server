@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.control_plane.management.tenant;
 
 import org.idp.server.basic.json.JsonConverter;

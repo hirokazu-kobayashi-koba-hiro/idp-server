@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.basic.random;
 
 import org.junit.jupiter.api.Test;

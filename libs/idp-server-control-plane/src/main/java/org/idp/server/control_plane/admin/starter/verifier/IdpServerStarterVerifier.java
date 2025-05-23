@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.control_plane.admin.starter.verifier;
 
 import org.idp.server.control_plane.admin.starter.IdpServerStarterContext;

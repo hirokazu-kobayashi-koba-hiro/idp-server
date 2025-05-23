@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.security.event.hook.ssf;
 
 import org.idp.server.platform.security.event.DefaultSecurityEventType;

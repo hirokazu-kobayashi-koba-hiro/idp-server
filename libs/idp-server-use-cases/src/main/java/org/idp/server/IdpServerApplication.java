@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server;
 
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceApi;

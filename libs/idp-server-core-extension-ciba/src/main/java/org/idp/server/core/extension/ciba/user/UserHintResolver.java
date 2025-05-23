@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.extension.ciba.user;
 
 import org.idp.server.core.oidc.identity.User;

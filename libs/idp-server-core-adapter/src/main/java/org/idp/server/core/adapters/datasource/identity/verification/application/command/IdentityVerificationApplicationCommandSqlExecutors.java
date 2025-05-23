@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.adapters.datasource.identity.verification.application.command;
 
 import java.util.HashMap;

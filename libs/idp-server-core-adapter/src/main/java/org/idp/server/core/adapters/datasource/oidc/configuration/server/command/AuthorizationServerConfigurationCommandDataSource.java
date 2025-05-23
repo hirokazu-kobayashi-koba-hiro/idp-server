@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.adapters.datasource.oidc.configuration.server.command;
 
 import org.idp.server.basic.json.JsonConverter;

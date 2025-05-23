@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.control_plane.management.onboarding.verifier;
 
 import java.util.HashMap;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.response;
 
 import org.idp.server.basic.random.RandomStringGenerator;

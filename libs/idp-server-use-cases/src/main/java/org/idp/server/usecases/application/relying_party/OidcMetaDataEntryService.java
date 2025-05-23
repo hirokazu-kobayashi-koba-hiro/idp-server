@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.usecases.application.relying_party;
 
 import org.idp.server.core.oidc.discovery.DiscoveryProtocol;

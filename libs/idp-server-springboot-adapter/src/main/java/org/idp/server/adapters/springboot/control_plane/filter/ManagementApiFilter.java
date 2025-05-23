@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.adapters.springboot.control_plane.filter;
 
 import jakarta.servlet.FilterChain;

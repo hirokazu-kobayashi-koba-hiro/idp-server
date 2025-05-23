@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.usecases.application.system;
 
 import org.idp.server.basic.type.extension.Pairs;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.adapters.datasource.authentication.interaction.command;
 
 import java.util.ArrayList;

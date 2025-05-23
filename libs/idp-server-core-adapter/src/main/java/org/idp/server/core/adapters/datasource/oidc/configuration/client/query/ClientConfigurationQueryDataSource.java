@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.adapters.datasource.oidc.configuration.client.query;
 
 import java.util.List;

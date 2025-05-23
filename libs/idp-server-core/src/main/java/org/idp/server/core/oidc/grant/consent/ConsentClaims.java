@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.grant.consent;
 
 import java.time.LocalDateTime;

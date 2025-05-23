@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.basic.type.extension;
 
 import java.util.HashMap;

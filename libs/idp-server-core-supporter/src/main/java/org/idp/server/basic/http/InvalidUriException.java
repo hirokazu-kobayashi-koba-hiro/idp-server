@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.basic.http;
 
 public class InvalidUriException extends Exception {

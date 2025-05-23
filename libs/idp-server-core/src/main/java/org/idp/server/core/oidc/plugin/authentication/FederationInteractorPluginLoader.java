@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.plugin.authentication;
 
 import java.util.HashMap;

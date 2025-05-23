@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.identity.permission;
 
 import java.util.ArrayList;

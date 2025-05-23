@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.pkce;
 
 import org.idp.server.basic.base64.Base64Codeable;

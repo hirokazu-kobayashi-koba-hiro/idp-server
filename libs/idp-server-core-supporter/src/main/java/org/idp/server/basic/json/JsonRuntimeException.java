@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.basic.json;
 
 public class JsonRuntimeException extends RuntimeException {

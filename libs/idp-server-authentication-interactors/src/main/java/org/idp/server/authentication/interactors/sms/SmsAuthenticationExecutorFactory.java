@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.authentication.interactors.sms;
 
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;

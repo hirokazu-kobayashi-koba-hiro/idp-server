@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.control_plane.admin.tenant;
 
 import org.idp.server.control_plane.admin.tenant.io.TenantInitializationRequest;

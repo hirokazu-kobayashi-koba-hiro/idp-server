@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.control_plane.base.schema.resource;
 
 import java.io.InputStream;

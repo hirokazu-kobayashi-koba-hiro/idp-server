@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.basic.base64;
 
 import com.nimbusds.jose.util.Base64;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.token.service;
 
 import static org.idp.server.basic.type.oauth.GrantType.*;

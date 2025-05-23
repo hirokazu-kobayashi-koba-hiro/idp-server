@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.token.tokenrevocation;
 
 import org.idp.server.basic.type.mtls.ClientCert;

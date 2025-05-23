@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.token.tokenintrospection.validator;
 
 import org.idp.server.core.oidc.token.tokenintrospection.TokenIntrospectionRequestParameters;

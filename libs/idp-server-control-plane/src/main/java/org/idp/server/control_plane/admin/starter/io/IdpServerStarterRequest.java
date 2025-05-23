@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.control_plane.admin.starter.io;
 
 import java.util.Map;

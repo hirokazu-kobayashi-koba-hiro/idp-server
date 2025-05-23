@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.authentication.evaluator;
 
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionResults;

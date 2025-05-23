@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.identity.authentication;
 
 import org.idp.server.basic.type.oauth.Password;

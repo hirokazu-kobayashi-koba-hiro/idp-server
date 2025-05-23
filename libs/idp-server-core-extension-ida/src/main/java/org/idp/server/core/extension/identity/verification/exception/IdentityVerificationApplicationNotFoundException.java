@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.extension.identity.verification.exception;
 
 import org.idp.server.platform.exception.NotFoundException;

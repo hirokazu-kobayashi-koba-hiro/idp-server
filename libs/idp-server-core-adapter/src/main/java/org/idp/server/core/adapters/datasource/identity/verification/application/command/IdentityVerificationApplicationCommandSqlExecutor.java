@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.adapters.datasource.identity.verification.application.command;
 
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;

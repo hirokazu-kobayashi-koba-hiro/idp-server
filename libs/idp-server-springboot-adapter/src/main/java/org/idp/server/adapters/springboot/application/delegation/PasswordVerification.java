@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.adapters.springboot.application.delegation;
 
 import org.idp.server.core.oidc.identity.authentication.PasswordVerificationDelegation;

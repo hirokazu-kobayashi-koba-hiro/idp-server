@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.security.event.hooks.webhook;
 
 import java.util.List;

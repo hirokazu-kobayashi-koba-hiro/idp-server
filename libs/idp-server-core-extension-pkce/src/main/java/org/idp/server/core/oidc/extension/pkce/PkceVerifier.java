@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.extension.pkce;
 
 import org.idp.server.core.oidc.OAuthRequestContext;

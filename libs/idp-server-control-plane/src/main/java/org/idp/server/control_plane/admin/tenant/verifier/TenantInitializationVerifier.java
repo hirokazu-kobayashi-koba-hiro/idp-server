@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.control_plane.admin.tenant.verifier;
 
 import org.idp.server.control_plane.admin.tenant.TenantInitializationContext;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.identity.event;
 
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;

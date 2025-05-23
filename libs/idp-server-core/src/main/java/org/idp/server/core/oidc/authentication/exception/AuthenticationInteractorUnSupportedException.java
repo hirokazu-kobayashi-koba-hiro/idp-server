@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.authentication.exception;
 
 public class AuthenticationInteractorUnSupportedException extends RuntimeException {

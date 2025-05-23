@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.adapters.springboot.application.restapi.metadata;
 
 import org.idp.server.IdpServerApplication;

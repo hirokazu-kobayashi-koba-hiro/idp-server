@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.federation.plugin;
 
 import java.util.ServiceLoader;

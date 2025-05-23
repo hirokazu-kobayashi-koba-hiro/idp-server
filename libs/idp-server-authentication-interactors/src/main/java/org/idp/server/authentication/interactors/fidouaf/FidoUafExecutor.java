@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.authentication.interactors.fidouaf;
 
 import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;

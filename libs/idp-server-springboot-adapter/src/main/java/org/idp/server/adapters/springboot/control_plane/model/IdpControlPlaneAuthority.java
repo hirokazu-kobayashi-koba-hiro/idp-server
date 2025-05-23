@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.adapters.springboot.control_plane.model;
 
 import org.idp.server.control_plane.base.definition.IdpControlPlaneScope;

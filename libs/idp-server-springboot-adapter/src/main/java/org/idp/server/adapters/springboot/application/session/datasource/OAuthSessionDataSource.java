@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.adapters.springboot.application.session.datasource;
 
 import jakarta.servlet.http.HttpSession;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.request;
 
 import org.idp.server.basic.type.extension.ExpiredAt;
