@@ -23,6 +23,7 @@ import org.idp.server.basic.jose.JoseInvalidException;
 import org.idp.server.basic.jose.JsonWebKeyInvalidException;
 import org.idp.server.basic.jose.JsonWebSignature;
 import org.idp.server.basic.jose.JsonWebSignatureFactory;
+import org.idp.server.basic.random.RandomStringGenerator;
 import org.idp.server.basic.type.extension.CreatedAt;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
@@ -63,26 +64,14 @@ public interface AccessTokenCreatable {
       payloadBuilder.add(expiredAt);
       payloadBuilder.addJti(UUID.randomUUID().toString());
 
-      ClientCertificationThumbprint thumbprint = new ClientCertificationThumbprint();
-      if (clientCredentials.isTlsClientAuthOrSelfSignedTlsClientAuth()
-          && authorizationServerConfiguration.isTlsClientCertificateBoundAccessTokens()
-          && clientConfiguration.isTlsClientCertificateBoundAccessTokens()) {
-        ClientCertification clientCertification = clientCredentials.clientCertification();
-        ClientCertificationThumbprintCalculator calculator =
-            new ClientCertificationThumbprintCalculator(clientCertification);
-        thumbprint = calculator.calculate();
-        payloadBuilder.add(thumbprint);
-      }
+      ClientCertificationThumbprint thumbprint =
+          createClientCertificationThumbprint(
+              authorizationServerConfiguration, clientConfiguration, clientCredentials);
+      payloadBuilder.add(thumbprint);
 
       Map<String, Object> accessTokenPayload = payloadBuilder.build();
-      JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
-      JsonWebSignature jsonWebSignature =
-          jsonWebSignatureFactory.createWithAsymmetricKey(
-              accessTokenPayload,
-              Map.of(),
-              authorizationServerConfiguration.jwks(),
-              authorizationServerConfiguration.tokenSignedKeyId());
-      AccessTokenEntity accessTokenEntity = new AccessTokenEntity(jsonWebSignature.serialize());
+      AccessTokenEntity accessTokenEntity =
+          createAccessTokenEntity(authorizationServerConfiguration, accessTokenPayload);
 
       return new AccessToken(
           authorizationGrant.tenantIdentifier(),
@@ -97,5 +86,42 @@ public interface AccessTokenCreatable {
     } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
       throw new ConfigurationInvalidException(exception);
     }
+  }
+
+  private static AccessTokenEntity createAccessTokenEntity(
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      Map<String, Object> accessTokenPayload)
+      throws JsonWebKeyInvalidException, JoseInvalidException {
+    if (authorizationServerConfiguration.isIdentifierAccessTokenType()) {
+      RandomStringGenerator randomStringGenerator = new RandomStringGenerator(32);
+      String token = randomStringGenerator.generate();
+      return new AccessTokenEntity(token);
+    }
+
+    JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
+    JsonWebSignature jsonWebSignature =
+        jsonWebSignatureFactory.createWithAsymmetricKey(
+            accessTokenPayload,
+            Map.of("typ", "at+jwt"),
+            authorizationServerConfiguration.jwks(),
+            authorizationServerConfiguration.tokenSignedKeyId());
+    return new AccessTokenEntity(jsonWebSignature.serialize());
+  }
+
+  private static ClientCertificationThumbprint createClientCertificationThumbprint(
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
+      ClientCredentials clientCredentials) {
+
+    if (clientCredentials.isTlsClientAuthOrSelfSignedTlsClientAuth()
+        && authorizationServerConfiguration.isTlsClientCertificateBoundAccessTokens()
+        && clientConfiguration.isTlsClientCertificateBoundAccessTokens()) {
+      ClientCertification clientCertification = clientCredentials.clientCertification();
+      ClientCertificationThumbprintCalculator calculator =
+          new ClientCertificationThumbprintCalculator(clientCertification);
+      return calculator.calculate();
+    }
+
+    return new ClientCertificationThumbprint();
   }
 }
