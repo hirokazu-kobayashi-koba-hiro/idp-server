@@ -284,6 +284,10 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     return scopes.stream().anyMatch(scope -> extension.fapiAdvanceScopes().contains(scope));
   }
 
+  public boolean isIdentifierAccessTokenType() {
+    return extension.isIdentifierAccessTokenType();
+  }
+
   public int authorizationCodeValidDuration() {
     return extension.authorizationCodeValidDuration();
   }

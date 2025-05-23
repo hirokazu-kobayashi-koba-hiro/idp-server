@@ -181,6 +181,7 @@
     }
   },
   "extension": {
+    "access_token_type": "JWT",
     "token_signed_key_id": "id_token_nextauth",
     "id_token_signed_key_id": "id_token_nextauth",
     "access_token_duration": 3600,

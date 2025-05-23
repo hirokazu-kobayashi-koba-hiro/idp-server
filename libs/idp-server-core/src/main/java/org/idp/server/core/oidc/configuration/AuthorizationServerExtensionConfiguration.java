@@ -24,6 +24,10 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   List<String> fapiBaselineScopes = new ArrayList<>();
   List<String> fapiAdvanceScopes = new ArrayList<>();
+
+  /** opaque: identifier type JWT: consisting type */
+  String accessTokenType = "opaque";
+
   int authorizationCodeValidDuration = 600;
   String tokenSignedKeyId = "";
   String idTokenSignedKeyId = "";
@@ -46,6 +50,14 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   public boolean hasFapiAdvanceScope(Set<String> scopes) {
     return scopes.stream().anyMatch(scope -> fapiAdvanceScopes.contains(scope));
+  }
+
+  public String accessTokenType() {
+    return accessTokenType;
+  }
+
+  public boolean isIdentifierAccessTokenType() {
+    return accessTokenType.equals("opaque");
   }
 
   public int authorizationCodeValidDuration() {
