@@ -210,16 +210,21 @@ Swap out mechanisms with minimal code.
 
 ### preparation
 
-* set up
+* set up generate api-key and api-secret
+
+```shell
+./init.sh
+```
 
 ※ fix your configuration
 
 ```shell
 export ADDRESS=0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198
-export PRIVATE_KEY=d8b595680851765f38ea5405129244ba3cbad84467d190859f4c8b20c1ff6c75
-export WEB3_URL=wss://eth-sepolia.g.alchemy.com/v2/xxx
-export VERIFICATION_Method=did:web:assets.dev.trustid.sbi-fc.com#key-2
-export CHAIN=ethereum_sepolia
+export IDP_SERVER_DOMAIN=http://localhost:8080/
+export IDP_SERVER_API_KEY=xxx
+export IDP_SERVER_API_SECRET=xxx
+export ENCRYPTION_KEY=xxx
+export ENV=local or develop or ...
 
 docker-compose up -d
 ```
@@ -228,28 +233,6 @@ docker-compose up -d
 
 ```shell
 ./gradlew flywayClean flywayMigrate
-```
-
-* generate api-key and api-secret
-
-```shell
-./init.sh
-```
-
-* set variable
-
-```shell
-export IDP_SERVER_DOMAIN=http://localhost:8080/
-export IDP_SERVER_API_KEY=xxx
-export IDP_SERVER_API_SECRET=xxx
-export ENCRYPTION_KEY=xxx
-export ENV=local or develop or ...
-```
-
-### bootRun
-
-```shell
-./gradlew bootRun
 ```
 
 ### setup configuration
@@ -290,6 +273,23 @@ npm install
 npm test
 ```
 
+### docker 
+
+```shell
+docker build -t idp-server .
+```
+
+```shell
+docker run -p 8080:8080 \
+  -e IDP_SERVER_API_KEY=local-key \
+  -e IDP_SERVER_API_SECRET=local-secret \
+  -e ENCRYPTION_KEY=supersecret \
+  -e DB_WRITE_URL=jdbc:postgresql://host.docker.internal:5432/idpserver \
+  -e DB_READ_URL=jdbc:postgresql://host.docker.internal:5432/idpserver \
+  -e REDIS_HOST=host.docker.internal \
+  idp-server:latest
+```
+
 ## License
 
 Apache License, Version 2.0
@@ -308,15 +308,3 @@ or report it privately via [GitHub Security Advisories](https://github.com/hirok
 Contributions are welcome – whether it's code, feedback, or questions!
 
 Before participating, please check out our [Code of Conduct](./CODE_OF_CONDUCT.md) to help keep our community open, safe, and respectful.
-
-# verifiable-credentials
-
-## pre setup
-
-1. create wallet
-    1. https://metamask.io/
-2. create alchemy account
-    1. https://www.alchemy.com/
-3. create apikey of sepolia at alchemy
-4. send eth to wallet
-    1. https://sepoliafaucet.com/
