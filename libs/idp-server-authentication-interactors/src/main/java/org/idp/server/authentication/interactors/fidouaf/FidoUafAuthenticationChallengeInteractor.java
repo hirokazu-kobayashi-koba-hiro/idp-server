@@ -16,7 +16,9 @@
 
 package org.idp.server.authentication.interactors.fidouaf;
 
+import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
@@ -28,12 +30,15 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
 
   FidoUafExecutors fidoUafExecutors;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
+  FidoUafAdditionalRequestResolvers additionalRequestResolvers;
 
   public FidoUafAuthenticationChallengeInteractor(
       FidoUafExecutors fidoUafExecutors,
-      AuthenticationConfigurationQueryRepository configurationQueryRepository) {
+      AuthenticationConfigurationQueryRepository configurationQueryRepository,
+      FidoUafAdditionalRequestResolvers additionalRequestResolvers) {
     this.fidoUafExecutors = fidoUafExecutors;
     this.configurationQueryRepository = configurationQueryRepository;
+    this.additionalRequestResolvers = additionalRequestResolvers;
   }
 
   @Override
@@ -51,8 +56,12 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
 
     User user = transaction.user();
     String deviceId = user.getPrimaryAuthenticationDevice().id();
-    Map<String, Object> executionRequest = Map.of("user_id", deviceId);
-    // TODO add transaction request
+    Map<String, Object> executionRequest = new HashMap<>();
+    executionRequest.put(fidoUafConfiguration.deviceIdParam(), deviceId);
+
+    Map<String, Object> additionalRequests =
+        additionalRequestResolvers.resolveAll(tenant, type, request, transaction);
+    executionRequest.putAll(additionalRequests);
 
     FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(executionRequest);
     FidoUafExecutionResult executionResult =
