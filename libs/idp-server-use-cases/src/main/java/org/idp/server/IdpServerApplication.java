@@ -22,6 +22,8 @@ import org.idp.server.authentication.interactors.device.AuthenticationDeviceNoti
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutorLoader;
 import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutors;
+import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
+import org.idp.server.authentication.interactors.plugin.FidoUafAdditionalRequestResolverPluginLoader;
 import org.idp.server.authentication.interactors.sms.SmsAuthenticationExecutorLoader;
 import org.idp.server.authentication.interactors.sms.SmsAuthenticationExecutors;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
@@ -256,7 +258,7 @@ public class IdpServerApplication {
 
     SecurityEventHooks securityEventHooks = SecurityEventHooksPluginLoader.load();
 
-    // create mfa instance
+    // create authentication-interactor instance
     AuthenticationDependencyContainer authenticationDependencyContainer =
         AuthenticationDependencyContainerLoader.load();
     authenticationDependencyContainer.register(
@@ -276,6 +278,10 @@ public class IdpServerApplication {
     FidoUafExecutors fidoUafExecutors =
         FidoUafExecutorLoader.load(authenticationDependencyContainer);
     authenticationDependencyContainer.register(FidoUafExecutors.class, fidoUafExecutors);
+    FidoUafAdditionalRequestResolvers fidoUafAdditionalRequestResolvers =
+        FidoUafAdditionalRequestResolverPluginLoader.load();
+    authenticationDependencyContainer.register(
+        FidoUafAdditionalRequestResolvers.class, fidoUafAdditionalRequestResolvers);
 
     SmsAuthenticationExecutors smsAuthenticationExecutors =
         SmsAuthenticationExecutorLoader.load(authenticationDependencyContainer);

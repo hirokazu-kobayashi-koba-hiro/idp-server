@@ -1,4 +1,4 @@
-name: License Header Check
+name: Lint Check
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  check-license:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,3 +24,6 @@ jobs:
 
       - name: Run license header check
         run: ./gradlew checkLicenseHeader
+
+      - name: Run Build check
+        run: ./gradlew build -x test

@@ -20,10 +20,12 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
+import org.idp.server.core.oidc.rar.AuthorizationDetails;
 
 public class AuthenticationContext {
   AcrValues acrValues;
   Scopes scopes;
+  AuthorizationDetails authorizationDetails;
 
   public AuthenticationContext() {}
 

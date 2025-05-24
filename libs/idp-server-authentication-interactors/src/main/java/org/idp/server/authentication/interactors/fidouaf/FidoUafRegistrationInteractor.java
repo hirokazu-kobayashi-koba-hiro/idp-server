@@ -17,7 +17,10 @@
 package org.idp.server.authentication.interactors.fidouaf;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
@@ -31,12 +34,15 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
 
   FidoUafExecutors fidoUafExecutors;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
+  FidoUafAdditionalRequestResolvers additionalRequestResolvers;
 
   public FidoUafRegistrationInteractor(
       FidoUafExecutors fidoUafExecutors,
-      AuthenticationConfigurationQueryRepository configurationQueryRepository) {
+      AuthenticationConfigurationQueryRepository configurationQueryRepository,
+      FidoUafAdditionalRequestResolvers additionalRequestResolvers) {
     this.fidoUafExecutors = fidoUafExecutors;
     this.configurationQueryRepository = configurationQueryRepository;
+    this.additionalRequestResolvers = additionalRequestResolvers;
   }
 
   @Override
@@ -52,7 +58,12 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
         configurationQueryRepository.get(tenant, "fido-uaf", FidoUafConfiguration.class);
     FidoUafExecutor fidoUafExecutor = fidoUafExecutors.get(fidoUafConfiguration.type());
 
-    FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(request.toMap());
+    Map<String, Object> executionRequest = new HashMap<>(request.toMap());
+    Map<String, Object> additionalRequests =
+        additionalRequestResolvers.resolveAll(tenant, type, request, transaction);
+    executionRequest.putAll(additionalRequests);
+
+    FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(executionRequest);
     FidoUafExecutionResult executionResult =
         fidoUafExecutor.verifyRegistration(
             tenant, authorizationIdentifier, fidoUafExecutionRequest, fidoUafConfiguration);
