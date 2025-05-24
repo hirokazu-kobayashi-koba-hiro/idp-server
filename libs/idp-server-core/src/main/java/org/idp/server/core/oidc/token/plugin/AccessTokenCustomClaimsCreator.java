@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-
-package org.idp.server.core.oidc.token;
+package org.idp.server.core.oidc.token.plugin;
 
 import java.util.Map;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;

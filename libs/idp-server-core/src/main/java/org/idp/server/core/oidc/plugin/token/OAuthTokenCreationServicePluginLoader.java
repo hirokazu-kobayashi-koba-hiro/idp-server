@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.token.plugin;
+package org.idp.server.core.oidc.plugin.token;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 import org.idp.server.basic.type.oauth.GrantType;
+import org.idp.server.core.oidc.token.plugin.OAuthTokenCreationServiceFactory;
 import org.idp.server.core.oidc.token.service.OAuthTokenCreationService;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.log.LoggerWrapper;
 
-public class OAuthTokenCreationServiceLoader {
+public class OAuthTokenCreationServicePluginLoader {
 
   private static final LoggerWrapper log =
-      LoggerWrapper.getLogger(OAuthTokenCreationServiceLoader.class);
+      LoggerWrapper.getLogger(OAuthTokenCreationServicePluginLoader.class);
 
   public static Map<GrantType, OAuthTokenCreationService> load(
       ApplicationComponentContainer container) {

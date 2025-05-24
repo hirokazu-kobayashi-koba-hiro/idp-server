@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.plugin.token;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
-import org.idp.server.core.oidc.token.AccessTokenCustomClaimsCreator;
+import org.idp.server.core.oidc.token.plugin.AccessTokenCustomClaimsCreator;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class AccessTokenCustomClaimsCreationPluginLoader {

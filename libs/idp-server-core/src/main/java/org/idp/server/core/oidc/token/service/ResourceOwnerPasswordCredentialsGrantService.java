@@ -52,14 +52,16 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  *     Request</a>
  */
 public class ResourceOwnerPasswordCredentialsGrantService
-    implements OAuthTokenCreationService, AccessTokenCreatable, RefreshTokenCreatable {
-  OAuthTokenRepository oAuthTokenRepository;
+    implements OAuthTokenCreationService, RefreshTokenCreatable {
 
+  OAuthTokenRepository oAuthTokenRepository;
   IdTokenCreator idTokenCreator;
+  AccessTokenCreator accessTokenCreator;
 
   public ResourceOwnerPasswordCredentialsGrantService(OAuthTokenRepository oAuthTokenRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.idTokenCreator = IdTokenCreator.getInstance();
+    this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
 
   @Override
@@ -97,7 +99,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
             .build();
 
     AccessToken accessToken =
-        createAccessToken(
+        accessTokenCreator.createAccessToken(
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,

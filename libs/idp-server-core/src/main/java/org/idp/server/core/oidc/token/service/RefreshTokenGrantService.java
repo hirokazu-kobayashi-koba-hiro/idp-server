@@ -29,13 +29,14 @@ import org.idp.server.core.oidc.token.validator.RefreshTokenGrantValidator;
 import org.idp.server.core.oidc.token.verifier.RefreshTokenVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class RefreshTokenGrantService
-    implements OAuthTokenCreationService, AccessTokenCreatable, RefreshTokenCreatable {
+public class RefreshTokenGrantService implements OAuthTokenCreationService, RefreshTokenCreatable {
 
   OAuthTokenRepository oAuthTokenRepository;
+  AccessTokenCreator accessTokenCreator;
 
   public RefreshTokenGrantService(OAuthTokenRepository oAuthTokenRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
+    this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
 
   @Override
@@ -59,7 +60,7 @@ public class RefreshTokenGrantService
     verifier.verify();
     AuthorizationGrant authorizationGrant = oAuthToken.authorizationGrant();
     AccessToken accessToken =
-        createAccessToken(
+        accessTokenCreator.createAccessToken(
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,

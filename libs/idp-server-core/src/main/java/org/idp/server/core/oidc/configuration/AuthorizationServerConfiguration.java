@@ -537,6 +537,22 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     return extension.enabledCustomClaimsScopeMapping();
   }
 
+  public boolean enabledAccessTokenUserCustomProperties() {
+    return extension.enabledAccessTokenUserCustomProperties();
+  }
+
+  public boolean enabledAccessTokenSelectiveUserCustomProperties() {
+    return extension.enabledAccessTokenSelectiveUserCustomProperties();
+  }
+
+  public boolean enabledAccessTokenVerifiedClaims() {
+    return extension.enabledAccessTokenVerifiedClaims();
+  }
+
+  public boolean enabledAccessTokenSelectiveVerifiedClaims() {
+    return extension.enabledAccessTokenSelectiveVerifiedClaims();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("issuer", issuer);

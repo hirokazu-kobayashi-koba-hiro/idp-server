@@ -21,9 +21,9 @@ import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
+import org.idp.server.core.oidc.plugin.token.OAuthTokenCreationServicePluginLoader;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
-import org.idp.server.core.oidc.token.plugin.OAuthTokenCreationServiceLoader;
 import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
 import org.idp.server.core.oidc.token.service.OAuthTokenCreationService;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
@@ -54,7 +54,7 @@ public class DefaultTokenProtocolProvider implements ProtocolProvider<TokenProto
     PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate =
         container.resolve(PasswordCredentialsGrantDelegate.class);
     Map<GrantType, OAuthTokenCreationService> extentions =
-        OAuthTokenCreationServiceLoader.load(container);
+        OAuthTokenCreationServicePluginLoader.load(container);
 
     return new DefaultTokenProtocol(
         authorizationRequestRepository,

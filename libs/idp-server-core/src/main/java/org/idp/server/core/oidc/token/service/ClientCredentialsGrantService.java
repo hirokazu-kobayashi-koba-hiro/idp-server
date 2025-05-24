@@ -31,12 +31,13 @@ import org.idp.server.core.oidc.token.validator.ClientCredentialsGrantValidator;
 import org.idp.server.core.oidc.token.verifier.ClientCredentialsGrantVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class ClientCredentialsGrantService
-    implements OAuthTokenCreationService, AccessTokenCreatable {
+public class ClientCredentialsGrantService implements OAuthTokenCreationService {
   OAuthTokenRepository oAuthTokenRepository;
+  AccessTokenCreator accessTokenCreator;
 
   public ClientCredentialsGrantService(OAuthTokenRepository oAuthTokenRepository) {
     this.oAuthTokenRepository = oAuthTokenRepository;
+    this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
 
   @Override
@@ -71,7 +72,7 @@ public class ClientCredentialsGrantService
             .build();
 
     AccessToken accessToken =
-        createAccessToken(
+        accessTokenCreator.createAccessToken(
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,

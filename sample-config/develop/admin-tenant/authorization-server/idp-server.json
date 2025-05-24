@@ -42,7 +42,8 @@
     "claims:roles",
     "claims:permissions",
     "claims:assigned_tenant",
-    "claims:assigned_organization"
+    "claims:assigned_organization",
+    "verified_claims:family_name"
   ],
   "response_types_supported": [
     "code",
@@ -203,6 +204,8 @@
       "write"
     ],
     "enabled_custom_claims_scope_mapping": true,
+    "enabled_access_token_user_custom_properties": true,
+    "enabled_access_token_selective_verified_claims": true,
     "authentication_policies": [
       {
         "id": "default_authentication_policy",
