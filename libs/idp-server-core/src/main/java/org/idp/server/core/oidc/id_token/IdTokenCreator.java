@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package org.idp.server.core.oidc.id_token;
 
 import java.time.LocalDateTime;
@@ -21,19 +22,33 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.jose.*;
 import org.idp.server.basic.type.extension.ExpiredAt;
-import org.idp.server.basic.type.oauth.*;
+import org.idp.server.basic.type.oauth.State;
+import org.idp.server.basic.type.oauth.TokenIssuer;
 import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.exception.ConfigurationInvalidException;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
+import org.idp.server.core.oidc.id_token.plugin.CustomIndividualClaimsCreators;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.date.SystemDateTime;
 
-public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashable {
+public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable {
 
-  default IdToken createIdToken(
+  CustomIndividualClaimsCreators customIndividualClaimsCreators;
+
+  private static final IdTokenCreator INSTANCE = new IdTokenCreator();
+
+  public static IdTokenCreator getInstance() {
+    return INSTANCE;
+  }
+
+  private IdTokenCreator() {
+    this.customIndividualClaimsCreators = new CustomIndividualClaimsCreators();
+  }
+
+  public IdToken createIdToken(
       User user,
       Authentication authentication,
       AuthorizationGrant authorizationGrant,
@@ -44,7 +59,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
     try {
 
       Map<String, Object> claims =
-          createClaims(
+          createIndividualClaims(
               user,
               authentication,
               customClaims,
@@ -53,6 +68,17 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
               authorizationServerConfiguration.tokenIssuer(),
               authorizationServerConfiguration.idTokenDuration(),
               authorizationServerConfiguration.isIdTokenStrictMode());
+
+      Map<String, Object> customIndividualClaims =
+          customIndividualClaimsCreators.createCustomIndividualClaims(
+              user,
+              authentication,
+              authorizationGrant,
+              customClaims,
+              requestedClaimsPayload,
+              authorizationServerConfiguration,
+              clientConfiguration);
+      claims.putAll(customIndividualClaims);
 
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
       JsonWebSignature jsonWebSignature =
@@ -80,7 +106,7 @@ public interface IdTokenCreatable extends IndividualClaimsCreatable, ClaimHashab
     }
   }
 
-  private Map<String, Object> createClaims(
+  private Map<String, Object> createIndividualClaims(
       User user,
       Authentication authentication,
       IdTokenCustomClaims idTokenCustomClaims,

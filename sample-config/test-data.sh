@@ -72,6 +72,7 @@ client_files=(
   clientSecretBasic.json
   clientSecretBasic2.json
   clientSecretJwt.json
+  clientSecretPost.json
   clientSecretPostWithIdTokenEnc.json
   privateKeyJwt.json
   publicClient.json

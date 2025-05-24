@@ -32,10 +32,7 @@ import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant_management.AuthorizationGranted;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedIdentifier;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.oidc.id_token.IdTokenCreatable;
-import org.idp.server.core.oidc.id_token.IdTokenCustomClaims;
-import org.idp.server.core.oidc.id_token.IdTokenCustomClaimsBuilder;
-import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
+import org.idp.server.core.oidc.id_token.*;
 import org.idp.server.core.oidc.token.*;
 import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
 import org.idp.server.core.oidc.token.service.OAuthTokenCreationService;
@@ -43,15 +40,13 @@ import org.idp.server.core.oidc.token.validator.CibaGrantValidator;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CibaGrantService
-    implements OAuthTokenCreationService,
-        AccessTokenCreatable,
-        RefreshTokenCreatable,
-        IdTokenCreatable {
+    implements OAuthTokenCreationService, AccessTokenCreatable, RefreshTokenCreatable {
 
   BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
   CibaGrantRepository cibaGrantRepository;
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
+  IdTokenCreator idTokenCreator;
 
   public CibaGrantService(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
@@ -62,6 +57,7 @@ public class CibaGrantService
     this.cibaGrantRepository = cibaGrantRepository;
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.authorizationGrantedRepository = authorizationGrantedRepository;
+    this.idTokenCreator = IdTokenCreator.getInstance();
   }
 
   @Override
@@ -105,7 +101,7 @@ public class CibaGrantService
             .add(refreshToken);
     IdTokenCustomClaims idTokenCustomClaims = new IdTokenCustomClaimsBuilder().build();
     IdToken idToken =
-        createIdToken(
+        idTokenCreator.createIdToken(
             cibaGrant.user(),
             new Authentication(),
             authorizationGrant,
