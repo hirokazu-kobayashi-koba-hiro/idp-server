@@ -37,11 +37,23 @@ import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.mtls.ClientCertification;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprintCalculator;
+import org.idp.server.core.oidc.token.plugin.AccessTokenCustomClaimsCreators;
 import org.idp.server.platform.date.SystemDateTime;
 
-public interface AccessTokenCreatable {
+public class AccessTokenCreator {
 
-  default AccessToken createAccessToken(
+  public static final AccessTokenCreator INSTANCE = new AccessTokenCreator();
+  AccessTokenCustomClaimsCreators customClaimsCreators;
+
+  public static AccessTokenCreator getInstance() {
+    return INSTANCE;
+  }
+
+  private AccessTokenCreator() {
+    this.customClaimsCreators = new AccessTokenCustomClaimsCreators();
+  }
+
+  public AccessToken createAccessToken(
       AuthorizationGrant authorizationGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
@@ -58,11 +70,18 @@ public interface AccessTokenCreatable {
       payloadBuilder.add(authorizationGrant.subject());
       payloadBuilder.add(authorizationGrant.requestedClientId());
       payloadBuilder.add(authorizationGrant.scopes());
-      payloadBuilder.add(authorizationGrant.customProperties());
       payloadBuilder.add(authorizationGrant.authorizationDetails());
       payloadBuilder.add(createdAt);
       payloadBuilder.add(expiredAt);
       payloadBuilder.addJti(UUID.randomUUID().toString());
+
+      Map<String, Object> customClaims =
+          customClaimsCreators.create(
+              authorizationGrant,
+              authorizationServerConfiguration,
+              clientConfiguration,
+              clientCredentials);
+      payloadBuilder.addCustomClaims(customClaims);
 
       ClientCertificationThumbprint thumbprint =
           createClientCertificationThumbprint(
@@ -88,7 +107,7 @@ public interface AccessTokenCreatable {
     }
   }
 
-  private static AccessTokenEntity createAccessTokenEntity(
+  private AccessTokenEntity createAccessTokenEntity(
       AuthorizationServerConfiguration authorizationServerConfiguration,
       Map<String, Object> accessTokenPayload)
       throws JsonWebKeyInvalidException, JoseInvalidException {
@@ -108,7 +127,7 @@ public interface AccessTokenCreatable {
     return new AccessTokenEntity(jsonWebSignature.serialize());
   }
 
-  private static ClientCertificationThumbprint createClientCertificationThumbprint(
+  private ClientCertificationThumbprint createClientCertificationThumbprint(
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
       ClientCredentials clientCredentials) {

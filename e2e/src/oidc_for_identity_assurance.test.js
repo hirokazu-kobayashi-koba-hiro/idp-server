@@ -74,7 +74,7 @@ describe("OpenID Connect for Identity Assurance 1.0 ", () => {
       clientId: clientSecretPostClient.clientId,
       responseType: "code",
       state: "aiueo",
-      scope: "openid profile phone email" + clientSecretPostClient.scope,
+      scope: "openid profile phone email verified_claims:family_name " + clientSecretPostClient.scope,
       redirectUri: clientSecretPostClient.redirectUri,
       customParams: {
         organizationId: "123",

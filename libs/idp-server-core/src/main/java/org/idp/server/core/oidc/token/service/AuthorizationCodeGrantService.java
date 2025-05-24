@@ -93,16 +93,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  *     Request</a>
  */
 public class AuthorizationCodeGrantService
-    implements OAuthTokenCreationService,
-        AccessTokenCreatable,
-        RefreshTokenCreatable,
-        CNonceCreatable {
+    implements OAuthTokenCreationService, RefreshTokenCreatable, CNonceCreatable {
 
   AuthorizationRequestRepository authorizationRequestRepository;
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
   IdTokenCreator idTokenCreator;
+  AccessTokenCreator accessTokenCreator;
 
   public AuthorizationCodeGrantService(
       AuthorizationRequestRepository authorizationRequestRepository,
@@ -114,6 +112,7 @@ public class AuthorizationCodeGrantService
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
     this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.idTokenCreator = IdTokenCreator.getInstance();
+    this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
 
   @Override
@@ -154,7 +153,7 @@ public class AuthorizationCodeGrantService
 
     AuthorizationGrant authorizationGrant = authorizationCodeGrant.authorizationGrant();
     AccessToken accessToken =
-        createAccessToken(
+        accessTokenCreator.createAccessToken(
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,

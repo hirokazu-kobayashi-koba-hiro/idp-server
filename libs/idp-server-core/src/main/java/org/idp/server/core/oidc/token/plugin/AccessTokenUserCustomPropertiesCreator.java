@@ -14,34 +14,35 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.id_token.plugin;
+
+package org.idp.server.core.oidc.token.plugin;
 
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.Authentication;
+import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
-import org.idp.server.core.oidc.id_token.IdTokenCustomClaims;
-import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
 import org.idp.server.core.oidc.identity.User;
 
-public interface CustomIndividualClaimsCreator {
+public class AccessTokenUserCustomPropertiesCreator implements AccessTokenCustomClaimsCreator {
 
-  boolean shouldCreate(
-      User user,
-      Authentication authentication,
+  @Override
+  public boolean shouldCreate(
       AuthorizationGrant authorizationGrant,
-      IdTokenCustomClaims customClaims,
-      RequestedClaimsPayload requestedClaimsPayload,
       AuthorizationServerConfiguration authorizationServerConfiguration,
-      ClientConfiguration clientConfiguration);
+      ClientConfiguration clientConfiguration,
+      ClientCredentials clientCredentials) {
+    return authorizationServerConfiguration.enabledAccessTokenUserCustomProperties();
+  }
 
-  Map<String, Object> create(
-      User user,
-      Authentication authentication,
+  @Override
+  public Map<String, Object> create(
       AuthorizationGrant authorizationGrant,
-      IdTokenCustomClaims customClaims,
-      RequestedClaimsPayload requestedClaimsPayload,
       AuthorizationServerConfiguration authorizationServerConfiguration,
-      ClientConfiguration clientConfiguration);
+      ClientConfiguration clientConfiguration,
+      ClientCredentials clientCredentials) {
+
+    User user = authorizationGrant.user();
+    return user.customPropertiesValue();
+  }
 }

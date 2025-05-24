@@ -42,13 +42,14 @@ import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 // FIXME consider. this is bad code.
-public class ClientNotificationService implements AccessTokenCreatable, RefreshTokenCreatable {
+public class ClientNotificationService implements RefreshTokenCreatable {
 
   BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
   OAuthTokenRepository oAuthTokenRepository;
   ClientNotificationGateway clientNotificationGateway;
   IdTokenCreator idTokenCreator;
+  AccessTokenCreator accessTokenCreator;
 
   public ClientNotificationService(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
@@ -60,6 +61,7 @@ public class ClientNotificationService implements AccessTokenCreatable, RefreshT
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.clientNotificationGateway = clientNotificationGateway;
     this.idTokenCreator = IdTokenCreator.getInstance();
+    this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
 
   public void notify(
@@ -85,7 +87,7 @@ public class ClientNotificationService implements AccessTokenCreatable, RefreshT
 
     if (backchannelAuthenticationRequest.isPushMode()) {
       AccessToken accessToken =
-          createAccessToken(
+          accessTokenCreator.createAccessToken(
               cibaGrant.authorizationGrant(),
               authorizationServerConfiguration,
               clientConfiguration,

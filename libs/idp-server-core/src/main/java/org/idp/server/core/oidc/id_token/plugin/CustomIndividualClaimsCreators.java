@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.core.oidc.id_token.plugin;
 
 import java.util.ArrayList;

@@ -39,14 +39,14 @@ import org.idp.server.core.oidc.token.service.OAuthTokenCreationService;
 import org.idp.server.core.oidc.token.validator.CibaGrantValidator;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class CibaGrantService
-    implements OAuthTokenCreationService, AccessTokenCreatable, RefreshTokenCreatable {
+public class CibaGrantService implements OAuthTokenCreationService, RefreshTokenCreatable {
 
   BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
   CibaGrantRepository cibaGrantRepository;
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
   IdTokenCreator idTokenCreator;
+  AccessTokenCreator accessTokenCreator;
 
   public CibaGrantService(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
@@ -58,6 +58,7 @@ public class CibaGrantService
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.idTokenCreator = IdTokenCreator.getInstance();
+    this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
 
   @Override
@@ -88,7 +89,7 @@ public class CibaGrantService
 
     AuthorizationGrant authorizationGrant = cibaGrant.authorizationGrant();
     AccessToken accessToken =
-        createAccessToken(
+        accessTokenCreator.createAccessToken(
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,
