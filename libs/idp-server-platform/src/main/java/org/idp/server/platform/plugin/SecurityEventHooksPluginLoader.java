@@ -18,25 +18,30 @@
 package org.idp.server.platform.plugin;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import org.idp.server.platform.security.SecurityEventHookExecutor;
 import org.idp.server.platform.security.SecurityEventHooks;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.security.hook.SecurityEventHookType;
 
-public class SecurityEventHooksPluginLoader {
+public class SecurityEventHooksPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHooksPluginLoader.class);
 
   public static SecurityEventHooks load() {
     Map<SecurityEventHookType, SecurityEventHookExecutor> hookExecutors = new HashMap<>();
-    ServiceLoader<SecurityEventHookExecutor> loader =
-        ServiceLoader.load(SecurityEventHookExecutor.class);
 
-    for (SecurityEventHookExecutor executor : loader) {
+    List<SecurityEventHookExecutor> internalHookExecutors = loadFromInternalModule(SecurityEventHookExecutor.class);
+    for (SecurityEventHookExecutor executor : internalHookExecutors) {
       hookExecutors.put(executor.type(), executor);
-      log.info("Dynamic Registered security event hook executor: " + executor.type().name());
+      log.info("Dynamic Registered internal security event hook executor: " + executor.type().name());
+    }
+
+    List<SecurityEventHookExecutor>  externalHookExecutors = loadFromExternalModule(SecurityEventHookExecutor.class);
+    for (SecurityEventHookExecutor executor : externalHookExecutors) {
+      hookExecutors.put(executor.type(), executor);
+      log.info("Dynamic Registered external security event hook executor: " + executor.type().name());
     }
 
     return new SecurityEventHooks(hookExecutors);

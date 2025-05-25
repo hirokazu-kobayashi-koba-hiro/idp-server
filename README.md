@@ -219,14 +219,14 @@ Swap out mechanisms with minimal code.
 ※ fix your configuration
 
 ```shell
-export ADDRESS=0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198
 export IDP_SERVER_DOMAIN=http://localhost:8080/
 export IDP_SERVER_API_KEY=xxx
 export IDP_SERVER_API_SECRET=xxx
 export ENCRYPTION_KEY=xxx
 export ENV=local or develop or ...
 
-docker-compose up -d
+docker compose up -d
+docker compose logs -f idp-server
 ```
 
 * init table
@@ -287,7 +287,7 @@ docker run -p 8080:8080 \
   -e DB_WRITE_URL=jdbc:postgresql://host.docker.internal:5432/idpserver \
   -e DB_READ_URL=jdbc:postgresql://host.docker.internal:5432/idpserver \
   -e REDIS_HOST=host.docker.internal \
-  idp-server:latest
+  idp-server:latest -it idp-server ls /app/providers
 ```
 
 ## License

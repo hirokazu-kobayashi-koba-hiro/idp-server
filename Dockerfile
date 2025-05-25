@@ -21,6 +21,7 @@ WORKDIR /app
 # app/build/libs/app-x.x.x.jar
 COPY --from=builder /workspace/app/build/libs/*.jar /app/idp-server.jar
 COPY entrypoint.sh /app/entrypoint.sh
+COPY plugins /app/plugins
 
 RUN chmod +x /app/entrypoint.sh
 

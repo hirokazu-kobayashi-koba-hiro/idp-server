@@ -18,12 +18,12 @@ package org.idp.server.authentication.interactors.plugin;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ServiceLoader;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolver;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.plugin.PluginLoader;
 
-public class FidoUafAdditionalRequestResolverPluginLoader {
+public class FidoUafAdditionalRequestResolverPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(FidoUafAdditionalRequestResolverPluginLoader.class);
@@ -31,14 +31,26 @@ public class FidoUafAdditionalRequestResolverPluginLoader {
   public static FidoUafAdditionalRequestResolvers load() {
     List<FidoUafAdditionalRequestResolver> resolvers = new ArrayList<>();
 
-    ServiceLoader<FidoUafAdditionalRequestResolver> serviceLoader =
-        ServiceLoader.load(FidoUafAdditionalRequestResolver.class);
-    for (FidoUafAdditionalRequestResolver resolver : serviceLoader) {
+    List<FidoUafAdditionalRequestResolver> loadedInternalResolvers =
+        loadFromInternalModule(FidoUafAdditionalRequestResolver.class);
+
+    for (FidoUafAdditionalRequestResolver resolver : loadedInternalResolvers) {
       resolvers.add(resolver);
       log.info(
           String.format(
-              "Dynamic Registered FidoUafAuthenticationChallengeAdditionalRequestResolver %s",
+              "Dynamic Registered internal FidoUafAdditionalRequestResolverPluginLoader %s",
               resolver.getClass().getName()));
+    }
+
+    List<FidoUafAdditionalRequestResolver> resolvedExternalModule =
+        loadFromExternalModule(FidoUafAdditionalRequestResolver.class);
+
+    for (FidoUafAdditionalRequestResolver externalResolver : resolvedExternalModule) {
+      resolvers.add(externalResolver);
+      log.info(
+          String.format(
+              "Dynamic Registered external FidoUafAdditionalRequestResolverPluginLoader %s",
+              externalResolver.getClass().getName()));
     }
 
     return new FidoUafAdditionalRequestResolvers(resolvers);

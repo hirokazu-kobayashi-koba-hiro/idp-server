@@ -17,30 +17,42 @@
 package org.idp.server.core.oidc.plugin.authentication;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import org.idp.server.core.oidc.federation.FederationInteractor;
 import org.idp.server.core.oidc.federation.FederationInteractors;
 import org.idp.server.core.oidc.federation.FederationType;
 import org.idp.server.core.oidc.federation.plugin.FederationDependencyContainer;
 import org.idp.server.core.oidc.federation.plugin.FederationInteractorFactory;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.plugin.PluginLoader;
 
-public class FederationInteractorPluginLoader {
+public class FederationInteractorPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(FederationInteractorPluginLoader.class);
 
   public static FederationInteractors load(FederationDependencyContainer container) {
     Map<FederationType, FederationInteractor> executors = new HashMap<>();
-    ServiceLoader<FederationInteractorFactory> ssoExecutorServiceLoaders =
-        ServiceLoader.load(FederationInteractorFactory.class);
 
-    for (FederationInteractorFactory federationInteractorFactory : ssoExecutorServiceLoaders) {
+    List<FederationInteractorFactory> internalSsoExecutorServiceLoaders =
+        loadFromInternalModule(FederationInteractorFactory.class);
+    for (FederationInteractorFactory federationInteractorFactory :
+        internalSsoExecutorServiceLoaders) {
       FederationType type = federationInteractorFactory.type();
       FederationInteractor federationInteractor = federationInteractorFactory.create(container);
       executors.put(type, federationInteractor);
-      log.info("Dynamic Registered SSO executor " + type.name());
+      log.info("Dynamic Registered internal sso executor " + type.name());
+    }
+
+    List<FederationInteractorFactory> externalSsoExecutorServiceLoaders =
+        loadFromExternalModule(FederationInteractorFactory.class);
+    for (FederationInteractorFactory federationInteractorFactory :
+        externalSsoExecutorServiceLoaders) {
+      FederationType type = federationInteractorFactory.type();
+      FederationInteractor federationInteractor = federationInteractorFactory.create(container);
+      executors.put(type, federationInteractor);
+      log.info("Dynamic Registered external sso executor " + type.name());
     }
 
     return new FederationInteractors(executors);

@@ -14,44 +14,31 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.fidouaf.plugin;
+package org.idp.server.authentication.interactors.extension;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolver;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class FidoUafAdditionalRequestResolvers {
-
-  List<FidoUafAdditionalRequestResolver> resolvers;
-  LoggerWrapper log = LoggerWrapper.getLogger(FidoUafAdditionalRequestResolvers.class);
-
-  public FidoUafAdditionalRequestResolvers(List<FidoUafAdditionalRequestResolver> resolvers) {
-    this.resolvers = resolvers;
-  }
-
-  public Map<String, Object> resolveAll(
+public class SampleFidoUafAdditionalRequestResolver implements FidoUafAdditionalRequestResolver {
+  @Override
+  public boolean shouldResolve(
       Tenant tenant,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction) {
-    Map<String, Object> response = new HashMap<>();
+    return true;
+  }
 
-    for (FidoUafAdditionalRequestResolver resolver : resolvers) {
-      if (resolver.shouldResolve(tenant, type, request, transaction)) {
-        log.info(
-            String.format(
-                "Execute FidoUafAuthenticationChallengeAdditionalRequestResolver %s",
-                resolver.getClass().getName()));
-        Map<String, Object> resolved = resolver.resolve(tenant, type, request, transaction);
-        response.putAll(resolved);
-      }
-    }
-
-    return response;
+  @Override
+  public Map<String, Object> resolve(
+      Tenant tenant,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      AuthenticationTransaction transaction) {
+    return Map.of("test", "value");
   }
 }

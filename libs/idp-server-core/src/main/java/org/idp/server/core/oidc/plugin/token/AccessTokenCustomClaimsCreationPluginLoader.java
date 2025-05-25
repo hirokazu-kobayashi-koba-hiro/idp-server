@@ -18,11 +18,11 @@ package org.idp.server.core.oidc.plugin.token;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ServiceLoader;
 import org.idp.server.core.oidc.token.plugin.AccessTokenCustomClaimsCreator;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.plugin.PluginLoader;
 
-public class AccessTokenCustomClaimsCreationPluginLoader {
+public class AccessTokenCustomClaimsCreationPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(AccessTokenCustomClaimsCreationPluginLoader.class);
@@ -30,13 +30,21 @@ public class AccessTokenCustomClaimsCreationPluginLoader {
   public static List<AccessTokenCustomClaimsCreator> load() {
     List<AccessTokenCustomClaimsCreator> customClaimsCreators = new ArrayList<>();
 
-    ServiceLoader<AccessTokenCustomClaimsCreator> serviceLoader =
-        ServiceLoader.load(AccessTokenCustomClaimsCreator.class);
-
-    for (AccessTokenCustomClaimsCreator customClaimsCreator : serviceLoader) {
+    List<AccessTokenCustomClaimsCreator> internals =
+        loadFromInternalModule(AccessTokenCustomClaimsCreator.class);
+    for (AccessTokenCustomClaimsCreator customClaimsCreator : internals) {
       customClaimsCreators.add(customClaimsCreator);
       log.info(
-          "Dynamic Registered AccessTokenCustomClaimsCreator "
+          "Dynamic Registered internal AccessTokenCustomClaimsCreator "
+              + customClaimsCreator.getClass().getSimpleName());
+    }
+
+    List<AccessTokenCustomClaimsCreator> externals =
+        loadFromExternalModule(AccessTokenCustomClaimsCreator.class);
+    for (AccessTokenCustomClaimsCreator customClaimsCreator : externals) {
+      customClaimsCreators.add(customClaimsCreator);
+      log.info(
+          "Dynamic Registered external AccessTokenCustomClaimsCreator "
               + customClaimsCreator.getClass().getSimpleName());
     }
 

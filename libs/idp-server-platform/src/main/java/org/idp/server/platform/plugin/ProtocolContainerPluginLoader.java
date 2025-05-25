@@ -15,24 +15,33 @@
  */
 
 
-package org.idp.server.platform.dependency.protocol;
+package org.idp.server.platform.plugin;
 
-import java.util.ServiceLoader;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.dependency.protocol.ProtocolContainer;
+import org.idp.server.platform.dependency.protocol.ProtocolProvider;
 import org.idp.server.platform.log.LoggerWrapper;
 
-public class ProtocolContainerLoader {
+import java.util.List;
 
-  private static final LoggerWrapper log = LoggerWrapper.getLogger(ProtocolContainerLoader.class);
+public class ProtocolContainerPluginLoader extends PluginLoader {
+
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(ProtocolContainerPluginLoader.class);
 
   public static ProtocolContainer load(
       ApplicationComponentContainer applicationComponentContainer) {
     ProtocolContainer container = new ProtocolContainer();
-    ServiceLoader<ProtocolProvider> loader = ServiceLoader.load(ProtocolProvider.class);
 
-    for (ProtocolProvider<?> provider : loader) {
+    List<ProtocolProvider> internals = loadFromInternalModule(ProtocolProvider.class);
+    for (ProtocolProvider<?> provider : internals) {
       container.register(provider.type(), provider.provide(applicationComponentContainer));
-      log.info("Dynamic Registered Protocol provider " + provider.type());
+      log.info("Dynamic Registered internal Protocol provider " + provider.type());
+    }
+
+    List<ProtocolProvider> externals = loadFromExternalModule(ProtocolProvider.class);
+    for (ProtocolProvider<?> provider : externals) {
+      container.register(provider.type(), provider.provide(applicationComponentContainer));
+      log.info("Dynamic Registered external Protocol provider " + provider.type());
     }
 
     return container;
