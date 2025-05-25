@@ -17,15 +17,16 @@
 package org.idp.server.core.oidc.plugin.token;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.core.oidc.token.plugin.OAuthTokenCreationServiceFactory;
 import org.idp.server.core.oidc.token.service.OAuthTokenCreationService;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.plugin.PluginLoader;
 
-public class OAuthTokenCreationServicePluginLoader {
+public class OAuthTokenCreationServicePluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(OAuthTokenCreationServicePluginLoader.class);
@@ -34,13 +35,22 @@ public class OAuthTokenCreationServicePluginLoader {
       ApplicationComponentContainer container) {
     Map<GrantType, OAuthTokenCreationService> creationServiceMap = new HashMap<>();
 
-    ServiceLoader<OAuthTokenCreationServiceFactory> serviceLoaders =
-        ServiceLoader.load(OAuthTokenCreationServiceFactory.class);
-
-    for (OAuthTokenCreationServiceFactory factory : serviceLoaders) {
+    List<OAuthTokenCreationServiceFactory> internals =
+        loadFromInternalModule(OAuthTokenCreationServiceFactory.class);
+    for (OAuthTokenCreationServiceFactory factory : internals) {
       OAuthTokenCreationService oAuthTokenCreationService = factory.create(container);
       log.info(
-          "Dynamic Registered  OAuthTokenCreationService "
+          "Dynamic Registered internal OAuthTokenCreationService "
+              + oAuthTokenCreationService.getClass().getSimpleName());
+      creationServiceMap.put(oAuthTokenCreationService.grantType(), oAuthTokenCreationService);
+    }
+
+    List<OAuthTokenCreationServiceFactory> externals =
+        loadFromExternalModule(OAuthTokenCreationServiceFactory.class);
+    for (OAuthTokenCreationServiceFactory factory : externals) {
+      OAuthTokenCreationService oAuthTokenCreationService = factory.create(container);
+      log.info(
+          "Dynamic Registered external OAuthTokenCreationService "
               + oAuthTokenCreationService.getClass().getSimpleName());
       creationServiceMap.put(oAuthTokenCreationService.grantType(), oAuthTokenCreationService);
     }

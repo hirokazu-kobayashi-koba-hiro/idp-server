@@ -14,33 +14,43 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.webauthn.plugin;
+package org.idp.server.authentication.interactors.plugin;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutor;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutorFactory;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutorType;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.plugin.PluginLoader;
 
-public class WebAuthnExecutorPluginLoader {
+public class WebAuthnExecutorPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(WebAuthnExecutorPluginLoader.class);
 
   public static WebAuthnExecutors load(AuthenticationDependencyContainer container) {
     Map<WebAuthnExecutorType, WebAuthnExecutor> executors = new HashMap<>();
-    ServiceLoader<WebAuthnExecutorFactory> loader =
-        ServiceLoader.load(WebAuthnExecutorFactory.class);
 
-    for (WebAuthnExecutorFactory factory : loader) {
+    List<WebAuthnExecutorFactory> internals = loadFromInternalModule(WebAuthnExecutorFactory.class);
+    for (WebAuthnExecutorFactory factory : internals) {
       WebAuthnExecutor webAuthnExecutor = factory.create(container);
       executors.put(webAuthnExecutor.type(), webAuthnExecutor);
       log.info(
-          String.format("Dynamic Registered WebAuthnExecutor %s", webAuthnExecutor.type().value()));
+          String.format(
+              "Dynamic Registered internal WebAuthnExecutor %s", webAuthnExecutor.type().value()));
+    }
+
+    List<WebAuthnExecutorFactory> externals = loadFromExternalModule(WebAuthnExecutorFactory.class);
+    for (WebAuthnExecutorFactory factory : externals) {
+      WebAuthnExecutor webAuthnExecutor = factory.create(container);
+      executors.put(webAuthnExecutor.type(), webAuthnExecutor);
+      log.info(
+          String.format(
+              "Dynamic Registered external WebAuthnExecutor %s", webAuthnExecutor.type().value()));
     }
 
     return new WebAuthnExecutors(executors);

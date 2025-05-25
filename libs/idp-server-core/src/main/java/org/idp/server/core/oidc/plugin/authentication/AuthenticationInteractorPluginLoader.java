@@ -17,30 +17,38 @@
 package org.idp.server.core.oidc.plugin.authentication;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractor;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractors;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFactory;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.plugin.PluginLoader;
 
-public class AuthenticationInteractorPluginLoader {
+public class AuthenticationInteractorPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(AuthenticationInteractorPluginLoader.class);
 
   public static AuthenticationInteractors load(AuthenticationDependencyContainer container) {
-
     Map<AuthenticationInteractionType, AuthenticationInteractor> interactors = new HashMap<>();
-    ServiceLoader<AuthenticationInteractorFactory> loader =
-        ServiceLoader.load(AuthenticationInteractorFactory.class);
 
-    for (AuthenticationInteractorFactory factory : loader) {
+    List<AuthenticationInteractorFactory> internals =
+        loadFromInternalModule(AuthenticationInteractorFactory.class);
+    for (AuthenticationInteractorFactory factory : internals) {
       AuthenticationInteractor interactor = factory.create(container);
       interactors.put(factory.type(), interactor);
-      log.info("Dynamic Registered Authentication interactor: " + factory.type().name());
+      log.info("Dynamic Registered internal Authentication interactor: " + factory.type().name());
+    }
+
+    List<AuthenticationInteractorFactory> externals =
+        loadFromExternalModule(AuthenticationInteractorFactory.class);
+    for (AuthenticationInteractorFactory factory : externals) {
+      AuthenticationInteractor interactor = factory.create(container);
+      interactors.put(factory.type(), interactor);
+      log.info("Dynamic Registered external Authentication interactor: " + factory.type().name());
     }
 
     return new AuthenticationInteractors(interactors);

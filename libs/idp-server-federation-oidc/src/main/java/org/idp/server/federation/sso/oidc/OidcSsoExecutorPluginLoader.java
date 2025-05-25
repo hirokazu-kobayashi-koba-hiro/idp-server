@@ -17,24 +17,32 @@
 package org.idp.server.federation.sso.oidc;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import org.idp.server.core.oidc.federation.sso.SsoProvider;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.plugin.PluginLoader;
 
-public class OidcSsoExecutorLoader {
+public class OidcSsoExecutorPluginLoader extends PluginLoader {
 
-  private static final LoggerWrapper log = LoggerWrapper.getLogger(OidcSsoExecutorLoader.class);
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(OidcSsoExecutorPluginLoader.class);
 
   public static OidcSsoExecutors load() {
     Map<SsoProvider, OidcSsoExecutor> executors = new HashMap<>();
-    ServiceLoader<OidcSsoExecutor> ssoExecutorServiceLoaders =
-        ServiceLoader.load(OidcSsoExecutor.class);
 
-    for (OidcSsoExecutor executor : ssoExecutorServiceLoaders) {
+    List<OidcSsoExecutor> internals = loadFromInternalModule(OidcSsoExecutor.class);
+    for (OidcSsoExecutor executor : internals) {
       SsoProvider provider = executor.type();
       executors.put(provider, executor);
-      log.info("Dynamic Registered SSO provider " + provider.name());
+      log.info("Dynamic Registered internal SSO provider " + provider.name());
+    }
+
+    List<OidcSsoExecutor> externals = loadFromExternalModule(OidcSsoExecutor.class);
+    for (OidcSsoExecutor executor : externals) {
+      SsoProvider provider = executor.type();
+      executors.put(provider, executor);
+      log.info("Dynamic Registered external SSO provider " + provider.name());
     }
 
     return new OidcSsoExecutors(executors);

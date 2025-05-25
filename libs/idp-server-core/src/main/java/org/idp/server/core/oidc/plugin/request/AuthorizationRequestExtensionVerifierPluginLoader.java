@@ -18,11 +18,11 @@ package org.idp.server.core.oidc.plugin.request;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ServiceLoader;
 import org.idp.server.core.oidc.verifier.AuthorizationRequestExtensionVerifier;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.plugin.PluginLoader;
 
-public class AuthorizationRequestExtensionVerifierPluginLoader {
+public class AuthorizationRequestExtensionVerifierPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(AuthorizationRequestExtensionVerifierPluginLoader.class);
@@ -30,13 +30,21 @@ public class AuthorizationRequestExtensionVerifierPluginLoader {
   public static List<AuthorizationRequestExtensionVerifier> load() {
     List<AuthorizationRequestExtensionVerifier> extensionVerifiers = new ArrayList<>();
 
-    ServiceLoader<AuthorizationRequestExtensionVerifier> serviceLoaders =
-        ServiceLoader.load(AuthorizationRequestExtensionVerifier.class);
-    for (AuthorizationRequestExtensionVerifier authorizationRequestExtensionVerifier :
-        serviceLoaders) {
+    List<AuthorizationRequestExtensionVerifier> internals =
+        loadFromInternalModule(AuthorizationRequestExtensionVerifier.class);
+    for (AuthorizationRequestExtensionVerifier authorizationRequestExtensionVerifier : internals) {
       extensionVerifiers.add(authorizationRequestExtensionVerifier);
       log.info(
-          "Dynamic Registered  AuthorizationRequestExtensionVerifier "
+          "Dynamic Registered internal AuthorizationRequestExtensionVerifier "
+              + authorizationRequestExtensionVerifier.getClass().getSimpleName());
+    }
+
+    List<AuthorizationRequestExtensionVerifier> externals =
+        loadFromExternalModule(AuthorizationRequestExtensionVerifier.class);
+    for (AuthorizationRequestExtensionVerifier authorizationRequestExtensionVerifier : externals) {
+      extensionVerifiers.add(authorizationRequestExtensionVerifier);
+      log.info(
+          "Dynamic Registered external AuthorizationRequestExtensionVerifier "
               + authorizationRequestExtensionVerifier.getClass().getSimpleName());
     }
 

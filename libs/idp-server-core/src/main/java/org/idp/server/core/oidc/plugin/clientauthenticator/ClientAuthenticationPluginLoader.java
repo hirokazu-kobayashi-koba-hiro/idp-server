@@ -17,24 +17,35 @@
 package org.idp.server.core.oidc.plugin.clientauthenticator;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticator;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.plugin.PluginLoader;
 
-public class ClientAuthenticationPluginLoader {
+public class ClientAuthenticationPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(ClientAuthenticationPluginLoader.class);
 
   public static Map<ClientAuthenticationType, ClientAuthenticator> load() {
     Map<ClientAuthenticationType, ClientAuthenticator> map = new HashMap<>();
-    ServiceLoader<ClientAuthenticator> loader = ServiceLoader.load(ClientAuthenticator.class);
-    for (ClientAuthenticator clientAuthenticator : loader) {
+
+    List<ClientAuthenticator> internals = loadFromInternalModule(ClientAuthenticator.class);
+    for (ClientAuthenticator clientAuthenticator : internals) {
       map.put(clientAuthenticator.type(), clientAuthenticator);
-      log.info("Dynamic Registered client authenticator {}", clientAuthenticator.type().name());
+      log.info(
+          "Dynamic Registered internal client authenticator {}", clientAuthenticator.type().name());
     }
+
+    List<ClientAuthenticator> externals = loadFromExternalModule(ClientAuthenticator.class);
+    for (ClientAuthenticator clientAuthenticator : externals) {
+      map.put(clientAuthenticator.type(), clientAuthenticator);
+      log.info(
+          "Dynamic Registered external client authenticator {}", clientAuthenticator.type().name());
+    }
+
     return map;
   }
 }

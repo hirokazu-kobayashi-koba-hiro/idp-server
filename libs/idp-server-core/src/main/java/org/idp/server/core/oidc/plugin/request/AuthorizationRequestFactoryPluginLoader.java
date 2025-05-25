@@ -17,13 +17,14 @@
 package org.idp.server.core.oidc.plugin.request;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import org.idp.server.core.oidc.factory.AuthorizationRequestObjectFactory;
 import org.idp.server.core.oidc.factory.RequestObjectFactoryType;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.plugin.PluginLoader;
 
-public class AuthorizationRequestFactoryPluginLoader {
+public class AuthorizationRequestFactoryPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(AuthorizationRequestFactoryPluginLoader.class);
@@ -31,12 +32,21 @@ public class AuthorizationRequestFactoryPluginLoader {
   public static Map<RequestObjectFactoryType, AuthorizationRequestObjectFactory> load() {
     Map<RequestObjectFactoryType, AuthorizationRequestObjectFactory> factories = new HashMap<>();
 
-    ServiceLoader<AuthorizationRequestObjectFactory> serviceLoaders =
-        ServiceLoader.load(AuthorizationRequestObjectFactory.class);
-    for (AuthorizationRequestObjectFactory requestObjectFactory : serviceLoaders) {
+    List<AuthorizationRequestObjectFactory> internals =
+        loadFromInternalModule(AuthorizationRequestObjectFactory.class);
+    for (AuthorizationRequestObjectFactory requestObjectFactory : internals) {
       factories.put(requestObjectFactory.type(), requestObjectFactory);
       log.info(
-          "Dynamic Registered AuthorizationRequestObjectFactory "
+          "Dynamic Registered internal AuthorizationRequestObjectFactory "
+              + requestObjectFactory.getClass().getSimpleName());
+    }
+
+    List<AuthorizationRequestObjectFactory> externals =
+        loadFromExternalModule(AuthorizationRequestObjectFactory.class);
+    for (AuthorizationRequestObjectFactory requestObjectFactory : externals) {
+      factories.put(requestObjectFactory.type(), requestObjectFactory);
+      log.info(
+          "Dynamic Registered external AuthorizationRequestObjectFactory "
               + requestObjectFactory.getClass().getSimpleName());
     }
 

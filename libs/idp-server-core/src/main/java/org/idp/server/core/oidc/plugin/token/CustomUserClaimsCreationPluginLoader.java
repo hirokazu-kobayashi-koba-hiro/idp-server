@@ -18,11 +18,11 @@ package org.idp.server.core.oidc.plugin.token;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ServiceLoader;
 import org.idp.server.core.oidc.id_token.plugin.CustomIndividualClaimsCreator;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.plugin.PluginLoader;
 
-public class CustomUserClaimsCreationPluginLoader {
+public class CustomUserClaimsCreationPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(CustomUserClaimsCreationPluginLoader.class);
@@ -30,12 +30,21 @@ public class CustomUserClaimsCreationPluginLoader {
   public static List<CustomIndividualClaimsCreator> load() {
     List<CustomIndividualClaimsCreator> customIndividualClaimsCreators = new ArrayList<>();
 
-    ServiceLoader<CustomIndividualClaimsCreator> serviceLoader =
-        ServiceLoader.load(CustomIndividualClaimsCreator.class);
-    for (CustomIndividualClaimsCreator customIndividualClaimsCreator : serviceLoader) {
+    List<CustomIndividualClaimsCreator> internals =
+        loadFromInternalModule(CustomIndividualClaimsCreator.class);
+    for (CustomIndividualClaimsCreator customIndividualClaimsCreator : internals) {
       customIndividualClaimsCreators.add(customIndividualClaimsCreator);
       log.info(
-          "Dynamic Registered CustomUserClaimsCreator "
+          "Dynamic Registered internal CustomUserClaimsCreator "
+              + customIndividualClaimsCreator.getClass().getSimpleName());
+    }
+
+    List<CustomIndividualClaimsCreator> externals =
+        loadFromExternalModule(CustomIndividualClaimsCreator.class);
+    for (CustomIndividualClaimsCreator customIndividualClaimsCreator : externals) {
+      customIndividualClaimsCreators.add(customIndividualClaimsCreator);
+      log.info(
+          "Dynamic Registered external CustomUserClaimsCreator "
               + customIndividualClaimsCreator.getClass().getSimpleName());
     }
 
