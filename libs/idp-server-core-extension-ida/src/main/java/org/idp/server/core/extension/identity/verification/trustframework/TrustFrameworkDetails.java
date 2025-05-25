@@ -17,7 +17,7 @@
 package org.idp.server.core.extension.identity.verification.trustframework;
 
 import java.util.Map;
-import org.idp.server.basic.json.JsonNodeWrapper;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class TrustFrameworkDetails {
 

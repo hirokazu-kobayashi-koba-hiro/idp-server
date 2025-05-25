@@ -18,10 +18,10 @@ package org.idp.server.core.adapters.datasource.identity.verification.config.com
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlExecutor {

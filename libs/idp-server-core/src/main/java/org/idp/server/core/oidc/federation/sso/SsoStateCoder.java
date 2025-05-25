@@ -18,7 +18,7 @@ package org.idp.server.core.oidc.federation.sso;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.platform.json.JsonConverter;
 
 public class SsoStateCoder {
 

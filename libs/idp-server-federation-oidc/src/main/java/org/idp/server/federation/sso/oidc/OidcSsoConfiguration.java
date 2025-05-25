@@ -18,8 +18,8 @@ package org.idp.server.federation.sso.oidc;
 
 import java.util.List;
 import java.util.Objects;
-import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.oidc.federation.sso.SsoProvider;
+import org.idp.server.platform.json.JsonReadable;
 
 public class OidcSsoConfiguration implements JsonReadable {
 

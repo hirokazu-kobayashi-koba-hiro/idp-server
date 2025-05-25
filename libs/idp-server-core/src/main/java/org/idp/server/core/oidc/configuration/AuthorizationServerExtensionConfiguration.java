@@ -17,8 +17,8 @@
 package org.idp.server.core.oidc.configuration;
 
 import java.util.*;
-import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
+import org.idp.server.platform.json.JsonReadable;
 
 public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 

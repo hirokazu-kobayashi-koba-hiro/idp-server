@@ -18,10 +18,10 @@ package org.idp.server.core.adapters.datasource.authentication.interaction.query
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 import org.idp.server.core.oidc.authentication.exception.MfaTransactionNotFoundException;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationInteractionQueryDataSource

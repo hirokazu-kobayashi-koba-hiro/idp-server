@@ -21,8 +21,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.json.JsonReadable;
 
 public class EmailVerificationChallenge implements Serializable, JsonReadable {
 

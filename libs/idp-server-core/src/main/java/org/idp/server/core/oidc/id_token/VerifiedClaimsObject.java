@@ -17,8 +17,8 @@
 package org.idp.server.core.oidc.id_token;
 
 import java.util.Map;
-import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.JsonReadable;
 
 public class VerifiedClaimsObject implements JsonReadable {
   Map<String, Object> verification;

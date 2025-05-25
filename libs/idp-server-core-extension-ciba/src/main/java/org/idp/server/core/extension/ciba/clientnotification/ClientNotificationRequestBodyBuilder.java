@@ -18,13 +18,13 @@ package org.idp.server.core.extension.ciba.clientnotification;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 import org.idp.server.basic.type.oauth.TokenType;
 import org.idp.server.basic.type.oidc.IdToken;
+import org.idp.server.platform.json.JsonConverter;
 
 public class ClientNotificationRequestBodyBuilder {
 

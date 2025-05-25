@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.*;
 
 public class TenantQueryDataSource implements TenantQueryRepository {

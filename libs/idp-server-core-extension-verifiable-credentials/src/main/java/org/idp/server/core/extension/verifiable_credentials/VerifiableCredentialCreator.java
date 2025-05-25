@@ -16,7 +16,7 @@
 
 package org.idp.server.core.extension.verifiable_credentials;
 
-import org.idp.server.basic.vc.Credential;
+import org.idp.server.basic.type.vc.Credential;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 

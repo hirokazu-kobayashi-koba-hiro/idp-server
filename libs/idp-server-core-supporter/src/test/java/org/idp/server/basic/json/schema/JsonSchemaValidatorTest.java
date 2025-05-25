@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package org.idp.server.basic.json.schema;
+package org.idp.server.platform.json.schema;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.idp.server.basic.json.JsonNodeWrapper;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.junit.jupiter.api.Test;
 
 public class JsonSchemaValidatorTest {

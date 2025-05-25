@@ -18,17 +18,17 @@ package org.idp.server.authentication.interactors.password;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.basic.json.schema.JsonSchemaDefinition;
-import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
-import org.idp.server.basic.json.schema.JsonSchemaValidator;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.IdPUserCreator;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.schema.JsonSchemaDefinition;
+import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
+import org.idp.server.platform.json.schema.JsonSchemaValidator;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 

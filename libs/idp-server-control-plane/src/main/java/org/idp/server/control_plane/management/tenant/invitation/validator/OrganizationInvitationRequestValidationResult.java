@@ -18,9 +18,9 @@ package org.idp.server.control_plane.management.tenant.invitation.validator;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementResponse;
 import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementStatus;
+import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 
 public class OrganizationInvitationRequestValidationResult {
 

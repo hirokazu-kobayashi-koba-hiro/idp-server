@@ -16,7 +16,7 @@
 
 package org.idp.server.authentication.interactors.sms.external;
 
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.json.JsonReadable;
 
 public class ExternalSmsAuthenticationTransaction implements JsonReadable {
 

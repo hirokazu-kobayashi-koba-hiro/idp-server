@@ -19,14 +19,14 @@ package org.idp.server.core.oidc.identity;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
-import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.vc.Credential;
+import org.idp.server.basic.type.vc.Credential;
 import org.idp.server.core.oidc.identity.address.Address;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevices;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 

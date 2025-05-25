@@ -18,7 +18,7 @@ package org.idp.server.basic.type.extension;
 
 import java.util.Iterator;
 import java.util.List;
-import org.idp.server.basic.http.UriMatcher;
+import org.idp.server.platform.http.UriMatcher;
 
 public class RegisteredRedirectUris implements Iterable<String> {
   List<String> values;

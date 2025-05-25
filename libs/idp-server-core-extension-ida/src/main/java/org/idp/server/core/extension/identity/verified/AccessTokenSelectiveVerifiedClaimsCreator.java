@@ -18,7 +18,6 @@ package org.idp.server.core.extension.identity.verified;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
@@ -26,6 +25,7 @@ import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.plugin.AccessTokenCustomClaimsCreator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class AccessTokenSelectiveVerifiedClaimsCreator implements AccessTokenCustomClaimsCreator {
 

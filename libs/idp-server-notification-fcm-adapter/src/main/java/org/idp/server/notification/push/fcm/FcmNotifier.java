@@ -28,7 +28,7 @@ import org.idp.server.authentication.interactors.device.AuthenticationDeviceNoti
 import org.idp.server.core.oidc.identity.device.NotificationChannel;
 import org.idp.server.core.oidc.identity.device.NotificationTemplate;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

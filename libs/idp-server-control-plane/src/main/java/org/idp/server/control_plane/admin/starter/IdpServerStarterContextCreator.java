@@ -17,7 +17,6 @@
 package org.idp.server.control_plane.admin.starter;
 
 import java.util.List;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.control_plane.admin.starter.io.IdpServerStarterRequest;
 import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminRole;
@@ -32,6 +31,7 @@ import org.idp.server.core.oidc.identity.authentication.PasswordEncodeDelegation
 import org.idp.server.core.oidc.identity.permission.Permissions;
 import org.idp.server.core.oidc.identity.role.Role;
 import org.idp.server.core.oidc.identity.role.Roles;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.organization.AssignedTenant;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

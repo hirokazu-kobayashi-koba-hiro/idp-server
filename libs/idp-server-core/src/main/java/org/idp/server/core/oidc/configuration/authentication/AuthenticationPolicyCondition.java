@@ -20,10 +20,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
+import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationPolicyCondition implements JsonReadable {
   List<String> authorizationFlows = new ArrayList<>();

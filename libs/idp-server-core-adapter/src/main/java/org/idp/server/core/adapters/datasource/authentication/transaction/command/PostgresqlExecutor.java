@@ -18,12 +18,12 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.comma
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
 import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlExecutor {

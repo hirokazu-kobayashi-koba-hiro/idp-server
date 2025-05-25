@@ -18,8 +18,8 @@ package org.idp.server.core.adapters.datasource.verifiable_credentials;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.extension.verifiable_credentials.VerifiableCredentialTransaction;
+import org.idp.server.platform.json.JsonConverter;
 
 class InsertSqlParamsCreator {
 

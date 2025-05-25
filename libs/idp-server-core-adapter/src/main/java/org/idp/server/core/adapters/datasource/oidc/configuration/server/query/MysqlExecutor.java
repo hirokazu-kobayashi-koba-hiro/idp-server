@@ -18,8 +18,8 @@ package org.idp.server.core.adapters.datasource.oidc.configuration.server.query;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class MysqlExecutor implements ServerConfigSqlExecutor {

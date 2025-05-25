@@ -17,7 +17,7 @@
 package org.idp.server.core.oidc.identity;
 
 import java.io.Serializable;
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.json.JsonReadable;
 
 public class UserRole implements Serializable, JsonReadable {
   String roleId;

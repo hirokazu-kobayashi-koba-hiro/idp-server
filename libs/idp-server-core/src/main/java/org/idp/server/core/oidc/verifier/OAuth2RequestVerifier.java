@@ -16,13 +16,13 @@
 
 package org.idp.server.core.oidc.verifier;
 
-import org.idp.server.basic.http.InvalidUriException;
-import org.idp.server.basic.http.UriWrapper;
 import org.idp.server.basic.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
 import org.idp.server.core.oidc.verifier.base.OAuthRequestBaseVerifier;
+import org.idp.server.platform.http.InvalidUriException;
+import org.idp.server.platform.http.UriWrapper;
 
 public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
 

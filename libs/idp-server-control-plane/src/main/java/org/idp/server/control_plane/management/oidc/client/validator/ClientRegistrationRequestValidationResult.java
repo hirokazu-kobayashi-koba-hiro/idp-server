@@ -18,9 +18,9 @@ package org.idp.server.control_plane.management.oidc.client.validator;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
+import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 
 public class ClientRegistrationRequestValidationResult {
 

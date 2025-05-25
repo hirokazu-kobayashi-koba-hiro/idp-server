@@ -16,7 +16,7 @@
 
 package org.idp.server.core.oidc.identity.device;
 
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.json.JsonReadable;
 
 public class NotificationTemplate implements JsonReadable {
 

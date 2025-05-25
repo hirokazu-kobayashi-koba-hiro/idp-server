@@ -18,7 +18,7 @@ package org.idp.server.basic.crypto;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.json.JsonReadable;
 
 public class EncryptedData implements JsonReadable {
 

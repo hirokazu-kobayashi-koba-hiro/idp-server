@@ -18,8 +18,8 @@ package org.idp.server.security.event.hooks.webhook;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.http.*;
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.http.*;
+import org.idp.server.platform.json.JsonReadable;
 
 public class WebHookConfig implements JsonReadable {
 

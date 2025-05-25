@@ -20,13 +20,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.oidc.federation.FederationConfiguration;
 import org.idp.server.core.oidc.federation.FederationConfigurationIdentifier;
 import org.idp.server.core.oidc.federation.FederationConfigurationNotFoundException;
 import org.idp.server.core.oidc.federation.FederationType;
 import org.idp.server.core.oidc.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.oidc.federation.sso.SsoProvider;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class FederationConfigurationQueryDataSource

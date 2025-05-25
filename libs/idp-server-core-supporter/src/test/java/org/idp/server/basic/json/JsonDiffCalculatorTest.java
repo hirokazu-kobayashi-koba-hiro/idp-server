@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.basic.json;
+package org.idp.server.platform.json;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

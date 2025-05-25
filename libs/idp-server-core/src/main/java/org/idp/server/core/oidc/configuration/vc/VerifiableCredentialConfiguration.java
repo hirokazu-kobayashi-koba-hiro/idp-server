@@ -19,8 +19,8 @@ package org.idp.server.core.oidc.configuration.vc;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.basic.type.verifiablecredential.CredentialIssuer;
+import org.idp.server.platform.json.JsonReadable;
 
 /**
  *

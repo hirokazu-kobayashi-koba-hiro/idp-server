@@ -18,10 +18,10 @@ package org.idp.server.core.extension.ciba.response;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.basic.type.ciba.Interval;
 import org.idp.server.basic.type.oauth.ExpiresIn;
+import org.idp.server.platform.json.JsonConverter;
 
 public class BackchannelAuthenticationResponseBuilder {
 

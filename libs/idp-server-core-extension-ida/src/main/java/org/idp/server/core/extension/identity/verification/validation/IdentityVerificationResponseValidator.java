@@ -16,12 +16,12 @@
 
 package org.idp.server.core.extension.identity.verification.validation;
 
-import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.basic.json.schema.JsonSchemaDefinition;
-import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
-import org.idp.server.basic.json.schema.JsonSchemaValidator;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.schema.JsonSchemaDefinition;
+import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
+import org.idp.server.platform.json.schema.JsonSchemaValidator;
 
 public class IdentityVerificationResponseValidator {
   IdentityVerificationProcessConfiguration processConfiguration;

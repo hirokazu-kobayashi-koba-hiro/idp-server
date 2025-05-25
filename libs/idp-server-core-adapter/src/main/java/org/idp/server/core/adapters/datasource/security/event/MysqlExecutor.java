@@ -18,8 +18,8 @@ package org.idp.server.core.adapters.datasource.security.event;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEvents;
 import org.idp.server.platform.security.event.SecurityEventSearchCriteria;

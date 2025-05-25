@@ -16,11 +16,11 @@
 
 package org.idp.server.core.oidc.response;
 
-import org.idp.server.basic.http.QueryParams;
 import org.idp.server.basic.type.extension.JarmPayload;
 import org.idp.server.basic.type.extension.ResponseModeValue;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oauth.Error;
+import org.idp.server.platform.http.QueryParams;
 
 public class AuthorizationErrorResponse {
   RedirectUri redirectUri;

@@ -16,7 +16,7 @@
 
 package org.idp.server.basic.type.oauth;
 
-import org.idp.server.basic.http.BasicAuth;
+import org.idp.server.platform.http.BasicAuth;
 
 public class ClientSecretBasic {
   BasicAuth basicAuth;

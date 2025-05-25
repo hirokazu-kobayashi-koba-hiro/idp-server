@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.EncryptedData;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.extension.CreatedAt;
 import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.basic.type.extension.ExpiredAt;
@@ -44,6 +43,7 @@ import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.OAuthTokenBuilder;
 import org.idp.server.core.oidc.token.OAuthTokenIdentifier;
 import org.idp.server.core.oidc.token.RefreshToken;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {

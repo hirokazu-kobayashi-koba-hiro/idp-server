@@ -20,15 +20,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.basic.json.schema.JsonSchemaDefinition;
-import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
 import org.idp.server.core.extension.identity.verification.exception.IdentityVerificationApplicationConfigurationNotFoundException;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.json.schema.JsonSchemaDefinition;
+import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class IdentityVerificationConfiguration implements JsonReadable {
   String id;

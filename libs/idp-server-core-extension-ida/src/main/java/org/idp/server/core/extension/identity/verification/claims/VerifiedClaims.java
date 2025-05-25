@@ -17,10 +17,10 @@
 package org.idp.server.core.extension.identity.verification.claims;
 
 import java.util.Map;
-import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationMapper;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 
 public class VerifiedClaims {
   JsonNodeWrapper json;

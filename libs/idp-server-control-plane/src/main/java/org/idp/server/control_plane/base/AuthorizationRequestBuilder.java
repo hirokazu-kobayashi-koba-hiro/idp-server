@@ -19,7 +19,7 @@ package org.idp.server.control_plane.base;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.http.QueryParams;
+import org.idp.server.platform.http.QueryParams;
 
 public class AuthorizationRequestBuilder {
   String authorizationEndpoint;

@@ -19,7 +19,7 @@ package org.idp.server.core.oidc.id_token;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.json.JsonReadable;
 
 public class RequestedClaimsPayload implements JsonReadable {
   RequestedUserinfoClaims userinfo = new RequestedUserinfoClaims();
