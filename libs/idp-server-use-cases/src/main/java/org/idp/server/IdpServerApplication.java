@@ -104,6 +104,7 @@ import org.idp.server.platform.plugin.ApplicationComponentContainerPluginLoader;
 import org.idp.server.platform.plugin.EmailSenderPluginLoader;
 import org.idp.server.platform.plugin.ProtocolContainerPluginLoader;
 import org.idp.server.platform.plugin.SecurityEventHooksPluginLoader;
+import org.idp.server.platform.proxy.TenantAwareEntryServiceProxy;
 import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.SecurityEventHooks;
 import org.idp.server.platform.security.SecurityEventPublisher;

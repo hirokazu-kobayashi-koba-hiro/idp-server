@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server;
+package org.idp.server.platform.proxy;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
