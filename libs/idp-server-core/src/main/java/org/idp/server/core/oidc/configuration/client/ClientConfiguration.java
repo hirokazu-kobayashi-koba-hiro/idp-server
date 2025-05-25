@@ -18,13 +18,13 @@ package org.idp.server.core.oidc.configuration.client;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.basic.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.basic.type.extension.RegisteredRedirectUris;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.client.ClientName;
+import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /** ClientConfiguration */

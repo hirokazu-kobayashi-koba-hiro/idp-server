@@ -18,7 +18,7 @@ package org.idp.server.core.adapters.datasource.security.hook.configuration.quer
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.json.JsonNodeWrapper;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
 
 class ModelConverter {

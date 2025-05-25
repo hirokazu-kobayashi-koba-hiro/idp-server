@@ -18,9 +18,9 @@ package org.idp.server.control_plane.management.tenant.validator;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingStatus;
+import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 
 public class TenantRequestValidationResult {
 

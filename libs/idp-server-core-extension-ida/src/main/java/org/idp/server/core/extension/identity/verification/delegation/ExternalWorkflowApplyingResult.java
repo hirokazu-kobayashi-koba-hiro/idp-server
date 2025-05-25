@@ -16,10 +16,10 @@
 
 package org.idp.server.core.extension.identity.verification.delegation;
 
-import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationValidationResult;
 import org.idp.server.core.extension.identity.verification.verifier.IdentityVerificationRequestVerificationResult;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class ExternalWorkflowApplyingResult {
 

@@ -22,9 +22,9 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import org.idp.server.basic.http.HttpClientFactory;
 import org.idp.server.basic.type.oauth.RequestUri;
 import org.idp.server.basic.type.oidc.RequestObject;
+import org.idp.server.platform.http.HttpClientFactory;
 
 /** RequestObjectHttpClient */
 public class RequestObjectHttpClient implements RequestObjectGateway {

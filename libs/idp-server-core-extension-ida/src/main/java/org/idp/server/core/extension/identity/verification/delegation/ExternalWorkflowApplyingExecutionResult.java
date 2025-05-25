@@ -18,8 +18,8 @@ package org.idp.server.core.extension.identity.verification.delegation;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.http.HttpRequestResult;
-import org.idp.server.basic.json.JsonNodeWrapper;
+import org.idp.server.platform.http.HttpRequestResult;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class ExternalWorkflowApplyingExecutionResult {
   int statusCode;

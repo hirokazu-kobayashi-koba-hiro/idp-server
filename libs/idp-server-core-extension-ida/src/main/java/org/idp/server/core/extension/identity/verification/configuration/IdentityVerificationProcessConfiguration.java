@@ -18,10 +18,10 @@ package org.idp.server.core.extension.identity.verification.configuration;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.http.*;
-import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.basic.json.JsonReadable;
-import org.idp.server.basic.json.schema.JsonSchemaDefinition;
+import org.idp.server.platform.http.*;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 
 public class IdentityVerificationProcessConfiguration implements JsonReadable {
   String url;

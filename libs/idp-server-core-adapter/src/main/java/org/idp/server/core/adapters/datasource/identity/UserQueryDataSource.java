@@ -21,13 +21,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.core.oidc.identity.exception.UserNotFoundException;
 import org.idp.server.core.oidc.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.datasource.SqlTooManyResultsException;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserQueryDataSource implements UserQueryRepository {

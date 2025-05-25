@@ -19,12 +19,12 @@ package org.idp.server.core.adapters.datasource.grant_management;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant_management.AuthorizationGranted;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {

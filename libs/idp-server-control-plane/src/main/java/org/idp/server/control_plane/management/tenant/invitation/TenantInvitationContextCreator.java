@@ -18,11 +18,11 @@ package org.idp.server.control_plane.management.tenant.invitation;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import org.idp.server.basic.http.QueryParams;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementRequest;
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitation;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.http.QueryParams;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TenantInvitationContextCreator {

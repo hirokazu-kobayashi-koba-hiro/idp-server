@@ -18,10 +18,6 @@ package org.idp.server.core.extension.identity.verification.handler;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.http.*;
-import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
-import org.idp.server.basic.oauth.OAuthAuthorizationResolver;
-import org.idp.server.basic.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
@@ -38,7 +34,11 @@ import org.idp.server.core.extension.identity.verification.validation.IdentityVe
 import org.idp.server.core.extension.identity.verification.verifier.IdentityVerificationRequestVerificationResult;
 import org.idp.server.core.extension.identity.verification.verifier.IdentityVerificationRequestVerifiers;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.platform.http.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 public class IdentityVerificationHandler {
 

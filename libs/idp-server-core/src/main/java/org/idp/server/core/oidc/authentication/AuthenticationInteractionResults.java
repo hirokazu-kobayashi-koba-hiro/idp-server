@@ -17,7 +17,7 @@
 package org.idp.server.core.oidc.authentication;
 
 import java.util.*;
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationInteractionResults implements JsonReadable {
 

@@ -19,9 +19,9 @@ package org.idp.server.authentication.interactors.legacy;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
-import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.address.Address;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.junit.jupiter.api.Test;
 
 public class UserInfoMapperTest {

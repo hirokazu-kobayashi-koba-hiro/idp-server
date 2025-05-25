@@ -18,9 +18,9 @@ package org.idp.server.control_plane.management.identity.user.validator;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
+import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 
 public class UserRegistrationRequestValidationResult {
 

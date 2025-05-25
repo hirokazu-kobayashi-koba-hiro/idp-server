@@ -18,9 +18,9 @@ package org.idp.server.control_plane.admin.starter.validator;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
 import org.idp.server.control_plane.admin.starter.io.IdpServerStarterResponse;
 import org.idp.server.control_plane.admin.starter.io.IdpServerStarterStatus;
+import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 
 public class IdpServerInitializeRequestValidationResult {
 

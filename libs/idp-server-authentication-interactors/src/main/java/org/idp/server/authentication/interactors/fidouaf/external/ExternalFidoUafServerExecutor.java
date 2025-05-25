@@ -18,11 +18,11 @@ package org.idp.server.authentication.interactors.fidouaf.external;
 
 import java.util.Map;
 import org.idp.server.authentication.interactors.fidouaf.*;
-import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.basic.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
 

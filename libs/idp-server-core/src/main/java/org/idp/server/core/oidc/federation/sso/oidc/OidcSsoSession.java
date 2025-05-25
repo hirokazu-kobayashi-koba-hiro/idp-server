@@ -18,8 +18,8 @@ package org.idp.server.core.oidc.federation.sso.oidc;
 
 import java.io.Serializable;
 import java.util.Objects;
-import org.idp.server.basic.json.JsonReadable;
 import org.idp.server.core.oidc.federation.sso.SsoSessionIdentifier;
+import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class OidcSsoSession implements Serializable, JsonReadable {

@@ -17,11 +17,11 @@
 package org.idp.server.control_plane.management.oidc.authorization;
 
 import java.util.Map;
-import org.idp.server.basic.json.JsonDiffCalculator;
-import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementResponse;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementStatus;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthorizationServerUpdateContext {

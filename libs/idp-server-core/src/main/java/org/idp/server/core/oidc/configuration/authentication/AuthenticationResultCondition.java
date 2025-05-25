@@ -16,7 +16,7 @@
 
 package org.idp.server.core.oidc.configuration.authentication;
 
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationResultCondition implements JsonReadable {
   String type;

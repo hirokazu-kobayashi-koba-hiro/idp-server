@@ -18,13 +18,13 @@ package org.idp.server.core.extension.identity.verification.io;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.basic.json.schema.JsonSchemaDefinition;
-import org.idp.server.basic.json.schema.JsonSchemaProperty;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.schema.JsonSchemaDefinition;
+import org.idp.server.platform.json.schema.JsonSchemaProperty;
 
 public class IdentityVerificationDynamicResponseMapper {
 

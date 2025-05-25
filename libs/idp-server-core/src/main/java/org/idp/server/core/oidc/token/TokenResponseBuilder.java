@@ -18,12 +18,12 @@ package org.idp.server.core.oidc.token;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.basic.type.verifiablecredential.CNonce;
 import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.platform.json.JsonConverter;
 
 public class TokenResponseBuilder {
   AccessTokenEntity accessTokenEntity;

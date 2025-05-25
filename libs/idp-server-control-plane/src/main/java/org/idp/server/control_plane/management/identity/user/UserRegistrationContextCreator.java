@@ -17,11 +17,11 @@
 package org.idp.server.control_plane.management.identity.user;
 
 import java.util.UUID;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserRegistrationContextCreator {

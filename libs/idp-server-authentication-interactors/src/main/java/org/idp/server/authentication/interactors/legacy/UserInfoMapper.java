@@ -17,9 +17,9 @@
 package org.idp.server.authentication.interactors.legacy;
 
 import java.util.*;
-import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.address.Address;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class UserInfoMapper {
   String providerName;

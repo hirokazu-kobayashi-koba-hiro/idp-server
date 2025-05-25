@@ -17,13 +17,13 @@
 package org.idp.server.authentication.interactors.legacy;
 
 import java.util.*;
-import org.idp.server.basic.http.*;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.http.*;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 

@@ -16,7 +16,7 @@
 
 package org.idp.server.authentication.interactors.email;
 
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.json.JsonReadable;
 
 public class EmailVerificationTemplate implements JsonReadable {
 

@@ -23,7 +23,7 @@ import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.util.Base64URL;
 import java.text.ParseException;
 import java.util.Map;
-import org.idp.server.basic.json.JsonConverter;
+import org.idp.server.platform.json.JsonConverter;
 
 /** JoseType */
 public enum JoseType {

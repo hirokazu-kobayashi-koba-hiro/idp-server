@@ -17,10 +17,10 @@
 package org.idp.server.control_plane.management.identity.verification;
 
 import java.util.UUID;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigurationRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationConfigRegistrationContextCreator {

@@ -17,7 +17,7 @@
 package org.idp.server.control_plane.management.onboarding.io;
 
 import java.util.UUID;
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationDescription;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;

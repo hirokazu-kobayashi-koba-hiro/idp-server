@@ -18,7 +18,7 @@ package org.idp.server.core.adapters.datasource.multi_tenancy.organization;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import org.idp.server.basic.json.JsonNodeWrapper;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.organization.*;
 
 class ModelConvertor {

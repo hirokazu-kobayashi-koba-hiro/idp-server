@@ -18,7 +18,6 @@ package org.idp.server.core.adapters.datasource.oidc.request;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.*;
@@ -32,6 +31,7 @@ import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {

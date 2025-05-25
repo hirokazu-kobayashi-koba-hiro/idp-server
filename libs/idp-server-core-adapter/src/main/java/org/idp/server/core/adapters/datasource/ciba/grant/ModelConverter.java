@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.json.JsonConverter;
-import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.basic.type.ciba.Interval;
 import org.idp.server.basic.type.extension.CustomProperties;
@@ -42,6 +40,8 @@ import org.idp.server.core.oidc.grant.consent.ConsentClaims;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {

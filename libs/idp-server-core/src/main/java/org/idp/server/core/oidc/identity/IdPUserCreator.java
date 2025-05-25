@@ -18,9 +18,9 @@ package org.idp.server.core.oidc.identity;
 
 import java.util.List;
 import java.util.UUID;
-import org.idp.server.basic.json.schema.JsonSchemaDefinition;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.oidc.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 
 public class IdPUserCreator {
 

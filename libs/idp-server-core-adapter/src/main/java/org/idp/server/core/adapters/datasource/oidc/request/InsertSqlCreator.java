@@ -18,10 +18,10 @@ package org.idp.server.core.adapters.datasource.oidc.request;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.basic.json.JsonConverter;
 import org.idp.server.basic.type.oauth.CustomParams;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
+import org.idp.server.platform.json.JsonConverter;
 
 public class InsertSqlCreator {
 

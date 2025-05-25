@@ -17,7 +17,7 @@
 package org.idp.server.core.oidc.identity.device;
 
 import java.io.Serializable;
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationDevice implements Serializable, JsonReadable {
   String id;

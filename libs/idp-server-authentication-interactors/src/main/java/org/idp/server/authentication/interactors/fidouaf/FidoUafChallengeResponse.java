@@ -18,7 +18,7 @@ package org.idp.server.authentication.interactors.fidouaf;
 
 import java.io.Serializable;
 import java.util.Map;
-import org.idp.server.basic.json.JsonReadable;
+import org.idp.server.platform.json.JsonReadable;
 
 public class FidoUafChallengeResponse implements Serializable, JsonReadable {
 

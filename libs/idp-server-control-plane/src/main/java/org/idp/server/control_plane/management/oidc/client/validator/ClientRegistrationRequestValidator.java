@@ -16,11 +16,11 @@
 
 package org.idp.server.control_plane.management.oidc.client.validator;
 
-import org.idp.server.basic.json.JsonNodeWrapper;
-import org.idp.server.basic.json.schema.JsonSchemaValidationResult;
-import org.idp.server.basic.json.schema.JsonSchemaValidator;
 import org.idp.server.control_plane.base.schema.SchemaReader;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
+import org.idp.server.platform.json.schema.JsonSchemaValidator;
 
 public class ClientRegistrationRequestValidator {
 

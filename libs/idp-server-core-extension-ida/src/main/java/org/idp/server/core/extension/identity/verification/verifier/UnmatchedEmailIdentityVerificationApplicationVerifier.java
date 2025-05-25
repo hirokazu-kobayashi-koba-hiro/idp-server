@@ -18,7 +18,6 @@ package org.idp.server.core.extension.identity.verification.verifier;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.json.JsonNodeWrapper;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
@@ -26,6 +25,7 @@ import org.idp.server.core.extension.identity.verification.application.IdentityV
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UnmatchedEmailIdentityVerificationApplicationVerifier
