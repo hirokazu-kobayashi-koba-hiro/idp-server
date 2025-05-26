@@ -37,7 +37,15 @@ const config = {
   // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'ja'],
+    localeConfigs: {
+      en: {
+        label: 'English',
+      },
+      ja: {
+        label: '日本語',
+      },
+    },
   },
 
   presets: [
@@ -72,6 +80,31 @@ const config = {
         },
       }),
     ],
+    // Redocusaurus config
+    [
+      'redocusaurus',
+      {
+        // Plugin Options for loading OpenAPI files
+        specs: [
+          // Pass it a path to a local OpenAPI YAML file
+          {
+            // Redocusaurus will automatically bundle your spec into a single file during the build
+            spec: 'openapi/swagger-ja.yaml',
+            route: '/api/',
+          },
+          // You can also pass it a OpenAPI spec URL
+          {
+            spec: 'https://redocly.github.io/redoc/openapi.yaml',
+            route: '/openapi/',
+          },
+        ],
+        // Theme Options for modifying how redoc renders them
+        theme: {
+          // Change with your site colors
+          primaryColor: '#1890ff',
+        },
+      },
+    ]
   ],
 
   themeConfig:
@@ -90,6 +123,11 @@ const config = {
             label: 'Docs',
             position: 'left',
             to: '/docs/introduction',
+          },
+          {
+            label: 'Api Reference',
+            position: 'left',
+            to: '/api',
           },
           // {to: '/blog', label: 'Blog', position: 'left'},
           {

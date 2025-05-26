@@ -1,0 +1,1149 @@
+openapi: 3.0.3
+info:
+  title: idp-server API
+  description: OAuth 2.0 / OpenID Connect 1.0 に準拠したエンドポイント仕様
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+    url: https://github.com/hirokazu-kobayashi-koba-hiro/idp-server
+
+servers:
+  - url: https://idp.example.com
+    description: 本番環境
+  - url: http://localhost:8080
+    description: 開発用
+
+tags:
+  - name: CIBAフロー
+    description: |
+      OpenID Connect Client Initiated Backchannel Authentication (CIBA) フローは、
+      リダイレクトやユーザーエージェントを介さずに認証を行う、非同期かつデバイス分離型のOpenID Connect認証フローです。
+
+      ユーザーがRelying Party（RP）と操作する端末（Consumption Device）と、
+      認証や同意を行う端末（Authentication Device）を分離して設計されており、
+      RPがユーザーの識別子を既に知っている場合に、OPからアクセストークンやIDトークンを非同期で取得できます。
+      
+      📘 仕様詳細（OpenID公式）:  
+      [OpenID Connect Client Initiated Backchannel Authentication Core 1.0](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html)
+  - name: 認可コードフロー
+    description: |
+      OpenID Connect 認可コードフローは、OAuth 2.0 を基盤とした認証フローであり、
+      Relying Party（クライアント）がエンドユーザーのアイデンティティを安全かつ確実に取得するための標準的な手法です。
+
+      このフローは **認証コード（authorization code）** を通じて、アクセストークンや ID トークンを取得する構成となっており、
+      クライアントと認可サーバーの間にユーザーのブラウザ（User Agent）を介在させることで、セキュアな認可と認証を両立します。
+
+      🔐 **OpenID Connect の特長**：
+      - OAuth 2.0 にアイデンティティレイヤーを追加
+      - `id_token` を用いてエンドユーザーを識別
+      - `userinfo` エンドポイントによるプロフィール情報の取得
+
+      🔑 **典型的なユースケース**：
+      - Webアプリケーションのログイン
+      - SPA（Single Page Application）やモバイルアプリのサーバー認証連携
+
+      📘 関連仕様：
+      - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
+      - [OAuth 2.0 Framework (RFC 6749)](https://datatracker.ietf.org/doc/html/rfc6749)
+  - name: SSF
+    description: |
+      Shared Signals Framework (SSF) は、OpenID Foundation により策定されたセキュリティイベント共有の標準仕様です。
+      IdP-Server では、**Push Delivery Mode** に対応しており、SET（Security Event Token）形式の通知を `POST` リクエストで受信します。
+
+      RFC 8935 に準拠し、セッション失効、アカウント停止、クレデンシャル変更などの重要イベントを連携できます。
+
+      📘 仕様: [RFC 8935 - Push-Based Event Delivery](https://www.rfc-editor.org/rfc/rfc8935.html)
+
+paths:
+  /v1/backchannel/authentications:
+    post:
+      summary: バックチャンネル認証リクエスト
+      tags:
+        - CIBAフロー
+      description: |
+        CIBA（Client-Initiated Backchannel Authentication）フローのバックチャンネル認証リクエストエンドポイント。
+        OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0 に準拠。
+        
+        このエンドポイントはクライアント認証を必要とします。
+        以下のクライアント認証方式に対応しています（Client Authentication）：
+
+          - **client_secret_basic**：AuthorizationヘッダにBasic認証形式で `client_id` / `client_secret` を送信します（デフォルト）。
+          - **client_secret_post**：`client_id` と `client_secret` をフォームパラメータとしてリクエストボディに含めます。
+          - **client_secret_jwt**：client_secret を共通鍵として署名した JWT を `client_assertion` として送信します。
+          - **private_key_jwt**：登録済みの公開鍵に対応する秘密鍵で署名した JWT を `client_assertion` として送信します。
+
+          JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
+
+          - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+          - `client_assertion`: 署名済みJWT
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BackchannelAuthenticationRequest'
+      responses:
+        '200':
+          description: 認証リクエストが正常に受理された
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackchannelAuthenticationResponse'
+
+        '400':
+          description: バリデーションエラーや不正リクエスト
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackchannelAuthenticationErrorResponse'
+
+        '401':
+          description: クライアント認証エラー（invalid_client）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackchannelAuthenticationErrorResponse'
+
+  /v1/authorizations:
+    get:
+      summary: 認可リクエスト
+      tags:
+        - 認可コードフロー
+      description: |
+        認可コード、インプリシット、ハイブリッドフローで使用されるエンドポイント。
+        OpenID Connect Core 1.0 Section 3 に準拠。
+      parameters:
+        - $ref: '#/components/parameters/response_type'
+        - $ref: '#/components/parameters/client_id'
+        - $ref: '#/components/parameters/redirect_uri'
+        - $ref: '#/components/parameters/scope'
+        - $ref: '#/components/parameters/state'
+        - $ref: '#/components/parameters/nonce'
+        - $ref: '#/components/parameters/display'
+        - $ref: '#/components/parameters/prompt'
+        - $ref: '#/components/parameters/max_age'
+        - $ref: '#/components/parameters/ui_locales'
+        - $ref: '#/components/parameters/id_token_hint'
+        - $ref: '#/components/parameters/login_hint'
+        - $ref: '#/components/parameters/acr_values'
+        - $ref: '#/components/parameters/request'
+        - $ref: '#/components/parameters/request_uri'
+        - $ref: '#/components/parameters/claims'
+        - $ref: '#/components/parameters/code_challenge'
+        - $ref: '#/components/parameters/code_challenge_method'
+      responses:
+        '302':
+          description: 認可レスポンス（リダイレクト）
+
+  /v1/tokens:
+    post:
+      summary: トークンリクエスト
+      tags:
+        - 認可コードフロー
+        - CIBAフロー
+      description: |
+        認可コードやリフレッシュトークンを使用してアクセストークン等を取得。
+        このエンドポイントはクライアント認証を必要とします。
+          以下のクライアント認証方式に対応しています（Client Authentication）：
+
+          - **client_secret_basic**：AuthorizationヘッダにBasic認証形式で `client_id` / `client_secret` を送信します（デフォルト）。
+          - **client_secret_post**：`client_id` と `client_secret` をフォームパラメータとしてリクエストボディに含めます。
+          - **client_secret_jwt**：client_secret を共通鍵として署名した JWT を `client_assertion` として送信します。
+          - **private_key_jwt**：登録済みの公開鍵に対応する秘密鍵で署名した JWT を `client_assertion` として送信します。
+          - **none**：認証を行いません。PKCEを使用するPublicクライアント向け。
+
+          JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
+
+          - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+          - `client_assertion`: 署名済みJWT
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/TokenRequest'
+                - $ref: '#/components/schemas/CibaTokenRequest'
+      responses:
+        '200':
+          description: トークンレスポンス
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TokenResponse'
+                  - $ref: '#/components/schemas/CibaTokenResponse'
+
+        '400':
+          description: |
+            OAuth 2.0 Token Endpoint でのエラーレスポンス形式。
+            RFC 6749 Section 5.2 に準拠。
+            
+            エラーコード一覧：
+
+            - **invalid_request**  
+              リクエストに必須パラメータが不足している、または構文が不正な場合に返される。  
+              例：`grant_type` が指定されていない、同じパラメータが複数存在する など。
+
+            - **invalid_client**  
+              クライアント認証に失敗した場合に返される。  
+              例：HTTP Basic 認証の情報が不正、`client_secret` が間違っている、JWT署名の検証に失敗。
+
+            - **invalid_grant**  
+              `authorization_code`、`refresh_token` 等の grant が不正または失効している場合。  
+              例：認可コードが使用済み、期限切れ、リプレイ攻撃、redirect_uri が一致しない。
+
+            - **unauthorized_client**  
+              クライアントが許可されていない `grant_type` を使用しようとした場合。  
+              例：`client_credentials` が許可されていないのに使った場合。
+
+            - **unsupported_grant_type**  
+              サーバーがサポートしていない `grant_type` を指定した場合。  
+              例：typo や未対応の独自拡張。
+
+            - **invalid_scope**  
+              リクエストされた scope が不正または許可されていない場合。  
+              例：`offline_access` の要求が許可されていない。
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenErrorResponse'
+
+        '401':
+          description: |
+            クライアント認証に失敗した場合のエラー。
+
+            以下のような状況で返されます：
+
+              - Authorizationヘッダに不正なBasic認証情報が含まれていた
+              - client_secret が間違っている
+              - client_assertion（JWT）の署名検証に失敗した
+              - JWTの `exp`, `aud`, `iss`, `jti` が不正または不整合だった
+              - 登録されていないクライアントがアクセスした
+
+              エラーコードは常に `invalid_client` が返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenErrorResponse'
+
+  /v1/userinfo:
+    get:
+      summary: ユーザーInfo
+      tags:
+        - 認可コードフロー
+      description: |
+        認証されたエンドユーザーのプロフィール情報を返す。
+        OpenID Connect Core 1.0 Section 5 に準拠。
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功時のユーザー情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfoResponse'
+
+        '401':
+          description: |
+            アクセストークンが無効または期限切れの場合の認証エラー。
+            このエラーは、OAuth 2.0 Bearer Token Usage（RFC 6750）Section 3 に従い、
+            `WWW-Authenticate` ヘッダ付きで返却されます。
+            
+            例:
+              HTTP/1.1 401 Unauthorized  
+              WWW-Authenticate: Bearer error=\"invalid_token\", error_description=\"The Access Token expired\"
+          headers:
+            WWW-Authenticate:
+              description: |
+                Bearer Token の認証エラー情報。
+                RFC 6750 Section 3 に従い、エラー詳細（例：invalid_token）と説明が含まれます。
+              schema:
+                type: string
+    post:
+      summary: ユーザーInfo
+      tags:
+        - 認可コードフロー
+      description: |
+        認証されたエンドユーザーのプロフィール情報を返す。
+        OpenID Connect Core 1.0 Section 5 に準拠。
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: 成功時のユーザー情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfoResponse'
+
+        '401':
+          description: |
+            アクセストークンが無効または期限切れの場合の認証エラー。
+            このエラーは、OAuth 2.0 Bearer Token Usage（RFC 6750）Section 3 に従い、
+            `WWW-Authenticate` ヘッダ付きで返却されます。
+
+            例:
+              HTTP/1.1 401 Unauthorized  
+              WWW-Authenticate: Bearer error=\"invalid_token\", error_description=\"The Access Token expired\"
+          headers:
+            WWW-Authenticate:
+              description: |
+                Bearer Token の認証エラー情報。
+                RFC 6750 Section 3 に従い、エラー詳細（例：invalid_token）と説明が含まれます。
+              schema:
+                type: string
+
+  /.well-known/openid-configuration:
+    get:
+      summary: OIDC メタデータ
+      tags:
+        - 認可コードフロー
+      description: OpenID Connect Discovery ドキュメント
+      responses:
+        '200':
+          description: Discoveryドキュメント
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenIDConfiguration'
+
+
+  /ssf/events/receive:
+    post:
+      summary: |
+       SSF (Shared Signals Framework) Push Notification Receiver        
+       ※ idp-serverからイベントを受信するアプリが作成するAPI仕様です。任意のパスを指定できます。
+      tags:
+        - SSF
+      description: |
+        このエンドポイントは、OpenID Shared Signals Framework (SSF) における **Push型通知 (Push Delivery Mode)** を受信するためのものです。
+                
+        📘 仕様準拠: [RFC 8935](https://www.rfc-editor.org/rfc/rfc8935.html)
+        
+        🔐 利用されるイベント例（例: RISC仕様準拠）:
+        - `https://schemas.openid.net/secevent/risc/event-type/account-disabled`
+        - `https://schemas.openid.net/secevent/risc/event-type/credential-change-required`
+        - `https://schemas.openid.net/secevent/risc/event-type/sessions-revoked`
+        
+        このエンドポイントは、ベースとなるSecurity Event Token (SET) 形式のJWTを受け入れ、必要に応じて検証・処理を行うものです。
+        
+        > 🔒 認証には `POST` リクエストの `Authorization` ヘッダーを使用することが推奨されます（例: Bearer Token）。
+
+      requestBody:
+        required: true
+        content:
+          application/secevent+jwt:
+            schema:
+              $ref: '#/components/schemas/SecurityEventToken'
+
+      responses:
+        '202':
+          description: 通知を受け取り、正常にキューまたは処理に登録した（非同期処理が前提）
+        '400':
+          description: 不正なリクエスト（JWTが無効、形式が不正）
+        '401':
+          description: 認証エラー（トークンが無効、署名検証失敗）
+
+components:
+  parameters:
+    response_type:
+      name: response_type
+      in: query
+      required: true
+      description: |
+        使用する認可フローの種類。OpenID Connectでは通常 "code" を使用。
+        他にも "id_token" や "token" を組み合わせてハイブリッドフローも可能。
+        OAuth 2.0 / OpenID Connect 仕様に準拠。
+      schema:
+        type: string
+        enum: [code, id_token, token, "code id_token", "code token", "id_token token", "code id_token token"]
+
+    client_id:
+      name: client_id
+      in: query
+      required: true
+      description: クライアントアプリケーションに割り当てられた一意のID。
+      schema:
+        type: string
+
+    redirect_uri:
+      name: redirect_uri
+      in: query
+      required: true
+      description: 認可後にユーザーをリダイレクトするURI。事前に登録されている必要がある。
+      schema:
+        type: string
+        format: uri
+
+    scope:
+      name: scope
+      in: query
+      required: true
+      description: |
+        要求するスコープ。OpenID Connectでは "openid" を含める必要がある。
+        例: "openid profile email"
+      schema:
+        type: string
+
+    state:
+      name: state
+      in: query
+      required: true
+      description: CSRF対策などのために利用されるクライアントからの任意文字列。
+      schema:
+        type: string
+
+    nonce:
+      name: nonce
+      in: query
+      required: false
+      description: リプレイアタック防止のためのランダムな文字列（IDトークンの検証に使用）。
+      schema:
+        type: string
+
+    display:
+      name: display
+      in: query
+      required: false
+      description: |
+        認可画面の表示方法を指定（popup / page / touch / wap）。
+        基本は省略可能。
+      schema:
+        type: string
+
+    prompt:
+      name: prompt
+      in: query
+      required: false
+      description: |
+        認可サーバーの動作を制御するためのヒント。
+        例: "login", "none", "consent", "select_account"
+      schema:
+        type: string
+
+    max_age:
+      name: max_age
+      in: query
+      required: false
+      description: |
+        最後の認証からの経過秒数の最大値。これを超えていると再認証が要求される。
+      schema:
+        type: integer
+
+    ui_locales:
+      name: ui_locales
+      in: query
+      required: false
+      description: |
+        認可画面のUI言語設定。複数指定可能（例: "ja en-US fr"）。
+      schema:
+        type: string
+
+    id_token_hint:
+      name: id_token_hint
+      in: query
+      required: false
+      description: |
+        特定のユーザーを示唆するIDトークン。ログインセッション再利用やユーザー固定に使用。
+      schema:
+        type: string
+
+    login_hint:
+      name: login_hint
+      in: query
+      required: false
+      description: |
+        ユーザー識別のヒント（email、phone、ユーザー名など）。
+        ログインフォームの事前入力などに使用。
+      schema:
+        type: string
+
+    acr_values:
+      name: acr_values
+      in: query
+      required: false
+      description: |
+        必要とされる認証レベル（例: "urn:mfa:required" など）を指定。
+        認証強度ポリシーの制御に使用。
+      schema:
+        type: string
+
+    request:
+      name: request
+      in: query
+      required: false
+      description: |
+        リクエストパラメータを含むJWT。署名・暗号化可能な "Request Object"。
+        認可リクエストの一貫性とセキュリティ向上に使用。
+      schema:
+        type: string
+
+    request_uri:
+      name: request_uri
+      in: query
+      required: false
+      description: |
+        事前登録されたリクエストオブジェクトのURI。
+        リクエストサイズ削減やセキュリティ強化に利用される。
+      schema:
+        type: string
+
+    claims:
+      name: claims
+      in: query
+      required: false
+      description: |
+        特定の Claim を `id_token` や `userinfo` に含めるようリクエストするためのパラメータ。
+        値は JSON 形式でエンコードされており、form-urlencoded によって送信される。
+        
+        以下のような構造で、IDトークンやUserInfoに含めたいClaimを指定できる：
+        
+        例:
+        {
+          "userinfo": {
+            "email": { "essential": true },
+            "email_verified": { "essential": true }
+          },
+          "id_token": {
+            "auth_time": { "essential": true },
+            "acr": { "values": ["urn:mace:incommon:iap:silver"] }
+          }
+        }
+        
+        - `essential`: Claim が必須であることを示す（true/false）
+        - `value`: 特定の値を要求
+        - `values`: 候補値の配列を指定
+        - `null`: 任意要求（Voluntary Claim）
+        
+        `claims_locales` と併用することで、言語タグ指定のClaim要求も可能。
+        
+        ◆補足
+        `claims` パラメータは、Authorization Request 時に OpenID Provider に対して
+        必要な Claim（属性）を明示的に要求するために使用されます。
+
+        - `userinfo` セクション：UserInfoエンドポイントに返されるClaimを指定
+        - `id_token` セクション：IDトークンに含まれるClaimを指定
+        - `essential` フラグで必須／任意を区別
+        - `value` / `values` による値制約
+        - `claims_locales` と併用すれば、言語指定付きのClaimも要求可能
+
+        仕様：OpenID Connect Core 1.0 Section 5.5 を参照。
+
+      schema:
+        type: string
+
+    code_challenge:
+      name: code_challenge
+      in: query
+      required: false
+      description: |
+        PKCE用のチャレンジ文字列。SHA256などで `code_verifier` を変換した値。
+        publicクライアント（SPAやモバイル）では使用が推奨される。
+      schema:
+        type: string
+
+    code_challenge_method:
+      name: code_challenge_method
+      in: query
+      required: false
+      description: |
+        `code_challenge` の生成に使用したメソッド。
+        推奨は "S256"。省略時は "plain" 扱いになる。
+      schema:
+        type: string
+        enum: [ plain, S256 ]
+
+
+  schemas:
+    TokenRequest:
+      type: object
+      description: |
+        クライアントが認可コードをアクセストークンに交換するために送信するリクエスト。
+        認可コードフローやリフレッシュトークンフローもこの形式で行う。
+        OAuth 2.0 / OpenID Connect 仕様に準拠。
+      properties:
+        grant_type:
+          type: string
+          description: |
+            使用するグラントタイプ。
+            認可コードフローにおいては "authorization_code" や "refresh_token"。
+        code:
+          type: string
+          description: |
+            認可エンドポイントから受け取った認可コード。
+            ※grant_type が "authorization_code" の場合に必須。
+        refresh_token:
+          type: string
+          description: |
+            リフレッシュトークン。
+            ※grant_type が "refresh_token" の場合に必須。
+        redirect_uri:
+          type: string
+          description: |
+            認可リクエスト時に指定した redirect_uri と一致させる必要がある。
+            ※認可リクエスト時に redirect_uri を指定した場合は必須。
+          format: uri
+        client_id:
+          type: string
+          description: クライアントの識別子。public クライアントでは必須。
+        client_secret:
+          type: string
+          description: |
+            クライアントのシークレット。
+            confidential クライアントが Authorization ヘッダで認証しない場合に送信される。
+        code_verifier:
+          type: string
+          description: |
+            PKCEで使用されるチャレンジ検証用の文字列。
+            認可リクエストで指定した code_challenge に対応。
+      required:
+        - grant_type
+        - client_id
+
+    CibaTokenRequest:
+      type: object
+      description: |
+        CIBA（Client Initiated Backchannel Authentication）フローにおいて、認証リクエスト完了後にアクセストークンを取得するためのリクエスト。
+        grant_type は常に "urn:openid:params:grant-type:ciba" となる。
+      properties:
+        grant_type:
+          type: string
+          enum:
+            - urn:openid:params:grant-type:ciba
+          description: |
+            グラントタイプ固定値。"urn:openid:params:grant-type:ciba"
+        auth_req_id:
+          type: string
+          description: |
+            backchannel authentication リクエスト時に発行された一時的識別子。
+            認証が完了するとこのIDを使ってトークンを取得する。
+        client_id:
+          type: string
+          description: |
+            クライアントの識別子。
+            `client_secret_post` などで認証する場合に使用。
+        client_secret:
+          type: string
+          description: |
+            クライアントのシークレット。
+            `client_secret_post` 認証方式で送信される。
+        client_assertion_type:
+          type: string
+          description: |
+            JWTベースクライアント認証方式において指定する識別子。
+            固定値: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+        client_assertion:
+          type: string
+          description: |
+            JWTとして署名されたクライアント認証トークン。
+            `client_secret_jwt` または `private_key_jwt` にて使用。
+
+      required:
+        - grant_type
+        - auth_req_id
+
+
+    TokenResponse:
+      type: object
+      description: |
+        トークンエンドポイントから返却されるレスポンス。
+        OpenID Connect フローであれば id_token が含まれる。
+        OAuth 2.0 / OpenID Connect 仕様に準拠。
+      required:
+        - access_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: |
+            APIへのアクセスに使用されるアクセストークン。
+            識別子型（ランダムな文字列） or 内包型（JWT）。
+        token_type:
+          type: string
+          description: |
+            トークンタイプ。通常は "Bearer"。
+          example: Bearer
+        expires_in:
+          type: integer
+          description: |
+            アクセストークンの有効期限（秒単位）。
+          example: 3600
+        refresh_token:
+          type: string
+          description: |
+            新しいアクセストークンを取得するために使用されるトークン。
+            オプション。スコープや設定によっては返されない。
+        id_token:
+          type: string
+          description: |
+            OpenID Connect フローでユーザー情報を表すJWTトークン。
+            sub（ユーザーID）や認証時間などのクレームが含まれる。
+
+    CibaTokenResponse:
+      type: object
+      description: |
+        CIBAフローにおけるトークンエンドポイントから返却されるレスポンス。
+        OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0 仕様に準拠。
+      required:
+        - access_token
+        - token_type
+        - expires_in
+        - id_token
+      properties:
+        access_token:
+          type: string
+          description: |
+            APIへのアクセスに使用されるアクセストークン。
+            識別子型（ランダムな文字列） or 内包型（JWT）。
+        token_type:
+          type: string
+          description: |
+            トークンタイプ。通常は "Bearer"。
+          example: Bearer
+        expires_in:
+          type: integer
+          description: |
+            アクセストークンの有効期限（秒単位）。
+          example: 3600
+        refresh_token:
+          type: string
+          description: |
+            新しいアクセストークンを取得するために使用されるトークン。
+            オプション。スコープや設定によっては返されない。
+        id_token:
+          type: string
+          description: |
+            OpenID Connect フローでユーザー情報を表すJWTトークン。
+            sub（ユーザーID）や認証時間などのクレームが含まれる。
+
+    TokenErrorResponse:
+      type: object
+      description: |
+        トークンエンドポイントでのエラーレスポンス。
+        OAuth 2.0 / OpenID Connect 仕様に準拠。
+      properties:
+        error:
+          type: string
+          description: |
+            エラーの種類。
+            例: invalid_request, invalid_client, invalid_grant, unauthorized_client, unsupported_grant_type, invalid_scope
+        error_description:
+          type: string
+          description: エラーの詳細な説明（ユーザー向けではない）
+      required:
+        - error
+
+    UserInfoResponse:
+      type: object
+      description: |
+        OpenID Connect Core 1.0 における UserInfo エンドポイントのレスポンススキーマ。
+
+        本レスポンスで返却される各 Claim（属性情報）は、以下のいずれかの方法で要求されている場合に含まれます：
+
+        - `scope` パラメータによるClaim要求（例: `profile`, `email`, `address`, `phone`）
+        - `claims` パラメータによる個別Claim要求（JSON形式で `userinfo` セクションに指定）
+
+        含まれるかどうかはクライアントのリクエスト内容およびEnd-Userの同意・設定に依存します。
+        OpenID Provider（OP）はプライバシー上の理由等により、リクエストされたClaimを返さない場合があります。
+
+        - `sub` Claim は必須であり（MUST）、常に含まれます。
+        - その他のClaimは、要求されていても返されないことがあります。
+        - 要求されていないClaimが含まれることはありません。
+        - 値が `null` のClaimは含めてはならず（SHOULD NOT）、欠落扱いとします。
+
+        クライアントは、`userinfo` レスポンスに含まれる `sub` が ID トークンの `sub` と一致することを必ず確認しなければなりません（MUST）。
+        
+        UserInfo エンドポイントのレスポンスは、主に以下の2つの方式で制御されます：
+
+        1. `scope` に基づくClaim要求：
+            - `profile`, `email`, `phone`, `address` などを指定することで、関連する標準Claimが返却されます。
+            - 含まれるClaimの一覧はOpenID Connect仕様の Section 5.1 を参照。
+
+        2. `claims` リクエストパラメータによる明示的指定：
+            - `userinfo` オブジェクト内で `email`, `email_verified`, `given_name` などの個別Claimを指定可能。
+            - `"essential": true` によって、特定のClaimが「必須」であることも要求できます。
+
+        これにより、最小限のデータ要求と最大限の柔軟性が両立されます。
+      properties:
+        sub:
+          type: string
+          description: ユーザーを一意に識別する Subject Identifier。必須。
+        name:
+          type: string
+          description: フルネーム。例：Ichiro Ito。`profile` scope または `claims` による要求時に返却される。
+        given_name:
+          type: string
+          description: 名（First name）。例：Ichiro。`profile` scope または `claims` による要求時に返却される。
+        family_name:
+          type: string
+          description: 姓（Last name）。例：Ito。`profile` scope または `claims` による要求時に返却される。
+        middle_name:
+          type: string
+          description: ミドルネーム。`profile` scope または `claims` による要求時に返却される。
+        nickname:
+          type: string
+          description: ニックネーム。`profile` scope または `claims` による要求時に返却される。
+        preferred_username:
+          type: string
+          description: ユーザーの希望する表示名（例：j.doe）。`profile` scope または `claims` による要求時に返却される。
+        profile:
+          type: string
+          format: uri
+          description: プロフィールページのURL。`profile` scope または `claims` による要求時に返却される。
+        picture:
+          type: string
+          format: uri
+          description: プロフィール画像のURL。`profile` scope または `claims` による要求時に返却される。
+        website:
+          type: string
+          format: uri
+          description: WebサイトやブログのURL。`profile` scope または `claims` による要求時に返却される。
+        email:
+          type: string
+          format: email
+          description: メールアドレス。`email` scope または `claims` による要求時に返却される。
+        email_verified:
+          type: boolean
+          description: メールアドレスの検証状態。`email` scope または `claims` による要求時に返却される。
+        gender:
+          type: string
+          enum: [ male, female ]
+          description: 性別（"male"、"female" またはその他の文字列）。`profile` scope または `claims` による要求時に返却される。
+        birthdate:
+          type: string
+          description: 生年月日（形式：YYYY-MM-DD）。`profile` scope または `claims` による要求時に返却される。
+        zoneinfo:
+          type: string
+          description: タイムゾーン。例：Asia/Tokyo。`profile` scope または `claims` による要求時に返却される。
+        locale:
+          type: string
+          description: ユーザーのロケール（例：ja-JP、en-US）。`profile` scope または `claims` による要求時に返却される。
+        phone_number:
+          type: string
+          description: 電話番号。例：+8190-1234-5678。`phone` scope または `claims` による要求時に返却される。
+        phone_number_verified:
+          type: boolean
+          description: 電話番号の検証状態。`phone` scope または `claims` による要求時に返却される。
+        address:
+          type: object
+          description: 郵送先住所。`address` scope または `claims` による要求時に返却される。
+          properties:
+            formatted:
+              type: string
+              description: 改行付き整形済み住所。
+            street_address:
+              type: string
+              description: 番地、通り名などの詳細住所。
+            locality:
+              type: string
+              description: 市区町村。
+            region:
+              type: string
+              description: 都道府県や州。
+            postal_code:
+              type: string
+              description: 郵便番号。
+            country:
+              type: string
+              description: 国名。
+        updated_at:
+          type: integer
+          format: int64
+          description: 最終更新時刻（UNIXエポック秒）。`profile` scope または `claims` による要求時に返却される。
+      required:
+        - sub
+
+    OpenIDConfiguration:
+      type: object
+      description: |
+        OpenID Connect Discovery 1.0 に準拠した OpenID Provider Metadata のレスポンス形式。
+        /.well-known/openid-configuration にて提供される。
+      required:
+        - issuer
+        - authorization_endpoint
+        - jwks_uri
+        - response_types_supported
+        - subject_types_supported
+        - id_token_signing_alg_values_supported
+      properties:
+        issuer:
+          type: string
+          description: 発行者（Issuer）識別子。https スキームのURL。IDトークンの `iss` に一致する必要がある（必須）。
+        authorization_endpoint:
+          type: string
+          description: 認可エンドポイントのURL（必須）。
+        token_endpoint:
+          type: string
+          description: トークンエンドポイントのURL。Implicit Flow のみをサポートする場合を除き必須。
+        userinfo_endpoint:
+          type: string
+          description: UserInfo エンドポイントのURL（推奨）。
+        jwks_uri:
+          type: string
+          description: JWK Set を取得するためのURL。署名鍵や暗号鍵を公開する（必須）。
+        registration_endpoint:
+          type: string
+          description: Dynamic Client Registration のエンドポイントURL（推奨）。
+        scopes_supported:
+          type: array
+          items:
+            type: string
+          description: サポートされている scope 値の一覧。`openid` は必須。
+        response_types_supported:
+          type: array
+          items:
+            type: string
+          description: サポートされている response_type 値の一覧（必須）。
+        response_modes_supported:
+          type: array
+          items:
+            type: string
+          description: サポートされている response_mode 値の一覧（省略時は "query", "fragment"）。
+        grant_types_supported:
+          type: array
+          items:
+            type: string
+          description: サポートされている Grant Type の一覧。省略時は `authorization_code`, `implicit`。
+        acr_values_supported:
+          type: array
+          items:
+            type: string
+          description: サポートされている ACR（Authentication Context Class Reference）値。
+        subject_types_supported:
+          type: array
+          items:
+            type: string
+          description: サポートされている Subject Identifier の型。`public` または `pairwise`（必須）。
+        id_token_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+          description: ID Token の署名アルゴリズム（JWS）としてサポートされる alg 値の一覧。`RS256` は必須。
+        id_token_encryption_alg_values_supported:
+          type: array
+          items:
+            type: string
+          description: ID Token の暗号化（JWE）に使用される alg 値。
+        id_token_encryption_enc_values_supported:
+          type: array
+          items:
+            type: string
+          description: ID Token の暗号化（JWE）に使用される enc 値。
+        userinfo_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+          description: UserInfo レスポンスの署名アルゴリズム。
+        userinfo_encryption_alg_values_supported:
+          type: array
+          items:
+            type: string
+          description: UserInfo レスポンスの暗号化に使用される alg 値。
+        userinfo_encryption_enc_values_supported:
+          type: array
+          items:
+            type: string
+          description: UserInfo レスポンスの暗号化に使用される enc 値。
+        request_object_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+          description: リクエストオブジェクトの署名アルゴリズム。
+        request_object_encryption_alg_values_supported:
+          type: array
+          items:
+            type: string
+          description: リクエストオブジェクトの暗号化に使用される alg 値。
+        request_object_encryption_enc_values_supported:
+          type: array
+          items:
+            type: string
+          description: リクエストオブジェクトの暗号化に使用される enc 値。
+        token_endpoint_auth_methods_supported:
+          type: array
+          items:
+            type: string
+          description: Token Endpoint でサポートされるクライアント認証方式。`client_secret_basic` がデフォルト。
+        token_endpoint_auth_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+          description: トークンエンドポイントでサポートされるJWS署名アルゴリズム（alg値）のリストを含むJSON配列。このJWTは、private_key_jwtおよびclient_secret_jwt認証方式で使用されます。サーバーはRS256をサポートする必要があります。noneという値は使用しない。
+        display_values_supported:
+          type: array
+          items:
+            type: string
+          description: サポートされる `display` パラメータの値。
+        claim_types_supported:
+          type: array
+          items:
+            type: string
+          description: サポートされる Claim Type（normal, aggregated, distributed など）。
+        claims_supported:
+          type: array
+          items:
+            type: string
+          description: サポートされる Claim 名の一覧（推奨）。
+        service_documentation:
+          type: string
+          format: uri
+          description: OP に関する人間可読なドキュメントのURL。
+        claims_locales_supported:
+          type: array
+          items:
+            type: string
+          description: Claim 値でサポートされる言語・文字種（BCP47 言語タグ）。
+        ui_locales_supported:
+          type: array
+          items:
+            type: string
+          description: UI表示にサポートされる言語・文字種（BCP47 言語タグ）。
+        claims_parameter_supported:
+          type: boolean
+          description: claims パラメータのサポート有無。省略時は false。
+        request_parameter_supported:
+          type: boolean
+          description: request パラメータのサポート有無。省略時は false。
+        request_uri_parameter_supported:
+          type: boolean
+          description: request_uri パラメータのサポート有無。省略時は true。
+        require_request_uri_registration:
+          type: boolean
+          description: request_uri の事前登録が必要かどうか。省略時は false。
+        op_policy_uri:
+          type: string
+          format: uri
+          description: OP のポリシーを記載したURL。クライアント登録者に表示されるべき。
+        op_tos_uri:
+          type: string
+          format: uri
+          description: OP の利用規約を記載したURL。クライアント登録者に表示されるべき。
+
+    BackchannelAuthenticationRequest:
+      type: object
+      description: |
+        CIBA 認証リクエストで送信されるパラメータ群。
+        OpenID Connect CIBA Core 1.0 Section 7 に準拠。
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+        scope:
+          type: string
+          description: "必須。openid を含める必要がある。例：openid profile email"
+        login_hint:
+          type: string
+          description: "ユーザーを識別するヒント。IDやメールアドレスなど"
+        login_hint_token:
+          type: string
+          description: "login_hint の代わりに使用できる暗号化済みのユーザー識別情報"
+        id_token_hint:
+          type: string
+          description: "過去の ID Token を用いたユーザー識別"
+        binding_message:
+          type: string
+          description: "ユーザー端末に表示される文言"
+        requested_expiry:
+          type: integer
+          description: "auth_req_id の有効期限（秒）"
+        request_context:
+          type: string
+          description: "認証時の追加情報"
+        acr_values:
+          type: string
+          description: "要求する認証強度（ACR値）"
+      required:
+        - client_id
+        - scope
+
+
+    BackchannelAuthenticationResponse:
+      type: object
+      description: |
+        CIBA の Backchannel Authentication リクエストに対する正常レスポンス。
+        認証リクエストが受理されたことを示す。
+      properties:
+        auth_req_id:
+          type: string
+          description: |
+            クライアントが後続の `/tokens` リクエストで使用する一意の認証リクエストID。
+        expires_in:
+          type: integer
+          description: |
+            auth_req_id の有効期限（秒）。この時間を超えるとトークンリクエストは拒否される。
+        interval:
+          type: integer
+          description: |
+            ポーリングを行う場合の最小間隔（秒）。
+      required:
+        - auth_req_id
+        - expires_in
+
+    BackchannelAuthenticationErrorResponse:
+      type: object
+      description: |
+        CIBA 認証リクエストのエラーレスポンス。
+        OpenID Connect CIBA Core 1.0 Section 13 および RFC 6749 Section 5.2 に準拠。
+      properties:
+        error:
+          type: string
+          description: |
+            エラーコード。
+            例: invalid_request, invalid_client, unauthorized_client, invalid_scope, access_denied, slow_down, expired_token, etc.
+        error_description:
+          type: string
+          description: エラーの詳細説明（オプション）
+        error_uri:
+          type: string
+          format: uri
+          description: エラーに関する詳細を説明したドキュメントへのURI（オプション）
+      required:
+        - error
+
+    SecurityEventToken:
+      type: string
+      description: |
+        Security Event Token (SET) は RFC 8417 に準拠した JWT 形式のセキュリティイベントメッセージです。
+        `application/secevent+jwt` の `POST` リクエストボディとして送信されます。
+        
+        ### SET の構成
+        
+        JWTのPayload部は以下のClaimを含む必要があります（RFC 8417）：
+        
+        - `iss` (Issuer): 発行者の識別子（例: https://idp.example.com）
+        - `aud` (Audience): 対象となる受信者の識別子（例: https://relying-party.example.org）
+        - `iat` (Issued At): 発行時刻（Unix時間）
+        - `jti` (JWT ID): トークンの一意な識別子（リプレイ防止）
+        - `events`: セキュリティイベントのオブジェクト。キーはイベントタイプのURI。
+        
+        ### 例: Account Disabled イベント
+        
+        ```json
+        {
+          "iss": "https://idp.example.com",
+          "aud": "https://relying-party.example.org",
+          "iat": 1682509200,
+          "jti": "4f1g23a12aa",
+          "events": {
+            "https://schemas.openid.net/secevent/risc/event-type/account-disabled": {
+              "subject": {
+                "sub": "248289761001"
+              }
+            }
+          }
+        }
+        ```
+        
+        JWT全体は署名される必要があります（通常はRS256など）。
+        ヘッダー: `{"alg": "RS256", "typ": "secevent+jwt"}`
+        
+        詳細は [RFC 8417](https://www.rfc-editor.org/rfc/rfc8417.html) を参照。
+      example: >
+        eyJhbGciOiJSUzI1NiIsInR5cCI6InN...（省略された署名付きJWT）
+
+
