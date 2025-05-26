@@ -1,0 +1,129 @@
+{
+  "type": "object",
+  "description": "Configuration for an external authentication method using customizable HTTP executions and optional OAuth authorization.",
+  "required": [
+    "type",
+    "details"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "external_authn"
+      ],
+      "description": "Authentication method type. Must be 'external_authn'."
+    },
+    "details": {
+      "type": "object",
+      "description": "Contains configuration specific to the 'external_authn' authentication method.",
+      "required": [
+        "external_authn"
+      ],
+      "properties": {
+        "external_authn": {
+          "type": "object",
+          "description": "Defines the configuration for integrating with an external authentication provider.",
+          "required": [
+            "device_id_param",
+            "executions"
+          ],
+          "properties": {
+            "oauth_authorization": {
+              "type": "object",
+              "description": "Optional OAuth2.0 credentials and settings used to obtain an access token for authenticating subsequent HTTP requests.",
+              "required": [
+                "type",
+                "token_endpoint",
+                "client_id",
+                "username",
+                "password",
+                "scope"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "password",
+                    "client_credentials"
+                  ],
+                  "description": "The OAuth2.0 grant type to use when obtaining the token. Supported types: 'password', 'client_credentials'."
+                },
+                "token_endpoint": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "The token endpoint URI to obtain an access token from the external identity provider."
+                },
+                "client_id": {
+                  "type": "string",
+                  "description": "The client ID registered with the external identity provider."
+                },
+                "username": {
+                  "type": "string",
+                  "description": "The username used in the password grant (required only for 'password' grant type). Optional otherwise."
+                },
+                "password": {
+                  "type": "string",
+                  "description": "The password used in the password grant (required only for 'password' grant type). Optional otherwise."
+                },
+                "scope": {
+                  "type": "string",
+                  "description": "The space-delimited list of scopes to request in the token request."
+                }
+              }
+            },
+            "device_id_param": {
+              "type": "string",
+              "description": "The name of the request parameter used to pass the device or user ID to external executions."
+            },
+            "executions": {
+              "type": "object",
+              "description": "A mapping of execution steps (e.g., 'authentication', 'registration') with their corresponding HTTP request definitions.",
+              "additionalProperties": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "method",
+                  "headers",
+                  "dynamic_body_keys",
+                  "static_body"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "The full URL to send the HTTP request for this execution step."
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "DELETE"
+                    ],
+                    "description": "The HTTP method used for the request. Supported values are GET, POST, PUT, DELETE."
+                  },
+                  "headers": {
+                    "type": "object",
+                    "description": "Custom headers to include in the HTTP request, typically used for authentication or content type."
+                  },
+                  "dynamic_body_keys": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of field names to dynamically extract from the context (e.g., login input) and include in the request body."
+                  },
+                  "static_body": {
+                    "type": "object",
+                    "description": "Static key-value pairs to include in the request body. Used alongside dynamic fields."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

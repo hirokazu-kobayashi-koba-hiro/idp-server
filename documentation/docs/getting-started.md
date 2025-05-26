@@ -1,74 +1,111 @@
-# Getting Started
+---
+sidebar_position: 2
+---
 
-This guide walks you through setting up and running the **idp-server** for the first time.
+# はじめにガイド
 
-## Prerequisites
+このガイドでは、**idp-server** を初めてセットアップして実行する手順を説明します。
 
-- Java 17 or higher
-- PostgreSQL or MySQL
-- Node.js (if using with frontend)
-- Docker (optional, for container-based setup)
+## 前提条件
 
-## Installation
+以下のツールが事前にインストールされている必要があります：
 
-### 1. Clone the Repository
+- Java 21 以上
+- PostgreSQL または MySQL
+- Node.js（フロントエンドと連携する場合）
+- Docker（オプション、コンテナベースでのセットアップを行う場合）
+
+## インストール手順
+
+### 1. リポジトリのクローン
 
 ```bash
 git clone https://github.com/hirokazu-kobayashi-koba-hiro/idp-server.git
 cd idp-server
 ```
 
-* set up
+### 初期準備
 
-※ fix your configuration
-
-```shell
-export ADDRESS=0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198
-export PRIVATE_KEY=d8b595680851765f38ea5405129244ba3cbad84467d190859f4c8b20c1ff6c75
-export WEB3_URL=wss://eth-sepolia.g.alchemy.com/v2/xxx
-export VERIFICATION_Method=did:web:assets.dev.trustid.sbi-fc.com#key-2
-export CHAIN=ethereum_sepolia
-
-docker-compose up -d
-```
-
-* init table
-
-```shell
-./gradlew flywayClean flywayMigrate
-```
-
-* generate api-key and api-secret
+* APIキーとシークレットの生成
 
 ```shell
 ./init.sh
 ```
 
-* set variable
+※ 設定を必要に応じて変更してください
 
 ```shell
 export IDP_SERVER_DOMAIN=http://localhost:8080/
 export IDP_SERVER_API_KEY=xxx
 export IDP_SERVER_API_SECRET=xxx
 export ENCRYPTION_KEY=xxx
+export ENV=local または develop など
+
+docker compose up -d
+docker compose logs -f idp-server
 ```
 
-### bootRun
+* テーブル初期化
 
 ```shell
-./gradlew bootRun
+./gradlew flywayClean flywayMigrate
 ```
 
-### setup configuration
+### 設定の適用
 
 ```shell
 ./setup.sh
 ```
 
-### e2e
+```shell
+./sample-config/test-data.sh \
+-e "local" \
+-u ito.ichiro@gmail.com \
+-p successUserCode \
+-t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
+-b http://localhost:8080 \
+-c clientSecretPost \
+-s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
+-d false
+```
+
+### アクセストークンの取得（デバッグ用）
+
+```shell
+./sample-config/get-access-token.sh \
+-u ito.ichiro@gmail.com \
+-p successUserCode \
+-t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
+-e http://localhost:8080 \
+-c clientSecretPost \
+-s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890
+```
+
+### エンドツーエンドテスト（E2E）
 
 ```shell
 cd e2e
 npm install
 npm test
 ```
+
+### Dockerビルドと実行
+
+```shell
+docker build -t idp-server .
+```
+
+```shell
+docker run -p 8080:8080 \
+  -e IDP_SERVER_API_KEY=local-key \
+  -e IDP_SERVER_API_SECRET=local-secret \
+  -e ENCRYPTION_KEY=supersecret \
+  -e DB_WRITE_URL=jdbc:postgresql://host.docker.internal:5432/idpserver \
+  -e DB_READ_URL=jdbc:postgresql://host.docker.internal:5432/idpserver \
+  -e REDIS_HOST=host.docker.internal \
+  idp-server:latest -it idp-server ls /app/providers
+```
+
+---
+
+次は管理画面のセットアップ、またはOIDCクライアント設定に進んでください。

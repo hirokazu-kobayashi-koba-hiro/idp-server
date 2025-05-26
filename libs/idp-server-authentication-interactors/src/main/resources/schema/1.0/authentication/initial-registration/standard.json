@@ -1,0 +1,98 @@
+{
+  "type": "object",
+  "description": "Standard user registration or update request containing user profile and credential attributes.",
+  "required": [
+    "type",
+    "details"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "standard"
+      ],
+      "description": "Must be 'standard' for this schema."
+    },
+    "details": {
+      "type": "object",
+      "description": "Container for the schema definition of user attributes to be registered or updated.",
+      "required": [
+        "standard"
+      ],
+      "properties": {
+        "standard": {
+          "type": "object",
+          "description": "A JsonSchema-based definition of user attributes including required fields, type constraints, and validation rules.",
+          "required": [
+            "required",
+            "properties"
+          ],
+          "properties": {
+            "required": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "properties": {
+              "additionalProperties": {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "string",
+                      "object",
+                      "array",
+                      "integer",
+                      "boolean"
+                    ],
+                    "description": "The JSON type of the attribute."
+                  },
+                  "items": {
+                    "type": "string",
+                    "description": "Data type of array elements if the type is 'array'."
+                  },
+                  "enum": {
+                    "type": "array",
+                    "description": "Set of allowed values for the attribute."
+                  },
+                  "minLength": {
+                    "type": "integer",
+                    "description": "Minimum length constraint for string values."
+                  },
+                  "maxLength": {
+                    "type": "integer",
+                    "description": "Maximum length constraint for string values."
+                  },
+                  "pattern": {
+                    "type": "string",
+                    "description": "Regular expression that string values must match."
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "uri",
+                      "uuid",
+                      "date",
+                      "email",
+                      "mobile_phone_number"
+                    ],
+                    "description": "Semantic format of the attribute, e.g., 'email', 'uri', 'date'."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Human-readable explanation of the attribute's purpose."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "type": "object",
+  "description": "Configuration for integrating with external SMS-based authentication services. This includes endpoints for triggering SMS delivery and verifying the code.",
+  "required": [
+    "type",
+    "details"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "external_authn"
+      ],
+      "description": "The authentication method type. Must be 'external_authn' for SMS service integration."
+    },
+    "details": {
+      "type": "object",
+      "description": "Holds the detailed configuration specific to external SMS verification logic.",
+      "required": [
+        "external_authn"
+      ],
+      "properties": {
+        "external_authn": {
+          "type": "object",
+          "description": "Defines how to communicate with the external SMS verification service, including parameter names and execution steps.",
+          "required": [
+            "transaction_id_param",
+            "verification_code_param",
+            "executions"
+          ],
+          "properties": {
+            "oauth_authorization": {
+              "type": "object",
+              "description": "Optional OAuth2.0 credentials and settings used to obtain an access token for authenticating subsequent HTTP requests.",
+              "required": [
+                "type",
+                "token_endpoint",
+                "client_id",
+                "username",
+                "password",
+                "scope"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "password",
+                    "client_credentials"
+                  ],
+                  "description": "The OAuth2.0 grant type to use when obtaining the token. Supported types: 'password', 'client_credentials'."
+                },
+                "token_endpoint": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "The token endpoint URI to obtain an access token from the external identity provider."
+                },
+                "client_id": {
+                  "type": "string",
+                  "description": "The client ID registered with the external identity provider."
+                },
+                "username": {
+                  "type": "string",
+                  "description": "The username used in the password grant (required only for 'password' grant type). Optional otherwise."
+                },
+                "password": {
+                  "type": "string",
+                  "description": "The password used in the password grant (required only for 'password' grant type). Optional otherwise."
+                },
+                "scope": {
+                  "type": "string",
+                  "description": "The space-delimited list of scopes to request in the token request."
+                }
+              }
+            },
+            "transaction_id_param": {
+              "type": "string",
+              "description": "The name of the parameter to be used for passing a transaction or session identifier to the external service."
+            },
+            "verification_code_param": {
+              "type": "string",
+              "description": "The name of the parameter used for passing the user-entered verification code to the service."
+            },
+            "executions": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "method",
+                  "headers",
+                  "dynamic_body_keys",
+                  "static_body"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "The full URL to send the HTTP request for this execution step."
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "DELETE"
+                    ],
+                    "description": "The HTTP method used for the request. Supported values are GET, POST, PUT, DELETE."
+                  },
+                  "headers": {
+                    "type": "object",
+                    "description": "Custom headers to include in the HTTP request, typically used for authentication or content type."
+                  },
+                  "dynamic_body_keys": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of field names to dynamically extract from the context (e.g., login input) and include in the request body."
+                  },
+                  "static_body": {
+                    "type": "object",
+                    "description": "Static key-value pairs to include in the request body. Used alongside dynamic fields."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

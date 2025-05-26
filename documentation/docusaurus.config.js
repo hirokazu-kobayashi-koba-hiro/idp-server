@@ -37,7 +37,15 @@ const config = {
   // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'ja'],
+    localeConfigs: {
+      en: {
+        label: 'English',
+      },
+      ja: {
+        label: '日本語',
+      },
+    },
   },
 
   presets: [
@@ -72,6 +80,36 @@ const config = {
         },
       }),
     ],
+    // Redocusaurus config
+    [
+      'redocusaurus',
+      {
+        // Plugin Options for loading OpenAPI files
+        specs: [
+          {
+            spec: 'openapi/swagger-en.yaml',
+            route: '/docs/api-en/',
+          },
+          {
+            spec: 'openapi/swagger-control-plane-en.yaml',
+            route: '/docs/control-plane-api-en/',
+          },
+          {
+            spec: 'openapi/swagger-ja.yaml',
+            route: '/docs/api-ja/',
+          },
+          {
+            spec: 'openapi/swagger-control-plane-ja.yaml',
+            route: '/docs/control-plane-api-ja/',
+          },
+        ],
+        // Theme Options for modifying how redoc renders them
+        theme: {
+          // Change with your site colors
+          primaryColor: '#1890ff',
+        },
+      },
+    ]
   ],
 
   themeConfig:
@@ -90,6 +128,11 @@ const config = {
             label: 'Docs',
             position: 'left',
             to: '/docs/introduction',
+          },
+          {
+            label: 'Api Reference',
+            position: 'left',
+            to: '/docs/api-reference',
           },
           // {to: '/blog', label: 'Blog', position: 'left'},
           {
