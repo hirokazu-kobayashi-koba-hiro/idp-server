@@ -2,11 +2,11 @@
 
 ## 概要
 
-idp-server は、OpenID Connect for Identity Assurance (OIDC4IDA) に準拠した 身元確認済みのID連携 をサポートしています。
+`idp-server` は、OpenID Connect for Identity Assurance (OIDC4IDA) に準拠した 身元確認済みのID連携 をサポートしています。
 
-OIDC4IDA によって、クライアント（Relying Party, RP）は IDトークンや UserInfo から 検証済みの本人情報（verified claims） を取得することができます。
+クライアント（Relying Party, RP）は IDトークンなどから 検証済みの本人情報（verified claims） を取得することができます。
 
-idp-server では以下のような用途に対応できます：
+`idp-server` では以下のような用途に対応できます：
 
 * 銀行・金融サービスでの「本人確認済みログイン」
 * eKYC 結果を元にした段階的アクセス制御
@@ -14,7 +14,7 @@ idp-server では以下のような用途に対応できます：
 
 ## 身元確認方法
 
-`idp-server` は OIDC4IDAの機能を利用するに当たり身元確認方法を2つ用意しています。
+`idp-server` は 身元確認済みIDの機能を利用するに当たり身元確認方法を2つ用意しています。
 
 1. 身元確認の申込みから利用するパターン
 2. 身元確認結果を直接登録するパターン
