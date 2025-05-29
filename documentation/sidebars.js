@@ -23,6 +23,7 @@ const sidebars = {
     'getting-started',
     'features',
     'use-cases',
+    'multi-tenant',
     'authorization-code-flow',
     'ciba-flow',
     'id-management',

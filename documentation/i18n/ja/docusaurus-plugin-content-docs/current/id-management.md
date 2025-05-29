@@ -52,7 +52,6 @@ sequenceDiagram
     participant AsView as 認可画面
     participant idp as idp-server
     participant ExIdp as 外部IdP
-    
     Client ->> idp: 認可リクエスト（/authorizations?prompt=creat）
     idp ->> idp: 認可リクエスト検証と記録
     idp -->> Client: 302 リダイレクト(認可画面URL)
@@ -63,7 +62,7 @@ sequenceDiagram
     idp ->> idp: セッション(state)生成と記録
     idp -->> AsView: 外部IdPへの認可リクエストのURLを返却
     AsView -->> ExIdp: 認可リクエストのURLへ遷移
-    ExIdp　->> ExIdp: 認証
+    ExIdp ->> ExIdp: 認証
     ExIdp -->> AsView: リダイレクト（認可コード付き）
     AsView ->> idp: フェデレーションコールバックに外部IdPからのパラメータをリクエスト
     idp -->> idp: stateからセッションを取得
@@ -86,7 +85,6 @@ sequenceDiagram
     idp ->> idp: トークンの生成と記録
     idp -->> Client: アクセストークン + IDトークン + リフレッシュトークン
 ```
-
 
 ## データ構造
 
@@ -146,15 +144,11 @@ sequenceDiagram
 | `UNREGISTERED`                   | アカウントが未作成の状態（初回アクセスや一時的ID）                   |
 | `REGISTERED`                     | 登録済だが、メールアドレスなど連絡先が未確認の状態                    |
 | `CONTACT_VERIFIED`               | メールアドレスまたは電話番号など、連絡先のいずれかが確認済                |
-| `IDENTITY_VERIFIED`              | eKYCなどの本人確認が完了した状態                           |
 | `IDENTITY_VERIFICATION_REQUIRED` | サービス利用にあたり本人確認が必要な状態                         |
+| `IDENTITY_VERIFIED`              | eKYCなどの本人確認が完了した状態                           |
 | `LOCKED`                         | 連続ログイン失敗などにより一時的にロックされた状態（MFA再認証や管理者解除が必要）   |
-| `DISABLED`                       | ユーザー自身または管理者により無効化された状態                      |
-| `SUSPENDED`                      | ポリシー違反や不正行為により一時停止された状態                      |
-| `DEACTIVATED`                    | ユーザーが退会申請済で、猶予期間中（完全削除前の一時状態）                |
+| `DISABLED`                       | ユーザー自身が無効にした状態                               |
 | `DELETED_PENDING`                | 削除予定状態（一定期間後に完全削除が実行される）                     |
-| `FEDERATED_ONLY`                 | 外部IdP（Google等）からのログインのみを許可しており、ローカル認証を行わない状態 |
-
 
 #### ステータス遷移例
 
@@ -168,11 +162,9 @@ CONTACT_VERIFIED
 IDENTITY_VERIFIED
 ```
 
+##   
 
-### ユーザー登録
-
-
-### ユーザー削除
+## 削除
 
 ユーザー削除は物理的にデータを削除します。
 
