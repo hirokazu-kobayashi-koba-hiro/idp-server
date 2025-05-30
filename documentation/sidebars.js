@@ -28,6 +28,8 @@ const sidebars = {
     'ciba-flow',
     'id-management',
     'id-verified',
+    'identity-verification-application',
+    `identity-verification-registration`,
     {
       type: 'category',
       label: 'Configuration',
