@@ -310,8 +310,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenIDConfiguration'
 
+  /v1/jwks:
+    get:
+      summary: JSON Web Key Set (JWKS)
+      description: トークンの署名を検証するための公開鍵セット（JWK Set）を返します。
+      tags:
+        - 認可コードフロー
+        - CIBAフロー
+      responses:
+        '200':
+          description: JWK Set response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWKS'
 
-  /ssf/events/receive:
+
+  /v1/ssf/events/receive:
     post:
       summary: |
        SSF (Shared Signals Framework) Push Notification Receiver        
@@ -346,6 +361,20 @@ paths:
           description: 不正なリクエスト（JWTが無効、形式が不正）
         '401':
           description: 認証エラー（トークンが無効、署名検証失敗）
+
+  /v1/ssf/jwks:
+    get:
+      summary: JSON Web Key Set (JWKS)
+      description: SETの署名を検証するための公開鍵セット（JWK Set）を返します。
+      tags:
+        - SSF
+      responses:
+        '200':
+          description: JWK Set response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWKS'
 
 components:
   parameters:
@@ -1022,6 +1051,53 @@ components:
           type: string
           format: uri
           description: OP の利用規約を記載したURL。クライアント登録者に表示されるべき。
+
+    JWK:
+      type: object
+      required:
+        - kty
+        - kid
+        - use
+        - alg
+        - crv
+        - x
+        - y
+      properties:
+        kty:
+          type: string
+          enum: [ EC ]
+          example: EC
+        kid:
+          type: string
+          example: ssf-debug
+        use:
+          type: string
+          enum: [ sig ]
+          example: sig
+        alg:
+          type: string
+          enum: [ ES256 ]
+          example: ES256
+        crv:
+          type: string
+          enum: [ P-256 ]
+          example: P-256
+        x:
+          type: string
+          description: Base64url-encoded x coordinate of the public key
+          example: nitxvSyqpZEhGXT-oJ8CJD_Pr3feMVFAO43d8TlHk1w
+        y:
+          type: string
+          description: Base64url-encoded y coordinate of the public key
+          example: xA6Slvr4rRnF53TNaIdeRsw9v655xGlHPD3YNGy_CMY
+
+    JWKS:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/JWK'
 
     BackchannelAuthenticationRequest:
       type: object
