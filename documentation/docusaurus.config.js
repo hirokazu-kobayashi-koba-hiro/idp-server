@@ -94,8 +94,9 @@ const config = {
           },
           // You can also pass it a OpenAPI spec URL
           {
-            spec: 'https://redocly.github.io/redoc/openapi.yaml',
-            route: '/openapi/',
+            // Redocusaurus will automatically bundle your spec into a single file during the build
+            spec: 'openapi/swagger-control-plane.yaml',
+            route: '/control-plane-api/',
           },
         ],
         // Theme Options for modifying how redoc renders them

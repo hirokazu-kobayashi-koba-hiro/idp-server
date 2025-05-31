@@ -5,13 +5,9 @@ info:
   version: 1.0.0
   contact:
     name: idp-server OSS
-    url: https://github.com/hirokazu-kobayashi-koba-hiro/idp-server
 
 servers:
-  - url: https://idp.example.com
-    description: 本番環境
   - url: http://localhost:8080
-    description: 開発用
 
 tags:
   - name: CIBAフロー

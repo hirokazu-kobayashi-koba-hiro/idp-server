@@ -1,0 +1,98 @@
+{
+  "type": "object",
+  "required": [
+    "type",
+    "settings",
+    "sender",
+    "templates",
+    "retry_count_limitation",
+    "expire_seconds"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "smtp"
+      ]
+    },
+    "settings": {
+      "type": "object",
+      "required": [
+        "smtp"
+      ],
+      "properties": {
+        "smtp": {
+          "type": "object",
+          "required": [
+            "host",
+            "port",
+            "username",
+            "password",
+            "auth",
+            "starttls"
+          ],
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "username": {
+              "type": "string",
+              "format": "email"
+            },
+            "password": {
+              "type": "string"
+            },
+            "auth": {
+              "type": "boolean"
+            },
+            "starttls": {
+              "type": "object",
+              "required": [
+                "enable"
+              ],
+              "properties": {
+                "enable": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sender": {
+      "type": "string",
+      "format": "email"
+    },
+    "templates": {
+      "type": "object",
+      "description": "A map of template types like 'transaction', 'authentication', 'default'.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject",
+          "body"
+        ]
+      }
+    },
+    "retry_count_limitation": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "expire_seconds": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

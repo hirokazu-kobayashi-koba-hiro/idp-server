@@ -1,0 +1,118 @@
+{
+  "type": "object",
+  "required": [
+    "type",
+    "description",
+    "device_id_param",
+    "details"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "external"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "oauth_authorization": {
+      "type": "object",
+      "required": [
+        "type",
+        "token_endpoint",
+        "client_id",
+        "username",
+        "password",
+        "scope"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "password"
+          ]
+        },
+        "token_endpoint": {
+          "type": "string",
+          "format": "uri"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        }
+      }
+    },
+    "device_id_param": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object",
+      "required": [
+        "external"
+      ],
+      "properties": {
+        "external": {
+          "type": "object",
+          "required": [
+            "executions"
+          ],
+          "properties": {
+            "executions": {
+              "type": "object",
+              "additionalProperties": {
+                  "type": "object",
+                  "required": [
+                    "url",
+                    "method",
+                    "headers",
+                    "dynamic_body_keys",
+                    "static_body"
+                  ],
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "method": {
+                      "type": "string",
+                      "enum": [
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE"
+                      ]
+                    },
+                    "headers": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "dynamic_body_keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "static_body": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

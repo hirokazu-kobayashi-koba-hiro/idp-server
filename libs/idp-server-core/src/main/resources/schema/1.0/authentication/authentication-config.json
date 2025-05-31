@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "required": [
+    "id",
+    "type",
+    "payload"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "password",
+        "sms",
+        "email",
+        "fido-uaf",
+        "webauthn",
+        "legacy",
+        "authentication-device"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "description": ""
+    }
+  }
+}
