@@ -1,8 +1,4 @@
----
-sidebar_position: 2
----
-
-# はじめにガイド
+# Getting-Started
 
 このガイドでは、**idp-server** を初めてセットアップして実行する手順を説明します。
 
@@ -32,7 +28,7 @@ cd idp-server
 ./init.sh
 ```
 
-※ 設定を必要に応じて変更してください
+※ init.shで生成した値に変更してください
 
 ```shell
 export IDP_SERVER_DOMAIN=http://localhost:8080/
@@ -107,5 +103,3 @@ docker run -p 8080:8080 \
 ```
 
 ---
-
-次は管理画面のセットアップ、またはOIDCクライアント設定に進んでください。

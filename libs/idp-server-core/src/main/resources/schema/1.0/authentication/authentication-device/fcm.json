@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "required": [
+    "channel",
+    "details"
+  ],
+  "properties": {
+    "channel": {
+      "type": "string",
+      "enum": [
+        "fcm"
+      ]
+    },
+    "details": {
+      "type": "object",
+      "required": [
+        "fcm"
+      ],
+      "properties": {
+        "fcm": {
+          "type": "object",
+          "required": [
+            "templates",
+            "credential"
+          ],
+          "properties": {
+            "templates": {
+              "type": "object",
+              "description": "A map of template types like 'transaction', 'authentication', 'default'.",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string"
+                  },
+                  "body": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              }
+            },
+            "credential": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

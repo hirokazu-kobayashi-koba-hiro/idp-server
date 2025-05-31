@@ -1,0 +1,105 @@
+{
+  "type": "object",
+  "required": ["type", "provider_name", "details"],
+  "properties": {
+    "type": {
+      "type": "string"
+    },
+    "provider_name": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object",
+      "required": ["authentication", "userinfo"],
+      "properties": {
+        "authentication": {
+          "type": "object",
+          "required": ["url", "method", "headers", "dynamic_body_keys", "static_body"],
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "method": {
+              "type": "string",
+              "enum": ["GET", "POST", "PUT", "DELETE"]
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "dynamic_body_keys": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "static_body": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "userinfo": {
+          "type": "object",
+          "required": ["url", "method", "headers", "dynamic_body_keys", "static_body"],
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "method": {
+              "type": "string",
+              "enum": ["GET", "POST", "PUT", "DELETE"]
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "dynamic_body_keys": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "static_body": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "userinfo_mapping_rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["from", "to", "type"],
+                "properties": {
+                  "from": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "string",
+                      "boolean",
+                      "number",
+                      "list.string",
+                      "list.boolean",
+                      "list.number",
+                      "address"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
