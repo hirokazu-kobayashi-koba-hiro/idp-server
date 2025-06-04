@@ -1,0 +1,1568 @@
+openapi: 3.0.3
+info:
+  title: idp-server control-plane API
+  description: idp-server control-plane API spec
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: authorization-server
+
+paths:
+  /v1/management/tenants/{tenant-id}/authorization-server:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: get authorization-server
+      tags:
+        - authorization-server
+      responses:
+        '200':
+          description: authorization-server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenIDConfiguration'
+    put:
+      summary: put authorization-server
+      tags:
+        - authorization-server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenIDConfiguration'
+      responses:
+        '200':
+          description: authorization-server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenIDConfiguration'
+
+  /v1/management/tenants/{tenant-id}/authentication-configurations:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      summary: Create authentication configuration
+      tags:
+        - authentication-config
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/InitialRegistrationConfig'
+                - $ref: '#/components/schemas/SmsAuthenticationExternalServiceConfig'
+                - $ref: '#/components/schemas/EmailAuthenticationSmtpConfig'
+                - $ref: '#/components/schemas/FidoUafExternalServiceConfig'
+                - $ref: '#/components/schemas/WebAuthn4jConfig'
+                - $ref: '#/components/schemas/AuthenticationDeviceConfig'
+                - $ref: '#/components/schemas/LegacyAuthnConfig'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Created authentication configuration
+          content:
+            application/json:
+              schema:
+                type: object
+    get:
+      summary: List authentication configurations
+      tags:
+        - authentication-config
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Authentication configuration list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuthenticationConfig'
+
+  /v1/management/tenants/{tenant-id}/authentication-configurations/{id}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AuthenticationConfigId'
+    get:
+      summary: Get authentication configuration by ID
+      tags:
+        - authentication-config
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Retrieved authentication configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationConfig'
+    put:
+      summary: Update authentication configuration by ID
+      tags:
+        - authentication-config
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationConfig'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Updated authentication configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationConfig'
+    delete:
+      summary: Delete authentication configuration by ID
+      tags:
+        - authentication-config
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Deleted authentication configuration
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Identifier of the tenant
+    AuthenticationConfigId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Identifier of the authentication configuration
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+      description: If true, the request will be validated but not applied
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+      description: Maximum number of items to return
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 0
+      description: Index to start returning items from
+
+  schemas:
+    OpenIDConfiguration:
+      type: object
+      required:
+        - issuer
+        - authorization_endpoint
+        - token_endpoint
+        - jwks_uri
+        - scopes_supported
+        - response_types_supported
+        - response_modes_supported
+        - subject_types_supported
+      properties:
+        issuer:
+          type: string
+          format: uri
+          description: REQUIRED. URL using the https scheme with no query or fragment components that the OP asserts as its Issuer Identifier. If Issuer discovery is supported (see Section 2), this value MUST be identical to the issuer value returned by WebFinger. This also MUST be identical to the iss Claim value in ID Tokens issued from this Issuer.
+        authorization_endpoint:
+          type: string
+          format: uri
+          description: REQUIRED. URL of the OP's OAuth 2.0 Authorization Endpoint [OpenID.Core]. This URL MUST use the https scheme and MAY contain port, path, and query parameter components.
+        token_endpoint:
+          type: string
+          format: uri
+          description: URL of the OP's OAuth 2.0 Token Endpoint [OpenID.Core]. This is REQUIRED unless only the Implicit Flow is used. This URL MUST use the https scheme and MAY contain port, path, and query parameter components.
+        userinfo_endpoint:
+          type: string
+          format: uri
+          description: RECOMMENDED. URL of the OP's UserInfo Endpoint [OpenID.Core]. This URL MUST use the https scheme and MAY contain port, path, and query parameter components.
+        jwk:
+          type: string
+          format: jwks
+          description: JWK Set
+        jwks_uri:
+          type: string
+          format: uri
+          description: REQUIRED. URL of the OP's JWK Set [JWK] document, which MUST use the https scheme. This contains the signing key(s) the RP uses to validate signatures from the OP. The JWK Set MAY also contain the Server's encryption key(s), which are used by RPs to encrypt requests to the Server. When both signing and encryption keys are made available, a use (public key use) parameter value is REQUIRED for all keys in the referenced JWK Set to indicate each key's intended usage. Although some algorithms allow the same key to be used for both signatures and encryption, doing so is NOT RECOMMENDED, as it is less secure. The JWK x5c parameter MAY be used to provide X.509 representations of keys provided. When used, the bare key values MUST still be present and MUST match those in the certificate. The JWK Set MUST NOT contain private or symmetric key values.
+        registration_endpoint:
+          type: string
+          format: uri
+          description: RECOMMENDED. URL of the OP's Dynamic Client Registration Endpoint [OpenID.Registration], which MUST use the https scheme.
+        scopes_supported:
+          type: array
+          items:
+            type: string
+          description: RECOMMENDED. JSON array containing a list of the OAuth 2.0 [RFC6749] scope values that this server supports. The server MUST support the openid scope value. Servers MAY choose not to advertise some supported scope values even when this parameter is used, although those defined in [OpenID.Core] SHOULD be listed, if supported.
+        response_types_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - code
+              - token
+              - id_token
+              - code token
+              - code token id_token
+              - token id_token
+              - code id_token
+              - none
+          description: REQUIRED. JSON array containing a list of the OAuth 2.0 response_type values that this OP supports. Dynamic OpenID Providers MUST support the code, id_token, and the id_token token Response Type values.
+        response_modes_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - query
+              - fragment
+          default:
+            - query
+            - fragment
+          description: OPTIONAL. JSON array containing a list of the OAuth 2.0 response_mode values that this OP supports, as specified in OAuth 2.0 Multiple Response Type Encoding Practices [OAuth.Responses]. If omitted, the default for Dynamic OpenID Providers is ["query", "fragment"].
+        grant_types_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - authorization_code
+              - implicit
+              - refresh_token
+              - password
+              - client_credentials
+              - urn:openid:params:grant-type:ciba
+          default:
+            - authorization_code
+            - implicit
+          description: OPTIONAL. JSON array containing a list of the OAuth 2.0 Grant Type values that this OP supports. Dynamic OpenID Providers MUST support the authorization_code and implicit Grant Type values and MAY support other Grant Types. If omitted, the default value is ["authorization_code", "implicit"].
+        acr_values_supported:
+          type: array
+          items:
+            type: string
+          description: OPTIONAL. JSON array containing a list of the Authentication Context Class References that this OP supports.
+        subject_types_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - pairwise
+              - public
+          description: REQUIRED. JSON array containing a list of the Subject Identifier types that this OP supports. Valid types include pairwise and public.
+        id_token_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - none
+              - RS256
+              - ES256
+              - HS256
+          description: REQUIRED. JSON array containing a list of the JWS signing algorithms (alg values) supported by the OP for the ID Token to encode the Claims in a JWT [JWT]. The algorithm RS256 MUST be included. The value none MAY be supported but MUST NOT be used unless the Response Type used returns no ID Token from the Authorization Endpoint (such as when using the Authorization Code Flow).
+        id_token_encryption_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - RSA1_5
+              - A128KW
+          description: OPTIONAL. JSON array containing a list of the JWE encryption algorithms (alg values) supported by the OP for the ID Token to encode the Claims in a JWT [JWT].
+        id_token_encryption_enc_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - A128CBC-HS256
+              - A128GCM
+              - A256GCM
+          description: OPTIONAL. JSON array containing a list of the JWE encryption algorithms (enc values) supported by the OP for the ID Token to encode the Claims in a JWT [JWT].
+        userinfo_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - none
+              - RS256
+              - ES256
+              - HS256
+          description: OPTIONAL. JSON array containing a list of the JWS [JWS] signing algorithms (alg values) [JWA] supported by the UserInfo Endpoint to encode the Claims in a JWT [JWT]. The value none MAY be included.
+        userinfo_encryption_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - RSA1_5
+              - A128KW
+          description: OPTIONAL. JSON array containing a list of the JWE [JWE] encryption algorithms (alg values) [JWA] supported by the UserInfo Endpoint to encode the Claims in a JWT [JWT].
+        userinfo_encryption_enc_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - A128CBC-HS256
+              - A128GCM
+              - A256GCM
+          description: OPTIONAL. JSON array containing a list of the JWE encryption algorithms (enc values) [JWA] supported by the UserInfo Endpoint to encode the Claims in a JWT [JWT].
+        request_object_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - none
+              - RS256
+              - ES256
+              - HS256
+          description: OPTIONAL. JSON array containing a list of the JWS signing algorithms (alg values) supported by the OP for Request Objects, which are described in Section 6.1 of OpenID Connect Core 1.0 [OpenID.Core]. These algorithms are used both when the Request Object is passed by value (using the request parameter) and when it is passed by reference (using the request_uri parameter). Servers SHOULD support none and RS256.
+        request_object_encryption_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - RSA1_5
+              - A128KW
+          description: OPTIONAL. JSON array containing a list of the JWE encryption algorithms (alg values) supported by the OP for Request Objects. These algorithms are used both when the Request Object is passed by value and when it is passed by reference.
+        request_object_encryption_enc_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - A128CBC-HS256
+              - A128GCM
+              - A256GCM
+          description: OPTIONAL. JSON array containing a list of the JWE encryption algorithms (enc values) supported by the OP for Request Objects. These algorithms are used both when the Request Object is passed by value and when it is passed by reference.
+        token_endpoint_auth_methods_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - client_secret_post
+              - client_secret_basic
+              - client_secret_jwt
+              - private_key_jwt
+              - tls_client_auth
+              - self_signed_tls_client_auth
+              - none
+          description: OPTIONAL. JSON array containing a list of Client Authentication methods supported by this Token Endpoint. The options are client_secret_post, client_secret_basic, client_secret_jwt, and private_key_jwt, as described in Section 9 of OpenID Connect Core 1.0Sakimura, N., Bradley, J., Jones, M., de Medeiros, B., and C. Mortimore, “OpenID Connect Core 1.0,” December 2023. [OpenID.Core]. Other authentication methods MAY be defined by extensions. If omitted, the default is client_secret_basic -- the HTTP Basic Authentication Scheme specified in Section 2.3.1 of OAuth 2.0 [RFC6749].
+        token_endpoint_auth_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - none
+              - RS256
+              - ES256
+              - HS256
+          description: OPTIONAL. JSON array containing a list of the JWS signing algorithms (alg values) supported by the Token Endpoint for the signature on the JWT [JWT] used to authenticate the Client at the Token Endpoint for the private_key_jwt and client_secret_jwt authentication methods. Servers SHOULD support RS256. The value none MUST NOT be used.
+        display_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - page
+              - popup
+          description: OPTIONAL. JSON array containing a list of the display parameter values that the OpenID Provider supports. These values are described in Section 3.1.2.1 of OpenID Connect Core 1.0 [OpenID.Core].
+        claim_types_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - normal
+          description: OPTIONAL. JSON array containing a list of the Claim Types that the OpenID Provider supports. These Claim Types are described in Section 5.6 of OpenID Connect Core 1.0 [OpenID.Core]. Values defined by this specification are normal, aggregated, and distributed. If omitted, the implementation supports only normal Claims.
+        claims_supported:
+          type: array
+          items:
+            type: string
+          default:
+            - sub
+            - iss
+            - auth_time
+            - acr
+            - name
+            - given_name
+            - family_name
+            - nickname
+            - profile
+            - picture
+            - website
+            - email
+            - email_verified
+            - locale
+            - zoneinfo
+            - birthdate
+            - gender
+            - preferred_username
+            - middle_name
+            - updated_at
+            - address
+            - phone_number
+            - phone_number_verified
+          description: RECOMMENDED. JSON array containing a list of the Claim Names of the Claims that the OpenID Provider MAY be able to supply values for. Note that for privacy or other reasons, this might not be an exhaustive list.
+        service_documentation:
+          type: string
+          format: uri
+          description: OPTIONAL. URL of a page containing human-readable information that developers might want or need to know when using the OpenID Provider. In particular, if the OpenID Provider does not support Dynamic Client Registration, then information on how to register Clients needs to be provided in this documentation.
+        claims_locales_supported:
+          type: string
+          items:
+            type: string
+          description: OPTIONAL. Languages and scripts supported for values in Claims being returned, represented as a JSON array of BCP47 [RFC5646] language tag values. Not all languages and scripts are necessarily supported for all Claim values.
+        ui_locales_supported:
+          type: array
+          items:
+            type: string
+          description: OPTIONAL. Languages and scripts supported for the user interface, represented as a JSON array of BCP47 [RFC5646] language tag values.
+        claims_parameter_supported:
+          type: boolean
+          default: true
+          description: OPTIONAL. Boolean value specifying whether the OP supports use of the claims parameter, with true indicating support. If omitted, the default value is false.
+        request_parameter_supported:
+          type: boolean
+          default: false
+          description: OPTIONAL. Boolean value specifying whether the OP supports use of the request parameter, with true indicating support. If omitted, the default value is false.
+        request_uri_parameter_supported:
+          type: boolean
+          default: false
+          description: OPTIONAL. Boolean value specifying whether the OP supports use of the request_uri parameter, with true indicating support. If omitted, the default value is true.
+        require_request_uri_registration:
+          type: boolean
+          default: false
+          description: OPTIONAL. Boolean value specifying whether the OP requires any request_uri values used to be pre-registered using the request_uris registration parameter. Pre-registration is REQUIRED when the value is true. If omitted, the default value is false.
+        op_policy_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL that the OpenID Provider provides to the person registering the Client to read about the OP's requirements on how the Relying Party can use the data provided by the OP. The registration process SHOULD display this URL to the person registering the Client if it is given.
+        op_tos_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL that the OpenID Provider provides to the person registering the Client to read about the OpenID Provider's terms of service. The registration process SHOULD display this URL to the person registering the Client if it is given.
+        revocation_endpoint:
+          type: string
+          format: uri
+          description: OPTIONAL. URL of the revocation endpoint.
+        revocation_endpoint_auth_methods_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - client_secret_post
+              - client_secret_basic
+              - client_secret_jwt
+              - private_key_jwt
+              - tls_client_auth
+              - self_signed_tls_client_auth
+          description: OPTIONAL. Supported auth methods for revocation endpoint.
+        revocation_endpoint_auth_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - none
+              - RS256
+              - ES256
+              - HS256
+          description: OPTIONAL. Supported signing algorithms for revocation endpoint.
+        introspection_endpoint:
+          type: string
+          format: uri
+          description: OPTIONAL. URL of the introspection endpoint.
+        introspection_endpoint_auth_methods_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - none
+              - RS256
+              - ES256
+              - HS256
+          description: OPTIONAL. Supported auth methods for introspection endpoint.
+        introspection_endpoint_auth_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - none
+              - RS256
+              - ES256
+              - HS256
+          description: OPTIONAL. Supported signing algorithms for introspection endpoint.
+        code_challenge_methods_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - plain
+              - S256
+          description: OPTIONAL. Supported PKCE code challenge methods.
+        extension:
+          type: object
+          description: Extension configuration parameters for authorization server behavior.
+          properties:
+            accessTokenType:
+              type: string
+              enum:
+                - opaque
+                - jwt
+              default: opaque
+              description: Specifies the format of issued access tokens. Either 'opaque' or 'jwt'.
+            authorizationCodeValidDuration:
+              type: integer
+              default: 600
+              description: Authorization code validity duration in seconds.
+            tokenSignedKeyId:
+              type: string
+              description: Key ID used for signing access tokens.
+            idTokenSignedKeyId:
+              type: string
+              description: Key ID used for signing ID tokens.
+            accessTokenDuration:
+              type: integer
+              default: 1800
+              description: Access token validity duration in seconds.
+            refreshTokenDuration:
+              type: integer
+              default: 3600
+              description: Refresh token validity duration in seconds.
+            idTokenDuration:
+              type: integer
+              default: 3600
+              description: ID token validity duration in seconds.
+            idTokenStrictMode:
+              type: boolean
+              default: false
+              description: Enforces strict validation on ID token claims.
+            defaultMaxAge:
+              type: integer
+              default: 86400
+              description: Default maximum authentication age in seconds.
+            authorizationResponseDuration:
+              type: integer
+              default: 60
+              description: Authorization response lifetime in seconds.
+            backchannelAuthRequestExpiresIn:
+              type: integer
+              default: 300
+              description: CIBA backchannel auth request expiration time.
+            backchannelAuthPollingInterval:
+              type: integer
+              default: 5
+              description: CIBA backchannel auth polling interval.
+            oauthAuthorizationRequestExpiresIn:
+              type: integer
+              default: 1800
+              description: OAuth authorization request expiration time.
+            fapiBaselineScopes:
+              type: array
+              items:
+                type: string
+              description: List of scopes indicating FAPI Baseline conformance.
+            fapiAdvanceScopes:
+              type: array
+              items:
+                type: string
+              description: List of scopes indicating FAPI Advanced conformance.
+            authenticationPolicies:
+              type: array
+              items:
+                type: object
+              description: Authentication policies applied to this tenant.
+            enabledCustomClaimsScopeMapping:
+              type: boolean
+              description: Enables mapping of custom claims based on scope.
+            enabledAccessTokenUserCustomProperties:
+              type: boolean
+              description: Enables embedding user custom properties in access token.
+            enabledAccessTokenSelectiveUserCustomProperties:
+              type: boolean
+              description: Enables selective inclusion of user custom properties in access token.
+            enabledAccessTokenVerifiedClaims:
+              type: boolean
+              description: Enables inclusion of verified claims in access token.
+            enabledAccessTokenSelectiveVerifiedClaims:
+              type: boolean
+              description: Enables selective inclusion of verified claims in access token.
+
+    Client:
+      type: object
+      required:
+        - redirect_uris
+      properties:
+        client_id:
+          type: string
+          format: uuid
+          description: Unique Client Identifier. It MUST NOT be currently valid for any other registered Client.
+        client_id_alias:
+          type: string
+          maxLength: "255"
+          description: Unique Client Id Alias
+        client_secret:
+          type: string
+          description: OPTIONAL. Client Secret. The same Client Secret value MUST NOT be assigned to multiple Clients. This value is used by Confidential Clients to authenticate to the Token Endpoint, as described in Section 2.3.1 of OAuth 2.0, and for the derivation of symmetric encryption key values, as described in Section 10.2 of OpenID Connect Core 1.0 [OpenID.Core]. It is not needed for Clients selecting a token_endpoint_auth_method of private_key_jwt unless symmetric encryption will be used.
+        redirect_uris:
+          type: array
+          items:
+            type: string
+          description: REQUIRED. Array of Redirection URI values used by the Client. One of these registered Redirection URI values MUST exactly match the redirect_uri parameter value used in each Authorization Request, with the matching performed as described in Section 6.2.1 of [RFC3986] (Simple String Comparison).
+        response_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - code
+              - token
+              - id_token
+              - code token
+              - code token id_token
+              - token id_token
+              - code id_token
+              - none
+          default:
+            - code
+          description: OPTIONAL. JSON [RFC8259] array containing a list of the OAuth 2.0 response_type values that the Client is declaring that it will restrict itself to using. If omitted, the default is that the Client will use only the code Response Type.
+        grant_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - authorization_code
+              - implicit
+              - refresh_token
+              - password
+              - client_credentials
+              - urn:openid:params:grant-type:ciba
+          default:
+            - authorization_code
+          description: 'OPTIONAL. JSON array containing a list of the OAuth 2.0 Grant Types that the Client is declaring that it will restrict itself to using. The Grant Type values used by OpenID Connect are: authorization_code: The Authorization Code Grant Type described in OAuth 2.0 Section 4.1. implicit: The Implicit Grant Type described in OAuth 2.0 Section 4.2. refresh_token: The Refresh Token Grant Type described in OAuth 2.0 Section 6. The following table lists the correspondence between response_type values that the Client will use and grant_type values that MUST be included in the registered grant_types list: code: authorization_code id_token: implicit id_token token: implicit code id_token: authorization_code, implicit code token: authorization_code, implicit code id_token token: authorization_code, implicit If omitted, the default is that the Client will use only the authorization_code Grant Type.'
+        application_type:
+          type: string
+          enum:
+            - native
+            - web
+          default: web
+          description: OPTIONAL. Kind of the application. The default, if omitted, is web. The defined values are native or web. Web Clients using the OAuth Implicit Grant Type MUST only register URLs using the https scheme as redirect_uris; they MUST NOT use localhost as the hostname. Native Clients MUST only register redirect_uris using custom URI schemes or loopback URLs using the http scheme; loopback URLs use localhost or the IP loopback literals 127.0.0.1 or [::1] as the hostname. Authorization Servers MAY place additional constraints on Native Clients. Authorization Servers MAY reject Redirection URI values using the http scheme, other than the loopback case for Native Clients. The Authorization Server MUST verify that all the registered redirect_uris conform to these constraints. This prevents sharing a Client ID across different types of Clients.
+        contacts:
+          type: array
+          items:
+            type: string
+          description: OPTIONAL. Array of e-mail addresses of people responsible for this Client. This might be used by some providers to enable a Web user interface to modify the Client information.
+        client_name:
+          type: string
+          description: OPTIONAL. Name of the Client to be presented to the End-User. If desired, representation of this Claim in different languages and scripts is represented as described in Section 2.1.
+        logo_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL that references a logo for the Client application. If present, the server SHOULD display this image to the End-User during approval. The value of this field MUST point to a valid image file. If desired, representation of this Claim in different languages and scripts is represented as described in Section 2.1.
+        client_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL of the home page of the Client. The value of this field MUST point to a valid Web page. If present, the server SHOULD display this URL to the End-User in a followable fashion. If desired, representation of this Claim in different languages and scripts is represented as described in Section 2.1.
+        policy_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL that the Relying Party Client provides to the End-User to read about how the profile data will be used. The value of this field MUST point to a valid web page. The OpenID Provider SHOULD display this URL to the End-User if it is given. If desired, representation of this Claim in different languages and scripts is represented as described in Section 2.1.
+        tos_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL that the Relying Party Client provides to the End-User to read about the Relying Party's terms of service. The value of this field MUST point to a valid web page. The OpenID Provider SHOULD display this URL to the End-User if it is given. If desired, representation of this Claim in different languages and scripts is represented as described in Section 2.1.
+        jwks_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL for the Client's JWK Set [JWK] document, which MUST use the https scheme. If the Client signs requests to the Server, it contains the signing key(s) the Server uses to validate signatures from the Client. The JWK Set MAY also contain the Client's encryption keys(s), which are used by the Server to encrypt responses to the Client. When both signing and encryption keys are made available, a use (public key use) parameter value is REQUIRED for all keys in the referenced JWK Set to indicate each key's intended usage. Although some algorithms allow the same key to be used for both signatures and encryption, doing so is NOT RECOMMENDED, as it is less secure. The JWK x5c parameter MAY be used to provide X.509 representations of keys provided. When used, the bare key values MUST still be present and MUST match those in the certificate. Th
+        jwks:
+          type: string
+          format: jwks
+          description: OPTIONAL. Client's JWK Set [JWK] document, passed by value. The semantics of the jwks parameter are the same as the jwks_uri parameter, other than that the JWK Set is passed by value, rather than by reference. This parameter is intended only to be used by Clients that, for some reason, are unable to use the jwks_uri parameter, for instance, by native applications that might not have a location to host the contents of the JWK Set. If a Client can use jwks_uri, it MUST NOT use jwks. One significant downside of jwks is that it does not enable key rotation (which jwks_uri does, as described in Section 10 of OpenID Connect Core 1.0 [OpenID.Core]). The jwks_uri and jwks parameters MUST NOT be used together. The JWK Set MUST NOT contain private or symmetric key values.
+        sector_identifier_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL using the https scheme to be used in calculating Pseudonymous Identifiers by the OP. The URL references a file with a single JSON array of redirect_uri values. Please see Section 5. Providers that use pairwise sub (subject) values SHOULD utilize the sector_identifier_uri value provided in the Subject Identifier calculation for pairwise identifiers.
+        subject_type:
+          type: string
+          enum:
+            - pairwise
+            - public
+          description: OPTIONAL. subject_type requested for responses to this Client. The subject_types_supported discovery parameter contains a list of the supported subject_type values for the OP. Valid types include pairwise and public.
+        id_token_signed_response_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS alg algorithm [JWA] REQUIRED for signing the ID Token issued to this Client. The value none MUST NOT be used as the ID Token alg value unless the Client uses only Response Types that return no ID Token from the Authorization Endpoint (such as when only using the Authorization Code Flow). The default, if omitted, is RS256. The public key for validating the signature is provided by retrieving the JWK Set referenced by the jwks_uri element from OpenID Connect Discovery 1.0 [OpenID.Discovery].
+        id_token_encrypted_response_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: OPTIONAL. JWE alg algorithm [JWA] REQUIRED for encrypting the ID Token issued to this Client. If this is requested, the response will be signed then encrypted, with the result being a Nested JWT, as defined in [JWT]. The default, if omitted, is that no encryption is performed.
+        id_token_encrypted_response_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: OPTIONAL. JWE enc algorithm [JWA] REQUIRED for encrypting the ID Token issued to this Client. If id_token_encrypted_response_alg is specified, the default id_token_encrypted_response_enc value is A128CBC-HS256. When id_token_encrypted_response_enc is included, id_token_encrypted_response_alg MUST also be provided.
+        userinfo_signed_response_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS alg algorithm [JWA] REQUIRED for signing UserInfo Responses. If this is specified, the response will be JWT [JWT] serialized, and signed using JWS. The default, if omitted, is for the UserInfo Response to return the Claims as a UTF-8 [RFC3629] encoded JSON object using the application/json content-type.
+        userinfo_encrypted_response_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: OPTIONAL. JWE [JWE] alg algorithm [JWA] REQUIRED for encrypting UserInfo Responses. If both signing and encryption are requested, the response will be signed then encrypted, with the result being a Nested JWT, as defined in [JWT]. The default, if omitted, is that no encryption is performed.
+        userinfo_encrypted_response_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: OPTIONAL. JWE enc algorithm [JWA] REQUIRED for encrypting UserInfo Responses. If userinfo_encrypted_response_alg is specified, the default userinfo_encrypted_response_enc value is A128CBC-HS256. When userinfo_encrypted_response_enc is included, userinfo_encrypted_response_alg MUST also be provided.
+        request_object_signing_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS [JWS] alg algorithm [JWA] that MUST be used for signing Request Objects sent to the OP. All Request Objects from this Client MUST be rejected, if not signed with this algorithm. Request Objects are described in Section 6.1 of OpenID Connect Core 1.0 [OpenID.Core]. This algorithm MUST be used both when the Request Object is passed by value (using the request parameter) and when it is passed by reference (using the request_uri parameter). Servers SHOULD support RS256. The value none MAY be used. The default, if omitted, is that any algorithm supported by the OP and the RP MAY be used.
+        request_object_encryption_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: OPTIONAL. JWE [JWE] alg algorithm [JWA] the RP is declaring that it may use for encrypting Request Objects sent to the OP. This parameter SHOULD be included when symmetric encryption will be used, since this signals to the OP that a client_secret value needs to be returned from which the symmetric key will be derived, that might not otherwise be returned. The RP MAY still use other supported encryption algorithms or send unencrypted Request Objects, even when this parameter is present. If both signing and encryption are requested, the Request Object will be signed then encrypted, with the result being a Nested JWT, as defined in [JWT]. The default, if omitted, is that the RP is not declaring whether it might encrypt any Request Objects.
+        request_object_encryption_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: OPTIONAL. JWE enc algorithm [JWA] the RP is declaring that it may use for encrypting Request Objects sent to the OP. If request_object_encryption_alg is specified, the default request_object_encryption_enc value is A128CBC-HS256. When request_object_encryption_enc is included, request_object_encryption_alg MUST also be provided.
+        token_endpoint_auth_method:
+          type: string
+          enum:
+            - client_secret_post
+            - client_secret_basic
+            - client_secret_jwt
+            - private_key_jwt
+            - tls_client_auth
+            - self_signed_tls_client_auth
+            - none
+          description: OPTIONAL. Requested Client Authentication method for the Token Endpoint. The options are client_secret_post, client_secret_basic, client_secret_jwt, private_key_jwt, and none, as described in Section 9 of OpenID Connect Core 1.0 [OpenID.Core]. Other authentication methods MAY be defined by extensions. If omitted, the default is client_secret_basic -- the HTTP Basic Authentication Scheme specified in Section 2.3.1 of OAuth 2.0 [RFC6749].
+        token_endpoint_auth_signing_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS [JWS] alg algorithm [JWA] that MUST be used for signing the JWT [JWT] used to authenticate the Client at the Token Endpoint for the private_key_jwt and client_secret_jwt authentication methods. All Token Requests using these authentication methods from this Client MUST be rejected, if the JWT is not signed with this algorithm. Servers SHOULD support RS256. The value none MUST NOT be used. The default, if omitted, is that any algorithm supported by the OP and the RP MAY be used.
+        default_max_age:
+          type: integer
+          description: OPTIONAL. Default Maximum Authentication Age. Specifies that the End-User MUST be actively authenticated if the End-User was authenticated longer ago than the specified number of seconds. The max_age request parameter overrides this default value. If omitted, no default Maximum Authentication Age is specified.
+        require_auth_time:
+          type: boolean
+          default: false
+          description: OPTIONAL. Boolean value specifying whether the auth_time Claim in the ID Token is REQUIRED. It is REQUIRED when the value is true. (If this is false, the auth_time Claim can still be dynamically requested as an individual Claim for the ID Token using the claims request parameter described in Section 5.5.1 of OpenID Connect Core 1.0 [OpenID.Core].) If omitted, the default value is false.
+        default_acr_values:
+          type: array
+          items:
+            type: string
+          description: OPTIONAL. Default requested Authentication Context Class Reference values. Array of strings that specifies the default acr values that the OP is being requested to use for processing requests from this Client, with the values appearing in order of preference. The Authentication Context Class satisfied by the authentication performed is returned as the acr Claim Value in the issued ID Token. The acr Claim is requested as a Voluntary Claim by this parameter. The acr_values_supported discovery element contains a list of the supported acr values supported by the OP. Values specified in the acr_values request parameter or an individual acr Claim request override these default values.
+        initiate_login_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URI using the https scheme that a third party can use to initiate a login by the RP, as specified in Section 4 of OpenID Connect Core 1.0 [OpenID.Core]. The URI MUST accept requests via both GET and POST. The Client MUST understand the login_hint and iss parameters and SHOULD support the target_link_uri parameter.
+        request_uris:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: |-
+            OPTIONAL. Array of request_uri values that are pre-registered by the RP for use at the OP. These URLs MUST use the https scheme unless the target Request Object is signed in a way that is verifiable by the OP. Servers MAY cache the contents of the files referenced by these URIs and not retrieve them at the time they are used in a request. OPs can require that request_uri values used be pre-registered with the require_request_uri_registration discovery parameter.
+            If the contents of the request file could ever change, these URI values SHOULD include the base64url-encoded SHA-256 hash value of the file contents referenced by the URI as the value of the URI fragment. If the fragment value used for a URI changes, that signals the server that its cached value for that URI with the old fragment value is no longer valid.
+        software_id:
+          type: string
+          format: uuid
+          description: ""
+        software_version:
+          type: string
+          description: ""
+
+
+    AuthenticationConfig:
+      type: object
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - password
+            - sms
+            - email
+            - fido-uaf
+            - webauthn
+            - legacy
+            - authentication-device
+        payload:
+          type: object
+          oneOf:
+            - $ref: '#/components/schemas/InitialRegistrationConfig'
+            - $ref: '#/components/schemas/SmsAuthenticationExternalServiceConfig'
+            - $ref: '#/components/schemas/EmailAuthenticationSmtpConfig'
+            - $ref: '#/components/schemas/FidoUafExternalServiceConfig'
+            - $ref: '#/components/schemas/WebAuthn4jConfig'
+            - $ref: '#/components/schemas/AuthenticationDeviceConfig'
+            - $ref: '#/components/schemas/LegacyAuthnConfig'
+          discriminator:
+            propertyName: type
+            mapping:
+              authentication-device: '#/components/schemas/AuthenticationDeviceConfig'
+              smtp: '#/components/schemas/EmailAuthenticationSmtpConfig'
+              fido-uaf: '#/components/schemas/FidoUafExternalServiceConfig'
+              legacy-authn: '#/components/schemas/LegacyAuthnConfig'
+
+
+    InitialRegistrationConfig:
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - initial-registration
+        payload:
+          type: object
+          description: Standard user registration or update request containing user profile and credential attributes.
+          required:
+            - type
+            - details
+          properties:
+            type:
+              type: string
+              enum:
+                - standard
+              description: Must be 'standard' for this schema.
+            details:
+              type: object
+              description: idp-server-authentication-interactors Container for standard user attributes used in registration or profile update.idp-server-authentication-interactors
+              required:
+                - standard
+              properties:
+                standard:
+                  type: object
+                  description: Defines User profile fields including personal information, credentials, and optional metadata using JsonSchema.
+                  required:
+                    - required
+                    - properties
+                  properties:
+                    required:
+                      type: array
+                      items:
+                        type: string
+                    properties:
+                      additionalProperties:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                            enum:
+                              - string
+                              - object
+                              - array
+                              - integer
+                              - boolean
+                            description: ""
+                          items:
+                            type: string
+                            description: ""
+                          enum:
+                            type: array
+                            description: ""
+                          minLength:
+                            type: integer
+                            description: ""
+                          maxLength:
+                            type: integer
+                            description: ""
+                          pattern:
+                            type: string
+                            description: ""
+                          format:
+                            type: string
+                            description: ""
+
+
+    SmsAuthenticationExternalServiceConfig:
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - sms
+        payload:
+          type: object
+          description: Configuration for integrating with external SMS-based authentication services. This includes endpoints for triggering SMS delivery and verifying the code.
+          required:
+            - type
+            - details
+          properties:
+            type:
+              type: string
+              enum:
+                - external_authn
+              description: The authentication method type. Must be 'external_authn' for SMS service integration.
+            details:
+              type: object
+              description: Holds the detailed configuration specific to external SMS verification logic.
+              required:
+                - external_authn
+              properties:
+                external_authn:
+                  type: object
+                  description: Defines how to communicate with the external SMS verification service, including parameter names and execution steps.
+                  required:
+                    - transaction_id_param
+                    - verification_code_param
+                    - executions
+                  properties:
+                    oauth_authorization:
+                      type: object
+                      description: Optional OAuth2.0 credentials and settings used to obtain an access token for authenticating subsequent HTTP requests.
+                      required:
+                        - type
+                        - token_endpoint
+                        - client_id
+                        - username
+                        - password
+                        - scope
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                            - password
+                            - client_credentials
+                          description: 'The OAuth2.0 grant type to use when obtaining the token. Supported types: ''password'', ''client_credentials''.'
+                        token_endpoint:
+                          type: string
+                          format: uri
+                          description: The token endpoint URI to obtain an access token from the external identity provider.
+                        client_id:
+                          type: string
+                          description: The client ID registered with the external identity provider.
+                        username:
+                          type: string
+                          description: The username used in the password grant (required only for 'password' grant type). Optional otherwise.
+                        password:
+                          type: string
+                          description: The password used in the password grant (required only for 'password' grant type). Optional otherwise.
+                        scope:
+                          type: string
+                          description: The space-delimited list of scopes to request in the token request.
+                    transaction_id_param:
+                      type: string
+                      description: The name of the parameter to be used for passing a transaction or session identifier to the external service.
+                    verification_code_param:
+                      type: string
+                      description: The name of the parameter used for passing the user-entered verification code to the service.
+                    executions:
+                      type: object
+                      additionalProperties:
+                        type: object
+                        required:
+                          - url
+                          - method
+                          - headers
+                          - dynamic_body_keys
+                          - static_body
+                        properties:
+                          url:
+                            type: string
+                            format: uri
+                            description: The full URL to send the HTTP request for this execution step.
+                          method:
+                            type: string
+                            enum:
+                              - GET
+                              - POST
+                              - PUT
+                              - DELETE
+                            description: The HTTP method used for the request. Supported values are GET, POST, PUT, DELETE.\
+                          headers:
+                            type: object
+                            description: Custom headers to include in the HTTP request, typically used for authentication or content type.
+                          dynamic_body_keys:
+                            type: array
+                            items:
+                              type: string
+                            description: List of field names to dynamically extract from the context (e.g., login input) and include in the request body.
+                          static_body:
+                            type: object
+                            description: Static key-value pairs to include in the request body. Used alongside dynamic fields.
+
+    EmailAuthenticationSmtpConfig:
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - email
+        payload:
+          type: object
+          description: Represents the configuration for an email-based authentication mechanism using SMTP.
+          required:
+            - type
+            - details
+          properties:
+            type:
+              type: string
+              enum:
+                - smtp
+              description: Indicates the authentication method type. Use 'smtp' for email-based authentication.
+            details:
+              type: object
+              description: Holds configuration details specific to the SMTP authentication method.
+              required:
+                - smtp
+              properties:
+                smtp:
+                  type: object
+                  description: SMTP-specific configuration, including server settings, sender information, templates, and retry policies.
+                  required:
+                    - settings
+                    - sender
+                    - templates
+                    - retry_count_limitation
+                    - expire_seconds
+                  properties:
+                    settings:
+                      type: object
+                      description: Defines the SMTP server connection settings used to send email notifications.
+                      required:
+                        - host
+                        - port
+                        - username
+                        - password
+                        - auth
+                        - starttls
+                      properties:
+                        host:
+                          type: string
+                          description: The hostname or IP address of the SMTP server.
+                        port:
+                          type: integer
+                          description: The port number to use when connecting to the SMTP server.
+                        username:
+                          type: string
+                          format: email
+                          description: The username (usually an email address) used to authenticate with the SMTP server.
+                        password:
+                          type: string
+                          description: The password used to authenticate with the SMTP server.
+                        auth:
+                          type: boolean
+                          description: Specifies whether SMTP authentication is required.
+                        starttls:
+                          type: object
+                          required:
+                            - enable
+                          properties:
+                            enable:
+                              type: boolean
+                              description: Enables or disables STARTTLS encryption.
+                          description: TLS encryption settings for the SMTP connection.
+                    sender:
+                      type: string
+                      format: email
+                      description: The email address used as the sender when sending authentication emails.
+                    templates:
+                      type: object
+                      description: A map of email templates keyed by type, such as 'registration', 'authentication', or 'default'. Each template includes a subject and body.
+                      additionalProperties:
+                        type: object
+                        required:
+                          - subject
+                          - body
+                        properties:
+                          subject:
+                            type: string
+                            description: The subject line of the email message.
+                          body:
+                            type: string
+                            description: The body text of the email message. Placeholders like {VERIFICATION_CODE}  {EXPIRE_SECONDS} may be included.
+                    retry_count_limitation:
+                      type: integer
+                      minimum: 0
+                      description: Maximum number of times a user is allowed to retry verification before the code becomes invalid.
+                    expire_seconds:
+                      type: integer
+                      minimum: 1
+                      description: Time in seconds before the verification code expires.
+
+    FidoUafExternalServiceConfig:
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - fido-uaf
+        payload:
+          type: object
+          description: Configuration for an external authentication method using customizable HTTP executions and optional OAuth authorization.
+          required:
+            - type
+            - details
+          properties:
+            type:
+              type: string
+              enum:
+                - external_authn
+              description: Authentication method type. Must be 'external_authn'.
+            details:
+              type: object
+              description: Contains configuration specific to the 'external_authn' authentication method.
+              required:
+                - external_authn
+              properties:
+                external_authn:
+                  type: object
+                  description: Defines the configuration for integrating with an external authentication provider.
+                  required:
+                    - device_id_param
+                    - executions
+                  properties:
+                    oauth_authorization:
+                      type: object
+                      description: Optional OAuth2.0 credentials and settings used to obtain an access token for authenticating subsequent HTTP requests.
+                      required:
+                        - type
+                        - token_endpoint
+                        - client_id
+                        - username
+                        - password
+                        - scope
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                            - password
+                            - client_credentials
+                          description: 'The OAuth2.0 grant type to use when obtaining the token. Supported types: ''password'', ''client_credentials''.'
+                        token_endpoint:
+                          type: string
+                          format: uri
+                          description: The token endpoint URI to obtain an access token from the external identity provider.
+                        client_id:
+                          type: string
+                          description: The client ID registered with the external identity provider.
+                        username:
+                          type: string
+                          description: The username used in the password grant (required only for 'password' grant type). Optional otherwise.
+                        password:
+                          type: string
+                          description: The password used in the password grant (required only for 'password' grant type). Optional otherwise.
+                        scope:
+                          type: string
+                          description: The space-delimited list of scopes to request in the token request.
+                    device_id_param:
+                      type: string
+                      description: The name of the request parameter used to pass the device or user ID to external executions.
+                    executions:
+                      type: object
+                      description: A mapping of execution steps (e.g., 'authentication', 'registration') with their corresponding HTTP request definitions.
+                      additionalProperties:
+                        type: object
+                        required:
+                          - url
+                          - method
+                          - headers
+                          - dynamic_body_keys
+                          - static_body
+                        properties:
+                          url:
+                            type: string
+                            format: uri
+                            description: The full URL to send the HTTP request for this execution step.
+                          method:
+                            type: string
+                            enum:
+                              - GET
+                              - POST
+                              - PUT
+                              - DELETE
+                            description: The HTTP method used for the request. Supported values are GET, POST, PUT, DELETE.\
+                          headers:
+                            type: object
+                            description: Custom headers to include in the HTTP request, typically used for authentication or content type.
+                          dynamic_body_keys:
+                            type: array
+                            items:
+                              type: string
+                            description: List of field names to dynamically extract from the context (e.g., login input) and include in the request body.
+                          static_body:
+                            type: object
+                            description: Static key-value pairs to include in the request body. Used alongside dynamic fields.
+
+    WebAuthn4jConfig:
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - webauthn
+        payload:
+          type: object
+          description: Configuration object for WebAuthn authentication using the webauthn4j library.
+          required:
+            - type
+            - details
+          properties:
+            type:
+              type: string
+              enum:
+                - webauthn4j
+              description: Indicates the authentication method type. Must be 'webauthn4j' for this configuration.
+            details:
+              type: object
+              description: Container for WebAuthn-specific configuration values.
+              required:
+                - webauthn4j
+              properties:
+                webauthn4j:
+                  type: object
+                  description: Parameters used by the webauthn4j library to verify WebAuthn registration and authentication ceremonies.
+                  required:
+                    - rp_id
+                    - origin
+                    - rp_name
+                    - require_resident_key
+                    - attestation_preference
+                    - user_presence_required
+                    - authenticator_attachment
+                    - user_verification_required
+                  properties:
+                    rp_id:
+                      type: string
+                      description: Relying Party Identifier used to scope credentials. Typically your domain name (e.g., 'example.com').
+                    origin:
+                      type: string
+                      format: uri
+                      description: The origin of the WebAuthn client, usually the frontend origin (e.g., 'https://app.example.com').
+                    rp_name:
+                      type: string
+                      description: Human-readable name for the Relying Party. Displayed in the authenticator UI.
+                    token_binding_id:
+                      type:
+                        - string
+                        - "null"
+                      description: Optional token binding ID for verifying client support of token binding (rarely used).
+                    require_resident_key:
+                      type: boolean
+                      description: Indicates whether the authenticator must store keys locally (required for discoverable credentials).
+                    attestation_preference:
+                      type: string
+                      enum:
+                        - none
+                        - indirect
+                        - direct
+                      description: Attestation conveyance preference. Controls what attestation data is returned by the authenticator.
+                    user_presence_required:
+                      type: boolean
+                      description: Specifies if user presence (touch or gesture) is required for authentication.
+                    authenticator_attachment:
+                      type: string
+                      enum:
+                        - cross-platform
+                        - platform
+                      description: Preferred authenticator attachment modality. 'platform' (built-in like Touch ID), or 'cross-platform' (e.g., YubiKey).
+                    user_verification_required:
+                      type: boolean
+                      description: Indicates if the authenticator must perform user verification (e.g., PIN, biometric).
+
+    LegacyAuthnConfig:
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - legacy-authentication
+        payload:
+          type: object
+          description: Configuration schema for registering users via integration with a legacy ID service.
+          required:
+            - type
+            - details
+          properties:
+            type:
+              type: string
+              enum:
+                - standard
+              description: The registration type. For legacy integration, it must be 'standard'.
+            details:
+              type: object
+              required:
+                - standard
+              properties:
+                standard:
+                  type: object
+                  description: Configuration container for user registration attributes and external execution definitions.
+                  properties:
+                    required:
+                      - provider_name
+                      - authentication
+                      - userinfo
+                      - userinfo_mapping_rules
+                    provider_name:
+                      type: string
+                      description: ""
+                    authentication:
+                      type: object
+                      required:
+                        - url
+                        - method
+                        - headers
+                        - dynamic_body_keys
+                        - static_body
+                      properties:
+                        url:
+                          type: string
+                          format: uri
+                          description: The full URL to send the HTTP request for this execution step.
+                        method:
+                          type: string
+                          enum:
+                            - GET
+                            - POST
+                            - PUT
+                            - DELETE
+                          description: The HTTP method used for the request. Supported values are GET, POST, PUT, DELETE.\
+                        headers:
+                          type: object
+                          description: Custom headers to include in the HTTP request, typically used for authentication or content type.
+                        dynamic_body_keys:
+                          type: array
+                          items:
+                            type: string
+                          description: List of field names to dynamically extract from the context (e.g., login input) and include in the request body.
+                        static_body:
+                          type: object
+                          description: Static key-value pairs to include in the request body. Used alongside dynamic fields.
+                    userinfo:
+                      type: object
+                      required:
+                        - url
+                        - method
+                        - headers
+                        - dynamic_body_keys
+                        - static_body
+                      properties:
+                        url:
+                          type: string
+                          format: uri
+                          description: The full URL to send the HTTP request for this execution step.
+                        method:
+                          type: string
+                          enum:
+                            - GET
+                            - POST
+                            - PUT
+                            - DELETE
+                          description: The HTTP method used for the request. Supported values are GET, POST, PUT, DELETE.\
+                        headers:
+                          type: object
+                          description: Custom headers to include in the HTTP request, typically used for authentication or content type.
+                        dynamic_body_keys:
+                          type: array
+                          items:
+                            type: string
+                          description: List of field names to dynamically extract from the context (e.g., login input) and include in the request body.
+                        static_body:
+                          type: object
+                          description: Static key-value pairs to include in the request body. Used alongside dynamic fields.
+                    userinfo_mapping_rules:
+                      type: array
+                      description: Rules for mapping fields from the legacy userinfo response to internal user fields.
+                      items:
+                        type: object
+                        required:
+                          - from
+                          - to
+                          - type
+                        properties:
+                          from:
+                            type: string
+                            description: Field name in the legacy response.
+                          to:
+                            type: string
+                            enum:
+                              - provider_user_id
+                              - name
+                              - given_name
+                              - family_name
+                              - middle_name
+                              - nickname
+                              - preferred_username
+                              - profile
+                              - picture
+                              - website
+                              - email
+                              - email_verified
+                              - gender
+                              - birthdate
+                              - zoneinfo
+                              - locale
+                              - phone_number
+                              - phone_number_verified
+                              - updated_at
+                              - custom_properties
+                            description: Field name in the idp-server user profile.
+                          type:
+                            type: string
+                            enum:
+                              - string
+                              - boolean
+                              - number
+                              - list.string
+                              - list.boolean
+                              - list.number
+                              - address
+                            description: Data type used when mapping from legacy to internal. Supports scalar and list types.
+
+
+    AuthenticationDeviceConfig:
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - authentication-device
+        payload:
+          type: object
+          description: Defines the configuration for an authentication device that communicates via specific channels like FCM.
+          required:
+            - type
+            - details
+          properties:
+            type:
+              type: string
+              enum:
+                - fcm
+              description: The delivery channel used for authentication notifications. Currently, only 'fcm' is supported.
+            details:
+              type: object
+              description: An object containing the configuration details for the selected channel.
+              required:
+                - fcm
+              properties:
+                fcm:
+                  type: object
+                  description: FCM-specific configuration used for sending push notifications to user devices.
+                  required:
+                    - templates
+                    - credential
+                  properties:
+                    templates:
+                      type: object
+                      description: A map of template types like 'transaction', 'authentication', 'default'.
+                      additionalProperties:
+                        type: object
+                        required:
+                          - subject
+                          - body
+                        properties:
+                          subject:
+                            type: string
+                            description: The subject line of the push notification message.
+                          body:
+                            type: string
+                            description: The body text of the push notification message.
+                    credential:
+                      type: string
+                      description: A serialized credential (typically JSON) used to authenticate the push notification service.

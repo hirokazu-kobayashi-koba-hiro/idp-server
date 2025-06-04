@@ -1,0 +1,74 @@
+{
+  "type": "object",
+  "description": "Configuration object for WebAuthn authentication using the webauthn4j library.",
+  "required": ["type", "details"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["webauthn4j"],
+      "description": "Indicates the authentication method type. Must be 'webauthn4j' for this configuration."
+    },
+    "details": {
+      "type": "object",
+      "description": "Container for WebAuthn-specific configuration values.",
+      "required": ["webauthn4j"],
+      "properties": {
+        "webauthn4j": {
+          "type": "object",
+          "description": "Parameters used by the webauthn4j library to verify WebAuthn registration and authentication ceremonies.",
+          "required": [
+            "rp_id",
+            "origin",
+            "rp_name",
+            "require_resident_key",
+            "attestation_preference",
+            "user_presence_required",
+            "authenticator_attachment",
+            "user_verification_required"
+          ],
+          "properties": {
+            "rp_id": {
+              "type": "string",
+              "description": "Relying Party Identifier used to scope credentials. Typically your domain name (e.g., 'example.com')."
+            },
+            "origin": {
+              "type": "string",
+              "format": "uri",
+              "description": "The origin of the WebAuthn client, usually the frontend origin (e.g., 'https://app.example.com')."
+            },
+            "rp_name": {
+              "type": "string",
+              "description": "Human-readable name for the Relying Party. Displayed in the authenticator UI."
+            },
+            "token_binding_id": {
+              "type": ["string", "null"],
+              "description": "Optional token binding ID for verifying client support of token binding (rarely used)."
+            },
+            "require_resident_key": {
+              "type": "boolean",
+              "description": "Indicates whether the authenticator must store keys locally (required for discoverable credentials)."
+            },
+            "attestation_preference": {
+              "type": "string",
+              "enum": ["none", "indirect", "direct"],
+              "description": "Attestation conveyance preference. Controls what attestation data is returned by the authenticator."
+            },
+            "user_presence_required": {
+              "type": "boolean",
+              "description": "Specifies if user presence (touch or gesture) is required for authentication."
+            },
+            "authenticator_attachment": {
+              "type": "string",
+              "enum": ["cross-platform", "platform"],
+              "description": "Preferred authenticator attachment modality. 'platform' (built-in like Touch ID), or 'cross-platform' (e.g., YubiKey)."
+            },
+            "user_verification_required": {
+              "type": "boolean",
+              "description": "Indicates if the authenticator must perform user verification (e.g., PIN, biometric)."
+            }
+          }
+        }
+      }
+    }
+  }
+}

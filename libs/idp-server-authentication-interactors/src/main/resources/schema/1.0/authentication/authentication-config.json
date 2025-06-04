@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "description": "Represents a configuration object for an authentication method. The 'type' field specifies the method (e.g., sms, email, webauthn), and the 'payload' contains method-specific settings.",
+  "required": [
+    "id",
+    "type",
+    "payload"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "A unique identifier (UUID) for this authentication configuration."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "initial-registration",
+        "sms",
+        "email",
+        "fido-uaf",
+        "webauthn",
+        "legacy",
+        "authentication-device"
+      ],
+      "description": "Specifies the type of authentication method. Supported types include 'sms', 'email', 'webauthn', 'fido-uaf', 'legacy', and 'authentication-device'."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Contains the configuration settings specific to the selected authentication method defined in the 'type' field."
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "type": "object",
+  "description": "Defines the configuration for an authentication device that communicates via specific channels like FCM.",
+  "required": [
+    "type",
+    "details"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "fcm"
+      ],
+      "description": "The delivery channel used for authentication notifications. Currently, only 'fcm' is supported."
+    },
+    "details": {
+      "type": "object",
+      "description": "An object containing the configuration details for the selected channel.",
+      "required": [
+        "fcm"
+      ],
+      "properties": {
+        "fcm": {
+          "type": "object",
+          "description": "FCM-specific configuration used for sending push notifications to user devices.",
+          "required": [
+            "templates",
+            "credential"
+          ],
+          "properties": {
+            "templates": {
+              "type": "object",
+              "description": "A map of template types like 'transaction', 'authentication', 'default'.",
+              "additionalProperties": {
+                "type": "object",
+                "required": [
+                  "subject",
+                  "body"
+                ],
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "description": "The subject line of the push notification message."
+                  },
+                  "body": {
+                    "type": "string",
+                    "description": "The body text of the push notification message."
+                  }
+                }
+              }
+            },
+            "credential": {
+              "type": "string",
+              "description": "A serialized credential (typically JSON) used to authenticate the push notification service."
+            }
+          }
+        }
+      }
+    }
+  }
+}

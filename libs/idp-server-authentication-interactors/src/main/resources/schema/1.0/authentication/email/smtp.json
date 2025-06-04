@@ -1,0 +1,123 @@
+{
+  "type": "object",
+  "description": "Represents the configuration for an email-based authentication mechanism using SMTP.",
+  "required": [
+    "type",
+    "details"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "smtp"
+      ],
+      "description": "Indicates the authentication method type. Use 'smtp' for email-based authentication."
+    },
+    "details": {
+      "type": "object",
+      "description": "Holds configuration details specific to the SMTP authentication method.",
+      "required": [
+        "smtp"
+      ],
+      "properties": {
+        "smtp": {
+          "type": "object",
+          "description": "SMTP-specific configuration, including server settings, sender information, templates, and retry policies.",
+          "required": [
+            "settings",
+            "sender",
+            "templates",
+            "retry_count_limitation",
+            "expire_seconds"
+          ],
+          "properties": {
+            "settings":{
+              "type": "object",
+              "description": "Defines the SMTP server connection settings used to send email notifications.",
+              "required": [
+                "host",
+                "port",
+                "username",
+                "password",
+                "auth",
+                "starttls"
+              ],
+              "properties": {
+                "host": {
+                  "type": "string",
+                  "description": "The hostname or IP address of the SMTP server."
+                },
+                "port": {
+                  "type": "integer",
+                  "description": "The port number to use when connecting to the SMTP server."
+                },
+                "username": {
+                  "type": "string",
+                  "format": "email",
+                  "description": "The username (usually an email address) used to authenticate with the SMTP server."
+                },
+                "password": {
+                  "type": "string",
+                  "description": "The password used to authenticate with the SMTP server."
+                },
+                "auth": {
+                  "type": "boolean",
+                  "description": "Specifies whether SMTP authentication is required."
+                },
+                "starttls": {
+                  "type": "object",
+                  "required": [
+                    "enable"
+                  ],
+                  "properties": {
+                    "enable": {
+                      "type": "boolean",
+                      "description": "Enables or disables STARTTLS encryption."
+                    }
+                  },
+                  "description": "TLS encryption settings for the SMTP connection."
+                }
+              }
+            },
+            "sender": {
+              "type": "string",
+              "format": "email",
+              "description": "The email address used as the sender when sending authentication emails."
+            },
+            "templates": {
+              "type": "object",
+              "description": "A map of email templates keyed by type, such as 'registration', 'authentication', or 'default'. Each template includes a subject and body.",
+              "additionalProperties": {
+                "type": "object",
+                "required": [
+                  "subject",
+                  "body"
+                ],
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "description": "The subject line of the email message."
+                  },
+                  "body": {
+                    "type": "string",
+                    "description": "The body text of the email message. Placeholders like {VERIFICATION_CODE}  {EXPIRE_SECONDS} may be included."
+                  }
+                }
+              }
+            },
+            "retry_count_limitation": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Maximum number of times a user is allowed to retry verification before the code becomes invalid."
+            },
+            "expire_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Time in seconds before the verification code expires."
+            }
+          }
+        }
+      }
+    }
+  }
+}

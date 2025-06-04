@@ -1,0 +1,182 @@
+{
+  "type": "object",
+  "description": "Configuration schema for registering users via integration with a legacy ID service.",
+  "required": [
+    "type",
+    "details"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "standard"
+      ],
+      "description": "The registration type. For legacy integration, it must be 'standard'."
+    },
+    "details": {
+      "type": "object",
+      "required": [
+        "standard"
+      ],
+      "properties": {
+        "standard": {
+          "type": "object",
+          "description": "Configuration container for user registration attributes and external execution definitions.",
+          "properties": {
+            "required": [
+              "provider_name",
+              "authentication",
+              "userinfo",
+              "userinfo_mapping_rules"
+            ],
+            "provider_name": {
+              "type": "string",
+              "description": ""
+            },
+            "authentication": {
+              "type": "object",
+              "required": [
+                "url",
+                "method",
+                "headers",
+                "dynamic_body_keys",
+                "static_body"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "The full URL to send the HTTP request for this execution step."
+                },
+                "method": {
+                  "type": "string",
+                  "enum": [
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "DELETE"
+                  ],
+                  "description": "The HTTP method used for the request. Supported values are GET, POST, PUT, DELETE."
+                },
+                "headers": {
+                  "type": "object",
+                  "description": "Custom headers to include in the HTTP request, typically used for authentication or content type."
+                },
+                "dynamic_body_keys": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of field names to dynamically extract from the context (e.g., login input) and include in the request body."
+                },
+                "static_body": {
+                  "type": "object",
+                  "description": "Static key-value pairs to include in the request body. Used alongside dynamic fields."
+                }
+              }
+            },
+            "userinfo": {
+              "type": "object",
+              "required": [
+                "url",
+                "method",
+                "headers",
+                "dynamic_body_keys",
+                "static_body"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "The full URL to send the HTTP request for this execution step."
+                },
+                "method": {
+                  "type": "string",
+                  "enum": [
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "DELETE"
+                  ],
+                  "description": "The HTTP method used for the request. Supported values are GET, POST, PUT, DELETE."
+                },
+                "headers": {
+                  "type": "object",
+                  "description": "Custom headers to include in the HTTP request, typically used for authentication or content type."
+                },
+                "dynamic_body_keys": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of field names to dynamically extract from the context (e.g., login input) and include in the request body."
+                },
+                "static_body": {
+                  "type": "object",
+                  "description": "Static key-value pairs to include in the request body. Used alongside dynamic fields."
+                }
+              }
+            },
+            "userinfo_mapping_rules": {
+              "type": "array",
+              "description": "Rules for mapping fields from the legacy userinfo response to internal user fields.",
+              "items": {
+                "type": "object",
+                "required": [
+                  "from",
+                  "to",
+                  "type"
+                ],
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "description": "Field name in the legacy response."
+                  },
+                  "to": {
+                    "type": "string",
+                    "enum": [
+                      "provider_user_id",
+                      "name",
+                      "given_name",
+                      "family_name",
+                      "middle_name",
+                      "nickname",
+                      "preferred_username",
+                      "profile",
+                      "picture",
+                      "website",
+                      "email",
+                      "email_verified",
+                      "gender",
+                      "birthdate",
+                      "zoneinfo",
+                      "locale",
+                      "phone_number",
+                      "phone_number_verified",
+                      "updated_at",
+                      "custom_properties"
+                    ],
+                    "description": "Field name in the idp-server user profile."
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "string",
+                      "boolean",
+                      "number",
+                      "list.string",
+                      "list.boolean",
+                      "list.number",
+                      "address"
+                    ],
+                    "description": "Data type used when mapping from legacy to internal. Supports scalar and list types."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
