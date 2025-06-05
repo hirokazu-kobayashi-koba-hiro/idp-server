@@ -24,8 +24,8 @@ subgraph Platform層
 Proxy[TenantAwareEntryServiceProxy<br>Tx + Tenantの境界]
 TxManager[TransactionManager<br>ThreadLocal + begin/commit/rollback]
 OperationCtx[OperationContext<br>READ/WRITE判定保持]
-Dialect[DialectProvider<br>DB種別を解決（PostgreSQL / MySQL）]
-TransactionMetadata[Transactionアノテーション<br> （readOnly=true, false）]
+Dialect[DialectProvider<br>DB種別を解決 PostgreSQL / MySQL]
+TransactionMetadata[Transactionアノテーション<br> readOnly=true, false]
 DbConnectionProvider[DbConnectionProvider<br>Writer/ReaderからConnection供給]
 end
 
@@ -46,7 +46,7 @@ TxManager --> DbConnectionProvider
 - DbConnectionProviderは、Writer/Readerを保持してDB接続情報を供給します。
 - DialectProvider は、このテナントのデータベース設定を解決します。
 - OperationContext が「読取りか書き込みか」を明示 → HikariConnectionProvider が適切な DataSource を選ぶ
-- TransactionManager が ThreadLocal<Connection>ベースにコネクションとトランザクションを制御
+- TransactionManager が ThreadLocal Connection ベースにコネクションとトランザクションを制御
 - TenantAwareEntryServiceProxy が処理フローを制御する。SpringでいうAOP + Contextの役割
 - EntryServiceは機能の実行を行う
 
