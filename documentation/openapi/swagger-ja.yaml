@@ -171,8 +171,6 @@ paths:
     post:
       summary: トークンリクエスト
       tags:
-        - 認可コードフロー
-        - CIBAフロー
         - トークン
       description: |
         grant_typeに応じて、トークンを取得します。
