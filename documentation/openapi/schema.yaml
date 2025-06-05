@@ -1,5 +1,5 @@
 type: object
-description: Defines the configuration for an authentication device that communicates via specific channels like FCM.
+description: Standard user registration or update request containing user profile and credential attributes.
 required:
   - type
   - details
@@ -7,36 +7,64 @@ properties:
   type:
     type: string
     enum:
-      - fcm
-    description: The delivery channel used for authentication notifications. Currently, only 'fcm' is supported.
+      - standard
+    description: Must be 'standard' for this schema.
   details:
     type: object
-    description: An object containing the configuration details for the selected channel.
+    description: Container for the schema definition of user attributes to be registered or updated.
     required:
-      - fcm
+      - standard
     properties:
-      fcm:
+      standard:
         type: object
-        description: FCM-specific configuration used for sending push notifications to user devices.
+        description: A JsonSchema-based definition of user attributes including required fields, type constraints, and validation rules.
         required:
-          - templates
-          - credential
+          - required
+          - properties
         properties:
-          templates:
-            type: object
-            description: A map of template types like 'transaction', 'authentication', 'default'.
+          required:
+            type: array
+            items:
+              type: string
+          properties:
             additionalProperties:
               type: object
               required:
-                - subject
-                - body
+                - type
               properties:
-                subject:
+                type:
                   type: string
-                  description: The subject line of the push notification message.
-                body:
+                  enum:
+                    - string
+                    - object
+                    - array
+                    - integer
+                    - boolean
+                  description: The JSON type of the attribute.
+                items:
                   type: string
-                  description: The body text of the push notification message.
-          credential:
-            type: string
-            description: A serialized credential (typically JSON) used to authenticate the push notification service.
+                  description: Data type of array elements if the type is 'array'.
+                enum:
+                  type: array
+                  description: Set of allowed values for the attribute.
+                minLength:
+                  type: integer
+                  description: Minimum length constraint for string values.
+                maxLength:
+                  type: integer
+                  description: Maximum length constraint for string values.
+                pattern:
+                  type: string
+                  description: Regular expression that string values must match.
+                format:
+                  type: string
+                  enum:
+                    - uri
+                    - uuid
+                    - date
+                    - email
+                    - mobile_phone_number
+                  description: Semantic format of the attribute, e.g., 'email', 'uri', 'date'.
+                description:
+                  type: string
+                  description: Human-readable explanation of the attribute's purpose.

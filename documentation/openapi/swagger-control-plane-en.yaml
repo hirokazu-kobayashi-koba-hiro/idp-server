@@ -896,13 +896,13 @@ components:
               description: Must be 'standard' for this schema.
             details:
               type: object
-              description: idp-server-authentication-interactors Container for standard user attributes used in registration or profile update.idp-server-authentication-interactors
+              description: Container for the schema definition of user attributes to be registered or updated.
               required:
                 - standard
               properties:
                 standard:
                   type: object
-                  description: Defines User profile fields including personal information, credentials, and optional metadata using JsonSchema.
+                  description: A JsonSchema-based definition of user attributes including required fields, type constraints, and validation rules.
                   required:
                     - required
                     - properties
@@ -914,6 +914,8 @@ components:
                     properties:
                       additionalProperties:
                         type: object
+                        required:
+                          - type
                         properties:
                           type:
                             type: string
@@ -923,591 +925,34 @@ components:
                               - array
                               - integer
                               - boolean
-                            description: ""
+                            description: The JSON type of the attribute.
                           items:
                             type: string
-                            description: ""
+                            description: Data type of array elements if the type is 'array'.
                           enum:
                             type: array
-                            description: ""
+                            description: Set of allowed values for the attribute.
                           minLength:
                             type: integer
-                            description: ""
+                            description: Minimum length constraint for string values.
                           maxLength:
                             type: integer
-                            description: ""
+                            description: Maximum length constraint for string values.
                           pattern:
                             type: string
-                            description: ""
+                            description: Regular expression that string values must match.
                           format:
                             type: string
-                            description: ""
-
-
-    SmsAuthenticationExternalServiceConfig:
-      required:
-        - id
-        - type
-        - payload
-      properties:
-        id:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum:
-            - sms
-        payload:
-          type: object
-          description: Configuration for integrating with external SMS-based authentication services. This includes endpoints for triggering SMS delivery and verifying the code.
-          required:
-            - type
-            - details
-          properties:
-            type:
-              type: string
-              enum:
-                - external_authn
-              description: The authentication method type. Must be 'external_authn' for SMS service integration.
-            details:
-              type: object
-              description: Holds the detailed configuration specific to external SMS verification logic.
-              required:
-                - external_authn
-              properties:
-                external_authn:
-                  type: object
-                  description: Defines how to communicate with the external SMS verification service, including parameter names and execution steps.
-                  required:
-                    - transaction_id_param
-                    - verification_code_param
-                    - executions
-                  properties:
-                    oauth_authorization:
-                      type: object
-                      description: Optional OAuth2.0 credentials and settings used to obtain an access token for authenticating subsequent HTTP requests.
-                      required:
-                        - type
-                        - token_endpoint
-                        - client_id
-                        - username
-                        - password
-                        - scope
-                      properties:
-                        type:
-                          type: string
-                          enum:
-                            - password
-                            - client_credentials
-                          description: 'The OAuth2.0 grant type to use when obtaining the token. Supported types: ''password'', ''client_credentials''.'
-                        token_endpoint:
-                          type: string
-                          format: uri
-                          description: The token endpoint URI to obtain an access token from the external identity provider.
-                        client_id:
-                          type: string
-                          description: The client ID registered with the external identity provider.
-                        username:
-                          type: string
-                          description: The username used in the password grant (required only for 'password' grant type). Optional otherwise.
-                        password:
-                          type: string
-                          description: The password used in the password grant (required only for 'password' grant type). Optional otherwise.
-                        scope:
-                          type: string
-                          description: The space-delimited list of scopes to request in the token request.
-                    transaction_id_param:
-                      type: string
-                      description: The name of the parameter to be used for passing a transaction or session identifier to the external service.
-                    verification_code_param:
-                      type: string
-                      description: The name of the parameter used for passing the user-entered verification code to the service.
-                    executions:
-                      type: object
-                      additionalProperties:
-                        type: object
-                        required:
-                          - url
-                          - method
-                          - headers
-                          - dynamic_body_keys
-                          - static_body
-                        properties:
-                          url:
-                            type: string
-                            format: uri
-                            description: The full URL to send the HTTP request for this execution step.
-                          method:
-                            type: string
                             enum:
-                              - GET
-                              - POST
-                              - PUT
-                              - DELETE
-                            description: The HTTP method used for the request. Supported values are GET, POST, PUT, DELETE.\
-                          headers:
-                            type: object
-                            description: Custom headers to include in the HTTP request, typically used for authentication or content type.
-                          dynamic_body_keys:
-                            type: array
-                            items:
-                              type: string
-                            description: List of field names to dynamically extract from the context (e.g., login input) and include in the request body.
-                          static_body:
-                            type: object
-                            description: Static key-value pairs to include in the request body. Used alongside dynamic fields.
-
-    EmailAuthenticationSmtpConfig:
-      required:
-        - id
-        - type
-        - payload
-      properties:
-        id:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum:
-            - email
-        payload:
-          type: object
-          description: Represents the configuration for an email-based authentication mechanism using SMTP.
-          required:
-            - type
-            - details
-          properties:
-            type:
-              type: string
-              enum:
-                - smtp
-              description: Indicates the authentication method type. Use 'smtp' for email-based authentication.
-            details:
-              type: object
-              description: Holds configuration details specific to the SMTP authentication method.
-              required:
-                - smtp
-              properties:
-                smtp:
-                  type: object
-                  description: SMTP-specific configuration, including server settings, sender information, templates, and retry policies.
-                  required:
-                    - settings
-                    - sender
-                    - templates
-                    - retry_count_limitation
-                    - expire_seconds
-                  properties:
-                    settings:
-                      type: object
-                      description: Defines the SMTP server connection settings used to send email notifications.
-                      required:
-                        - host
-                        - port
-                        - username
-                        - password
-                        - auth
-                        - starttls
-                      properties:
-                        host:
-                          type: string
-                          description: The hostname or IP address of the SMTP server.
-                        port:
-                          type: integer
-                          description: The port number to use when connecting to the SMTP server.
-                        username:
-                          type: string
-                          format: email
-                          description: The username (usually an email address) used to authenticate with the SMTP server.
-                        password:
-                          type: string
-                          description: The password used to authenticate with the SMTP server.
-                        auth:
-                          type: boolean
-                          description: Specifies whether SMTP authentication is required.
-                        starttls:
-                          type: object
-                          required:
-                            - enable
-                          properties:
-                            enable:
-                              type: boolean
-                              description: Enables or disables STARTTLS encryption.
-                          description: TLS encryption settings for the SMTP connection.
-                    sender:
-                      type: string
-                      format: email
-                      description: The email address used as the sender when sending authentication emails.
-                    templates:
-                      type: object
-                      description: A map of email templates keyed by type, such as 'registration', 'authentication', or 'default'. Each template includes a subject and body.
-                      additionalProperties:
-                        type: object
-                        required:
-                          - subject
-                          - body
-                        properties:
-                          subject:
-                            type: string
-                            description: The subject line of the email message.
-                          body:
-                            type: string
-                            description: The body text of the email message. Placeholders like {VERIFICATION_CODE}  {EXPIRE_SECONDS} may be included.
-                    retry_count_limitation:
-                      type: integer
-                      minimum: 0
-                      description: Maximum number of times a user is allowed to retry verification before the code becomes invalid.
-                    expire_seconds:
-                      type: integer
-                      minimum: 1
-                      description: Time in seconds before the verification code expires.
-
-    FidoUafExternalServiceConfig:
-      required:
-        - id
-        - type
-        - payload
-      properties:
-        id:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum:
-            - fido-uaf
-        payload:
-          type: object
-          description: Configuration for an external authentication method using customizable HTTP executions and optional OAuth authorization.
-          required:
-            - type
-            - details
-          properties:
-            type:
-              type: string
-              enum:
-                - external_authn
-              description: Authentication method type. Must be 'external_authn'.
-            details:
-              type: object
-              description: Contains configuration specific to the 'external_authn' authentication method.
-              required:
-                - external_authn
-              properties:
-                external_authn:
-                  type: object
-                  description: Defines the configuration for integrating with an external authentication provider.
-                  required:
-                    - device_id_param
-                    - executions
-                  properties:
-                    oauth_authorization:
-                      type: object
-                      description: Optional OAuth2.0 credentials and settings used to obtain an access token for authenticating subsequent HTTP requests.
-                      required:
-                        - type
-                        - token_endpoint
-                        - client_id
-                        - username
-                        - password
-                        - scope
-                      properties:
-                        type:
-                          type: string
-                          enum:
-                            - password
-                            - client_credentials
-                          description: 'The OAuth2.0 grant type to use when obtaining the token. Supported types: ''password'', ''client_credentials''.'
-                        token_endpoint:
-                          type: string
-                          format: uri
-                          description: The token endpoint URI to obtain an access token from the external identity provider.
-                        client_id:
-                          type: string
-                          description: The client ID registered with the external identity provider.
-                        username:
-                          type: string
-                          description: The username used in the password grant (required only for 'password' grant type). Optional otherwise.
-                        password:
-                          type: string
-                          description: The password used in the password grant (required only for 'password' grant type). Optional otherwise.
-                        scope:
-                          type: string
-                          description: The space-delimited list of scopes to request in the token request.
-                    device_id_param:
-                      type: string
-                      description: The name of the request parameter used to pass the device or user ID to external executions.
-                    executions:
-                      type: object
-                      description: A mapping of execution steps (e.g., 'authentication', 'registration') with their corresponding HTTP request definitions.
-                      additionalProperties:
-                        type: object
-                        required:
-                          - url
-                          - method
-                          - headers
-                          - dynamic_body_keys
-                          - static_body
-                        properties:
-                          url:
-                            type: string
-                            format: uri
-                            description: The full URL to send the HTTP request for this execution step.
-                          method:
-                            type: string
-                            enum:
-                              - GET
-                              - POST
-                              - PUT
-                              - DELETE
-                            description: The HTTP method used for the request. Supported values are GET, POST, PUT, DELETE.\
-                          headers:
-                            type: object
-                            description: Custom headers to include in the HTTP request, typically used for authentication or content type.
-                          dynamic_body_keys:
-                            type: array
-                            items:
-                              type: string
-                            description: List of field names to dynamically extract from the context (e.g., login input) and include in the request body.
-                          static_body:
-                            type: object
-                            description: Static key-value pairs to include in the request body. Used alongside dynamic fields.
-
-    WebAuthn4jConfig:
-      required:
-        - id
-        - type
-        - payload
-      properties:
-        id:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum:
-            - webauthn
-        payload:
-          type: object
-          description: Configuration object for WebAuthn authentication using the webauthn4j library.
-          required:
-            - type
-            - details
-          properties:
-            type:
-              type: string
-              enum:
-                - webauthn4j
-              description: Indicates the authentication method type. Must be 'webauthn4j' for this configuration.
-            details:
-              type: object
-              description: Container for WebAuthn-specific configuration values.
-              required:
-                - webauthn4j
-              properties:
-                webauthn4j:
-                  type: object
-                  description: Parameters used by the webauthn4j library to verify WebAuthn registration and authentication ceremonies.
-                  required:
-                    - rp_id
-                    - origin
-                    - rp_name
-                    - require_resident_key
-                    - attestation_preference
-                    - user_presence_required
-                    - authenticator_attachment
-                    - user_verification_required
-                  properties:
-                    rp_id:
-                      type: string
-                      description: Relying Party Identifier used to scope credentials. Typically your domain name (e.g., 'example.com').
-                    origin:
-                      type: string
-                      format: uri
-                      description: The origin of the WebAuthn client, usually the frontend origin (e.g., 'https://app.example.com').
-                    rp_name:
-                      type: string
-                      description: Human-readable name for the Relying Party. Displayed in the authenticator UI.
-                    token_binding_id:
-                      type:
-                        - string
-                        - "null"
-                      description: Optional token binding ID for verifying client support of token binding (rarely used).
-                    require_resident_key:
-                      type: boolean
-                      description: Indicates whether the authenticator must store keys locally (required for discoverable credentials).
-                    attestation_preference:
-                      type: string
-                      enum:
-                        - none
-                        - indirect
-                        - direct
-                      description: Attestation conveyance preference. Controls what attestation data is returned by the authenticator.
-                    user_presence_required:
-                      type: boolean
-                      description: Specifies if user presence (touch or gesture) is required for authentication.
-                    authenticator_attachment:
-                      type: string
-                      enum:
-                        - cross-platform
-                        - platform
-                      description: Preferred authenticator attachment modality. 'platform' (built-in like Touch ID), or 'cross-platform' (e.g., YubiKey).
-                    user_verification_required:
-                      type: boolean
-                      description: Indicates if the authenticator must perform user verification (e.g., PIN, biometric).
-
-    LegacyAuthnConfig:
-      required:
-        - id
-        - type
-        - payload
-      properties:
-        id:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum:
-            - legacy-authentication
-        payload:
-          type: object
-          description: Configuration schema for registering users via integration with a legacy ID service.
-          required:
-            - type
-            - details
-          properties:
-            type:
-              type: string
-              enum:
-                - standard
-              description: The registration type. For legacy integration, it must be 'standard'.
-            details:
-              type: object
-              required:
-                - standard
-              properties:
-                standard:
-                  type: object
-                  description: Configuration container for user registration attributes and external execution definitions.
-                  properties:
-                    required:
-                      - provider_name
-                      - authentication
-                      - userinfo
-                      - userinfo_mapping_rules
-                    provider_name:
-                      type: string
-                      description: ""
-                    authentication:
-                      type: object
-                      required:
-                        - url
-                        - method
-                        - headers
-                        - dynamic_body_keys
-                        - static_body
-                      properties:
-                        url:
-                          type: string
-                          format: uri
-                          description: The full URL to send the HTTP request for this execution step.
-                        method:
-                          type: string
-                          enum:
-                            - GET
-                            - POST
-                            - PUT
-                            - DELETE
-                          description: The HTTP method used for the request. Supported values are GET, POST, PUT, DELETE.\
-                        headers:
-                          type: object
-                          description: Custom headers to include in the HTTP request, typically used for authentication or content type.
-                        dynamic_body_keys:
-                          type: array
-                          items:
-                            type: string
-                          description: List of field names to dynamically extract from the context (e.g., login input) and include in the request body.
-                        static_body:
-                          type: object
-                          description: Static key-value pairs to include in the request body. Used alongside dynamic fields.
-                    userinfo:
-                      type: object
-                      required:
-                        - url
-                        - method
-                        - headers
-                        - dynamic_body_keys
-                        - static_body
-                      properties:
-                        url:
-                          type: string
-                          format: uri
-                          description: The full URL to send the HTTP request for this execution step.
-                        method:
-                          type: string
-                          enum:
-                            - GET
-                            - POST
-                            - PUT
-                            - DELETE
-                          description: The HTTP method used for the request. Supported values are GET, POST, PUT, DELETE.\
-                        headers:
-                          type: object
-                          description: Custom headers to include in the HTTP request, typically used for authentication or content type.
-                        dynamic_body_keys:
-                          type: array
-                          items:
-                            type: string
-                          description: List of field names to dynamically extract from the context (e.g., login input) and include in the request body.
-                        static_body:
-                          type: object
-                          description: Static key-value pairs to include in the request body. Used alongside dynamic fields.
-                    userinfo_mapping_rules:
-                      type: array
-                      description: Rules for mapping fields from the legacy userinfo response to internal user fields.
-                      items:
-                        type: object
-                        required:
-                          - from
-                          - to
-                          - type
-                        properties:
-                          from:
-                            type: string
-                            description: Field name in the legacy response.
-                          to:
-                            type: string
-                            enum:
-                              - provider_user_id
-                              - name
-                              - given_name
-                              - family_name
-                              - middle_name
-                              - nickname
-                              - preferred_username
-                              - profile
-                              - picture
-                              - website
+                              - uri
+                              - uuid
+                              - date
                               - email
-                              - email_verified
-                              - gender
-                              - birthdate
-                              - zoneinfo
-                              - locale
-                              - phone_number
-                              - phone_number_verified
-                              - updated_at
-                              - custom_properties
-                            description: Field name in the idp-server user profile.
-                          type:
+                              - mobile_phone_number
+                            description: Semantic format of the attribute, e.g., 'email', 'uri', 'date'.
+                          description:
                             type: string
-                            enum:
-                              - string
-                              - boolean
-                              - number
-                              - list.string
-                              - list.boolean
-                              - list.number
-                              - address
-                            description: Data type used when mapping from legacy to internal. Supports scalar and list types.
+                            description: Human-readable explanation of the attribute's purpose.
 
 
     AuthenticationDeviceConfig:
@@ -1525,25 +970,21 @@ components:
             - authentication-device
         payload:
           type: object
-          description: Defines the configuration for an authentication device that communicates via specific channels like FCM.
           required:
-            - type
+            - channel
             - details
           properties:
-            type:
+            channel:
               type: string
               enum:
                 - fcm
-              description: The delivery channel used for authentication notifications. Currently, only 'fcm' is supported.
             details:
               type: object
-              description: An object containing the configuration details for the selected channel.
               required:
                 - fcm
               properties:
                 fcm:
                   type: object
-                  description: FCM-specific configuration used for sending push notifications to user devices.
                   required:
                     - templates
                     - credential
@@ -1553,16 +994,473 @@ components:
                       description: A map of template types like 'transaction', 'authentication', 'default'.
                       additionalProperties:
                         type: object
-                        required:
-                          - subject
-                          - body
                         properties:
                           subject:
                             type: string
-                            description: The subject line of the push notification message.
                           body:
                             type: string
-                            description: The body text of the push notification message.
+                        required:
+                          - subject
+                          - body
                     credential:
                       type: string
-                      description: A serialized credential (typically JSON) used to authenticate the push notification service.
+
+    SmsAuthenticationExternalServiceConfig:
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - sms
+        payload:
+          type: object
+          required:
+            - type
+            - description
+            - transaction_id_param
+            - verification_code_param
+            - details
+          properties:
+            type:
+              type: string
+              enum:
+                - external
+            description:
+              type: string
+            oauth_authorization:
+              type: object
+              required:
+                - type
+                - token_endpoint
+                - client_id
+                - username
+                - password
+                - scope
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - password
+                token_endpoint:
+                  type: string
+                  format: uri
+                client_id:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+                scope:
+                  type: string
+            transaction_id_param:
+              type: string
+            verification_code_param:
+              type: string
+            details:
+              type: object
+              required:
+                - external
+              properties:
+                external:
+                  type: object
+                  required:
+                    - executions
+                  properties:
+                    executions:
+                      type: object
+                      additionalProperties:
+                        type: object
+                        required:
+                          - url
+                          - method
+                          - headers
+                          - dynamic_body_keys
+                          - static_body
+                        properties:
+                          url:
+                            type: string
+                            format: uri
+                          method:
+                            type: string
+                            enum:
+                              - GET
+                              - POST
+                              - PUT
+                              - DELETE
+                          headers:
+                            type: object
+                            additionalProperties:
+                              type: string
+                          dynamic_body_keys:
+                            type: array
+                            items:
+                              type: string
+                          static_body:
+                            type: object
+
+    EmailAuthenticationSmtpConfig:
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - email
+        payload:
+          type: object
+          required:
+            - type
+            - settings
+            - sender
+            - templates
+            - retry_count_limitation
+            - expire_seconds
+          properties:
+            type:
+              type: string
+              enum:
+                - smtp
+            settings:
+              type: object
+              required:
+                - smtp
+              properties:
+                smtp:
+                  type: object
+                  required:
+                    - host
+                    - port
+                    - username
+                    - password
+                    - auth
+                    - starttls
+                  properties:
+                    host:
+                      type: string
+                    port:
+                      type: integer
+                    username:
+                      type: string
+                      format: email
+                    password:
+                      type: string
+                    auth:
+                      type: boolean
+                    starttls:
+                      type: object
+                      required:
+                        - enable
+                      properties:
+                        enable:
+                          type: boolean
+            sender:
+              type: string
+              format: email
+            templates:
+              type: object
+              description: A map of template types like 'transaction', 'authentication', 'default'.
+              additionalProperties:
+                type: object
+                properties:
+                  subject:
+                    type: string
+                  body:
+                    type: string
+                required:
+                  - subject
+                  - body
+            retry_count_limitation:
+              type: integer
+              minimum: 0
+            expire_seconds:
+              type: integer
+              minimum: 1
+
+    FidoUafExternalServiceConfig:
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - fido-uaf
+        payload:
+          type: object
+          required:
+            - type
+            - description
+            - device_id_param
+            - details
+          properties:
+            type:
+              type: string
+              enum:
+                - external
+            description:
+              type: string
+            oauth_authorization:
+              type: object
+              required:
+                - type
+                - token_endpoint
+                - client_id
+                - username
+                - password
+                - scope
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - password
+                token_endpoint:
+                  type: string
+                  format: uri
+                client_id:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+                scope:
+                  type: string
+            device_id_param:
+              type: string
+            details:
+              type: object
+              required:
+                - external
+              properties:
+                external:
+                  type: object
+                  required:
+                    - executions
+                  properties:
+                    executions:
+                      type: object
+                      additionalProperties:
+                        type: object
+                        required:
+                          - url
+                          - method
+                          - headers
+                          - dynamic_body_keys
+                          - static_body
+                        properties:
+                          url:
+                            type: string
+                            format: uri
+                          method:
+                            type: string
+                            enum:
+                              - GET
+                              - POST
+                              - PUT
+                              - DELETE
+                          headers:
+                            type: object
+                            additionalProperties:
+                              type: string
+                          dynamic_body_keys:
+                            type: array
+                            items:
+                              type: string
+                          static_body:
+                            type: object
+
+    WebAuthn4jConfig:
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - webauthn
+        payload:
+          type: object
+          required:
+            - type
+            - details
+          properties:
+            type:
+              type: string
+              enum:
+                - webauthn4j
+            details:
+              type: object
+              required:
+                - webauthn4j
+              properties:
+                webauthn4j:
+                  type: object
+                  required:
+                    - rp_id
+                    - origin
+                    - rp_name
+                    - require_resident_key
+                    - attestation_preference
+                    - user_presence_required
+                    - authenticator_attachment
+                    - user_verification_required
+                  properties:
+                    rp_id:
+                      type: string
+                    origin:
+                      type: string
+                      format: uri
+                    rp_name:
+                      type: string
+                    token_binding_id:
+                      type: string
+                    require_resident_key:
+                      type: boolean
+                    attestation_preference:
+                      type: string
+                      enum:
+                        - none
+                        - indirect
+                        - direct
+                    user_presence_required:
+                      type: boolean
+                    authenticator_attachment:
+                      type: string
+                      enum:
+                        - cross-platform
+                        - platform
+                    user_verification_required:
+                      type: boolean
+
+
+    LegacyAuthnConfig:
+      required:
+        - id
+        - type
+        - payload
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - legacy-authentication
+        payload:
+          type: object
+          required:
+            - type
+            - provider_name
+            - details
+          properties:
+            type:
+              type: string
+            provider_name:
+              type: string
+            details:
+              type: object
+              required:
+                - authentication
+                - userinfo
+              properties:
+                authentication:
+                  type: object
+                  required:
+                    - url
+                    - method
+                    - headers
+                    - dynamic_body_keys
+                    - static_body
+                  properties:
+                    url:
+                      type: string
+                      format: uri
+                    method:
+                      type: string
+                      enum:
+                        - GET
+                        - POST
+                        - PUT
+                        - DELETE
+                    headers:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    dynamic_body_keys:
+                      type: array
+                      items:
+                        type: string
+                    static_body:
+                      type: object
+                      additionalProperties: true
+                userinfo:
+                  type: object
+                  required:
+                    - url
+                    - method
+                    - headers
+                    - dynamic_body_keys
+                    - static_body
+                  properties:
+                    url:
+                      type: string
+                      format: uri
+                    method:
+                      type: string
+                      enum:
+                        - GET
+                        - POST
+                        - PUT
+                        - DELETE
+                    headers:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    dynamic_body_keys:
+                      type: array
+                      items:
+                        type: string
+                    static_body:
+                      type: object
+                      additionalProperties: true
+                    userinfo_mapping_rules:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - from
+                          - to
+                          - type
+                        properties:
+                          from:
+                            type: string
+                          to:
+                            type: string
+                          type:
+                            type: string
+                            enum:
+                              - string
+                              - boolean
+                              - number
+                              - list.string
+                              - list.boolean
+                              - list.number
+                              - address
