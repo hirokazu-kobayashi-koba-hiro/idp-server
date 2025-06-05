@@ -38,6 +38,4 @@
 
 ## 🧭 今後のキャッシュ対象候補
 
-- セッション情報（`OAuthSession`）
 - トークン情報（`AccessToken` / `RefreshToken`）
-- ユーザー属性 / コンセント情報
