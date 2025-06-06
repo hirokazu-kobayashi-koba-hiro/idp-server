@@ -27,6 +27,8 @@ public interface UserQueryRepository {
 
   User findById(Tenant tenant, UserIdentifier userIdentifier);
 
+  User findByExternalIdpSubject(Tenant tenant, String hint, String providerId);
+
   User findByEmail(Tenant tenant, String hint, String providerId);
 
   User findByPhone(Tenant tenant, String hint, String providerId);

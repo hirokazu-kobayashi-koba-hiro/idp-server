@@ -42,6 +42,11 @@ public class LoginHintResolver implements UserHintResolver {
                   return userQueryRepository.get(tenant, userIdentifier);
                 }),
             new PrefixMatcher(
+                "ex-sub:",
+                hints ->
+                    userQueryRepository.findByExternalIdpSubject(
+                        tenant, hints.getLeft(), hints.getRight())),
+            new PrefixMatcher(
                 "phone:",
                 hints ->
                     userQueryRepository.findByPhone(tenant, hints.getLeft(), hints.getRight())),

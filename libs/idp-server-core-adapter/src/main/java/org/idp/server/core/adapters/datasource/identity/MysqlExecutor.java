@@ -39,6 +39,27 @@ public class MysqlExecutor implements UserSqlExecutor {
   }
 
   @Override
+  public Map<String, String> selectByExternalIdpSubject(
+      Tenant tenant, String externalSubject, String providerId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        String.format(
+            selectSql,
+            """
+                        WHERE idp_user.tenant_id = ?
+                        AND idp_user.provider_user_id = ?
+                        AND idp_user.provider_id = ?
+                    """);
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+    params.add(externalSubject);
+    params.add(providerId);
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
   public Map<String, String> selectByEmail(Tenant tenant, String email, String providerId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 

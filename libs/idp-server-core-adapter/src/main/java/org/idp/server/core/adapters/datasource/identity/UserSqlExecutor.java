@@ -25,6 +25,9 @@ public interface UserSqlExecutor {
 
   Map<String, String> selectOne(Tenant tenant, UserIdentifier userIdentifier);
 
+  Map<String, String> selectByExternalIdpSubject(
+      Tenant tenant, String externalSubject, String providerId);
+
   Map<String, String> selectByEmail(Tenant tenant, String email, String providerId);
 
   Map<String, String> selectByPhone(Tenant tenant, String phone, String providerId);
