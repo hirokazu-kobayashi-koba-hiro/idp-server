@@ -37,7 +37,7 @@ public class PrefixMatcher implements LoginHintMatcher {
   public Pairs<String, String> extractHints(String hint) {
     String[] hints = hint.substring(prefix.length()).split(",");
     String userHint = hints.length > 0 ? hints[0] : "";
-    String providerHint = hints.length > 1 ? hints[1] : "";
+    String providerHint = hints.length > 1 ? hints[1] : "idp-server";
     return Pairs.of(userHint, providerHint);
   }
 

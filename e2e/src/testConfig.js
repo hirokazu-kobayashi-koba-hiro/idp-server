@@ -41,6 +41,7 @@ export const serverConfig = {
   enabledSsr: false,
   ciba: {
     loginHint: "email:ito.ichiro@gmail.com,idp-server",
+    loginHintExSub: "ex-sub:3ec055a8-8000-44a2-8677-e70ebff414e2,idp-server",
     username: "ito.ichiro@gmail.com",
     userCode: "successUserCode",
     bindingMessage: "999",

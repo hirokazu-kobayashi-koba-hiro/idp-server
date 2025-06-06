@@ -39,6 +39,27 @@ public class PostgresqlExecutor implements UserSqlExecutor {
   }
 
   @Override
+  public Map<String, String> selectByExternalIdpSubject(
+      Tenant tenant, String externalSubject, String providerId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        String.format(
+            selectSql,
+            """
+                        WHERE idp_user.tenant_id = ?::uuid
+                        AND idp_user.provider_user_id = ?
+                        AND idp_user.provider_id = ?
+                    """);
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(externalSubject);
+    params.add(providerId);
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
   public Map<String, String> selectByEmail(Tenant tenant, String email, String providerId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
@@ -71,7 +92,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                         AND idp_user.provider_id = ?
                     """);
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(phone);
     params.add(providerId);
 
@@ -94,7 +115,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
             """;
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(limit);
     params.add(offset);
 
@@ -116,7 +137,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                 AND idp_user.provider_user_id = ?
             """);
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(providerId);
     params.add(providerUserId);
 
@@ -169,7 +190,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
       """;
 
     List<Object> params = new ArrayList<>();
-    params.add(userIdentifier.value());
+    params.add(userIdentifier.valueAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -197,7 +218,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
       """;
 
     List<Object> params = new ArrayList<>();
-    params.add(userIdentifier.value());
+    params.add(userIdentifier.valueAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
