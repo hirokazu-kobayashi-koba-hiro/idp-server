@@ -18,7 +18,6 @@ sequenceDiagram
     participant Client as クライアント
     participant idp as idp-server
     participant Device as ユーザー端末（スマホなど）
-    
     Client ->> idp: 1. 認証リクエスト（/backchannel-authentication）
     idp ->> Device: 2. 認証通知（Push/FIDO等）
     Device ->> idp: 3. ユーザー認証（パスワード / Passkey など）
@@ -26,6 +25,25 @@ sequenceDiagram
     Client ->> idp: 5. トークンリクエスト（/tokens, polling）
     idp -->> Client: 6. トークン（IDトークン / アクセストークン 等）
 ```
+
+## login_hint
+
+`idp-server` は CIBA フローの login_hint パラメータに対して、複数の識別子形式をサポートしています。これにより、柔軟なユーザー特定が可能です。
+
+CIBA 仕様 に準拠し、login_hint はユーザー識別のヒントとして使用されます。
+
+### サポート形式
+
+以下のような接頭辞つきの拡張形式に対応しており、ユーザーの識別方法を柔軟に指定できます：
+
+| フォーマット                           | 意味              | 例                                  |
+|----------------------------------|-----------------|------------------------------------|
+| `sub:<subject>`                  | 内部ユーザーIDで直接識別   | `sub:abc123`                       |
+| `ex-sub:<subject>,<id-provider>` | 外部IdPのサブジェクトで識別 | `ex-sub:ex-idp123,ex-idp`          |
+| `email:<email>,<id-provider>`    | メールアドレスによる識別    | `email:foo@example.com,idp-server` |
+| `phone:<number>,<id-provider>`   | 電話番号による識別       | `phone:09012345678,idp-server`     |
+
+※ `id-provider` のデフォルト値は `idp-server`となります。 フェデレーションによる外部IdPを利用してユーザーを作成している場合は、外部IdPプロバイダー名を指定することができます。
 
 ## ユーザー通知・端末連携
 
