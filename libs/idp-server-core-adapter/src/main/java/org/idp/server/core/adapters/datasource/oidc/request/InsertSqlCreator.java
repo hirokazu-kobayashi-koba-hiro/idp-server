@@ -29,8 +29,8 @@ public class InsertSqlCreator {
 
   static List<Object> createInsert(AuthorizationRequest authorizationRequest) {
     List<Object> params = new ArrayList<>();
-    params.add(authorizationRequest.identifier().value());
-    params.add(authorizationRequest.tenantIdentifier().value());
+    params.add(authorizationRequest.identifier().valueAsUuid());
+    params.add(authorizationRequest.tenantIdentifier().valueAsUuid());
     params.add(authorizationRequest.profile().name());
     params.add(authorizationRequest.scopes().toStringValues());
     params.add(authorizationRequest.responseType().name());

@@ -78,13 +78,13 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
                     """;
     List<Object> params = new ArrayList<>();
     AuthorizationGrant authorizationGrant = cibaGrant.authorizationGrant();
-    params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().value());
-    params.add(cibaGrant.tenantIdentifier().value());
+    params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().valueAsUuid());
+    params.add(cibaGrant.tenantIdentifier().valueAsUuid());
     params.add(cibaGrant.authReqId().value());
     params.add(cibaGrant.expiredAt().toStringValue());
     params.add(cibaGrant.interval().toStringValue());
     params.add(cibaGrant.status().name());
-    params.add(authorizationGrant.user().sub());
+    params.add(authorizationGrant.user().subAsUuid());
     params.add(toJson(authorizationGrant.user()));
     params.add(toJson(authorizationGrant.authentication()));
     params.add(authorizationGrant.requestedClientId().value());
@@ -139,7 +139,7 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(toJson(cibaGrant.authorizationGrant().authentication()));
     params.add(cibaGrant.status().name());
-    params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().value());
+    params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -170,7 +170,7 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
             """;
 
     List<Object> params = new ArrayList<>();
-    params.add(backchannelAuthenticationRequestIdentifier.value());
+    params.add(backchannelAuthenticationRequestIdentifier.valueAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -184,7 +184,7 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
             WHERE backchannel_authentication_request_id = ?::uuid;
             """;
     List<Object> params = new ArrayList<>();
-    params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().value());
+    params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

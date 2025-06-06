@@ -48,8 +48,8 @@ public class PostgresqlExecutor implements PermissionSqlExecutor {
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(permission.id());
-    params.add(tenant.identifierValue());
+    params.add(permission.idAsUuid());
+    params.add(tenant.identifierUUID());
     params.add(permission.name());
     params.add(permission.description());
 
@@ -77,8 +77,8 @@ public class PostgresqlExecutor implements PermissionSqlExecutor {
     permissions.forEach(
         permission -> {
           sqlValues.add("(?::uuid, ?::uuid, ?, ?)");
-          params.add(permission.id());
-          params.add(tenant.identifierValue());
+          params.add(permission.idAsUuid());
+          params.add(tenant.identifierUUID());
           params.add(permission.name());
           params.add(permission.description());
         });

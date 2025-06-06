@@ -56,7 +56,7 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
   @Override
   public void update(Tenant tenant, AuthorizationGranted authorizationGranted) {
     AuthorizationGrantedSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.update(authorizationGranted);
+    executor.update(tenant, authorizationGranted);
   }
 
   private String toJson(Object value) {

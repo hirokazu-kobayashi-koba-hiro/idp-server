@@ -72,8 +72,8 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(request.identifier().value());
-    params.add(request.tenantIdentifier().value());
+    params.add(request.identifier().valueAsUuid());
+    params.add(request.tenantIdentifier().valueAsUuid());
     params.add(request.profile().name());
     params.add(request.deliveryMode().name());
     params.add(request.scopes().toStringValues());
@@ -160,7 +160,7 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
                         """;
 
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
+    params.add(identifier.valueAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -174,7 +174,7 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
             WHERE id = ?::uuid;
             """;
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
+    params.add(identifier.valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

@@ -21,6 +21,8 @@ export const serverConfig = {
   jwksEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/jwks`,
   backchannelAuthenticationEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/backchannel/authentications`,
+  backchannelAuthenticationInvalidTenantIdEndpoint:
+    `${backendUrl}/67e7/v1/backchannel/authentications`,
   backchannelAuthenticationAutomatedCompleteEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/backchannel/authentications/automated-complete`,
   authenticationDeviceInteractionEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/{flow-type}/{id}/`,

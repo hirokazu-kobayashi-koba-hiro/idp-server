@@ -40,8 +40,8 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(role.id());
-    params.add(tenant.identifierValue());
+    params.add(role.idAsUuid());
+    params.add(tenant.identifierUUID());
     params.add(role.name());
     params.add(role.description());
 
@@ -70,8 +70,8 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
     roles.forEach(
         role -> {
           sqlValues.add("(?::uuid, ?::uuid, ?, ?)");
-          params.add(role.id());
-          params.add(tenant.identifierValue());
+          params.add(role.idAsUuid());
+          params.add(tenant.identifierUUID());
           params.add(role.name());
           params.add(role.description());
         });
@@ -97,9 +97,9 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
                 .forEach(
                     permission -> {
                       sqlValues.add("(?::uuid, ?::uuid, ?::uuid)");
-                      params.add(tenant.identifierValue());
-                      params.add(role.id());
-                      params.add(permission.id());
+                      params.add(tenant.identifierUUID());
+                      params.add(role.idAsUuid());
+                      params.add(permission.idAsUuid());
                     }));
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(";");

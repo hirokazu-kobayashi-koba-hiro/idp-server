@@ -17,10 +17,13 @@
 
 package org.idp.server.platform.multi_tenancy.organization;
 
+import org.idp.server.platform.uuid.UuidConvertable;
+
 import java.util.Objects;
+import java.util.UUID;
 
 /** OrganizationIdentifier is organization identity. */
-public class OrganizationIdentifier {
+public class OrganizationIdentifier implements UuidConvertable {
 
   String value;
 
@@ -32,6 +35,10 @@ public class OrganizationIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   @Override

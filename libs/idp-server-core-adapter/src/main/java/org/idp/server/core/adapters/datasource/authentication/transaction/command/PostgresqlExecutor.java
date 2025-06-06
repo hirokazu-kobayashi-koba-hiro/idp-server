@@ -71,16 +71,22 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
 
     User user = authenticationTransaction.user();
     List<Object> params = new ArrayList<>();
-    params.add(authenticationTransaction.identifier().value());
-    params.add(tenant.identifierValue());
+    params.add(authenticationTransaction.identifier().valueAsUuid());
+    params.add(tenant.identifierUUID());
     params.add(authenticationTransaction.request().authorizationFlow().value());
     params.add(authenticationTransaction.request().requestedClientId().value());
-    params.add(user.sub());
-    params.add(jsonConverter.write(user));
+
+    if (user.exists()) {
+      params.add(user.subAsUuid());
+      params.add(jsonConverter.write(user));
+    } else {
+      params.add(null);
+      params.add(null);
+    }
     params.add(jsonConverter.write(authenticationTransaction.requestContext().toMap()));
     if (user.hasAuthenticationDevices()) {
       AuthenticationDevice authenticationDevice = user.findPreferredForNotification();
-      params.add(authenticationDevice.id());
+      params.add(authenticationDevice.idAsUuid());
     } else {
       params.add(null);
     }
@@ -114,12 +120,12 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
 
     User user = authenticationTransaction.user();
     List<Object> params = new ArrayList<>();
-    params.add(user.sub());
+    params.add(user.subAsUuid());
     params.add(jsonConverter.write(user));
 
     if (user.hasAuthenticationDevices()) {
       AuthenticationDevice authenticationDevice = user.findPreferredForNotification();
-      params.add(authenticationDevice.id());
+      params.add(authenticationDevice.idAsUuid());
     } else {
       params.add(null);
     }
@@ -130,8 +136,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
       params.add(null);
     }
 
-    params.add(authenticationTransaction.identifier().value());
-    params.add(tenant.identifierValue());
+    params.add(authenticationTransaction.identifier().valueAsUuid());
+    params.add(tenant.identifierUUID());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

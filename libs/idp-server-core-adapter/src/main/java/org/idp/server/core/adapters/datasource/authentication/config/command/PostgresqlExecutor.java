@@ -47,8 +47,8 @@ public class PostgresqlExecutor implements AuthenticationConfigCommandSqlExecuto
             """;
 
     List<Object> params = new ArrayList<>();
-    params.add(configuration.id());
-    params.add(tenant.identifierValue());
+    params.add(configuration.idAsUUID());
+    params.add(tenant.identifierUUID());
     params.add(configuration.type());
     params.add(jsonConverter.write(configuration.payload()));
 
@@ -68,7 +68,7 @@ public class PostgresqlExecutor implements AuthenticationConfigCommandSqlExecuto
 
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration.payload()));
-    params.add(configuration.id());
+    params.add(configuration.idAsUUID());
     params.add(tenant.identifierValue());
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -85,7 +85,7 @@ public class PostgresqlExecutor implements AuthenticationConfigCommandSqlExecuto
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(configuration.id());
+    params.add(configuration.idAsUUID());
     params.add(tenant.identifierValue());
 
     sqlExecutor.execute(sqlTemplate, params);

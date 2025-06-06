@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.oidc.configuration.server.query;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
@@ -39,6 +40,10 @@ public class PostgresqlExecutor implements ServerConfigSqlExecutor {
                     FROM authorization_server_configuration
                     WHERE tenant_id = ?::uuid;
                     """;
-    return sqlExecutor.selectOne(sqlTemplate, List.of(tenantIdentifier.value()));
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenantIdentifier.valueAsUuid());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
   }
 }

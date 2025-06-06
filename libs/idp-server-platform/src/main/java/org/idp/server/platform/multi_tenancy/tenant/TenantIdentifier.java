@@ -17,9 +17,11 @@
 
 package org.idp.server.platform.multi_tenancy.tenant;
 
+import org.idp.server.platform.uuid.UuidConvertable;
 import java.util.Objects;
+import java.util.UUID;
 
-public class TenantIdentifier {
+public class TenantIdentifier implements UuidConvertable {
 
   String value;
 
@@ -31,6 +33,10 @@ public class TenantIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   @Override

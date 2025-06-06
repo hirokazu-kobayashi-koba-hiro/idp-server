@@ -44,9 +44,9 @@ public class PostgresqlExecutor implements ClientConfigCommandSqlExecutor {
 
     String payload = jsonConverter.write(clientConfiguration);
     List<Object> params = new ArrayList<>();
-    params.add(clientConfiguration.clientIdentifier().value());
+    params.add(clientConfiguration.clientIdentifier().valueAsUuid());
     params.add(clientConfiguration.clientIdAlias());
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(payload);
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -69,8 +69,8 @@ public class PostgresqlExecutor implements ClientConfigCommandSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(clientConfiguration.clientIdAlias());
     params.add(payload);
-    params.add(tenant.identifierValue());
-    params.add(clientConfiguration.clientIdentifier().value());
+    params.add(tenant.identifierUUID());
+    params.add(clientConfiguration.clientIdentifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -87,8 +87,8 @@ public class PostgresqlExecutor implements ClientConfigCommandSqlExecutor {
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
-    params.add(clientIdentifier.value());
+    params.add(tenant.identifierUUID());
+    params.add(clientIdentifier.valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

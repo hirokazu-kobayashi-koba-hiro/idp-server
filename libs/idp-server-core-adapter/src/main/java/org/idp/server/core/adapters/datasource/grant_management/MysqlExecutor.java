@@ -25,6 +25,7 @@ import org.idp.server.core.oidc.grant_management.AuthorizationGranted;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class MysqlExecutor implements AuthorizationGrantedSqlExecutor {
@@ -151,7 +152,7 @@ public class MysqlExecutor implements AuthorizationGrantedSqlExecutor {
   }
 
   @Override
-  public void update(AuthorizationGranted authorizationGranted) {
+  public void update(Tenant tenant, AuthorizationGranted authorizationGranted) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -167,7 +168,8 @@ public class MysqlExecutor implements AuthorizationGrantedSqlExecutor {
                 authorization_details = ?,
                 consent_claims = ?,
                 updated_at = now()
-                WHERE id = ?;
+                WHERE id = ?
+                AND tenant_id = ?;
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -208,6 +210,7 @@ public class MysqlExecutor implements AuthorizationGrantedSqlExecutor {
     }
 
     params.add(authorizationGranted.identifier().value());
+    params.add(authorizationGrant.tenantIdentifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

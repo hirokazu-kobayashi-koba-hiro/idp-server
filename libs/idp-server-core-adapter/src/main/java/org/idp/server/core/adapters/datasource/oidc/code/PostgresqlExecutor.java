@@ -75,10 +75,10 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
                     """;
     List<Object> params = new ArrayList<>();
 
-    params.add(authorizationCodeGrant.authorizationRequestIdentifier().value());
-    params.add(authorizationCodeGrant.tenantIdentifier().value());
+    params.add(authorizationCodeGrant.authorizationRequestIdentifier().valueAsUuid());
+    params.add(authorizationCodeGrant.tenantIdentifier().valueAsUuid());
     params.add(authorizationCodeGrant.authorizationCode().value());
-    params.add(authorizationCodeGrant.user().sub());
+    params.add(authorizationCodeGrant.user().subAsUuid());
     params.add(toJson(authorizationCodeGrant.user()));
     params.add(toJson(authorizationCodeGrant.authentication()));
     params.add(authorizationCodeGrant.clientId().value());
@@ -150,7 +150,7 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(authorizationCode.value());
-    params.add(tenant.identifier().value());
+    params.add(tenant.identifier().valueAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -164,8 +164,8 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
                 AND tenant_id = ?::uuid;
             """;
     List<Object> params = new ArrayList<>();
-    params.add(authorizationCodeGrant.authorizationRequestIdentifier().value());
-    params.add(tenant.identifier().value());
+    params.add(authorizationCodeGrant.authorizationRequestIdentifier().valueAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

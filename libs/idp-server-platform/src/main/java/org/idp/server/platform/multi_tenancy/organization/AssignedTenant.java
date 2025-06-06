@@ -17,10 +17,13 @@
 
 package org.idp.server.platform.multi_tenancy.organization;
 
+import org.idp.server.platform.uuid.UuidConvertable;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
-public class AssignedTenant {
+public class AssignedTenant implements UuidConvertable {
   String id;
   String name;
   String type;
@@ -35,6 +38,10 @@ public class AssignedTenant {
 
   public String id() {
     return id;
+  }
+
+  public UUID idAsUuid() {
+    return convertUuid(id);
   }
 
   public String name() {

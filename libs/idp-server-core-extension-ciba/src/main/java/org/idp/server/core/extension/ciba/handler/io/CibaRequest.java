@@ -81,4 +81,9 @@ public class CibaRequest implements AuthorizationHeaderHandlerable {
   public ClientCert toClientCert() {
     return new ClientCert(clientCert);
   }
+
+  public boolean hasClientId() {
+    RequestedClientId requestedClientId = clientId();
+    return requestedClientId.exists();
+  }
 }

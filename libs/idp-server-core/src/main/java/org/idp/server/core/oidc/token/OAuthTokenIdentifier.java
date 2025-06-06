@@ -17,8 +17,10 @@
 package org.idp.server.core.oidc.token;
 
 import java.util.Objects;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class OAuthTokenIdentifier {
+public class OAuthTokenIdentifier implements UuidConvertable {
   String value;
 
   public OAuthTokenIdentifier() {}
@@ -29,6 +31,10 @@ public class OAuthTokenIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   public boolean exists() {

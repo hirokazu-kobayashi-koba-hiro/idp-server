@@ -17,9 +17,11 @@
 package org.idp.server.core.oidc.authentication;
 
 import java.util.Objects;
+import java.util.UUID;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class AuthorizationIdentifier {
+public class AuthorizationIdentifier implements UuidConvertable {
   String value;
 
   public AuthorizationIdentifier() {}
@@ -34,6 +36,10 @@ public class AuthorizationIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   @Override

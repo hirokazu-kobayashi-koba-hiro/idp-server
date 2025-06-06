@@ -17,8 +17,10 @@
 package org.idp.server.control_plane.management.tenant.invitation.operation;
 
 import java.util.Objects;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class TenantInvitationIdentifier {
+public class TenantInvitationIdentifier implements UuidConvertable {
   String value;
 
   public TenantInvitationIdentifier() {}
@@ -29,6 +31,10 @@ public class TenantInvitationIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   public boolean exists() {

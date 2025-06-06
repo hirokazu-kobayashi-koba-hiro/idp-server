@@ -53,7 +53,7 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
             )
             """;
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(tenant.name().value());
     params.add(tenant.type().name());
     params.add(tenant.domain().value());

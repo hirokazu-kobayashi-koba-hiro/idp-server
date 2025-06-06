@@ -57,9 +57,9 @@ public class PostgresqlExecutor implements SecurityEventHoolResultSqlExecutor {
         sql.append(", ");
       }
       sql.append("(?::uuid, ?::uuid, ?::uuid, ?, ?, ?::jsonb, ?)");
-      params.add(result.identifier().value());
-      params.add(tenant.identifierValue());
-      params.add(securityEvent.identifier().value());
+      params.add(result.identifier().valueAsUuid());
+      params.add(tenant.identifierUUID());
+      params.add(securityEvent.identifier().valueAsUuid());
       params.add(securityEvent.type().value());
       params.add(result.type().name());
       params.add(eventPayload);

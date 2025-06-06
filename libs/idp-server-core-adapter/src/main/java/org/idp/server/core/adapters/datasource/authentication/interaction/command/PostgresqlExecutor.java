@@ -54,8 +54,8 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
     String json = jsonConverter.write(payload);
 
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
-    params.add(tenant.identifierValue());
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
     params.add(type);
     params.add(json);
     params.add(json);
@@ -80,8 +80,8 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
 
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(payload));
-    params.add(identifier.value());
-    params.add(tenant.identifierValue());
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
     params.add(type);
 
     sqlExecutor.execute(sqlTemplate, params);

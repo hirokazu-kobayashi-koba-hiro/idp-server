@@ -43,11 +43,15 @@ public class PostgresqlExecutor implements ServerConfigSqlExecutor {
                     token_issuer,
                     payload
                     )
-                    VALUES (?::uuid, ?, ?::jsonb);
+                    VALUES (
+                    ?::uuid,
+                    ?,
+                    ?::jsonb
+                    );
                     """;
     String payload = jsonConverter.write(authorizationServerConfiguration);
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(authorizationServerConfiguration.tokenIssuer().value());
     params.add(payload);
 
@@ -69,7 +73,7 @@ public class PostgresqlExecutor implements ServerConfigSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(payload);
     params.add(authorizationServerConfiguration.tokenIssuer().value());
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

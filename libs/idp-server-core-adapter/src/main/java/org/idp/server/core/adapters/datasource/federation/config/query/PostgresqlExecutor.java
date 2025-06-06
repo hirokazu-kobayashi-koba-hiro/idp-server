@@ -45,7 +45,7 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
                 AND sso_provider = ?
                 """;
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(federationType.name());
     params.add(ssoProvider.name());
 
@@ -63,7 +63,7 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
                     AND id = ?::uuid
                     """;
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(identifier.value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
@@ -80,7 +80,7 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
                     offset ?
                     """;
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(limit);
     params.add(offset);
 

@@ -17,8 +17,10 @@
 package org.idp.server.core.oidc.client;
 
 import java.util.Objects;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class ClientIdentifier {
+public class ClientIdentifier implements UuidConvertable {
   String value;
 
   public ClientIdentifier() {}
@@ -29,6 +31,10 @@ public class ClientIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   public boolean exists() {

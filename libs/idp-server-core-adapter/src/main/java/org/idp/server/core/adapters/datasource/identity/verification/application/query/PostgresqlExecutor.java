@@ -42,9 +42,9 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
-    params.add(tenant.identifierValue());
-    params.add(user.sub());
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
+    params.add(user.subAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -63,7 +63,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
 
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -81,8 +81,8 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
                     """;
 
     List<Object> params = new ArrayList<>();
-    params.add(user.sub());
-    params.add(tenant.identifierValue());
+    params.add(user.subAsUuid());
+    params.add(tenant.identifierUUID());
 
     return sqlExecutor.selectList(sqlTemplate, params);
   }
@@ -98,11 +98,11 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
 
     List<Object> params = new ArrayList<>();
     params.add(user.sub());
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
 
     if (queries.hasId()) {
       sqlBuilder.append(" AND id = ?::uuid");
-      params.add(queries.id());
+      params.add(queries.idAsUuid());
     }
     if (queries.hasType()) {
       sqlBuilder.append(" AND verification_type = ?");

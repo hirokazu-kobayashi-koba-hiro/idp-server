@@ -65,16 +65,16 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
                 ) ON CONFLICT DO NOTHING;
                 """;
     List<Object> params = new ArrayList<>();
-    params.add(securityEvent.identifier().value());
+    params.add(securityEvent.identifier().valueAsUuid());
     params.add(securityEvent.type().value());
     params.add(securityEvent.description().value());
-    params.add(securityEvent.tenant().id());
+    params.add(securityEvent.tenant().idAsUuid());
     params.add(securityEvent.tenant().name());
     params.add(securityEvent.client().id());
     params.add(securityEvent.client().name());
 
     if (securityEvent.hasUser()) {
-      params.add(securityEvent.user().id());
+      params.add(securityEvent.user().idAsUuid());
       params.add(securityEvent.user().name());
       // TODO login hint
       params.add(securityEvent.user().name());
