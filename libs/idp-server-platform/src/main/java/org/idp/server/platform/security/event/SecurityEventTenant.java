@@ -17,11 +17,14 @@
 
 package org.idp.server.platform.security.event;
 
+import org.idp.server.platform.uuid.UuidConvertable;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
-public class SecurityEventTenant {
+public class SecurityEventTenant implements UuidConvertable {
 
   String id;
   String issuer;
@@ -51,6 +54,10 @@ public class SecurityEventTenant {
 
   public String id() {
     return id;
+  }
+
+  public UUID idAsUuid() {
+    return convertUuid(id);
   }
 
   public String issuer() {

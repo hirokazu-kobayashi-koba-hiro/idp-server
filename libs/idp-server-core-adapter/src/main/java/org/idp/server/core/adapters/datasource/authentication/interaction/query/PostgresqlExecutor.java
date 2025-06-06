@@ -39,8 +39,8 @@ public class PostgresqlExecutor implements AuthenticationInteractionQuerySqlExec
             """;
 
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
-    params.add(tenant.identifierValue());
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
     params.add(type);
 
     return sqlExecutor.selectOne(sqlTemplate, params);

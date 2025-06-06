@@ -17,8 +17,10 @@
 package org.idp.server.core.oidc.federation;
 
 import java.util.Objects;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class FederationConfigurationIdentifier {
+public class FederationConfigurationIdentifier implements UuidConvertable {
 
   String value;
 
@@ -30,6 +32,10 @@ public class FederationConfigurationIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   public boolean exists() {

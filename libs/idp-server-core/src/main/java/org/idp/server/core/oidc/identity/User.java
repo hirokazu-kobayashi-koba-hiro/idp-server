@@ -29,8 +29,9 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class User implements JsonReadable, Serializable {
+public class User implements JsonReadable, Serializable, UuidConvertable {
   String sub;
   String providerId;
   String providerUserId;
@@ -88,6 +89,10 @@ public class User implements JsonReadable, Serializable {
 
   public String sub() {
     return sub;
+  }
+
+  public UUID subAsUuid() {
+    return convertUuid(sub);
   }
 
   public User setSub(String sub) {

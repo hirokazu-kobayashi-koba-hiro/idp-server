@@ -34,7 +34,7 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
                 VALUES (?::uuid, ?, ?);
                 """;
     List<Object> organizationParams = new ArrayList<>();
-    organizationParams.add(organization.identifier().value());
+    organizationParams.add(organization.identifier().valueAsUuid());
     organizationParams.add(organization.name().value());
     organizationParams.add(organization.description().value());
 
@@ -61,8 +61,8 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
         .forEach(
             organizationTenant -> {
               sqlValues.add("(?::uuid, ?::uuid)");
-              tenantParams.add(organization.identifier().value());
-              tenantParams.add(organizationTenant.id());
+              tenantParams.add(organization.identifier().valueAsUuid());
+              tenantParams.add(organizationTenant.idAsUuid());
             });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(
@@ -90,7 +90,7 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
     List<Object> organizationParams = new ArrayList<>();
     organizationParams.add(organization.name().value());
     organizationParams.add(organization.description().value());
-    organizationParams.add(organization.identifier().value());
+    organizationParams.add(organization.identifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, organizationParams);
   }
@@ -120,7 +120,7 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
             organization.description
           """;
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
+    params.add(identifier.valueAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

@@ -49,8 +49,8 @@ public class PostgresqlExecutor implements SsoSessionCommandSqlExecutor {
 
     String json = jsonConverter.write(payload);
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
-    params.add(tenant.identifierValue());
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
     params.add(json);
     params.add(json);
 
@@ -69,8 +69,8 @@ public class PostgresqlExecutor implements SsoSessionCommandSqlExecutor {
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
-    params.add(tenant.identifierValue());
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
     sqlExecutor.execute(sqlTemplate, params);
   }
 }

@@ -591,4 +591,89 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       );
     });
   });
+
+  describe("invalid request", () => {
+
+    it("tenantId id is invalid", async () => {
+      let backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationInvalidTenantIdEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHint,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(400);
+    });
+
+    it("clientId id is not specified", async () => {
+      let backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: "",
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHint,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(400);
+      expect(backchannelAuthenticationResponse.data.error).toEqual("invalid_request");
+      expect(backchannelAuthenticationResponse.data.error_description).toEqual("client_id is in neither body or header. client_id is required");
+    });
+
+    it("loginHint is invalid format", async () => {
+      let backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: "email--aa",
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(400);
+      expect(backchannelAuthenticationResponse.data.error).toEqual("unknown_user_id");
+      expect(backchannelAuthenticationResponse.data.error_description).toEqual("The OpenID Provider is not able to identify which end-user the Client wishes to be authenticated by means of the hint provided in the request (login_hint_token, id_token_hint, or login_hint).");
+    });
+
+    xit("bindingMessage is invalid format", async () => {
+      let backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          bindingMessage: ciba.bindingMessage + "a@@@?<>aaggahhgguuaugklagba#########&777a----------------------------------------------------------------------------------------",
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHint,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(400);
+      expect(backchannelAuthenticationResponse.data.error).toEqual("unknown_user_id");
+      expect(backchannelAuthenticationResponse.data.error_description).toEqual("The OpenID Provider is not able to identify which end-user the Client wishes to be authenticated by means of the hint provided in the request (login_hint_token, id_token_hint, or login_hint).");
+    });
+
+    it("clientSecret is not specified", async () => {
+      let backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHint,
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(401);
+      expect(backchannelAuthenticationResponse.data.error).toEqual("invalid_client");
+      expect(backchannelAuthenticationResponse.data.error_description).toEqual("client authentication type is client_secret_post, but request does not contains client_secret_post");
+    });
+  });
 });

@@ -23,6 +23,8 @@ import org.idp.server.core.extension.ciba.handler.io.CibaRequestResult;
 import org.idp.server.core.extension.ciba.handler.io.CibaRequestStatus;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
+import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class CibaRequestErrorHandler {
@@ -37,12 +39,29 @@ public class CibaRequestErrorHandler {
           new BackchannelAuthenticationErrorResponse(
               badRequest.error(), badRequest.errorDescription()));
     }
+
     if (exception instanceof ClientUnAuthorizedException) {
       log.warn(exception.getMessage());
       return new CibaRequestResult(
           CibaRequestStatus.UNAUTHORIZE,
           new BackchannelAuthenticationErrorResponse(
               new Error("invalid_client"), new ErrorDescription(exception.getMessage())));
+    }
+
+    if (exception instanceof ClientConfigurationNotFoundException) {
+      log.warn(exception.getMessage());
+      return new CibaRequestResult(
+          CibaRequestStatus.BAD_REQUEST,
+          new BackchannelAuthenticationErrorResponse(
+              new Error("invalid_client"), new ErrorDescription(exception.getMessage())));
+    }
+
+    if (exception instanceof ServerConfigurationNotFoundException) {
+      log.warn(exception.getMessage());
+      return new CibaRequestResult(
+          CibaRequestStatus.BAD_REQUEST,
+          new BackchannelAuthenticationErrorResponse(
+              new Error("invalid_request"), new ErrorDescription(exception.getMessage())));
     }
 
     log.error(exception.getMessage(), exception);

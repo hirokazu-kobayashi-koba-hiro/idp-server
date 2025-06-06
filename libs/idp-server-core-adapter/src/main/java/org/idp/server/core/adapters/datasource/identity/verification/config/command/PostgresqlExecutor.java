@@ -52,8 +52,8 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
             """;
 
     List<Object> params = new ArrayList<>();
-    params.add(configuration.id());
-    params.add(tenant.identifierValue());
+    params.add(configuration.idAsUuid());
+    params.add(tenant.identifierUUID());
     params.add(type.name());
     params.add(jsonConverter.write(configuration));
 
@@ -78,9 +78,9 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
 
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration));
-    params.add(configuration.id());
+    params.add(configuration.idAsUuid());
     params.add(type.name());
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -100,9 +100,9 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
             """;
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(type.name());
-    params.add(configuration.id());
+    params.add(configuration.idAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

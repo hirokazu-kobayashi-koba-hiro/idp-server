@@ -17,8 +17,10 @@
 package org.idp.server.core.extension.identity.verification.result;
 
 import java.util.Objects;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class IdentityVerificationResultIdentifier {
+public class IdentityVerificationResultIdentifier implements UuidConvertable {
 
   String value;
 
@@ -30,6 +32,10 @@ public class IdentityVerificationResultIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   @Override

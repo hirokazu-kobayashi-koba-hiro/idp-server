@@ -17,9 +17,11 @@
 package org.idp.server.core.oidc.identity.device;
 
 import java.io.Serializable;
+import java.util.UUID;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class AuthenticationDevice implements Serializable, JsonReadable {
+public class AuthenticationDevice implements Serializable, JsonReadable, UuidConvertable {
   String id;
   String platform;
   String os;
@@ -49,6 +51,10 @@ public class AuthenticationDevice implements Serializable, JsonReadable {
 
   public String id() {
     return id;
+  }
+
+  public UUID idAsUuid() {
+    return convertUuid(id);
   }
 
   public String platform() {

@@ -48,8 +48,8 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
                     ) ON CONFLICT DO NOTHING;
                     """;
     List<Object> params = new ArrayList<>();
-    params.add(configuration.identifier().value());
-    params.add(tenant.identifier().value());
+    params.add(configuration.identifier().valueAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
     params.add(configuration.hookType().name());
     params.add(jsonConverter.write(configuration));
     params.add(configuration.executionOrder());
@@ -71,8 +71,8 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration));
     params.add(configuration.executionOrder());
-    params.add(configuration.identifier().value());
-    params.add(tenant.identifier().value());
+    params.add(configuration.identifier().valueAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -87,8 +87,8 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
                     AND tenant_id = ?::uuid;
                     """;
     List<Object> params = new ArrayList<>();
-    params.add(configuration.identifier().value());
-    params.add(tenant.identifier().value());
+    params.add(configuration.identifier().valueAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

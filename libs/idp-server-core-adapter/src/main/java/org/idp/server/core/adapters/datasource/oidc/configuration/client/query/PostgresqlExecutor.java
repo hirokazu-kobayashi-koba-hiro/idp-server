@@ -41,14 +41,19 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
     String sqlTemplate =
         """
             INSERT INTO client_configuration (id, id_alias, tenant_id, payload)
-            VALUES (?::uuid, ?, ?::uuid, ?::jsonb)
+            VALUES (
+            ?::uuid,
+            ?,
+            ?::uuid,
+            ?::jsonb
+            )
             """;
 
     String payload = jsonConverter.write(clientConfiguration);
     List<Object> params = new ArrayList<>();
-    params.add(clientConfiguration.clientIdentifier().value());
+    params.add(clientConfiguration.clientIdentifier().valueAsUuid());
     params.add(clientConfiguration.clientIdAlias());
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(payload);
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -65,8 +70,11 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
                         WHERE tenant_id = ?::uuid
                         AND id_alias = ?;
                         """;
-    List<Object> paramsClientIdAlias = List.of(tenant.identifierValue(), requestedClientId.value());
-    return sqlExecutor.selectOne(sqlTemplateClientIdAlias, paramsClientIdAlias);
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(requestedClientId.value());
+
+    return sqlExecutor.selectOne(sqlTemplateClientIdAlias, params);
   }
 
   @Override
@@ -79,7 +87,10 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
                         WHERE tenant_id = ?::uuid
                         AND id = ?::uuid;
                         """;
-    List<Object> params = List.of(tenant.identifierValue(), clientIdentifier.value());
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifier().valueAsUuid());
+    params.add(clientIdentifier.valueAsUuid());
+
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
@@ -94,7 +105,11 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
                         limit ?
                         offset ?;
                         """;
-    List<Object> params = List.of(tenant.identifierValue(), limit, offset);
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(limit);
+    params.add(offset);
+
     return sqlExecutor.selectList(sqlTemplate, params);
   }
 
@@ -115,8 +130,8 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(clientConfiguration.clientIdAlias());
     params.add(payload);
-    params.add(tenant.identifierValue());
-    params.add(clientConfiguration.clientIdentifier().value());
+    params.add(tenant.identifierUUID());
+    params.add(clientConfiguration.clientIdentifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -133,7 +148,7 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(requestedClientId.value());
 
     sqlExecutor.execute(sqlTemplate, params);

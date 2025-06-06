@@ -18,8 +18,9 @@ package org.idp.server.core.oidc.identity.device;
 
 import java.util.Objects;
 import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class AuthenticationDeviceIdentifier {
+public class AuthenticationDeviceIdentifier implements UuidConvertable {
   String value;
 
   public static AuthenticationDeviceIdentifier generate() {
@@ -34,6 +35,10 @@ public class AuthenticationDeviceIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   @Override

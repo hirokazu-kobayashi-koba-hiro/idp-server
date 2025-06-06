@@ -53,8 +53,8 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
             AND tenant_id = ?::uuid;
             """;
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
-    params.add(tenant.identifierValue());
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -70,7 +70,7 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
             OFFSET ?;
             """;
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(limit);
     params.add(offset);
 

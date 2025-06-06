@@ -44,7 +44,7 @@ public class PostgresqlExecutor implements IdentityVerificationConfigSqlExecutor
             """;
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(type.name());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
@@ -63,8 +63,8 @@ public class PostgresqlExecutor implements IdentityVerificationConfigSqlExecutor
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
-    params.add(identifier.value());
+    params.add(tenant.identifierUUID());
+    params.add(identifier.valueAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -82,7 +82,7 @@ public class PostgresqlExecutor implements IdentityVerificationConfigSqlExecutor
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     params.add(limit);
     params.add(offset);
 

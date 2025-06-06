@@ -27,7 +27,7 @@ class InsertSqlParamsCreator {
 
   static List<Object> create(VerifiableCredentialTransaction verifiableCredentialTransaction) {
     List<Object> params = new ArrayList<>();
-    params.add(verifiableCredentialTransaction.transactionId().value());
+    params.add(verifiableCredentialTransaction.transactionId().valueAsUuid());
     params.add(verifiableCredentialTransaction.credentialIssuer().value());
     params.add(verifiableCredentialTransaction.clientId().value());
     params.add(verifiableCredentialTransaction.subject().value());

@@ -20,6 +20,8 @@ package org.idp.server.platform.multi_tenancy.tenant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
+
 import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 
@@ -75,6 +77,10 @@ public class Tenant {
 
   public String identifierValue() {
     return identifier.value();
+  }
+
+  public UUID identifierUUID() {
+    return identifier.valueAsUuid();
   }
 
   public TenantName name() {
