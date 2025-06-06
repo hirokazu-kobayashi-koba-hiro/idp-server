@@ -45,7 +45,7 @@ public class PostgresqlExecutor implements TenantQuerySqlExecutor {
             WHERE id = ?::uuid
             """;
     List<Object> params = new ArrayList<>();
-    params.add(tenantIdentifier.value());
+    params.add(tenantIdentifier.valueAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -80,7 +80,7 @@ public class PostgresqlExecutor implements TenantQuerySqlExecutor {
         sqlTemplateBuilder.append(", ");
       }
       sqlTemplateBuilder.append("?::uuid");
-      params.add(tenantIdentifier.value());
+      params.add(tenantIdentifier.valueAsUuid());
     }
 
     sqlTemplateBuilder.append(" )");

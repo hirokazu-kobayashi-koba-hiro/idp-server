@@ -17,9 +17,12 @@
 
 package org.idp.server.platform.security.hook;
 
-import java.util.Objects;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class SecurityEventHookResultIdentifier {
+import java.util.Objects;
+import java.util.UUID;
+
+public class SecurityEventHookResultIdentifier implements UuidConvertable {
 
   String value;
 
@@ -31,6 +34,10 @@ public class SecurityEventHookResultIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   public boolean exists() {

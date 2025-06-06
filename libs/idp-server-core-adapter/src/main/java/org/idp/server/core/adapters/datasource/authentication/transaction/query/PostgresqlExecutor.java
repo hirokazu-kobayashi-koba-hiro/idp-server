@@ -38,8 +38,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
             AND tenant_id = ?::uuid
             """;
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
-    params.add(tenant.identifierValue());
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -59,8 +59,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
                 limit 1
                 """;
     List<Object> params = new ArrayList<>();
-    params.add(authenticationDeviceIdentifier.value());
-    params.add(tenant.identifierValue());
+    params.add(authenticationDeviceIdentifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

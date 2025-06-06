@@ -18,10 +18,7 @@
 package org.idp.server.platform.datasource;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SqlExecutor {
   private final Connection connection;
@@ -40,6 +37,21 @@ public class SqlExecutor {
         }
         if (param instanceof Integer integerValue) {
           prepareStatement.setInt(index, integerValue);
+        }
+        if (param instanceof Long longValue) {
+          prepareStatement.setLong(index, longValue);
+        }
+        if (param instanceof Boolean booleanValue) {
+          prepareStatement.setBoolean(index, booleanValue);
+        }
+        if (param instanceof byte[] binary) {
+          prepareStatement.setBytes(index, binary);
+        }
+        if (param instanceof UUID uuid) {
+          prepareStatement.setObject(index, uuid);
+        }
+        if (param == null) {
+          prepareStatement.setString(index, "");
         }
         index++;
       }
@@ -77,6 +89,9 @@ public class SqlExecutor {
         if (param instanceof byte[] binary) {
           prepareStatement.setBytes(index, binary);
         }
+        if (param instanceof UUID uuid) {
+          prepareStatement.setObject(index, uuid);
+        }
         if (param == null) {
           prepareStatement.setString(index, "");
         }
@@ -112,6 +127,9 @@ public class SqlExecutor {
         }
         if (param instanceof byte[] binary) {
           prepareStatement.setBytes(index, binary);
+        }
+        if (param instanceof UUID uuid) {
+          prepareStatement.setObject(index, uuid);
         }
         if (param == null) {
           prepareStatement.setString(index, "");
@@ -149,6 +167,9 @@ public class SqlExecutor {
         }
         if (param instanceof byte[] binary) {
           prepareStatement.setBytes(index, binary);
+        }
+        if (param instanceof UUID uuid) {
+          prepareStatement.setObject(index, uuid);
         }
         if (param == null) {
           prepareStatement.setString(index, null);

@@ -48,8 +48,8 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
             """;
 
     List<Object> params = new ArrayList<>();
-    params.add(configuration.identifier().value());
-    params.add(tenant.identifier().value());
+    params.add(configuration.identifier().valueAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
     params.add(configuration.type().name());
     params.add(configuration.ssoProvider().name());
     params.add(jsonConverter.write(configuration.payload()));
@@ -70,8 +70,8 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration.payload()));
-    params.add(configuration.identifier().value());
-    params.add(tenant.identifier().value());
+    params.add(configuration.identifier().valueAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -87,8 +87,8 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
             """;
 
     List<Object> params = new ArrayList<>();
-    params.add(configuration.identifier().value());
-    params.add(tenant.identifier().value());
+    params.add(configuration.identifier().valueAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

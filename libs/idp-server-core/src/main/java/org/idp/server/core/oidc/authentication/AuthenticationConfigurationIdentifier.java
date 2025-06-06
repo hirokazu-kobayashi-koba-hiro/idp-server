@@ -17,8 +17,10 @@
 package org.idp.server.core.oidc.authentication;
 
 import java.util.Objects;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class AuthenticationConfigurationIdentifier {
+public class AuthenticationConfigurationIdentifier implements UuidConvertable {
 
   String value;
 
@@ -30,6 +32,10 @@ public class AuthenticationConfigurationIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   public boolean exists() {

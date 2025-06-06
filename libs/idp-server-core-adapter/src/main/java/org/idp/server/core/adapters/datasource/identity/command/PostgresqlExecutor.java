@@ -102,8 +102,8 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(user.sub());
-    params.add(tenant.identifierValue());
+    params.add(user.subAsUuid());
+    params.add(tenant.identifierUUID());
     params.add(user.providerId());
     params.add(user.providerUserId());
     params.add(jsonConverter.write(user.providerOriginalPayload()));
@@ -193,7 +193,7 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     params.add(jsonConverter.write(user.authenticationDevicesAsList()));
     params.add(jsonConverter.write(user.verifiedClaims()));
     params.add(user.statusName());
-    params.add(user.sub());
+    params.add(user.subAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -210,8 +210,8 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
             """;
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
-    params.add(userIdentifier.value());
+    params.add(tenant.identifierUUID());
+    params.add(userIdentifier.valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -233,8 +233,8 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     userRoles.forEach(
         userRole -> {
           sqlValues.add("(?::uuid, ?::uuid, ?::uuid)");
-          params.add(tenant.identifierValue());
-          params.add(user.sub());
+          params.add(tenant.identifierUUID());
+          params.add(user.subAsUuid());
           params.add(userRole.roleId());
         });
 
@@ -266,7 +266,7 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
         assignedTenant -> {
           sqlValues.add("(?::uuid, ?::uuid)");
           params.add(assignedTenant);
-          params.add(user.sub());
+          params.add(user.subAsUuid());
         });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(
@@ -296,8 +296,8 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
             ;
             """;
     List<Object> params = new ArrayList<>();
-    params.add(user.currentTenantIdentifier().value());
-    params.add(user.sub());
+    params.add(user.currentTenantIdentifier().valueAsUuid());
+    params.add(user.subAsUuid());
     sqlExecutor.execute(sqlTemplate, params);
   }
 
@@ -319,7 +319,7 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
         assignedOrganization -> {
           sqlValues.add("(?::uuid, ?::uuid)");
           params.add(assignedOrganization);
-          params.add(user.sub());
+          params.add(user.subAsUuid());
         });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(
@@ -349,8 +349,8 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
             ;
             """;
     List<Object> params = new ArrayList<>();
-    params.add(user.currentOrganizationIdentifier().value());
-    params.add(user.sub());
+    params.add(user.currentOrganizationIdentifier().valueAsUuid());
+    params.add(user.subAsUuid());
     sqlExecutor.execute(sqlTemplate, params);
   }
 }

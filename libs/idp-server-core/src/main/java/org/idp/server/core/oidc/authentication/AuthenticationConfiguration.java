@@ -17,6 +17,7 @@
 package org.idp.server.core.oidc.authentication;
 
 import java.util.Map;
+import java.util.UUID;
 
 public class AuthenticationConfiguration {
   String id;
@@ -33,6 +34,10 @@ public class AuthenticationConfiguration {
 
   public String id() {
     return id;
+  }
+
+  public UUID idAsUUID() {
+    return UUID.fromString(id);
   }
 
   public AuthenticationConfigurationIdentifier identifier() {

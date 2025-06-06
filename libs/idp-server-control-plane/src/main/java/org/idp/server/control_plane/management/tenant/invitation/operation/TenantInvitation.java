@@ -19,9 +19,11 @@ package org.idp.server.control_plane.management.tenant.invitation.operation;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class TenantInvitation {
+public class TenantInvitation implements UuidConvertable {
 
   String id;
   String tenantId;
@@ -85,8 +87,16 @@ public class TenantInvitation {
     return id;
   }
 
+  public UUID idAsUuid() {
+    return convertUuid(id);
+  }
+
   public String tenantId() {
     return tenantId;
+  }
+
+  public UUID tenantIdAsUuid() {
+    return convertUuid(tenantId);
   }
 
   public String tenantName() {
@@ -99,6 +109,10 @@ public class TenantInvitation {
 
   public String roleId() {
     return roleId;
+  }
+
+  public UUID roleIdAsUuid() {
+    return convertUuid(roleId);
   }
 
   public String roleName() {

@@ -17,8 +17,10 @@
 package org.idp.server.core.oidc.identity.permission;
 
 import java.io.Serializable;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class Permission implements Serializable {
+public class Permission implements Serializable, UuidConvertable {
   String id;
   String name;
   String description;
@@ -33,6 +35,10 @@ public class Permission implements Serializable {
 
   public String id() {
     return id;
+  }
+
+  public UUID idAsUuid() {
+    return convertUuid(id);
   }
 
   public String name() {

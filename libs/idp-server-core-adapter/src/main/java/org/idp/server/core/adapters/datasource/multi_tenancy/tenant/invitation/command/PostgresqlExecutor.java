@@ -60,11 +60,11 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
                     );
                     """;
     List<Object> params = new ArrayList<>();
-    params.add(invitation.id());
-    params.add(invitation.tenantId());
+    params.add(invitation.idAsUuid());
+    params.add(invitation.tenantIdAsUuid());
     params.add(invitation.tenantName());
     params.add(invitation.email());
-    params.add(invitation.roleId());
+    params.add(invitation.roleIdAsUuid());
     params.add(invitation.roleName());
     params.add(invitation.url());
     params.add(invitation.status());
@@ -93,8 +93,8 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(invitation.status());
     params.add(invitation.updatedAt().toString());
-    params.add(invitation.id());
-    params.add(invitation.tenantId());
+    params.add(invitation.idAsUuid());
+    params.add(invitation.tenantIdAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -112,8 +112,8 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
                     """;
 
     List<Object> params = new ArrayList<>();
-    params.add(invitation.id());
-    params.add(invitation.tenantId());
+    params.add(invitation.idAsUuid());
+    params.add(invitation.tenantIdAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

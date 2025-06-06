@@ -16,10 +16,7 @@
 
 package org.idp.server.core.extension.identity.verification.configuration;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
@@ -29,8 +26,9 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class IdentityVerificationConfiguration implements JsonReadable {
+public class IdentityVerificationConfiguration implements JsonReadable, UuidConvertable {
   String id;
   String type;
   String delegation;
@@ -69,6 +67,10 @@ public class IdentityVerificationConfiguration implements JsonReadable {
 
   public String id() {
     return id;
+  }
+
+  public UUID idAsUuid() {
+    return convertUuid(id);
   }
 
   public IdentityVerificationType type() {

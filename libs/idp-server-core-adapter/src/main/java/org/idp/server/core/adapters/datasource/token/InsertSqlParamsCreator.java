@@ -32,15 +32,15 @@ class InsertSqlParamsCreator {
   static List<Object> create(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher) {
     AuthorizationGrant authorizationGrant = oAuthToken.accessToken().authorizationGrant();
     List<Object> params = new ArrayList<>();
-    params.add(oAuthToken.identifier().value());
-    params.add(oAuthToken.tenantIdentifier().value());
+    params.add(oAuthToken.identifier().valueAsUuid());
+    params.add(oAuthToken.tenantIdentifier().valueAsUuid());
     params.add(oAuthToken.tokenIssuer().value());
     params.add(oAuthToken.tokenType().name());
     params.add(toEncryptedJson(oAuthToken.accessTokenEntity().value(), aesCipher));
     params.add(hmacHasher.hash(oAuthToken.accessTokenEntity().value()));
 
     if (authorizationGrant.hasUser()) {
-      params.add((authorizationGrant.user().sub()));
+      params.add((authorizationGrant.user().subAsUuid()));
       params.add(toJson(authorizationGrant.user()));
     } else {
       params.add(null);

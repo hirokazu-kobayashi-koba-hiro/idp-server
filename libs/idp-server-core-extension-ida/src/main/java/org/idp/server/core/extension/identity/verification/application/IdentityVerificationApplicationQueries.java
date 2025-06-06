@@ -17,8 +17,10 @@
 package org.idp.server.core.extension.identity.verification.application;
 
 import java.util.Map;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class IdentityVerificationApplicationQueries {
+public class IdentityVerificationApplicationQueries implements UuidConvertable {
 
   Map<String, String> values;
 
@@ -34,6 +36,10 @@ public class IdentityVerificationApplicationQueries {
 
   public String id() {
     return values.get("id");
+  }
+
+  public UUID idAsUuid() {
+    return convertUuid(id());
   }
 
   public boolean hasType() {

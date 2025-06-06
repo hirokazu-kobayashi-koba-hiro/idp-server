@@ -38,7 +38,7 @@ public class PostgresqlExecutor implements SsoSessionQuerySqlExecutor {
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(ssoSessionIdentifier.value());
+    params.add(ssoSessionIdentifier.valueAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

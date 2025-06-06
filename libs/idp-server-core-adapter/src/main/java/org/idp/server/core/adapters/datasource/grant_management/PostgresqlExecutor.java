@@ -25,6 +25,7 @@ import org.idp.server.core.oidc.grant_management.AuthorizationGranted;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
@@ -72,9 +73,9 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
     List<Object> params = new ArrayList<>();
 
     AuthorizationGrant authorizationGrant = authorizationGranted.authorizationGrant();
-    params.add(authorizationGranted.identifier().value());
-    params.add(authorizationGrant.tenantIdentifier().value());
-    params.add(authorizationGrant.user().sub());
+    params.add(authorizationGranted.identifier().valueAsUuid());
+    params.add(authorizationGrant.tenantIdentifier().valueAsUuid());
+    params.add(authorizationGrant.user().subAsUuid());
     params.add(toJson(authorizationGrant.user()));
     params.add(toJson(authorizationGrant.authentication()));
     params.add(authorizationGrant.requestedClientId().value());
@@ -144,15 +145,15 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
               limit 1;
               """;
     List<Object> params = new ArrayList<>();
-    params.add(tenantIdentifier.value());
+    params.add(tenantIdentifier.valueAsUuid());
     params.add(requestedClientId.value());
-    params.add(user.sub());
+    params.add(user.subAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
   @Override
-  public void update(AuthorizationGranted authorizationGranted) {
+  public void update(Tenant tenant, AuthorizationGranted authorizationGranted) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -168,7 +169,8 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
                 authorization_details = ?::jsonb,
                 consent_claims = ?::jsonb,
                 updated_at = now()
-                WHERE id = ?::uuid;
+                WHERE id = ?::uuid
+                AND tenant_id = ?::uuid;
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -208,7 +210,8 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
       params.add(null);
     }
 
-    params.add(authorizationGranted.identifier().value());
+    params.add(authorizationGranted.identifier().valueAsUuid());
+    params.add(tenant.identifierUUID());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

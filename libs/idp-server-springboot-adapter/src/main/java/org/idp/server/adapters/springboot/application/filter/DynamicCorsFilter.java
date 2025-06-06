@@ -22,12 +22,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.idp.server.IdpServerApplication;
+import org.idp.server.platform.exception.BadRequestException;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.TenantDomain;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.multi_tenancy.tenant.TenantMetaDataApi;
+import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -45,23 +43,34 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
 
-    TenantIdentifier tenantIdentifier = extractTenantIdentifier(request);
-    Tenant tenant = tenantMetaDataApi.get(tenantIdentifier);
-    TenantDomain domain = tenant.domain();
-    log.info("DynamicCorsFilter tenantId: {} domain: {}", tenantIdentifier.value(), domain.host());
+    try {
+      TenantIdentifier tenantIdentifier = extractTenantIdentifier(request);
+      Tenant tenant = tenantMetaDataApi.get(tenantIdentifier);
+      TenantDomain domain = tenant.domain();
+      log.info(
+          "DynamicCorsFilter tenantId: {} domain: {}", tenantIdentifier.value(), domain.host());
 
-    response.setHeader("Access-Control-Allow-Origin", domain.host());
-    response.setHeader("Access-Control-Allow-Credentials", "true");
-    response.setHeader(
-        "Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, X-Requested-With");
-    response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+      response.setHeader("Access-Control-Allow-Origin", domain.host());
+      response.setHeader("Access-Control-Allow-Credentials", "true");
+      response.setHeader(
+          "Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, X-Requested-With");
+      response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
 
-    if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-      response.setStatus(HttpServletResponse.SC_OK);
-      return;
+      if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+        response.setStatus(HttpServletResponse.SC_OK);
+        return;
+      }
+
+      filterChain.doFilter(request, response);
+    } catch (TenantNotFoundException exception) {
+
+      log.warn(exception.getMessage(), exception);
+      response.sendError(HttpServletResponse.SC_NOT_FOUND, exception.getMessage());
+    } catch (BadRequestException exception) {
+
+      log.warn(exception.getMessage(), exception);
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST, exception.getMessage());
     }
-
-    filterChain.doFilter(request, response);
   }
 
   private TenantIdentifier extractTenantIdentifier(HttpServletRequest request) {

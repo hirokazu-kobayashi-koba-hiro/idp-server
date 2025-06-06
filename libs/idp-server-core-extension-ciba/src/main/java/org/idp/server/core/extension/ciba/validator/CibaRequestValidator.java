@@ -16,9 +16,21 @@
 
 package org.idp.server.core.extension.ciba.validator;
 
-import org.idp.server.core.extension.ciba.CibaRequestParameters;
+import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
+import org.idp.server.core.extension.ciba.handler.io.CibaRequest;
 
 public class CibaRequestValidator {
 
-  public void validate(CibaRequestParameters parameters) {}
+  CibaRequest request;
+
+  public CibaRequestValidator(CibaRequest request) {
+    this.request = request;
+  }
+
+  public void validate() {
+    if (!request.hasClientId()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request", "client_id is in neither body or header. client_id is required");
+    }
+  }
 }

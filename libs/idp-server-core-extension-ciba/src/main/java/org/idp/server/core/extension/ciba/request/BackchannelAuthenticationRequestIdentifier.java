@@ -17,9 +17,11 @@
 package org.idp.server.core.extension.ciba.request;
 
 import java.util.Objects;
+import java.util.UUID;
 import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class BackchannelAuthenticationRequestIdentifier {
+public class BackchannelAuthenticationRequestIdentifier implements UuidConvertable {
   String value;
 
   public BackchannelAuthenticationRequestIdentifier() {}
@@ -30,6 +32,10 @@ public class BackchannelAuthenticationRequestIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   @Override

@@ -17,8 +17,10 @@
 package org.idp.server.core.oidc.federation.sso;
 
 import java.util.Objects;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class SsoSessionIdentifier {
+public class SsoSessionIdentifier implements UuidConvertable {
 
   String value;
 
@@ -30,6 +32,10 @@ public class SsoSessionIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   @Override

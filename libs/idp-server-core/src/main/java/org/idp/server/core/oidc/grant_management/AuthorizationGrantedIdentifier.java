@@ -17,8 +17,10 @@
 package org.idp.server.core.oidc.grant_management;
 
 import java.util.Objects;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class AuthorizationGrantedIdentifier {
+public class AuthorizationGrantedIdentifier implements UuidConvertable {
 
   String value;
 
@@ -30,6 +32,10 @@ public class AuthorizationGrantedIdentifier {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   public boolean exists() {

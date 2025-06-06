@@ -18,9 +18,11 @@ package org.idp.server.core.oidc.identity.role;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.UUID;
 import org.idp.server.core.oidc.identity.permission.Permission;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class Role implements Serializable {
+public class Role implements Serializable, UuidConvertable {
   String id;
   String name;
   String description;
@@ -37,6 +39,10 @@ public class Role implements Serializable {
 
   public String id() {
     return id;
+  }
+
+  public UUID idAsUuid() {
+    return convertUuid(id);
   }
 
   public String name() {

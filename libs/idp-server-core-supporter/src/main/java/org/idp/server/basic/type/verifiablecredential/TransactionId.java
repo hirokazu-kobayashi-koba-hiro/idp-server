@@ -17,6 +17,8 @@
 package org.idp.server.basic.type.verifiablecredential;
 
 import java.util.Objects;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
 /**
  * transaction_id: REQUIRED.
@@ -27,7 +29,7 @@ import java.util.Objects;
  *     href=https://openid.bitbucket.io/connect/openid-4-verifiable-credential-issuance-1_0.html#name-deferred-credential-request">9.1.
  *     Deferred Credential Request</a>
  */
-public class TransactionId {
+public class TransactionId implements UuidConvertable {
   String value;
 
   public TransactionId() {}
@@ -38,6 +40,10 @@ public class TransactionId {
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   public boolean exists() {

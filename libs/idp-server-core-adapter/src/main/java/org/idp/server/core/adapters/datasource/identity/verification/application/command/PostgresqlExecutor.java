@@ -66,10 +66,10 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(application.identifier().value());
-    params.add(tenant.identifierValue());
+    params.add(application.identifier().valueAsUuid());
+    params.add(tenant.identifierUUID());
     params.add(application.requestedClientId().value());
-    params.add(application.userIdentifier().value());
+    params.add(application.userIdentifier().valueAsUuid());
     params.add(application.identityVerificationType().name());
     params.add(jsonConverter.write(application.applicationDetails().toMap()));
 
@@ -131,8 +131,8 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     sqlBuilder.append(String.join(", ", setClauses));
 
     sqlBuilder.append(" WHERE id = ?::uuid AND tenant_id = ?::uuid");
-    params.add(application.identifier().value());
-    params.add(tenant.identifierValue());
+    params.add(application.identifier().valueAsUuid());
+    params.add(tenant.identifierUUID());
 
     sqlExecutor.execute(sqlBuilder.toString(), params);
   }
@@ -151,9 +151,9 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
             """;
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
-    params.add(user.sub());
-    params.add(identifier.value());
+    params.add(tenant.identifierUUID());
+    params.add(user.subAsUuid());
+    params.add(identifier.valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
