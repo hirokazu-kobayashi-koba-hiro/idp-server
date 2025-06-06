@@ -141,8 +141,16 @@ paths:
       tags:
         - 認可コードフロー
       description: |
-        認可コード、インプリシット、ハイブリッドフローで使用されるエンドポイント。
+        クライアントアプリケーションがエンドユーザーの認可を取得するためのエンドポイント。
         OpenID Connect Core 1.0 Section 3 に準拠。
+        
+        本エンドポイントは、以下の OpenID Connect 認可フローに対応しています：
+          - Authorization Code Flow（認可コードフロー）
+          - Implicit Flow（インプリシットフロー）
+          - Hybrid Flow（ハイブリッドフロー）
+        
+        認可リクエストを受け取ると、本サーバーはエンドユーザーとの認証・同意を行うための認可画面URLをレスポンス(302)として返却します。
+        このURLにクライアントアプリケーションがリダイレクトすることで、ユーザーとの対話（認証・同意）が開始されます。
       parameters:
         - $ref: '#/components/parameters/response_type'
         - $ref: '#/components/parameters/client_id'
