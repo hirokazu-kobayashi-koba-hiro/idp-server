@@ -29,6 +29,7 @@ import org.idp.server.basic.type.oidc.IdTokenHint;
 import org.idp.server.basic.type.oidc.LoginHint;
 import org.idp.server.basic.type.oidc.RequestObject;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
+import org.idp.server.core.oidc.rar.AuthorizationDetails;
 
 public class CibaRequestObjectParameters implements BackchannelRequestParameters {
   Map<String, Object> values;
@@ -185,5 +186,13 @@ public class CibaRequestObjectParameters implements BackchannelRequestParameters
 
   Map<String, Object> values() {
     return values;
+  }
+
+  public boolean hasAuthorizationDetails() {
+    return contains(authorization_details);
+  }
+
+  public AuthorizationDetails authorizationDetails() {
+    return AuthorizationDetails.fromObject(values.get(authorization_details.name()));
   }
 }

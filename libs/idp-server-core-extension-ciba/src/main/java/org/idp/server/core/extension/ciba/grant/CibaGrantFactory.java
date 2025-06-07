@@ -31,6 +31,7 @@ import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
@@ -61,12 +62,14 @@ public class CibaGrantFactory {
     TenantIdentifier tenantIdentifier = context.tenantIdentifier();
     Client client = context.client();
     Scopes scopes = context.scopes();
-    // TODO authorization_details
+    AuthorizationDetails authorizationDetails = context.authorizationDetails();
+
     AuthorizationGrantBuilder builder =
         new AuthorizationGrantBuilder(tenantIdentifier, requestedClientId, GrantType.ciba, scopes)
             .add(client)
             .add(user)
-            .add(authentication);
+            .add(authentication)
+            .add(authorizationDetails);
 
     if (user.hasCustomProperties()) {
       builder.add(user.customProperties());

@@ -76,7 +76,9 @@ public class CibaAuthorizeHandler {
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(
             tenant, cibaGrant.authorizationGrant().clientIdentifier());
-    CibaGrant updated = cibaGrant.update(CibaGrantStatus.authorized);
+    CibaGrant updated =
+        cibaGrant.updateWith(
+            CibaGrantStatus.authorized, request.authentication(), request.toDeniedScopes());
     cibaGrantRepository.update(tenant, updated);
 
     clientNotificationService.notify(

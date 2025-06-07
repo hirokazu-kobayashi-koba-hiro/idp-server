@@ -18,6 +18,7 @@ package org.idp.server.basic.type.oauth;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import org.idp.server.basic.type.extension.DeniedScopes;
 
 /**
  * 3.3. Access Token Scope
@@ -99,5 +100,11 @@ public class Scopes implements Iterable<String> {
     Set<String> filteredValues =
         values.stream().filter(value -> value.startsWith(prefix)).collect(Collectors.toSet());
     return new Scopes(filteredValues);
+  }
+
+  public Scopes removeScopes(DeniedScopes deniedScopes) {
+    Set<String> removeScopes =
+        values.stream().filter(scope -> !deniedScopes.contains(scope)).collect(Collectors.toSet());
+    return new Scopes(removeScopes);
   }
 }

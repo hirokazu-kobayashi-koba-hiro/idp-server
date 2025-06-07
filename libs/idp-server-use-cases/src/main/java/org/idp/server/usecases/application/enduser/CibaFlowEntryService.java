@@ -201,8 +201,10 @@ public class CibaFlowEntryService implements CibaFlowApi {
         requestAttributes);
 
     if (updatedTransaction.isSuccess()) {
+      Authentication authentication = updatedTransaction.authentication();
       CibaAuthorizeRequest cibaAuthorizeRequest =
-          new CibaAuthorizeRequest(tenant, backchannelAuthenticationRequestIdentifier);
+          new CibaAuthorizeRequest(
+              tenant, backchannelAuthenticationRequestIdentifier, authentication);
       cibaProtocol.authorize(cibaAuthorizeRequest);
       eventPublisher.publish(
           tenant,

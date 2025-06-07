@@ -57,6 +57,10 @@ public class NormalRequestFactory implements BackchannelAuthenticationRequestFac
             .add(parameters.userCode())
             .add(parameters.requestedExpiry());
 
+    if (parameters.hasAuthorizationDetails()) {
+      builder.add(parameters.authorizationDetails());
+    }
+
     if (parameters.hasClientId()) {
       builder.add(parameters.clientId());
     } else {
