@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.extension.DeniedScopes;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.ResponseMode;
@@ -48,6 +49,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
   User user;
   Authentication authentication;
   CustomProperties customProperties;
+  DeniedScopes deniedScopes;
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
 
@@ -58,12 +60,14 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
       User user,
       Authentication authentication,
       CustomProperties customProperties,
+      DeniedScopes deniedScopes,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.authorizationRequest = authorizationRequest;
     this.user = user;
     this.authentication = authentication;
     this.customProperties = customProperties;
+    this.deniedScopes = deniedScopes;
     this.clientConfiguration = clientConfiguration;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
   }
@@ -80,10 +84,6 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     return authentication;
   }
 
-  public Scopes scopes() {
-    return authorizationRequest.scopes();
-  }
-
   public RequestedClaimsPayload requestedClaimsPayload() {
     return authorizationRequest.requestedClaimsPayload();
   }
@@ -95,6 +95,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     Client client = clientConfiguration.client();
 
     Scopes scopes = authorizationRequest.scopes();
+    Scopes removeScopes = scopes.removeScopes(deniedScopes);
     ResponseType responseType = authorizationRequest.responseType();
     List<String> supportedClaims = authorizationServerConfiguration.claimsSupported();
     RequestedClaimsPayload requestedClaimsPayload = authorizationRequest.requestedClaimsPayload();
@@ -102,7 +103,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
 
     GrantIdTokenClaims grantIdTokenClaims =
         GrantIdTokenClaims.create(
-            scopes,
+            removeScopes,
             responseType,
             supportedClaims,
             requestedClaimsPayload.idToken(),

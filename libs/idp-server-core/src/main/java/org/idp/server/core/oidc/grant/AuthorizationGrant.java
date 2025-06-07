@@ -184,6 +184,23 @@ public class AuthorizationGrant {
     return consentClaims.exists();
   }
 
+  public AuthorizationGrant updatedWith(Authentication authentication, Scopes scopes) {
+
+    return new AuthorizationGrant(
+        tenantIdentifier,
+        user,
+        authentication,
+        requestedClientId,
+        client,
+        grantType,
+        scopes,
+        idTokenClaims,
+        userinfoClaims,
+        customProperties,
+        authorizationDetails,
+        consentClaims);
+  }
+
   // TODO
   public AuthorizationGrant merge(AuthorizationGrant newAuthorizationGrant) {
     User newUser = newAuthorizationGrant.user();

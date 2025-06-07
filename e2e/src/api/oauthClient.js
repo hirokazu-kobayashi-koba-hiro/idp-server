@@ -367,6 +367,7 @@ export const requestBackchannelAuthentications = async ({
   idTokenHint,
   loginHint,
   requestedExpiry,
+  authorizationDetails,
   request,
   clientId,
   clientSecret,
@@ -401,6 +402,9 @@ export const requestBackchannelAuthentications = async ({
   }
   if (requestedExpiry) {
     params.append("requested_expiry", requestedExpiry);
+  }
+  if (authorizationDetails) {
+    params.append("authorization_details", authorizationDetails);
   }
   if (request) {
     params.append("request", request);

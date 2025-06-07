@@ -41,11 +41,12 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   int backchannelAuthPollingInterval = 5;
   int oauthAuthorizationRequestExpiresIn = 1800;
   List<AuthenticationPolicy> authenticationPolicies = new ArrayList<>();
-  boolean enabledCustomClaimsScopeMapping = false;
-  boolean enabledAccessTokenUserCustomProperties = false;
-  boolean enabledAccessTokenSelectiveUserCustomProperties = false;
-  boolean enabledAccessTokenVerifiedClaims = false;
-  boolean enabledAccessTokenSelectiveVerifiedClaims = false;
+  boolean customClaimsScopeMapping = false;
+  boolean accessTokenUserCustomProperties = false;
+  boolean accessTokenSelectiveUserCustomProperties = false;
+  boolean accessTokenVerifiedClaims = false;
+  boolean accessTokenSelectiveVerifiedClaims = false;
+  boolean levelOfAuthenticationScpeFilter = false;
 
   public AuthorizationServerExtensionConfiguration() {}
 
@@ -130,22 +131,22 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   }
 
   public boolean enabledCustomClaimsScopeMapping() {
-    return enabledCustomClaimsScopeMapping;
+    return customClaimsScopeMapping;
   }
 
   public boolean enabledAccessTokenUserCustomProperties() {
-    return enabledAccessTokenUserCustomProperties;
+    return accessTokenUserCustomProperties;
   }
 
   public boolean enabledAccessTokenSelectiveUserCustomProperties() {
-    return enabledAccessTokenSelectiveUserCustomProperties;
+    return accessTokenSelectiveUserCustomProperties;
   }
 
   public boolean enabledAccessTokenVerifiedClaims() {
-    return enabledAccessTokenVerifiedClaims;
+    return accessTokenVerifiedClaims;
   }
 
   public boolean enabledAccessTokenSelectiveVerifiedClaims() {
-    return enabledAccessTokenSelectiveVerifiedClaims;
+    return accessTokenSelectiveVerifiedClaims;
   }
 }

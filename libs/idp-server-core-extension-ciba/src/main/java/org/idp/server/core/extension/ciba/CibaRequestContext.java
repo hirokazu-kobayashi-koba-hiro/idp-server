@@ -35,6 +35,7 @@ import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
@@ -179,6 +180,10 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   public CibaProfile profile() {
     return backchannelAuthenticationRequest.profile();
+  }
+
+  public AuthorizationDetails authorizationDetails() {
+    return backchannelAuthenticationRequest.authorizationDetails();
   }
 
   public boolean hasOpenidScope() {

@@ -19,10 +19,12 @@ package org.idp.server.core.extension.ciba.grant;
 import java.time.LocalDateTime;
 import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.basic.type.ciba.Interval;
+import org.idp.server.basic.type.extension.DeniedScopes;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.identity.User;
@@ -123,10 +125,15 @@ public class CibaGrant {
     return authorizationGrant.requestedClientId();
   }
 
-  public CibaGrant update(CibaGrantStatus cibaGrantStatus) {
+  public CibaGrant updateWith(
+      CibaGrantStatus cibaGrantStatus, Authentication authentication, DeniedScopes deniedScopes) {
+
+    Scopes removedScopes = authorizationGrant.scopes().removeScopes(deniedScopes);
+    AuthorizationGrant updatedGrant = authorizationGrant.updatedWith(authentication, removedScopes);
+
     return new CibaGrant(
         backchannelAuthenticationRequestIdentifier,
-        authorizationGrant,
+        updatedGrant,
         authReqId,
         expiredAt,
         interval,

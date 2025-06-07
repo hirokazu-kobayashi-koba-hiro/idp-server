@@ -27,6 +27,7 @@ import org.idp.server.core.extension.ciba.CibaRequestObjectParameters;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -93,6 +94,11 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
             ? requestObjectParameters.requestedExpiry()
             : parameters.requestedExpiry();
 
+    AuthorizationDetails authorizationDetails =
+        requestObjectParameters.hasAuthorizationDetails()
+            ? requestObjectParameters.authorizationDetails()
+            : parameters.authorizationDetails();
+
     RequestObject requestObject = new RequestObject();
 
     BackchannelAuthenticationRequestBuilder builder = new BackchannelAuthenticationRequestBuilder();
@@ -111,6 +117,7 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
     builder.add(bindingMessage);
     builder.add(clientNotificationToken);
     builder.add(requestedExpiry);
+    builder.add(authorizationDetails);
     return builder.build();
   }
 

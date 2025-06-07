@@ -17,6 +17,7 @@
 package org.idp.server.core.oidc.handler;
 
 import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.extension.DeniedScopes;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.OAuthAuthorizeContext;
 import org.idp.server.core.oidc.OAuthSession;
@@ -76,6 +77,7 @@ public class OAuthAuthorizeHandler {
     User user = request.user();
     Authentication authentication = request.authentication();
     CustomProperties customProperties = request.toCustomProperties();
+    DeniedScopes deniedScopes = request.toDeniedScopes();
 
     OAuthAuthorizeRequestValidator validator =
         new OAuthAuthorizeRequestValidator(
@@ -96,6 +98,7 @@ public class OAuthAuthorizeHandler {
             user,
             authentication,
             customProperties,
+            deniedScopes,
             authorizationServerConfiguration,
             clientConfiguration);
 

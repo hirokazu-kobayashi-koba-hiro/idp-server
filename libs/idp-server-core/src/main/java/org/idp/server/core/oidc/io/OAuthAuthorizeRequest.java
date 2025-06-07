@@ -16,9 +16,12 @@
 
 package org.idp.server.core.oidc.io;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.type.extension.CustomProperties;
+import org.idp.server.basic.type.extension.DeniedScopes;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
@@ -31,6 +34,7 @@ public class OAuthAuthorizeRequest {
   String id;
   User user;
   Authentication authentication;
+  List<String> deniedScopes = new ArrayList<>();
   Map<String, Object> customProperties = new HashMap<>();
 
   public OAuthAuthorizeRequest(Tenant tenant, String id, User user, Authentication authentication) {
@@ -38,6 +42,11 @@ public class OAuthAuthorizeRequest {
     this.id = id;
     this.user = user;
     this.authentication = authentication;
+  }
+
+  public OAuthAuthorizeRequest setDeniedScopes(List<String> deniedScopes) {
+    this.deniedScopes = deniedScopes;
+    return this;
   }
 
   public OAuthAuthorizeRequest setCustomProperties(Map<String, Object> customProperties) {
@@ -67,5 +76,9 @@ public class OAuthAuthorizeRequest {
 
   public CustomProperties toCustomProperties() {
     return new CustomProperties(customProperties);
+  }
+
+  public DeniedScopes toDeniedScopes() {
+    return new DeniedScopes(deniedScopes);
   }
 }

@@ -26,6 +26,7 @@ import org.idp.server.basic.type.ciba.*;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.*;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
+import org.idp.server.core.oidc.rar.AuthorizationDetails;
 
 public class CibaRequestParameters implements BackchannelRequestParameters {
   ArrayValueMap values;
@@ -185,5 +186,13 @@ public class CibaRequestParameters implements BackchannelRequestParameters {
       return CibaRequestPattern.REQUEST_OBJECT;
     }
     return CibaRequestPattern.NORMAL;
+  }
+
+  public AuthorizationDetails authorizationDetails() {
+    return AuthorizationDetails.fromString(getValueOrEmpty(authorization_details));
+  }
+
+  public boolean hasAuthorizationDetails() {
+    return contains(authorization_details);
   }
 }
