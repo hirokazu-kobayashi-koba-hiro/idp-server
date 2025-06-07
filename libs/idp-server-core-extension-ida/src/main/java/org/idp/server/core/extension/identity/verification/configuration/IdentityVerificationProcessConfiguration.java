@@ -78,10 +78,10 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
   }
 
   public JsonSchemaDefinition requestValidationSchemaAsDefinition() {
-    return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(requestValidationSchema));
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(requestValidationSchema));
   }
 
   public JsonSchemaDefinition responseValidationSchemaAsDefinition() {
-    return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(responseValidationSchema));
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(responseValidationSchema));
   }
 }

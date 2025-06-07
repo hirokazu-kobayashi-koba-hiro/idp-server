@@ -17,22 +17,18 @@
 package org.idp.server.core.oidc.authentication;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.type.AuthorizationFlow;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.authentication.evaluator.MfaConditionEvaluator;
+import org.idp.server.core.oidc.configuration.authentication.AcrMapper;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationResultConditions;
 import org.idp.server.core.oidc.federation.FederationInteractionResult;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.io.OAuthRequestResponse;
-import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.platform.date.SystemDateTime;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.exception.BadRequestException;
 
 public class AuthenticationTransaction {
   AuthorizationIdentifier identifier;
@@ -40,46 +36,32 @@ public class AuthenticationTransaction {
   AuthenticationPolicy authenticationPolicy;
   AuthenticationInteractionResults interactionResults;
 
-  public static AuthenticationTransaction createOnOAuthFlow(
-      Tenant tenant, OAuthRequestResponse requestResponse) {
-    AuthorizationIdentifier identifier =
-        new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier());
-    AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
-    AuthenticationPolicy authenticationPolicy = requestResponse.findSatisfiedAuthenticationPolicy();
-    return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicy);
+  public AuthenticationTransaction() {}
+
+  public AuthenticationTransaction(
+      AuthorizationIdentifier identifier,
+      AuthenticationRequest request,
+      AuthenticationPolicy authenticationPolicy) {
+    this(identifier, request, authenticationPolicy, new AuthenticationInteractionResults());
   }
 
-  private static AuthenticationRequest toAuthenticationRequest(
-      Tenant tenant, OAuthRequestResponse requestResponse) {
-    AuthorizationRequest authorizationRequest = requestResponse.authorizationRequest();
-    AuthorizationFlow authorizationFlow = AuthorizationFlow.OAUTH;
-    TenantIdentifier tenantIdentifier = tenant.identifier();
-
-    RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
-    User user = User.notFound();
-    AuthenticationContext context =
-        new AuthenticationContext(authorizationRequest.acrValues(), authorizationRequest.scopes());
-    LocalDateTime createdAt = SystemDateTime.now();
-    LocalDateTime expiredAt =
-        createdAt.plusSeconds(requestResponse.oauthAuthorizationRequestExpiresIn());
-    return new AuthenticationRequest(
-        authorizationFlow,
-        tenantIdentifier,
-        requestedClientId,
-        user,
-        context,
-        createdAt,
-        expiredAt);
+  public AuthenticationTransaction(
+      AuthorizationIdentifier identifier,
+      AuthenticationRequest request,
+      AuthenticationPolicy authenticationPolicy,
+      AuthenticationInteractionResults interactionResults) {
+    this.identifier = identifier;
+    this.request = request;
+    this.authenticationPolicy = authenticationPolicy;
+    this.interactionResults = interactionResults;
   }
 
   public AuthenticationTransaction updateWith(
       AuthenticationInteractionRequestResult interactionRequestResult) {
     Map<String, AuthenticationInteractionResult> resultMap = interactionResults.toMap();
 
-    AuthenticationRequest updatedRequest =
-        interactionRequestResult.isIdentifyUserEventType()
-            ? request.updateWithUser(interactionRequestResult)
-            : request;
+    AuthenticationRequest updatedRequest = updateWithUser(interactionRequestResult);
+
     if (interactionResults.contains(interactionRequestResult.interactionTypeName())) {
 
       AuthenticationInteractionResult foundResult =
@@ -102,6 +84,24 @@ public class AuthenticationTransaction {
         new AuthenticationInteractionResults(resultMap);
     return new AuthenticationTransaction(
         identifier, updatedRequest, authenticationPolicy, updatedResults);
+  }
+
+  private AuthenticationRequest updateWithUser(
+      AuthenticationInteractionRequestResult interactionRequestResult) {
+
+    if (!interactionRequestResult.hasUser()) {
+      return request;
+    }
+
+    if (!request.hasUser()) {
+      return request.updateWithUser(interactionRequestResult);
+    }
+
+    if (!request.isSameUser(interactionRequestResult.user())) {
+      throw new BadRequestException("User is not the same as the request");
+    }
+
+    return request;
   }
 
   public AuthenticationTransaction updateWith(FederationInteractionResult result) {
@@ -131,28 +131,12 @@ public class AuthenticationTransaction {
         identifier, updatedRequest, authenticationPolicy, updatedResults);
   }
 
-  public AuthenticationTransaction() {}
-
-  public AuthenticationTransaction(
-      AuthorizationIdentifier identifier,
-      AuthenticationRequest request,
-      AuthenticationPolicy authenticationPolicy) {
-    this(identifier, request, authenticationPolicy, new AuthenticationInteractionResults());
-  }
-
-  public AuthenticationTransaction(
-      AuthorizationIdentifier identifier,
-      AuthenticationRequest request,
-      AuthenticationPolicy authenticationPolicy,
-      AuthenticationInteractionResults interactionResults) {
-    this.identifier = identifier;
-    this.request = request;
-    this.authenticationPolicy = authenticationPolicy;
-    this.interactionResults = interactionResults;
-  }
-
   public AuthorizationIdentifier identifier() {
     return identifier;
+  }
+
+  public AuthorizationFlow flow() {
+    return request.authorizationFlow();
   }
 
   public AuthenticationRequest request() {
@@ -235,11 +219,11 @@ public class AuthenticationTransaction {
     return request.context();
   }
 
-  // TODO
   public Authentication authentication() {
     LocalDateTime time = SystemDateTime.now();
-    List<String> methods = new ArrayList<>();
-    List<String> acrValues = new ArrayList<>();
-    return new Authentication().setTime(time);
+    AcrMapper acrMapper = authenticationPolicy.acrMapper();
+    List<String> methods = interactionResults.authenticationMethods();
+    List<String> acrValues = acrMapper.resolveAcrFrom(methods);
+    return new Authentication().setTime(time).addMethods(methods).addAcrValues(acrValues);
   }
 }

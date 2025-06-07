@@ -16,7 +16,6 @@
 
 package org.idp.server.core.adapters.datasource.token;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.crypto.AesCipher;
@@ -36,7 +35,6 @@ import org.idp.server.core.oidc.grant.GrantUserinfoClaims;
 import org.idp.server.core.oidc.grant.consent.ConsentClaims;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
-import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.token.AccessToken;
 import org.idp.server.core.oidc.token.OAuthToken;
@@ -77,7 +75,7 @@ class ModelConverter {
     GrantUserinfoClaims userinfoClaims = new GrantUserinfoClaims(stringMap.get("userinfo_claims"));
 
     AuthorizationDetails authorizationDetails =
-        convertAuthorizationDetails(stringMap.get("authorization_details"));
+        AuthorizationDetails.fromString(stringMap.get("authorization_details"));
     ConsentClaims consentClaims = convertConsentClaims(stringMap.get("consent_claims"));
 
     AuthorizationGrant authorizationGrant =
@@ -143,23 +141,6 @@ class ModelConverter {
 
     EncryptedData data = jsonConverter.read(encryptedData, EncryptedData.class);
     return aesCipher.decrypt(data);
-  }
-
-  // TODO
-  private static AuthorizationDetails convertAuthorizationDetails(String value) {
-    if (value.isEmpty()) {
-      return new AuthorizationDetails();
-    }
-    try {
-      JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-      List list = jsonConverter.read(value, List.class);
-      List<Map> details = (List<Map>) list;
-      List<AuthorizationDetail> authorizationDetailsList =
-          details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
-      return new AuthorizationDetails(authorizationDetailsList);
-    } catch (Exception exception) {
-      return new AuthorizationDetails();
-    }
   }
 
   private static ConsentClaims convertConsentClaims(String value) {

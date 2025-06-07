@@ -39,7 +39,7 @@ public class VerifiedClaims {
     Map<String, Object> mappingResult =
         IdentityVerificationMapper.mapping(request.toMap(), jsonSchemaDefinition);
 
-    return new VerifiedClaims(JsonNodeWrapper.fromObject(mappingResult));
+    return new VerifiedClaims(JsonNodeWrapper.fromMap(mappingResult));
   }
 
   public String getValueOrEmptyAsString(String fieldName) {

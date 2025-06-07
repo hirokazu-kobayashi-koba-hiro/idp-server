@@ -44,7 +44,7 @@ public class IdpServerInitializeRequestValidator {
   }
 
   public IdpServerInitializeRequestValidationResult validate() {
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(request.toMap());
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult organizationResult =
         organizationSchemaValidator.validate(jsonNodeWrapper.getValueAsJsonNode("organization"));
     JsonSchemaValidationResult tenantResult =

@@ -57,7 +57,7 @@ public class JsonSchemaValidatorObjectTest {
         new JsonSchemaDefinition(JsonNodeWrapper.fromString(schema));
 
     JsonNodeWrapper value =
-        JsonNodeWrapper.fromObject(
+        JsonNodeWrapper.fromMap(
             Map.of("name", "Koba", "url", "https://example.com", "address", Map.of()));
 
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);

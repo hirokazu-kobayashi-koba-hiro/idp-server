@@ -36,6 +36,10 @@ public class AuthorizationDetailsEntity {
     return value;
   }
 
+  public boolean isString() {
+    return value instanceof String;
+  }
+
   public boolean exists() {
     return Objects.nonNull(value);
   }

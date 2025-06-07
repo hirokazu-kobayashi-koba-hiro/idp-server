@@ -41,7 +41,7 @@ public class ExternalWorkflowApplicationDetails {
         processConfig.responseValidationSchemaAsDefinition();
     Map<String, Object> mappingResult =
         IdentityVerificationMapper.mapping(body.toMap(), jsonSchemaDefinition);
-    return new ExternalWorkflowApplicationDetails(JsonNodeWrapper.fromObject(mappingResult));
+    return new ExternalWorkflowApplicationDetails(JsonNodeWrapper.fromMap(mappingResult));
   }
 
   public ExternalWorkflowApplicationDetails merge(
@@ -52,7 +52,7 @@ public class ExternalWorkflowApplicationDetails {
         IdentityVerificationMapper.mapping(body.toMap(), jsonSchemaDefinition);
     Map<String, Object> merged = new HashMap<>(json.toMap());
     merged.putAll(mappingResult);
-    return new ExternalWorkflowApplicationDetails(JsonNodeWrapper.fromObject(merged));
+    return new ExternalWorkflowApplicationDetails(JsonNodeWrapper.fromMap(merged));
   }
 
   public String getValueOrEmptyAsString(String fieldName) {

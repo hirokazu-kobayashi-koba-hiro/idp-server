@@ -49,7 +49,7 @@ public class UnmatchedEmailIdentityVerificationApplicationVerifier
       return false;
     }
 
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(verificationSchema);
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(verificationSchema);
     return jsonNodeWrapper.optValueAsBoolean("unmatched_user_claims_email", false);
   }
 
@@ -66,7 +66,7 @@ public class UnmatchedEmailIdentityVerificationApplicationVerifier
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(processes);
     Map<String, Object> verificationSchema = processConfig.requestVerificationSchema();
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(verificationSchema);
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(verificationSchema);
     JsonNodeWrapper unmatchedUserClaims =
         jsonNodeWrapper.getValueAsJsonNode("unmatched_user_claims_email");
 

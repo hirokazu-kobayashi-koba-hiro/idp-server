@@ -99,13 +99,8 @@ public class JsonConverter {
   }
 
   public JsonNodeWrapper readTree(Object jsonObject) {
-    try {
 
-      String json = write(jsonObject);
-      return new JsonNodeWrapper(objectMapper.readTree(json));
-    } catch (JsonProcessingException exception) {
-      throw new JsonRuntimeException(exception);
-    }
+      return new JsonNodeWrapper(objectMapper.valueToTree(jsonObject));
   }
 
   public String write(Object value) {

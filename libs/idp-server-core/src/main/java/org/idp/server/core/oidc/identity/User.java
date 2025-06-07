@@ -344,7 +344,7 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
   }
 
   public JsonNodeWrapper verifiedClaimsNodeWrapper() {
-    return JsonNodeWrapper.fromObject(verifiedClaims);
+    return JsonNodeWrapper.fromMap(verifiedClaims);
   }
 
   public boolean hasVerifiedClaims() {

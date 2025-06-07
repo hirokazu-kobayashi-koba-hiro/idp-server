@@ -32,10 +32,10 @@ public class VerifiedClaimsObject implements JsonReadable {
   }
 
   public JsonNodeWrapper verificationNodeWrapper() {
-    return JsonNodeWrapper.fromObject(verification);
+    return JsonNodeWrapper.fromMap(verification);
   }
 
   public JsonNodeWrapper claimsNodeWrapper() {
-    return JsonNodeWrapper.fromObject(claims);
+    return JsonNodeWrapper.fromMap(claims);
   }
 }

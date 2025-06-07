@@ -38,7 +38,7 @@ public class TenantRequestValidator {
   }
 
   public TenantRequestValidationResult validate() {
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(request.toMap());
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult tenantResult =
         tenantSchemaValidator.validate(jsonNodeWrapper.getValueAsJsonNode("tenant"));
     JsonSchemaValidationResult authorizationServerResult =

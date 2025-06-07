@@ -60,8 +60,8 @@ public class AuthenticationConfigUpdateContext {
   }
 
   public AuthenticationConfigManagementResponse toResponse() {
-    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromObject(before.payload());
-    JsonNodeWrapper afterJson = JsonNodeWrapper.fromObject(after.payload());
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.payload());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.payload());
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
     Map<String, Object> response = new HashMap<>();
     response.put("result", after.payload());

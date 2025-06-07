@@ -5,7 +5,7 @@ export const serverConfig = {
   authorizationEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations`,
   authenticationEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations/{id}/`,
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentications/{id}/`,
   authenticationDeviceEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentication-devices/{id}/authentications/latest`,
   authorizeEndpoint:
@@ -25,7 +25,7 @@ export const serverConfig = {
     `${backendUrl}/67e7/v1/backchannel/authentications`,
   backchannelAuthenticationAutomatedCompleteEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/backchannel/authentications/automated-complete`,
-  authenticationDeviceInteractionEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/{flow-type}/{id}/`,
+  authenticationDeviceInteractionEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentications/{id}/`,
   fidoUafFacetsEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/fido/facets`,
   identityVerificationApplyEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity/applications/{type}/{process}`,
   identityVerificationProcessEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity/applications/{type}/{id}/{process}`,

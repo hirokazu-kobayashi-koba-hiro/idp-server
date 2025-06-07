@@ -72,6 +72,13 @@ public class AuthenticationRequest {
     return user;
   }
 
+  public boolean isSameUser(User interactedUser) {
+    if (!hasUser()) {
+      return false;
+    }
+    return this.user.sub().equals(interactedUser.sub());
+  }
+
   public AuthenticationContext context() {
     return context;
   }

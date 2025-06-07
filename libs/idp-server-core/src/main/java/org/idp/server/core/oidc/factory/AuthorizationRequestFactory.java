@@ -16,8 +16,6 @@
 
 package org.idp.server.core.oidc.factory;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.idp.server.basic.jose.JoseContext;
@@ -27,7 +25,6 @@ import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
-import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
@@ -66,22 +63,13 @@ public interface AuthorizationRequestFactory {
     if (!authorizationDetailsEntity.exists()) {
       return new AuthorizationDetails();
     }
-    try {
+
+    if (authorizationDetailsEntity.isString()) {
       Object object = authorizationDetailsEntity.value();
-      if (object instanceof String string) {
-        JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-        List list = jsonConverter.read(string, List.class);
-        List<Map> details = (List<Map>) list;
-        List<AuthorizationDetail> authorizationDetailsList =
-            details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
-        return new AuthorizationDetails(authorizationDetailsList);
-      }
-      List<Map> details = (List<Map>) authorizationDetailsEntity.value();
-      List<AuthorizationDetail> authorizationDetailsList =
-          details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
-      return new AuthorizationDetails(authorizationDetailsList);
-    } catch (Exception exception) {
-      return new AuthorizationDetails();
+      return AuthorizationDetails.fromString(object.toString());
     }
+
+    Object object = authorizationDetailsEntity.value();
+    return AuthorizationDetails.fromObject(object);
   }
 }

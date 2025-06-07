@@ -16,7 +16,7 @@
 
 package org.idp.server;
 
-import org.idp.server.authentication.interactors.device.AuthenticationDeviceApi;
+import org.idp.server.authentication.interactors.device.AuthenticationApi;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutors;
@@ -131,7 +131,7 @@ public class IdpServerApplication {
   UserinfoApi userinfoApi;
   CibaFlowApi cibaFlowApi;
   AuthenticationMetaDataApi authenticationMetaDataApi;
-  AuthenticationDeviceApi authenticationDeviceApi;
+  AuthenticationApi authenticationApi;
   IdentityVerificationApi identityVerificationApi;
   SecurityEventApi securityEventApi;
   TenantMetaDataApi tenantMetaDataApi;
@@ -399,11 +399,11 @@ public class IdpServerApplication {
             AuthenticationMetaDataApi.class,
             tenantDialectProvider);
 
-    this.authenticationDeviceApi =
+    this.authenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new AuthenticationDeviceEntryService(
+            new AuthenticationEntryService(
                 tenantQueryRepository, authenticationTransactionQueryRepository),
-            AuthenticationDeviceApi.class,
+            AuthenticationApi.class,
             tenantDialectProvider);
 
     this.identityVerificationApi =
@@ -610,8 +610,8 @@ public class IdpServerApplication {
     return authenticationMetaDataApi;
   }
 
-  public AuthenticationDeviceApi authenticationDeviceApi() {
-    return authenticationDeviceApi;
+  public AuthenticationApi authenticationApi() {
+    return authenticationApi;
   }
 
   public IdentityVerificationApi identityVerificationApi() {

@@ -47,7 +47,7 @@ public class UserIdParameterResolver implements AdditionalRequestParameterResolv
       return false;
     }
 
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(additionalParameterSchema);
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(additionalParameterSchema);
     return jsonNodeWrapper.optValueAsBoolean("user_id", false);
   }
 

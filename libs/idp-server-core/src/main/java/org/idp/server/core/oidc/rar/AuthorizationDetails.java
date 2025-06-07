@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.vc.CredentialDefinition;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class AuthorizationDetails implements Iterable<AuthorizationDetail> {
 
@@ -32,6 +33,32 @@ public class AuthorizationDetails implements Iterable<AuthorizationDetail> {
 
   public AuthorizationDetails(List<AuthorizationDetail> values) {
     this.values = values;
+  }
+
+  public static AuthorizationDetails fromString(String string) {
+    try {
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(string);
+      List<Map<String, Object>> listAsMap = jsonNodeWrapper.toListAsMap();
+      List<AuthorizationDetail> authorizationDetailsList =
+          listAsMap.stream().map(AuthorizationDetail::new).toList();
+
+      return new AuthorizationDetails(authorizationDetailsList);
+    } catch (Exception exception) {
+      return new AuthorizationDetails();
+    }
+  }
+
+  public static AuthorizationDetails fromObject(Object object) {
+    try {
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(object);
+      List<Map<String, Object>> listAsMap = jsonNodeWrapper.toListAsMap();
+      List<AuthorizationDetail> authorizationDetailsList =
+          listAsMap.stream().map(AuthorizationDetail::new).toList();
+
+      return new AuthorizationDetails(authorizationDetailsList);
+    } catch (Exception exception) {
+      return new AuthorizationDetails();
+    }
   }
 
   @Override

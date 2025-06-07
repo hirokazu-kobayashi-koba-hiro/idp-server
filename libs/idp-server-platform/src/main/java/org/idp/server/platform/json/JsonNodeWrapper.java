@@ -41,13 +41,20 @@ public class JsonNodeWrapper {
     this.jsonNode = jsonNode;
   }
 
-  public static JsonNodeWrapper fromObject(Map<String, Object> map) {
+  public static JsonNodeWrapper fromMap(Map<String, Object> map) {
     if (map == null || map.isEmpty()) {
       return empty();
     }
     JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-    String json = jsonConverter.write(map);
-    return jsonConverter.readTree(json);
+    return jsonConverter.readTree(map);
+  }
+
+  public static JsonNodeWrapper fromObject(Object object) {
+    if (object == null) {
+      return empty();
+    }
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    return jsonConverter.readTree(object);
   }
 
   /**
@@ -100,6 +107,15 @@ public class JsonNodeWrapper {
     Iterator<JsonNode> iterator = jsonNode.get(fieldName).elements();
     while (iterator.hasNext()) {
       values.add(new JsonNodeWrapper(iterator.next()));
+    }
+    return values;
+  }
+
+  public List<Map<String, Object>> toListAsMap() {
+    List<Map<String, Object>> values = new ArrayList<>();
+    Iterator<JsonNode> iterator = jsonNode.elements();
+    while (iterator.hasNext()) {
+      values.add(new JsonNodeWrapper(iterator.next()).toMap());
     }
     return values;
   }

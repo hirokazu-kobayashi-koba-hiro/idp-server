@@ -52,7 +52,7 @@ public class UnmatchedPhoneIdentityVerificationApplicationVerifier
       return false;
     }
 
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(verificationSchema);
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(verificationSchema);
     return jsonNodeWrapper.optValueAsBoolean("unmatched_user_claims_phone", false);
   }
 
