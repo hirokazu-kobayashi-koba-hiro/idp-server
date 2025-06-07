@@ -405,7 +405,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
 
       const failureResponse = await postAuthenticationDeviceInteraction({
         endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-        flowType: authenticationTransactionResponse.data.authorization_flow,
+        flowType: authenticationTransactionResponse.data.flow,
         id: authenticationTransactionResponse.data.id,
         interactionType: "password-authentication",
         body: {
@@ -418,7 +418,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
 
       const completeResponse = await postAuthenticationDeviceInteraction({
         endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-        flowType: authenticationTransactionResponse.data.authorization_flow,
+        flowType: authenticationTransactionResponse.data.flow,
         id: authenticationTransactionResponse.data.id,
         interactionType: "password-authentication",
         body: {

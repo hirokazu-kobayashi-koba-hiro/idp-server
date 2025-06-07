@@ -39,7 +39,7 @@ public class WebAuthnAuthenticationChallengeInteractor implements Authentication
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
@@ -51,7 +51,7 @@ public class WebAuthnAuthenticationChallengeInteractor implements Authentication
     WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
     WebAuthnChallenge webAuthnChallenge =
         webAuthnExecutor.challengeAuthentication(
-            tenant, authorizationIdentifier, request, configuration);
+            tenant, authenticationTransactionIdentifier, request, configuration);
 
     Map<String, Object> response = new HashMap<>();
     response.put("challenge", webAuthnChallenge.challenge());

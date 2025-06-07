@@ -16,7 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.authentication.interaction.command;
 
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -34,14 +34,14 @@ public class AuthenticationInteractionCommandDataSource
 
   @Override
   public <T> void register(
-      Tenant tenant, AuthorizationIdentifier identifier, String type, T payload) {
+      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
     AuthenticationInteractionCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, identifier, type, payload);
   }
 
   @Override
   public <T> void update(
-      Tenant tenant, AuthorizationIdentifier identifier, String type, T payload) {
+      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
     AuthenticationInteractionCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, identifier, type, payload);
   }

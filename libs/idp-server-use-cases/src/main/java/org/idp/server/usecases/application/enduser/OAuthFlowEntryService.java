@@ -116,7 +116,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     if (requestResponse.isOK()) {
       AuthenticationTransaction authenticationTransaction =
-          OAuthAuthenticationTransactionCreator.createOnOAuthFlow(tenant, requestResponse);
+          OAuthAuthenticationTransactionCreator.create(tenant, requestResponse);
       authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
     }
 
@@ -156,14 +156,14 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
     AuthorizationIdentifier authorizationIdentifier =
-        authorizationRequestIdentifier.toAuthorizationIdentifier();
+        new AuthorizationIdentifier(authorizationRequestIdentifier.value());
     AuthenticationTransaction authenticationTransaction =
         authenticationTransactionQueryRepository.get(tenant, authorizationIdentifier);
 
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
             tenant,
-            authorizationIdentifier,
+            authenticationTransaction.identifier(),
             type,
             request,
             authenticationTransaction,

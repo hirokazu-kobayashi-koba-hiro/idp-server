@@ -19,7 +19,7 @@ package org.idp.server.core.oidc.io;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.AuthorizationFlow;
+import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.OAuthRequestContext;
@@ -159,7 +159,7 @@ public class OAuthRequestResponse {
         .filter(
             authenticationPolicy ->
                 authenticationPolicy.anyMatch(
-                    AuthorizationFlow.OAUTH,
+                    AuthFlow.OAUTH,
                     authorizationRequest.acrValues(),
                     authorizationRequest.scopes()))
         .max(Comparator.comparingInt(AuthenticationPolicy::priority))

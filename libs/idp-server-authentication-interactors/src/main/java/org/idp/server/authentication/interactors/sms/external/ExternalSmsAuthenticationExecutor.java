@@ -19,7 +19,7 @@ package org.idp.server.authentication.interactors.sms.external;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.authentication.interactors.sms.*;
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
@@ -50,7 +50,7 @@ public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
   @Override
   public SmsAuthenticationExecutionResult challenge(
       Tenant tenant,
-      AuthorizationIdentifier identifier,
+      AuthenticationTransactionIdentifier identifier,
       SmsAuthenticationExecutionRequest request,
       SmsAuthenticationConfiguration configuration) {
 
@@ -69,7 +69,7 @@ public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
   @Override
   public SmsAuthenticationExecutionResult verify(
       Tenant tenant,
-      AuthorizationIdentifier identifier,
+      AuthenticationTransactionIdentifier identifier,
       SmsAuthenticationExecutionRequest request,
       SmsAuthenticationConfiguration configuration) {
 

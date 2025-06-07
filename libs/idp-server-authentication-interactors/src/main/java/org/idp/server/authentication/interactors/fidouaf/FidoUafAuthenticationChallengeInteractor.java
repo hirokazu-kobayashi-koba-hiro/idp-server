@@ -44,7 +44,7 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
@@ -66,7 +66,10 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
     FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(executionRequest);
     FidoUafExecutionResult executionResult =
         fidoUafExecutor.challengeAuthentication(
-            tenant, authorizationIdentifier, fidoUafExecutionRequest, fidoUafConfiguration);
+            tenant,
+            authenticationTransactionIdentifier,
+            fidoUafExecutionRequest,
+            fidoUafConfiguration);
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(

@@ -18,7 +18,7 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.query
 
 import java.time.LocalDateTime;
 import java.util.*;
-import org.idp.server.basic.type.AuthorizationFlow;
+import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
@@ -36,8 +36,11 @@ public class ModelConverter {
   static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static AuthenticationTransaction convert(Map<String, String> map) {
-    AuthorizationIdentifier identifier = new AuthorizationIdentifier(map.get("authorization_id"));
-    AuthorizationFlow authorizationFlow = AuthorizationFlow.of(map.get("authorization_flow"));
+    AuthenticationTransactionIdentifier identifier =
+        new AuthenticationTransactionIdentifier(map.get("id"));
+    AuthFlow authFlow = AuthFlow.of(map.get("flow"));
+    AuthorizationIdentifier authorizationIdentifier =
+        new AuthorizationIdentifier(map.get("authorization_id"));
     TenantIdentifier tenantIdentifier = new TenantIdentifier(map.get("tenant_id"));
     RequestedClientId requestedClientId = new RequestedClientId(map.get("client_id"));
     User user = toUser(map);
@@ -48,17 +51,18 @@ public class ModelConverter {
     LocalDateTime expiredAt = LocalDateTime.parse(map.get("expired_at"));
     AuthenticationRequest request =
         new AuthenticationRequest(
-            authorizationFlow,
-            tenantIdentifier,
-            requestedClientId,
-            user,
-            context,
-            createdAt,
-            expiredAt);
+            authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);
 
     AuthenticationInteractionResults interactionResults = toAuthenticationInteractionResults(map);
+    AuthenticationTransactionAttributes attributes = toAuthenticationTransactionAttributes(map);
+
     return new AuthenticationTransaction(
-        identifier, request, authenticationPolicy, interactionResults);
+        identifier,
+        authorizationIdentifier,
+        request,
+        authenticationPolicy,
+        interactionResults,
+        attributes);
   }
 
   private static AuthenticationContext toAuthenticationContext(Map<String, String> map) {
@@ -110,5 +114,16 @@ public class ModelConverter {
     }
 
     return new AuthenticationInteractionResults();
+  }
+
+  static AuthenticationTransactionAttributes toAuthenticationTransactionAttributes(
+      Map<String, String> map) {
+    if (map.containsKey("attributes") && map.get("attributes") != null) {
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(map.get("attributes"));
+      Map<String, Object> attributesMap = jsonNodeWrapper.toMap();
+      return new AuthenticationTransactionAttributes(attributesMap);
+    }
+
+    return new AuthenticationTransactionAttributes();
   }
 }

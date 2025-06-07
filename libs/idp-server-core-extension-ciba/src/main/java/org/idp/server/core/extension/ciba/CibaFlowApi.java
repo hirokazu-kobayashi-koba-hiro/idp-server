@@ -22,6 +22,7 @@ import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationReque
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
+import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 
@@ -36,6 +37,7 @@ public interface CibaFlowApi {
   AuthenticationInteractionRequestResult interact(
       TenantIdentifier tenantIdentifier,
       BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier,
+      AuthenticationTransaction authenticationTransaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes);

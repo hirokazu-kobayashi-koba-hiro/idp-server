@@ -19,12 +19,32 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.query
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExecutor {
+
+  @Override
+  public Map<String, String> selectOne(
+      Tenant tenant, AuthenticationTransactionIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
+            WHERE id = ?::uuid
+            AND tenant_id = ?::uuid
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
 
   @Override
   public Map<String, String> selectOne(Tenant tenant, AuthorizationIdentifier identifier) {
@@ -68,9 +88,10 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
   String selectSql =
       """
           SELECT
-          authorization_id,
+          id,
           tenant_id,
-          authorization_flow,
+          flow,
+          authorization_id,
           client_id,
           user_id,
           user_payload,
@@ -78,6 +99,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
           authentication_device_id,
           authentication_policy,
           interactions,
+          attributes,
           created_at,
           expired_at
           FROM authentication_transaction

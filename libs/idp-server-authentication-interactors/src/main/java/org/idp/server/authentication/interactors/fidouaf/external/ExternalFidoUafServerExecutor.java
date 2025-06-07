@@ -18,7 +18,7 @@ package org.idp.server.authentication.interactors.fidouaf.external;
 
 import java.util.Map;
 import org.idp.server.authentication.interactors.fidouaf.*;
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -52,7 +52,7 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
   @Override
   public FidoUafExecutionResult challengeRegistration(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
       FidoUafConfiguration configuration) {
 
@@ -62,7 +62,7 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
   @Override
   public FidoUafExecutionResult verifyRegistration(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
       FidoUafConfiguration configuration) {
 
@@ -72,7 +72,7 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
   @Override
   public FidoUafExecutionResult challengeAuthentication(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
       FidoUafConfiguration configuration) {
 
@@ -82,7 +82,7 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
   @Override
   public FidoUafExecutionResult verifyAuthentication(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
       FidoUafConfiguration configuration) {
 

@@ -726,9 +726,10 @@ CREATE INDEX idx_authentication_configuration_type ON authentication_configurati
 
 CREATE TABLE authentication_transaction
 (
-    authorization_id         UUID         NOT NULL,
+    id                       UUID         NOT NULL,
     tenant_id                UUID         NOT NULL,
-    authorization_flow       VARCHAR(255) NOT NULL,
+    flow                     VARCHAR(255) NOT NULL,
+    authorization_id         UUID,
     client_id                VARCHAR(255) NOT NULL,
     user_id                  UUID,
     user_payload             JSONB,
@@ -736,9 +737,10 @@ CREATE TABLE authentication_transaction
     authentication_device_id UUID,
     authentication_policy    JSONB,
     interactions             JSONB,
+    attributes               JSONB,
     created_at               TEXT         NOT NULL,
     expired_at               TEXT         NOT NULL,
-    PRIMARY KEY (authorization_id),
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
@@ -751,14 +753,14 @@ ALTER TABLE authentication_transaction FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE authentication_interactions
 (
-    authorization_id UUID                    NOT NULL,
-    tenant_id        UUID                    NOT NULL,
-    interaction_type VARCHAR(255)            NOT NULL,
-    payload          JSONB                   NOT NULL,
-    created_at       TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at       TIMESTAMP DEFAULT now() NOT NULL,
-    PRIMARY KEY (authorization_id, interaction_type),
-    FOREIGN KEY (authorization_id) REFERENCES authentication_transaction (authorization_id) ON DELETE CASCADE,
+    authentication_transaction_id UUID                    NOT NULL,
+    tenant_id                     UUID                    NOT NULL,
+    interaction_type              VARCHAR(255)            NOT NULL,
+    payload                       JSONB                   NOT NULL,
+    created_at                    TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at                    TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (authentication_transaction_id, interaction_type),
+    FOREIGN KEY (authentication_transaction_id) REFERENCES authentication_transaction (id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 

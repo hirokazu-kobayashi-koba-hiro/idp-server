@@ -41,7 +41,7 @@ public class SmsAuthenticationRegistrationInteractor implements AuthenticationIn
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
@@ -53,7 +53,8 @@ public class SmsAuthenticationRegistrationInteractor implements AuthenticationIn
     SmsAuthenticationExecutionRequest executionRequest =
         new SmsAuthenticationExecutionRequest(request.toMap());
     SmsAuthenticationExecutionResult executionResult =
-        executor.verify(tenant, authorizationIdentifier, executionRequest, configuration);
+        executor.verify(
+            tenant, authenticationTransactionIdentifier, executionRequest, configuration);
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(

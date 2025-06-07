@@ -16,16 +16,30 @@
 
 package org.idp.server.core.oidc.authentication;
 
-import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import java.util.HashMap;
+import java.util.Map;
 
-public interface AuthenticationInteractor {
+public class AuthenticationTransactionAttributes {
 
-  AuthenticationInteractionRequestResult interact(
-      Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
-      UserQueryRepository userQueryRepository);
+  Map<String, Object> values;
+
+  public AuthenticationTransactionAttributes() {
+    this.values = new HashMap<>();
+  }
+
+  public AuthenticationTransactionAttributes(Map<String, Object> values) {
+    this.values = values;
+  }
+
+  public Map<String, Object> toMap() {
+    return values;
+  }
+
+  public String getValueOrEmpty(String key) {
+    return (String) values.getOrDefault(key, "");
+  }
+
+  public boolean exists() {
+    return values != null && !values.isEmpty();
+  }
 }

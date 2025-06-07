@@ -18,7 +18,7 @@ package org.idp.server.core.extension.ciba.request;
 
 import java.util.Objects;
 import java.util.UUID;
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.platform.uuid.UuidConvertable;
 
 public class BackchannelAuthenticationRequestIdentifier implements UuidConvertable {
@@ -56,7 +56,7 @@ public class BackchannelAuthenticationRequestIdentifier implements UuidConvertab
     return Objects.nonNull(value) && !value.isEmpty();
   }
 
-  public AuthorizationIdentifier toAuthorizationIdentifier() {
-    return new AuthorizationIdentifier(value);
+  public AuthenticationTransactionIdentifier toAuthorizationIdentifier() {
+    return new AuthenticationTransactionIdentifier(value);
   }
 }

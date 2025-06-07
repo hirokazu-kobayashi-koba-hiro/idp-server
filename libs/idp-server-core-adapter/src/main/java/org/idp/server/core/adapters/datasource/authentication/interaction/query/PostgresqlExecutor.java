@@ -19,7 +19,7 @@ package org.idp.server.core.adapters.datasource.authentication.interaction.query
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -27,13 +27,15 @@ public class PostgresqlExecutor implements AuthenticationInteractionQuerySqlExec
 
   @Override
   public Map<String, String> selectOne(
-      Tenant tenant, AuthorizationIdentifier identifier, String type) {
+      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            SELECT authorization_id, payload
+            SELECT
+            authentication_transaction_id,
+            payload
             FROM authentication_interactions
-            WHERE authorization_id = ?::uuid
+            WHERE authentication_transaction_id = ?::uuid
             AND tenant_id = ?::uuid
             AND interaction_type = ?
             """;
