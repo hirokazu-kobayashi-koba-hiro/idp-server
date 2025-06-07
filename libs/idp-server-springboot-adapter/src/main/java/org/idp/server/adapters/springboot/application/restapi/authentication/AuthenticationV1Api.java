@@ -63,7 +63,7 @@ public class AuthenticationV1Api implements ParameterTransformable {
   @PostMapping("/{id}/{interaction-type}")
   public ResponseEntity<?> interact(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("id") AuthorizationIdentifier authorizationIdentifier,
+      @PathVariable("id") AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       @PathVariable("interaction-type") AuthenticationInteractionType type,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
@@ -72,15 +72,9 @@ public class AuthenticationV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationTransaction authenticationTransaction =
-        authenticationApi.get(tenantIdentifier, authorizationIdentifier);
+        authenticationApi.get(tenantIdentifier, authenticationTransactionIdentifier);
     AuthenticationInteractionRequestResult result =
-        interact(
-            tenantIdentifier,
-            authorizationIdentifier,
-            authenticationTransaction,
-            type,
-            request,
-            requestAttributes);
+        interact(tenantIdentifier, authenticationTransaction, type, request, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
@@ -90,7 +84,6 @@ public class AuthenticationV1Api implements ParameterTransformable {
 
   private AuthenticationInteractionRequestResult interact(
       TenantIdentifier tenantIdentifier,
-      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationTransaction authenticationTransaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
@@ -99,7 +92,8 @@ public class AuthenticationV1Api implements ParameterTransformable {
       case OAUTH -> {
         return oAuthFlowApi.interact(
             tenantIdentifier,
-            new AuthorizationRequestIdentifier(authorizationIdentifier.value()),
+            new AuthorizationRequestIdentifier(
+                authenticationTransaction.authorizationIdentifier().value()),
             type,
             request,
             requestAttributes);
@@ -108,7 +102,9 @@ public class AuthenticationV1Api implements ParameterTransformable {
       case CIBA -> {
         return cibaFlowApi.interact(
             tenantIdentifier,
-            new BackchannelAuthenticationRequestIdentifier(authorizationIdentifier.value()),
+            new BackchannelAuthenticationRequestIdentifier(
+                authenticationTransaction.authorizationIdentifier().value()),
+            authenticationTransaction,
             type,
             request,
             requestAttributes);

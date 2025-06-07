@@ -165,6 +165,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
   public AuthenticationInteractionRequestResult interact(
       TenantIdentifier tenantIdentifier,
       BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier,
+      AuthenticationTransaction authenticationTransaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes) {
@@ -176,15 +177,11 @@ public class CibaFlowEntryService implements CibaFlowApi {
         cibaProtocol.get(tenant, backchannelAuthenticationRequestIdentifier);
 
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
-    AuthorizationIdentifier authorizationIdentifier =
-        backchannelAuthenticationRequestIdentifier.toAuthorizationIdentifier();
 
-    AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(tenant, authorizationIdentifier);
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
             tenant,
-            authorizationIdentifier,
+            authenticationTransaction.identifier(),
             type,
             request,
             authenticationTransaction,

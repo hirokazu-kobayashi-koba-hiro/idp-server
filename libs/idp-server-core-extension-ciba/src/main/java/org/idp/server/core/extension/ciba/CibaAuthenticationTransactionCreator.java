@@ -17,15 +17,15 @@
 package org.idp.server.core.extension.ciba;
 
 import java.time.LocalDateTime;
-import org.idp.server.basic.type.AuthorizationFlow;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.extension.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.oidc.authentication.AuthenticationContext;
-import org.idp.server.core.oidc.authentication.AuthenticationRequest;
-import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
@@ -37,21 +37,36 @@ public class CibaAuthenticationTransactionCreator {
 
   public static AuthenticationTransaction create(
       Tenant tenant, CibaIssueResponse cibaIssueResponse) {
-    AuthorizationIdentifier identifier =
+
+    AuthenticationTransactionIdentifier identifier =
+        new AuthenticationTransactionIdentifier(UUID.randomUUID().toString());
+    AuthorizationIdentifier authorizationIdentifier =
         new AuthorizationIdentifier(
             cibaIssueResponse.backchannelAuthenticationRequestIdentifier().value());
+
     AuthenticationRequest authenticationRequest =
         toAuthenticationRequest(tenant, cibaIssueResponse);
     AuthenticationPolicy authenticationPolicy =
         cibaIssueResponse.findSatisfiedAuthenticationPolicy();
-    return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicy);
+
+    Map<String, Object> attributes = new HashMap<>();
+    attributes.put("auth_req_id", cibaIssueResponse.authReqId().value());
+    AuthenticationTransactionAttributes authenticationTransactionAttributes =
+        new AuthenticationTransactionAttributes(attributes);
+
+    return new AuthenticationTransaction(
+        identifier,
+        authorizationIdentifier,
+        authenticationRequest,
+        authenticationPolicy,
+        authenticationTransactionAttributes);
   }
 
   private static AuthenticationRequest toAuthenticationRequest(
       Tenant tenant, CibaIssueResponse cibaIssueResponse) {
     BackchannelAuthenticationRequest backchannelAuthenticationRequest = cibaIssueResponse.request();
     ExpiresIn expiresIn = cibaIssueResponse.expiresIn();
-    AuthorizationFlow authorizationFlow = AuthorizationFlow.CIBA;
+    AuthFlow authFlow = AuthFlow.CIBA;
     TenantIdentifier tenantIdentifier = tenant.identifier();
 
     RequestedClientId requestedClientId = backchannelAuthenticationRequest.requestedClientId();
@@ -64,12 +79,6 @@ public class CibaAuthenticationTransactionCreator {
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt = createdAt.plusSeconds(expiresIn.value());
     return new AuthenticationRequest(
-        authorizationFlow,
-        tenantIdentifier,
-        requestedClientId,
-        user,
-        context,
-        createdAt,
-        expiredAt);
+        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);
   }
 }

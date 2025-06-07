@@ -19,7 +19,7 @@ package org.idp.server.usecases.application.enduser;
 import org.idp.server.authentication.interactors.device.AuthenticationApi;
 import org.idp.server.authentication.interactors.device.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.datasource.Transaction;
@@ -42,10 +42,12 @@ public class AuthenticationEntryService implements AuthenticationApi {
   }
 
   public AuthenticationTransaction get(
-      TenantIdentifier tenantIdentifier, AuthorizationIdentifier authorizationIdentifier) {
+      TenantIdentifier tenantIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    return authenticationTransactionQueryRepository.get(tenant, authorizationIdentifier);
+    return authenticationTransactionQueryRepository.get(
+        tenant, authenticationTransactionIdentifier);
   }
 
   public AuthenticationTransactionFindingResponse findLatest(

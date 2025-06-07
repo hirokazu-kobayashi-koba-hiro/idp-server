@@ -150,12 +150,11 @@ public class OAuthV1Api implements ParameterTransformable {
     }
   }
 
-  @PostMapping("/{id}/{mfa-interaction-type}")
+  @PostMapping("/{id}/{interaction-type}")
   public ResponseEntity<?> interact(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      @PathVariable("mfa-interaction-type")
-          AuthenticationInteractionType authenticationInteractionType,
+      @PathVariable("interaction-type") AuthenticationInteractionType authenticationInteractionType,
       @RequestBody(required = false) Map<String, Object> params,
       HttpServletRequest httpServletRequest) {
 

@@ -19,7 +19,7 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.comma
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.platform.datasource.SqlExecutor;
@@ -38,9 +38,10 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
         """
             INSERT INTO authentication_transaction
             (
-            authorization_id,
+            id,
             tenant_id,
-            authorization_flow,
+            flow,
+            authorization_id,
             client_id,
             user_id,
             user_payload,
@@ -48,6 +49,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
             authentication_device_id,
             authentication_policy,
             interactions,
+            attributes,
             created_at,
             expired_at
             )
@@ -56,11 +58,13 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
             ?::uuid,
             ?::uuid,
             ?,
+            ?::uuid,
             ?,
             ?::uuid,
             ?::jsonb,
             ?::jsonb,
             ?::uuid,
+            ?::jsonb,
             ?::jsonb,
             ?::jsonb,
             ?,
@@ -74,6 +78,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
     params.add(authenticationTransaction.identifier().valueAsUuid());
     params.add(tenant.identifierUUID());
     params.add(authenticationTransaction.request().authorizationFlow().value());
+    params.add(authenticationTransaction.authorizationIdentifier().valueAsUuid());
     params.add(authenticationTransaction.request().requestedClientId().value());
 
     if (user.exists()) {
@@ -97,6 +102,12 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
       params.add(null);
     }
 
+    if (authenticationTransaction.hasAttributes()) {
+      params.add(jsonConverter.write(authenticationTransaction.attributes().toMap()));
+    } else {
+      params.add(null);
+    }
+
     params.add(authenticationTransaction.request().createdAt().toString());
     params.add(authenticationTransaction.request().expiredAt().toString());
 
@@ -114,7 +125,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
                 user_payload = ?::jsonb,
                 authentication_device_id = ?::uuid,
                 interactions = ?::jsonb
-                WHERE authorization_id = ?::uuid
+                WHERE id = ?::uuid
                 AND tenant_id = ?::uuid
                 """;
 
@@ -143,5 +154,20 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
   }
 
   @Override
-  public void delete(Tenant tenant, AuthorizationIdentifier identifier) {}
+  public void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+        DELETE FROM authentication_transaction
+        WHERE id = ?::uuid
+        AND tenant_id = ?::uuid
+    """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(identifier.valueAsUuid());
+    params.add(identifier.valueAsUuid());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
 }

@@ -5,7 +5,7 @@ export const serverConfig = {
   authorizationEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations`,
   authenticationEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentications/{id}/`,
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations/{id}/`,
   authenticationDeviceEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentication-devices/{id}/authentications/latest`,
   authorizeEndpoint:

@@ -41,7 +41,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,
@@ -49,7 +49,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
 
     EmailVerificationChallenge emailVerificationChallenge =
         queryRepository.get(
-            tenant, authorizationIdentifier, "email", EmailVerificationChallenge.class);
+            tenant, authenticationTransactionIdentifier, "email", EmailVerificationChallenge.class);
     String verificationCode = request.optValueAsString("verification_code", "");
 
     EmailVerificationResult verificationResult =
@@ -60,7 +60,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
       EmailVerificationChallenge countUpEmailVerificationChallenge =
           emailVerificationChallenge.countUp();
       commandRepository.update(
-          tenant, authorizationIdentifier, "email", countUpEmailVerificationChallenge);
+          tenant, authenticationTransactionIdentifier, "email", countUpEmailVerificationChallenge);
 
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,

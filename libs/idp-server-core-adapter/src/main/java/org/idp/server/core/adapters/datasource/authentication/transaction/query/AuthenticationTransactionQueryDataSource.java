@@ -18,6 +18,7 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.query
 
 import java.util.Map;
 import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 import org.idp.server.core.oidc.authentication.exception.AuthenticationTransactionNotFoundException;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionQueryRepository;
@@ -34,13 +35,28 @@ public class AuthenticationTransactionQueryDataSource
   }
 
   @Override
-  public AuthenticationTransaction get(Tenant tenant, AuthorizationIdentifier identifier) {
+  public AuthenticationTransaction get(
+      Tenant tenant, AuthenticationTransactionIdentifier identifier) {
     AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {
       throw new AuthenticationTransactionNotFoundException(
           "Authentication transaction not found for identifier: " + identifier.value());
+    }
+
+    return ModelConverter.convert(result);
+  }
+
+  @Override
+  public AuthenticationTransaction get(Tenant tenant, AuthorizationIdentifier identifier) {
+    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectOne(tenant, identifier);
+
+    if (result == null || result.isEmpty()) {
+      throw new AuthenticationTransactionNotFoundException(
+          "Authentication transaction not found for authorization identifier: "
+              + identifier.value());
     }
 
     return ModelConverter.convert(result);

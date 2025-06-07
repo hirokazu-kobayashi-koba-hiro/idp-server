@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.AuthorizationFlow;
+import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.core.oidc.authentication.evaluator.MfaConditionEvaluator;
 import org.idp.server.core.oidc.configuration.authentication.AcrMapper;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
@@ -31,29 +31,43 @@ import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.exception.BadRequestException;
 
 public class AuthenticationTransaction {
-  AuthorizationIdentifier identifier;
+  AuthenticationTransactionIdentifier identifier;
+  AuthorizationIdentifier authorizationIdentifier;
   AuthenticationRequest request;
   AuthenticationPolicy authenticationPolicy;
   AuthenticationInteractionResults interactionResults;
+  AuthenticationTransactionAttributes attributes;
 
   public AuthenticationTransaction() {}
 
   public AuthenticationTransaction(
-      AuthorizationIdentifier identifier,
+      AuthenticationTransactionIdentifier identifier,
+      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationRequest request,
-      AuthenticationPolicy authenticationPolicy) {
-    this(identifier, request, authenticationPolicy, new AuthenticationInteractionResults());
+      AuthenticationPolicy authenticationPolicy,
+      AuthenticationTransactionAttributes attributes) {
+    this(
+        identifier,
+        authorizationIdentifier,
+        request,
+        authenticationPolicy,
+        new AuthenticationInteractionResults(),
+        attributes);
   }
 
   public AuthenticationTransaction(
-      AuthorizationIdentifier identifier,
+      AuthenticationTransactionIdentifier identifier,
+      AuthorizationIdentifier authorizationIdentifier,
       AuthenticationRequest request,
       AuthenticationPolicy authenticationPolicy,
-      AuthenticationInteractionResults interactionResults) {
+      AuthenticationInteractionResults interactionResults,
+      AuthenticationTransactionAttributes attributes) {
     this.identifier = identifier;
+    this.authorizationIdentifier = authorizationIdentifier;
     this.request = request;
     this.authenticationPolicy = authenticationPolicy;
     this.interactionResults = interactionResults;
+    this.attributes = attributes;
   }
 
   public AuthenticationTransaction updateWith(
@@ -83,7 +97,12 @@ public class AuthenticationTransaction {
     AuthenticationInteractionResults updatedResults =
         new AuthenticationInteractionResults(resultMap);
     return new AuthenticationTransaction(
-        identifier, updatedRequest, authenticationPolicy, updatedResults);
+        identifier,
+        authorizationIdentifier,
+        updatedRequest,
+        authenticationPolicy,
+        updatedResults,
+        attributes);
   }
 
   private AuthenticationRequest updateWithUser(
@@ -128,14 +147,23 @@ public class AuthenticationTransaction {
     AuthenticationInteractionResults updatedResults =
         new AuthenticationInteractionResults(resultMap);
     return new AuthenticationTransaction(
-        identifier, updatedRequest, authenticationPolicy, updatedResults);
+        identifier,
+        authorizationIdentifier,
+        updatedRequest,
+        authenticationPolicy,
+        updatedResults,
+        attributes);
   }
 
-  public AuthorizationIdentifier identifier() {
+  public AuthenticationTransactionIdentifier identifier() {
     return identifier;
   }
 
-  public AuthorizationFlow flow() {
+  public AuthorizationIdentifier authorizationIdentifier() {
+    return authorizationIdentifier;
+  }
+
+  public AuthFlow flow() {
     return request.authorizationFlow();
   }
 
@@ -217,6 +245,14 @@ public class AuthenticationTransaction {
 
   public AuthenticationContext requestContext() {
     return request.context();
+  }
+
+  public AuthenticationTransactionAttributes attributes() {
+    return attributes;
+  }
+
+  public boolean hasAttributes() {
+    return attributes != null && attributes.exists();
   }
 
   public Authentication authentication() {

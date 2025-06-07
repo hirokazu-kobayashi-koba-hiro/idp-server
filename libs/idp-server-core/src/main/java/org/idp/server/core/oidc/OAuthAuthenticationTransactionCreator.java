@@ -17,12 +17,10 @@
 package org.idp.server.core.oidc;
 
 import java.time.LocalDateTime;
-import org.idp.server.basic.type.AuthorizationFlow;
+import java.util.UUID;
+import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.core.oidc.authentication.AuthenticationContext;
-import org.idp.server.core.oidc.authentication.AuthenticationRequest;
-import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
@@ -34,19 +32,31 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class OAuthAuthenticationTransactionCreator {
 
-  public static AuthenticationTransaction createOnOAuthFlow(
+  public static AuthenticationTransaction create(
       Tenant tenant, OAuthRequestResponse requestResponse) {
-    AuthorizationIdentifier identifier =
-        new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier());
+
+    AuthenticationTransactionIdentifier identifier =
+        new AuthenticationTransactionIdentifier(UUID.randomUUID().toString());
+    AuthorizationIdentifier authorizationIdentifier =
+        new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier().value());
+
     AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
     AuthenticationPolicy authenticationPolicy = requestResponse.findSatisfiedAuthenticationPolicy();
-    return new AuthenticationTransaction(identifier, authenticationRequest, authenticationPolicy);
+    AuthenticationTransactionAttributes attributes = new AuthenticationTransactionAttributes();
+
+    return new AuthenticationTransaction(
+        identifier,
+        authorizationIdentifier,
+        authenticationRequest,
+        authenticationPolicy,
+        attributes);
   }
 
   private static AuthenticationRequest toAuthenticationRequest(
       Tenant tenant, OAuthRequestResponse requestResponse) {
+
     AuthorizationRequest authorizationRequest = requestResponse.authorizationRequest();
-    AuthorizationFlow authorizationFlow = AuthorizationFlow.OAUTH;
+    AuthFlow authFlow = AuthFlow.OAUTH;
     TenantIdentifier tenantIdentifier = tenant.identifier();
 
     RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
@@ -60,12 +70,6 @@ public class OAuthAuthenticationTransactionCreator {
     LocalDateTime expiredAt =
         createdAt.plusSeconds(requestResponse.oauthAuthorizationRequestExpiresIn());
     return new AuthenticationRequest(
-        authorizationFlow,
-        tenantIdentifier,
-        requestedClientId,
-        user,
-        context,
-        createdAt,
-        expiredAt);
+        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);
   }
 }

@@ -18,7 +18,7 @@ package org.idp.server.core.adapters.datasource.authentication.interaction.comma
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -29,12 +29,17 @@ public class MysqlExecutor implements AuthenticationInteractionCommandSqlExecuto
 
   @Override
   public <T> void insert(
-      Tenant tenant, AuthorizationIdentifier identifier, String type, T payload) {
+      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
-            INSERT INTO authentication_interactions (authorization_id, tenant_id, interaction_type, payload)
+            INSERT INTO authentication_interactions (
+            authentication_transaction_id,
+            tenant_id,
+            interaction_type,
+            payload
+            )
             VALUES (?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE payload = ?, updated_at = now()
             """;
@@ -53,7 +58,7 @@ public class MysqlExecutor implements AuthenticationInteractionCommandSqlExecuto
 
   @Override
   public <T> void update(
-      Tenant tenant, AuthorizationIdentifier identifier, String type, T payload) {
+      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -61,7 +66,7 @@ public class MysqlExecutor implements AuthenticationInteractionCommandSqlExecuto
                 UPDATE authentication_interactions
                 SET payload = ?,
                 updated_at = now()
-                WHERE authorization_id = ?
+                WHERE authentication_transaction_id = ?
                 AND tenant_id =
                 AND interaction_type = ?
                 """;

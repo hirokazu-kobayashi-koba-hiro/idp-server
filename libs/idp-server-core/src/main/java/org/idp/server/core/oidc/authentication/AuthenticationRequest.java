@@ -19,7 +19,7 @@ package org.idp.server.core.oidc.authentication;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.type.AuthorizationFlow;
+import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
@@ -29,7 +29,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class AuthenticationRequest {
 
-  AuthorizationFlow authorizationFlow;
+  AuthFlow authFlow;
   TenantIdentifier tenantIdentifier;
   RequestedClientId requestedClientId;
   User user;
@@ -40,14 +40,14 @@ public class AuthenticationRequest {
   public AuthenticationRequest() {}
 
   public AuthenticationRequest(
-      AuthorizationFlow authorizationFlow,
+      AuthFlow authFlow,
       TenantIdentifier tenantIdentifier,
       RequestedClientId requestedClientId,
       User user,
       AuthenticationContext context,
       LocalDateTime createdAt,
       LocalDateTime expiredAt) {
-    this.authorizationFlow = authorizationFlow;
+    this.authFlow = authFlow;
     this.tenantIdentifier = tenantIdentifier;
     this.requestedClientId = requestedClientId;
     this.user = user;
@@ -56,8 +56,8 @@ public class AuthenticationRequest {
     this.expiredAt = expiredAt;
   }
 
-  public AuthorizationFlow authorizationFlow() {
-    return authorizationFlow;
+  public AuthFlow authorizationFlow() {
+    return authFlow;
   }
 
   public TenantIdentifier tenantIdentifier() {
@@ -97,7 +97,7 @@ public class AuthenticationRequest {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("authorization_flow", authorizationFlow.value());
+    map.put("flow", authFlow.value());
     map.put("tenant_id", tenantIdentifier.value());
     map.put("client_id", requestedClientId.value());
     map.put("user", user.toMap());
@@ -111,25 +111,13 @@ public class AuthenticationRequest {
       AuthenticationInteractionRequestResult interactionRequestResult) {
     User user = interactionRequestResult.user();
     return new AuthenticationRequest(
-        authorizationFlow,
-        tenantIdentifier,
-        requestedClientId,
-        user,
-        context,
-        createdAt,
-        expiredAt);
+        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);
   }
 
   public AuthenticationRequest updateWithUser(FederationInteractionResult result) {
     User user = result.user();
     return new AuthenticationRequest(
-        authorizationFlow,
-        tenantIdentifier,
-        requestedClientId,
-        user,
-        context,
-        createdAt,
-        expiredAt);
+        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);
   }
 
   public AcrValues acrValues() {

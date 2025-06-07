@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.AuthorizationFlow;
+import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.platform.json.JsonReadable;
@@ -39,8 +39,8 @@ public class AuthenticationPolicyCondition implements JsonReadable {
     this.scopes = scopes;
   }
 
-  public boolean anyMatch(AuthorizationFlow authorizationFlow, AcrValues acrValues, Scopes scopes) {
-    if (authorizationFlows.contains(authorizationFlow.name())) {
+  public boolean anyMatch(AuthFlow authFlow, AcrValues acrValues, Scopes scopes) {
+    if (authorizationFlows.contains(authFlow.name())) {
       return true;
     }
 

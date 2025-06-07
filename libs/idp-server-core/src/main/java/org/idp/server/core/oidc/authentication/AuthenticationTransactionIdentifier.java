@@ -18,14 +18,20 @@ package org.idp.server.core.oidc.authentication;
 
 import java.util.Objects;
 import java.util.UUID;
+import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.uuid.UuidConvertable;
 
-public class AuthorizationIdentifier implements UuidConvertable {
+public class AuthenticationTransactionIdentifier implements UuidConvertable {
   String value;
 
-  public AuthorizationIdentifier() {}
+  public AuthenticationTransactionIdentifier() {}
 
-  public AuthorizationIdentifier(String value) {
+  public AuthenticationTransactionIdentifier(
+      AuthorizationRequestIdentifier authorizationRequestIdentifier) {
+    this.value = authorizationRequestIdentifier.value();
+  }
+
+  public AuthenticationTransactionIdentifier(String value) {
     this.value = value;
   }
 
@@ -40,7 +46,7 @@ public class AuthorizationIdentifier implements UuidConvertable {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    AuthorizationIdentifier that = (AuthorizationIdentifier) o;
+    AuthenticationTransactionIdentifier that = (AuthenticationTransactionIdentifier) o;
     return Objects.equals(value, that.value);
   }
 

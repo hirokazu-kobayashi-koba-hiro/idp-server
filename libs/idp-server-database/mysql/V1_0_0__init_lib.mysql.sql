@@ -55,18 +55,6 @@ CREATE TABLE organization_tenants
     FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE idp_user_assigned_organizations
-(
-    id              CHAR(36)       DEFAULT gen_random_uuid(),
-    organization_id CHAR(36)                     NOT NULL,
-    user_id         CHAR(36)                     NOT NULL,
-    assigned_at     TIMESTAMP DEFAULT now() NOT NULL,
-    PRIMARY KEY (id),
-    FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
-    UNIQUE (organization_id, user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 CREATE TABLE authorization_server_configuration
 (
     tenant_id    CHAR(36)                           NOT NULL,
@@ -171,6 +159,18 @@ CREATE TABLE idp_user
 
 CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_id, provider_user_id);
 CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
+
+CREATE TABLE idp_user_assigned_organizations
+(
+    id              CHAR(36)                NOT NULL,
+    organization_id CHAR(36)                NOT NULL,
+    user_id         CHAR(36)                NOT NULL,
+    assigned_at     TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
+    UNIQUE (organization_id, user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE idp_user_roles
 (
@@ -565,9 +565,10 @@ CREATE INDEX idx_authentication_configuration_type ON authentication_configurati
 
 CREATE TABLE authentication_transaction
 (
-    authorization_id                     CHAR(36)     NOT NULL,
+    id                                   CHAR(36)     NOT NULL,
     tenant_id                            CHAR(36)     NOT NULL,
-    authorization_flow                   VARCHAR(255) NOT NULL,
+    flow                                 VARCHAR(255) NOT NULL,
+    authorization_id                     CHAR(36),
     client_id                            VARCHAR(255) NOT NULL,
     user_id                              CHAR(36),
     user_payload                         JSON,
@@ -576,31 +577,32 @@ CREATE TABLE authentication_transaction
     required_any_of_authentication_types JSON,
     last_interaction_type                VARCHAR(255),
     interactions                         JSON,
+    attributes                           JSON,
     created_at                           TEXT         NOT NULL,
     expired_at                           TEXT         NOT NULL,
-    PRIMARY KEY (authorization_id),
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE authentication_interactions
 (
-    authorization_id CHAR(36)                           NOT NULL,
-    tenant_id        CHAR(36)                           NOT NULL,
-    interaction_type VARCHAR(255)                       NOT NULL,
-    payload          JSON                               NOT NULL,
-    created_at       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    PRIMARY KEY (authorization_id, interaction_type),
-    FOREIGN KEY (authorization_id) REFERENCES authentication_transaction (authorization_id) ON DELETE CASCADE,
+    authentication_transaction_id CHAR(36)                           NOT NULL,
+    tenant_id                     CHAR(36)                           NOT NULL,
+    interaction_type              VARCHAR(255)                       NOT NULL,
+    payload                       JSON                               NOT NULL,
+    created_at                    DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at                    DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (authentication_transaction_id, interaction_type),
+    FOREIGN KEY (authentication_transaction_id) REFERENCES authentication_transaction (id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE idp_user_lifecycle_event_result
 (
-    id             CHAR(36)         NOT NULL,
-    tenant_id      CHAR(36)          NOT NULL,
-    user_id        CHAR(36)          NOT NULL,
-    lifecycle_type VARCHAR(255)  NOT NULL,
+    id             CHAR(36)     NOT NULL,
+    tenant_id      CHAR(36)     NOT NULL,
+    user_id        CHAR(36)     NOT NULL,
+    lifecycle_type VARCHAR(255) NOT NULL,
     executor_name  VARCHAR(255) NOT NULL,
     status         VARCHAR(16)  NOT NULL,
     payload        JSON,

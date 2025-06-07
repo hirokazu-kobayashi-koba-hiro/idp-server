@@ -19,8 +19,9 @@ package org.idp.server.core.extension.ciba.handler.io;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import org.idp.server.basic.type.AuthorizationFlow;
+import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.basic.type.ContentType;
+import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
@@ -128,10 +129,12 @@ public class CibaIssueResponse {
   public AuthenticationPolicy findSatisfiedAuthenticationPolicy() {
     List<AuthenticationPolicy> authenticationPolicies = cibaRequestContext.authenticationPolicies();
     return authenticationPolicies.stream()
-        .filter(
-            policy ->
-                policy.anyMatch(AuthorizationFlow.CIBA, request.acrValues(), request.scopes()))
+        .filter(policy -> policy.anyMatch(AuthFlow.CIBA, request.acrValues(), request.scopes()))
         .max(Comparator.comparingInt(AuthenticationPolicy::priority))
         .orElse(new AuthenticationPolicy());
+  }
+
+  public AuthReqId authReqId() {
+    return response.authReqId();
   }
 }

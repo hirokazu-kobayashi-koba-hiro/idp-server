@@ -16,7 +16,7 @@
 
 package org.idp.server.authentication.interactors.fidouaf;
 
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface FidoUafExecutor {
@@ -27,25 +27,25 @@ public interface FidoUafExecutor {
 
   FidoUafExecutionResult challengeRegistration(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
       FidoUafConfiguration configuration);
 
   FidoUafExecutionResult verifyRegistration(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
       FidoUafConfiguration configuration);
 
   FidoUafExecutionResult challengeAuthentication(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
       FidoUafConfiguration configuration);
 
   FidoUafExecutionResult verifyAuthentication(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
       FidoUafConfiguration configuration);
 

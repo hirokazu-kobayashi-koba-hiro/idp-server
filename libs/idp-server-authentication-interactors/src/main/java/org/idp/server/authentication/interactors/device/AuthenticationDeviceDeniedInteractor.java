@@ -27,7 +27,7 @@ public class AuthenticationDeviceDeniedInteractor implements AuthenticationInter
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthorizationIdentifier authorizationIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       AuthenticationTransaction transaction,

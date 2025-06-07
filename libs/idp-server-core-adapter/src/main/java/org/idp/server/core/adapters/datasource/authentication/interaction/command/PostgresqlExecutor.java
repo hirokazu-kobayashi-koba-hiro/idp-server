@@ -18,7 +18,7 @@ package org.idp.server.core.adapters.datasource.authentication.interaction.comma
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -29,14 +29,14 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
 
   @Override
   public <T> void insert(
-      Tenant tenant, AuthorizationIdentifier identifier, String type, T payload) {
+      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         """
             INSERT INTO authentication_interactions
             (
-            authorization_id,
+            authentication_transaction_id,
             tenant_id,
             interaction_type,
             payload
@@ -48,7 +48,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
             ?,
             ?::jsonb
             )
-            ON CONFLICT (authorization_id, interaction_type) DO UPDATE SET payload = ?::jsonb, updated_at = now()
+            ON CONFLICT (authentication_transaction_id, interaction_type) DO UPDATE SET payload = ?::jsonb, updated_at = now()
             """;
 
     String json = jsonConverter.write(payload);
@@ -65,7 +65,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
 
   @Override
   public <T> void update(
-      Tenant tenant, AuthorizationIdentifier identifier, String type, T payload) {
+      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -73,7 +73,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
                 UPDATE authentication_interactions
                 SET payload = ?::jsonb,
                 updated_at = now()
-                WHERE authorization_id = ?
+                WHERE authentication_transaction_id = ?
                 AND tenant_id = ?::uuid
                 AND interaction_type = ?
                 """;
