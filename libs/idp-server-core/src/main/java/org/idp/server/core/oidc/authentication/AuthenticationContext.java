@@ -29,14 +29,11 @@ public class AuthenticationContext {
 
   public AuthenticationContext() {}
 
-  public AuthenticationContext(String acrValues, String scopes) {
-    this.acrValues = new AcrValues(acrValues);
-    this.scopes = new Scopes(scopes);
-  }
-
-  public AuthenticationContext(AcrValues acrValues, Scopes scopes) {
+  public AuthenticationContext(
+      AcrValues acrValues, Scopes scopes, AuthorizationDetails authorizationDetails) {
     this.acrValues = acrValues;
     this.scopes = scopes;
+    this.authorizationDetails = authorizationDetails;
   }
 
   public AcrValues acrValues() {
@@ -51,6 +48,7 @@ public class AuthenticationContext {
     HashMap<String, Object> map = new HashMap<>();
     map.put("acr_values", acrValues.toStringValues());
     map.put("scopes", scopes.toStringValues());
+    map.put("authorization_details", authorizationDetails.toMapValues());
     return map;
   }
 }

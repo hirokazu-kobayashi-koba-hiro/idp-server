@@ -130,7 +130,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
   }
 
   public JsonSchemaDefinition verifiedClaimsSchemaAsDefinition() {
-    return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(verifiedClaimsSchema));
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(verifiedClaimsSchema));
   }
 
   public Map<String, Object> toMap() {

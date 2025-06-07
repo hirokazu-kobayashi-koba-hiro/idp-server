@@ -20,9 +20,13 @@ import java.time.LocalDateTime;
 import java.util.*;
 import org.idp.server.basic.type.AuthorizationFlow;
 import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.Scopes;
+import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.rar.AuthorizationDetail;
+import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -62,7 +66,16 @@ public class ModelConverter {
       JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(map.get("context"));
       String acrValues = jsonNodeWrapper.getValueOrEmptyAsString("acr_values");
       String scopes = jsonNodeWrapper.getValueOrEmptyAsString("scopes");
-      return new AuthenticationContext(acrValues, scopes);
+      Object authorizationDetails = jsonNodeWrapper.getValue("authorization_details");
+      JsonNodeWrapper detailsNode = JsonNodeWrapper.fromObject(authorizationDetails);
+      List<Map<String, Object>> listAsMap = detailsNode.toListAsMap();
+      List<AuthorizationDetail> authorizationDetailsList =
+          listAsMap.stream().map(AuthorizationDetail::new).toList();
+
+      return new AuthenticationContext(
+          new AcrValues(acrValues),
+          new Scopes(scopes),
+          new AuthorizationDetails(authorizationDetailsList));
     }
 
     return new AuthenticationContext();

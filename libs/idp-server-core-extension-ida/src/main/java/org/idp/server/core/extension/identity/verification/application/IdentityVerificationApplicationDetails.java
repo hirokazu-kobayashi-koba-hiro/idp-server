@@ -42,7 +42,7 @@ public class IdentityVerificationApplicationDetails {
     Map<String, Object> mappingResult =
         IdentityVerificationMapper.mapping(request.toMap(), jsonSchemaDefinition);
 
-    return new IdentityVerificationApplicationDetails(JsonNodeWrapper.fromObject(mappingResult));
+    return new IdentityVerificationApplicationDetails(JsonNodeWrapper.fromMap(mappingResult));
   }
 
   public IdentityVerificationApplicationDetails merge(
@@ -54,7 +54,7 @@ public class IdentityVerificationApplicationDetails {
     ;
     mergedResult.putAll(mappingResult);
 
-    return new IdentityVerificationApplicationDetails(JsonNodeWrapper.fromObject(mergedResult));
+    return new IdentityVerificationApplicationDetails(JsonNodeWrapper.fromMap(mergedResult));
   }
 
   public String getValueOrEmptyAsString(String fieldName) {

@@ -434,9 +434,9 @@ export const postAuthenticationDeviceInteraction = async ({
  body,
 }) => {
 
-  const url = endpoint.replace("{flow-type}", flowType).replace("{id}", id);
+  const url = endpoint.replace("{flow-type}", flowType).replace("{id}", id) + interactionType;
   return await postWithJson({
-    url: url + interactionType,
+    url: url,
     body,
   });
 };

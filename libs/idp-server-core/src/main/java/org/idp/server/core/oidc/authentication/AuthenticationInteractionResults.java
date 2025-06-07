@@ -72,4 +72,15 @@ public class AuthenticationInteractionResults implements JsonReadable {
     }
     return false;
   }
+
+  public List<String> authenticationMethods() {
+    List<String> methods = new ArrayList<>();
+    for (Map.Entry<String, AuthenticationInteractionResult> result : values.entrySet()) {
+      if (result.getKey().contains("-authentication") && result.getValue().successCount() > 0) {
+        methods.add(result.getKey().replace("-authentication", ""));
+      }
+    }
+
+    return methods;
+  }
 }

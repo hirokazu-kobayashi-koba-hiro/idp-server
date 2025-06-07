@@ -116,7 +116,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     if (requestResponse.isOK()) {
       AuthenticationTransaction authenticationTransaction =
-          AuthenticationTransaction.createOnOAuthFlow(tenant, requestResponse);
+          OAuthAuthenticationTransactionCreator.createOnOAuthFlow(tenant, requestResponse);
       authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
     }
 

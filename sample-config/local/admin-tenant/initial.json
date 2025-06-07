@@ -73,6 +73,7 @@
       "fragment"
     ],
     "acr_values_supported": [
+      "urn:mace:incommon:iap:gold",
       "urn:mace:incommon:iap:silver",
       "urn:mace:incommon:iap:bronze"
     ],
@@ -236,6 +237,20 @@
             "fido-uaf",
             "legacy"
           ],
+          "acr_mapper": {
+            "urn:mace:incommon:iap:gold": [
+              "fido-uaf",
+              "webauthn"
+            ],
+            "urn:mace:incommon:iap:silver": [
+              "email",
+              "sms"
+            ],
+            "urn:mace:incommon:iap:bronze": [
+              "password",
+              "legacy"
+            ]
+          },
           "success_conditions": {
             "any_of": [
               {

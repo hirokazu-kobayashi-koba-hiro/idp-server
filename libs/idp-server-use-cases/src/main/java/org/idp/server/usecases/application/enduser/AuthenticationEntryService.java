@@ -16,9 +16,10 @@
 
 package org.idp.server.usecases.application.enduser;
 
-import org.idp.server.authentication.interactors.device.AuthenticationDeviceApi;
+import org.idp.server.authentication.interactors.device.AuthenticationApi;
 import org.idp.server.authentication.interactors.device.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
+import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.datasource.Transaction;
@@ -28,16 +29,23 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction(readOnly = true)
-public class AuthenticationDeviceEntryService implements AuthenticationDeviceApi {
+public class AuthenticationEntryService implements AuthenticationApi {
 
   TenantQueryRepository tenantQueryRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
 
-  public AuthenticationDeviceEntryService(
+  public AuthenticationEntryService(
       TenantQueryRepository tenantQueryRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
+  }
+
+  public AuthenticationTransaction get(
+      TenantIdentifier tenantIdentifier, AuthorizationIdentifier authorizationIdentifier) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    return authenticationTransactionQueryRepository.get(tenant, authorizationIdentifier);
   }
 
   public AuthenticationTransactionFindingResponse findLatest(

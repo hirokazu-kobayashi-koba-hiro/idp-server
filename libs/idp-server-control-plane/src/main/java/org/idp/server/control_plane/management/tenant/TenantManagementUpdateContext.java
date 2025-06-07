@@ -63,8 +63,8 @@ public class TenantManagementUpdateContext {
   }
 
   public Map<String, Object> diff() {
-    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromObject(before.toMap());
-    JsonNodeWrapper afterJson = JsonNodeWrapper.fromObject(after.toMap());
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
     return JsonDiffCalculator.deepDiff(beforeJson, afterJson);
   }
 

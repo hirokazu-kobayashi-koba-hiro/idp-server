@@ -35,7 +35,6 @@ import org.idp.server.core.oidc.grant.GrantUserinfoClaims;
 import org.idp.server.core.oidc.grant.consent.ConsentClaim;
 import org.idp.server.core.oidc.grant.consent.ConsentClaims;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.json.JsonConverter;
@@ -61,7 +60,7 @@ class ModelConverter {
     GrantIdTokenClaims idTokenClaims = new GrantIdTokenClaims(stringMap.get("id_token_claims"));
     GrantUserinfoClaims userinfoClaims = new GrantUserinfoClaims(stringMap.get("userinfo_claims"));
     AuthorizationDetails authorizationDetails =
-        convertAuthorizationDetails(stringMap.get("authorization_details"));
+        AuthorizationDetails.fromString(stringMap.get("authorization_details"));
     ConsentClaims consentClaims = convertConsentClaims(stringMap.get("consent_claims"));
 
     AuthorizationGrant authorizationGrant =
@@ -96,22 +95,6 @@ class ModelConverter {
       return new CustomProperties(map);
     } catch (Exception exception) {
       return new CustomProperties();
-    }
-  }
-
-  private static AuthorizationDetails convertAuthorizationDetails(String value) {
-    if (value == null || value.isEmpty()) {
-      return new AuthorizationDetails();
-    }
-    try {
-
-      List list = jsonConverter.read(value, List.class);
-      List<Map> details = (List<Map>) list;
-      List<AuthorizationDetail> authorizationDetailsList =
-          details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
-      return new AuthorizationDetails(authorizationDetailsList);
-    } catch (Exception exception) {
-      return new AuthorizationDetails();
     }
   }
 

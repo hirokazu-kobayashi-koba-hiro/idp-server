@@ -97,7 +97,7 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
   }
 
   public JsonSchemaDefinition verifiedClaimsSchemaAsDefinition() {
-    return new JsonSchemaDefinition(JsonNodeWrapper.fromObject(verifiedClaimsSchema));
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(verifiedClaimsSchema));
   }
 
   public IdentityVerificationConfiguration toConfiguration(String identifier) {

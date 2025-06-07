@@ -16,11 +16,16 @@
 
 package org.idp.server.authentication.interactors.device;
 
+import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
+import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 
-public interface AuthenticationDeviceApi {
+public interface AuthenticationApi {
+
+  AuthenticationTransaction get(
+      TenantIdentifier tenantIdentifier, AuthorizationIdentifier authorizationIdentifier);
 
   AuthenticationTransactionFindingResponse findLatest(
       TenantIdentifier tenantIdentifier,

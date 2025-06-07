@@ -91,6 +91,15 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       jwks: jwksResponse.data,
     });
     console.log(decodedIdToken);
+
+    const decodedAccessToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.access_token,
+      jwks: jwksResponse.data
+    });
+    console.log(JSON.stringify(decodedAccessToken, null, 2));
+
+    expect(decodedAccessToken.payload.authorization_details).not.toBeNull();
+
   });
 
   it("success pattern request object", async () => {
@@ -182,6 +191,14 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       jwks: jwksResponse.data,
     });
     console.log(decodedIdToken);
+
+    const decodedAccessToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.access_token,
+      jwks: jwksResponse.data
+    });
+    console.log(JSON.stringify(decodedAccessToken, null, 2));
+
+    expect(decodedAccessToken.payload.authorization_details).not.toBeNull();
   });
 
 });

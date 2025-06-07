@@ -37,7 +37,7 @@ public class AuthorizationServerRequestValidator {
   }
 
   public AuthorizationServerRequestValidationResult validate() {
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(request.toMap());
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult serverResult =
         authorizationServerSchemaValidator.validate(jsonNodeWrapper);
 

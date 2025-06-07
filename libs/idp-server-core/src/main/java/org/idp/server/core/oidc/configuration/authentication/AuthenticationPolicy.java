@@ -29,6 +29,7 @@ public class AuthenticationPolicy implements JsonReadable {
   int priority;
   AuthenticationPolicyCondition conditions;
   List<String> availableMethods;
+  Map<String, List<String>> acrMapper;
   AuthenticationResultConditions successConditions;
   AuthenticationResultConditions failureConditions;
   AuthenticationResultConditions lockConditions;
@@ -61,6 +62,14 @@ public class AuthenticationPolicy implements JsonReadable {
 
   public boolean hasAvailableMethods() {
     return availableMethods != null;
+  }
+
+  public AcrMapper acrMapper() {
+    return new AcrMapper(acrMapper);
+  }
+
+  public boolean hasAcrMapper() {
+    return acrMapper != null;
   }
 
   public AuthenticationResultConditions successConditions() {
@@ -96,6 +105,7 @@ public class AuthenticationPolicy implements JsonReadable {
     map.put("id", id);
     if (hasPolicyConditions()) map.put("conditions", conditions.toMap());
     if (hasAvailableMethods()) map.put("available_methods", availableMethods);
+    if (hasAcrMapper()) map.put("acr_mapper", acrMapper);
     if (hasSuccessConditions()) map.put("success_conditions", successConditions.toMap());
     if (hasFailureConditions()) map.put("failure_conditions", failureConditions.toMap());
     if (hasLockConditions()) map.put("lock_conditions", lockConditions.toMap());

@@ -16,7 +16,6 @@
 
 package org.idp.server.core.adapters.datasource.oidc.request;
 
-import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.type.extension.ExpiredAt;
 import org.idp.server.basic.type.oauth.*;
@@ -26,7 +25,6 @@ import org.idp.server.basic.type.pkce.CodeChallengeMethod;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
-import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestBuilder;
@@ -64,7 +62,7 @@ class ModelConverter {
     builder.add(convertClaimsPayload(stringMap.get("claims_value")));
     builder.add(new CodeChallenge(stringMap.get("code_challenge")));
     builder.add(CodeChallengeMethod.of(stringMap.get("code_challenge_method")));
-    builder.add(convertAuthorizationDetails(stringMap.get("authorization_details")));
+    builder.add(AuthorizationDetails.fromString(stringMap.get("authorization_details")));
     builder.add(convertCustomParams(stringMap.get("custom_params")));
     builder.add(new ExpiresIn(stringMap.get("expires_in")));
     builder.add(new ExpiredAt(stringMap.get("expires_at")));
@@ -86,23 +84,6 @@ class ModelConverter {
       return jsonConverter.read(value, RequestedClaimsPayload.class);
     } catch (Exception exception) {
       return new RequestedClaimsPayload();
-    }
-  }
-
-  private static AuthorizationDetails convertAuthorizationDetails(String value) {
-    if (value == null || value.isEmpty()) {
-      return new AuthorizationDetails();
-    }
-    try {
-
-      List list = jsonConverter.read(value, List.class);
-      List<Map> details = (List<Map>) list;
-      List<AuthorizationDetail> authorizationDetailsList =
-          details.stream().map(detail -> new AuthorizationDetail(detail)).toList();
-
-      return new AuthorizationDetails(authorizationDetailsList);
-    } catch (Exception exception) {
-      return new AuthorizationDetails();
     }
   }
 

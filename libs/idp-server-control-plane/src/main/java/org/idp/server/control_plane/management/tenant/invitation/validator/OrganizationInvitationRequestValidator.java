@@ -37,7 +37,7 @@ public class OrganizationInvitationRequestValidator {
   }
 
   public OrganizationInvitationRequestValidationResult validate() {
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(request.toMap());
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult tenantInvitationResult =
         tenantInvitationSchemaValidator.validate(jsonNodeWrapper);
 

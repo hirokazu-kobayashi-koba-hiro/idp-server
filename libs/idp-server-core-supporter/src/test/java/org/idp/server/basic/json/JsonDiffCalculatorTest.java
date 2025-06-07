@@ -26,15 +26,15 @@ public class JsonDiffCalculatorTest {
 
   @Test
   void test_diff_with_added_field() {
-    JsonNodeWrapper before = JsonNodeWrapper.fromObject(Map.of("name", "Alice"));
+    JsonNodeWrapper before = JsonNodeWrapper.fromMap(Map.of("name", "Alice"));
     JsonNodeWrapper after =
-        JsonNodeWrapper.fromObject(
+        JsonNodeWrapper.fromMap(
             Map.of(
                 "name", "Alice",
                 "email", "alice@example.com"));
 
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(before, after);
-    JsonNodeWrapper diffJson = JsonNodeWrapper.fromObject(diff);
+    JsonNodeWrapper diffJson = JsonNodeWrapper.fromMap(diff);
 
     assertEquals(1, diff.size());
     assertEquals("alice@example.com", diffJson.getValueOrEmptyAsString("email"));
@@ -42,11 +42,11 @@ public class JsonDiffCalculatorTest {
 
   @Test
   void test_diff_with_changed_field() {
-    JsonNodeWrapper before = JsonNodeWrapper.fromObject(Map.of("timeout", 3000));
-    JsonNodeWrapper after = JsonNodeWrapper.fromObject(Map.of("timeout", 5000));
+    JsonNodeWrapper before = JsonNodeWrapper.fromMap(Map.of("timeout", 3000));
+    JsonNodeWrapper after = JsonNodeWrapper.fromMap(Map.of("timeout", 5000));
 
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(before, after);
-    JsonNodeWrapper diffJson = JsonNodeWrapper.fromObject(diff);
+    JsonNodeWrapper diffJson = JsonNodeWrapper.fromMap(diff);
 
     assertEquals(1, diff.size());
     assertEquals(5000, diffJson.getValueAsInt("timeout"));
@@ -55,14 +55,14 @@ public class JsonDiffCalculatorTest {
   @Test
   void test_diff_with_nested_object_change() {
     JsonNodeWrapper before =
-        JsonNodeWrapper.fromObject(
+        JsonNodeWrapper.fromMap(
             Map.of("provider", Map.of("endpoint", "https://old.example.com", "timeout", 3000)));
     JsonNodeWrapper after =
-        JsonNodeWrapper.fromObject(
+        JsonNodeWrapper.fromMap(
             Map.of("provider", Map.of("endpoint", "https://new.example.com", "timeout", 3000)));
 
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(before, after);
-    JsonNodeWrapper diffJson = JsonNodeWrapper.fromObject(diff);
+    JsonNodeWrapper diffJson = JsonNodeWrapper.fromMap(diff);
 
     assertEquals(1, diff.size());
     assertEquals("https://new.example.com", diffJson.getValueOrEmptyAsString("provider.endpoint"));
@@ -71,9 +71,9 @@ public class JsonDiffCalculatorTest {
   @Test
   void test_diff_with_array_change() {
     JsonNodeWrapper before =
-        JsonNodeWrapper.fromObject(Map.of("scopes", new String[] {"openid", "email"}));
+        JsonNodeWrapper.fromMap(Map.of("scopes", new String[] {"openid", "email"}));
     JsonNodeWrapper after =
-        JsonNodeWrapper.fromObject(Map.of("scopes", new String[] {"openid", "profile", "email"}));
+        JsonNodeWrapper.fromMap(Map.of("scopes", new String[] {"openid", "profile", "email"}));
 
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(before, after);
 
@@ -83,8 +83,8 @@ public class JsonDiffCalculatorTest {
 
   @Test
   void test_no_diff() {
-    JsonNodeWrapper before = JsonNodeWrapper.fromObject(Map.of("name", "Alice", "age", 30));
-    JsonNodeWrapper after = JsonNodeWrapper.fromObject(Map.of("name", "Alice", "age", 30));
+    JsonNodeWrapper before = JsonNodeWrapper.fromMap(Map.of("name", "Alice", "age", 30));
+    JsonNodeWrapper after = JsonNodeWrapper.fromMap(Map.of("name", "Alice", "age", 30));
 
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(before, after);
 
