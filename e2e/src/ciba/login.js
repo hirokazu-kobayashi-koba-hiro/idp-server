@@ -5,6 +5,8 @@ import {
   requestBackchannelAuthentications,
   requestToken
 } from "../api/oauthClient";
+import { serverConfig } from "../testConfig";
+import { get } from "../lib/http";
 
 export const loginForClientSecretPost = async ({ serverConfig, client, scope }) => {
   const cibaConfig = serverConfig.ciba;
@@ -20,17 +22,27 @@ export const loginForClientSecretPost = async ({ serverConfig, client, scope }) 
       clientSecret: client.clientSecret,
     });
 
-  const authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+  let authenticationTransactionResponse;
+  authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
     endpoint: serverConfig.authenticationDeviceEndpoint,
-    deviceId: cibaConfig.authenticationDeviceId,
+    deviceId: serverConfig.ciba.authenticationDeviceId,
     params: {},
   });
+  console.log(authenticationTransactionResponse);
 
+  authenticationTransactionResponse = await get({
+    url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
+  });
+
+  expect(authenticationTransactionResponse.status).toBe(200);
+
+  const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+  console.log(authenticationTransaction);
 
   const completeResponse = await postAuthenticationDeviceInteraction({
     endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-    flowType: authenticationTransactionResponse.data.authorization_flow,
-    id: authenticationTransactionResponse.data.id,
+    flowType: authenticationTransaction.flow,
+    id: authenticationTransaction.id,
     interactionType: "password-authentication",
     body: {
       username: serverConfig.ciba.username,

@@ -16,9 +16,12 @@
 
 package org.idp.server.core.adapters.datasource.authentication.transaction.query;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionQueries;
 import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 import org.idp.server.core.oidc.authentication.exception.AuthenticationTransactionNotFoundException;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionQueryRepository;
@@ -75,5 +78,19 @@ public class AuthenticationTransactionQueryDataSource
     }
 
     return ModelConverter.convert(result);
+  }
+
+  @Override
+  public List<AuthenticationTransaction> findList(
+      Tenant tenant, AuthenticationTransactionQueries queries) {
+
+    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
+    List<Map<String, String>> results = executor.selectList(tenant, queries);
+
+    if (results == null || results.isEmpty()) {
+      return List.of();
+    }
+
+    return results.stream().map(ModelConverter::convert).collect(Collectors.toList());
   }
 }

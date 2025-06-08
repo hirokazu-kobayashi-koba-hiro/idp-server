@@ -4,8 +4,10 @@ export const serverConfig = {
   issuer: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66`,
   authorizationEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations`,
-  authenticationEndpoint:
+  authorizationIdEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations/{id}/`,
+  authenticationEndpoint:
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentications`,
   authenticationDeviceEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentication-devices/{id}/authentications/latest`,
   authorizeEndpoint:

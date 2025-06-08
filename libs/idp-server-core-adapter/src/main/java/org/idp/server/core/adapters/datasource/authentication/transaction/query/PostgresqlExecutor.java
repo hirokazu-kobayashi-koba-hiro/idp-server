@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionQueries;
 import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
@@ -83,6 +84,48 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     params.add(tenant.identifierUUID());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(
+      Tenant tenant, AuthenticationTransactionQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?::uuid");
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+
+    if (queries.hasId()) {
+      sql.append(" AND id = ?");
+      params.add(queries.id());
+    }
+
+    if (queries.hasFlow()) {
+      sql.append(" AND flow = ?");
+      params.add(queries.flow());
+    }
+
+    if (queries.hasClientId()) {
+      sql.append(" AND client_id = ?");
+      params.add(queries.clientId());
+    }
+
+    if (queries.hasDeviceId()) {
+      sql.append(" AND authentication_device_id = ?");
+    }
+
+    if (queries.hasAttributes()) {
+      for (Map.Entry<String, String> entry : queries.attributes().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        sql.append(" AND attributes ->> ? = ?");
+        params.add(key);
+        params.add(value);
+      }
+    }
+
+    sql.append(" ORDER BY created_at DESC");
+
+    return sqlExecutor.selectList(sql.toString(), params);
   }
 
   String selectSql =

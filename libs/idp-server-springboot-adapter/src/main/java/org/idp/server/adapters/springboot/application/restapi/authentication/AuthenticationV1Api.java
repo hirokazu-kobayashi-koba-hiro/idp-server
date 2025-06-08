@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.authentication.interactors.device.AuthenticationApi;
+import org.idp.server.authentication.interactors.device.AuthenticationTransactionFindingListResponse;
 import org.idp.server.core.extension.ciba.CibaFlowApi;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oidc.OAuthFlowApi;
@@ -58,6 +59,24 @@ public class AuthenticationV1Api implements ParameterTransformable {
     httpHeaders.add("Content-Type", "application/json");
 
     return new ResponseEntity<>(httpHeaders, HttpStatus.OK);
+  }
+
+  @GetMapping
+  public ResponseEntity<?> findList(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestParam Map<String, String> queryParams,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    AuthenticationTransactionFindingListResponse response =
+        authenticationApi.findList(
+            tenantIdentifier, new AuthenticationTransactionQueries(queryParams));
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @PostMapping("/{id}/{interaction-type}")
