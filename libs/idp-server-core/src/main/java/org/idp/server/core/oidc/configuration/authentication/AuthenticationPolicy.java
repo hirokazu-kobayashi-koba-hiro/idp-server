@@ -16,6 +16,7 @@
 
 package org.idp.server.core.oidc.configuration.authentication;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,12 +28,13 @@ import org.idp.server.platform.json.JsonReadable;
 public class AuthenticationPolicy implements JsonReadable {
   String id;
   int priority;
-  AuthenticationPolicyCondition conditions;
-  List<String> availableMethods;
-  Map<String, List<String>> acrMapper;
-  AuthenticationResultConditions successConditions;
-  AuthenticationResultConditions failureConditions;
-  AuthenticationResultConditions lockConditions;
+  AuthenticationPolicyCondition conditions = new AuthenticationPolicyCondition();
+  List<String> availableMethods = new ArrayList<>();
+  Map<String, List<String>> acrMappingRules = new HashMap<>();
+  Map<String, List<String>> levelOfAuthenticationScopes = new HashMap<>();
+  AuthenticationResultConditions successConditions = new AuthenticationResultConditions();
+  AuthenticationResultConditions failureConditions = new AuthenticationResultConditions();
+  AuthenticationResultConditions lockConditions = new AuthenticationResultConditions();
 
   public AuthenticationPolicy() {}
 
@@ -64,12 +66,20 @@ public class AuthenticationPolicy implements JsonReadable {
     return availableMethods != null;
   }
 
-  public AcrMapper acrMapper() {
-    return new AcrMapper(acrMapper);
+  public Map<String, List<String>> acrMappingRules() {
+    return acrMappingRules;
   }
 
-  public boolean hasAcrMapper() {
-    return acrMapper != null;
+  public boolean hasAcrMappingRules() {
+    return acrMappingRules != null;
+  }
+
+  public Map<String, List<String>> levelOfAuthenticationScopes() {
+    return levelOfAuthenticationScopes;
+  }
+
+  public boolean hasLevelOfAuthenticationScopes() {
+    return levelOfAuthenticationScopes != null;
   }
 
   public AuthenticationResultConditions successConditions() {
@@ -105,7 +115,9 @@ public class AuthenticationPolicy implements JsonReadable {
     map.put("id", id);
     if (hasPolicyConditions()) map.put("conditions", conditions.toMap());
     if (hasAvailableMethods()) map.put("available_methods", availableMethods);
-    if (hasAcrMapper()) map.put("acr_mapper", acrMapper);
+    if (hasAcrMappingRules()) map.put("acr_mapping_rules", acrMappingRules);
+    if (hasLevelOfAuthenticationScopes())
+      map.put("level_of_authentication_scopes", levelOfAuthenticationScopes);
     if (hasSuccessConditions()) map.put("success_conditions", successConditions.toMap());
     if (hasFailureConditions()) map.put("failure_conditions", failureConditions.toMap());
     if (hasLockConditions()) map.put("lock_conditions", lockConditions.toMap());

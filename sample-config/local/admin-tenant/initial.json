@@ -223,8 +223,75 @@
       "custom_claims_scope_mapping": true,
       "access_token_user_custom_properties": true,
       "access_token_selective_verified_claims": true,
-      "": true,
       "authentication_policies": [
+        {
+          "id": "gold",
+          "priority": 100,
+          "conditions": {
+            "acr_values": [
+              "urn:mace:incommon:iap:gold"
+            ]
+          },
+          "available_methods": [
+            "password",
+            "email",
+            "sms",
+            "webauthn",
+            "fido-uaf",
+            "legacy"
+          ],
+          "acr_mapping_rules": {
+            "urn:mace:incommon:iap:gold": [
+              "fido-uaf",
+              "webauthn"
+            ],
+            "urn:mace:incommon:iap:silver": [
+              "email",
+              "sms"
+            ],
+            "urn:mace:incommon:iap:bronze": [
+              "password",
+              "legacy"
+            ]
+          },
+          "level_of_authentication_scopes": {
+            "transfers": [
+              "fido-uaf", "webauthn"
+            ]
+          },
+          "success_conditions": {
+            "any_of": [
+              {
+                "type": "fido-uaf-authentication",
+                "success_count": 1
+              }
+            ]
+          },
+          "failure_conditions": {
+            "any_of": [
+              {
+                "type": "password",
+                "failure_count": 5
+              },
+              {
+                "type": "fido-uaf-authentication",
+                "failure_count": 5
+              }
+            ]
+          },
+          "lock_conditions": {
+            "any_of": [
+              {
+                "type": "password",
+                "failure_count": 5
+              },
+              {
+                "type": "fido-uaf-authentication",
+                "failure_count": 5
+              }
+            ]
+          }
+        },
         {
           "id": "default_authentication_policy",
           "priority": 1,
@@ -241,7 +308,7 @@
             "fido-uaf",
             "legacy"
           ],
-          "acr_mapper": {
+          "acr_mapping_rules": {
             "urn:mace:incommon:iap:gold": [
               "fido-uaf",
               "webauthn"
@@ -253,6 +320,11 @@
             "urn:mace:incommon:iap:bronze": [
               "password",
               "legacy"
+            ]
+          },
+          "level_of_authentication_scopes": {
+            "transfers": [
+              "fido-uaf", "webauthn"
             ]
           },
           "success_conditions": {

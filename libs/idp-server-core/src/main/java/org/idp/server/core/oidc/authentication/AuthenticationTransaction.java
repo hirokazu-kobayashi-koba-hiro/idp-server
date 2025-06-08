@@ -21,8 +21,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.type.AuthFlow;
+import org.idp.server.core.oidc.authentication.acr.AcrResolver;
 import org.idp.server.core.oidc.authentication.evaluator.MfaConditionEvaluator;
-import org.idp.server.core.oidc.configuration.authentication.AcrMapper;
+import org.idp.server.core.oidc.authentication.loa.LoaDeniedScopeResolver;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationResultConditions;
 import org.idp.server.core.oidc.federation.FederationInteractionResult;
@@ -257,9 +258,15 @@ public class AuthenticationTransaction {
 
   public Authentication authentication() {
     LocalDateTime time = SystemDateTime.now();
-    AcrMapper acrMapper = authenticationPolicy.acrMapper();
     List<String> methods = interactionResults.authenticationMethods();
-    List<String> acrValues = acrMapper.resolveAcrFrom(methods);
+    List<String> acrValues = AcrResolver.resolve(authenticationPolicy.acrMappingRules(), methods);
     return new Authentication().setTime(time).addMethods(methods).addAcrValues(acrValues);
+  }
+
+  public List<String> deniedScopes() {
+    Map<String, List<String>> levelOfAuthenticationScopes =
+        authenticationPolicy.levelOfAuthenticationScopes();
+    List<String> methods = interactionResults.authenticationMethods();
+    return LoaDeniedScopeResolver.resolve(levelOfAuthenticationScopes, methods);
   }
 }

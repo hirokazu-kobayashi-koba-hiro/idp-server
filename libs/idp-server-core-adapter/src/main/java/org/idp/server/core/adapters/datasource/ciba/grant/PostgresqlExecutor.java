@@ -133,11 +133,13 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
         """
                 UPDATE ciba_grant
                 SET authentication = ?::jsonb,
+                scopes = ?,
                 status = ?
                 WHERE backchannel_authentication_request_id = ?::uuid;
                 """;
     List<Object> params = new ArrayList<>();
     params.add(toJson(cibaGrant.authorizationGrant().authentication()));
+    params.add(cibaGrant.scopes().toStringValues());
     params.add(cibaGrant.status().name());
     params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().valueAsUuid());
 

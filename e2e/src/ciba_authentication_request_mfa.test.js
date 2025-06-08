@@ -1,7 +1,7 @@
 import { describe, expect, it, xit } from "@jest/globals";
 
 import {
-  getAuthenticationDeviceAuthenticationTransaction,
+  getAuthenticationDeviceAuthenticationTransaction, getJwks,
   postAuthenticationDeviceInteraction,
   requestBackchannelAuthentications,
   requestToken
@@ -11,7 +11,7 @@ import {
   privateKeyJwtClient,
   serverConfig,
 } from "./testConfig";
-import { createJwt, createJwtWithPrivateKey, generateJti } from "./lib/jose";
+import { createJwt, createJwtWithPrivateKey, generateJti, verifyAndDecodeJwt } from "./lib/jose";
 import { isNumber, toEpocTime } from "./lib/util";
 import { get } from "./lib/http";
 
@@ -32,10 +32,11 @@ describe("ciba - mfa", () => {
       await requestBackchannelAuthentications({
         endpoint: serverConfig.backchannelAuthenticationEndpoint,
         clientId: clientSecretPostClient.clientId,
-        scope: "openid profile phone email" + clientSecretPostClient.scope,
+        scope: "openid profile phone email transfers",
         bindingMessage: ciba.bindingMessage,
         userCode: ciba.userCode,
         loginHint: ciba.loginHint,
+        acrValues: "urn:mace:incommon:iap:gold",
         clientSecret: clientSecretPostClient.clientSecret,
       });
     console.log(backchannelAuthenticationResponse.data);
@@ -58,20 +59,9 @@ describe("ciba - mfa", () => {
     const authenticationTransaction = authenticationTransactionResponse.data.list[0];
     console.log(authenticationTransaction);
 
-    const failureResponse = await postAuthenticationDeviceInteraction({
-      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransaction.flow,
-      id: authenticationTransaction.id,
-      interactionType: "password-authentication",
-      body: {
-        username: serverConfig.ciba.username,
-        password: "serverConfig.ciba.userCode",
-      }
-    });
-    console.log(failureResponse.data);
-    console.log(failureResponse.status);
+    let authenticationResponse;
 
-    let authenticationResponse = await postAuthenticationDeviceInteraction({
+    authenticationResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
       flowType: authenticationTransaction.flow,
       id: authenticationTransaction.id,
@@ -81,6 +71,7 @@ describe("ciba - mfa", () => {
         password: serverConfig.ciba.userCode,
       }
     });
+
     expect(authenticationResponse.status).toBe(200);
 
     authenticationResponse = await postAuthenticationDeviceInteraction({
@@ -88,18 +79,6 @@ describe("ciba - mfa", () => {
       flowType: authenticationTransaction.flow,
       id: authenticationTransaction.id,
       interactionType: "fido-uaf-registration-challenge",
-      body: {
-        username: serverConfig.ciba.username,
-        password: serverConfig.ciba.userCode,
-      }
-    });
-    expect(authenticationResponse.status).toBe(200);
-
-    authenticationResponse = await postAuthenticationDeviceInteraction({
-      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransaction.flow,
-      id: authenticationTransaction.id,
-      interactionType: "password-authentication",
       body: {
         username: serverConfig.ciba.username,
         password: serverConfig.ciba.userCode,
@@ -140,6 +119,25 @@ describe("ciba - mfa", () => {
     });
     console.log(tokenResponse.data);
     expect(tokenResponse.status).toBe(200);
+    expect(tokenResponse.data.scope).toContain("transfers");
+
+    const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+    console.log(jwksResponse.data);
+    expect(jwksResponse.status).toBe(200);
+
+    const decodedIdToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.id_token,
+      jwks: jwksResponse.data,
+    });
+    console.log(decodedIdToken);
+    expect(decodedIdToken.payload).toHaveProperty("amr");
+
+    const decodedAccessToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.access_token,
+      jwks: jwksResponse.data
+    });
+    console.log(JSON.stringify(decodedAccessToken, null, 2));
+
 
   });
 

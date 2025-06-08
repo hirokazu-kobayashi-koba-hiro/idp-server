@@ -16,6 +16,7 @@
 
 package org.idp.server.usecases.application.enduser;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.basic.type.extension.OAuthDenyReason;
@@ -271,6 +272,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
             tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
 
     User user = authenticationTransaction.user();
+    List<String> deniedScopes = authenticationTransaction.deniedScopes();
     OAuthAuthorizeRequest oAuthAuthorizeRequest =
         new OAuthAuthorizeRequest(
             tenant,
@@ -279,6 +281,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
             authenticationTransaction.isSuccess()
                 ? authenticationTransaction.authentication()
                 : null);
+    oAuthAuthorizeRequest.setDeniedScopes(deniedScopes);
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 

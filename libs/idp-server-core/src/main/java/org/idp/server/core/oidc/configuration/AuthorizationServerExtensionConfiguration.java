@@ -51,7 +51,6 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   boolean accessTokenSelectiveUserCustomProperties = false;
   boolean accessTokenVerifiedClaims = false;
   boolean accessTokenSelectiveVerifiedClaims = false;
-  boolean levelOfAuthenticationScpeFilter = false;
 
   public AuthorizationServerExtensionConfiguration() {}
 
