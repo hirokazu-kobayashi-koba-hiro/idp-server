@@ -17,22 +17,16 @@
 package org.idp.server.usecases.application.enduser;
 
 import java.util.Map;
-import org.idp.server.basic.type.oauth.Error;
-import org.idp.server.basic.type.oauth.ErrorDescription;
-import org.idp.server.core.extension.ciba.CibaAuthenticationTransactionCreator;
-import org.idp.server.core.extension.ciba.CibaFlowApi;
-import org.idp.server.core.extension.ciba.CibaProtocol;
-import org.idp.server.core.extension.ciba.CibaProtocols;
+import org.idp.server.core.extension.ciba.*;
 import org.idp.server.core.extension.ciba.handler.io.*;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErrorResponse;
-import org.idp.server.core.extension.ciba.user.UserHintResolver;
 import org.idp.server.core.extension.ciba.user.UserHintResolvers;
+import org.idp.server.core.extension.ciba.verifier.additional.CibaRequestAdditionalVerifiers;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionQueryRepository;
-import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.oidc.identity.event.UserLifecycleEvent;
 import org.idp.server.core.oidc.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.oidc.identity.event.UserLifecycleType;
@@ -50,6 +44,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
   CibaProtocols cibaProtocols;
   UserHintResolvers userHintResolvers;
   AuthenticationInteractors authenticationInteractors;
+  CibaRequestAdditionalVerifiers additionalVerifiers;
   UserQueryRepository userQueryRepository;
   TenantQueryRepository tenantQueryRepository;
   AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
@@ -65,10 +60,12 @@ public class CibaFlowEntryService implements CibaFlowApi {
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       CibaFlowEventPublisher eventPublisher,
-      UserLifecycleEventPublisher userLifecycleEventPublisher) {
+      UserLifecycleEventPublisher userLifecycleEventPublisher,
+      PasswordVerificationDelegation passwordVerificationDelegation) {
     this.cibaProtocols = cibaProtocols;
     this.userHintResolvers = new UserHintResolvers();
     this.authenticationInteractors = authenticationInteractors;
+    this.additionalVerifiers = new CibaRequestAdditionalVerifiers(passwordVerificationDelegation);
     this.userQueryRepository = userQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
@@ -89,44 +86,16 @@ public class CibaFlowEntryService implements CibaFlowApi {
     cibaRequest.setClientCert(clientCert);
 
     CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProvider());
-
-    CibaRequestResult requestResult = cibaProtocol.request(cibaRequest);
-
-    if (!requestResult.isOK()) {
-      return requestResult.toErrorResponse();
-    }
-
-    UserHintResolver userHintResolver = this.userHintResolvers.get(requestResult.userHintType());
-    User user =
-        userHintResolver.resolve(
-            tenant,
-            requestResult.userhint(),
-            requestResult.userHintRelatedParams(),
-            userQueryRepository);
-
-    if (!user.exists()) {
-      eventPublisher.publish(
-          tenant,
-          requestResult.request(),
-          user,
-          DefaultSecurityEventType.backchannel_authentication_request_success,
-          requestAttributes);
-
-      BackchannelAuthenticationErrorResponse errorResponse =
-          new BackchannelAuthenticationErrorResponse(
-              new Error("unknown_user_id"),
-              new ErrorDescription(
-                  "The OpenID Provider is not able to identify which end-user the Client wishes to be authenticated by means of the hint provided in the request (login_hint_token, id_token_hint, or login_hint)."));
-      return new CibaRequestResponse(CibaRequestStatus.BAD_REQUEST, errorResponse);
-    }
-
     CibaIssueResponse issueResponse =
-        cibaProtocol.issueResponse(new CibaIssueRequest(tenant, requestResult.context(), user));
+        cibaProtocol.request(cibaRequest, userHintResolvers, additionalVerifiers);
+    if (!issueResponse.isOK()) {
+      return issueResponse.toErrorResponse();
+    }
 
     eventPublisher.publish(
         tenant,
         issueResponse.request(),
-        user,
+        issueResponse.user(),
         DefaultSecurityEventType.backchannel_authentication_request_success,
         requestAttributes);
 
@@ -135,10 +104,9 @@ public class CibaFlowEntryService implements CibaFlowApi {
     authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
 
     AuthenticationInteractionType authenticationInteractionType =
-        StandardAuthenticationInteraction.AUTHENTICATION_DEVICE_NOTIFICATION.toType();
+        issueResponse.defaultCibaAuthenticationInteractionType();
     AuthenticationInteractor authenticationInteractor =
         authenticationInteractors.get(authenticationInteractionType);
-
     AuthenticationInteractionRequestResult interactionRequestResult =
         authenticationInteractor.interact(
             tenant,
@@ -155,7 +123,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
     eventPublisher.publish(
         tenant,
         issueResponse.request(),
-        user,
+        issueResponse.user(),
         interactionRequestResult.eventType(),
         requestAttributes);
 

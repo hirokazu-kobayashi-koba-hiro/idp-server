@@ -18,21 +18,14 @@ package org.idp.server.core.extension.ciba.exception;
 
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
-import org.idp.server.platform.exception.BadRequestException;
+import org.idp.server.platform.exception.ForbiddenException;
 
-public class BackchannelAuthenticationBadRequestException extends BadRequestException {
+public class BackchannelAuthenticationForbiddenException extends ForbiddenException {
   String error;
   String errorDescription;
 
-  public BackchannelAuthenticationBadRequestException(String error, String errorDescription) {
+  public BackchannelAuthenticationForbiddenException(String error, String errorDescription) {
     super(errorDescription);
-    this.error = error;
-    this.errorDescription = errorDescription;
-  }
-
-  public BackchannelAuthenticationBadRequestException(
-      String error, String errorDescription, Throwable throwable) {
-    super(errorDescription, throwable);
     this.error = error;
     this.errorDescription = errorDescription;
   }

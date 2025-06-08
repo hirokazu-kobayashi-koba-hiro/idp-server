@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.usecases.application.enduser;
+package org.idp.server.core.extension.ciba;
 
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.oidc.identity.User;

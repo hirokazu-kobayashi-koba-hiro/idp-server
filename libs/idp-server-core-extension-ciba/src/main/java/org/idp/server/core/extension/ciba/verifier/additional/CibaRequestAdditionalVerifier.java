@@ -14,26 +14,16 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.ciba.handler.io;
+package org.idp.server.core.extension.ciba.verifier.additional;
 
-public enum CibaRequestStatus {
-  OK(200),
-  BAD_REQUEST(400),
-  UNAUTHORIZE(401),
-  FORBIDDEN(403),
-  SERVER_ERROR(500);
+import org.idp.server.core.extension.ciba.CibaRequestContext;
+import org.idp.server.core.oidc.identity.User;
 
-  int statusCode;
+public interface CibaRequestAdditionalVerifier {
 
-  CibaRequestStatus(int statusCode) {
-    this.statusCode = statusCode;
+  default boolean shouldVerify(CibaRequestContext context, User user) {
+    return false;
   }
 
-  public boolean isOK() {
-    return this == OK;
-  }
-
-  public int statusCode() {
-    return statusCode;
-  }
+  void verify(CibaRequestContext context, User user);
 }

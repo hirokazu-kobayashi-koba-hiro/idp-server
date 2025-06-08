@@ -48,6 +48,7 @@ import org.idp.server.control_plane.management.tenant.invitation.operation.Tenan
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationMetaDataApi;
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationQueryRepository;
 import org.idp.server.core.extension.ciba.CibaFlowApi;
+import org.idp.server.core.extension.ciba.CibaFlowEventPublisher;
 import org.idp.server.core.extension.ciba.CibaProtocol;
 import org.idp.server.core.extension.ciba.CibaProtocols;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApi;
@@ -113,7 +114,6 @@ import org.idp.server.platform.security.repository.SecurityEventHookConfiguratio
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.usecases.application.enduser.*;
-import org.idp.server.usecases.application.enduser.CibaFlowEventPublisher;
 import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
 import org.idp.server.usecases.application.system.*;
 import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMetaDataEntryService;
@@ -385,7 +385,8 @@ public class IdpServerApplication {
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository,
                 cibaFlowEventPublisher,
-                userLifecycleEventPublisher),
+                userLifecycleEventPublisher,
+                passwordVerificationDelegation),
             CibaFlowApi.class,
             tenantDialectProvider);
 

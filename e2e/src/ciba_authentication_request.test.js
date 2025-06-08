@@ -38,7 +38,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       deviceId: serverConfig.ciba.authenticationDeviceId,
       params: {},
     });
-    console.log(authenticationTransactionResponse);
+    console.log(authenticationTransactionResponse.data);
 
     authenticationTransactionResponse = await get({
       url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
@@ -307,8 +307,37 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
     });
 
     describe("7.1.2. User Code", () => {
-      it("", async () => {
-        //TODO
+      it ("invalid_user_code", async () => {
+        const backchannelAuthenticationResponse =
+          await requestBackchannelAuthentications({
+            endpoint: serverConfig.backchannelAuthenticationEndpoint,
+            clientId: clientSecretPostClient.clientId,
+            scope: "openid profile phone email" + clientSecretPostClient.scope,
+            bindingMessage: ciba.bindingMessage,
+            userCode: "ciba.userCode",
+            loginHint: ciba.loginHintExSub,
+            clientSecret: clientSecretPostClient.clientSecret,
+          });
+        console.log(backchannelAuthenticationResponse.data);
+        expect(backchannelAuthenticationResponse.status).toBe(400);
+        expect(backchannelAuthenticationResponse.data.error).toEqual("invalid_user_code");
+        expect(backchannelAuthenticationResponse.data.error_description).toEqual("The user code was invalid. Unmatch to user password.");
+      });
+
+      xit("missing_user_code", async () => {
+        const backchannelAuthenticationResponse =
+          await requestBackchannelAuthentications({
+            endpoint: serverConfig.backchannelAuthenticationEndpoint,
+            clientId: clientSecretPostClient.clientId,
+            scope: "openid profile phone email" + clientSecretPostClient.scope,
+            bindingMessage: ciba.bindingMessage,
+            loginHint: ciba.loginHintExSub,
+            clientSecret: clientSecretPostClient.clientSecret,
+          });
+        console.log(backchannelAuthenticationResponse.data);
+        expect(backchannelAuthenticationResponse.status).toBe(400);
+        expect(backchannelAuthenticationResponse.data.error).toEqual("missing_user_code");
+        expect(backchannelAuthenticationResponse.data.error_description).toEqual("user_code is required for this id-provider.");
       });
     });
 
@@ -601,7 +630,25 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
     });
   });
 
-  describe("invalid request", () => {
+  describe("error request", () => {
+
+    //TODO register IDENTITY_VERIFICATION_REQUIRED user
+    xit("identity verification id is required", async () => {
+      let backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          scope: "openid profile phone email " + clientSecretPostClient.identityVerificationScope,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHint,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(403);
+      expect(backchannelAuthenticationResponse.data.error).toEqual("access_denied");
+      expect(backchannelAuthenticationResponse.data.error_description).toEqual("This request contains required identity verification scope. But the user is not identity verified. scopes: transfers");
+    });
 
     it("tenantId id is invalid", async () => {
       let backchannelAuthenticationResponse =

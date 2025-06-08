@@ -29,6 +29,7 @@ import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationReque
 import org.idp.server.core.extension.ciba.user.UserHint;
 import org.idp.server.core.extension.ciba.user.UserHintRelatedParams;
 import org.idp.server.core.extension.ciba.user.UserHintType;
+import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
@@ -204,6 +205,38 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   public boolean isSupportedGrantTypeWithClient(GrantType grantType) {
     return clientConfiguration.isSupportedGrantType(grantType);
+  }
+
+  public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {
+    return authorizationServerConfiguration.defaultCibaAuthenticationInteractionType();
+  }
+
+  public boolean isSupportedUserCode() {
+    if (!authorizationServerConfiguration.backchannelUserCodeParameterSupported()) {
+      return false;
+    }
+    return clientConfiguration.backchannelUserCodeParameter();
+  }
+
+  public boolean requiredBackchannelAuthUserCode() {
+    return authorizationServerConfiguration.requiredBackchannelAuthUserCode();
+  }
+
+  public String backchannelAuthUserCodeType() {
+    return authorizationServerConfiguration.backchannelAuthUserCodeType();
+  }
+
+  public boolean isRequiredIdentityVerification() {
+    Scopes scopes = backchannelAuthenticationRequest.scopes();
+    return authorizationServerConfiguration.hasRequiredIdentityVerificationScope(
+        scopes.toStringSet());
+  }
+
+  public Scopes requiredIdentityVerificationScopes() {
+    Scopes scopes = backchannelAuthenticationRequest.scopes();
+    List<String> requiredIdentityVerificationScope =
+        authorizationServerConfiguration.requiredIdentityVerificationScope();
+    return scopes.filter(requiredIdentityVerificationScope);
   }
 
   public TenantIdentifier tenantIdentifier() {

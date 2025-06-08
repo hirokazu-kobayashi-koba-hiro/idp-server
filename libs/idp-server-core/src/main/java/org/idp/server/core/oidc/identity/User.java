@@ -700,4 +700,8 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     }
     return false;
   }
+
+  public boolean isIdentityVerified() {
+    return status.isIdentityVerified();
+  }
 }
