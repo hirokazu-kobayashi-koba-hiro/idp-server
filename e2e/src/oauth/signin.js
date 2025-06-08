@@ -97,7 +97,7 @@ export const requestAuthorizations = async ({
     if (action === "authorize") {
 
       const passwordResponse = await postAuthentication({
-        endpoint: serverConfig.authenticationEndpoint + "password-authentication",
+        endpoint: serverConfig.authorizationIdEndpoint + "password-authentication",
         id,
         body: {
           ...user
@@ -110,7 +110,7 @@ export const requestAuthorizations = async ({
 
       if (mfa === "email") {
         const challengeResponse = await postAuthentication({
-          endpoint: serverConfig.authenticationEndpoint + "email-verification-challenge",
+          endpoint: serverConfig.authorizationIdEndpoint + "email-verification-challenge",
           id,
           body: {
             email: "test@gmail.com",
@@ -121,7 +121,7 @@ export const requestAuthorizations = async ({
         console.log(challengeResponse.data);
 
         const verificationResponse = await postAuthentication({
-          endpoint: serverConfig.authenticationEndpoint + "email-verification",
+          endpoint: serverConfig.authorizationIdEndpoint + "email-verification",
           id,
           body: {
             verification_code: "123",
@@ -134,7 +134,7 @@ export const requestAuthorizations = async ({
 
       if (mfa === "webauthn") {
         const challengeResponse = await postAuthentication({
-          endpoint: serverConfig.authenticationEndpoint + "webauthn-authentication-challenge",
+          endpoint: serverConfig.authorizationIdEndpoint + "webauthn-authentication-challenge",
           id,
           body: {
             email_template: "authentication"
@@ -144,7 +144,7 @@ export const requestAuthorizations = async ({
         console.log(challengeResponse.data);
 
         const verificationResponse = await postAuthentication({
-          endpoint: serverConfig.authenticationEndpoint + "webauthn-authentication",
+          endpoint: serverConfig.authorizationIdEndpoint + "webauthn-authentication",
           id,
           body: {
             verification_code: "123",
@@ -157,7 +157,7 @@ export const requestAuthorizations = async ({
 
       if (mfa === "legacy-authentication") {
         const challengeResponse = await postAuthentication({
-          endpoint: serverConfig.authenticationEndpoint + "legacy-authentication",
+          endpoint: serverConfig.authorizationIdEndpoint + "legacy-authentication",
           id,
           body: {
             username: "dummy",

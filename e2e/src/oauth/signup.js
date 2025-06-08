@@ -188,7 +188,7 @@ export const requestAuthorizationsForSignup = async ({
     if (action === "authorize") {
 
       const passwordResponse = await postAuthentication({
-        endpoint: serverConfig.authenticationEndpoint + "password-registration",
+        endpoint: serverConfig.authorizationIdEndpoint + "password-registration",
         id,
         body: {
           ...user
@@ -201,7 +201,7 @@ export const requestAuthorizationsForSignup = async ({
 
       if (mfa === "email") {
         const challengeResponse = await postAuthentication({
-          endpoint: serverConfig.authenticationEndpoint + "email-verification-challenge",
+          endpoint: serverConfig.authorizationIdEndpoint + "email-verification-challenge",
           id,
           body: {
             email_template: "authentication"
@@ -211,7 +211,7 @@ export const requestAuthorizationsForSignup = async ({
         console.log(challengeResponse.data);
 
         const verificationResponse = await postAuthentication({
-          endpoint: serverConfig.authenticationEndpoint + "email-verification",
+          endpoint: serverConfig.authorizationIdEndpoint + "email-verification",
           id,
           body: {
             verification_code: "123",
@@ -224,7 +224,7 @@ export const requestAuthorizationsForSignup = async ({
 
       if (mfa === "webauthn") {
         const challengeResponse = await postAuthentication({
-          endpoint: serverConfig.authenticationEndpoint + "webauthn-registration-challenge",
+          endpoint: serverConfig.authorizationIdEndpoint + "webauthn-registration-challenge",
           id,
           body: {
             email_template: "authentication"
@@ -236,7 +236,7 @@ export const requestAuthorizationsForSignup = async ({
         const credential = generateFakeWebAuthnCredential(challengeResponse.data.challenge);
 
         const verificationResponse = await postAuthentication({
-          endpoint: serverConfig.authenticationEndpoint + "webauthn-registration",
+          endpoint: serverConfig.authorizationIdEndpoint + "webauthn-registration",
           id,
           body: credential
         });

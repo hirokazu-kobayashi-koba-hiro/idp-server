@@ -41,19 +41,27 @@ describe("ciba - mfa", () => {
     console.log(backchannelAuthenticationResponse.data);
     expect(backchannelAuthenticationResponse.status).toBe(200);
 
-    const authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+    let authenticationTransactionResponse;
+    authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
       endpoint: serverConfig.authenticationDeviceEndpoint,
       deviceId: serverConfig.ciba.authenticationDeviceId,
       params: {},
     });
+    console.log(authenticationTransactionResponse);
 
-    console.log(authenticationTransactionResponse.data);
+    authenticationTransactionResponse = await get({
+      url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
+    });
+
     expect(authenticationTransactionResponse.status).toBe(200);
+
+    const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+    console.log(authenticationTransaction);
 
     const failureResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransactionResponse.data.authorization_flow,
-      id: authenticationTransactionResponse.data.id,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
       interactionType: "password-authentication",
       body: {
         username: serverConfig.ciba.username,
@@ -65,8 +73,8 @@ describe("ciba - mfa", () => {
 
     let authenticationResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransactionResponse.data.authorization_flow,
-      id: authenticationTransactionResponse.data.id,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
       interactionType: "password-authentication",
       body: {
         username: serverConfig.ciba.username,
@@ -77,8 +85,8 @@ describe("ciba - mfa", () => {
 
     authenticationResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransactionResponse.data.authorization_flow,
-      id: authenticationTransactionResponse.data.id,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
       interactionType: "fido-uaf-registration-challenge",
       body: {
         username: serverConfig.ciba.username,
@@ -89,8 +97,8 @@ describe("ciba - mfa", () => {
 
     authenticationResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransactionResponse.data.authorization_flow,
-      id: authenticationTransactionResponse.data.id,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
       interactionType: "password-authentication",
       body: {
         username: serverConfig.ciba.username,
@@ -101,8 +109,8 @@ describe("ciba - mfa", () => {
 
     authenticationResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransactionResponse.data.authorization_flow,
-      id: authenticationTransactionResponse.data.id,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
       interactionType: "fido-uaf-authentication-challenge",
       body: {
         username: serverConfig.ciba.username,
@@ -113,8 +121,8 @@ describe("ciba - mfa", () => {
 
     authenticationResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransactionResponse.data.authorization_flow,
-      id: authenticationTransactionResponse.data.id,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
       interactionType: "fido-uaf-authentication",
       body: {
         username: serverConfig.ciba.username,
@@ -150,19 +158,27 @@ describe("ciba - mfa", () => {
     console.log(backchannelAuthenticationResponse.data);
     expect(backchannelAuthenticationResponse.status).toBe(200);
 
-    const authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+    let authenticationTransactionResponse;
+    authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
       endpoint: serverConfig.authenticationDeviceEndpoint,
       deviceId: serverConfig.ciba.authenticationDeviceId,
       params: {},
     });
+    console.log(authenticationTransactionResponse);
 
-    console.log(authenticationTransactionResponse.data);
+    authenticationTransactionResponse = await get({
+      url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
+    });
+
     expect(authenticationTransactionResponse.status).toBe(200);
+
+    const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+    console.log(authenticationTransaction);
 
     const failureResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransactionResponse.data.authorization_flow,
-      id: authenticationTransactionResponse.data.id,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
       interactionType: "password-authentication",
       body: {
         username: serverConfig.ciba.username,
@@ -174,8 +190,8 @@ describe("ciba - mfa", () => {
 
     let authenticationResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransactionResponse.data.authorization_flow,
-      id: authenticationTransactionResponse.data.id,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
       interactionType: "sms-authentication-challenge",
       body: {
         phone_number: "09012345678",
@@ -186,8 +202,8 @@ describe("ciba - mfa", () => {
 
     authenticationResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransactionResponse.data.authorization_flow,
-      id: authenticationTransactionResponse.data.id,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
       interactionType: "sms-authentication",
       body: {
         "verification_code": "123456",
@@ -197,8 +213,8 @@ describe("ciba - mfa", () => {
 
     authenticationResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransactionResponse.data.authorization_flow,
-      id: authenticationTransactionResponse.data.id,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
       interactionType: "password-authentication",
       body: {
         username: serverConfig.ciba.username,
