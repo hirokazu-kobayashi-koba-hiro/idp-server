@@ -47,7 +47,7 @@ describe("ciba - mfa", () => {
       deviceId: serverConfig.ciba.authenticationDeviceId,
       params: {},
     });
-    console.log(authenticationTransactionResponse);
+    console.log(authenticationTransactionResponse.data);
 
     authenticationTransactionResponse = await get({
       url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
@@ -164,7 +164,7 @@ describe("ciba - mfa", () => {
       deviceId: serverConfig.ciba.authenticationDeviceId,
       params: {},
     });
-    console.log(authenticationTransactionResponse);
+    console.log(authenticationTransactionResponse.data);
 
     authenticationTransactionResponse = await get({
       url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,

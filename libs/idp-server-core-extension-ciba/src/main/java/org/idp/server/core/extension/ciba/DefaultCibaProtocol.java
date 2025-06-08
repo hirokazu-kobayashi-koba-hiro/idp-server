@@ -26,9 +26,13 @@ import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRe
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.extension.ciba.user.UserHintResolver;
+import org.idp.server.core.extension.ciba.user.UserHintResolvers;
+import org.idp.server.core.extension.ciba.verifier.additional.CibaRequestAdditionalVerifiers;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
@@ -103,23 +107,32 @@ public class DefaultCibaProtocol implements CibaProtocol {
    * </ul>
    *
    * @param request the CIBA request containing client authentication data and parameters
-   * @return a {@link CibaRequestResult} containing the status and the backchannel authentication
-   *     response
+   * @return containing the status and the backchannel authentication response
    */
-  public CibaRequestResult request(CibaRequest request) {
+  public CibaIssueResponse request(
+      CibaRequest request,
+      UserHintResolvers userHintResolvers,
+      CibaRequestAdditionalVerifiers additionalVerifiers) {
     try {
 
       CibaRequestContext cibaRequestContext = cibaRequestHandler.handleRequest(request);
 
-      return new CibaRequestResult(CibaRequestStatus.OK, cibaRequestContext);
+      UserHintResolver userHintResolver = userHintResolvers.get(cibaRequestContext.userHintType());
+      User user =
+          userHintResolver.resolve(
+              cibaRequestContext.tenant(),
+              cibaRequestContext.userHint(),
+              cibaRequestContext.userHintRelatedParams(),
+              userQueryRepository);
+
+      additionalVerifiers.verify(cibaRequestContext, user);
+
+      return cibaRequestHandler.handleIssueResponse(
+          new CibaIssueRequest(cibaRequestContext.tenant(), cibaRequestContext, user));
+
     } catch (Exception exception) {
       return errorHandler.handle(exception);
     }
-  }
-
-  public CibaIssueResponse issueResponse(CibaIssueRequest issueRequest) {
-
-    return cibaRequestHandler.handleIssueResponse(issueRequest);
   }
 
   public BackchannelAuthenticationRequest get(

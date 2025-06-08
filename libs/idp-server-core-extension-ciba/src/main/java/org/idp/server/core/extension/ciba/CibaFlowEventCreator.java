@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.usecases.application.enduser;
+package org.idp.server.core.extension.ciba;
 
 import java.util.HashMap;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;

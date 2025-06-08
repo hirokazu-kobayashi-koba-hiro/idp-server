@@ -17,6 +17,7 @@
 package org.idp.server.core.oidc.configuration;
 
 import java.util.*;
+import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -24,6 +25,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   List<String> fapiBaselineScopes = new ArrayList<>();
   List<String> fapiAdvanceScopes = new ArrayList<>();
+  List<String> requiredIdentityVerificationScopes = new ArrayList<>();
 
   /** opaque: identifier type JWT: consisting type */
   String accessTokenType = "opaque";
@@ -39,6 +41,9 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   long authorizationResponseDuration = 60;
   int backchannelAuthRequestExpiresIn = 300;
   int backchannelAuthPollingInterval = 5;
+  boolean requiredBackchannelAuthUserCode = false;
+  String backchannelAuthUserCodeType = "password";
+  String defaultCibaAuthenticationInteractionType = "authentication-device-notification";
   int oauthAuthorizationRequestExpiresIn = 1800;
   List<AuthenticationPolicy> authenticationPolicies = new ArrayList<>();
   boolean customClaimsScopeMapping = false;
@@ -56,6 +61,10 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   public boolean hasFapiAdvanceScope(Set<String> scopes) {
     return scopes.stream().anyMatch(scope -> fapiAdvanceScopes.contains(scope));
+  }
+
+  public boolean hasRequiredIdentityVerificationScope(Set<String> scopes) {
+    return scopes.stream().anyMatch(scope -> requiredIdentityVerificationScopes.contains(scope));
   }
 
   public String accessTokenType() {
@@ -110,6 +119,14 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return backchannelAuthPollingInterval;
   }
 
+  public boolean requiredBackchannelAuthUserCode() {
+    return requiredBackchannelAuthUserCode;
+  }
+
+  public String backchannelAuthUserCodeType() {
+    return backchannelAuthUserCodeType;
+  }
+
   public int oauthAuthorizationRequestExpiresIn() {
     return oauthAuthorizationRequestExpiresIn;
   }
@@ -120,6 +137,10 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   public List<String> fapiAdvanceScopes() {
     return fapiAdvanceScopes;
+  }
+
+  public List<String> requiredIdentityVerificationScopes() {
+    return requiredIdentityVerificationScopes;
   }
 
   public boolean idTokenStrictMode() {
@@ -148,5 +169,9 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   public boolean enabledAccessTokenSelectiveVerifiedClaims() {
     return accessTokenSelectiveVerifiedClaims;
+  }
+
+  public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {
+    return new AuthenticationInteractionType(defaultCibaAuthenticationInteractionType);
   }
 }

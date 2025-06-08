@@ -107,4 +107,10 @@ public class Scopes implements Iterable<String> {
         values.stream().filter(scope -> !deniedScopes.contains(scope)).collect(Collectors.toSet());
     return new Scopes(removeScopes);
   }
+
+  public Scopes filter(List<String> scopes) {
+    Set<String> filteredScopes =
+        values.stream().filter(scopes::contains).collect(Collectors.toSet());
+    return new Scopes(filteredScopes);
+  }
 }

@@ -203,6 +203,9 @@
     "fapi_advance_scopes": [
       "write"
     ],
+    "required_identity_verification_scopes": [
+      "transfers"
+    ],
     "enabled_custom_claims_scope_mapping": true,
     "enabled_access_token_user_custom_properties": true,
     "enabled_access_token_selective_verified_claims": true,

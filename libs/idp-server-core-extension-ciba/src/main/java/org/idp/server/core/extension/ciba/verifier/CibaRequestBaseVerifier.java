@@ -26,6 +26,7 @@ public class CibaRequestBaseVerifier {
     throwExceptionIfUnSupportedGrantType(context);
     throwExceptionIfNotContainsOpenidScope(context);
     throwExceptionIfNotContainsAnyHint(context);
+    throwExceptionIfNotContainsUserCode(context);
   }
 
   void throwExceptionIfUnSupportedGrantType(CibaRequestContext context) {
@@ -52,6 +53,13 @@ public class CibaRequestBaseVerifier {
       throw new BackchannelAuthenticationBadRequestException(
           "invalid_request",
           "backchannel request does not have any hint, must contains login_hint or login_hint_token or id_token_hint");
+    }
+  }
+
+  void throwExceptionIfNotContainsUserCode(CibaRequestContext context) {
+    if (!context.hasUserCode() && context.requiredBackchannelAuthUserCode()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "missing_user_code", "user_code is required for this id-provider.");
     }
   }
 }

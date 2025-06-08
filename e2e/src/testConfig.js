@@ -88,9 +88,10 @@ export const clientSecretPostClient = {
   clientSecret:
     "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
-  scope: "account transfers management",
+  scope: "account management",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  identityVerificationScope: "transfers",
   idTokenAlg: "RS256",
   requestKey: {
     kty: "EC",
@@ -122,9 +123,10 @@ export const clientSecretPostWithIdTokenEncClient = {
   clientSecret:
     "clientSecretPostWithIdTokenEncPassword1234567890123456789012345678901234567890123456789012345678901234567890",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
-  scope: "account transfers",
+  scope: "account",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  identityVerificationScope: "transfers",
   idTokenAlg: "RS256",
   requestKey: {
     kty: "EC",
@@ -169,9 +171,10 @@ export const clientSecretBasicClient = {
   clientId: "s6BhdRkqt3",
   clientSecret: "cf136dc3c1fc93f31185e5885805d",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
-  scope: "account transfers",
+  scope: "account",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  identityVerificationScope: "transfers",
   idTokenAlg: "RS256",
 };
 
@@ -180,9 +183,10 @@ export const clientSecretJwtClient = {
   clientSecret:
     "clientSecretJwtSecret1234567890123456789012345678901234567890123456789012345678901234567890",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
-  scope: "account transfers",
+  scope: "account",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  identityVerificationScope: "transfers",
   idTokenAlg: "RS256",
 };
 
@@ -192,9 +196,10 @@ export const privateKeyJwtClient = {
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
   redirectUriWithPort: "https://www.certification.openid.net:443/test/a/idp_oidc_basic/callback",
   redirectUriWithHttp: "http://localhost:8081/callback",
-  scope: "account transfers",
+  scope: "account",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  identityVerificationScope: "transfers",
   idTokenAlg: "RS256",
   clientSecretKey: {
     p: "5tYV_YB0h-OATLkIJlh12EvU1eZj0Q_ttbzCS4b9fAsSYB2w6qMA_0LRT_upIZm_tPm-HmMLec-5b7enPjKj9N1iqADf_8j50tVcp60Ns9zqX4nXtFZ0w39iHJnMEhbmkBAU5oKLP0m_vYcwtExJ_9EC8aV6MrNOHHnQhaCdRZE",
@@ -230,7 +235,8 @@ export const privateKeyJwtEcKeyClient = {
   clientId: "privateKeyJwtEcKey",
   clientSecret: "privateKeyJwtEcKeySecret",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
-  scope: "account transfers",
+  scope: "account",
+  identityVerificationScope: "transfers",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
   idTokenAlg: "RS256",
@@ -243,9 +249,10 @@ export const selfSignedTlsAuthClient = {
   clientId: "selfSignedTlsClientAuth",
   clientSecret: "selfSignedTlsClientAuth1234567890123456789012345678901234567890123456789012345678901234567890",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
-  scope: "account transfers",
+  scope: "account",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  identityVerificationScope: "transfers",
   idTokenAlg: "RS256",
   clientCertFile: "selfSignedTlsAuth.pem",
   requestKey: {
@@ -269,9 +276,10 @@ export const selfSignedTlsClientAuth2 = {
   clientId: "selfSignedTlsClientAuth2",
   clientSecret: "selfSignedTlsClientAuth2",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
-  scope: "account transfers",
+  scope: "account",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  identityVerificationScope: "transfers",
   idTokenAlg: "RS256",
   clientCertFile: "selfSignedTlsAuth2.pem",
   requesstKey: {
@@ -290,17 +298,19 @@ export const unsupportedClient = {
   clientId: "unsupportedClient",
   clientSecret: "unsupportedClientSecret",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
-  scope: "account transfers",
+  scope: "account",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  identityVerificationScope: "transfers",
 };
 
 export const publicClient = {
   clientId: "publicClient",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
-  scope: "account transfers",
+  scope: "account",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  identityVerificationScope: "transfers",
   requestKey: {
     kty: "EC",
     d: "Aaknbn13MHEb4hxvhy4gC1nzHs_s5Uz_Mo0W227nR3CAptwrcHBtLjZt7slvLi8lZ5SfQHLjyJB83rP7XtGPAsHT",

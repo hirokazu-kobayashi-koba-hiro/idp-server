@@ -20,6 +20,7 @@ import java.util.*;
 import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.ResponseType;
 import org.idp.server.basic.type.oauth.TokenIssuer;
+import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.configuration.vc.VerifiableCredentialConfiguration;
 import org.idp.server.platform.json.JsonReadable;
@@ -73,7 +74,7 @@ public class AuthorizationServerConfiguration implements JsonReadable {
   List<String> backchannelTokenDeliveryModesSupported = new ArrayList<>();
   String backchannelAuthenticationEndpoint = "";
   List<String> backchannelAuthenticationRequestSigningAlgValuesSupported = new ArrayList<>();
-  Boolean backchannelUserCodeParameterSupported;
+  boolean backchannelUserCodeParameterSupported = false;
   List<String> authorizationDetailsTypesSupported = new ArrayList<>();
   VerifiableCredentialConfiguration credentialIssuerMetadata =
       new VerifiableCredentialConfiguration();
@@ -277,11 +278,19 @@ public class AuthorizationServerConfiguration implements JsonReadable {
   }
 
   public boolean hasFapiBaselineScope(Set<String> scopes) {
-    return scopes.stream().anyMatch(scope -> extension.fapiBaselineScopes().contains(scope));
+    return extension.hasFapiBaselineScope(scopes);
   }
 
   public boolean hasFapiAdvanceScope(Set<String> scopes) {
-    return scopes.stream().anyMatch(scope -> extension.fapiAdvanceScopes().contains(scope));
+    return extension.hasFapiAdvanceScope(scopes);
+  }
+
+  public boolean hasRequiredIdentityVerificationScope(Set<String> scopes) {
+    return extension.hasRequiredIdentityVerificationScope(scopes);
+  }
+
+  public List<String> requiredIdentityVerificationScope() {
+    return extension.requiredIdentityVerificationScopes();
   }
 
   public boolean isIdentifierAccessTokenType() {
@@ -517,12 +526,24 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     return credentialIssuerMetadata.exists();
   }
 
+  public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {
+    return extension.defaultCibaAuthenticationInteractionType();
+  }
+
   public int backchannelAuthRequestExpiresIn() {
     return extension.backchannelAuthRequestExpiresIn();
   }
 
   public int backchannelAuthPollingInterval() {
     return extension.backchannelAuthPollingInterval();
+  }
+
+  public boolean requiredBackchannelAuthUserCode() {
+    return extension.requiredBackchannelAuthUserCode();
+  }
+
+  public String backchannelAuthUserCodeType() {
+    return extension.backchannelAuthUserCodeType();
   }
 
   public int oauthAuthorizationRequestExpiresIn() {

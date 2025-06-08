@@ -49,4 +49,8 @@ public enum UserStatus {
     }
     return UNREGISTERED;
   }
+
+  public boolean isIdentityVerified() {
+    return this == IDENTITY_VERIFIED;
+  }
 }

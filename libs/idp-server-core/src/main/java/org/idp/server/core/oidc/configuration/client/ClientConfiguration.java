@@ -25,7 +25,6 @@ import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.client.ClientName;
 import org.idp.server.platform.json.JsonReadable;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /** ClientConfiguration */
 public class ClientConfiguration implements JsonReadable {
@@ -51,7 +50,7 @@ public class ClientConfiguration implements JsonReadable {
   String backchannelTokenDeliveryMode = "";
   String backchannelClientNotificationEndpoint = "";
   String backchannelAuthenticationRequestSigningAlg = "";
-  Boolean backchannelUserCodeParameter;
+  boolean backchannelUserCodeParameter = false;
   String applicationType = "web";
   String idTokenEncryptedResponseAlg;
   String idTokenEncryptedResponseEnc;
@@ -333,14 +332,6 @@ public class ClientConfiguration implements JsonReadable {
         && Objects.nonNull(idTokenEncryptedResponseEnc);
   }
 
-  public String tenantId() {
-    return tenantId;
-  }
-
-  public TenantIdentifier tenantIdentifier() {
-    return new TenantIdentifier(tenantId);
-  }
-
   public Client client() {
     return new Client(clientIdentifier(), clientName());
   }
@@ -398,7 +389,6 @@ public class ClientConfiguration implements JsonReadable {
     map.put("authorization_encrypted_response_alg", authorizationEncryptedResponseAlg);
     map.put("authorization_encrypted_response_enc", authorizationEncryptedResponseEnc);
     map.put("supported_jar", supportedJar);
-    map.put("tenant_id", tenantId);
     map.put("issuer", issuer);
     return map;
   }

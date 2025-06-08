@@ -30,6 +30,7 @@ import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationReque
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponse;
+import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.identity.User;
 
@@ -54,6 +55,14 @@ public class CibaIssueResponse {
     this.response = response;
     this.user = user;
     this.errorResponse = new BackchannelAuthenticationErrorResponse();
+    this.contentType = ContentType.application_json;
+  }
+
+  public CibaIssueResponse(
+      CibaRequestStatus cibaRequestStatus,
+      BackchannelAuthenticationErrorResponse backchannelAuthenticationErrorResponse) {
+    this.status = cibaRequestStatus;
+    this.errorResponse = backchannelAuthenticationErrorResponse;
     this.contentType = ContentType.application_json;
   }
 
@@ -118,12 +127,20 @@ public class CibaIssueResponse {
     return new CibaRequestResponse(status, response);
   }
 
+  public CibaRequestResponse toErrorResponse() {
+    return new CibaRequestResponse(status, errorResponse);
+  }
+
   public AcrValues acrValues() {
     return cibaRequestContext.acrValues();
   }
 
   public Scopes scopes() {
     return cibaRequestContext.scopes();
+  }
+
+  public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {
+    return cibaRequestContext.defaultCibaAuthenticationInteractionType();
   }
 
   public AuthenticationPolicy findSatisfiedAuthenticationPolicy() {
