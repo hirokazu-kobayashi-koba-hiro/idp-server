@@ -223,7 +223,7 @@
           "fido-uaf",
           "legacy"
         ],
-        "acr_mapper": {
+        "acr_mapping_rules": {
           "urn:mace:incommon:iap:gold": [
             "fido-uaf",
             "webauthn"

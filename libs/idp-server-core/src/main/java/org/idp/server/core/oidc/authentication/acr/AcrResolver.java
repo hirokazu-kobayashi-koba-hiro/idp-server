@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.configuration.authentication;
+package org.idp.server.core.oidc.authentication.acr;
 
 import java.util.*;
 
-public class AcrMapper {
+public class AcrResolver {
 
-  Map<String, List<String>> values;
+  public static List<String> resolve(
+      Map<String, List<String>> acrMappingRules, List<String> performedMethods) {
 
-  public AcrMapper(Map<String, List<String>> values) {
-    this.values = Objects.requireNonNullElseGet(values, HashMap::new);
-  }
+    if (acrMappingRules == null || acrMappingRules.isEmpty()) {
+      return List.of();
+    }
 
-  public List<String> resolveAcrFrom(List<String> performedMethods) {
     List<String> acrs = new ArrayList<>();
-    for (Map.Entry<String, List<String>> entry : values.entrySet()) {
+    for (Map.Entry<String, List<String>> entry : acrMappingRules.entrySet()) {
       if (performedMethods.stream()
           .anyMatch(performedMethod -> entry.getValue().contains(performedMethod))) {
         acrs.add(entry.getKey());

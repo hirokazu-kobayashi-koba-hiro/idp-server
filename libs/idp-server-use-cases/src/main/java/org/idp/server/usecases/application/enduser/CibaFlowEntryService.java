@@ -16,6 +16,7 @@
 
 package org.idp.server.usecases.application.enduser;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.ciba.*;
 import org.idp.server.core.extension.ciba.handler.io.*;
@@ -166,10 +167,14 @@ public class CibaFlowEntryService implements CibaFlowApi {
         requestAttributes);
 
     if (updatedTransaction.isSuccess()) {
+
       Authentication authentication = updatedTransaction.authentication();
+      List<String> deniedScopes = updatedTransaction.deniedScopes();
       CibaAuthorizeRequest cibaAuthorizeRequest =
           new CibaAuthorizeRequest(
               tenant, backchannelAuthenticationRequestIdentifier, authentication);
+      cibaAuthorizeRequest.setDeniedScopes(deniedScopes);
+
       cibaProtocol.authorize(cibaAuthorizeRequest);
       eventPublisher.publish(
           tenant,
