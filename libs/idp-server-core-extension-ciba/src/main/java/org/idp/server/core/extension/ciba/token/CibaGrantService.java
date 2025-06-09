@@ -33,6 +33,7 @@ import org.idp.server.core.oidc.grant_management.AuthorizationGrantedIdentifier;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.id_token.*;
 import org.idp.server.core.oidc.token.*;
+import org.idp.server.core.oidc.token.exception.TokenBadRequestException;
 import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
 import org.idp.server.core.oidc.token.service.OAuthTokenCreationService;
 import org.idp.server.core.oidc.token.validator.CibaGrantValidator;
@@ -74,6 +75,15 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
     Tenant tenant = tokenRequestContext.tenant();
     AuthReqId authReqId = tokenRequestContext.authReqId();
     CibaGrant cibaGrant = cibaGrantRepository.find(tenant, authReqId);
+
+    if (!cibaGrant.exists()) {
+      throw new TokenBadRequestException(
+          "invalid_grant",
+          String.format(
+              "auth_req_id is invalid (%s) (%s)",
+              authReqId.value(), tokenRequestContext.requestedClientId().value()));
+    }
+
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
         backchannelAuthenticationRequestRepository.find(
             tenant, cibaGrant.backchannelAuthenticationRequestIdentifier());

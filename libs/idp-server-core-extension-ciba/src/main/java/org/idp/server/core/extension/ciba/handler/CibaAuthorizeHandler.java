@@ -25,6 +25,7 @@ import org.idp.server.core.extension.ciba.handler.io.CibaAuthorizeStatus;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.extension.ciba.validator.CibaAuthorizeRequestValidator;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -65,13 +66,16 @@ public class CibaAuthorizeHandler {
     BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier =
         request.backchannleAuthenticationIdentifier();
 
+    CibaAuthorizeRequestValidator validator =
+        new CibaAuthorizeRequestValidator(
+            request.backchannleAuthenticationIdentifier(), request.authentication());
+    validator.validate();
+
     Tenant tenant = request.tenant();
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
     CibaGrant cibaGrant =
         cibaGrantRepository.get(tenant, backchannelAuthenticationRequestIdentifier);
-
-    // TODO verify
 
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(

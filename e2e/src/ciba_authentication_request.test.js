@@ -12,7 +12,7 @@ import {
   serverConfig,
 } from "./testConfig";
 import { createJwt, createJwtWithPrivateKey, generateJti } from "./lib/jose";
-import { isNumber, toEpocTime } from "./lib/util";
+import { isNumber, sleep, toEpocTime } from "./lib/util";
 import { get } from "./lib/http";
 
 describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0", () => {
@@ -562,6 +562,181 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
     });
   });
 
+  describe("11. Token Error Response", () => {
+
+    it("authorization_pending", async () => {
+      const backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHintExSub,
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("authorization_pending");
+      expect(tokenResponse.data.error_description).toEqual("The authorization request is still pending as the end-user hasn't yet been authenticated.");
+
+    });
+
+    it("expired_token", async () => {
+      const backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHintExSub,
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          requestedExpiry: 1,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+
+      await sleep(1000);
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("expired_token");
+      expect(tokenResponse.data.error_description).toEqual("The auth_req_id has expired. The Client will need to make a new Authentication Request.");
+
+    });
+
+    it("access_denied", async () => {
+      const backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHintExSub,
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          requestedExpiry: 1,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+
+      const authenticationTransactionResponse = await get({
+        url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
+      });
+
+      expect(authenticationTransactionResponse.status).toBe(200);
+
+      const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+      console.log(authenticationTransaction);
+
+      const intaractionResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransaction.flow,
+        id: authenticationTransaction.id,
+        interactionType: "authentication-device-deny",
+        body: {},
+      });
+      console.log(intaractionResponse.data);
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("access_denied");
+      expect(tokenResponse.data.error_description).toEqual("The end-user denied the authorization request.");
+
+    });
+
+    it("invalid_grant", async () => {
+      let backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHintExSub,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+
+      let authenticationTransactionResponse;
+      authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: serverConfig.authenticationDeviceEndpoint,
+        deviceId: serverConfig.ciba.authenticationDeviceId,
+        params: {},
+      });
+      console.log(authenticationTransactionResponse.data);
+
+      authenticationTransactionResponse = await get({
+        url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
+      });
+
+      expect(authenticationTransactionResponse.status).toBe(200);
+
+      const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+      console.log(authenticationTransaction);
+
+      const completeResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransaction.flow,
+        id: authenticationTransaction.id,
+        interactionType: "password-authentication",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      expect(completeResponse.status).toBe(200);
+
+      let tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+
+      tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("invalid_grant");
+      expect(tokenResponse.data.error_description).toContain("auth_req_id is invalid");
+    });
+  });
+
   describe("13. Authentication Error Response", () => {
     it("error REQUIRED. A single ASCII error code from one present in the list below.", async () => {
       const backchannelAuthenticationResponse =
@@ -731,5 +906,6 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       expect(backchannelAuthenticationResponse.data.error).toEqual("invalid_client");
       expect(backchannelAuthenticationResponse.data.error_description).toEqual("client authentication type is client_secret_post, but request does not contains client_secret_post");
     });
+
   });
 });

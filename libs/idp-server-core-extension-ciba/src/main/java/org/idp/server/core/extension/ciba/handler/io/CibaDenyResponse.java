@@ -16,14 +16,37 @@
 
 package org.idp.server.core.extension.ciba.handler.io;
 
+import org.idp.server.basic.type.oauth.Error;
+import org.idp.server.basic.type.oauth.ErrorDescription;
+
 public class CibaDenyResponse {
   CibaDenyStatus status;
+  Error error;
+  ErrorDescription errorDescription;
 
   public CibaDenyResponse(CibaDenyStatus status) {
     this.status = status;
   }
 
+  public CibaDenyResponse(CibaDenyStatus status, Error error, ErrorDescription errorDescription) {
+    this.status = status;
+    this.error = error;
+    this.errorDescription = errorDescription;
+  }
+
   public int statusCode() {
     return status.statusCode();
+  }
+
+  public boolean isError() {
+    return !status.isOK();
+  }
+
+  public Error error() {
+    return error;
+  }
+
+  public ErrorDescription errorDescription() {
+    return errorDescription;
   }
 }
