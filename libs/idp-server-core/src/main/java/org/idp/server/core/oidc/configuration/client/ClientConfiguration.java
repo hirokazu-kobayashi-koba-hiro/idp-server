@@ -65,9 +65,7 @@ public class ClientConfiguration implements JsonReadable {
   String authorizationEncryptedResponseAlg;
   String authorizationEncryptedResponseEnc;
   // extension
-  boolean supportedJar;
-  String tenantId;
-  String issuer;
+  ClientExtensionConfiguration extension = new ClientExtensionConfiguration();
 
   public ClientConfiguration() {}
 
@@ -199,7 +197,7 @@ public class ClientConfiguration implements JsonReadable {
   }
 
   public boolean isSupportedJar() {
-    return supportedJar;
+    return extension.isSupportedJar();
   }
 
   public boolean isRegisteredRequestUri(String requestUri) {
@@ -208,10 +206,6 @@ public class ClientConfiguration implements JsonReadable {
 
   public boolean isRegisteredRedirectUri(String redirectUri) {
     return redirectUris.contains(redirectUri);
-  }
-
-  public TokenIssuer tokenIssuer() {
-    return new TokenIssuer(issuer);
   }
 
   public boolean isSupportedResponseType(ResponseType responseType) {
@@ -348,6 +342,22 @@ public class ClientConfiguration implements JsonReadable {
     return clientId != null && !clientId.isEmpty();
   }
 
+  public boolean hasAccessTokenDuration() {
+    return extension.hasAccessTokenDuration();
+  }
+
+  public long accessTokenDuration() {
+    return extension.accessTokenDuration();
+  }
+
+  public boolean hasRefreshTokenDuration() {
+    return extension.hasRefreshTokenDuration();
+  }
+
+  public long refreshTokenDuration() {
+    return extension.refreshTokenDuration();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("client_id", clientId);
@@ -388,8 +398,7 @@ public class ClientConfiguration implements JsonReadable {
     map.put("authorization_signed_response_alg", authorizationSignedResponseAlg);
     map.put("authorization_encrypted_response_alg", authorizationEncryptedResponseAlg);
     map.put("authorization_encrypted_response_enc", authorizationEncryptedResponseEnc);
-    map.put("supported_jar", supportedJar);
-    map.put("issuer", issuer);
+    map.put("extension", extension.toMap());
     return map;
   }
 }

@@ -59,14 +59,18 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
     RefreshTokenVerifier verifier = new RefreshTokenVerifier(context, oAuthToken);
     verifier.verify();
     AuthorizationGrant authorizationGrant = oAuthToken.authorizationGrant();
+
     AccessToken accessToken =
-        accessTokenCreator.createAccessToken(
+        accessTokenCreator.refresh(
+            oAuthToken.accessToken(),
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,
             clientCredentials);
+
     RefreshToken refreshToken =
-        createRefreshToken(authorizationServerConfiguration, clientConfiguration);
+        refresh(oAuthToken.refreshToken(), authorizationServerConfiguration, clientConfiguration);
+
     OAuthTokenBuilder oAuthTokenBuilder =
         new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))
             .add(accessToken)

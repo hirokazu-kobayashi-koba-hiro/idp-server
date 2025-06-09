@@ -35,6 +35,8 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   String idTokenSignedKeyId = "";
   long accessTokenDuration = 1800;
   long refreshTokenDuration = 3600;
+  String accessTokenStrategy = "FIXED";
+  boolean rotateRefreshToken = true;
   long idTokenDuration = 3600;
   boolean idTokenStrictMode = false;
   long defaultMaxAge = 86400;
@@ -92,6 +94,22 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   public long refreshTokenDuration() {
     return refreshTokenDuration;
+  }
+
+  public AccessTokenStrategy accessTokenStrategy() {
+    return AccessTokenStrategy.of(accessTokenStrategy);
+  }
+
+  public boolean isFixedAccessTokenStrategy() {
+    return accessTokenStrategy().isFixed();
+  }
+
+  public boolean isExtendsAccessTokenStrategy() {
+    return accessTokenStrategy().isExtends();
+  }
+
+  public boolean isRotateRefreshToken() {
+    return rotateRefreshToken;
   }
 
   public long idTokenDuration() {

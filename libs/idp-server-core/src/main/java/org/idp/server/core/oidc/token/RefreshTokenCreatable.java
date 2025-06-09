@@ -30,14 +30,57 @@ public interface RefreshTokenCreatable {
   default RefreshToken createRefreshToken(
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
-    RandomStringGenerator randomStringGenerator = new RandomStringGenerator(24);
+    RandomStringGenerator randomStringGenerator = new RandomStringGenerator(32);
     String code = randomStringGenerator.generate();
     RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity(code);
 
     LocalDateTime localDateTime = SystemDateTime.now();
     CreatedAt createdAt = new CreatedAt(localDateTime);
-    long refreshTokenDuration = authorizationServerConfiguration.refreshTokenDuration();
+
+    long refreshTokenDuration =
+        clientConfiguration.hasRefreshTokenDuration()
+            ? clientConfiguration.refreshTokenDuration()
+            : authorizationServerConfiguration.refreshTokenDuration();
+
     ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(refreshTokenDuration));
+
+    return new RefreshToken(refreshTokenEntity, createdAt, expiredAt);
+  }
+
+  default RefreshToken refresh(
+      RefreshToken oldRefreshToken,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration) {
+
+    if (authorizationServerConfiguration.isExtendsAccessTokenStrategy()
+        && authorizationServerConfiguration.isRotateRefreshToken()) {
+
+      return createRefreshToken(authorizationServerConfiguration, clientConfiguration);
+    }
+
+    if (authorizationServerConfiguration.isExtendsAccessTokenStrategy()) {
+
+      LocalDateTime localDateTime = SystemDateTime.now();
+      CreatedAt createdAt = new CreatedAt(localDateTime);
+
+      long refreshTokenDuration =
+          clientConfiguration.hasRefreshTokenDuration()
+              ? clientConfiguration.refreshTokenDuration()
+              : authorizationServerConfiguration.refreshTokenDuration();
+
+      ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(refreshTokenDuration));
+      RefreshTokenEntity refreshTokenEntity = oldRefreshToken.refreshTokenEntity();
+
+      return new RefreshToken(refreshTokenEntity, createdAt, expiredAt);
+    }
+
+    RandomStringGenerator randomStringGenerator = new RandomStringGenerator(32);
+    String code = randomStringGenerator.generate();
+    RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity(code);
+
+    LocalDateTime localDateTime = SystemDateTime.now();
+    CreatedAt createdAt = new CreatedAt(localDateTime);
+    ExpiredAt expiredAt = oldRefreshToken.expiredAt();
 
     return new RefreshToken(refreshTokenEntity, createdAt, expiredAt);
   }

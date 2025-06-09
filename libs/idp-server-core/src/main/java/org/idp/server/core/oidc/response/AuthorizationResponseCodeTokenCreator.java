@@ -45,7 +45,7 @@ public class AuthorizationResponseCodeTokenCreator
     AuthorizationGrant authorizationGrant = context.authorize();
 
     AccessToken accessToken =
-        accessTokenCreator.createAccessToken(
+        accessTokenCreator.create(
             authorizationGrant,
             context.serverConfiguration(),
             context.clientConfiguration(),

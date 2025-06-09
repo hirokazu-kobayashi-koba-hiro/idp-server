@@ -72,7 +72,7 @@ public class ClientCredentialsGrantService implements OAuthTokenCreationService 
             .build();
 
     AccessToken accessToken =
-        accessTokenCreator.createAccessToken(
+        accessTokenCreator.create(
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,

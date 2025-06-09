@@ -153,7 +153,7 @@ public class AuthorizationCodeGrantService
 
     AuthorizationGrant authorizationGrant = authorizationCodeGrant.authorizationGrant();
     AccessToken accessToken =
-        accessTokenCreator.createAccessToken(
+        accessTokenCreator.create(
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,
