@@ -2,7 +2,7 @@ import { describe, expect, it, xit } from "@jest/globals";
 
 import {
   getAuthenticationDeviceAuthenticationTransaction,
-  getJwks, postAuthenticationDeviceInteraction,
+  getJwks, inspectToken, postAuthenticationDeviceInteraction,
   requestBackchannelAuthentications,
   requestToken
 } from "./api/oauthClient";
@@ -476,6 +476,160 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       console.log(JSON.stringify(decodedAccessToken, null, 2));
 
       expect(decodedAccessToken.payload).toHaveProperty("authorization_details");
+    });
+
+    it("oneshot with request object pattern", async () => {
+      const authorizationDetails = [{
+        "type": "account_information",
+        "actions": [
+          "list_accounts",
+          "read_balances",
+          "read_transactions"
+        ],
+        "locations": [
+          "https://example.com/accounts"
+        ],
+        "oneshot_token": true,
+      },
+        {
+          "type": "payment_initiation",
+          "actions": [
+            "initiate",
+            "status",
+            "cancel"
+          ],
+          "locations": [
+            "https://example.com/payments"
+          ],
+          "instructedAmount": {
+            "currency": "EUR",
+            "amount": "123.50"
+          },
+          "creditorName": "Merchant A",
+          "creditorAccount": {
+            "iban": "DE02100100109307118603"
+          },
+          "remittanceInformationUnstructured": "Ref Number Merchant"
+        }];
+
+      const request = createJwtWithPrivateKey({
+        payload: {
+          client_id: clientSecretPostClient.clientId,
+          scope: "openid profile phone email " + clientSecretPostClient.identityVerificationScope,
+          binding_message: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          authorization_details: authorizationDetails,
+          login_hint: ciba.loginHintExSub,
+          client_secret: clientSecretPostClient.clientSecret,
+          aud: serverConfig.issuer,
+          iss: clientSecretPostClient.clientId,
+          exp: toEpocTime({ adjusted: 3000 }),
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: clientSecretPostClient.requestKey,
+      });
+
+      let backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          request
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+
+      const authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: serverConfig.authenticationDeviceEndpoint,
+        deviceId: serverConfig.ciba.authenticationDeviceId,
+        params: {},
+      });
+
+      console.log(authenticationTransactionResponse.data);
+      expect(authenticationTransactionResponse.status).toBe(200);
+
+      const failureResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransactionResponse.data.flow,
+        id: authenticationTransactionResponse.data.id,
+        interactionType: "password-authentication",
+        body: {
+          username: serverConfig.ciba.username,
+          password: "serverConfig.ciba.userCode",
+        }
+      });
+      console.log(failureResponse.data);
+      console.log(failureResponse.status);
+
+      const completeResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransactionResponse.data.flow,
+        id: authenticationTransactionResponse.data.id,
+        interactionType: "password-authentication",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      expect(completeResponse.status).toBe(200);
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+
+      backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        scope: "openid profile phone email" + clientSecretPostClient.scope,
+        bindingMessage: ciba.bindingMessage,
+        userCode: ciba.userCode,
+        idTokenHint: tokenResponse.data.id_token,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+
+      const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+      console.log(jwksResponse.data);
+      expect(jwksResponse.status).toBe(200);
+
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.id_token,
+        jwks: jwksResponse.data,
+      });
+      console.log(decodedIdToken);
+
+      const decodedAccessToken = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.access_token,
+        jwks: jwksResponse.data
+      });
+      console.log(JSON.stringify(decodedAccessToken, null, 2));
+
+      expect(decodedAccessToken.payload).toHaveProperty("authorization_details");
+
+      let introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+      });
+      console.log(introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(true);
+
+      introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+      });
+      console.log(introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(false);
+
     });
   });
 });

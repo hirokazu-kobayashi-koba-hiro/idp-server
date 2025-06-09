@@ -73,6 +73,11 @@ public class AuthorizationDetail {
     return getValueOrEmpty("doctype");
   }
 
+  public boolean isOneshotToken() {
+
+    return getValueAsBoolean("oneshot_token");
+  }
+
   public List<String> getListOrEmpty(String key) {
     Object value = values.get(key);
     if (Objects.isNull(value)) {
@@ -87,6 +92,13 @@ public class AuthorizationDetail {
       return "";
     }
     return (String) value;
+  }
+
+  public boolean getValueAsBoolean(String key) {
+    if (values.containsKey(key)) {
+      return values.get(key).toString().equals("true");
+    }
+    return false;
   }
 
   public Map<String, Object> getMapOrEmpty(String key) {

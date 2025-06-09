@@ -53,6 +53,11 @@ public class TokenIntrospectionHandler {
 
     Map<String, Object> contents =
         TokenIntrospectionContentsCreator.createSuccessContents(oAuthToken);
+
+    if (oAuthToken.isOneshotToken()) {
+      oAuthTokenRepository.delete(request.tenant(), oAuthToken);
+    }
+
     return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
   }
 
