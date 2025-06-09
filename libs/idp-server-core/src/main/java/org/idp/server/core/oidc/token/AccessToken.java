@@ -167,4 +167,8 @@ public class AccessToken {
   public boolean isClientCredentialsGrant() {
     return authorizationGrant.isClientCredentialsGrant();
   }
+
+  public boolean isOneshotToken() {
+    return authorizationGrant.isOneshotToken();
+  }
 }

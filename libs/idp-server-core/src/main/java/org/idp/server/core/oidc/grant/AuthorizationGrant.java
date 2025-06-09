@@ -308,4 +308,8 @@ public class AuthorizationGrant {
 
     return consentClaims.isAllConsented(requestedConsentClaims);
   }
+
+  public boolean isOneshotToken() {
+    return authorizationDetails.isOneshotToken();
+  }
 }

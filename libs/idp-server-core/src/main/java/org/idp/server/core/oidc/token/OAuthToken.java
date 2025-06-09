@@ -173,4 +173,8 @@ public class OAuthToken {
   public boolean isClientCredentialsGrant() {
     return accessToken.isClientCredentialsGrant();
   }
+
+  public boolean isOneshotToken() {
+    return accessToken.isOneshotToken();
+  }
 }

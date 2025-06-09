@@ -85,4 +85,8 @@ public class AuthorizationDetails implements Iterable<AuthorizationDetail> {
   public List<CredentialDefinition> credentialDefinitions() {
     return values.stream().map(AuthorizationDetail::credentialDefinition).toList();
   }
+
+  public boolean isOneshotToken() {
+    return values.stream().anyMatch(AuthorizationDetail::isOneshotToken);
+  }
 }
