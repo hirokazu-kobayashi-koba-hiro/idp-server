@@ -17,10 +17,7 @@
 package org.idp.server.core.extension.ciba;
 
 import org.idp.server.core.extension.ciba.clientnotification.NotificationClient;
-import org.idp.server.core.extension.ciba.handler.CibaAuthorizeHandler;
-import org.idp.server.core.extension.ciba.handler.CibaDenyHandler;
-import org.idp.server.core.extension.ciba.handler.CibaRequestErrorHandler;
-import org.idp.server.core.extension.ciba.handler.CibaRequestHandler;
+import org.idp.server.core.extension.ciba.handler.*;
 import org.idp.server.core.extension.ciba.handler.io.*;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
@@ -44,8 +41,10 @@ public class DefaultCibaProtocol implements CibaProtocol {
 
   CibaRequestHandler cibaRequestHandler;
   CibaAuthorizeHandler cibaAuthorizeHandler;
-  CibaDenyHandler cibaDenyHandler;
+  CibaDenyHandler denyHandler;
   CibaRequestErrorHandler errorHandler;
+  CibaAuthorizeRequestErrorHandler authorizeErrorHandler;
+  CibaDenyRequestErrorHandler denyErrorHandler;
   UserQueryRepository userQueryRepository;
   CibaGrantRepository cibaGrantRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(DefaultCibaProtocol.class);
@@ -74,12 +73,14 @@ public class DefaultCibaProtocol implements CibaProtocol {
             new NotificationClient(),
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
-    this.cibaDenyHandler =
+    this.denyHandler =
         new CibaDenyHandler(
             cibaGrantRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.errorHandler = new CibaRequestErrorHandler();
+    this.authorizeErrorHandler = new CibaAuthorizeRequestErrorHandler();
+    this.denyErrorHandler = new CibaDenyRequestErrorHandler();
     this.cibaGrantRepository = cibaGrantRepository;
     this.userQueryRepository = userQueryRepository;
   }
@@ -145,19 +146,20 @@ public class DefaultCibaProtocol implements CibaProtocol {
 
   public CibaAuthorizeResponse authorize(CibaAuthorizeRequest request) {
     try {
+
       return cibaAuthorizeHandler.handle(request);
     } catch (Exception exception) {
-      log.error(exception.getMessage(), exception);
-      return new CibaAuthorizeResponse(CibaAuthorizeStatus.SERVER_ERROR);
+
+      return authorizeErrorHandler.handle(exception);
     }
   }
 
   public CibaDenyResponse deny(CibaDenyRequest request) {
     try {
-      return cibaDenyHandler.handle(request);
+      return denyHandler.handle(request);
     } catch (Exception exception) {
-      log.error(exception.getMessage(), exception);
-      return new CibaDenyResponse(CibaDenyStatus.SERVER_ERROR);
+
+      return denyErrorHandler.handle(exception);
     }
   }
 }

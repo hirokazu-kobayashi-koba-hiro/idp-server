@@ -14,38 +14,34 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.ciba.handler.io;
+package org.idp.server.core.extension.ciba.exception;
 
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
+import org.idp.server.platform.exception.BadRequestException;
 
-public class CibaAuthorizeResponse {
-  CibaAuthorizeStatus status;
-  Error error;
-  ErrorDescription errorDescription;
+public class CibaAuthorizeBadRequestException extends BadRequestException {
+  String error;
+  String errorDescription;
 
-  public CibaAuthorizeResponse(CibaAuthorizeStatus status) {
-    this.status = status;
+  public CibaAuthorizeBadRequestException(String error, String errorDescription) {
+    super(errorDescription);
+    this.error = error;
+    this.errorDescription = errorDescription;
   }
 
-  public CibaAuthorizeResponse(
-      CibaAuthorizeStatus cibaAuthorizeStatus, Error error, ErrorDescription errorDescription) {
-    this.status = cibaAuthorizeStatus;
-  }
-
-  public int statusCode() {
-    return status.statusCode();
-  }
-
-  public boolean isError() {
-    return !status.isOK();
+  public CibaAuthorizeBadRequestException(
+      String error, String errorDescription, Throwable throwable) {
+    super(errorDescription, throwable);
+    this.error = error;
+    this.errorDescription = errorDescription;
   }
 
   public Error error() {
-    return error;
+    return new Error(error);
   }
 
   public ErrorDescription errorDescription() {
-    return errorDescription;
+    return new ErrorDescription(errorDescription);
   }
 }
