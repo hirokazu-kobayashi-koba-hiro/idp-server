@@ -112,8 +112,8 @@ class ModelConverter {
             accessTokenCreatedAt,
             expiresIn,
             accessTokenExpiredAt);
-    if (!Objects.nonNull(stringMap.get("encrypted_refresh_token"))
-        && !stringMap.get("refresh_token").equals("{}")) {
+    if (Objects.nonNull(stringMap.get("encrypted_refresh_token"))
+        && !stringMap.get("encrypted_refresh_token").equals("{}")) {
       RefreshTokenEntity refreshTokenEntity =
           new RefreshTokenEntity(decrypt(stringMap.get("encrypted_refresh_token"), aesCipher));
       ExpiredAt refreshTokenExpiredAt = new ExpiredAt(stringMap.get("refresh_token_expired_at"));

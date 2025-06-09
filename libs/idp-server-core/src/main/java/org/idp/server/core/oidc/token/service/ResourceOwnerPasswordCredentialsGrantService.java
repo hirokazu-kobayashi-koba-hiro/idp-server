@@ -99,7 +99,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
             .build();
 
     AccessToken accessToken =
-        accessTokenCreator.createAccessToken(
+        accessTokenCreator.create(
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,

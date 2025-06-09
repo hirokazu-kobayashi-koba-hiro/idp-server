@@ -53,7 +53,7 @@ public class AccessTokenCreator {
     this.customClaimsCreators = new AccessTokenCustomClaimsCreators();
   }
 
-  public AccessToken createAccessToken(
+  public AccessToken create(
       AuthorizationGrant authorizationGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
@@ -61,50 +61,119 @@ public class AccessTokenCreator {
     try {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
-      long accessTokenDuration = authorizationServerConfiguration.accessTokenDuration();
+
+      long accessTokenDuration =
+          clientConfiguration.hasAccessTokenDuration()
+              ? clientConfiguration.accessTokenDuration()
+              : authorizationServerConfiguration.accessTokenDuration();
+
       ExpiresIn expiresIn = new ExpiresIn(accessTokenDuration);
       ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(accessTokenDuration));
 
-      AccessTokenPayloadBuilder payloadBuilder = new AccessTokenPayloadBuilder();
-      payloadBuilder.add(authorizationServerConfiguration.tokenIssuer());
-      payloadBuilder.add(authorizationGrant.subject());
-      payloadBuilder.add(authorizationGrant.requestedClientId());
-      payloadBuilder.add(authorizationGrant.scopes());
-      payloadBuilder.add(authorizationGrant.authorizationDetails());
-      payloadBuilder.add(createdAt);
-      payloadBuilder.add(expiredAt);
-      payloadBuilder.addJti(UUID.randomUUID().toString());
-
-      Map<String, Object> customClaims =
-          customClaimsCreators.create(
-              authorizationGrant,
-              authorizationServerConfiguration,
-              clientConfiguration,
-              clientCredentials);
-      payloadBuilder.addCustomClaims(customClaims);
-
-      ClientCertificationThumbprint thumbprint =
-          createClientCertificationThumbprint(
-              authorizationServerConfiguration, clientConfiguration, clientCredentials);
-      payloadBuilder.add(thumbprint);
-
-      Map<String, Object> accessTokenPayload = payloadBuilder.build();
-      AccessTokenEntity accessTokenEntity =
-          createAccessTokenEntity(authorizationServerConfiguration, accessTokenPayload);
-
-      return new AccessToken(
-          authorizationGrant.tenantIdentifier(),
-          authorizationServerConfiguration.tokenIssuer(),
-          TokenType.Bearer,
-          accessTokenEntity,
+      return issueAccessToken(
           authorizationGrant,
-          thumbprint,
+          authorizationServerConfiguration,
+          clientConfiguration,
+          clientCredentials,
           createdAt,
           expiresIn,
           expiredAt);
     } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
       throw new ConfigurationInvalidException(exception);
     }
+  }
+
+  public AccessToken refresh(
+      AccessToken oldAccessToken,
+      AuthorizationGrant authorizationGrant,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
+      ClientCredentials clientCredentials) {
+    try {
+      LocalDateTime localDateTime = SystemDateTime.now();
+      CreatedAt createdAt = new CreatedAt(localDateTime);
+
+      if (authorizationServerConfiguration.isExtendsAccessTokenStrategy()) {
+
+        long accessTokenDuration =
+            clientConfiguration.hasAccessTokenDuration()
+                ? clientConfiguration.accessTokenDuration()
+                : authorizationServerConfiguration.accessTokenDuration();
+
+        ExpiresIn expiresIn = new ExpiresIn(accessTokenDuration);
+        ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(accessTokenDuration));
+        return issueAccessToken(
+            authorizationGrant,
+            authorizationServerConfiguration,
+            clientConfiguration,
+            clientCredentials,
+            createdAt,
+            expiresIn,
+            expiredAt);
+      }
+
+      ExpiresIn expiresIn = oldAccessToken.expiresIn();
+      ExpiredAt expiredAt = oldAccessToken.expiredAt();
+
+      return issueAccessToken(
+          authorizationGrant,
+          authorizationServerConfiguration,
+          clientConfiguration,
+          clientCredentials,
+          createdAt,
+          expiresIn,
+          expiredAt);
+    } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
+      throw new ConfigurationInvalidException(exception);
+    }
+  }
+
+  private AccessToken issueAccessToken(
+      AuthorizationGrant authorizationGrant,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
+      ClientCredentials clientCredentials,
+      CreatedAt createdAt,
+      ExpiresIn expiresIn,
+      ExpiredAt expiredAt)
+      throws JsonWebKeyInvalidException, JoseInvalidException {
+    AccessTokenPayloadBuilder payloadBuilder = new AccessTokenPayloadBuilder();
+    payloadBuilder.add(authorizationServerConfiguration.tokenIssuer());
+    payloadBuilder.add(authorizationGrant.subject());
+    payloadBuilder.add(authorizationGrant.requestedClientId());
+    payloadBuilder.add(authorizationGrant.scopes());
+    payloadBuilder.add(authorizationGrant.authorizationDetails());
+    payloadBuilder.add(createdAt);
+    payloadBuilder.add(expiredAt);
+    payloadBuilder.addJti(UUID.randomUUID().toString());
+
+    Map<String, Object> customClaims =
+        customClaimsCreators.create(
+            authorizationGrant,
+            authorizationServerConfiguration,
+            clientConfiguration,
+            clientCredentials);
+    payloadBuilder.addCustomClaims(customClaims);
+
+    ClientCertificationThumbprint thumbprint =
+        createClientCertificationThumbprint(
+            authorizationServerConfiguration, clientConfiguration, clientCredentials);
+    payloadBuilder.add(thumbprint);
+
+    Map<String, Object> accessTokenPayload = payloadBuilder.build();
+    AccessTokenEntity accessTokenEntity =
+        createAccessTokenEntity(authorizationServerConfiguration, accessTokenPayload);
+
+    return new AccessToken(
+        authorizationGrant.tenantIdentifier(),
+        authorizationServerConfiguration.tokenIssuer(),
+        TokenType.Bearer,
+        accessTokenEntity,
+        authorizationGrant,
+        thumbprint,
+        createdAt,
+        expiresIn,
+        expiredAt);
   }
 
   private AccessTokenEntity createAccessTokenEntity(

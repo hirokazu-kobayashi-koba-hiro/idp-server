@@ -98,7 +98,7 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
 
     AuthorizationGrant authorizationGrant = cibaGrant.authorizationGrant();
     AccessToken accessToken =
-        accessTokenCreator.createAccessToken(
+        accessTokenCreator.create(
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,
