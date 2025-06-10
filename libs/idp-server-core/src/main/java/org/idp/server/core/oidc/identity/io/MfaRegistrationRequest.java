@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.authentication;
+package org.idp.server.core.oidc.identity.io;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.basic.type.AuthFlow;
 
-public class AuthenticationTransactionAttributes {
+public class MfaRegistrationRequest {
 
   Map<String, Object> values;
 
-  public AuthenticationTransactionAttributes() {
+  public MfaRegistrationRequest() {
     this.values = new HashMap<>();
   }
 
-  public AuthenticationTransactionAttributes(Map<String, Object> values) {
+  public MfaRegistrationRequest(Map<String, Object> values) {
     this.values = values;
   }
 
@@ -48,5 +49,10 @@ public class AuthenticationTransactionAttributes {
 
   public boolean exists() {
     return values != null && !values.isEmpty();
+  }
+
+  public AuthFlow getAuthFlow() {
+
+    return AuthFlow.of(getValueOrEmpty("flow"));
   }
 }

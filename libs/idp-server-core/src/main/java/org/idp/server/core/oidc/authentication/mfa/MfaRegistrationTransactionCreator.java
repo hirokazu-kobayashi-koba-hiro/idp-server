@@ -14,35 +14,41 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc;
+package org.idp.server.core.oidc.authentication.mfa;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.basic.type.oauth.Scopes;
+import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.io.OAuthRequestResponse;
+import org.idp.server.core.oidc.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
-import org.idp.server.core.oidc.request.AuthorizationRequest;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
-public class OAuthAuthenticationTransactionCreator {
+public class MfaRegistrationTransactionCreator {
 
   public static AuthenticationTransaction create(
-      Tenant tenant, OAuthRequestResponse requestResponse) {
+      Tenant tenant,
+      User user,
+      OAuthToken oAuthToken,
+      MfaRegistrationRequest mfaRegistrationRequest,
+      AuthenticationPolicy authenticationPolicy) {
 
     AuthenticationTransactionIdentifier identifier =
         new AuthenticationTransactionIdentifier(UUID.randomUUID().toString());
-    AuthorizationIdentifier authorizationIdentifier =
-        new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier().value());
+    AuthorizationIdentifier authorizationIdentifier = new AuthorizationIdentifier();
 
-    AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
-    AuthenticationPolicy authenticationPolicy = requestResponse.findSatisfiedAuthenticationPolicy();
-    AuthenticationTransactionAttributes attributes = new AuthenticationTransactionAttributes();
+    AuthenticationRequest authenticationRequest =
+        toAuthenticationRequest(tenant, user, oAuthToken, mfaRegistrationRequest);
+    AuthenticationTransactionAttributes attributes =
+        new AuthenticationTransactionAttributes(mfaRegistrationRequest.toMap());
 
     return new AuthenticationTransaction(
         identifier,
@@ -53,22 +59,20 @@ public class OAuthAuthenticationTransactionCreator {
   }
 
   private static AuthenticationRequest toAuthenticationRequest(
-      Tenant tenant, OAuthRequestResponse requestResponse) {
+      Tenant tenant,
+      User user,
+      OAuthToken oAuthToken,
+      MfaRegistrationRequest mfaRegistrationRequest) {
 
-    AuthorizationRequest authorizationRequest = requestResponse.authorizationRequest();
-    AuthFlow authFlow = AuthFlow.OAUTH;
+    AuthFlow authFlow = mfaRegistrationRequest.getAuthFlow();
     TenantIdentifier tenantIdentifier = tenant.identifier();
 
-    RequestedClientId requestedClientId = authorizationRequest.requestedClientId();
-    User user = User.notFound();
-    AuthorizationDetails authorizationDetails =
-        requestResponse.authorizationRequest().authorizationDetails();
+    RequestedClientId requestedClientId = oAuthToken.requestedClientId();
     AuthenticationContext context =
-        new AuthenticationContext(
-            authorizationRequest.acrValues(), authorizationRequest.scopes(), authorizationDetails);
+        new AuthenticationContext(new AcrValues(), new Scopes(), new AuthorizationDetails());
     LocalDateTime createdAt = SystemDateTime.now();
-    LocalDateTime expiredAt =
-        createdAt.plusSeconds(requestResponse.oauthAuthorizationRequestExpiresIn());
+    LocalDateTime expiredAt = createdAt.plusSeconds(300);
+
     return new AuthenticationRequest(
         authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);
   }

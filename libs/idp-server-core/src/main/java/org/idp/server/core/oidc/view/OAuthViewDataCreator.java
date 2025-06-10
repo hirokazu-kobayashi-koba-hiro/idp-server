@@ -43,7 +43,7 @@ public class OAuthViewDataCreator {
   }
 
   public OAuthViewData create() {
-    String clientId = authorizationRequest.retrieveClientId().value();
+    String clientId = authorizationRequest.requestedClientId().value();
     String clientName = clientConfiguration.clientNameValue();
     String clientUri = clientConfiguration.clientUri();
     String logoUri = clientConfiguration.logoUri();

@@ -20,12 +20,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
-import org.idp.server.authentication.interactors.device.AuthenticationApi;
-import org.idp.server.authentication.interactors.device.AuthenticationTransactionFindingListResponse;
 import org.idp.server.core.extension.ciba.CibaFlowApi;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.AuthenticationApi;
+import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingListResponse;
+import org.idp.server.core.oidc.identity.UserOperationApi;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -42,11 +43,13 @@ public class AuthenticationV1Api implements ParameterTransformable {
   AuthenticationApi authenticationApi;
   OAuthFlowApi oAuthFlowApi;
   CibaFlowApi cibaFlowApi;
+  UserOperationApi userOperationApi;
 
   public AuthenticationV1Api(IdpServerApplication idpServerApplication) {
     this.authenticationApi = idpServerApplication.authenticationApi();
     this.oAuthFlowApi = idpServerApplication.oAuthFlowApi();
     this.cibaFlowApi = idpServerApplication.cibaFlowApi();
+    this.userOperationApi = idpServerApplication.userOperationApi();
   }
 
   @PostMapping
@@ -107,6 +110,7 @@ public class AuthenticationV1Api implements ParameterTransformable {
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes) {
+
     switch (authenticationTransaction.flow()) {
       case OAUTH -> {
         return oAuthFlowApi.interact(
@@ -128,6 +132,16 @@ public class AuthenticationV1Api implements ParameterTransformable {
             request,
             requestAttributes);
       }
+
+      case FIDO_UAF_REGISTRATION -> {
+        return userOperationApi.interact(
+            tenantIdentifier,
+            authenticationTransaction.identifier(),
+            type,
+            request,
+            requestAttributes);
+      }
+
       default ->
           throw new UnSupportedException("Unexpected value: " + authenticationTransaction.flow());
     }

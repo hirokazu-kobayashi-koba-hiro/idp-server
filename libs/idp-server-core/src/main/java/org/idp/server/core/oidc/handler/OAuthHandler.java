@@ -57,7 +57,7 @@ public class OAuthHandler {
 
     AuthorizationRequest authorizationRequest =
         authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
-    RequestedClientId requestedClientId = authorizationRequest.retrieveClientId();
+    RequestedClientId requestedClientId = authorizationRequest.requestedClientId();
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
     ClientConfiguration clientConfiguration =

@@ -16,29 +16,23 @@
 
 package org.idp.server.authentication.interactors.fidouaf;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.UserStatus;
-import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
-public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
+public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor {
 
   FidoUafExecutors fidoUafExecutors;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   FidoUafAdditionalRequestResolvers additionalRequestResolvers;
 
-  public FidoUafRegistrationInteractor(
+  public FidoUafDeRegistrationInteractor(
       FidoUafExecutors fidoUafExecutors,
       AuthenticationConfigurationQueryRepository configurationQueryRepository,
       FidoUafAdditionalRequestResolvers additionalRequestResolvers) {
@@ -67,70 +61,33 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
 
     FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(executionRequest);
     FidoUafExecutionResult executionResult =
-        fidoUafExecutor.verifyRegistration(
-            tenant,
-            authenticationTransactionIdentifier,
-            fidoUafExecutionRequest,
-            fidoUafConfiguration);
+        fidoUafExecutor.deleteKey(tenant, fidoUafExecutionRequest, fidoUafConfiguration);
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(
-          executionResult.contents(), type, DefaultSecurityEventType.fido_uaf_registration_failure);
+          executionResult.contents(),
+          type,
+          DefaultSecurityEventType.fido_uaf_deregistration_failure);
     }
 
     if (executionResult.isServerError()) {
       return AuthenticationInteractionRequestResult.serverError(
-          executionResult.contents(), type, DefaultSecurityEventType.fido_uaf_registration_failure);
+          executionResult.contents(),
+          type,
+          DefaultSecurityEventType.fido_uaf_deregistration_failure);
     }
 
-    String deviceId =
-        executionResult.getValueAsStringFromContents(fidoUafConfiguration.deviceIdParam());
+    String deviceId = request.getValueAsString("authentication_device_id");
     User user = transaction.user();
-    AuthenticationDevice authenticationDevice =
-        createAuthenticationDevice(deviceId, transaction.attributes());
 
-    HashMap<String, Object> mfa = new HashMap<>();
-    mfa.put("fido-uaf", true);
-    User addedDeviceUser =
-        user.addAuthenticationDevice(authenticationDevice).addMultiFactorAuthentication(mfa);
-
-    AuthenticationPolicy authenticationPolicy = transaction.authenticationPolicy();
-    if (authenticationPolicy.authenticationDeviceRule().requiredIdentityVerification()) {
-      addedDeviceUser.setStatus(UserStatus.IDENTITY_VERIFICATION_REQUIRED);
-    }
-
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("hwk")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
+    User removedDeviceUser = user.removeAuthenticationDevice(deviceId);
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
-        addedDeviceUser,
-        authentication,
+        removedDeviceUser,
+        new Authentication(),
         executionResult.contents(),
-        DefaultSecurityEventType.fido_uaf_registration_success);
-  }
-
-  private AuthenticationDevice createAuthenticationDevice(
-      String deviceId, AuthenticationTransactionAttributes attributes) {
-
-    String platform = attributes.getValueOrEmpty("platform");
-    String os = attributes.getValueOrEmpty("os");
-    String model = attributes.getValueOrEmpty("model");
-    String notificationChannel = attributes.getValueOrEmpty("notification_channel");
-    String notificationToken = attributes.getValueOrEmpty("notification_token");
-    boolean preferredForNotification = attributes.getValueAsBoolean("preferred_for_notification");
-
-    return new AuthenticationDevice(
-        deviceId,
-        platform,
-        os,
-        model,
-        notificationChannel,
-        notificationToken,
-        preferredForNotification);
+        DefaultSecurityEventType.fido_uaf_deregistration_success);
   }
 }

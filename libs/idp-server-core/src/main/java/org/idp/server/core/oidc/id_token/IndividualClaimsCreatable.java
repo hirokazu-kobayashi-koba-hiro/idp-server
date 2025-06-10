@@ -171,6 +171,14 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       claims.put("assigned_tenants", user.assignedTenants());
     }
 
+    if (user.hasMultiFactorAuthentication()) {
+      claims.put("mfa", user.multiFactorAuthentication());
+    }
+
+    if (user.hasAuthenticationDevices()) {
+      claims.put("authentication_devices", user.authenticationDevices().toMapList());
+    }
+
     if (user.hasCustomProperties()) {
       claims.putAll(user.customPropertiesValue());
     }

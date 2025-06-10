@@ -16,11 +16,21 @@
 
 package org.idp.server.usecases.application.enduser;
 
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.mfa.*;
+import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionCommandRepository;
+import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionQueryRepository;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.identity.*;
 import org.idp.server.core.oidc.identity.event.UserLifecycleEvent;
 import org.idp.server.core.oidc.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.oidc.identity.event.UserLifecycleType;
+import org.idp.server.core.oidc.identity.io.MfaRegistrationRequest;
+import org.idp.server.core.oidc.identity.io.UserOperationResponse;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
+import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.TokenEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -33,20 +43,106 @@ import org.idp.server.platform.security.type.RequestAttributes;
 @Transaction
 public class UserOperationEntryService implements UserOperationApi {
 
+  UserQueryRepository userQueryRepository;
   UserCommandRepository userCommandRepository;
   TenantQueryRepository tenantQueryRepository;
+  AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
+  AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
+  MfaPolicies mfaPolicies;
+  MfaRegistrationVerifiers mfaRegistrationVerifiers;
+  AuthenticationInteractors authenticationInteractors;
   TokenEventPublisher eventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
 
   public UserOperationEntryService(
+      UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
       TenantQueryRepository tenantQueryRepository,
+      AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
+      AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
+      AuthenticationInteractors authenticationInteractors,
       TokenEventPublisher eventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher) {
+    this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
+    this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
+    this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
+    this.mfaPolicies = new MfaPolicies();
+    this.mfaRegistrationVerifiers = new MfaRegistrationVerifiers();
+    this.authenticationInteractors = authenticationInteractors;
     this.eventPublisher = eventPublisher;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
+  }
+
+  @Override
+  public UserOperationResponse requestMfaOperation(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken token,
+      MfaRegistrationRequest request,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    AuthenticationPolicy authenticationPolicy = mfaPolicies.get(request.getAuthFlow());
+    MfaRequestVerifier mfaRequestVerifier = mfaRegistrationVerifiers.get(request.getAuthFlow());
+    MfaVerificationResult verificationResult =
+        mfaRequestVerifier.verify(user, request, authenticationPolicy);
+
+    if (verificationResult.isFailure()) {
+      return UserOperationResponse.failure(verificationResult.errorContents());
+    }
+
+    AuthenticationTransaction authenticationTransaction =
+        MfaRegistrationTransactionCreator.create(
+            tenant, user, token, request, authenticationPolicy);
+    authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
+
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("id", authenticationTransaction.identifier().value());
+
+    return UserOperationResponse.success(contents);
+  }
+
+  @Override
+  public AuthenticationInteractionRequestResult interact(
+      TenantIdentifier tenantIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes) {
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
+
+    AuthenticationTransaction authenticationTransaction =
+        authenticationTransactionQueryRepository.get(tenant, authenticationTransactionIdentifier);
+    AuthenticationInteractionRequestResult result =
+        authenticationInteractor.interact(
+            tenant,
+            authenticationTransaction.identifier(),
+            type,
+            request,
+            authenticationTransaction,
+            userQueryRepository);
+
+    AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
+    authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
+
+    if (updatedTransaction.isSuccess()) {
+      userCommandRepository.update(tenant, authenticationTransaction.user());
+    }
+
+    if (updatedTransaction.isFailure()) {}
+
+    if (updatedTransaction.isLocked()) {
+      UserLifecycleEvent userLifecycleEvent =
+          new UserLifecycleEvent(tenant, result.user(), UserLifecycleType.LOCK);
+      userLifecycleEventPublisher.publish(userLifecycleEvent);
+    }
+
+    return result;
   }
 
   @Override

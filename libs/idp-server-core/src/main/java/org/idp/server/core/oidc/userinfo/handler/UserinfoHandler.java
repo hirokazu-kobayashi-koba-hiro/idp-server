@@ -53,6 +53,8 @@ public class UserinfoHandler {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
     Tenant tenant = request.tenant();
 
+    // TODO validate
+
     OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
 
     if (!oAuthToken.exists()) {

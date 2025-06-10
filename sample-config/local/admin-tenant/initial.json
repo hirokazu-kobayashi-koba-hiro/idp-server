@@ -56,6 +56,7 @@
       "claims:permissions",
       "claims:assigned_tenant",
       "claims:assigned_organization",
+      "claims:authentication_devices",
       "verified_claims:family_name"
     ],
     "response_types_supported": [
@@ -146,7 +147,8 @@
       "roles",
       "permissions",
       "assigned_tenant",
-      "assigned_organization"
+      "assigned_organization",
+      "authentication_devices"
     ],
     "claims_parameter_supported": true,
     "service_documentation": "http://server.example.com/connect/service_documentation.html",

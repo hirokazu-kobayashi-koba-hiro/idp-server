@@ -46,9 +46,10 @@ public class AuthenticationContext {
 
   public Map<String, Object> toMap() {
     HashMap<String, Object> map = new HashMap<>();
-    map.put("acr_values", acrValues.toStringValues());
-    map.put("scopes", scopes.toStringValues());
-    map.put("authorization_details", authorizationDetails.toMapValues());
+    if (acrValues.exists()) map.put("acr_values", acrValues.toStringValues());
+    if (scopes.exists()) map.put("scopes", scopes.toStringValues());
+    if (authorizationDetails.exists())
+      map.put("authorization_details", authorizationDetails.toMapValues());
     return map;
   }
 }

@@ -155,7 +155,7 @@ public class AuthorizationRequest {
     return !responseType.isUndefined();
   }
 
-  public RequestedClientId retrieveClientId() {
+  public RequestedClientId requestedClientId() {
     return requestedClientId;
   }
 
