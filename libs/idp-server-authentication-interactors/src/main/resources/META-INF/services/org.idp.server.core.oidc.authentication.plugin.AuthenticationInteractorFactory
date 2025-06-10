@@ -13,6 +13,7 @@ org.idp.server.authentication.interactors.fidouaf.FidoUafRegistrationChallengeIn
 org.idp.server.authentication.interactors.fidouaf.FidoUafRegistrationInteractorFactory
 org.idp.server.authentication.interactors.fidouaf.FidoUafAuthenticationChallengeInteractorFactory
 org.idp.server.authentication.interactors.fidouaf.FidoUafAuthenticationInteractorFactory
+org.idp.server.authentication.interactors.fidouaf.FidoUafDeRegistrationInteractorFactory
 org.idp.server.authentication.interactors.sms.SmsAuthenticationChallengeInteractorFactory
 org.idp.server.authentication.interactors.sms.SmsAuthenticationInteractorFactory
 org.idp.server.authentication.interactors.sms.SmsAuthenticationRegistrationChallengeInteractorFactory

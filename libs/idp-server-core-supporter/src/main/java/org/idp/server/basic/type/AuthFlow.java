@@ -21,7 +21,12 @@ import org.idp.server.platform.exception.UnSupportedException;
 public enum AuthFlow {
   OAUTH("oauth"),
   CIBA("ciba"),
-  MFA("mfa");
+  FIDO_UAF_REGISTRATION("fido-uaf-registration"),
+  FIDO_UAF_DEREGISTRATION("fido-uaf-deregistration"),
+  WEBAUTHN_REGISTRATION("webauthn-registration"),
+  WEBAUTHN_DEREGISTRATION("webauthn-deregistration"),
+  MFA_SMS_REGISTRATION("mfa-sms-registration"),
+  MFA_EMAIL_REGISTRATION("mfa-email-registration");
 
   String value;
 
@@ -29,14 +34,13 @@ public enum AuthFlow {
     this.value = value;
   }
 
-  public static AuthFlow of(String authorizationFlow) {
-    for (AuthFlow flow : AuthFlow.values()) {
-      if (flow.value.equals(authorizationFlow)) {
-        return flow;
+  public static AuthFlow of(String flow) {
+    for (AuthFlow authFlow : AuthFlow.values()) {
+      if (authFlow.value.equals(flow)) {
+        return authFlow;
       }
     }
-    throw new UnSupportedException(
-        String.format("unsupported authorization flow (%s)", authorizationFlow));
+    throw new UnSupportedException(String.format("unsupported auth flow (%s)", flow));
   }
 
   public String value() {

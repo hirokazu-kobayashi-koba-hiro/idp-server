@@ -383,6 +383,24 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return this;
   }
 
+  public boolean hasAuthenticationDevice(String deviceId) {
+    return authenticationDevices.stream().anyMatch(device -> device.id().equals(deviceId));
+  }
+
+  public User removeAuthenticationDevice(String deviceId) {
+    List<AuthenticationDevice> removed =
+        authenticationDevices.stream().filter(device -> !device.id().equals(deviceId)).toList();
+    this.authenticationDevices = removed;
+    if (removed.isEmpty()) {
+      multiFactorAuthentication.remove("fido-uaf");
+    }
+    return this;
+  }
+
+  public int authenticationDeviceCount() {
+    return authenticationDevices.size();
+  }
+
   public boolean exists() {
     return Objects.nonNull(sub) && !sub.isEmpty();
   }
@@ -507,6 +525,13 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
 
   public User setMultiFactorAuthentication(HashMap<String, Object> multiFactorAuthentication) {
     this.multiFactorAuthentication = multiFactorAuthentication;
+    return this;
+  }
+
+  public User addMultiFactorAuthentication(HashMap<String, Object> multiFactorAuthentication) {
+    HashMap<String, Object> newMfa = new HashMap<>(multiFactorAuthentication);
+    newMfa.putAll(multiFactorAuthentication);
+    this.multiFactorAuthentication = newMfa;
     return this;
   }
 

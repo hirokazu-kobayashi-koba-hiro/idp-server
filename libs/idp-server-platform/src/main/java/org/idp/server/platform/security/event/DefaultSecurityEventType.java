@@ -35,6 +35,8 @@ public enum DefaultSecurityEventType {
   fido_uaf_authentication_challenge_failure("User challenge authentication using fido-uaf is "),
   fido_uaf_authentication_success("User successfully authenticated using fido-uaf"),
   fido_uaf_authentication_failure("User failed authentication using fido-uaf"),
+  fido_uaf_deregistration_success("User successfully deregistration fido-uaf"),
+  fido_uaf_deregistration_failure("User failed deregistration fido-uaf"),
   webauthn_registration_challenge("User challenge registration WebAuthn"),
   webauthn_registration_success("User successfully registration WebAuthn"),
   webauthn_registration_failure("User failed registration WebAuthn"),

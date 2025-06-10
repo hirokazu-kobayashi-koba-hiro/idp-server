@@ -87,7 +87,7 @@ public class OAuthPushedRequestContext implements BackchannelRequestContext {
 
   @Override
   public RequestedClientId requestedClientId() {
-    return oAuthRequestContext.authorizationRequest().retrieveClientId();
+    return oAuthRequestContext.authorizationRequest().requestedClientId();
   }
 
   public OAuthPushedRequestResponse createResponse() {

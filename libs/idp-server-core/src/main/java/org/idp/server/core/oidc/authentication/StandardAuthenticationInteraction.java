@@ -29,10 +29,12 @@ public enum StandardAuthenticationInteraction {
   FIDO_UAF_REGISTRATION("fido-uaf-registration"),
   FIDO_UAF_AUTHENTICATION_CHALLENGE("fido-uaf-authentication-challenge"),
   FIDO_UAF_AUTHENTICATION("fido-uaf-authentication"),
+  FIDO_UAF_DEREGISTRATION("fido-uaf-deregistration"),
   WEBAUTHN_REGISTRATION_CHALLENGE("webauthn-registration-challenge"),
   WEBAUTHN_REGISTRATION("webauthn-registration"),
   WEBAUTHN_AUTHENTICATION_CHALLENGE("webauthn-authentication-challenge"),
   WEBAUTHN_AUTHENTICATION("webauthn-authentication"),
+  WEBAUTHN_DEREGISTRATION("webauthn-deregistration"),
   AUTHENTICATION_DEVICE_NOTIFICATION("authentication-device-notification"),
   AUTHENTICATION_DEVICE_DENY("authentication-device-deny"),
   ;

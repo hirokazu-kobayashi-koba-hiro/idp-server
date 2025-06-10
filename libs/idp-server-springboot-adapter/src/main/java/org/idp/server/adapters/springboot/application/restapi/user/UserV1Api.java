@@ -23,6 +23,8 @@ import org.idp.server.adapters.springboot.application.restapi.ParameterTransform
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserOperationApi;
+import org.idp.server.core.oidc.identity.io.MfaRegistrationRequest;
+import org.idp.server.core.oidc.identity.io.UserOperationResponse;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
@@ -42,8 +44,30 @@ public class UserV1Api implements ParameterTransformable {
     this.userOperationApi = idpServerApplication.userOperationApi();
   }
 
+  @PostMapping("/mfa-registration")
+  public ResponseEntity<?> requestMfaRegistration(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    User user = resourceOwnerPrincipal.getUser();
+    OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
+    MfaRegistrationRequest request = new MfaRegistrationRequest(requestBody);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserOperationResponse response =
+        userOperationApi.requestMfaOperation(
+            tenantIdentifier, user, oAuthToken, request, requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
   @DeleteMapping
-  public ResponseEntity<?> apply(
+  public ResponseEntity<?> delete(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       HttpServletRequest httpServletRequest) {

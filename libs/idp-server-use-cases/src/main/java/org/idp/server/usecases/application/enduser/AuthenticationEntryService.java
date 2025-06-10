@@ -17,12 +17,13 @@
 package org.idp.server.usecases.application.enduser;
 
 import java.util.List;
-import org.idp.server.authentication.interactors.device.AuthenticationApi;
-import org.idp.server.authentication.interactors.device.AuthenticationTransactionFindingListResponse;
-import org.idp.server.authentication.interactors.device.AuthenticationTransactionFindingResponse;
+import org.idp.server.core.oidc.authentication.AuthenticationApi;
 import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionQueries;
+import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingListResponse;
+import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingResponse;
+import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.datasource.Transaction;
@@ -35,13 +36,28 @@ import org.idp.server.platform.security.type.RequestAttributes;
 public class AuthenticationEntryService implements AuthenticationApi {
 
   TenantQueryRepository tenantQueryRepository;
+  AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
 
   public AuthenticationEntryService(
       TenantQueryRepository tenantQueryRepository,
+      AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository) {
     this.tenantQueryRepository = tenantQueryRepository;
+    this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
+  }
+
+  @Override
+  public AuthenticationTransaction request(
+      TenantIdentifier tenantIdentifier, RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    AuthenticationTransaction authenticationTransaction = new AuthenticationTransaction();
+    authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
+
+    return null;
   }
 
   public AuthenticationTransaction get(

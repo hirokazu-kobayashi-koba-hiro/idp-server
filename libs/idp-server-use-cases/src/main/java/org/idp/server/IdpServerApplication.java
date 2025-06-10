@@ -16,7 +16,6 @@
 
 package org.idp.server;
 
-import org.idp.server.authentication.interactors.device.AuthenticationApi;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutors;
@@ -58,6 +57,7 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.oidc.*;
+import org.idp.server.core.oidc.authentication.AuthenticationApi;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractors;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationCommandRepository;
@@ -403,7 +403,9 @@ public class IdpServerApplication {
     this.authenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuthenticationEntryService(
-                tenantQueryRepository, authenticationTransactionQueryRepository),
+                tenantQueryRepository,
+                authenticationTransactionCommandRepository,
+                authenticationTransactionQueryRepository),
             AuthenticationApi.class,
             tenantDialectProvider);
 
@@ -448,8 +450,12 @@ public class IdpServerApplication {
     this.userOperationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new UserOperationEntryService(
+                userQueryRepository,
                 userCommandRepository,
                 tenantQueryRepository,
+                authenticationTransactionCommandRepository,
+                authenticationTransactionQueryRepository,
+                authenticationInteractors,
                 tokenEventPublisher,
                 userLifecycleEventPublisher),
             UserOperationApi.class,

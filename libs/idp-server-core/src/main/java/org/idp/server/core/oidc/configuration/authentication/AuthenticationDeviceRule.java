@@ -14,26 +14,21 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.webauthn;
+package org.idp.server.core.oidc.configuration.authentication;
 
-import java.util.Map;
-import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.json.JsonReadable;
 
-public class WebAuthnExecutors {
+public class AuthenticationDeviceRule implements JsonReadable {
+  int maxDevices = 1;
+  boolean requiredIdentityVerification = false;
 
-  Map<WebAuthnExecutorType, WebAuthnExecutor> executors;
+  public AuthenticationDeviceRule() {}
 
-  public WebAuthnExecutors(Map<WebAuthnExecutorType, WebAuthnExecutor> executors) {
-    this.executors = executors;
+  public int maxDevices() {
+    return maxDevices;
   }
 
-  public WebAuthnExecutor get(WebAuthnExecutorType type) {
-    WebAuthnExecutor executor = executors.get(type);
-
-    if (executor == null) {
-      throw new UnSupportedException("Unsupported web authn executor type: " + type.value());
-    }
-
-    return executor;
+  public boolean requiredIdentityVerification() {
+    return requiredIdentityVerification;
   }
 }

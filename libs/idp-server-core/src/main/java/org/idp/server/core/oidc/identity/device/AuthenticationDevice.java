@@ -17,6 +17,8 @@
 package org.idp.server.core.oidc.identity.device;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.uuid.UuidConvertable;
@@ -83,5 +85,17 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
 
   public boolean exists() {
     return id != null && !id.isEmpty();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", id);
+    map.put("platform", platform);
+    map.put("os", os);
+    map.put("model", model);
+    map.put("notification_channel", notificationChannel);
+    map.put("notification_token", notificationToken);
+    map.put("preferred_for_notification", preferredForNotification);
+    return map;
   }
 }

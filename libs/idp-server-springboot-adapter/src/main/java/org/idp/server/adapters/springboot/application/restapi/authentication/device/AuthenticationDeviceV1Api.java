@@ -19,8 +19,8 @@ package org.idp.server.adapters.springboot.application.restapi.authentication.de
 import jakarta.servlet.http.HttpServletRequest;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
-import org.idp.server.authentication.interactors.device.AuthenticationApi;
-import org.idp.server.authentication.interactors.device.AuthenticationTransactionFindingResponse;
+import org.idp.server.core.oidc.authentication.AuthenticationApi;
+import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;

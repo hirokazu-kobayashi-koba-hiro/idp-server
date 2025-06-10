@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.device;
+package org.idp.server.core.oidc.authentication;
 
-import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionQueries;
+import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingListResponse;
+import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 public interface AuthenticationApi {
+
+  AuthenticationTransaction request(
+      TenantIdentifier tenantIdentifier, RequestAttributes requestAttributes);
 
   AuthenticationTransaction get(
       TenantIdentifier tenantIdentifier,

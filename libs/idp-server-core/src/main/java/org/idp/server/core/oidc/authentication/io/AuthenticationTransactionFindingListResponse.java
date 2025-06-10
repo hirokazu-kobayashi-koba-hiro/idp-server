@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.device;
+package org.idp.server.core.oidc.authentication.io;
 
 import java.util.HashMap;
 import java.util.List;

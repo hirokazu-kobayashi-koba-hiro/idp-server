@@ -19,6 +19,8 @@ package org.idp.server.core.oidc.identity.device;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AuthenticationDevices implements Iterable<AuthenticationDevice> {
   List<AuthenticationDevice> values;
@@ -34,5 +36,9 @@ public class AuthenticationDevices implements Iterable<AuthenticationDevice> {
   @Override
   public Iterator<AuthenticationDevice> iterator() {
     return values.iterator();
+  }
+
+  public List<Map<String, Object>> toMapList() {
+    return values.stream().map(AuthenticationDevice::toMap).collect(Collectors.toList());
   }
 }

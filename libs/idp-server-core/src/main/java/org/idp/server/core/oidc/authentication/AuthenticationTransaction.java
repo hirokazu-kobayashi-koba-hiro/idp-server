@@ -269,4 +269,8 @@ public class AuthenticationTransaction {
     List<String> methods = interactionResults.authenticationMethods();
     return LoaDeniedScopeResolver.resolve(levelOfAuthenticationScopes, methods);
   }
+
+  public boolean hasAuthorizationIdentifier() {
+    return authorizationIdentifier != null && authorizationIdentifier.exists();
+  }
 }

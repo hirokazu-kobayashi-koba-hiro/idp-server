@@ -16,11 +16,31 @@
 
 package org.idp.server.core.oidc.identity;
 
+import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequest;
+import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequestResult;
+import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.oidc.identity.io.MfaRegistrationRequest;
+import org.idp.server.core.oidc.identity.io.UserOperationResponse;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 public interface UserOperationApi {
+
+  UserOperationResponse requestMfaOperation(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken token,
+      MfaRegistrationRequest request,
+      RequestAttributes requestAttributes);
+
+  AuthenticationInteractionRequestResult interact(
+      TenantIdentifier tenantIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes);
 
   void delete(
       TenantIdentifier tenantIdentifier,
