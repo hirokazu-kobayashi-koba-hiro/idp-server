@@ -93,6 +93,7 @@ import org.idp.server.core.oidc.userinfo.UserinfoProtocol;
 import org.idp.server.core.oidc.userinfo.UserinfoProtocols;
 import org.idp.server.federation.sso.oidc.OidcSsoExecutorPluginLoader;
 import org.idp.server.federation.sso.oidc.OidcSsoExecutors;
+import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
@@ -101,10 +102,7 @@ import org.idp.server.platform.dependency.protocol.ProtocolContainer;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.platform.notification.EmailSenders;
-import org.idp.server.platform.plugin.ApplicationComponentContainerPluginLoader;
-import org.idp.server.platform.plugin.EmailSenderPluginLoader;
-import org.idp.server.platform.plugin.ProtocolContainerPluginLoader;
-import org.idp.server.platform.plugin.SecurityEventHooksPluginLoader;
+import org.idp.server.platform.plugin.*;
 import org.idp.server.platform.proxy.TenantAwareEntryServiceProxy;
 import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.SecurityEventHooks;
@@ -330,6 +328,9 @@ public class IdpServerApplication {
 
     SchemaReader.initialValidate();
 
+    AuditLogWriters auditLogWriters =
+        AuditLogWriterPluginLoader.load(applicationComponentContainer);
+
     this.oAuthFlowApi =
         TenantAwareEntryServiceProxy.createProxy(
             new OAuthFlowEntryService(
@@ -503,7 +504,8 @@ public class IdpServerApplication {
                 tenantCommandRepository,
                 tenantQueryRepository,
                 organizationRepository,
-                authorizationServerConfigurationCommandRepository),
+                authorizationServerConfigurationCommandRepository,
+                auditLogWriters),
             TenantManagementApi.class,
             tenantDialectProvider);
 
@@ -523,7 +525,8 @@ public class IdpServerApplication {
             new AuthorizationServerManagementEntryService(
                 tenantQueryRepository,
                 authorizationServerConfigurationQueryRepository,
-                authorizationServerConfigurationCommandRepository),
+                authorizationServerConfigurationCommandRepository,
+                auditLogWriters),
             AuthorizationServerManagementApi.class,
             tenantDialectProvider);
 
@@ -532,7 +535,8 @@ public class IdpServerApplication {
             new ClientManagementEntryService(
                 tenantQueryRepository,
                 clientConfigurationCommandRepository,
-                clientConfigurationQueryRepository),
+                clientConfigurationQueryRepository,
+                auditLogWriters),
             ClientManagementApi.class,
             tenantDialectProvider);
 
@@ -543,7 +547,8 @@ public class IdpServerApplication {
                 userQueryRepository,
                 userCommandRepository,
                 passwordEncodeDelegation,
-                userLifecycleEventPublisher),
+                userLifecycleEventPublisher,
+                auditLogWriters),
             UserManagementApi.class,
             tenantDialectProvider);
 
@@ -552,7 +557,8 @@ public class IdpServerApplication {
             new AuthenticationConfigurationManagementEntryService(
                 authenticationConfigurationCommandRepository,
                 authenticationConfigurationQueryRepository,
-                tenantQueryRepository),
+                tenantQueryRepository,
+                auditLogWriters),
             AuthenticationConfigurationManagementApi.class,
             tenantDialectProvider);
 
@@ -561,7 +567,8 @@ public class IdpServerApplication {
             new FederationConfigurationManagementEntryService(
                 federationConfigurationQueryRepository,
                 federationConfigurationCommandRepository,
-                tenantQueryRepository),
+                tenantQueryRepository,
+                auditLogWriters),
             FederationConfigurationManagementApi.class,
             tenantDialectProvider);
 
@@ -570,7 +577,8 @@ public class IdpServerApplication {
             new SecurityEventHookConfigurationManagementEntryService(
                 securityEventHookConfigurationCommandRepository,
                 securityEventHookConfigurationQueryRepository,
-                tenantQueryRepository),
+                tenantQueryRepository,
+                auditLogWriters),
             SecurityEventHookConfigurationManagementApi.class,
             tenantDialectProvider);
 
@@ -579,7 +587,8 @@ public class IdpServerApplication {
             new IdentityVerificationConfigManagementEntryService(
                 identityVerificationConfigurationCommandRepository,
                 identityVerificationConfigurationQueryRepository,
-                tenantQueryRepository),
+                tenantQueryRepository,
+                auditLogWriters),
             IdentityVerificationConfigManagementApi.class,
             tenantDialectProvider);
 

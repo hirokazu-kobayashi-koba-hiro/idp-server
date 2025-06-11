@@ -34,3 +34,4 @@ org.idp.server.core.adapters.datasource.federation.config.query.FederationConfig
 org.idp.server.core.adapters.datasource.federation.config.command.FederationConfigurationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.command.TenantInvitationDataSourceProvider
 org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.query.TenantInvitationQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.audit.command.AuditLogCommandDataSourceProvider

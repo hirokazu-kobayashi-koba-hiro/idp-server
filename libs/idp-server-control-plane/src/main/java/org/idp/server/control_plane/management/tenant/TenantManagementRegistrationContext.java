@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.tenant;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigRegistrationContext;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
@@ -25,7 +26,7 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class TenantManagementRegistrationContext {
+public class TenantManagementRegistrationContext implements ConfigRegistrationContext {
 
   Tenant adminTenant;
   Tenant newTenant;
@@ -69,6 +70,17 @@ public class TenantManagementRegistrationContext {
     return user;
   }
 
+  @Override
+  public String type() {
+    return "tenant";
+  }
+
+  @Override
+  public Map<String, Object> payload() {
+    return authorizationServerConfiguration.toMap();
+  }
+
+  @Override
   public boolean isDryRun() {
     return dryRun;
   }

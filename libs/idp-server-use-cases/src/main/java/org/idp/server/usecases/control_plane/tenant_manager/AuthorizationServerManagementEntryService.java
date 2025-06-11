@@ -18,6 +18,7 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerUpdateContext;
@@ -32,6 +33,8 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCo
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.platform.audit.AuditLog;
+import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -46,6 +49,7 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   AuthorizationServerConfigurationCommandRepository
       authorizationServerConfigurationCommandRepository;
+  AuditLogWriters auditLogWriters;
   LoggerWrapper log = LoggerWrapper.getLogger(AuthorizationServerManagementEntryService.class);
 
   public AuthorizationServerManagementEntryService(
@@ -53,15 +57,16 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       AuthorizationServerConfigurationCommandRepository
-          authorizationServerConfigurationCommandRepository) {
+          authorizationServerConfigurationCommandRepository,
+      AuditLogWriters auditLogWriters) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.authorizationServerConfigurationCommandRepository =
         authorizationServerConfigurationCommandRepository;
+    this.auditLogWriters = auditLogWriters;
   }
 
-  @Transaction(readOnly = true)
   @Override
   public AuthorizationServerManagementResponse get(
       TenantIdentifier tenantIdentifier,
@@ -70,6 +75,21 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("get");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        authorizationServerConfigurationQueryRepository.get(tenant);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnRead(
+            "AuthorizationServerManagementApi.get",
+            "get",
+            tenant,
+            operator,
+            oAuthToken,
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -82,11 +102,6 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
       return new AuthorizationServerManagementResponse(
           AuthorizationServerManagementStatus.FORBIDDEN, response);
     }
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    AuthorizationServerConfiguration authorizationServerConfiguration =
-        authorizationServerConfigurationQueryRepository.get(tenant);
 
     return new AuthorizationServerManagementResponse(
         AuthorizationServerManagementStatus.OK, authorizationServerConfiguration.toMap());
@@ -102,6 +117,29 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("update");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    AuthorizationServerConfiguration before =
+        authorizationServerConfigurationQueryRepository.get(tenant);
+
+    AuthorizationServerRequestValidator validator =
+        new AuthorizationServerRequestValidator(request, dryRun);
+    AuthorizationServerRequestValidationResult validate = validator.validate();
+
+    AuthorizationServerUpdateContextCreator contextCreator =
+        new AuthorizationServerUpdateContextCreator(tenant, before, request, dryRun);
+    AuthorizationServerUpdateContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "AuthorizationServerManagementApi.update",
+            tenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -115,21 +153,10 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
           AuthorizationServerManagementStatus.FORBIDDEN, response);
     }
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthorizationServerConfiguration before =
-        authorizationServerConfigurationQueryRepository.get(tenant);
-
-    AuthorizationServerRequestValidator validator =
-        new AuthorizationServerRequestValidator(request, dryRun);
-    AuthorizationServerRequestValidationResult validate = validator.validate();
-
     if (!validate.isValid()) {
       return validate.errorResponse();
     }
 
-    AuthorizationServerUpdateContextCreator contextCreator =
-        new AuthorizationServerUpdateContextCreator(tenant, before, request, dryRun);
-    AuthorizationServerUpdateContext context = contextCreator.create();
     if (dryRun) {
       return context.toResponse();
     }

@@ -19,6 +19,7 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.management.tenant.*;
@@ -30,6 +31,8 @@ import org.idp.server.control_plane.management.tenant.verifier.TenantManagementV
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.platform.audit.AuditLog;
+import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -50,6 +53,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
   AuthorizationServerConfigurationCommandRepository
       authorizationServerConfigurationCommandRepository;
   TenantManagementVerifier tenantManagementVerifier;
+  AuditLogWriters auditLogWriters;
 
   LoggerWrapper log = LoggerWrapper.getLogger(TenantManagementEntryService.class);
 
@@ -58,7 +62,8 @@ public class TenantManagementEntryService implements TenantManagementApi {
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
       AuthorizationServerConfigurationCommandRepository
-          authorizationServerConfigurationCommandRepository) {
+          authorizationServerConfigurationCommandRepository,
+      AuditLogWriters auditLogWriters) {
     this.tenantCommandRepository = tenantCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
@@ -66,6 +71,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
         authorizationServerConfigurationCommandRepository;
     TenantVerifier tenantVerifier = new TenantVerifier(tenantQueryRepository);
     this.tenantManagementVerifier = new TenantManagementVerifier(tenantVerifier);
+    this.auditLogWriters = auditLogWriters;
   }
 
   @Override
@@ -77,17 +83,6 @@ public class TenantManagementEntryService implements TenantManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun) {
     AdminPermissions permissions = getRequiredPermissions("create");
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new TenantManagementResponse(TenantManagementStatus.FORBIDDEN, response);
-    }
 
     Tenant adminTenant = tenantQueryRepository.get(adminTenantIdentifier);
     OrganizationIdentifier organizationIdentifier = operator.currentOrganizationIdentifier();
@@ -100,6 +95,29 @@ public class TenantManagementEntryService implements TenantManagementApi {
 
     TenantManagementVerificationResult verificationResult =
         tenantManagementVerifier.verify(context);
+
+    AuditLog auditLog =
+        AuditLogCreator.create(
+            "TenantManagementApi.create",
+            adminTenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogWriters.write(adminTenant, auditLog);
+
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
+      return new TenantManagementResponse(TenantManagementStatus.FORBIDDEN, response);
+    }
+
     if (!verificationResult.isValid()) {
       return verificationResult.errorResponse();
     }
@@ -116,7 +134,6 @@ public class TenantManagementEntryService implements TenantManagementApi {
     return context.toResponse();
   }
 
-  @Transaction(readOnly = true)
   @Override
   public TenantManagementResponse findList(
       TenantIdentifier adminTenantIdentifier,
@@ -148,7 +165,6 @@ public class TenantManagementEntryService implements TenantManagementApi {
     return new TenantManagementResponse(TenantManagementStatus.OK, response);
   }
 
-  @Transaction(readOnly = true)
   @Override
   public TenantManagementResponse get(
       TenantIdentifier adminTenantIdentifier,
@@ -190,6 +206,24 @@ public class TenantManagementEntryService implements TenantManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun) {
     AdminPermissions permissions = getRequiredPermissions("update");
+
+    Tenant adminTenant = tenantQueryRepository.get(adminTenantIdentifier);
+    Tenant before = tenantQueryRepository.find(tenantIdentifier);
+
+    TenantManagementUpdateContextCreator contextCreator =
+        new TenantManagementUpdateContextCreator(adminTenant, before, request, operator, dryRun);
+    TenantManagementUpdateContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "TenantManagementApi.update",
+            adminTenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogWriters.write(adminTenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -202,16 +236,9 @@ public class TenantManagementEntryService implements TenantManagementApi {
       return new TenantManagementResponse(TenantManagementStatus.FORBIDDEN, response);
     }
 
-    Tenant adminTenant = tenantQueryRepository.get(adminTenantIdentifier);
-    Tenant before = tenantQueryRepository.find(tenantIdentifier);
-
     if (!before.exists()) {
       return new TenantManagementResponse(TenantManagementStatus.NOT_FOUND, Map.of());
     }
-
-    TenantManagementUpdateContextCreator contextCreator =
-        new TenantManagementUpdateContextCreator(adminTenant, before, request, operator, dryRun);
-    TenantManagementUpdateContext context = contextCreator.create();
 
     if (dryRun) {
       return context.toResponse();
@@ -231,6 +258,21 @@ public class TenantManagementEntryService implements TenantManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun) {
     AdminPermissions permissions = getRequiredPermissions("delete");
+
+    Tenant adminTenant = tenantQueryRepository.get(adminTenantIdentifier);
+    Tenant before = tenantQueryRepository.find(tenantIdentifier);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnDeletion(
+            "TenantManagementApi.delete",
+            "delete",
+            adminTenant,
+            operator,
+            oAuthToken,
+            before.toMap(),
+            requestAttributes);
+    auditLogWriters.write(adminTenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -242,9 +284,6 @@ public class TenantManagementEntryService implements TenantManagementApi {
       log.warn(response.toString());
       return new TenantManagementResponse(TenantManagementStatus.FORBIDDEN, response);
     }
-
-    tenantQueryRepository.get(adminTenantIdentifier);
-    Tenant before = tenantQueryRepository.find(tenantIdentifier);
 
     if (!before.exists()) {
       return new TenantManagementResponse(TenantManagementStatus.NOT_FOUND, Map.of());

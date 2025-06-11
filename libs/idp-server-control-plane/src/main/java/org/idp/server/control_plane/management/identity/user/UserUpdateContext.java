@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.identity.user;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.core.oidc.identity.User;
@@ -24,7 +25,7 @@ import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class UserUpdateContext {
+public class UserUpdateContext implements ConfigUpdateContext {
 
   Tenant tenant;
   User before;
@@ -50,6 +51,22 @@ public class UserUpdateContext {
     return after;
   }
 
+  @Override
+  public String type() {
+    return "user";
+  }
+
+  @Override
+  public Map<String, Object> beforePayload() {
+    return before.toMaskedValueMap();
+  }
+
+  @Override
+  public Map<String, Object> afterPayload() {
+    return after.toMaskedValueMap();
+  }
+
+  @Override
   public boolean isDryRun() {
     return dryRun;
   }

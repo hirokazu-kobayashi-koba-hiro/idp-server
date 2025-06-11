@@ -19,6 +19,7 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.oidc.client.*;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
@@ -32,6 +33,8 @@ import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandR
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.platform.audit.AuditLog;
+import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -45,15 +48,18 @@ public class ClientManagementEntryService implements ClientManagementApi {
   TenantQueryRepository tenantQueryRepository;
   ClientConfigurationCommandRepository clientConfigurationCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  AuditLogWriters auditLogWriters;
   LoggerWrapper log = LoggerWrapper.getLogger(ClientManagementEntryService.class);
 
   public ClientManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       ClientConfigurationCommandRepository clientConfigurationCommandRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      AuditLogWriters auditLogWriters) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.clientConfigurationCommandRepository = clientConfigurationCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.auditLogWriters = auditLogWriters;
   }
 
   public ClientManagementResponse create(
@@ -65,6 +71,21 @@ public class ClientManagementEntryService implements ClientManagementApi {
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("create");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    ClientRegistrationRequestValidator validator =
+        new ClientRegistrationRequestValidator(request, dryRun);
+    ClientRegistrationRequestValidationResult validate = validator.validate();
+
+    ClientRegistrationContextCreator contextCreator =
+        new ClientRegistrationContextCreator(tenant, request, dryRun);
+    ClientRegistrationContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.create(
+            "ClientManagementApi.create", tenant, operator, oAuthToken, context, requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -77,18 +98,10 @@ public class ClientManagementEntryService implements ClientManagementApi {
       return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
     }
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientRegistrationRequestValidator validator =
-        new ClientRegistrationRequestValidator(request, dryRun);
-    ClientRegistrationRequestValidationResult validate = validator.validate();
-
     if (!validate.isValid()) {
       return validate.errorResponse();
     }
 
-    ClientRegistrationContextCreator contextCreator =
-        new ClientRegistrationContextCreator(tenant, request, dryRun);
-    ClientRegistrationContext context = contextCreator.create();
     if (dryRun) {
       return context.toResponse();
     }
@@ -98,7 +111,6 @@ public class ClientManagementEntryService implements ClientManagementApi {
     return context.toResponse();
   }
 
-  @Transaction(readOnly = true)
   @Override
   public ClientManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -109,6 +121,21 @@ public class ClientManagementEntryService implements ClientManagementApi {
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("findList");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    List<ClientConfiguration> clientConfigurations =
+        clientConfigurationQueryRepository.findList(tenant, limit, offset);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnRead(
+            "ClientManagementApi.findList",
+            "findList",
+            tenant,
+            operator,
+            oAuthToken,
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -121,17 +148,12 @@ public class ClientManagementEntryService implements ClientManagementApi {
       return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
     }
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    List<ClientConfiguration> clientConfigurations =
-        clientConfigurationQueryRepository.findList(tenant, limit, offset);
     Map<String, Object> response = new HashMap<>();
     response.put("list", clientConfigurations.stream().map(ClientConfiguration::toMap).toList());
 
     return new ClientManagementResponse(ClientManagementStatus.OK, response);
   }
 
-  @Transaction(readOnly = true)
   @Override
   public ClientManagementResponse get(
       TenantIdentifier tenantIdentifier,
@@ -141,6 +163,16 @@ public class ClientManagementEntryService implements ClientManagementApi {
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("get");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    ClientConfiguration clientConfiguration =
+        clientConfigurationQueryRepository.find(tenant, clientIdentifier);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnRead(
+            "ClientManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -152,11 +184,6 @@ public class ClientManagementEntryService implements ClientManagementApi {
       log.warn(response.toString());
       return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
     }
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.find(tenant, clientIdentifier);
 
     if (!clientConfiguration.exists()) {
       return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());
@@ -176,6 +203,23 @@ public class ClientManagementEntryService implements ClientManagementApi {
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("update");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    ClientConfiguration before = clientConfigurationQueryRepository.find(tenant, clientIdentifier);
+
+    ClientRegistrationRequestValidator validator =
+        new ClientRegistrationRequestValidator(request, dryRun);
+    ClientRegistrationRequestValidationResult validate = validator.validate();
+
+    ClientUpdateContextCreator contextCreator =
+        new ClientUpdateContextCreator(tenant, before, request, dryRun);
+    ClientUpdateContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "ClientManagementApi.update", tenant, operator, oAuthToken, context, requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -188,24 +232,14 @@ public class ClientManagementEntryService implements ClientManagementApi {
       return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
     }
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientConfiguration before = clientConfigurationQueryRepository.find(tenant, clientIdentifier);
-
     if (!before.exists()) {
       return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());
     }
-
-    ClientRegistrationRequestValidator validator =
-        new ClientRegistrationRequestValidator(request, dryRun);
-    ClientRegistrationRequestValidationResult validate = validator.validate();
 
     if (!validate.isValid()) {
       return validate.errorResponse();
     }
 
-    ClientUpdateContextCreator contextCreator =
-        new ClientUpdateContextCreator(tenant, before, request, dryRun);
-    ClientUpdateContext context = contextCreator.create();
     if (dryRun) {
       return context.toResponse();
     }
@@ -240,6 +274,17 @@ public class ClientManagementEntryService implements ClientManagementApi {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.find(tenant, clientIdentifier);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnDeletion(
+            "ClientManagementApi.delete",
+            "delete",
+            tenant,
+            operator,
+            oAuthToken,
+            clientConfiguration.toMap(),
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
 
     if (!clientConfiguration.exists()) {
       return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());

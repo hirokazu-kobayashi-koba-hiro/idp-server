@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.authentication;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementStatus;
 import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
@@ -25,7 +26,7 @@ import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class AuthenticationConfigUpdateContext {
+public class AuthenticationConfigUpdateContext implements ConfigUpdateContext {
 
   Tenant tenant;
   AuthenticationConfiguration before;
@@ -55,6 +56,22 @@ public class AuthenticationConfigUpdateContext {
     return after;
   }
 
+  @Override
+  public String type() {
+    return after.type();
+  }
+
+  @Override
+  public Map<String, Object> beforePayload() {
+    return before.payload();
+  }
+
+  @Override
+  public Map<String, Object> afterPayload() {
+    return after.payload();
+  }
+
+  @Override
   public boolean isDryRun() {
     return dryRun;
   }

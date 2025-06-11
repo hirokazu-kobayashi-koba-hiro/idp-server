@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.federation;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
 import org.idp.server.core.oidc.federation.FederationConfiguration;
@@ -25,7 +26,7 @@ import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class FederationConfigUpdateContext {
+public class FederationConfigUpdateContext implements ConfigUpdateContext {
 
   Tenant tenant;
   FederationConfiguration before;
@@ -55,6 +56,22 @@ public class FederationConfigUpdateContext {
     return after;
   }
 
+  @Override
+  public String type() {
+    return after.typeName();
+  }
+
+  @Override
+  public Map<String, Object> beforePayload() {
+    return before.payload();
+  }
+
+  @Override
+  public Map<String, Object> afterPayload() {
+    return after.payload();
+  }
+
+  @Override
   public boolean isDryRun() {
     return dryRun;
   }

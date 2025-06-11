@@ -19,6 +19,7 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.*;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
@@ -30,6 +31,8 @@ import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigur
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.platform.audit.AuditLog;
+import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -44,17 +47,20 @@ public class AuthenticationConfigurationManagementEntryService
   AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository;
   AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository;
   TenantQueryRepository tenantQueryRepository;
+  AuditLogWriters auditLogWriters;
   LoggerWrapper log =
       LoggerWrapper.getLogger(AuthenticationConfigurationManagementEntryService.class);
 
   public AuthenticationConfigurationManagementEntryService(
       AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository,
       AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository,
-      TenantQueryRepository tenantQueryRepository) {
+      TenantQueryRepository tenantQueryRepository,
+      AuditLogWriters auditLogWriters) {
     this.authenticationConfigurationCommandRepository =
         authenticationConfigurationCommandRepository;
     this.authenticationConfigurationQueryRepository = authenticationConfigurationQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
+    this.auditLogWriters = auditLogWriters;
   }
 
   @Override
@@ -67,6 +73,23 @@ public class AuthenticationConfigurationManagementEntryService
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("create");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    AuthenticationConfigRegistrationContextCreator contextCreator =
+        new AuthenticationConfigRegistrationContextCreator(tenant, request, dryRun);
+    AuthenticationConfigRegistrationContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.create(
+            "AuthenticationConfigurationManagementApi.create",
+            tenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -79,12 +102,6 @@ public class AuthenticationConfigurationManagementEntryService
       return new AuthenticationConfigManagementResponse(
           AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    AuthenticationConfigRegistrationContextCreator contextCreator =
-        new AuthenticationConfigRegistrationContextCreator(tenant, request, dryRun);
-    AuthenticationConfigRegistrationContext context = contextCreator.create();
 
     if (context.isDryRun()) {
       return context.toResponse();
@@ -95,7 +112,6 @@ public class AuthenticationConfigurationManagementEntryService
     return context.toResponse();
   }
 
-  @Transaction(readOnly = true)
   @Override
   public AuthenticationConfigManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -106,6 +122,21 @@ public class AuthenticationConfigurationManagementEntryService
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("findList");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    List<AuthenticationConfiguration> configurations =
+        authenticationConfigurationQueryRepository.findList(tenant, limit, offset);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnRead(
+            "AuthenticationConfigurationManagementApi.findList",
+            "findList",
+            tenant,
+            operator,
+            oAuthToken,
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -119,10 +150,6 @@ public class AuthenticationConfigurationManagementEntryService
           AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    List<AuthenticationConfiguration> configurations =
-        authenticationConfigurationQueryRepository.findList(tenant, limit, offset);
     Map<String, Object> response = new HashMap<>();
     response.put(
         "list", configurations.stream().map(AuthenticationConfiguration::payload).toList());
@@ -131,7 +158,6 @@ public class AuthenticationConfigurationManagementEntryService
         AuthenticationConfigManagementStatus.OK, response);
   }
 
-  @Transaction(readOnly = true)
   @Override
   public AuthenticationConfigManagementResponse get(
       TenantIdentifier tenantIdentifier,
@@ -141,6 +167,21 @@ public class AuthenticationConfigurationManagementEntryService
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("get");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    AuthenticationConfiguration configuration =
+        authenticationConfigurationQueryRepository.find(tenant, identifier);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnRead(
+            "AuthenticationConfigurationManagementApi.get",
+            "get",
+            tenant,
+            operator,
+            oAuthToken,
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -153,11 +194,6 @@ public class AuthenticationConfigurationManagementEntryService
       return new AuthenticationConfigManagementResponse(
           AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    AuthenticationConfiguration configuration =
-        authenticationConfigurationQueryRepository.find(tenant, identifier);
 
     if (!configuration.exists()) {
       return new AuthenticationConfigManagementResponse(
@@ -179,6 +215,25 @@ public class AuthenticationConfigurationManagementEntryService
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("update");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    AuthenticationConfiguration before =
+        authenticationConfigurationQueryRepository.find(tenant, identifier);
+
+    AuthenticationConfigUpdateContextCreator contextCreator =
+        new AuthenticationConfigUpdateContextCreator(tenant, before, request, dryRun);
+    AuthenticationConfigUpdateContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "AuthenticationConfigurationManagementApi.update",
+            tenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -191,14 +246,6 @@ public class AuthenticationConfigurationManagementEntryService
       return new AuthenticationConfigManagementResponse(
           AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthenticationConfiguration before =
-        authenticationConfigurationQueryRepository.find(tenant, identifier);
-
-    AuthenticationConfigUpdateContextCreator contextCreator =
-        new AuthenticationConfigUpdateContextCreator(tenant, before, request, dryRun);
-    AuthenticationConfigUpdateContext context = contextCreator.create();
 
     if (context.isDryRun()) {
       return context.toResponse();
@@ -219,6 +266,22 @@ public class AuthenticationConfigurationManagementEntryService
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("delete");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    AuthenticationConfiguration configuration =
+        authenticationConfigurationQueryRepository.find(tenant, identifier);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnDeletion(
+            "AuthenticationConfigurationManagementApi.delete",
+            "delete",
+            tenant,
+            operator,
+            oAuthToken,
+            configuration.payload(),
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -231,11 +294,6 @@ public class AuthenticationConfigurationManagementEntryService
       return new AuthenticationConfigManagementResponse(
           AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    AuthenticationConfiguration configuration =
-        authenticationConfigurationQueryRepository.find(tenant, identifier);
 
     if (configuration.exists()) {
       return new AuthenticationConfigManagementResponse(

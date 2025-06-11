@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.oidc.client;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -24,7 +25,7 @@ import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class ClientUpdateContext {
+public class ClientUpdateContext implements ConfigUpdateContext {
   Tenant tenant;
   ClientConfiguration before;
   ClientConfiguration after;
@@ -50,6 +51,22 @@ public class ClientUpdateContext {
     return after;
   }
 
+  @Override
+  public String type() {
+    return "client";
+  }
+
+  @Override
+  public Map<String, Object> beforePayload() {
+    return before.toMap();
+  }
+
+  @Override
+  public Map<String, Object> afterPayload() {
+    return after.toMap();
+  }
+
+  @Override
   public boolean isDryRun() {
     return dryRun;
   }

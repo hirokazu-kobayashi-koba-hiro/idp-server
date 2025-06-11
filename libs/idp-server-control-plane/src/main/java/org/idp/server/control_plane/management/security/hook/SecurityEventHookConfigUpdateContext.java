@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.security.hook;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
 import org.idp.server.platform.json.JsonDiffCalculator;
@@ -25,7 +26,7 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
 
-public class SecurityEventHookConfigUpdateContext {
+public class SecurityEventHookConfigUpdateContext implements ConfigUpdateContext {
 
   Tenant tenant;
   SecurityEventHookConfiguration before;
@@ -55,6 +56,22 @@ public class SecurityEventHookConfigUpdateContext {
     return after;
   }
 
+  @Override
+  public String type() {
+    return after.type();
+  }
+
+  @Override
+  public Map<String, Object> beforePayload() {
+    return before.payload();
+  }
+
+  @Override
+  public Map<String, Object> afterPayload() {
+    return after.payload();
+  }
+
+  @Override
   public boolean isDryRun() {
     return dryRun;
   }
