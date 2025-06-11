@@ -51,6 +51,10 @@ public class SecurityEventHookConfiguration {
     return new SecurityEventHookConfigurationIdentifier(id);
   }
 
+  public String type() {
+    return type;
+  }
+
   public SecurityEventHookType hookType() {
     return new SecurityEventHookType(type);
   }

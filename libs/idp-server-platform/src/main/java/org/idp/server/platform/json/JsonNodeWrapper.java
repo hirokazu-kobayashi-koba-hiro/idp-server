@@ -289,4 +289,8 @@ public class JsonNodeWrapper {
       return node.toString();
     }
   }
+
+  public String toJson() {
+    return jsonNode.toString();
+  }
 }

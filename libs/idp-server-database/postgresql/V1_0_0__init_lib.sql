@@ -874,3 +874,24 @@ POLICY rls_idp_user_lifecycle_event_result
   ON idp_user_lifecycle_event_result
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE idp_user_lifecycle_event_result FORCE ROW LEVEL SECURITY;
+
+CREATE TABLE audit_log
+(
+    id                     UUID                    NOT NULL,
+    type                   VARCHAR(255)            NOT NULL,
+    description            VARCHAR(255)            NOT NULL,
+    tenant_id              UUID                    NOT NULL,
+    client_id              VARCHAR(255)            NOT NULL,
+    user_id                UUID                    NOT NULL,
+    user_payload           JSONB                   NOT NULL,
+    target_resource        TEXT                    NOT NULL,
+    target_resource_action TEXT                    NOT NULL,
+    before_payload         JSONB,
+    after_payload          JSONB,
+    ip_address             TEXT,
+    user_agent             TEXT,
+    dry_run                BOOLEAN,
+    created_at             TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id)
+);
+

@@ -17,13 +17,14 @@
 package org.idp.server.control_plane.management.identity.verification;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigRegistrationContext;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class IdentityVerificationConfigRegistrationContext {
+public class IdentityVerificationConfigRegistrationContext implements ConfigRegistrationContext {
 
   Tenant tenant;
   IdentityVerificationConfiguration identityVerificationConfiguration;
@@ -46,10 +47,21 @@ public class IdentityVerificationConfigRegistrationContext {
     return identityVerificationConfiguration;
   }
 
-  public IdentityVerificationType type() {
+  public IdentityVerificationType identityVerificationType() {
     return identityVerificationConfiguration.type();
   }
 
+  @Override
+  public String type() {
+    return identityVerificationConfiguration.type().name();
+  }
+
+  @Override
+  public Map<String, Object> payload() {
+    return identityVerificationConfiguration.toMap();
+  }
+
+  @Override
   public boolean isDryRun() {
     return dryRun;
   }

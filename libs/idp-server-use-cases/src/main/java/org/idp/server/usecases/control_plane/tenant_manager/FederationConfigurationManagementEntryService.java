@@ -19,6 +19,7 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.federation.*;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
@@ -30,6 +31,8 @@ import org.idp.server.core.oidc.federation.repository.FederationConfigurationCom
 import org.idp.server.core.oidc.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.platform.audit.AuditLog;
+import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -44,15 +47,18 @@ public class FederationConfigurationManagementEntryService
   FederationConfigurationQueryRepository federationConfigurationQueryRepository;
   FederationConfigurationCommandRepository federationConfigurationCommandRepository;
   TenantQueryRepository tenantQueryRepository;
+  AuditLogWriters auditLogWriters;
   LoggerWrapper log = LoggerWrapper.getLogger(FederationConfigurationManagementEntryService.class);
 
   public FederationConfigurationManagementEntryService(
       FederationConfigurationQueryRepository federationConfigurationQueryRepository,
       FederationConfigurationCommandRepository federationConfigurationCommandRepository,
-      TenantQueryRepository tenantQueryRepository) {
+      TenantQueryRepository tenantQueryRepository,
+      AuditLogWriters auditLogWriters) {
     this.federationConfigurationQueryRepository = federationConfigurationQueryRepository;
     this.federationConfigurationCommandRepository = federationConfigurationCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
+    this.auditLogWriters = auditLogWriters;
   }
 
   @Override
@@ -64,6 +70,23 @@ public class FederationConfigurationManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
     AdminPermissions permissions = getRequiredPermissions("create");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    FederationConfigRegistrationContextCreator contextCreator =
+        new FederationConfigRegistrationContextCreator(tenant, request, dryRun);
+    FederationConfigRegistrationContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.create(
+            "FederationConfigurationManagementApi.create",
+            tenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -76,12 +99,6 @@ public class FederationConfigurationManagementEntryService
       return new FederationConfigManagementResponse(
           FederationConfigManagementStatus.FORBIDDEN, response);
     }
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    FederationConfigRegistrationContextCreator contextCreator =
-        new FederationConfigRegistrationContextCreator(tenant, request, dryRun);
-    FederationConfigRegistrationContext context = contextCreator.create();
 
     if (context.isDryRun()) {
       return context.toResponse();
@@ -92,7 +109,6 @@ public class FederationConfigurationManagementEntryService
     return context.toResponse();
   }
 
-  @Transaction(readOnly = true)
   @Override
   public FederationConfigManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -102,6 +118,21 @@ public class FederationConfigurationManagementEntryService
       int offset,
       RequestAttributes requestAttributes) {
     AdminPermissions permissions = getRequiredPermissions("findList");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    List<FederationConfiguration> configurations =
+        federationConfigurationQueryRepository.findList(tenant, limit, offset);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnRead(
+            "FederationConfigurationManagementApi.findList",
+            "findList",
+            tenant,
+            operator,
+            oAuthToken,
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -115,17 +146,12 @@ public class FederationConfigurationManagementEntryService
           FederationConfigManagementStatus.FORBIDDEN, response);
     }
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    List<FederationConfiguration> configurations =
-        federationConfigurationQueryRepository.findList(tenant, limit, offset);
     Map<String, Object> response = new HashMap<>();
     response.put("list", configurations.stream().map(FederationConfiguration::payload).toList());
 
     return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
   }
 
-  @Transaction(readOnly = true)
   @Override
   public FederationConfigManagementResponse get(
       TenantIdentifier tenantIdentifier,
@@ -134,6 +160,21 @@ public class FederationConfigurationManagementEntryService
       FederationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
     AdminPermissions permissions = getRequiredPermissions("get");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    FederationConfiguration configuration =
+        federationConfigurationQueryRepository.find(tenant, identifier);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnRead(
+            "FederationConfigurationManagementApi.get",
+            "get",
+            tenant,
+            operator,
+            oAuthToken,
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -146,11 +187,6 @@ public class FederationConfigurationManagementEntryService
       return new FederationConfigManagementResponse(
           FederationConfigManagementStatus.FORBIDDEN, response);
     }
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    FederationConfiguration configuration =
-        federationConfigurationQueryRepository.find(tenant, identifier);
 
     if (!configuration.exists()) {
       return new FederationConfigManagementResponse(
@@ -171,6 +207,25 @@ public class FederationConfigurationManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
     AdminPermissions permissions = getRequiredPermissions("update");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    FederationConfiguration before =
+        federationConfigurationQueryRepository.find(tenant, identifier);
+
+    FederationConfigUpdateContextCreator contextCreator =
+        new FederationConfigUpdateContextCreator(tenant, before, request, dryRun);
+    FederationConfigUpdateContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "FederationConfigurationManagementApi.update",
+            tenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -184,18 +239,10 @@ public class FederationConfigurationManagementEntryService
           FederationConfigManagementStatus.FORBIDDEN, response);
     }
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    FederationConfiguration before =
-        federationConfigurationQueryRepository.find(tenant, identifier);
-
     if (!before.exists()) {
       return new FederationConfigManagementResponse(
           FederationConfigManagementStatus.NOT_FOUND, Map.of());
     }
-
-    FederationConfigUpdateContextCreator contextCreator =
-        new FederationConfigUpdateContextCreator(tenant, before, request, dryRun);
-    FederationConfigUpdateContext context = contextCreator.create();
 
     if (context.isDryRun()) {
       return context.toResponse();
@@ -215,6 +262,22 @@ public class FederationConfigurationManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
     AdminPermissions permissions = getRequiredPermissions("delete");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    FederationConfiguration configuration =
+        federationConfigurationQueryRepository.find(tenant, identifier);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnDeletion(
+            "FederationConfigurationManagementApi.delete",
+            "delete",
+            tenant,
+            operator,
+            oAuthToken,
+            configuration.payload(),
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -227,11 +290,6 @@ public class FederationConfigurationManagementEntryService
       return new FederationConfigManagementResponse(
           FederationConfigManagementStatus.FORBIDDEN, response);
     }
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    FederationConfiguration configuration =
-        federationConfigurationQueryRepository.find(tenant, identifier);
 
     if (!configuration.exists()) {
       return new FederationConfigManagementResponse(

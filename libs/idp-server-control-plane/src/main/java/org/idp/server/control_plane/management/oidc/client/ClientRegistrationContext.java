@@ -17,12 +17,13 @@
 package org.idp.server.control_plane.management.oidc.client;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigRegistrationContext;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class ClientRegistrationContext {
+public class ClientRegistrationContext implements ConfigRegistrationContext {
   Tenant tenant;
   ClientConfiguration clientConfiguration;
   boolean dryRun;
@@ -42,6 +43,17 @@ public class ClientRegistrationContext {
     return clientConfiguration;
   }
 
+  @Override
+  public String type() {
+    return "client";
+  }
+
+  @Override
+  public Map<String, Object> payload() {
+    return clientConfiguration.toMap();
+  }
+
+  @Override
   public boolean isDryRun() {
     return dryRun;
   }

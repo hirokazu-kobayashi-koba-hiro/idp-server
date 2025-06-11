@@ -17,12 +17,13 @@
 package org.idp.server.control_plane.management.identity.user;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigRegistrationContext;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class UserRegistrationContext {
+public class UserRegistrationContext implements ConfigRegistrationContext {
 
   Tenant tenant;
   User user;
@@ -42,6 +43,17 @@ public class UserRegistrationContext {
     return user;
   }
 
+  @Override
+  public String type() {
+    return "user";
+  }
+
+  @Override
+  public Map<String, Object> payload() {
+    return user.toMaskedValueMap();
+  }
+
+  @Override
   public boolean isDryRun() {
     return dryRun;
   }

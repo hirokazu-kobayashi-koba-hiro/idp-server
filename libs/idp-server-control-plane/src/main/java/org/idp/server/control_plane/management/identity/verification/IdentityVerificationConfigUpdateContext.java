@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.identity.verification;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
@@ -25,7 +26,7 @@ import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class IdentityVerificationConfigUpdateContext {
+public class IdentityVerificationConfigUpdateContext implements ConfigUpdateContext {
 
   Tenant tenant;
   IdentityVerificationConfiguration before;
@@ -61,6 +62,21 @@ public class IdentityVerificationConfigUpdateContext {
 
   public IdentityVerificationType afterType() {
     return after.type();
+  }
+
+  @Override
+  public String type() {
+    return after.type().name();
+  }
+
+  @Override
+  public Map<String, Object> beforePayload() {
+    return before.toMap();
+  }
+
+  @Override
+  public Map<String, Object> afterPayload() {
+    return after.toMap();
   }
 
   public boolean isDryRun() {

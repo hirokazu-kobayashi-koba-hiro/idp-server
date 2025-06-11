@@ -18,12 +18,13 @@ package org.idp.server.control_plane.management.authentication;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigRegistrationContext;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementStatus;
 import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class AuthenticationConfigRegistrationContext {
+public class AuthenticationConfigRegistrationContext implements ConfigRegistrationContext {
 
   Tenant tenant;
   AuthenticationConfiguration authenticationConfiguration;
@@ -44,6 +45,17 @@ public class AuthenticationConfigRegistrationContext {
     return authenticationConfiguration;
   }
 
+  @Override
+  public String type() {
+    return configuration().type();
+  }
+
+  @Override
+  public Map<String, Object> payload() {
+    return authenticationConfiguration.payload();
+  }
+
+  @Override
   public boolean isDryRun() {
     return dryRun;
   }

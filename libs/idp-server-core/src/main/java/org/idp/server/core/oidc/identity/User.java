@@ -707,6 +707,13 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return map;
   }
 
+  public Map<String, Object> toMaskedValueMap() {
+    Map<String, Object> maskedMap = toMap();
+    maskedMap.replaceAll((k, v) -> "****");
+
+    return maskedMap;
+  }
+
   public User didEmailVerification() {
     this.emailVerified = true;
     return this;

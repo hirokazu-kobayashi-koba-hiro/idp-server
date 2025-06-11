@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.tenant;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.core.oidc.identity.User;
@@ -25,7 +26,7 @@ import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class TenantManagementUpdateContext {
+public class TenantManagementUpdateContext implements ConfigUpdateContext {
 
   Tenant adminTenant;
   Tenant before;
@@ -58,6 +59,22 @@ public class TenantManagementUpdateContext {
     return user;
   }
 
+  @Override
+  public String type() {
+    return "tenant";
+  }
+
+  @Override
+  public Map<String, Object> beforePayload() {
+    return before.toMap();
+  }
+
+  @Override
+  public Map<String, Object> afterPayload() {
+    return after.toMap();
+  }
+
+  @Override
   public boolean isDryRun() {
     return dryRun;
   }

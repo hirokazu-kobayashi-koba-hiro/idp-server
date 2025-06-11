@@ -19,6 +19,7 @@ package org.idp.server.usecases.control_plane.tenant_manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.UserVerifier;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
@@ -41,6 +42,8 @@ import org.idp.server.core.oidc.identity.event.UserLifecycleType;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.platform.audit.AuditLog;
+import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -57,6 +60,7 @@ public class UserManagementEntryService implements UserManagementApi {
   PasswordEncodeDelegation passwordEncodeDelegation;
   UserRegistrationVerifier verifier;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
+  AuditLogWriters auditLogWriters;
   LoggerWrapper log = LoggerWrapper.getLogger(UserManagementEntryService.class);
 
   public UserManagementEntryService(
@@ -64,7 +68,8 @@ public class UserManagementEntryService implements UserManagementApi {
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
       PasswordEncodeDelegation passwordEncodeDelegation,
-      UserLifecycleEventPublisher userLifecycleEventPublisher) {
+      UserLifecycleEventPublisher userLifecycleEventPublisher,
+      AuditLogWriters auditLogWriters) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
@@ -72,6 +77,7 @@ public class UserManagementEntryService implements UserManagementApi {
     UserVerifier userVerifier = new UserVerifier(userQueryRepository);
     this.verifier = new UserRegistrationVerifier(userVerifier);
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
+    this.auditLogWriters = auditLogWriters;
   }
 
   @Override
@@ -84,6 +90,24 @@ public class UserManagementEntryService implements UserManagementApi {
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("create");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    UserRegistrationRequestValidator validator =
+        new UserRegistrationRequestValidator(request, dryRun);
+    UserRegistrationRequestValidationResult validate = validator.validate();
+
+    UserRegistrationContextCreator userRegistrationContextCreator =
+        new UserRegistrationContextCreator(tenant, request, dryRun, passwordEncodeDelegation);
+    UserRegistrationContext context = userRegistrationContextCreator.create();
+
+    UserRegistrationVerificationResult verificationResult = verifier.verify(context);
+
+    AuditLog auditLog =
+        AuditLogCreator.create(
+            "UserManagementApi.create", tenant, operator, oAuthToken, context, requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -96,20 +120,10 @@ public class UserManagementEntryService implements UserManagementApi {
       return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
     }
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    UserRegistrationRequestValidator validator =
-        new UserRegistrationRequestValidator(request, dryRun);
-    UserRegistrationRequestValidationResult validate = validator.validate();
     if (!validate.isValid()) {
       return validate.errorResponse();
     }
 
-    UserRegistrationContextCreator userRegistrationContextCreator =
-        new UserRegistrationContextCreator(tenant, request, dryRun, passwordEncodeDelegation);
-    UserRegistrationContext context = userRegistrationContextCreator.create();
-
-    UserRegistrationVerificationResult verificationResult = verifier.verify(context);
     if (!verificationResult.isValid()) {
       return verificationResult.errorResponse();
     }
@@ -123,7 +137,6 @@ public class UserManagementEntryService implements UserManagementApi {
     return context.toResponse();
   }
 
-  @Transaction(readOnly = true)
   @Override
   public UserManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -134,6 +147,20 @@ public class UserManagementEntryService implements UserManagementApi {
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("findList");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    List<User> users = userQueryRepository.findList(tenant, limit, offset);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnRead(
+            "UserManagementApi.findList",
+            "findList",
+            tenant,
+            operator,
+            oAuthToken,
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -146,15 +173,11 @@ public class UserManagementEntryService implements UserManagementApi {
       return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
     }
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    List<User> users = userQueryRepository.findList(tenant, limit, offset);
     Map<String, Object> response = Map.of("list", users.stream().map(User::toMap).toList());
 
     return new UserManagementResponse(UserManagementStatus.OK, response);
   }
 
-  @Transaction(readOnly = true)
   @Override
   public UserManagementResponse get(
       TenantIdentifier tenantIdentifier,
@@ -164,6 +187,15 @@ public class UserManagementEntryService implements UserManagementApi {
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("get");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    User user = userQueryRepository.findById(tenant, userIdentifier);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnRead(
+            "UserManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -175,10 +207,6 @@ public class UserManagementEntryService implements UserManagementApi {
       log.warn(response.toString());
       return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
     }
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    User user = userQueryRepository.findById(tenant, userIdentifier);
 
     if (!user.exists()) {
       return new UserManagementResponse(UserManagementStatus.NOT_FOUND, Map.of());
@@ -235,6 +263,21 @@ public class UserManagementEntryService implements UserManagementApi {
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("delete");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    User user = userQueryRepository.get(tenant, userIdentifier);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnDeletion(
+            "UserManagementApi.delete",
+            "delete",
+            tenant,
+            operator,
+            oAuthToken,
+            user.toMaskedValueMap(),
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -247,13 +290,10 @@ public class UserManagementEntryService implements UserManagementApi {
       return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
     }
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
     if (dryRun) {
       return new UserManagementResponse(UserManagementStatus.OK, Map.of());
     }
 
-    User user = userQueryRepository.get(tenant, userIdentifier);
     userCommandRepository.delete(tenant, userIdentifier);
 
     UserLifecycleEvent userLifecycleEvent =

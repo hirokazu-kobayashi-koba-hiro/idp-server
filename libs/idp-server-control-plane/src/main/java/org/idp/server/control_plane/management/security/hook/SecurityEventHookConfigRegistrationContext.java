@@ -18,12 +18,13 @@ package org.idp.server.control_plane.management.security.hook;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.ConfigRegistrationContext;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
 
-public class SecurityEventHookConfigRegistrationContext {
+public class SecurityEventHookConfigRegistrationContext implements ConfigRegistrationContext {
 
   Tenant tenant;
   SecurityEventHookConfiguration securityEventHookConfiguration;
@@ -46,6 +47,17 @@ public class SecurityEventHookConfigRegistrationContext {
     return securityEventHookConfiguration;
   }
 
+  @Override
+  public String type() {
+    return securityEventHookConfiguration.type();
+  }
+
+  @Override
+  public Map<String, Object> payload() {
+    return securityEventHookConfiguration.payload();
+  }
+
+  @Override
   public boolean isDryRun() {
     return dryRun;
   }

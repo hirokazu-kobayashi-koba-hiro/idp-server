@@ -44,6 +44,10 @@ public class FederationConfiguration {
     return new FederationType(type);
   }
 
+  public String typeName() {
+    return type;
+  }
+
   public SsoProvider ssoProvider() {
     return new SsoProvider(ssoProvider);
   }
