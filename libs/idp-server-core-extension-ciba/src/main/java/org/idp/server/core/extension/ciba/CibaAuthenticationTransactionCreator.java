@@ -74,7 +74,10 @@ public class CibaAuthenticationTransactionCreator {
     AuthorizationDetails authorizationDetails = cibaIssueResponse.request().authorizationDetails();
     AuthenticationContext context =
         new AuthenticationContext(
-            cibaIssueResponse.acrValues(), cibaIssueResponse.scopes(), authorizationDetails);
+            cibaIssueResponse.acrValues(),
+            cibaIssueResponse.scopes(),
+            cibaIssueResponse.bindingMessage(),
+            authorizationDetails);
 
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt = createdAt.plusSeconds(expiresIn.value());

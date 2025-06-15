@@ -355,11 +355,11 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return new AuthenticationDevices(authenticationDevices);
   }
 
-  public AuthenticationDevice getPrimaryAuthenticationDevice() {
+  public AuthenticationDevice findPrimaryAuthenticationDevice() {
     return authenticationDevices.stream()
         .filter(AuthenticationDevice::isPreferredForNotification)
         .findFirst()
-        .orElseThrow(() -> new RuntimeException("Primary authentication device not found"));
+        .orElse(new AuthenticationDevice());
   }
 
   public List<AuthenticationDevice> authenticationDevicesAsList() {

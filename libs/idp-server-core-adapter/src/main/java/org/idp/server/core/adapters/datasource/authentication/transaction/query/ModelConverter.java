@@ -19,6 +19,7 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.query
 import java.time.LocalDateTime;
 import java.util.*;
 import org.idp.server.basic.type.AuthFlow;
+import org.idp.server.basic.type.ciba.BindingMessage;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
@@ -70,6 +71,7 @@ public class ModelConverter {
       JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(map.get("context"));
       String acrValues = jsonNodeWrapper.getValueOrEmptyAsString("acr_values");
       String scopes = jsonNodeWrapper.getValueOrEmptyAsString("scopes");
+      String bindingMessage = jsonNodeWrapper.getValueOrEmptyAsString("binding_message");
       Object authorizationDetails = jsonNodeWrapper.getValue("authorization_details");
       JsonNodeWrapper detailsNode = JsonNodeWrapper.fromObject(authorizationDetails);
       List<Map<String, Object>> listAsMap = detailsNode.toListAsMap();
@@ -79,6 +81,7 @@ public class ModelConverter {
       return new AuthenticationContext(
           new AcrValues(acrValues),
           new Scopes(scopes),
+          new BindingMessage(bindingMessage),
           new AuthorizationDetails(authorizationDetailsList));
     }
 

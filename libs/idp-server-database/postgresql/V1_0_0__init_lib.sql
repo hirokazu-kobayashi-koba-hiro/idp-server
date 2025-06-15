@@ -744,6 +744,8 @@ CREATE TABLE authentication_transaction
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
+CREATE INDEX idx_authentication_transaction_device_id ON authentication_transaction (authentication_device_id);
+
 ALTER TABLE authentication_transaction ENABLE ROW LEVEL SECURITY;
 CREATE
 POLICY rls_authentication_transaction

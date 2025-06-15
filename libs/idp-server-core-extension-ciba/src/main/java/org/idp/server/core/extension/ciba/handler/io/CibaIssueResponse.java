@@ -22,6 +22,7 @@ import java.util.List;
 import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.basic.type.ContentType;
 import org.idp.server.basic.type.ciba.AuthReqId;
+import org.idp.server.basic.type.ciba.BindingMessage;
 import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
@@ -76,6 +77,10 @@ public class CibaIssueResponse {
 
   public BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier() {
     return request.identifier();
+  }
+
+  public BindingMessage bindingMessage() {
+    return request.bindingMessage();
   }
 
   public BackchannelAuthenticationResponse response() {

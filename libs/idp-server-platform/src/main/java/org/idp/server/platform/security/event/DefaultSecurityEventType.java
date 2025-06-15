@@ -79,6 +79,8 @@ public enum DefaultSecurityEventType {
   authentication_device_deny_failure("User failed to deny a device notification"),
   authentication_device_allow_success("User successfully allowed a device notification"),
   authentication_device_allow_failure("User failed to allow a device notification"),
+  authentication_device_binding_message_success("User successfully binding a device notification"),
+  authentication_device_binding_message_failure("User failed to bind a device notification"),
   authentication_device_registration_success("User successfully registered a device"),
   authentication_device_registration_failure("User failed to register a device"),
   authentication_device_deregistration_success("User successfully deregistered a device"),

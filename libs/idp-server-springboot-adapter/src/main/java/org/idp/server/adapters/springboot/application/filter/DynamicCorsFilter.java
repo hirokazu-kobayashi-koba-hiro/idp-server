@@ -86,6 +86,7 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
 
   protected boolean shouldNotFilter(HttpServletRequest request) {
     String path = request.getRequestURI();
-    return path.contains("/admin/") || path.contains("/management/");
+    return true;
+    //    return path.contains("/admin/") || path.contains("/management/");
   }
 }

@@ -18,6 +18,7 @@ package org.idp.server.core.oidc.authentication;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.basic.type.ciba.BindingMessage;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
@@ -25,14 +26,19 @@ import org.idp.server.core.oidc.rar.AuthorizationDetails;
 public class AuthenticationContext {
   AcrValues acrValues;
   Scopes scopes;
+  BindingMessage bindingMessage;
   AuthorizationDetails authorizationDetails;
 
   public AuthenticationContext() {}
 
   public AuthenticationContext(
-      AcrValues acrValues, Scopes scopes, AuthorizationDetails authorizationDetails) {
+      AcrValues acrValues,
+      Scopes scopes,
+      BindingMessage bindingMessage,
+      AuthorizationDetails authorizationDetails) {
     this.acrValues = acrValues;
     this.scopes = scopes;
+    this.bindingMessage = bindingMessage;
     this.authorizationDetails = authorizationDetails;
   }
 
@@ -44,10 +50,19 @@ public class AuthenticationContext {
     return scopes;
   }
 
+  public BindingMessage bindingMessage() {
+    return bindingMessage;
+  }
+
+  public AuthorizationDetails authorizationDetails() {
+    return authorizationDetails;
+  }
+
   public Map<String, Object> toMap() {
     HashMap<String, Object> map = new HashMap<>();
     if (acrValues.exists()) map.put("acr_values", acrValues.toStringValues());
     if (scopes.exists()) map.put("scopes", scopes.toStringValues());
+    if (bindingMessage.exists()) map.put("binding_message", bindingMessage.value());
     if (authorizationDetails.exists())
       map.put("authorization_details", authorizationDetails.toMapValues());
     return map;

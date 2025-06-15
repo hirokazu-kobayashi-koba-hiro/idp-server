@@ -19,6 +19,7 @@ package org.idp.server.core.oidc.authentication.mfa;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.idp.server.basic.type.AuthFlow;
+import org.idp.server.basic.type.ciba.BindingMessage;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
@@ -69,7 +70,8 @@ public class MfaRegistrationTransactionCreator {
 
     RequestedClientId requestedClientId = oAuthToken.requestedClientId();
     AuthenticationContext context =
-        new AuthenticationContext(new AcrValues(), new Scopes(), new AuthorizationDetails());
+        new AuthenticationContext(
+            new AcrValues(), new Scopes(), new BindingMessage(), new AuthorizationDetails());
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt = createdAt.plusSeconds(300);
 
