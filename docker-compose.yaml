@@ -1,29 +1,41 @@
 version: '3'
 
 services:
-#  idp-server:
-#    build: ./
-#    ports:
-#      - "8080:8080"
-#    depends_on:
-#      - postgresql
-#      - postgresql-reader
-#      - mysql
-#      - redis
-#    environment:
-#      IDP_SERVER_API_KEY: $IDP_SERVER_API_KEY
-#      IDP_SERVER_API_SECRET: $IDP_SERVER_API_SECRET
-#      ENCRYPTION_KEY: $ENCRYPTION_KEY
-#      DB_WRITE_URL: jdbc:postgresql://postgresql:5432/idpserver
-#      DB_WRITE_USER_NAME: idpserver
-#      DB_WRITE_PASSWORD: idpserver
-#      DB_READ_URL: jdbc:postgresql://postgresql:5432/idpserver
-#      DB_READ_USER_NAME: idpserver
-#      DB_READ_PASSWORD: idpserver
-#      REDIS_HOST: redis
-#      REDIS_PORT: 6379
-#      CACHE_ENABLE: "true"
-#      CACHE_TIME_TO_LIVE_SECOND: 300
+  idp-server:
+    build: ./
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgresql
+      - postgresql-reader
+      - mysql
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 2g
+        reservations:
+          cpus: '0.5'
+          memory: 1g
+    environment:
+      IDP_SERVER_API_KEY: $IDP_SERVER_API_KEY
+      IDP_SERVER_API_SECRET: $IDP_SERVER_API_SECRET
+      ENCRYPTION_KEY: $ENCRYPTION_KEY
+      DB_WRITE_URL: jdbc:postgresql://postgresql:5432/idpserver
+      DB_WRITE_USER_NAME: idpserver
+      DB_WRITE_PASSWORD: idpserver
+      DB_READ_URL: jdbc:postgresql://postgresql:5432/idpserver
+      DB_READ_USER_NAME: idpserver
+      DB_READ_PASSWORD: idpserver
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_ENABLE: "true"
+      CACHE_TIME_TO_LIVE_SECOND: 300
+      JAVA_TOOL_OPTIONS: >
+        -Xms512m -Xmx2g
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=100
 
   nginx:
     build: ./nginx
@@ -40,6 +52,7 @@ services:
       - POSTGRES_DB=idpserver
     ports:
       - "5432:5432"
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
   postgresql-reader:
     image: postgres:15
     container_name: postgres-reader
@@ -49,6 +62,7 @@ services:
       - POSTGRES_DB=idpserver_reader
     ports:
       - "54321:5432"
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
 
   mysql:
     image: mysql:8.0

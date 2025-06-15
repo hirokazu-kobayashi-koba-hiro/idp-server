@@ -65,12 +65,15 @@ class ModelConverter {
       user.setUpdatedAt(parseDateTime(stringMap.get("updated_at")));
     }
 
-    if (stringMap.containsKey("address") && !stringMap.get("address").isEmpty()) {
+    if (stringMap.containsKey("address")
+        && stringMap.get("address") != null
+        && !stringMap.get("address").isEmpty()) {
       Address address = jsonConverter.read(stringMap.get("address"), Address.class);
       user.setAddress(address);
     }
 
     if (stringMap.containsKey("multi_factor_authentication")
+        && stringMap.get("multi_factor_authentication") != null
         && !stringMap.get("multi_factor_authentication").isEmpty()) {
       JsonNodeWrapper jsonNodeWrapper =
           JsonNodeWrapper.fromString(stringMap.get("multi_factor_authentication"));
@@ -79,6 +82,7 @@ class ModelConverter {
     }
 
     if (stringMap.containsKey("custom_properties")
+        && stringMap.get("custom_properties") != null
         && !stringMap.get("custom_properties").isEmpty()) {
       JsonNodeWrapper jsonNodeWrapper =
           JsonNodeWrapper.fromString(stringMap.get("custom_properties"));
@@ -86,12 +90,16 @@ class ModelConverter {
       user.setCustomProperties(customProps);
     }
 
-    if (stringMap.containsKey("credentials") && !stringMap.get("credentials").isEmpty()) {
+    if (stringMap.containsKey("credentials")
+        && stringMap.get("credentials") != null
+        && !stringMap.get("credentials").isEmpty()) {
       List<HashMap<String, Object>> credentials =
           jsonConverter.read(stringMap.get("credentials"), List.class);
       user.setCredentials(credentials);
     }
-    if (stringMap.containsKey("roles") && !stringMap.get("roles").equals("[]")) {
+    if (stringMap.containsKey("roles")
+        && stringMap.get("roles") != null
+        && !stringMap.get("roles").equals("[]")) {
       JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(stringMap.get("roles"));
       Collection<UserRole> distinctRoles =
           jsonNodeWrapper.elements().stream()
@@ -107,7 +115,9 @@ class ModelConverter {
       user.setRoles(roles);
     }
 
-    if (stringMap.containsKey("permissions") && !stringMap.get("permissions").equals("[]")) {
+    if (stringMap.containsKey("permissions")
+        && stringMap.get("permissions") != null
+        && !stringMap.get("permissions").equals("[]")) {
       JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(stringMap.get("permissions"));
       List<String> permissions = jsonNodeWrapper.toList();
       List<String> filtered = permissions.stream().filter(Objects::nonNull).toList();
@@ -115,6 +125,7 @@ class ModelConverter {
     }
 
     if (stringMap.containsKey("assigned_tenants")
+        && stringMap.get("assigned_tenants") != null
         && !stringMap.get("assigned_tenants").equals("[]")) {
       JsonNodeWrapper jsonNodeWrapper =
           JsonNodeWrapper.fromString(stringMap.get("assigned_tenants"));
@@ -131,6 +142,7 @@ class ModelConverter {
     }
 
     if (stringMap.containsKey("assigned_organizations")
+        && stringMap.get("assigned_organizations") != null
         && !stringMap.get("assigned_organizations").equals("[]")) {
       JsonNodeWrapper jsonNodeWrapper =
           JsonNodeWrapper.fromString(stringMap.get("assigned_organizations"));
@@ -175,7 +187,9 @@ class ModelConverter {
       user.setAuthenticationDevices(authenticationDevices);
     }
 
-    if (stringMap.containsKey("verified_claims") && !stringMap.get("verified_claims").isEmpty()) {
+    if (stringMap.containsKey("verified_claims")
+        && stringMap.get("verified_claims") != null
+        && !stringMap.get("verified_claims").isEmpty()) {
       JsonNodeWrapper jsonNodeWrapper =
           JsonNodeWrapper.fromString(stringMap.get("verified_claims"));
       HashMap<String, Object> verifiedClaims = new HashMap<>(jsonNodeWrapper.toMap());

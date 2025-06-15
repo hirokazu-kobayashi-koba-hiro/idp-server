@@ -18,26 +18,13 @@ package org.idp.server.authentication.interactors.device;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.basic.type.ciba.BindingMessage;
 import org.idp.server.core.oidc.authentication.*;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
-import org.idp.server.core.oidc.identity.device.NotificationChannel;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
-public class AuthenticationDeviceNotificationInteractor implements AuthenticationInteractor {
-
-  AuthenticationDeviceNotifiers authenticationDeviceNotifiers;
-  AuthenticationConfigurationQueryRepository configurationQueryRepository;
-
-  public AuthenticationDeviceNotificationInteractor(
-      AuthenticationDeviceNotifiers authenticationDeviceNotifiers,
-      AuthenticationConfigurationQueryRepository configurationQueryRepository) {
-    this.authenticationDeviceNotifiers = authenticationDeviceNotifiers;
-    this.configurationQueryRepository = configurationQueryRepository;
-  }
+public class AuthenticationDeviceBindingMessageInteractor implements AuthenticationInteractor {
 
   @Override
   public AuthenticationInteractionRequestResult interact(
@@ -48,42 +35,36 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
       AuthenticationTransaction transaction,
       UserQueryRepository userQueryRepository) {
 
-    AuthenticationDeviceNotificationConfiguration configuration =
-        configurationQueryRepository.get(
-            tenant, "authentication-device", AuthenticationDeviceNotificationConfiguration.class);
+    AuthenticationContext authenticationContext = transaction.requestContext();
+    BindingMessage bindingMessage = authenticationContext.bindingMessage();
 
-    User user = transaction.user();
-    if (!user.exists()) {
+    if (bindingMessage == null) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "invalid_request");
-      response.put("error_description", "User does not exist");
+      response.put("error_description", "Binding Message is null");
+
       DefaultSecurityEventType eventType =
-          DefaultSecurityEventType.authentication_device_notification_failure;
+          DefaultSecurityEventType.authentication_device_binding_message_failure;
+
       return AuthenticationInteractionRequestResult.clientError(response, type, eventType);
     }
 
-    AuthenticationDevice authenticationDevice = user.findPrimaryAuthenticationDevice();
-
-    if (!authenticationDevice.exists()) {
-
+    String bindingMessageValue = request.getValueAsString("binding_message");
+    if (!bindingMessage.value().equals(bindingMessageValue)) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "invalid_request");
-      response.put("error_description", "User does not have a primary authentication device");
+      response.put("error_description", "Binding Message is unmatched");
+
       DefaultSecurityEventType eventType =
-          DefaultSecurityEventType.authentication_device_notification_failure;
+          DefaultSecurityEventType.authentication_device_binding_message_failure;
+
       return AuthenticationInteractionRequestResult.clientError(response, type, eventType);
     }
-
-    NotificationChannel channel = new NotificationChannel("fcm");
-
-    AuthenticationDeviceNotifier notifier = authenticationDeviceNotifiers.get(channel);
-
-    notifier.notify(tenant, authenticationDevice, configuration);
 
     AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
     Map<String, Object> response = Map.of();
     DefaultSecurityEventType eventType =
-        DefaultSecurityEventType.authentication_device_notification_success;
+        DefaultSecurityEventType.authentication_device_binding_message_success;
     return new AuthenticationInteractionRequestResult(status, type, response, eventType);
   }
 }

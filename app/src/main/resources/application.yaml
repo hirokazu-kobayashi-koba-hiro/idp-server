@@ -13,16 +13,16 @@ idp:
         password: "${DB_WRITE_PASSWORD:idpserver}"
         hikari:
           connection-timeout: 2000
-          maximum-pool-size: 5
-          minimum-idle: 2
+          maximum-pool-size: 50
+          minimum-idle: 20
       reader:
         url: "${DB_READ_URL:jdbc:postgresql://localhost:5432/idpserver}"
         username: "${DB_READ_USER_NAME:idpserver}"
         password: "${DB_READ_PASSWORD:idpserver}"
         hikari:
           connection-timeout: 2000
-          maximum-pool-size: 3
-          minimum-idle: 1
+          maximum-pool-size: 50
+          minimum-idle: 20
 
     mysql:
       writer:
@@ -65,3 +65,9 @@ spring:
     redis:
       configure-action: none
     timeout: 3600s
+
+server:
+  tomcat:
+    threads:
+      max: 300
+      min-spare: 50

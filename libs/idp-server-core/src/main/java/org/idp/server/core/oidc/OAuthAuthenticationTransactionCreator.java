@@ -19,6 +19,7 @@ package org.idp.server.core.oidc;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.idp.server.basic.type.AuthFlow;
+import org.idp.server.basic.type.ciba.BindingMessage;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
@@ -65,7 +66,10 @@ public class OAuthAuthenticationTransactionCreator {
         requestResponse.authorizationRequest().authorizationDetails();
     AuthenticationContext context =
         new AuthenticationContext(
-            authorizationRequest.acrValues(), authorizationRequest.scopes(), authorizationDetails);
+            authorizationRequest.acrValues(),
+            authorizationRequest.scopes(),
+            new BindingMessage(),
+            authorizationDetails);
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt =
         createdAt.plusSeconds(requestResponse.oauthAuthorizationRequestExpiresIn());

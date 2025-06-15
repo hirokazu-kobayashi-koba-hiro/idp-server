@@ -336,6 +336,10 @@
                 "success_count": 1
               },
               {
+                "type": "authentication-device-binding-message",
+                "success_count": 1
+              },
+              {
                 "type": "sms-authentication",
                 "success_count": 1
               },
@@ -364,6 +368,10 @@
                 "failure_count": 5
               },
               {
+                "type": "authentication-device-binding-message",
+                "failure_count": 5
+              },
+              {
                 "type": "fido-uaf-authentication",
                 "failure_count": 5
               }
@@ -373,6 +381,10 @@
             "any_of": [
               {
                 "type": "password",
+                "failure_count": 5
+              },
+              {
+                "type": "authentication-device-binding-message",
                 "failure_count": 5
               },
               {

@@ -37,6 +37,7 @@ public enum StandardAuthenticationInteraction {
   WEBAUTHN_DEREGISTRATION("webauthn-deregistration"),
   AUTHENTICATION_DEVICE_NOTIFICATION("authentication-device-notification"),
   AUTHENTICATION_DEVICE_DENY("authentication-device-deny"),
+  AUTHENTICATION_DEVICE_BINDING_MESSAGE("authentication-device-binding-message"),
   ;
 
   String type;

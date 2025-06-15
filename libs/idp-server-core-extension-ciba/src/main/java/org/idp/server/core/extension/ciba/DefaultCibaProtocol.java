@@ -47,7 +47,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
   CibaDenyRequestErrorHandler denyErrorHandler;
   UserQueryRepository userQueryRepository;
   CibaGrantRepository cibaGrantRepository;
-  LoggerWrapper log = LoggerWrapper.getLogger(DefaultCibaProtocol.class);
+  LoggerWrapper logger = LoggerWrapper.getLogger(DefaultCibaProtocol.class);
 
   public DefaultCibaProtocol(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
@@ -114,24 +114,47 @@ public class DefaultCibaProtocol implements CibaProtocol {
       CibaRequest request,
       UserHintResolvers userHintResolvers,
       CibaRequestAdditionalVerifiers additionalVerifiers) {
-    try {
 
+    long startAt = System.currentTimeMillis(); // ← 開始時間記録
+
+    try {
       CibaRequestContext cibaRequestContext = cibaRequestHandler.handleRequest(request);
 
       UserHintResolver userHintResolver = userHintResolvers.get(cibaRequestContext.userHintType());
+
+      long resolveStart = System.currentTimeMillis(); // ← resolve 開始時間
       User user =
           userHintResolver.resolve(
               cibaRequestContext.tenant(),
               cibaRequestContext.userHint(),
               cibaRequestContext.userHintRelatedParams(),
               userQueryRepository);
+      long resolveTime = System.currentTimeMillis() - resolveStart;
 
+      long verifyStart = System.currentTimeMillis(); // ← verify 開始時間
       additionalVerifiers.verify(cibaRequestContext, user);
+      long verifyTime = System.currentTimeMillis() - verifyStart;
 
-      return cibaRequestHandler.handleIssueResponse(
-          new CibaIssueRequest(cibaRequestContext.tenant(), cibaRequestContext, user));
+      long issueStart = System.currentTimeMillis(); // ← issue 開始時間
+      CibaIssueResponse response =
+          cibaRequestHandler.handleIssueResponse(
+              new CibaIssueRequest(cibaRequestContext.tenant(), cibaRequestContext, user));
+      long issueTime = System.currentTimeMillis() - issueStart;
+
+      long totalTime = System.currentTimeMillis() - startAt;
+
+      logger.info(
+          "[CIBA] request() timing: total={}ms (resolveUser={}ms, verify={}ms, issueResponse={}ms)",
+          totalTime,
+          resolveTime,
+          verifyTime,
+          issueTime);
+
+      return response;
 
     } catch (Exception exception) {
+      long totalTime = System.currentTimeMillis() - startAt;
+      logger.warn("[CIBA] request() failed after {}ms: {}", totalTime, exception.getMessage());
       return errorHandler.handle(exception);
     }
   }

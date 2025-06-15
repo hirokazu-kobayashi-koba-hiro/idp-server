@@ -55,7 +55,7 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
     FidoUafExecutor fidoUafExecutor = fidoUafExecutors.get(fidoUafConfiguration.type());
 
     User user = transaction.user();
-    String deviceId = user.getPrimaryAuthenticationDevice().id();
+    String deviceId = user.findPrimaryAuthenticationDevice().id();
     Map<String, Object> executionRequest = new HashMap<>();
     executionRequest.put(fidoUafConfiguration.deviceIdParam(), deviceId);
 
