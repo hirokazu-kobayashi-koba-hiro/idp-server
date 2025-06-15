@@ -1,6 +1,6 @@
-# 📈 Stress Test Guide for idp-server
+# 📈 Performance Test Guide for idp-server
 
-This guide provides comprehensive steps and configurations to perform stress testing on the `idp-server` using [k6](https://k6.io/), PostgreSQL performance analytics, and synthetic test data.
+This guide provides comprehensive steps and configurations to perform testing on the `idp-server` using [k6](https://k6.io/), PostgreSQL performance analytics, and synthetic test data.
 
 ---
 
@@ -9,18 +9,18 @@ This guide provides comprehensive steps and configurations to perform stress tes
 This document covers:
 
 * Generating and registering 100,000+ test users
-* Running various stress test scenarios with k6
+* Running various performance test scenarios with k6
 * Analyzing database performance using `pg_stat_statements`
 
 ## Test Data Preparation
 
-### 🗃️ Test Data Preparation
+### 🗃️ User
 
 ```shell
 ../data/generate_users_100k.sh
 ```
 
-### 📥 Register into PostgreSQL
+* 10k
 
 ```shell
 psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
@@ -35,11 +35,11 @@ psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
   phone_number_verified,
   status,
   authentication_devices
-) FROM '../data/generated_users_100k.tsv' WITH (FORMAT csv, HEADER false,  DELIMITER E'\t')"
+) FROM './data/generated_users_100k.tsv' WITH (FORMAT csv, HEADER false,  DELIMITER E'\t')"
 
 ```
 
-### Register user for ciba into PostgreSQL
+* ciba 
 ```shell
 psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
   id,
@@ -53,7 +53,22 @@ psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
   phone_number_verified,
   status,
   authentication_devices
-) FROM '../data/user-for-ciba.csv' WITH (FORMAT csv, HEADER false,  DELIMITER E',')"
+) FROM './data/user-for-ciba.csv' WITH (FORMAT csv, HEADER false,  DELIMITER E',')"
+```
+
+### tenants
+
+```shell
+./performance-test/load/register-tenants.sh \
+  -e local \
+  -u ito.ichiro@gmail.com \
+  -p successUserCode \
+  -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
+  -b http://localhost:8080 \
+  -c clientSecretPost \
+  -s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
+  -n 50 \
+  -d false
 ```
 
 ## 📄 App Logging
@@ -93,6 +108,22 @@ export ACCESS_TOKEN=eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImlkX3Rva2Vu
 ```
 
 ### run
+
+#### load test
+
+```shell
+k6 run ./performance-test/load/scenario-1-ciba-login.js
+```
+
+```shell
+k6 run ./performance-test/load/scenario-2-multi-ciba-login.js
+```
+
+```shell
+k6 run ./performance-test/load/scenario-3-peak-login.js
+```
+
+#### stress test
 
 ```shell
 k6 run ./performance-test/stress/scenario-1-authorization-request.js
@@ -158,7 +189,7 @@ statistics of all queries.
 
 ---
 
-## 🔧 1. Enable the Extension
+#### 🔧 1. Enable the Extension
 
 To enable `pg_stat_statements`, it must be preloaded by PostgreSQL. You can set it in `postgresql.conf`:
 
@@ -174,20 +205,19 @@ command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
 
 ---
 
-## 💥 2. Create the Extension (One-Time Setup)
+#### 💥 2. Create the Extension (One-Time Setup)
 
 After the database is up and running, connect using `psql` and run:
 
 ```sql
-CREATE
-EXTENSION pg_stat_statements;
+CREATE EXTENSION pg_stat_statements;
 ```
 
 This only needs to be done once per database.
 
 ---
 
-## 🔍 3. View Query Statistics
+#### 🔍 3. View Query Statistics
 
 To check query performance:
 
@@ -203,7 +233,7 @@ ORDER BY
     LIMIT 20;
 ```
 
-### 📌 Column Descriptions
+#### 📌 Column Descriptions
 
 | Column             | Description                                         |
 |--------------------|-----------------------------------------------------|
@@ -217,7 +247,7 @@ ORDER BY
 
 ---
 
-## 🧼 4. Reset Statistics (Optional)
+#### 🧼 4. Reset Statistics (Optional)
 
 To reset statistics before a performance test or benchmark:
 
@@ -227,7 +257,7 @@ SELECT pg_stat_statements_reset();
 
 ---
 
-## 📦 Docker Compose Example
+#### 📦 Docker Compose Example
 
 ```yaml
 services:
@@ -239,4 +269,20 @@ services:
 ```
 
 This ensures that `pg_stat_statements` is enabled when PostgreSQL starts inside a Docker container.
+
+## Tips
+
+* confirm disk
+
+```shell
+docker system df
+```
+
+* delete data at docker
+
+```shell
+docker system prune -a
+docker volume prune
+docker builder prune
+```
 
