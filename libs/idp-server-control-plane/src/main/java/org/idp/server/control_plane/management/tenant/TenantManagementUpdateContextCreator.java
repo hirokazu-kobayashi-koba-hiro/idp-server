@@ -56,7 +56,7 @@ public class TenantManagementUpdateContextCreator {
   public TenantAttributes extractAttributes() {
     JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(request.toMap());
     JsonNodeWrapper attributes = jsonNodeWrapper.getValueAsJsonNode("attributes");
-    if (attributes == null) {
+    if (attributes == null || !attributes.exists()) {
       return new TenantAttributes();
     }
     Map<String, Object> attributesMap = attributes.toMap();

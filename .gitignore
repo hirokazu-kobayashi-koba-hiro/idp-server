@@ -38,4 +38,4 @@ out/
 
 secret/
 
-./performance-test/data/generated_users_100k.tsv
+generated_users_100k.tsv

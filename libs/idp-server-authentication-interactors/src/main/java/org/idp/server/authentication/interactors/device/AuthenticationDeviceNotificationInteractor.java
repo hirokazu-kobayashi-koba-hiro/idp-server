@@ -48,42 +48,52 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
       AuthenticationTransaction transaction,
       UserQueryRepository userQueryRepository) {
 
-    AuthenticationDeviceNotificationConfiguration configuration =
-        configurationQueryRepository.get(
-            tenant, "authentication-device", AuthenticationDeviceNotificationConfiguration.class);
+    try {
+      AuthenticationDeviceNotificationConfiguration configuration =
+          configurationQueryRepository.get(
+              tenant, "authentication-device", AuthenticationDeviceNotificationConfiguration.class);
 
-    User user = transaction.user();
-    if (!user.exists()) {
+      User user = transaction.user();
+      if (!user.exists()) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "invalid_request");
+        response.put("error_description", "User does not exist");
+        DefaultSecurityEventType eventType =
+            DefaultSecurityEventType.authentication_device_notification_failure;
+        return AuthenticationInteractionRequestResult.clientError(response, type, eventType);
+      }
+
+      AuthenticationDevice authenticationDevice = user.findPrimaryAuthenticationDevice();
+
+      if (!authenticationDevice.exists()) {
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "invalid_request");
+        response.put("error_description", "User does not have a primary authentication device");
+        DefaultSecurityEventType eventType =
+            DefaultSecurityEventType.authentication_device_notification_failure;
+        return AuthenticationInteractionRequestResult.clientError(response, type, eventType);
+      }
+
+      NotificationChannel channel = new NotificationChannel("fcm");
+
+      AuthenticationDeviceNotifier notifier = authenticationDeviceNotifiers.get(channel);
+
+      notifier.notify(tenant, authenticationDevice, configuration);
+
+      AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
+      Map<String, Object> response = Map.of();
+      DefaultSecurityEventType eventType =
+          DefaultSecurityEventType.authentication_device_notification_success;
+      return new AuthenticationInteractionRequestResult(status, type, response, eventType);
+    } catch (Exception e) {
+
       Map<String, Object> response = new HashMap<>();
       response.put("error", "invalid_request");
-      response.put("error_description", "User does not exist");
+      response.put("error_description", e.getMessage());
       DefaultSecurityEventType eventType =
           DefaultSecurityEventType.authentication_device_notification_failure;
       return AuthenticationInteractionRequestResult.clientError(response, type, eventType);
     }
-
-    AuthenticationDevice authenticationDevice = user.findPrimaryAuthenticationDevice();
-
-    if (!authenticationDevice.exists()) {
-
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_request");
-      response.put("error_description", "User does not have a primary authentication device");
-      DefaultSecurityEventType eventType =
-          DefaultSecurityEventType.authentication_device_notification_failure;
-      return AuthenticationInteractionRequestResult.clientError(response, type, eventType);
-    }
-
-    NotificationChannel channel = new NotificationChannel("fcm");
-
-    AuthenticationDeviceNotifier notifier = authenticationDeviceNotifiers.get(channel);
-
-    notifier.notify(tenant, authenticationDevice, configuration);
-
-    AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
-    Map<String, Object> response = Map.of();
-    DefaultSecurityEventType eventType =
-        DefaultSecurityEventType.authentication_device_notification_success;
-    return new AuthenticationInteractionRequestResult(status, type, response, eventType);
   }
 }
