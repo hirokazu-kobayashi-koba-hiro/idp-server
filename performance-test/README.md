@@ -1,14 +1,22 @@
 # 📈 Performance Test Guide for idp-server
 
-This guide provides comprehensive steps and configurations to perform testing on the `idp-server` using [k6](https://k6.io/), PostgreSQL performance analytics, and synthetic test data.
+This guide provides comprehensive steps and configurations to perform testing on the `idp-server`
+using [k6](https://k6.io/), PostgreSQL performance analytics, and synthetic test data.
 
 ---
 
-## 🧪 Overview
+## 📊 Performance Test Types
 
-This document covers:
+To ensure the idp-server performs reliably under various conditions, different types of performance tests should be
+conducted. Each test type targets a specific system behavior:
 
-* Generating and registering 100,000+ test users
+| Test Type    | Description                                                                                                                                                      |
+|--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ✅ **Load**   | Identify the system's maximum sustainable throughput under expected usage (e.g., 500 RPS). Focuses on **steady-state behavior**.                                 |
+| ✅ **Stress** | Push beyond the expected load to observe **failure modes**, **error rates**, and **graceful degradation**.                                                       |
+| **Spike**    | Test sudden and extreme load increases (e.g., from 0 to 1000 RPS instantly) to measure the system’s **burst tolerance**.                                         |
+| **Soak**     | Run the system under a typical load for an extended period (1 hour or more) to detect **memory leaks**, **GC issues**, or **performance degradation over time**. |
+
 * Running various performance test scenarios with k6
 * Analyzing database performance using `pg_stat_statements`
 
@@ -39,7 +47,8 @@ psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
 
 ```
 
-* ciba 
+* ciba
+
 ```shell
 psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
   id,
@@ -178,8 +187,6 @@ iterations.........................: 2717   88.91/s
 
 Interpret the metrics in context of test goal, such as max TPS, latency, or error rate.
 
-
-
 ### postgresql
 
 # ✅ Using `pg_stat_statements` in PostgreSQL
@@ -210,7 +217,8 @@ command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
 After the database is up and running, connect using `psql` and run:
 
 ```sql
-CREATE EXTENSION pg_stat_statements;
+CREATE
+EXTENSION pg_stat_statements;
 ```
 
 This only needs to be done once per database.
