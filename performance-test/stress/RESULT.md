@@ -33,7 +33,7 @@ Environment: Local environment via Docker Compose (PostgreSQL / MySQL / Redis)
 
 | Scenario                      | VUs | TPS   | p95 Latency (ms) | Error Rate (%) |
 |-------------------------------|-----|-------|------------------|----------------|
-| 1. Authorization Request      | 120 | 2,057 | 179.34           | 0.00           |
+| 1. Authorization Request      | 120 | 1,135 | 168.42           | 0.00           |
 | 2. BC Request                 | 120 | 712   | 251.11           | 0.00           |
 | 3. CIBA Flow All              | 120 | 712   | 386.31           | 0.17           |
 | 4. Token (Password)           | 120 | 34    | 6400.00          | 60.47          |
