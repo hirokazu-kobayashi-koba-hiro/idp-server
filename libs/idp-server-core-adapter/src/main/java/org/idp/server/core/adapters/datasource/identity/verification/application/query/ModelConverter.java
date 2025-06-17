@@ -28,6 +28,7 @@ import org.idp.server.core.extension.identity.verification.delegation.ExternalWo
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
 import org.idp.server.core.extension.identity.verification.trustframework.TrustFramework;
 import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
@@ -60,7 +61,7 @@ public class ModelConverter {
 
     IdentityVerificationApplicationStatus status =
         IdentityVerificationApplicationStatus.of(map.get("status"));
-    LocalDateTime requestedAt = LocalDateTime.parse(map.get("requested_at"));
+    LocalDateTime requestedAt = LocalDateTimeParser.parse(map.get("requested_at"));
 
     return new IdentityVerificationApplication(
         identifier,

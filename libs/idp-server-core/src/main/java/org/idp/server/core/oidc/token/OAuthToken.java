@@ -19,6 +19,7 @@ package org.idp.server.core.oidc.token;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.basic.type.verifiablecredential.CNonce;
@@ -176,5 +177,17 @@ public class OAuthToken {
 
   public boolean isOneshotToken() {
     return accessToken.isOneshotToken();
+  }
+
+  public ExpiresAt expiresAt() {
+    if (!hasRefreshToken()) {
+      return accessToken.expiresAt();
+    }
+    ExpiresAt accessTokenExpiresAt = accessToken.expiresAt();
+    ExpiresAt refreshTokenExpiresAt = refreshToken.expiresAt();
+
+    return refreshTokenExpiresAt.isAfter(accessTokenExpiresAt)
+        ? refreshTokenExpiresAt
+        : accessTokenExpiresAt;
   }
 }

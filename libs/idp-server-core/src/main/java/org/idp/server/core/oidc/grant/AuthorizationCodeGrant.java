@@ -18,7 +18,7 @@ package org.idp.server.core.oidc.grant;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.Client;
@@ -34,7 +34,7 @@ public class AuthorizationCodeGrant {
       new AuthorizationRequestIdentifier("");
   AuthorizationGrant authorizationGrant;
   AuthorizationCode authorizationCode;
-  ExpiredAt expiredAt;
+  ExpiresAt expiresAt;
 
   public AuthorizationCodeGrant() {}
 
@@ -42,11 +42,11 @@ public class AuthorizationCodeGrant {
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
       AuthorizationGrant authorizationGrant,
       AuthorizationCode authorizationCode,
-      ExpiredAt expiredAt) {
+      ExpiresAt expiresAt) {
     this.authorizationRequestIdentifier = authorizationRequestIdentifier;
     this.authorizationGrant = authorizationGrant;
     this.authorizationCode = authorizationCode;
-    this.expiredAt = expiredAt;
+    this.expiresAt = expiresAt;
   }
 
   public AuthorizationRequestIdentifier authorizationRequestIdentifier() {
@@ -70,7 +70,7 @@ public class AuthorizationCodeGrant {
   }
 
   public boolean isExpire(LocalDateTime other) {
-    return expiredAt.isExpire(other);
+    return expiresAt.isExpire(other);
   }
 
   public boolean exists() {
@@ -89,8 +89,8 @@ public class AuthorizationCodeGrant {
     return authorizationGrant.requestedClientId();
   }
 
-  public ExpiredAt expiredAt() {
-    return expiredAt;
+  public ExpiresAt expiredAt() {
+    return expiresAt;
   }
 
   public Client client() {

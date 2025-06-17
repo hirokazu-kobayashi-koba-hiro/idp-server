@@ -232,6 +232,10 @@ public class AuthenticationTransaction {
     return false;
   }
 
+  public boolean isComplete() {
+    return isSuccess() || isFailure() || isLocked();
+  }
+
   public boolean exists() {
     return identifier != null && identifier.exists();
   }

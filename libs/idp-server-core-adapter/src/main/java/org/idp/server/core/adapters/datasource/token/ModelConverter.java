@@ -22,7 +22,7 @@ import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.EncryptedData;
 import org.idp.server.basic.type.extension.CreatedAt;
 import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.basic.type.verifiablecredential.CNonce;
@@ -96,7 +96,7 @@ class ModelConverter {
     ClientCertificationThumbprint thumbprint =
         new ClientCertificationThumbprint(stringMap.get("client_certification_thumbprint"));
     ExpiresIn expiresIn = new ExpiresIn(stringMap.get("expires_in"));
-    ExpiredAt accessTokenExpiredAt = new ExpiredAt(stringMap.get("access_token_expired_at"));
+    ExpiresAt accessTokenExpiresAt = new ExpiresAt(stringMap.get("access_token_expires_at"));
     CreatedAt accessTokenCreatedAt = new CreatedAt(stringMap.get("access_token_created_at"));
 
     OAuthTokenBuilder oAuthTokenBuilder = new OAuthTokenBuilder(id);
@@ -111,15 +111,15 @@ class ModelConverter {
             thumbprint,
             accessTokenCreatedAt,
             expiresIn,
-            accessTokenExpiredAt);
+            accessTokenExpiresAt);
     if (Objects.nonNull(stringMap.get("encrypted_refresh_token"))
         && !stringMap.get("encrypted_refresh_token").equals("{}")) {
       RefreshTokenEntity refreshTokenEntity =
           new RefreshTokenEntity(decrypt(stringMap.get("encrypted_refresh_token"), aesCipher));
-      ExpiredAt refreshTokenExpiredAt = new ExpiredAt(stringMap.get("refresh_token_expired_at"));
+      ExpiresAt refreshTokenExpiresAt = new ExpiresAt(stringMap.get("refresh_token_expires_at"));
       CreatedAt refreshTokenCreatedAt = new CreatedAt(stringMap.get("refresh_token_created_at"));
       RefreshToken refreshToken =
-          new RefreshToken(refreshTokenEntity, refreshTokenCreatedAt, refreshTokenExpiredAt);
+          new RefreshToken(refreshTokenEntity, refreshTokenCreatedAt, refreshTokenExpiresAt);
       oAuthTokenBuilder.add(refreshToken);
     }
 

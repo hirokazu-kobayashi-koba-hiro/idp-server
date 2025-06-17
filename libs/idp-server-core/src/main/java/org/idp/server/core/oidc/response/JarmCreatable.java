@@ -24,7 +24,7 @@ import org.idp.server.basic.jose.JsonWebKeyInvalidException;
 import org.idp.server.basic.jose.JsonWebSignature;
 import org.idp.server.basic.jose.JsonWebSignatureFactory;
 import org.idp.server.basic.type.extension.CreatedAt;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.extension.JarmPayload;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -42,13 +42,13 @@ public interface JarmCreatable {
       CreatedAt createdAt = new CreatedAt(localDateTime);
       long authorizationResponseDuration =
           authorizationServerConfiguration.authorizationResponseDuration();
-      ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(authorizationResponseDuration));
+      ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(authorizationResponseDuration));
 
       Map<String, Object> payload = new HashMap<>();
       payload.put("iss", authorizationResponse.tokenIssuer().value());
       payload.put("aud", clientConfiguration.clientIdValue());
       payload.put("iat", createdAt.toEpochSecondWithUtc());
-      payload.put("exp", expiredAt.toEpochSecondWithUtc());
+      payload.put("exp", expiresAt.toEpochSecondWithUtc());
       if (authorizationResponse.hasState()) {
         payload.put("state", authorizationResponse.state().value());
       }
@@ -88,13 +88,13 @@ public interface JarmCreatable {
       CreatedAt createdAt = new CreatedAt(localDateTime);
       long authorizationResponseDuration =
           authorizationServerConfiguration.authorizationResponseDuration();
-      ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(authorizationResponseDuration));
+      ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(authorizationResponseDuration));
 
       Map<String, Object> payload = new HashMap<>();
       payload.put("iss", errorResponse.tokenIssuer().value());
       payload.put("aud", clientConfiguration.clientIdValue());
       payload.put("iat", createdAt.toEpochSecondWithUtc());
-      payload.put("exp", expiredAt.toEpochSecondWithUtc());
+      payload.put("exp", expiresAt.toEpochSecondWithUtc());
       payload.put("error", errorResponse.error().value());
       payload.put("error_description", errorResponse.errorDescription().value());
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();

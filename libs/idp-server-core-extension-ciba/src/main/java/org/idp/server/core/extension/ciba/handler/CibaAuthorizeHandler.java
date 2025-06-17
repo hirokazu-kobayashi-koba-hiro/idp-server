@@ -37,6 +37,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class CibaAuthorizeHandler {
 
   CibaGrantRepository cibaGrantRepository;
+  BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
   ClientNotificationService clientNotificationService;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
@@ -51,6 +52,7 @@ public class CibaAuthorizeHandler {
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.cibaGrantRepository = cibaGrantRepository;
+    this.backchannelAuthenticationRequestRepository = backchannelAuthenticationRequestRepository;
     this.clientNotificationService =
         new ClientNotificationService(
             backchannelAuthenticationRequestRepository,
@@ -84,6 +86,9 @@ public class CibaAuthorizeHandler {
         cibaGrant.updateWith(
             CibaGrantStatus.authorized, request.authentication(), request.toDeniedScopes());
     cibaGrantRepository.update(tenant, updated);
+
+    backchannelAuthenticationRequestRepository.delete(
+        tenant, backchannelAuthenticationRequestIdentifier);
 
     clientNotificationService.notify(
         tenant, cibaGrant, authorizationServerConfiguration, clientConfiguration);

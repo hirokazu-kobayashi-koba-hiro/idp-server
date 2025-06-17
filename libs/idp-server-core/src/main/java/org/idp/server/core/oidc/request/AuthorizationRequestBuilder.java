@@ -16,7 +16,7 @@
 
 package org.idp.server.core.oidc.request;
 
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.*;
 import org.idp.server.basic.type.pkce.CodeChallenge;
@@ -58,7 +58,7 @@ public class AuthorizationRequestBuilder {
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
   CustomParams customParams = new CustomParams();
   ExpiresIn expiresIn = new ExpiresIn(1800);
-  ExpiredAt expiredAt = new ExpiredAt(SystemDateTime.now().plusSeconds(expiresIn.value()));
+  ExpiresAt expiresAt = new ExpiresAt(SystemDateTime.now().plusSeconds(expiresIn.value()));
 
   public AuthorizationRequestBuilder() {}
 
@@ -197,8 +197,8 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
-  public AuthorizationRequestBuilder add(ExpiredAt expiredAt) {
-    this.expiredAt = expiredAt;
+  public AuthorizationRequestBuilder add(ExpiresAt expiresAt) {
+    this.expiresAt = expiresAt;
     return this;
   }
 
@@ -231,6 +231,6 @@ public class AuthorizationRequestBuilder {
         authorizationDetails,
         customParams,
         expiresIn,
-        expiredAt);
+        expiresAt);
   }
 }

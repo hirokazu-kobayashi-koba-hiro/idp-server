@@ -18,7 +18,7 @@ package org.idp.server.core.oidc.factory;
 
 import java.util.Set;
 import org.idp.server.basic.jose.JoseContext;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.MaxAge;
@@ -78,7 +78,7 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
     builder.add(
         new ExpiresIn(authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn()));
     builder.add(
-        new ExpiredAt(
+        new ExpiresAt(
             SystemDateTime.now()
                 .plusSeconds(
                     authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn())));

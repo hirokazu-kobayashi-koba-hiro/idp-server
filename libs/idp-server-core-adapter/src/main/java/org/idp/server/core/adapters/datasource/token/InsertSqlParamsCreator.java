@@ -78,19 +78,19 @@ class InsertSqlParamsCreator {
     }
 
     params.add(oAuthToken.accessToken().expiresIn().toStringValue());
-    params.add(oAuthToken.accessToken().expiredAt().toStringValue());
-    params.add(oAuthToken.accessToken().createdAt().toStringValue());
+    params.add(oAuthToken.accessToken().expiresAt().toLocalDateTime());
+    params.add(oAuthToken.accessToken().createdAt().toLocalDateTime());
 
     if (oAuthToken.hasRefreshToken()) {
       params.add(toEncryptedJson(oAuthToken.refreshTokenEntity().value(), aesCipher));
       params.add(hmacHasher.hash(oAuthToken.refreshTokenEntity().value()));
-      params.add(oAuthToken.refreshToken().createdAt().toStringValue());
-      params.add(oAuthToken.refreshToken().expiredAt().toStringValue());
+      params.add(oAuthToken.refreshToken().createdAt().toLocalDateTime());
+      params.add(oAuthToken.refreshToken().expiresAt().toLocalDateTime());
     } else {
-      params.add("{}");
-      params.add("");
-      params.add("");
-      params.add("");
+      params.add(null);
+      params.add(null);
+      params.add(null);
+      params.add(null);
     }
 
     if (oAuthToken.hasIdToken()) {
@@ -115,6 +115,7 @@ class InsertSqlParamsCreator {
     } else {
       params.add("");
     }
+    params.add(oAuthToken.expiresAt().toLocalDateTime());
 
     return params;
   }

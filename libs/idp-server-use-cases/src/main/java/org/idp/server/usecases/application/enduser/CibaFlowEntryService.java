@@ -175,7 +175,6 @@ public class CibaFlowEntryService implements CibaFlowApi {
             userQueryRepository);
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
-    authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     eventPublisher.publish(
         tenant,
@@ -218,6 +217,13 @@ public class CibaFlowEntryService implements CibaFlowApi {
       UserLifecycleEvent userLifecycleEvent =
           new UserLifecycleEvent(tenant, result.user(), UserLifecycleType.LOCK);
       userLifecycleEventPublisher.publish(userLifecycleEvent);
+    }
+
+    if (updatedTransaction.isComplete()) {
+      authenticationTransactionCommandRepository.delete(
+          tenant, authenticationTransaction.identifier());
+    } else {
+      authenticationTransactionCommandRepository.update(tenant, authenticationTransaction);
     }
 
     return result;

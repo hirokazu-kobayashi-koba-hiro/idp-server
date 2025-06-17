@@ -39,7 +39,7 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
                     backchannel_authentication_request_id,
                     tenant_id,
                     auth_req_id,
-                    expired_at,
+                    expires_at,
                     polling_interval,
                     status,
                     user_id,
@@ -81,7 +81,7 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
     params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().valueAsUuid());
     params.add(cibaGrant.tenantIdentifier().valueAsUuid());
     params.add(cibaGrant.authReqId().value());
-    params.add(cibaGrant.expiredAt().toStringValue());
+    params.add(cibaGrant.expiredAt().toLocalDateTime());
     params.add(cibaGrant.interval().toStringValue());
     params.add(cibaGrant.status().name());
     params.add(authorizationGrant.user().subAsUuid());
@@ -201,7 +201,7 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
                   backchannel_authentication_request_id,
                   tenant_id,
                   auth_req_id,
-                  expired_at,
+                  expires_at,
                   polling_interval,
                   status,
                   user_id,

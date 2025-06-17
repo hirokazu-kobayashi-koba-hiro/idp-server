@@ -1,5 +1,7 @@
 org.idp.server.core.adapters.datasource.ciba.grant.CibaGrantDataSourceProvider
 org.idp.server.core.adapters.datasource.ciba.request.BackchannelAuthenticationDataSourceProvider
+org.idp.server.core.adapters.datasource.ciba.request.operation.BackchannelAuthenticationRequestOperationCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.ciba.grant.operation.CibaGrantOperationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.configuration.server.query.ServerConfigurationDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.configuration.server.command.ServerConfigurationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.configuration.client.query.ClientConfigurationQueryDataSourceProvider
@@ -11,7 +13,9 @@ org.idp.server.core.adapters.datasource.identity.role.RoleCommandDataSourceProvi
 org.idp.server.core.adapters.datasource.identity.UserDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.command.UserCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.code.AuthorizationCodeGrantDataSourceProvider
+org.idp.server.core.adapters.datasource.oidc.code.operation.AuthorizationCodeGrantOperationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.request.AuthorizationRequestDataSourceProvider
+org.idp.server.core.adapters.datasource.oidc.request.operation.AuthorizationRequestOperationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.multi_tenancy.organization.OrganizationDataSourceProvider
 org.idp.server.core.adapters.datasource.security.event.SecurityEventDataSourceProvider
 org.idp.server.core.adapters.datasource.security.hook.configuration.query.SecurityEventHookConfigurationDataSourceProvider
@@ -20,8 +24,10 @@ org.idp.server.core.adapters.datasource.security.hook.result.SecurityEventHookRe
 org.idp.server.core.adapters.datasource.multi_tenancy.tenant.query.TenantQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.multi_tenancy.tenant.command.TenantCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.token.OAuthTokenDataSourceProvider
+org.idp.server.core.adapters.datasource.token.command.OAuthTokenCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.transaction.command.AuthenticationTransactionCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.transaction.query.AuthenticationTransactionQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.authentication.transaction.operation.AuthenticationTransactionOperationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.verification.config.query.IdentityVerificationConfigurationDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.verification.config.command.IdentityVerificationConfigurationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.verification.application.command.IdentityVerificationApplicationCommandDataSourceProvider

@@ -23,7 +23,7 @@ import java.util.Map;
 import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.basic.type.ciba.Interval;
 import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
@@ -53,7 +53,7 @@ class ModelConverter {
             stringMap.get("backchannel_authentication_request_id"));
     TenantIdentifier tenantIdentifier = new TenantIdentifier(stringMap.get("tenant_id"));
     AuthReqId authReqId = new AuthReqId(stringMap.get("auth_req_id"));
-    ExpiredAt expiredAt = new ExpiredAt(stringMap.get("expired_at"));
+    ExpiresAt expiresAt = new ExpiresAt(stringMap.get("expires_at"));
     Interval interval = new Interval(stringMap.get("polling_interval"));
     CibaGrantStatus status = CibaGrantStatus.valueOf(stringMap.get("status"));
     User user = jsonConverter.read(stringMap.get("user_payload"), User.class);
@@ -86,7 +86,7 @@ class ModelConverter {
             authorizationDetails,
             consentClaims);
 
-    return new CibaGrant(id, authorizationGrant, authReqId, expiredAt, interval, status);
+    return new CibaGrant(id, authorizationGrant, authReqId, expiresAt, interval, status);
   }
 
   private static ConsentClaims convertConsentClaims(String value) {

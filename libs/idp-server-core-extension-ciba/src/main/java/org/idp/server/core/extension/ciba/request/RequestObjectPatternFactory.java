@@ -16,10 +16,12 @@
 
 package org.idp.server.core.extension.ciba.request;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.basic.type.ciba.*;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.*;
 import org.idp.server.core.extension.ciba.CibaProfile;
@@ -28,6 +30,7 @@ import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -118,6 +121,17 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
     builder.add(clientNotificationToken);
     builder.add(requestedExpiry);
     builder.add(authorizationDetails);
+
+    LocalDateTime now = SystemDateTime.now();
+    if (requestedExpiry.exists()) {
+      int expiresIn = requestedExpiry.valueAsInt();
+      builder.add(new ExpiresIn(expiresIn)).add(new ExpiresAt(now.plusSeconds(expiresIn)));
+    } else {
+      int expiresIn = authorizationServerConfiguration.backchannelAuthRequestExpiresIn();
+      builder.add(new ExpiresIn(expiresIn));
+      builder.add(new ExpiresAt(now.plusSeconds(expiresIn)));
+    }
+
     return builder.build();
   }
 

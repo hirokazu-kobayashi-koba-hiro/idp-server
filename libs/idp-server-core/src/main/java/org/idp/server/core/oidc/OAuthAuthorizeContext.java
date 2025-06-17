@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.basic.type.extension.DeniedScopes;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.ResponseMode;
 import org.idp.server.core.oidc.authentication.Authentication;
@@ -174,10 +174,10 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     return isJwtMode(authorizationRequest.profile(), responseType(), responseMode());
   }
 
-  public ExpiredAt authorizationCodeGrantExpiresDateTime() {
+  public ExpiresAt authorizationCodeGrantExpiresDateTime() {
     LocalDateTime localDateTime = SystemDateTime.now();
     int duration = authorizationServerConfiguration.authorizationCodeValidDuration();
-    return new ExpiredAt(localDateTime.plusMinutes(duration));
+    return new ExpiresAt(localDateTime.plusMinutes(duration));
   }
 
   public RequestedIdTokenClaims idTokenClaims() {

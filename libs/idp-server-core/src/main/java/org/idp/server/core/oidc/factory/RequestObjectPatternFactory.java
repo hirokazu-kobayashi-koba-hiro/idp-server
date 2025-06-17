@@ -19,7 +19,7 @@ package org.idp.server.core.oidc.factory;
 import java.util.Set;
 import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.basic.jose.JsonWebTokenClaims;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.*;
 import org.idp.server.basic.type.pkce.CodeChallenge;
@@ -169,7 +169,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestObjectFa
     builder.add(
         new ExpiresIn(authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn()));
     builder.add(
-        new ExpiredAt(
+        new ExpiresAt(
             SystemDateTime.now()
                 .plusSeconds(
                     authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn())));

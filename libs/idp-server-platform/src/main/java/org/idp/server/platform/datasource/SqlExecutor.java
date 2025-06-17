@@ -17,11 +17,15 @@
 
 package org.idp.server.platform.datasource;
 
+import org.idp.server.platform.log.LoggerWrapper;
+
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class SqlExecutor {
   private final Connection connection;
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(SqlExecutor.class);
 
   public SqlExecutor() {
     this.connection = TransactionManager.getConnection();
@@ -50,8 +54,11 @@ public class SqlExecutor {
         if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
         }
+        if (param instanceof LocalDateTime localDateTime) {
+          prepareStatement.setObject(index, localDateTime);
+        }
         if (param == null) {
-          prepareStatement.setString(index, "");
+          prepareStatement.setObject(index, null);
         }
         index++;
       }
@@ -92,8 +99,11 @@ public class SqlExecutor {
         if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
         }
+        if (param instanceof LocalDateTime localDateTime) {
+          prepareStatement.setObject(index, localDateTime);
+        }
         if (param == null) {
-          prepareStatement.setString(index, "");
+          prepareStatement.setObject(index, null);
         }
         index++;
       }
@@ -131,8 +141,11 @@ public class SqlExecutor {
         if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
         }
+        if (param instanceof LocalDateTime localDateTime) {
+          prepareStatement.setObject(index, localDateTime);
+        }
         if (param == null) {
-          prepareStatement.setString(index, "");
+          prepareStatement.setObject(index, null);
         }
         index++;
       }
@@ -152,6 +165,11 @@ public class SqlExecutor {
 
       int index = 1;
       for (Object param : params) {
+        if (param != null) {
+          log.info(String.format("sql parameter %d: %s", index, param));
+        } else {
+          log.info(String.format("sql parameter %d: null", index));
+        }
 
         if (param instanceof String stringValue) {
           prepareStatement.setString(index, stringValue);
@@ -171,8 +189,11 @@ public class SqlExecutor {
         if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
         }
+        if (param instanceof LocalDateTime localDateTime) {
+          prepareStatement.setObject(index, localDateTime);
+        }
         if (param == null) {
-          prepareStatement.setString(index, null);
+          prepareStatement.setObject(index, null);
         }
         index++;
       }

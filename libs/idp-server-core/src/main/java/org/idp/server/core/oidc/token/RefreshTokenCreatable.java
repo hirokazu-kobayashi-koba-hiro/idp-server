@@ -19,7 +19,7 @@ package org.idp.server.core.oidc.token;
 import java.time.LocalDateTime;
 import org.idp.server.basic.random.RandomStringGenerator;
 import org.idp.server.basic.type.extension.CreatedAt;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -42,9 +42,9 @@ public interface RefreshTokenCreatable {
             ? clientConfiguration.refreshTokenDuration()
             : authorizationServerConfiguration.refreshTokenDuration();
 
-    ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(refreshTokenDuration));
+    ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(refreshTokenDuration));
 
-    return new RefreshToken(refreshTokenEntity, createdAt, expiredAt);
+    return new RefreshToken(refreshTokenEntity, createdAt, expiresAt);
   }
 
   default RefreshToken refresh(
@@ -68,10 +68,10 @@ public interface RefreshTokenCreatable {
               ? clientConfiguration.refreshTokenDuration()
               : authorizationServerConfiguration.refreshTokenDuration();
 
-      ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(refreshTokenDuration));
+      ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(refreshTokenDuration));
       RefreshTokenEntity refreshTokenEntity = oldRefreshToken.refreshTokenEntity();
 
-      return new RefreshToken(refreshTokenEntity, createdAt, expiredAt);
+      return new RefreshToken(refreshTokenEntity, createdAt, expiresAt);
     }
 
     RandomStringGenerator randomStringGenerator = new RandomStringGenerator(32);
@@ -80,8 +80,8 @@ public interface RefreshTokenCreatable {
 
     LocalDateTime localDateTime = SystemDateTime.now();
     CreatedAt createdAt = new CreatedAt(localDateTime);
-    ExpiredAt expiredAt = oldRefreshToken.expiredAt();
+    ExpiresAt expiresAt = oldRefreshToken.expiresAt();
 
-    return new RefreshToken(refreshTokenEntity, createdAt, expiredAt);
+    return new RefreshToken(refreshTokenEntity, createdAt, expiresAt);
   }
 }

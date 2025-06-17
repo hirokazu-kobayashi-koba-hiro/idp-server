@@ -69,9 +69,9 @@ public class PostgresqlExecutor implements TenantInvitationSqlExecutor {
     params.add(invitation.url());
     params.add(invitation.status());
     params.add(invitation.expiresIn());
-    params.add(invitation.createdAt().toString());
-    params.add(invitation.expiresAt().toString());
-    params.add(invitation.updatedAt().toString());
+    params.add(invitation.createdAt());
+    params.add(invitation.expiresAt());
+    params.add(invitation.updatedAt());
 
     sqlExecutor.execute(sqlOrganizationTemplate, params);
   }

@@ -17,6 +17,7 @@
 package org.idp.server.core.extension.ciba.request;
 
 import org.idp.server.basic.type.ciba.*;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.*;
 import org.idp.server.core.extension.ciba.CibaProfile;
@@ -41,6 +42,8 @@ public class BackchannelAuthenticationRequestBuilder {
   RequestedExpiry requestedExpiry;
   RequestObject requestObject;
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
+  ExpiresIn expiresIn;
+  ExpiresAt expiresAt;
 
   public BackchannelAuthenticationRequestBuilder() {}
 
@@ -126,6 +129,16 @@ public class BackchannelAuthenticationRequestBuilder {
     return this;
   }
 
+  public BackchannelAuthenticationRequestBuilder add(ExpiresIn expiresIn) {
+    this.expiresIn = expiresIn;
+    return this;
+  }
+
+  public BackchannelAuthenticationRequestBuilder add(ExpiresAt expiresAt) {
+    this.expiresAt = expiresAt;
+    return this;
+  }
+
   public BackchannelAuthenticationRequest build() {
     return new BackchannelAuthenticationRequest(
         identifier,
@@ -143,6 +156,8 @@ public class BackchannelAuthenticationRequestBuilder {
         bindingMessage,
         requestedExpiry,
         requestObject,
-        authorizationDetails);
+        authorizationDetails,
+        expiresIn,
+        expiresAt);
   }
 }

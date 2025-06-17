@@ -17,7 +17,7 @@
 package org.idp.server.core.adapters.datasource.oidc.request;
 
 import java.util.Map;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.*;
 import org.idp.server.basic.type.pkce.CodeChallenge;
@@ -65,7 +65,7 @@ class ModelConverter {
     builder.add(AuthorizationDetails.fromString(stringMap.get("authorization_details")));
     builder.add(convertCustomParams(stringMap.get("custom_params")));
     builder.add(new ExpiresIn(stringMap.get("expires_in")));
-    builder.add(new ExpiredAt(stringMap.get("expires_at")));
+    builder.add(new ExpiresAt(stringMap.get("expires_at")));
     return builder.build();
   }
 

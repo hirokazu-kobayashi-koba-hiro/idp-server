@@ -16,7 +16,7 @@
 
 package org.idp.server.core.oidc.grant;
 
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.core.oidc.OAuthAuthorizeContext;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
@@ -31,9 +31,9 @@ public class AuthorizationCodeGrantCreator {
 
     AuthorizationGrant authorizationGrant = oAuthAuthorizeContext.authorize();
     AuthorizationCode authorizationCode = authorizationResponse.authorizationCode();
-    ExpiredAt expiredAt = oAuthAuthorizeContext.authorizationCodeGrantExpiresDateTime();
+    ExpiresAt expiresAt = oAuthAuthorizeContext.authorizationCodeGrantExpiresDateTime();
 
     return new AuthorizationCodeGrant(
-        authorizationRequestIdentifier, authorizationGrant, authorizationCode, expiredAt);
+        authorizationRequestIdentifier, authorizationGrant, authorizationCode, expiresAt);
   }
 }

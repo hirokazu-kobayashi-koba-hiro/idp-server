@@ -19,7 +19,7 @@ package org.idp.server.core.oidc.token;
 import java.util.Map;
 import org.idp.server.basic.type.extension.CreatedAt;
 import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 
 public class AccessTokenPayload {
@@ -29,7 +29,7 @@ public class AccessTokenPayload {
   Scopes scopes;
   CustomProperties customProperties;
   CreatedAt createdAt;
-  ExpiredAt expiredAt;
+  ExpiresAt expiresAt;
   Map<String, Object> values;
 
   public AccessTokenPayload() {}
@@ -41,7 +41,7 @@ public class AccessTokenPayload {
       Scopes scopes,
       CustomProperties customProperties,
       CreatedAt createdAt,
-      ExpiredAt expiredAt,
+      ExpiresAt expiresAt,
       Map<String, Object> values) {
     this.tokenIssuer = tokenIssuer;
     this.subject = subject;
@@ -49,7 +49,7 @@ public class AccessTokenPayload {
     this.scopes = scopes;
     this.customProperties = customProperties;
     this.createdAt = createdAt;
-    this.expiredAt = expiredAt;
+    this.expiresAt = expiresAt;
     this.values = values;
   }
 
@@ -77,8 +77,8 @@ public class AccessTokenPayload {
     return createdAt;
   }
 
-  public ExpiredAt expiredAt() {
-    return expiredAt;
+  public ExpiresAt expiredAt() {
+    return expiresAt;
   }
 
   public Map<String, Object> values() {

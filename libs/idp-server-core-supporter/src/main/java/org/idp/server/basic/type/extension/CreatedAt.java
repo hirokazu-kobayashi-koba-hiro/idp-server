@@ -18,6 +18,7 @@ package org.idp.server.basic.type.extension;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import org.idp.server.platform.date.LocalDateTimeParser;
 
 /** CreatedAt */
 public class CreatedAt {
@@ -30,7 +31,7 @@ public class CreatedAt {
   }
 
   public CreatedAt(String value) {
-    this.value = LocalDateTime.parse(value);
+    this.value = LocalDateTimeParser.parse(value);
   }
 
   public LocalDateTime value() {
@@ -43,5 +44,9 @@ public class CreatedAt {
 
   public String toStringValue() {
     return value.toString();
+  }
+
+  public LocalDateTime toLocalDateTime() {
+    return value;
   }
 }

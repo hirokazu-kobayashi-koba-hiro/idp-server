@@ -17,6 +17,8 @@
 package org.idp.server.core.extension.ciba.request;
 
 import org.idp.server.basic.type.ciba.*;
+import org.idp.server.basic.type.extension.ExpiresAt;
+import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
@@ -46,6 +48,8 @@ public class BackchannelAuthenticationRequest {
   RequestedExpiry requestedExpiry;
   RequestObject requestObject;
   AuthorizationDetails authorizationDetails;
+  ExpiresIn expiresIn;
+  ExpiresAt expiresAt;
 
   BackchannelAuthenticationRequest(
       BackchannelAuthenticationRequestIdentifier identifier,
@@ -63,7 +67,9 @@ public class BackchannelAuthenticationRequest {
       BindingMessage bindingMessage,
       RequestedExpiry requestedExpiry,
       RequestObject requestObject,
-      AuthorizationDetails authorizationDetails) {
+      AuthorizationDetails authorizationDetails,
+      ExpiresIn expiresIn,
+      ExpiresAt expiresAt) {
     this.identifier = identifier;
     this.tenantIdentifier = tenantIdentifier;
     this.profile = profile;
@@ -80,6 +86,8 @@ public class BackchannelAuthenticationRequest {
     this.requestedExpiry = requestedExpiry;
     this.requestObject = requestObject;
     this.authorizationDetails = authorizationDetails;
+    this.expiresIn = expiresIn;
+    this.expiresAt = expiresAt;
   }
 
   public BackchannelAuthenticationRequestIdentifier identifier() {
@@ -180,6 +188,14 @@ public class BackchannelAuthenticationRequest {
 
   public RequestObject requestObject() {
     return requestObject;
+  }
+
+  public ExpiresIn expiresIn() {
+    return expiresIn;
+  }
+
+  public ExpiresAt expiresAt() {
+    return expiresAt;
   }
 
   public boolean hasAnyHint() {

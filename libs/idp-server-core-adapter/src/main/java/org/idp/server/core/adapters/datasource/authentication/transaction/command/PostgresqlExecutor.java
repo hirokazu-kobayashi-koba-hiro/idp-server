@@ -51,7 +51,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
             interactions,
             attributes,
             created_at,
-            expired_at
+            expires_at
             )
             VALUES
             (
@@ -112,8 +112,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
       params.add(null);
     }
 
-    params.add(authenticationTransaction.request().createdAt().toString());
-    params.add(authenticationTransaction.request().expiredAt().toString());
+    params.add(authenticationTransaction.request().createdAt());
+    params.add(authenticationTransaction.request().expiredAt());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -170,7 +170,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
 
     List<Object> params = new ArrayList<>();
     params.add(identifier.valueAsUuid());
-    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

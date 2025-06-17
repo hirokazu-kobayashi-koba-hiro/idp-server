@@ -17,7 +17,7 @@
 package org.idp.server.core.oidc.token;
 
 import org.idp.server.basic.type.extension.CreatedAt;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.TokenIssuer;
@@ -35,7 +35,7 @@ public class AccessTokenBuilder {
   ClientCertificationThumbprint clientCertificationThumbprint;
   CreatedAt createdAt;
   ExpiresIn expiresIn;
-  ExpiredAt expiredAt;
+  ExpiresAt expiresAt;
 
   public AccessTokenBuilder(TenantIdentifier tenantIdentifier) {
     this.tenantIdentifier = tenantIdentifier;
@@ -76,8 +76,8 @@ public class AccessTokenBuilder {
     return this;
   }
 
-  public AccessTokenBuilder add(ExpiredAt expiredAt) {
-    this.expiredAt = expiredAt;
+  public AccessTokenBuilder add(ExpiresAt expiresAt) {
+    this.expiresAt = expiresAt;
     return this;
   }
 
@@ -91,6 +91,6 @@ public class AccessTokenBuilder {
         clientCertificationThumbprint,
         createdAt,
         expiresIn,
-        expiredAt);
+        expiresAt);
   }
 }

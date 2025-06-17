@@ -18,6 +18,8 @@ package org.idp.server.core.adapters.datasource.ciba.request;
 
 import java.util.Map;
 import org.idp.server.basic.type.ciba.*;
+import org.idp.server.basic.type.extension.ExpiresAt;
+import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
@@ -51,6 +53,8 @@ class ModelConverter {
     builder.add(new RequestedExpiry(stringMap.get("requested_expiry")));
     builder.add(new RequestObject(stringMap.get("request_object")));
     builder.add(AuthorizationDetails.fromString(stringMap.get("authorization_details")));
+    builder.add(new ExpiresIn(stringMap.get("expires_in")));
+    builder.add(new ExpiresAt(stringMap.get("expires_at")));
     return builder.build();
   }
 }

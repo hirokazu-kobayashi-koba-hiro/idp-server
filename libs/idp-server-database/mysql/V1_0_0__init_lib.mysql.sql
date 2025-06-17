@@ -410,7 +410,6 @@ CREATE TABLE ciba_grant
     consent_claims                        JSON,
     created_at                            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (backchannel_authentication_request_id),
-    FOREIGN KEY (backchannel_authentication_request_id) REFERENCES backchannel_authentication_request (id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
