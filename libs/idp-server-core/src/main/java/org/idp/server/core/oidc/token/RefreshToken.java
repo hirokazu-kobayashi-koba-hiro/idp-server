@@ -19,21 +19,21 @@ package org.idp.server.core.oidc.token;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import org.idp.server.basic.type.extension.CreatedAt;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 
 public class RefreshToken {
   RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity();
   CreatedAt createdAt;
-  ExpiredAt expiredAt;
+  ExpiresAt expiresAt;
 
   public RefreshToken() {}
 
   public RefreshToken(
-      RefreshTokenEntity refreshTokenEntity, CreatedAt createdAt, ExpiredAt expiredAt) {
+      RefreshTokenEntity refreshTokenEntity, CreatedAt createdAt, ExpiresAt expiresAt) {
     this.refreshTokenEntity = refreshTokenEntity;
     this.createdAt = createdAt;
-    this.expiredAt = expiredAt;
+    this.expiresAt = expiresAt;
   }
 
   public RefreshTokenEntity refreshTokenEntity() {
@@ -44,12 +44,12 @@ public class RefreshToken {
     return createdAt;
   }
 
-  public ExpiredAt expiredAt() {
-    return expiredAt;
+  public ExpiresAt expiresAt() {
+    return expiresAt;
   }
 
   public boolean isExpired(LocalDateTime other) {
-    return expiredAt.isExpire(other);
+    return expiresAt.isExpire(other);
   }
 
   public boolean exists() {

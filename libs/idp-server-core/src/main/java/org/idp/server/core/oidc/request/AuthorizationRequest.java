@@ -16,7 +16,7 @@
 
 package org.idp.server.core.oidc.request;
 
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.*;
 import org.idp.server.basic.type.pkce.CodeChallenge;
@@ -60,7 +60,7 @@ public class AuthorizationRequest {
   AuthorizationDetails authorizationDetails;
   CustomParams customParams;
   ExpiresIn expiresIn;
-  ExpiredAt expiredAt;
+  ExpiresAt expiresAt;
 
   public AuthorizationRequest() {}
 
@@ -92,7 +92,7 @@ public class AuthorizationRequest {
       AuthorizationDetails authorizationDetails,
       CustomParams customParams,
       ExpiresIn expiresIn,
-      ExpiredAt expiredAt) {
+      ExpiresAt expiresAt) {
     this.identifier = identifier;
     this.tenantIdentifier = tenantIdentifier;
     this.profile = profile;
@@ -120,7 +120,7 @@ public class AuthorizationRequest {
     this.authorizationDetails = authorizationDetails;
     this.customParams = customParams;
     this.expiresIn = expiresIn;
-    this.expiredAt = expiredAt;
+    this.expiresAt = expiresAt;
   }
 
   public AuthorizationRequestIdentifier identifier() {
@@ -311,8 +311,8 @@ public class AuthorizationRequest {
     return expiresIn;
   }
 
-  public ExpiredAt expiredAt() {
-    return expiredAt;
+  public ExpiresAt expiredAt() {
+    return expiresAt;
   }
 
   public boolean hasCodeChallenge() {

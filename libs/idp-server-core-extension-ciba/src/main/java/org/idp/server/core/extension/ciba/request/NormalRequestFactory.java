@@ -16,14 +16,18 @@
 
 package org.idp.server.core.extension.ciba.request;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 import org.idp.server.basic.jose.JoseContext;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.ClientSecretBasic;
+import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** NormalRequestFactory */
@@ -56,6 +60,16 @@ public class NormalRequestFactory implements BackchannelAuthenticationRequestFac
             .add(parameters.clientNotificationToken())
             .add(parameters.userCode())
             .add(parameters.requestedExpiry());
+
+    LocalDateTime now = SystemDateTime.now();
+    if (parameters.hasRequestedExpiry()) {
+      int expiresIn = parameters.requestedExpiry().valueAsInt();
+      builder.add(new ExpiresIn(expiresIn)).add(new ExpiresAt(now.plusSeconds(expiresIn)));
+    } else {
+      int expiresIn = authorizationServerConfiguration.backchannelAuthRequestExpiresIn();
+      builder.add(new ExpiresIn(expiresIn));
+      builder.add(new ExpiresAt(now.plusSeconds(expiresIn)));
+    }
 
     if (parameters.hasAuthorizationDetails()) {
       builder.add(parameters.authorizationDetails());

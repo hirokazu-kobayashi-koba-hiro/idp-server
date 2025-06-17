@@ -36,9 +36,9 @@ CREATE TABLE tenant_invitation
     url         TEXT         NOT NULL,
     status      VARCHAR(255) NOT NULL,
     expires_in  TEXT         NOT NULL,
-    created_at  TEXT         NOT NULL,
-    expires_at  TEXT         NOT NULL,
-    updated_at  TEXT         NOT NULL,
+    created_at  TIMESTAMP    NOT NULL,
+    expires_at  TIMESTAMP    NOT NULL,
+    updated_at  TIMESTAMP    NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
@@ -391,7 +391,7 @@ CREATE TABLE authorization_request
     authorization_details JSONB,
     custom_params         JSONB                   NOT NULL,
     expires_in            TEXT                    NOT NULL,
-    expires_at            TEXT                    NOT NULL,
+    expires_at            TIMESTAMP               NOT NULL,
     created_at            TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
@@ -403,6 +403,8 @@ POLICY rls_authorization_request
   ON authorization_request
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE authorization_request FORCE ROW LEVEL SECURITY;
+
+CREATE INDEX idx_authorization_request_expires_at ON authorization_request (tenant_id, expires_at);
 
 CREATE TABLE authorization_code_grant
 (
@@ -420,7 +422,7 @@ CREATE TABLE authorization_code_grant
     userinfo_claims          TEXT                    NOT NULL,
     custom_properties        JSONB,
     authorization_details    JSONB,
-    expired_at               TEXT                    NOT NULL,
+    expires_at               TIMESTAMP               NOT NULL,
     consent_claims           JSONB,
     created_at               TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (authorization_request_id),
@@ -436,6 +438,7 @@ POLICY rls_authorization_code_grant
 ALTER TABLE authorization_code_grant FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_auth_code_grant_code ON authorization_code_grant (authorization_code);
+CREATE INDEX idx_auth_code_expires_at ON authorization_code_grant (tenant_id, expires_at);
 
 CREATE TABLE oauth_token
 (
@@ -457,17 +460,18 @@ CREATE TABLE oauth_token
     custom_properties               JSONB,
     authorization_details           JSONB,
     expires_in                      TEXT                    NOT NULL,
-    access_token_expired_at         TEXT                    NOT NULL,
-    access_token_created_at         TEXT                    NOT NULL,
-    encrypted_refresh_token         TEXT                    NOT NULL,
-    hashed_refresh_token            TEXT                    NOT NULL,
-    refresh_token_expired_at        TEXT                    NOT NULL,
-    refresh_token_created_at        TEXT                    NOT NULL,
+    access_token_expires_at         TIMESTAMP               NOT NULL,
+    access_token_created_at         TIMESTAMP               NOT NULL,
+    encrypted_refresh_token         TEXT,
+    hashed_refresh_token            TEXT,
+    refresh_token_expires_at        TIMESTAMP,
+    refresh_token_created_at        TIMESTAMP,
     id_token                        TEXT                    NOT NULL,
     client_certification_thumbprint TEXT                    NOT NULL,
     c_nonce                         TEXT                    NOT NULL,
     c_nonce_expires_in              TEXT                    NOT NULL,
     consent_claims                  JSONB,
+    expires_at                      TIMESTAMP               NOT NULL,
     created_at                      TIMESTAMP DEFAULT now() NOT NULL,
     updated_at                      TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
@@ -483,6 +487,7 @@ ALTER TABLE oauth_token FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_oauth_token_hashed_access_token ON oauth_token (tenant_id, hashed_access_token);
 CREATE INDEX idx_oauth_token_hashed_refresh_token ON oauth_token (tenant_id, hashed_refresh_token);
+CREATE INDEX idx_oauth_token_expires_at ON oauth_token (tenant_id, expires_at);
 
 CREATE TABLE backchannel_authentication_request
 (
@@ -502,6 +507,8 @@ CREATE TABLE backchannel_authentication_request
     requested_expiry          TEXT,
     request_object            TEXT,
     authorization_details     JSONB,
+    expires_in                TEXT                    NOT NULL,
+    expires_at                TIMESTAMP               NOT NULL,
     created_at                TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
@@ -514,12 +521,14 @@ POLICY rls_backchannel_authentication_request
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE backchannel_authentication_request FORCE ROW LEVEL SECURITY;
 
+CREATE INDEX idx_bc_auth_request_expires_at ON backchannel_authentication_request (tenant_id, expires_at);
+
 CREATE TABLE ciba_grant
 (
     backchannel_authentication_request_id UUID                    NOT NULL,
     tenant_id                             UUID                    NOT NULL,
     auth_req_id                           VARCHAR(255)            NOT NULL,
-    expired_at                            TEXT                    NOT NULL,
+    expires_at                            TIMESTAMP               NOT NULL,
     polling_interval                      TEXT                    NOT NULL,
     status                                VARCHAR(100)            NOT NULL,
     user_id                               UUID                    NOT NULL,
@@ -536,8 +545,7 @@ CREATE TABLE ciba_grant
     consent_claims                        JSONB,
     created_at                            TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (backchannel_authentication_request_id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
-    FOREIGN KEY (backchannel_authentication_request_id) REFERENCES backchannel_authentication_request (id) ON DELETE CASCADE
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 ALTER TABLE ciba_grant ENABLE ROW LEVEL SECURITY;
@@ -548,6 +556,7 @@ POLICY rls_ciba_grant
 ALTER TABLE ciba_grant FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_ciba_grant_auth_req ON ciba_grant (auth_req_id);
+CREATE INDEX idx_ciba_grant_expires_at ON ciba_grant (tenant_id, expires_at);
 
 CREATE TABLE authorization_granted
 (
@@ -739,12 +748,10 @@ CREATE TABLE authentication_transaction
     interactions             JSONB,
     attributes               JSONB,
     created_at               TEXT         NOT NULL,
-    expired_at               TEXT         NOT NULL,
+    expires_at               TIMESTAMP    NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
-
-CREATE INDEX idx_authentication_transaction_device_id ON authentication_transaction (authentication_device_id);
 
 ALTER TABLE authentication_transaction ENABLE ROW LEVEL SECURITY;
 CREATE
@@ -752,6 +759,9 @@ POLICY rls_authentication_transaction
   ON authentication_transaction
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE authentication_transaction FORCE ROW LEVEL SECURITY;
+
+CREATE INDEX idx_authentication_transaction_device_id ON authentication_transaction (authentication_device_id);
+CREATE INDEX idx_authentication_transaction_expires_at ON authentication_transaction (tenant_id, expires_at);
 
 CREATE TABLE authentication_interactions
 (
@@ -897,3 +907,6 @@ CREATE TABLE audit_log
     PRIMARY KEY (id)
 );
 
+CREATE INDEX idx_audit_log_tenant_id ON audit_log (tenant_id);
+CREATE INDEX idx_audit_log_client_id ON audit_log (client_id);
+CREATE INDEX idx_audit_log_user_id ON audit_log (user_id);

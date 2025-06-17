@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import org.idp.server.basic.type.extension.CreatedAt;
 import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.client.ClientIdentifier;
@@ -39,7 +39,7 @@ public class AccessToken {
   ClientCertificationThumbprint clientCertificationThumbprint;
   CreatedAt createdAt;
   ExpiresIn expiresIn;
-  ExpiredAt expiredAt;
+  ExpiresAt expiresAt;
 
   public AccessToken() {}
 
@@ -52,7 +52,7 @@ public class AccessToken {
       ClientCertificationThumbprint clientCertificationThumbprint,
       CreatedAt createdAt,
       ExpiresIn expiresIn,
-      ExpiredAt expiredAt) {
+      ExpiresAt expiresAt) {
     this.tenantIdentifier = tenantIdentifier;
     this.tokenIssuer = tokenIssuer;
     this.tokenType = tokenType;
@@ -61,7 +61,7 @@ public class AccessToken {
     this.clientCertificationThumbprint = clientCertificationThumbprint;
     this.createdAt = createdAt;
     this.expiresIn = expiresIn;
-    this.expiredAt = expiredAt;
+    this.expiresAt = expiresAt;
   }
 
   public TenantIdentifier tenantIdentifier() {
@@ -112,12 +112,12 @@ public class AccessToken {
     return expiresIn;
   }
 
-  public ExpiredAt expiredAt() {
-    return expiredAt;
+  public ExpiresAt expiresAt() {
+    return expiresAt;
   }
 
   public boolean isExpired(LocalDateTime other) {
-    return expiredAt.isExpire(other);
+    return expiresAt.isExpire(other);
   }
 
   public boolean exists() {

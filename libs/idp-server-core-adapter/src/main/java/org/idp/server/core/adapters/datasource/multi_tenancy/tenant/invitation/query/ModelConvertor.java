@@ -19,6 +19,7 @@ package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.
 import java.time.LocalDateTime;
 import java.util.Map;
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitation;
+import org.idp.server.platform.date.LocalDateTimeParser;
 
 class ModelConvertor {
 
@@ -32,9 +33,9 @@ class ModelConvertor {
     String url = result.get("url");
     String status = result.get("status");
     int expiresIn = Integer.parseInt(result.get("expires_in"));
-    LocalDateTime createdAt = LocalDateTime.parse(result.get("created_at"));
-    LocalDateTime expiresAt = LocalDateTime.parse(result.get("expires_at"));
-    LocalDateTime updatedAt = LocalDateTime.parse(result.get("updated_at"));
+    LocalDateTime createdAt = LocalDateTimeParser.parse(result.get("created_at"));
+    LocalDateTime expiresAt = LocalDateTimeParser.parse(result.get("expires_at"));
+    LocalDateTime updatedAt = LocalDateTimeParser.parse(result.get("updated_at"));
     return new TenantInvitation(
         id,
         tenantId,

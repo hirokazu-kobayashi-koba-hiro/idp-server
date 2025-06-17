@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.basic.type.ciba.Interval;
 import org.idp.server.basic.type.extension.DeniedScopes;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
@@ -36,7 +36,7 @@ public class CibaGrant {
       new BackchannelAuthenticationRequestIdentifier();
   AuthorizationGrant authorizationGrant;
   AuthReqId authReqId;
-  ExpiredAt expiredAt;
+  ExpiresAt expiresAt;
   Interval interval;
   CibaGrantStatus status;
 
@@ -46,13 +46,13 @@ public class CibaGrant {
       BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier,
       AuthorizationGrant authorizationGrant,
       AuthReqId authReqId,
-      ExpiredAt expiredAt,
+      ExpiresAt expiresAt,
       Interval interval,
       CibaGrantStatus status) {
     this.backchannelAuthenticationRequestIdentifier = backchannelAuthenticationRequestIdentifier;
     this.authorizationGrant = authorizationGrant;
     this.authReqId = authReqId;
-    this.expiredAt = expiredAt;
+    this.expiresAt = expiresAt;
     this.interval = interval;
     this.status = status;
   }
@@ -86,7 +86,7 @@ public class CibaGrant {
   }
 
   public boolean isExpire(LocalDateTime other) {
-    return expiredAt.isExpire(other);
+    return expiresAt.isExpire(other);
   }
 
   public boolean exists() {
@@ -97,8 +97,8 @@ public class CibaGrant {
     return authorizationGrant.scopes();
   }
 
-  public ExpiredAt expiredAt() {
-    return expiredAt;
+  public ExpiresAt expiredAt() {
+    return expiresAt;
   }
 
   public Interval interval() {
@@ -135,7 +135,7 @@ public class CibaGrant {
         backchannelAuthenticationRequestIdentifier,
         updatedGrant,
         authReqId,
-        expiredAt,
+        expiresAt,
         interval,
         cibaGrantStatus);
   }

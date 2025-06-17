@@ -18,19 +18,20 @@ package org.idp.server.basic.type.extension;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import org.idp.server.platform.date.LocalDateTimeParser;
 
-/** ExpiredAt */
-public class ExpiredAt {
+/** ExpiresAt */
+public class ExpiresAt {
   LocalDateTime value;
 
-  public ExpiredAt() {}
+  public ExpiresAt() {}
 
-  public ExpiredAt(LocalDateTime value) {
+  public ExpiresAt(LocalDateTime value) {
     this.value = value;
   }
 
-  public ExpiredAt(String value) {
-    this.value = LocalDateTime.parse(value);
+  public ExpiresAt(String value) {
+    this.value = LocalDateTimeParser.parse(value);
   }
 
   public LocalDateTime value() {
@@ -47,5 +48,13 @@ public class ExpiredAt {
 
   public String toStringValue() {
     return value.toString();
+  }
+
+  public LocalDateTime toLocalDateTime() {
+    return value;
+  }
+
+  public boolean isAfter(ExpiresAt other) {
+    return value.isAfter(other.value());
   }
 }

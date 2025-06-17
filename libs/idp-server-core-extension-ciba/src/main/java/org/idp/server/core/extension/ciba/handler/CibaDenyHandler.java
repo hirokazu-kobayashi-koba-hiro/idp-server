@@ -22,6 +22,7 @@ import org.idp.server.core.extension.ciba.grant.CibaGrantStatus;
 import org.idp.server.core.extension.ciba.handler.io.CibaDenyRequest;
 import org.idp.server.core.extension.ciba.handler.io.CibaDenyResponse;
 import org.idp.server.core.extension.ciba.handler.io.CibaDenyStatus;
+import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
@@ -32,15 +33,18 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class CibaDenyHandler {
 
   CibaGrantRepository cibaGrantRepository;
+  BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public CibaDenyHandler(
       CibaGrantRepository cibaGrantRepository,
+      BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.cibaGrantRepository = cibaGrantRepository;
+    this.backchannelAuthenticationRequestRepository = backchannelAuthenticationRequestRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
@@ -58,6 +62,9 @@ public class CibaDenyHandler {
         cibaGrant.updateWith(
             CibaGrantStatus.access_denied, new Authentication(), new DeniedScopes());
     cibaGrantRepository.update(tenant, updated);
+
+    backchannelAuthenticationRequestRepository.delete(
+        tenant, backchannelAuthenticationRequestIdentifier);
 
     return new CibaDenyResponse(CibaDenyStatus.OK);
   }

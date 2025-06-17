@@ -50,7 +50,9 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
                 binding_message,
                 requested_expiry,
                 request_object,
-                authorization_details
+                authorization_details,
+                expires_in,
+                expires_at
                 )
                 VALUES (
                 ?::uuid,
@@ -68,7 +70,9 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
                 ?,
                 ?,
                 ?,
-                ?::jsonb);
+                ?::jsonb,
+                ?,
+                ?);
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -130,6 +134,9 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
       params.add("[]");
     }
 
+    params.add(request.expiresIn().value());
+    params.add(request.expiresAt().toLocalDateTime());
+
     sqlExecutor.execute(sqlTemplate, params);
   }
 
@@ -154,7 +161,9 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
                         binding_message,
                         requested_expiry,
                         request_object,
-                        authorization_details
+                        authorization_details,
+                        expires_in,
+                        expires_at
                         FROM backchannel_authentication_request
                         WHERE id = ?::uuid;
                         """;

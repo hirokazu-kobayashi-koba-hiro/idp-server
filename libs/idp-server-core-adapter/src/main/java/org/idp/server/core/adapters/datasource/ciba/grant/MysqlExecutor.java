@@ -39,7 +39,7 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
                         backchannel_authentication_request_id,
                         tenant_id,
                         auth_req_id,
-                        expired_at,
+                        expires_at,
                         polling_interval,
                         status,
                         user_id,
@@ -81,7 +81,7 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
     params.add(cibaGrant.backchannelAuthenticationRequestIdentifier().value());
     params.add(cibaGrant.tenantIdentifier().value());
     params.add(cibaGrant.authReqId().value());
-    params.add(cibaGrant.expiredAt().toStringValue());
+    params.add(cibaGrant.expiredAt().toLocalDateTime());
     params.add(cibaGrant.interval().toStringValue());
     params.add(cibaGrant.status().name());
     params.add(authorizationGrant.user().sub());
@@ -150,7 +150,7 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expired_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
+            SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expires_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
             FROM ciba_grant
             WHERE auth_req_id = ?;
             """;
@@ -200,7 +200,7 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
                       backchannel_authentication_request_id,
                       tenant_id,
                       auth_req_id,
-                      expired_at,
+                      expires_at,
                       polling_interval,
                       status,
                       user_id,

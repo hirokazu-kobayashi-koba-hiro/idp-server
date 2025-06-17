@@ -316,6 +316,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
           requestAttributes);
     }
 
+    authenticationTransactionCommandRepository.delete(
+        tenant, authenticationTransaction.identifier());
+
     return authorize;
   }
 
@@ -361,6 +364,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    AuthenticationTransaction authenticationTransaction =
+        authenticationTransactionQueryRepository.get(
+            tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
@@ -380,6 +386,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         session.user(),
         DefaultSecurityEventType.oauth_deny,
         requestAttributes);
+
+    authenticationTransactionCommandRepository.delete(
+        tenant, authenticationTransaction.identifier());
 
     return denyResponse;
   }

@@ -29,6 +29,7 @@ import org.idp.server.authentication.interactors.sms.SmsAuthenticationExecutors;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
 import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.HmacHasher;
+import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
@@ -50,6 +51,8 @@ import org.idp.server.core.extension.ciba.CibaFlowApi;
 import org.idp.server.core.extension.ciba.CibaFlowEventPublisher;
 import org.idp.server.core.extension.ciba.CibaProtocol;
 import org.idp.server.core.extension.ciba.CibaProtocols;
+import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestOperationCommandRepository;
+import org.idp.server.core.extension.ciba.repository.CibaGrantOperationCommandRepository;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApi;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationQueryRepository;
@@ -60,10 +63,7 @@ import org.idp.server.core.oidc.*;
 import org.idp.server.core.oidc.authentication.AuthenticationApi;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractors;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationCommandRepository;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionCommandRepository;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionQueryRepository;
+import org.idp.server.core.oidc.authentication.repository.*;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
@@ -87,7 +87,10 @@ import org.idp.server.core.oidc.plugin.FederationDependencyContainerPluginLoader
 import org.idp.server.core.oidc.plugin.UserLifecycleEventExecutorPluginLoader;
 import org.idp.server.core.oidc.plugin.authentication.AuthenticationInteractorPluginLoader;
 import org.idp.server.core.oidc.plugin.authentication.FederationInteractorPluginLoader;
+import org.idp.server.core.oidc.repository.AuthorizationCodeGrantOperationCommandRepository;
+import org.idp.server.core.oidc.repository.AuthorizationRequestOperationCommandRepository;
 import org.idp.server.core.oidc.token.*;
+import org.idp.server.core.oidc.token.repository.OAuthTokenOperationCommandRepository;
 import org.idp.server.core.oidc.userinfo.UserinfoApi;
 import org.idp.server.core.oidc.userinfo.UserinfoProtocol;
 import org.idp.server.core.oidc.userinfo.UserinfoProtocols;
@@ -115,6 +118,7 @@ import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
 import org.idp.server.usecases.application.system.*;
 import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMetaDataEntryService;
+import org.idp.server.usecases.control_plane.system_administrator.IdpServerOperationEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerStarterEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.TenantInitializationEntryService;
 import org.idp.server.usecases.control_plane.tenant_manager.*;
@@ -123,6 +127,7 @@ import org.idp.server.usecases.control_plane.tenant_manager.*;
 public class IdpServerApplication {
 
   IdpServerStarterApi idpServerStarterApi;
+  IdpServerOperationApi idpServerOperationApi;
   OAuthFlowApi oAuthFlowApi;
   TokenApi tokenApi;
   OidcMetaDataApi oidcMetaDataApi;
@@ -248,6 +253,24 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(SecurityEventHookConfigurationQueryRepository.class);
     UserLifecycleEventResultCommandRepository userLifecycleEventResultCommandRepository =
         applicationComponentContainer.resolve(UserLifecycleEventResultCommandRepository.class);
+    OAuthTokenOperationCommandRepository oAuthTokenOperationCommandRepository =
+        applicationComponentContainer.resolve(OAuthTokenOperationCommandRepository.class);
+    AuthenticationTransactionOperationCommandRepository
+        authenticationTransactionOperationCommandRepository =
+            applicationComponentContainer.resolve(
+                AuthenticationTransactionOperationCommandRepository.class);
+    AuthorizationRequestOperationCommandRepository authorizationRequestOperationCommandRepository =
+        applicationComponentContainer.resolve(AuthorizationRequestOperationCommandRepository.class);
+    AuthorizationCodeGrantOperationCommandRepository
+        authorizationCodeGrantOperationCommandRepository =
+            applicationComponentContainer.resolve(
+                AuthorizationCodeGrantOperationCommandRepository.class);
+    BackchannelAuthenticationRequestOperationCommandRepository
+        backchannelAuthenticationRequestOperationCommandRepository =
+            applicationComponentContainer.resolve(
+                BackchannelAuthenticationRequestOperationCommandRepository.class);
+    CibaGrantOperationCommandRepository cibaGrantOperationCommandRepository =
+        applicationComponentContainer.resolve(CibaGrantOperationCommandRepository.class);
 
     applicationComponentContainer.register(
         PasswordCredentialsGrantDelegate.class,
@@ -311,6 +334,19 @@ public class IdpServerApplication {
                 clientConfigurationQueryRepository,
                 passwordEncodeDelegation),
             IdpServerStarterApi.class,
+            tenantDialectProvider);
+
+    this.idpServerOperationApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new IdpServerOperationEntryService(
+                tenantQueryRepository,
+                oAuthTokenOperationCommandRepository,
+                authenticationTransactionOperationCommandRepository,
+                authorizationRequestOperationCommandRepository,
+                authorizationCodeGrantOperationCommandRepository,
+                backchannelAuthenticationRequestOperationCommandRepository,
+                cibaGrantOperationCommandRepository),
+            IdpServerOperationApi.class,
             tenantDialectProvider);
 
     OAuthFlowEventPublisher oAuthFLowEventPublisher =
@@ -602,6 +638,14 @@ public class IdpServerApplication {
             tenantDialectProvider);
   }
 
+  public IdpServerStarterApi idpServerStarterApi() {
+    return idpServerStarterApi;
+  }
+
+  public IdpServerOperationApi idpServerOperationApi() {
+    return idpServerOperationApi;
+  }
+
   public OAuthFlowApi oAuthFlowApi() {
     return oAuthFlowApi;
   }
@@ -692,10 +736,6 @@ public class IdpServerApplication {
 
   public UserAuthenticationApi operatorAuthenticationApi() {
     return userAuthenticationApi;
-  }
-
-  public IdpServerStarterApi idpServerStarterApi() {
-    return idpServerStarterApi;
   }
 
   public FederationConfigurationManagementApi federationConfigManagementApi() {

@@ -28,6 +28,7 @@ import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolic
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -48,8 +49,8 @@ public class ModelConverter {
     AuthenticationContext context = toAuthenticationContext(map);
     AuthenticationPolicy authenticationPolicy =
         jsonConverter.read(map.get("authentication_policy"), AuthenticationPolicy.class);
-    LocalDateTime createdAt = LocalDateTime.parse(map.get("created_at"));
-    LocalDateTime expiredAt = LocalDateTime.parse(map.get("expired_at"));
+    LocalDateTime createdAt = LocalDateTimeParser.parse(map.get("created_at"));
+    LocalDateTime expiredAt = LocalDateTimeParser.parse(map.get("expires_at"));
     AuthenticationRequest request =
         new AuthenticationRequest(
             authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);

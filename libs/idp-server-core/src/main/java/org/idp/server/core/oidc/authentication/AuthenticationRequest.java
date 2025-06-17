@@ -35,7 +35,7 @@ public class AuthenticationRequest {
   User user;
   AuthenticationContext context;
   LocalDateTime createdAt;
-  LocalDateTime expiredAt;
+  LocalDateTime expiresAt;
 
   public AuthenticationRequest() {}
 
@@ -46,14 +46,14 @@ public class AuthenticationRequest {
       User user,
       AuthenticationContext context,
       LocalDateTime createdAt,
-      LocalDateTime expiredAt) {
+      LocalDateTime expiresAt) {
     this.authFlow = authFlow;
     this.tenantIdentifier = tenantIdentifier;
     this.requestedClientId = requestedClientId;
     this.user = user;
     this.context = context;
     this.createdAt = createdAt;
-    this.expiredAt = expiredAt;
+    this.expiresAt = expiresAt;
   }
 
   public AuthFlow authorizationFlow() {
@@ -88,7 +88,7 @@ public class AuthenticationRequest {
   }
 
   public LocalDateTime expiredAt() {
-    return expiredAt;
+    return expiresAt;
   }
 
   public boolean hasUser() {
@@ -103,7 +103,7 @@ public class AuthenticationRequest {
     map.put("user", user.toMap());
     map.put("context", context.toMap());
     map.put("created_at", createdAt.toString());
-    map.put("expired_at", expiredAt.toString());
+    map.put("expires_at", expiresAt.toString());
     return map;
   }
 
@@ -111,13 +111,13 @@ public class AuthenticationRequest {
       AuthenticationInteractionRequestResult interactionRequestResult) {
     User user = interactionRequestResult.user();
     return new AuthenticationRequest(
-        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);
+        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiresAt);
   }
 
   public AuthenticationRequest updateWithUser(FederationInteractionResult result) {
     User user = result.user();
     return new AuthenticationRequest(
-        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);
+        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiresAt);
   }
 
   public AcrValues acrValues() {

@@ -25,7 +25,7 @@ import org.idp.server.basic.jose.JsonWebSignature;
 import org.idp.server.basic.jose.JsonWebSignatureFactory;
 import org.idp.server.basic.random.RandomStringGenerator;
 import org.idp.server.basic.type.extension.CreatedAt;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.type.oauth.ExpiresIn;
 import org.idp.server.basic.type.oauth.TokenType;
@@ -68,7 +68,7 @@ public class AccessTokenCreator {
               : authorizationServerConfiguration.accessTokenDuration();
 
       ExpiresIn expiresIn = new ExpiresIn(accessTokenDuration);
-      ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(accessTokenDuration));
+      ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(accessTokenDuration));
 
       return issueAccessToken(
           authorizationGrant,
@@ -77,7 +77,7 @@ public class AccessTokenCreator {
           clientCredentials,
           createdAt,
           expiresIn,
-          expiredAt);
+          expiresAt);
     } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
       throw new ConfigurationInvalidException(exception);
     }
@@ -101,7 +101,7 @@ public class AccessTokenCreator {
                 : authorizationServerConfiguration.accessTokenDuration();
 
         ExpiresIn expiresIn = new ExpiresIn(accessTokenDuration);
-        ExpiredAt expiredAt = new ExpiredAt(localDateTime.plusSeconds(accessTokenDuration));
+        ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(accessTokenDuration));
         return issueAccessToken(
             authorizationGrant,
             authorizationServerConfiguration,
@@ -109,11 +109,11 @@ public class AccessTokenCreator {
             clientCredentials,
             createdAt,
             expiresIn,
-            expiredAt);
+            expiresAt);
       }
 
       ExpiresIn expiresIn = oldAccessToken.expiresIn();
-      ExpiredAt expiredAt = oldAccessToken.expiredAt();
+      ExpiresAt expiresAt = oldAccessToken.expiresAt();
 
       return issueAccessToken(
           authorizationGrant,
@@ -122,7 +122,7 @@ public class AccessTokenCreator {
           clientCredentials,
           createdAt,
           expiresIn,
-          expiredAt);
+          expiresAt);
     } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
       throw new ConfigurationInvalidException(exception);
     }
@@ -135,7 +135,7 @@ public class AccessTokenCreator {
       ClientCredentials clientCredentials,
       CreatedAt createdAt,
       ExpiresIn expiresIn,
-      ExpiredAt expiredAt)
+      ExpiresAt expiresAt)
       throws JsonWebKeyInvalidException, JoseInvalidException {
     AccessTokenPayloadBuilder payloadBuilder = new AccessTokenPayloadBuilder();
     payloadBuilder.add(authorizationServerConfiguration.tokenIssuer());
@@ -144,7 +144,7 @@ public class AccessTokenCreator {
     payloadBuilder.add(authorizationGrant.scopes());
     payloadBuilder.add(authorizationGrant.authorizationDetails());
     payloadBuilder.add(createdAt);
-    payloadBuilder.add(expiredAt);
+    payloadBuilder.add(expiresAt);
     payloadBuilder.addJti(UUID.randomUUID().toString());
 
     Map<String, Object> customClaims =
@@ -173,7 +173,7 @@ public class AccessTokenCreator {
         thumbprint,
         createdAt,
         expiresIn,
-        expiredAt);
+        expiresAt);
   }
 
   private AccessTokenEntity createAccessTokenEntity(

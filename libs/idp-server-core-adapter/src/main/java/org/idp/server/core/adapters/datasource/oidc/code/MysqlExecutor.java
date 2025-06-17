@@ -51,7 +51,7 @@ public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
                     userinfo_claims,
                     custom_properties,
                     authorization_details,
-                    expired_at,
+                    expires_at,
                     consent_claims
                     )
                     VALUES (
@@ -111,7 +111,7 @@ public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
       params.add("[]");
     }
 
-    params.add(authorizationCodeGrant.expiredAt().toStringValue());
+    params.add(authorizationCodeGrant.expiredAt().toLocalDateTime());
 
     if (authorizationCodeGrant.authorizationGrant().hasConsentClaims()) {
       params.add(toJson(authorizationCodeGrant.authorizationGrant().consentClaims().toMap()));
@@ -141,7 +141,7 @@ public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
                 userinfo_claims,
                 custom_properties,
                 authorization_details,
-                expired_at,
+                expires_at,
                 consent_claims
                 FROM authorization_code_grant
                 WHERE authorization_code = ?

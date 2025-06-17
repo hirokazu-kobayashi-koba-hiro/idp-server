@@ -144,7 +144,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
           interactions,
           attributes,
           created_at,
-          expired_at
+          expires_at
           FROM authentication_transaction
           """;
 }

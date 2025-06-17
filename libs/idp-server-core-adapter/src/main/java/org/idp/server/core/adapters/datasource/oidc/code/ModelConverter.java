@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.AuthorizationCode;
 import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.basic.type.oauth.RequestedClientId;
@@ -80,8 +80,8 @@ class ModelConverter {
 
     AuthorizationCode authorizationCode =
         new AuthorizationCode(stringMap.get("authorization_code"));
-    ExpiredAt expiredAt = new ExpiredAt(stringMap.get("expired_at"));
-    return new AuthorizationCodeGrant(id, authorizationGrant, authorizationCode, expiredAt);
+    ExpiresAt expiresAt = new ExpiresAt(stringMap.get("expires_at"));
+    return new AuthorizationCodeGrant(id, authorizationGrant, authorizationCode, expiresAt);
   }
 
   private static CustomProperties convertCustomProperties(String value) {

@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.basic.jose.*;
-import org.idp.server.basic.type.extension.ExpiredAt;
+import org.idp.server.basic.type.extension.ExpiresAt;
 import org.idp.server.basic.type.oauth.State;
 import org.idp.server.basic.type.oauth.TokenIssuer;
 import org.idp.server.basic.type.oidc.IdToken;
@@ -116,11 +116,11 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
       boolean idTokenStrictMode) {
 
     LocalDateTime now = SystemDateTime.now();
-    ExpiredAt expiredAt = new ExpiredAt(now.plusSeconds(idTokenDuration));
+    ExpiresAt expiresAt = new ExpiresAt(now.plusSeconds(idTokenDuration));
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("iss", tokenIssuer.value());
     claims.put("aud", authorizationGrant.requestedClientId().value());
-    claims.put("exp", expiredAt.toEpochSecondWithUtc());
+    claims.put("exp", expiresAt.toEpochSecondWithUtc());
     claims.put("iat", now.toEpochSecond(SystemDateTime.zoneOffset));
 
     if (idTokenCustomClaims.hasNonce()) {

@@ -145,7 +145,7 @@ public class InsertSqlCreator {
       params.add("{}");
     }
     params.add(authorizationRequest.expiresIn().toStringValue());
-    params.add(authorizationRequest.expiredAt().toStringValue());
+    params.add(authorizationRequest.expiredAt().toLocalDateTime());
 
     return params;
   }

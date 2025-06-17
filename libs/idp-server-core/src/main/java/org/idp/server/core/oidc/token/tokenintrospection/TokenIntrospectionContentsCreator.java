@@ -43,7 +43,7 @@ public class TokenIntrospectionContentsCreator {
       contents.put("cnf", Map.of("x5t#S256", accessToken.clientCertificationThumbprint().value()));
     }
     contents.put("iat", accessToken.createdAt().toEpochSecondWithUtc());
-    contents.put("exp", accessToken.expiredAt().toEpochSecondWithUtc());
+    contents.put("exp", accessToken.expiresAt().toEpochSecondWithUtc());
     return contents;
   }
 

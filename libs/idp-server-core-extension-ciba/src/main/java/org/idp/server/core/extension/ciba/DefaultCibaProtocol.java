@@ -76,6 +76,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
     this.denyHandler =
         new CibaDenyHandler(
             cibaGrantRepository,
+            backchannelAuthenticationRequestRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.errorHandler = new CibaRequestErrorHandler();
