@@ -1,5 +1,5 @@
-import { get, post, postWithJson } from "../lib/http";
-import { convertToSnake } from "../lib/util";
+import { get, post, postWithJson } from ".../../lib/http";
+import { convertToSnake } from ".../../lib/util";
 import { encodedClientCert } from "./cert/clientCert";
 
 export const createParams = ({

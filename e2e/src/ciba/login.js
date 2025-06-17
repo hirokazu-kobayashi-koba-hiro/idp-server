@@ -5,7 +5,6 @@ import {
   requestBackchannelAuthentications,
   requestToken
 } from "../api/oauthClient";
-import { serverConfig } from "../testConfig";
 import { get } from "../lib/http";
 
 export const loginForClientSecretPost = async ({ serverConfig, client, scope }) => {

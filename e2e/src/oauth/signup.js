@@ -5,7 +5,7 @@ import {
   getAuthorizations,
   postAuthentication
 } from "../api/oauthClient";
-import { serverConfig } from "../testConfig";
+import { serverConfig } from "../tests/testConfig";
 import { convertNextAction, convertToAuthorizationResponse, convertToSnake } from "../lib/util";
 import puppeteer from "puppeteer-core";
 import { createHash, X509Certificate } from "node:crypto";
