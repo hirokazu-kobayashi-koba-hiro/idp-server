@@ -4,7 +4,7 @@ import {
   getAuthorizations,
   postAuthentication
 } from "../api/oauthClient";
-import { serverConfig } from "../testConfig";
+import { serverConfig } from "../tests/testConfig";
 import { convertNextAction, convertToAuthorizationResponse, convertToSnake } from "../lib/util";
 import { createHash, X509Certificate } from "node:crypto";
 import { encodeBuffer } from "../lib/bas64";
