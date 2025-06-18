@@ -42,6 +42,7 @@ export const serverConfig = {
   usersEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/users`,
   enabledSsr: false,
   ciba: {
+    sub: "3ec055a8-8000-44a2-8677-e70ebff414e2",
     loginHint: "email:ito.ichiro@gmail.com,idp-server",
     loginHintExSub: "ex-sub:3ec055a8-8000-44a2-8677-e70ebff414e2,idp-server",
     username: "ito.ichiro@gmail.com",

@@ -25,7 +25,6 @@ import java.util.*;
 
 public class SqlExecutor {
   private final Connection connection;
-  private static final LoggerWrapper log = LoggerWrapper.getLogger(SqlExecutor.class);
 
   public SqlExecutor() {
     this.connection = TransactionManager.getConnection();
@@ -165,11 +164,6 @@ public class SqlExecutor {
 
       int index = 1;
       for (Object param : params) {
-        if (param != null) {
-          log.info(String.format("sql parameter %d: %s", index, param));
-        } else {
-          log.info(String.format("sql parameter %d: null", index));
-        }
 
         if (param instanceof String stringValue) {
           prepareStatement.setString(index, stringValue);
