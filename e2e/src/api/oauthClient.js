@@ -403,6 +403,9 @@ export const requestBackchannelAuthentications = async ({
   if (requestedExpiry) {
     params.append("requested_expiry", requestedExpiry);
   }
+  if (requestedExpiry === 0) {
+    params.append("requested_expiry", 0);
+  }
   if (authorizationDetails) {
     params.append("authorization_details", authorizationDetails);
   }

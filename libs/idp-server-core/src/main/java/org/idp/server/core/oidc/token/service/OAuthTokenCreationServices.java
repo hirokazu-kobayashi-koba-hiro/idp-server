@@ -25,8 +25,8 @@ import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
+import org.idp.server.core.oidc.token.exception.TokenUnSupportedGrantException;
 import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
-import org.idp.server.platform.exception.UnSupportedException;
 
 public class OAuthTokenCreationServices {
 
@@ -54,7 +54,7 @@ public class OAuthTokenCreationServices {
   public OAuthTokenCreationService get(GrantType grantType) {
     OAuthTokenCreationService oAuthTokenCreationService = values.get(grantType);
     if (Objects.isNull(oAuthTokenCreationService)) {
-      throw new UnSupportedException(
+      throw new TokenUnSupportedGrantException(
           String.format("unsupported grant_type (%s)", grantType.name()));
     }
     return oAuthTokenCreationService;

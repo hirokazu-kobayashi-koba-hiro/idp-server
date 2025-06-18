@@ -33,7 +33,6 @@ import org.idp.server.core.oidc.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.oidc.identity.event.UserLifecycleType;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -53,7 +52,6 @@ public class CibaFlowEntryService implements CibaFlowApi {
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
   CibaFlowEventPublisher eventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
-  LoggerWrapper log = LoggerWrapper.getLogger(this.getClass());
 
   public CibaFlowEntryService(
       CibaProtocols cibaProtocols,
@@ -84,38 +82,27 @@ public class CibaFlowEntryService implements CibaFlowApi {
       String clientCert,
       RequestAttributes requestAttributes) {
 
-    long startAll = System.currentTimeMillis();
-
-    long t1 = System.currentTimeMillis();
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     CibaRequest cibaRequest = new CibaRequest(tenant, authorizationHeader, params);
     cibaRequest.setClientCert(clientCert);
-    log.info("[CIBA] step1: tenant + request create = {}ms", System.currentTimeMillis() - t1);
 
-    long t2 = System.currentTimeMillis();
     CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProvider());
     CibaIssueResponse issueResponse =
         cibaProtocol.request(cibaRequest, userHintResolvers, additionalVerifiers);
-    log.info("[CIBA] step2: protocol.request = {}ms", System.currentTimeMillis() - t2);
     if (!issueResponse.isOK()) {
       return issueResponse.toErrorResponse();
     }
 
-    long t3 = System.currentTimeMillis();
     eventPublisher.publish(
         tenant,
         issueResponse.request(),
         issueResponse.user(),
         DefaultSecurityEventType.backchannel_authentication_request_success,
         requestAttributes);
-    log.info("[CIBA] step3: event publish(success) = {}ms", System.currentTimeMillis() - t3);
 
-    long t4 = System.currentTimeMillis();
     AuthenticationTransaction authenticationTransaction =
         CibaAuthenticationTransactionCreator.create(tenant, issueResponse);
-    log.info("[CIBA] step4: transaction create = {}ms", System.currentTimeMillis() - t4);
 
-    long t5 = System.currentTimeMillis();
     AuthenticationInteractionType authenticationInteractionType =
         issueResponse.defaultCibaAuthenticationInteractionType();
     AuthenticationInteractor authenticationInteractor =
@@ -128,24 +115,17 @@ public class CibaFlowEntryService implements CibaFlowApi {
             new AuthenticationInteractionRequest(Map.of()),
             authenticationTransaction,
             userQueryRepository);
-    log.info("[CIBA] step5: authentication interact = {}ms", System.currentTimeMillis() - t5);
 
-    long t6 = System.currentTimeMillis();
     AuthenticationTransaction updatedTransaction =
         authenticationTransaction.updateWith(interactionRequestResult);
     authenticationTransactionCommandRepository.register(tenant, updatedTransaction);
-    log.info("[CIBA] step6: transaction update = {}ms", System.currentTimeMillis() - t6);
 
-    long t7 = System.currentTimeMillis();
     eventPublisher.publish(
         tenant,
         issueResponse.request(),
         issueResponse.user(),
         interactionRequestResult.eventType(),
         requestAttributes);
-    log.info("[CIBA] step7: event publish(result) = {}ms", System.currentTimeMillis() - t7);
-
-    log.info("[CIBA] total time = {}ms", System.currentTimeMillis() - startAll);
     return issueResponse.toResponse();
   }
 
