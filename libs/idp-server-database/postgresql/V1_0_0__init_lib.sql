@@ -211,6 +211,9 @@ ALTER TABLE idp_user FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_id, provider_user_id);
 CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
+CREATE INDEX idx_idp_user_tenant_phone ON idp_user (tenant_id, phone_number);
+CREATE INDEX idx_user_devices_gin_path_ops
+    ON idp_user USING GIN (authentication_devices jsonb_path_ops);
 
 -- no rls
 CREATE TABLE idp_user_assigned_tenants

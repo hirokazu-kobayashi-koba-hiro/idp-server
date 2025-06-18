@@ -43,8 +43,9 @@ export const serverConfig = {
   enabledSsr: false,
   ciba: {
     sub: "3ec055a8-8000-44a2-8677-e70ebff414e2",
-    loginHint: "email:ito.ichiro@gmail.com,idp-server",
-    loginHintExSub: "ex-sub:3ec055a8-8000-44a2-8677-e70ebff414e2,idp-server",
+    loginHint: "email:ito.ichiro@gmail.com,idp:idp-server",
+    loginHintExSub: "ex-sub:3ec055a8-8000-44a2-8677-e70ebff414e2,idp:idp-server",
+    loginHintDevice: "device:7736a252-60b4-45f5-b817-65ea9a540860,idp:idp-server",
     username: "ito.ichiro@gmail.com",
     userCode: "successUserCode",
     bindingMessage: "999",

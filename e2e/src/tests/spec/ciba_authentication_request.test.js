@@ -26,7 +26,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         scope: "openid profile phone email" + clientSecretPostClient.scope,
         bindingMessage: ciba.bindingMessage,
         userCode: ciba.userCode,
-        loginHint: ciba.loginHintExSub,
+        loginHint: ciba.loginHintDevice,
         clientSecret: clientSecretPostClient.clientSecret,
       });
     console.log(backchannelAuthenticationResponse.data);

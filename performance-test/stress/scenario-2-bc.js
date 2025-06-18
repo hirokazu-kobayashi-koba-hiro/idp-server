@@ -23,7 +23,7 @@ export default function () {
   const randomUserId = getRandomInt(100000);
   const email = `user${randomUserId}@example.com`;
   const deviceId = getDeviceId(getRandomInt(499))
-  const loginHint = encodeURIComponent(`sub:${deviceId},idp-server`);
+  const loginHint = encodeURIComponent(`sub:${deviceId},idp:idp-server`);
 
   const url = `${baseUrl}/${tenantId}/v1/backchannel/authentications`;
 
