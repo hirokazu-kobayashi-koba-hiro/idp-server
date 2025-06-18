@@ -19,7 +19,7 @@ export default function() {
   const testData = getTestData(getRandomInt(499));
   const deviceId = testData.device_id;
   const bindingMessage = "999";
-  const loginHint = encodeURIComponent(`sub:${deviceId},idp-server`);
+  const loginHint = encodeURIComponent(`device:${deviceId},idp:idp-server`);
 
   const url = `${baseUrl}/${tenantId}/v1/backchannel/authentications`;
 

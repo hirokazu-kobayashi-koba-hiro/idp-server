@@ -36,12 +36,13 @@ CIBA 仕様 に準拠し、login_hint はユーザー識別のヒントとして
 
 以下のような接頭辞つきの拡張形式に対応しており、ユーザーの識別方法を柔軟に指定できます：
 
-| フォーマット                           | 意味              | 例                                  |
-|----------------------------------|-----------------|------------------------------------|
-| `sub:<subject>`                  | 内部ユーザーIDで直接識別   | `sub:abc123`                       |
-| `ex-sub:<subject>,<id-provider>` | 外部IdPのサブジェクトで識別 | `ex-sub:ex-idp123,ex-idp`          |
-| `email:<email>,<id-provider>`    | メールアドレスによる識別    | `email:foo@example.com,idp-server` |
-| `phone:<number>,<id-provider>`   | 電話番号による識別       | `phone:09012345678,idp-server`     |
+| フォーマット                                | 意味              | 例                                      |
+|---------------------------------------|-----------------|----------------------------------------|
+| `sub:<subject>`                       | 内部ユーザーIDで直接識別   | `sub:abc123`                           |
+| `ex-sub:<subject>,idp:<id-provider>`  | 外部IdPのサブジェクトで識別 | `ex-sub:ex-idp123,idp:ex-idp`          |
+| `device:<deviceId>,idp:<id-provider>` | 認証デバイスで識別       | `device:device123,idp:ex-idp`          |
+| `email:<email>,idp:<id-provider>`     | メールアドレスによる識別    | `email:foo@example.com,idp:idp-server` |
+| `phone:<number>,idp:<id-provider>`    | 電話番号による識別       | `phone:09012345678,idp:idp-server`     |
 
 ※ `id-provider` のデフォルト値は `idp-server`となります。 フェデレーションによる外部IdPを利用してユーザーを作成している場合は、外部IdPプロバイダー名を指定することができます。
 

@@ -28,6 +28,8 @@ public interface UserSqlExecutor {
   Map<String, String> selectByExternalIdpSubject(
       Tenant tenant, String externalSubject, String providerId);
 
+  Map<String, String> selectByDeviceId(Tenant tenant, String deviceId, String providerId);
+
   Map<String, String> selectByEmail(Tenant tenant, String email, String providerId);
 
   Map<String, String> selectByPhone(Tenant tenant, String phone, String providerId);

@@ -45,7 +45,7 @@ function login(index) {
 
   const deviceId = testData.deviceId;
   const bindingMessage = "999";
-  const loginHint = encodeURIComponent(`sub:${deviceId},idp-server`);
+  const loginHint = encodeURIComponent(`sub:${deviceId},idp:idp-server`);
 
   const url = `${baseUrl}/${tenantId}/v1/backchannel/authentications`;
 
