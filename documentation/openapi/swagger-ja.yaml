@@ -7,7 +7,7 @@ info:
     name: idp-server OSS
 
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8080/{tenant-id}
 
 tags:
   - name: CIBAフロー
@@ -126,14 +126,21 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BackchannelAuthenticationErrorResponse'
+                $ref: '#/components/schemas/BackchannelAuthenticationBadRequestErrorResponse'
 
         '401':
           description: クライアント認証エラー（invalid_client）
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BackchannelAuthenticationErrorResponse'
+                $ref: '#/components/schemas/BackchannelAuthenticationUnauthorizedErrorResponse'
+
+        '403':
+          description: 権限エラー（access_denied）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackchannelAuthenticationForbiddenErrorResponse'
 
   /v1/authorizations:
     get:
@@ -1617,9 +1624,9 @@ components:
         - auth_req_id
         - expires_in
 
-    BackchannelAuthenticationErrorResponse:
+    BackchannelAuthenticationBadRequestErrorResponse:
       type: object
-      description: |
+      description: >
         CIBA 認証リクエストのエラーレスポンス。
         OpenID Connect CIBA Core 1.0 Section 13 および RFC 6749 Section 5.2 に準拠。
       properties:
@@ -1627,14 +1634,92 @@ components:
           type: string
           description: |
             エラーコード。
-            例: invalid_request, invalid_client, unauthorized_client, invalid_scope, access_denied, slow_down, expired_token, etc.
+            以下のいずれかの値を持つ。
+            
+            ### エラーコード一覧
+
+            | エラーコード | 説明 |
+            | ------------ | ---- |
+            | `invalid_request` | リクエストが不正。パラメータが不足、無効、重複、複数の hint を含む等。 |
+            | `invalid_scope` | 要求されたスコープが無効、未知、または形式不正。 |
+            | `expired_login_hint_token` | login_hint_token の有効期限が切れている。 |
+            | `unknown_user_id` | login_hint 等のヒントからユーザーを特定できなかった。 |
+            | `unauthorized_client` | クライアントがこの認証フローを使う許可がない。 |
+            | `missing_user_code` | 必須の user_code がリクエストに含まれていない。 |
+            | `invalid_user_code` | 指定された user_code が無効。 |
+            | `invalid_binding_message` | binding_message が無効または不適切。 |
+          enum:
+            - invalid_request
+            - invalid_scope
+            - expired_login_hint_token
+            - unknown_user_id
+            - unauthorized_client
+            - missing_user_code
+            - invalid_user_code
+            - invalid_binding_message
+          example: invalid_request
         error_description:
           type: string
-          description: エラーの詳細説明（オプション）
-        error_uri:
+          description: エラーの詳細な説明（任意）
+          example: The request is missing a required parameter.
+      required:
+        - error
+
+    BackchannelAuthenticationUnauthorizedErrorResponse:
+      type: object
+      description: >
+        CIBA 認証リクエストのエラーレスポンス。
+        OpenID Connect CIBA Core 1.0 Section 13 および RFC 6749 Section 5.2 に準拠。
+      properties:
+        error:
           type: string
-          format: uri
-          description: エラーに関する詳細を説明したドキュメントへのURI（オプション）
+          description: |
+            エラーコード。
+            以下のいずれかの値を持つ。
+
+            ### エラーコード一覧
+
+            | エラーコード | 説明 |
+            | ------------ | ---- |
+            | `invalid_client` | クライアント認証に失敗。無効なクライアントID/シークレット、未知のクライアント、認証方式の不備、または認証ヘッダーがない等。 |
+
+          enum:
+            - invalid_client
+          example: invalid_client
+        error_description:
+          type: string
+          description: エラーの詳細説明（任意）
+          example: Client authentication failed.
+      required:
+        - error
+
+    BackchannelAuthenticationForbiddenErrorResponse:
+      type: object
+      description: >
+        リソースオーナーまたは OpenID Provider によりリクエストが拒否された場合のエラーレスポンス。  
+          RFC 6749 Section 5.2 および OpenID Connect CIBA Core 1.0 Section 13 に準拠。
+
+          通常このエラーはユーザー操作の前に発生し、特定のクライアントや要求種別が事前に拒否されている場合などに返される。
+      properties:
+        error:
+          type: string
+          description: |
+            エラーコード。
+            以下のいずれかの値を持つ。
+
+            ### エラーコード一覧
+
+            | エラーコード | 説明 |
+            | ------------ | ---- |
+            | `access_denied` | リソースオーナーまたはOpenID Providerがリクエストを拒否した。身元確認が必須や、特定のクライアントやリクエスト種別を事前にブロックしている可能性がある。 |
+
+          enum:
+            - access_denied
+          example: access_denied
+        error_description:
+          type: string
+          description: エラーの詳細説明（任意）
+          example: The request was denied by the OpenID Provider..
       required:
         - error
 
