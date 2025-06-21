@@ -22,16 +22,16 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.json.schema.JsonSchemaValidator;
 
-public class UserRegistrationRequestValidator {
+public class UserUpdateRequestValidator {
 
   UserRegistrationRequest request;
   boolean dryRun;
   JsonSchemaValidator userSchemaValidator;
 
-  public UserRegistrationRequestValidator(UserRegistrationRequest request, boolean dryRun) {
+  public UserUpdateRequestValidator(UserRegistrationRequest request, boolean dryRun) {
     this.request = request;
     this.dryRun = dryRun;
-    this.userSchemaValidator = new JsonSchemaValidator(SchemaReader.adminUserSchema());
+    this.userSchemaValidator = new JsonSchemaValidator(SchemaReader.adminUserUpdateSchema());
   }
 
   public UserRequestValidationResult validate() {

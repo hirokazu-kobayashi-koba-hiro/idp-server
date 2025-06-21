@@ -72,6 +72,12 @@ public class UserCommandDataSource implements UserCommandRepository {
   }
 
   @Override
+  public void updatePassword(Tenant tenant, User user) {
+    UserCommandSqlExecutor executor = executors.get(tenant.databaseType());
+    executor.updatePassword(tenant, user);
+  }
+
+  @Override
   public void delete(Tenant tenant, UserIdentifier userIdentifier) {
     UserCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, userIdentifier);
