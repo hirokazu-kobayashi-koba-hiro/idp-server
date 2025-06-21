@@ -74,7 +74,8 @@ public class TokenEventCreator {
     User user = oAuthToken.user();
 
     if (user != null) {
-      SecurityEventUser securityEventUser = new SecurityEventUser(user.sub(), user.name());
+      SecurityEventUser securityEventUser =
+          new SecurityEventUser(user.sub(), user.name(), user.providerUserId());
       builder.add(securityEventUser);
       detailsMap.put("user", user.toMap());
     }

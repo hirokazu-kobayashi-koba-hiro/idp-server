@@ -20,6 +20,8 @@ package org.idp.server.platform.audit;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AuditLog {
 
@@ -29,6 +31,7 @@ public class AuditLog {
     String tenantId;
     String clientId;
     String userId;
+    String externalUserId;
     JsonNodeWrapper userPayload;
     String targetResource;
     String targetResourceAction;
@@ -42,13 +45,14 @@ public class AuditLog {
 
     public AuditLog() {}
 
-    public AuditLog(String id, String type, String description, String tenantId, String clientId, String userId, JsonNodeWrapper userPayload, String targetResource, String targetResourceAction, String ipAddress, String userAgent, JsonNodeWrapper before, JsonNodeWrapper after, JsonNodeWrapper attributes, boolean dryRun, LocalDateTime createdAt) {
+    public AuditLog(String id, String type, String description, String tenantId, String clientId, String userId, String externalUserId, JsonNodeWrapper userPayload, String targetResource, String targetResourceAction, String ipAddress, String userAgent, JsonNodeWrapper before, JsonNodeWrapper after, JsonNodeWrapper attributes, boolean dryRun, LocalDateTime createdAt) {
         this.id = id;
         this.type = type;
         this.description = description;
         this.tenantId = tenantId;
         this.clientId = clientId;
         this.userId = userId;
+        this.externalUserId = externalUserId;
         this.userPayload = userPayload;
         this.targetResource = targetResource;
         this.targetResourceAction = targetResourceAction;
@@ -89,6 +93,10 @@ public class AuditLog {
         return userId;
     }
 
+    public String externalUserId() {
+        return externalUserId;
+    }
+
     public JsonNodeWrapper userPayload() {
         return userPayload;
     }
@@ -127,5 +135,32 @@ public class AuditLog {
 
     public LocalDateTime createdAt() {
         return createdAt;
+    }
+
+    public Map<String, Object> toMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("type", type);
+        map.put("description", description);
+        map.put("tenant_id", tenantId);
+        map.put("client_id", clientId);
+        map.put("user_od", userId);
+        map.put("external_user_id", externalUserId);
+        map.put("user_payload", userPayload.toMap());
+        map.put("target_resource", targetResource);
+        map.put("target_resource_action", targetResourceAction);
+        map.put("ip_address", ipAddress);
+        map.put("user_agent", userAgent);
+        map.put("before", before.toMap());
+        map.put("after", after.toMap());
+        map.put("attributes", attributes.toMap());
+        map.put("dry_run", dryRun);
+        map.put("created_at", createdAt.toString());
+        return map;
+
+    }
+
+    public boolean exists() {
+        return id != null && !id.isEmpty();
     }
 }

@@ -36,6 +36,7 @@ public class PostgresqlExecutor implements AuditLogSqlExecutor {
                 tenant_id,
                 client_id,
                 user_id,
+                external_user_id,
                 user_payload,
                 target_resource,
                 target_resource_action,
@@ -51,6 +52,7 @@ public class PostgresqlExecutor implements AuditLogSqlExecutor {
                 ?::uuid,
                 ?,
                 ?::uuid,
+                ?,
                 ?::jsonb,
                 ?,
                 ?,
@@ -69,6 +71,7 @@ public class PostgresqlExecutor implements AuditLogSqlExecutor {
     params.add(auditLog.tenantId());
     params.add(auditLog.clientId());
     params.add(auditLog.userId());
+    params.add(auditLog.externalUserId());
     params.add(auditLog.userPayload().toJson());
     params.add(auditLog.targetResource());
     params.add(auditLog.targetResourceAction());

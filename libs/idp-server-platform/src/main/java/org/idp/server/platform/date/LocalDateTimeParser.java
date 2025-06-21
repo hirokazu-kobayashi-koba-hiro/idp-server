@@ -17,19 +17,25 @@
 
 package org.idp.server.platform.date;
 
+import org.idp.server.platform.exception.BadRequestException;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class LocalDateTimeParser {
 
     public static LocalDateTime parse(String date) {
-        if (date.contains("T")) {
-            return LocalDateTime.parse(date);
+        try {
+            if (date.contains("T")) {
+                return LocalDateTime.parse(date);
+            }
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+            return LocalDateTime.parse(normalizeDateTime(date), formatter);
+        } catch (DateTimeParseException e) {
+            throw new BadRequestException(e.getMessage());
         }
-
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
-        return LocalDateTime.parse(normalizeDateTime(date), formatter);
     }
 
     private static String normalizeDateTime(String dateTimeStr) {

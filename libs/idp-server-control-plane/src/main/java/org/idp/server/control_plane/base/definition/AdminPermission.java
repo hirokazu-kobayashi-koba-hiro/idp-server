@@ -176,7 +176,14 @@ public enum AdminPermission {
   SECURITY_EVENT_HOOK_CONFIG_DELETE(
       "dd26ac14-66b3-4f02-837d-cc0c1346b41e",
       "security-event-hook-config:delete",
-      "Admin Delete security-event-hook-config");
+      "Admin Delete security-event-hook-config"),
+
+  SECURITY_EVENT_READ(
+      "9d550b46-e461-4cfc-8c8c-e078aea445c8",
+      "security-event:read",
+      "Admin Read security-event information"),
+  AUDIT_LOG_READ(
+      "dac5337d-a014-4039-a537-d282881d256d", "audit-log:read", "Admin Read audit-log information");
 
   private final String id;
   private final String value;
