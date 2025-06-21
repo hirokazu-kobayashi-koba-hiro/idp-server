@@ -26,7 +26,7 @@ import java.util.List;
 
 public interface SecurityEventQueryRepository {
 
-  int findTotalCount(Tenant tenant, SecurityEventQueries queries);
+  long findTotalCount(Tenant tenant, SecurityEventQueries queries);
 
   List<SecurityEvent> findList(Tenant tenant, SecurityEventQueries queries);
 

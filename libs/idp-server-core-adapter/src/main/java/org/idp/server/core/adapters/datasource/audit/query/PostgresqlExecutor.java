@@ -152,6 +152,12 @@ public class PostgresqlExecutor implements AuditLogSqlExecutor {
         params.add(value);
       }
     }
+
+    sql.append(" ORDER BY created_at DESC");
+    sql.append(" LIMIT ? OFFSET ?");
+    params.add(queries.limit());
+    params.add(queries.offset());
+
     return sqlExecutor.selectList(sql.toString(), params);
   }
 

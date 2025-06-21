@@ -19,6 +19,7 @@ package org.idp.server.core.adapters.datasource.identity;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.UserQueries;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface UserSqlExecutor {
@@ -34,7 +35,9 @@ public interface UserSqlExecutor {
 
   Map<String, String> selectByPhone(Tenant tenant, String phone, String providerId);
 
-  List<Map<String, String>> selectList(Tenant tenant, int limit, int offset);
+  Map<String, String> selectCount(Tenant tenant, UserQueries queries);
+
+  List<Map<String, String>> selectList(Tenant tenant, UserQueries queries);
 
   Map<String, String> selectByProvider(Tenant tenant, String providerId, String providerUserId);
 

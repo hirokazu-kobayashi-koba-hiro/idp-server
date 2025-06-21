@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.UserQueries;
 import org.idp.server.core.oidc.identity.exception.UserNotFoundException;
 import org.idp.server.core.oidc.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
@@ -146,9 +147,21 @@ public class UserQueryDataSource implements UserQueryRepository {
   }
 
   @Override
-  public List<User> findList(Tenant tenant, int limit, int offset) {
+  public long findTotalCount(Tenant tenant, UserQueries queries) {
     UserSqlExecutor executor = executors.get(tenant.databaseType());
-    List<Map<String, String>> results = executor.selectList(tenant, limit, offset);
+    Map<String, String> result = executor.selectCount(tenant, queries);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return 0;
+    }
+
+    return Long.parseLong(result.get("count"));
+  }
+
+  @Override
+  public List<User> findList(Tenant tenant, UserQueries queries) {
+    UserSqlExecutor executor = executors.get(tenant.databaseType());
+    List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (Objects.isNull(results) || results.isEmpty()) {
       return List.of();

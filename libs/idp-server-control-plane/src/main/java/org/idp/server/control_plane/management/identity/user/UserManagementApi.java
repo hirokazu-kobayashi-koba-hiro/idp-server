@@ -25,6 +25,7 @@ import org.idp.server.control_plane.management.identity.user.io.UserManagementRe
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.UserQueries;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -60,8 +61,7 @@ public interface UserManagementApi {
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      int limit,
-      int offset,
+      UserQueries queries,
       RequestAttributes requestAttributes);
 
   UserManagementResponse get(

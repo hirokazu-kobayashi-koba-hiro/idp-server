@@ -34,6 +34,7 @@ import org.idp.server.control_plane.management.identity.user.verifier.UserRegist
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerifier;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.UserQueries;
 import org.idp.server.core.oidc.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.oidc.identity.event.UserLifecycleEvent;
 import org.idp.server.core.oidc.identity.event.UserLifecycleEventPublisher;
@@ -141,14 +142,12 @@ public class UserManagementEntryService implements UserManagementApi {
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      int limit,
-      int offset,
+      UserQueries queries,
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("findList");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    List<User> users = userQueryRepository.findList(tenant, limit, offset);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -172,7 +171,22 @@ public class UserManagementEntryService implements UserManagementApi {
       return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
     }
 
-    Map<String, Object> response = Map.of("list", users.stream().map(User::toMap).toList());
+    long totalCount = userQueryRepository.findTotalCount(tenant, queries);
+    if (totalCount == 0) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("list", List.of());
+      response.put("total_count", 0);
+      response.put("limit", queries.limit());
+      response.put("offset", queries.offset());
+      return new UserManagementResponse(UserManagementStatus.OK, response);
+    }
+
+    List<User> users = userQueryRepository.findList(tenant, queries);
+    Map<String, Object> response = new HashMap<>();
+    response.put("list", users.stream().map(User::toMap).toList());
+    response.put("total_count", totalCount);
+    response.put("limit", queries.limit());
+    response.put("offset", queries.offset());
 
     return new UserManagementResponse(UserManagementStatus.OK, response);
   }

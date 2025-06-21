@@ -89,11 +89,11 @@ public class SecurityEventManagementEntryService implements SecurityEventManagem
       return new SecurityEventManagementResponse(SecurityEventManagementStatus.FORBIDDEN, response);
     }
 
-    int totalCount = securityEventQueryRepository.findTotalCount(tenant, queries);
+    long totalCount = securityEventQueryRepository.findTotalCount(tenant, queries);
     if (totalCount == 0) {
       Map<String, Object> response = new HashMap<>();
       response.put("list", List.of());
-      response.put("totalCount", 0);
+      response.put("total_count", 0);
       response.put("limit", queries.limit());
       response.put("offset", queries.offset());
       return new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, response);
@@ -103,7 +103,7 @@ public class SecurityEventManagementEntryService implements SecurityEventManagem
 
     Map<String, Object> response = new HashMap<>();
     response.put("list", events.stream().map(SecurityEvent::toMap).toList());
-    response.put("totalCount", totalCount);
+    response.put("total_count", totalCount);
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
 

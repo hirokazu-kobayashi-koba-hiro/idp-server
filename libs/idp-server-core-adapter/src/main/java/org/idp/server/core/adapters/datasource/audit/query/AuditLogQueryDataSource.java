@@ -31,7 +31,7 @@ public class AuditLogQueryDataSource implements AuditLogQueryRepository {
   }
 
   @Override
-  public int findTotalCount(Tenant tenant, AuditLogQueries queries) {
+  public long findTotalCount(Tenant tenant, AuditLogQueries queries) {
     AuditLogSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectCount(tenant, queries);
 
@@ -39,7 +39,7 @@ public class AuditLogQueryDataSource implements AuditLogQueryRepository {
       return 0;
     }
 
-    return Integer.parseInt(result.get("count"));
+    return Long.parseLong(result.get("count"));
   }
 
   @Override
