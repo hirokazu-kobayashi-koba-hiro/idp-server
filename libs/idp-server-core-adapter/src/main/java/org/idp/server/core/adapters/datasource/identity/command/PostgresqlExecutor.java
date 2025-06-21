@@ -166,7 +166,8 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
                  verified_claims = ?::jsonb,
                  status = ?,
                  updated_at = now()
-                 WHERE id = ?::uuid;
+                 WHERE id = ?::uuid
+                 AND tenant_id = ?::uuid;
                  """;
 
     List<Object> params = new ArrayList<>();
@@ -194,6 +195,26 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     params.add(jsonConverter.write(user.verifiedClaims()));
     params.add(user.statusName());
     params.add(user.subAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  public void updatePassword(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                     UPDATE idp_user
+                     SET hashed_password = ?,
+                     updated_at = now()
+                     WHERE id = ?::uuid
+                     AND tenant_id = ?::uuid;
+                     """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(user.hashedPassword());
+    params.add(user.subAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

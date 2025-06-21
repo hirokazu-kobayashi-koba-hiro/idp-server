@@ -44,6 +44,28 @@ export const postWithJson = async ({ url, headers, body }) => {
   }
 };
 
+export const putWithJson = async ({ url, headers, body }) => {
+  try {
+    return await client.put(url, body, {
+      headers,
+      withCredentials: true
+    });
+  } catch (e) {
+    return e.response ? e.response : e;
+  }
+};
+
+export const patchWithJson = async ({ url, headers, body }) => {
+  try {
+    return await client.patch(url, body, {
+      headers,
+      withCredentials: true
+    });
+  } catch (e) {
+    return e.response ? e.response : e;
+  }
+};
+
 export const deletion = async ({ url, headers }) => {
   try {
     return await client.delete(url, {

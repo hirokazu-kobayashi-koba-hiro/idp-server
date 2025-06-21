@@ -22,27 +22,27 @@ import org.idp.server.control_plane.management.identity.user.io.UserManagementRe
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 
-public class UserRegistrationRequestValidationResult {
+public class UserRequestValidationResult {
 
   boolean isValid;
   JsonSchemaValidationResult userResult;
   boolean dryRun;
 
-  public static UserRegistrationRequestValidationResult success(
+  public static UserRequestValidationResult success(
       JsonSchemaValidationResult adminUserResult, boolean dryRun) {
-    return new UserRegistrationRequestValidationResult(true, adminUserResult, dryRun);
+    return new UserRequestValidationResult(true, adminUserResult, dryRun);
   }
 
-  private UserRegistrationRequestValidationResult(
+  private UserRequestValidationResult(
       boolean isValid, JsonSchemaValidationResult userResult, boolean dryRun) {
     this.isValid = isValid;
     this.userResult = userResult;
     this.dryRun = dryRun;
   }
 
-  public static UserRegistrationRequestValidationResult error(
+  public static UserRequestValidationResult error(
       JsonSchemaValidationResult adminUserResult, boolean dryRun) {
-    return new UserRegistrationRequestValidationResult(false, adminUserResult, dryRun);
+    return new UserRequestValidationResult(false, adminUserResult, dryRun);
   }
 
   public boolean isValid() {

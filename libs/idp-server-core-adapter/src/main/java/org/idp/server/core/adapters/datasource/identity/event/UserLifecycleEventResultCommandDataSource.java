@@ -36,6 +36,9 @@ public class UserLifecycleEventResultCommandDataSource
       Tenant tenant,
       UserLifecycleEvent userLifecycleEvent,
       List<UserLifecycleEventResult> userLifecycleEventResults) {
+    if (userLifecycleEventResults.isEmpty()) {
+      return;
+    }
     UserLifecycleEventResultSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, userLifecycleEvent, userLifecycleEventResults);
   }

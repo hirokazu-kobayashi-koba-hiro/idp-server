@@ -23,7 +23,6 @@ import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
-import org.idp.server.control_plane.management.identity.user.io.UserUpdateRequest;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.core.oidc.token.OAuthToken;
@@ -39,6 +38,8 @@ public interface UserManagementApi {
     map.put("findList", new AdminPermissions(Set.of(AdminPermission.USER_READ)));
     map.put("get", new AdminPermissions(Set.of(AdminPermission.USER_READ)));
     map.put("update", new AdminPermissions(Set.of(AdminPermission.USER_UPDATE)));
+    map.put("patch", new AdminPermissions(Set.of(AdminPermission.USER_UPDATE)));
+    map.put("updatePassword", new AdminPermissions(Set.of(AdminPermission.USER_UPDATE)));
     map.put("delete", new AdminPermissions(Set.of(AdminPermission.USER_DELETE)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
@@ -75,7 +76,25 @@ public interface UserManagementApi {
       User operator,
       OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
-      UserUpdateRequest request,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  UserManagementResponse patch(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  UserManagementResponse updatePassword(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 

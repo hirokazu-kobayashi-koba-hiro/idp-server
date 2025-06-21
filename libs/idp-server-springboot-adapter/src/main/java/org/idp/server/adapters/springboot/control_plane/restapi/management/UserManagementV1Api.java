@@ -24,7 +24,6 @@ import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
-import org.idp.server.control_plane.management.identity.user.io.UserUpdateRequest;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
@@ -135,7 +134,89 @@ public class UserManagementV1Api implements ParameterTransformable {
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             userIdentifier,
-            new UserUpdateRequest(body),
+            new UserRegistrationRequest(body),
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(
+        response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PatchMapping("/{user-id}")
+  public ResponseEntity<?> patch(
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("user-id") UserIdentifier userIdentifier,
+      @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        userManagementApi.patch(
+            tenantIdentifier,
+            operatorPrincipal.getUser(),
+            operatorPrincipal.getOAuthToken(),
+            userIdentifier,
+            new UserRegistrationRequest(body),
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(
+        response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PutMapping("/{user-id}/password")
+  public ResponseEntity<?> updatePassword(
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("user-id") UserIdentifier userIdentifier,
+      @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        userManagementApi.updatePassword(
+            tenantIdentifier,
+            operatorPrincipal.getUser(),
+            operatorPrincipal.getOAuthToken(),
+            userIdentifier,
+            new UserRegistrationRequest(body),
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(
+        response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @DeleteMapping("/{user-id}")
+  public ResponseEntity<?> delete(
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("user-id") UserIdentifier userIdentifier,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        userManagementApi.delete(
+            tenantIdentifier,
+            operatorPrincipal.getUser(),
+            operatorPrincipal.getOAuthToken(),
+            userIdentifier,
             requestAttributes,
             dryRun);
 
