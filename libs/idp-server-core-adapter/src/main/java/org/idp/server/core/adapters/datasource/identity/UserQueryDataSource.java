@@ -93,6 +93,24 @@ public class UserQueryDataSource implements UserQueryRepository {
   }
 
   @Override
+  public User findByName(Tenant tenant, String name, String providerId) {
+    try {
+      UserSqlExecutor executor = executors.get(tenant.databaseType());
+      Map<String, String> result = executor.selectByName(tenant, name, providerId);
+
+      if (Objects.isNull(result) || result.isEmpty()) {
+        return new User();
+      }
+
+      UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
+      return collectAssignedDataAndConvert(tenant, userIdentifier, executor, result);
+    } catch (SqlTooManyResultsException exception) {
+
+      throw new UserTooManyFoundResultException(exception.getMessage());
+    }
+  }
+
+  @Override
   public User findByDeviceId(Tenant tenant, String deviceId, String providerId) {
     try {
       UserSqlExecutor executor = executors.get(tenant.databaseType());
