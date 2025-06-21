@@ -23,7 +23,7 @@ import java.util.List;
 
 public interface AuditLogQueryRepository {
 
-    int findTotalCount(Tenant tenant, AuditLogQueries queries);
+    long findTotalCount(Tenant tenant, AuditLogQueries queries);
     List<AuditLog> findList(Tenant tenant, AuditLogQueries queries);
     AuditLog find(Tenant tenant, AuditLogIdentifier identifier);
 }

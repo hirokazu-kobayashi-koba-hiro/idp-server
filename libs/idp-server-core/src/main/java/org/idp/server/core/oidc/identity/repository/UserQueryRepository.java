@@ -19,6 +19,7 @@ package org.idp.server.core.oidc.identity.repository;
 import java.util.List;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.UserQueries;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface UserQueryRepository {
@@ -35,7 +36,9 @@ public interface UserQueryRepository {
 
   User findByPhone(Tenant tenant, String hint, String providerId);
 
-  List<User> findList(Tenant tenant, int limit, int offset);
+  long findTotalCount(Tenant tenant, UserQueries queries);
+
+  List<User> findList(Tenant tenant, UserQueries queries);
 
   User findByProvider(Tenant tenant, String providerId, String providerUserId);
 

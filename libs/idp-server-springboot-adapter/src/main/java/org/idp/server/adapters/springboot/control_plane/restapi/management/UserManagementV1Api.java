@@ -25,6 +25,7 @@ import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.UserQueries;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -72,8 +73,7 @@ public class UserManagementV1Api implements ParameterTransformable {
   public ResponseEntity<?> get(
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestParam(value = "limit", defaultValue = "20") String limitValue,
-      @RequestParam(value = "offset", defaultValue = "0") String offsetValue,
+      @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -82,8 +82,7 @@ public class UserManagementV1Api implements ParameterTransformable {
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
-            Integer.parseInt(limitValue),
-            Integer.parseInt(offsetValue),
+            new UserQueries(queryParams),
             requestAttributes);
 
     HttpHeaders headers = new HttpHeaders();

@@ -83,11 +83,11 @@ public class AuditLogManagementEntryService implements AuditLogManagementApi {
       return new AuditLogManagementResponse(AuditLogManagementStatus.FORBIDDEN, response);
     }
 
-    int totalCount = auditLogQueryRepository.findTotalCount(tenant, queries);
+    long totalCount = auditLogQueryRepository.findTotalCount(tenant, queries);
     if (totalCount == 0) {
       Map<String, Object> response = new HashMap<>();
       response.put("list", List.of());
-      response.put("totalCount", 0);
+      response.put("total_count", 0);
       response.put("limit", queries.limit());
       response.put("offset", queries.offset());
       return new AuditLogManagementResponse(AuditLogManagementStatus.OK, response);
@@ -97,7 +97,7 @@ public class AuditLogManagementEntryService implements AuditLogManagementApi {
 
     Map<String, Object> response = new HashMap<>();
     response.put("list", auditLogs.stream().map(AuditLog::toMap).toList());
-    response.put("totalCount", totalCount);
+    response.put("total_count", totalCount);
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
 

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.UserQueries;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -120,23 +121,207 @@ public class MysqlExecutor implements UserSqlExecutor {
   }
 
   @Override
-  public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
+  public Map<String, String> selectCount(Tenant tenant, UserQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        String.format(selectSql, """
-                WHERE idp_user.tenant_id = ?
-            """);
-
-    String pagedSql = sqlTemplate + """
-            limit ?
-            OFFSET ?
-            """;
-
+    StringBuilder where = new StringBuilder("WHERE idp_user.tenant_id = ?::uuid");
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
-    params.add(limit);
-    params.add(offset);
+    params.add(tenant.identifierUUID());
+
+    if (queries.hasFrom()) {
+      where.append(" AND idp_user.created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      where.append(" AND idp_user.created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasUserId()) {
+      where.append(" AND idp_user.id = ?::uuid");
+      params.add(queries.userIdAsUuid());
+    }
+
+    if (queries.hasExternalUserId()) {
+      where.append(" AND idp_user.provider_user_id = ?");
+      params.add(queries.externalUserId());
+    }
+
+    if (queries.hasProviderId()) {
+      where.append(" AND idp_user.provider_id = ?");
+      params.add(queries.providerId());
+    }
+
+    if (queries.hasProviderUserId()) {
+      where.append(" AND idp_user.provider_user_id = ?");
+      params.add(queries.providerUserId());
+    }
+
+    if (queries.hasEmail()) {
+      where.append(" AND idp_user.email = ?");
+      params.add(queries.email());
+    }
+
+    if (queries.hasStatus()) {
+      where.append(" AND idp_user.status = ?");
+      params.add(queries.status().name());
+    }
+
+    if (queries.hasName()) {
+      where.append(" AND LOWER(idp_user.name) LIKE ?");
+      params.add("%" + queries.name().toLowerCase() + "%");
+    }
+
+    if (queries.hasGivenName()) {
+      where.append(" AND LOWER(idp_user.given_name) LIKE ?");
+      params.add("%" + queries.givenName().toLowerCase() + "%");
+    }
+
+    if (queries.hasFamilyName()) {
+      where.append(" AND LOWER(idp_user.family_name) LIKE ?");
+      params.add("%" + queries.familyName().toLowerCase() + "%");
+    }
+
+    if (queries.hasMiddleName()) {
+      where.append(" AND LOWER(idp_user.middle_name) LIKE ?");
+      params.add("%" + queries.middleName().toLowerCase() + "%");
+    }
+    if (queries.hasNickname()) {
+      where.append(" AND LOWER(idp_user.nickname) LIKE ?");
+      params.add("%" + queries.nickname().toLowerCase() + "%");
+    }
+    if (queries.hasPreferredUsername()) {
+      where.append(" AND LOWER(idp_user.preferred_username) LIKE ?");
+      params.add("%" + queries.preferredUsername().toLowerCase() + "%");
+    }
+
+    if (queries.hasPhoneNumber()) {
+      where.append(" AND idp_user.phone_number = ?");
+      params.add(queries.phoneNumber());
+    }
+
+    if (queries.hasRole()) {
+      where.append(" AND role.name LIKE ?");
+      params.add("%" + queries.role() + "%");
+    }
+
+    if (queries.hasPermission()) {
+      where.append(" AND user_effective_permissions_view.permission_name LIKE ?");
+      params.add("%" + queries.permission() + "%");
+    }
+
+    String sql =
+        """
+    SELECT COUNT(DISTINCT idp_user.id)
+    FROM idp_user
+    LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
+    LEFT JOIN role ON idp_user_roles.role_id = role.id
+    LEFT JOIN user_effective_permissions_view ON idp_user.id = user_effective_permissions_view.user_id
+    """;
+
+    return sqlExecutor.selectOne(sql + where, params);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(Tenant tenant, UserQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder where = new StringBuilder("WHERE idp_user.tenant_id = ?::uuid");
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+
+    if (queries.hasFrom()) {
+      where.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      where.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasUserId()) {
+      where.append(" AND idp_user.id = ?::uuid");
+      params.add(queries.userIdAsUuid());
+    }
+
+    if (queries.hasExternalUserId()) {
+      where.append(" AND idp_user.provider_user_id = ?");
+      params.add(queries.externalUserId());
+    }
+
+    if (queries.hasProviderId()) {
+      where.append(" AND idp_user.provider_id = ?");
+      params.add(queries.providerId());
+    }
+
+    if (queries.hasProviderUserId()) {
+      where.append(" AND idp_user.provider_user_id = ?");
+      params.add(queries.providerUserId());
+    }
+
+    if (queries.hasEmail()) {
+      where.append(" AND idp_user.email = ?");
+      params.add(queries.email());
+    }
+
+    if (queries.hasStatus()) {
+      where.append(" AND idp_user.status = ?");
+      params.add(queries.status().name());
+    }
+
+    if (queries.hasName()) {
+      where.append(" AND LOWER(idp_user.name) LIKE ?");
+      params.add("%" + queries.name().toLowerCase() + "%");
+    }
+
+    if (queries.hasGivenName()) {
+      where.append(" AND LOWER(idp_user.given_name) LIKE ?");
+      params.add("%" + queries.givenName().toLowerCase() + "%");
+    }
+
+    if (queries.hasFamilyName()) {
+      where.append(" AND LOWER(idp_user.family_name) LIKE ?");
+      params.add("%" + queries.familyName().toLowerCase() + "%");
+    }
+
+    if (queries.hasMiddleName()) {
+      where.append(" AND LOWER(idp_user.middle_name) LIKE ?");
+      params.add("%" + queries.middleName().toLowerCase() + "%");
+    }
+    if (queries.hasNickname()) {
+      where.append(" AND LOWER(idp_user.nickname) LIKE ?");
+      params.add("%" + queries.nickname().toLowerCase() + "%");
+    }
+    if (queries.hasPreferredUsername()) {
+      where.append(" AND LOWER(idp_user.preferred_username) LIKE ?");
+      params.add("%" + queries.preferredUsername().toLowerCase() + "%");
+    }
+
+    if (queries.hasPhoneNumber()) {
+      where.append(" AND idp_user.phone_number = ?");
+      params.add(queries.phoneNumber());
+    }
+
+    if (queries.hasRole()) {
+      where.append(" AND role.name LIKE ?");
+      params.add("%" + queries.role() + "%");
+    }
+
+    if (queries.hasPermission()) {
+      where.append(" AND user_effective_permissions_view.permission_name LIKE ?");
+      params.add("%" + queries.permission() + "%");
+    }
+
+    String pagedSql =
+        String.format(selectSql, where) + """
+          LIMIT ?
+          OFFSET ?
+        """;
+
+    params.add(queries.limit());
+    params.add(queries.offset());
 
     return sqlExecutor.selectList(pagedSql, params);
   }

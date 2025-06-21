@@ -34,7 +34,7 @@ public class SecurityEventQueryDataSource implements SecurityEventQueryRepositor
   }
 
   @Override
-  public int findTotalCount(Tenant tenant, SecurityEventQueries queries) {
+  public long findTotalCount(Tenant tenant, SecurityEventQueries queries) {
     SecurityEventSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectCount(tenant, queries);
 
@@ -42,7 +42,7 @@ public class SecurityEventQueryDataSource implements SecurityEventQueryRepositor
       return 0;
     }
 
-    return Integer.parseInt(result.get("count"));
+    return Long.parseLong(result.get("count"));
   }
 
   @Override
