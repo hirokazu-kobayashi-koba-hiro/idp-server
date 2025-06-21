@@ -61,6 +61,26 @@ public class PostgresqlExecutor implements UserSqlExecutor {
   }
 
   @Override
+  public Map<String, String> selectByName(Tenant tenant, String name, String providerId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        String.format(
+            selectSql,
+            """
+                                WHERE idp_user.tenant_id = ?::uuid
+                                AND idp_user.name = ?
+                                AND idp_user.provider_id = ?
+                            """);
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(name);
+    params.add(providerId);
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
   public Map<String, String> selectByDeviceId(Tenant tenant, String deviceId, String providerId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 

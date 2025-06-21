@@ -192,7 +192,7 @@ docker compose logs -f idp-server
 ```shell
 ./sample-config/test-data.sh \
 -e "local" \
--u ito.ichiro@gmail.com \
+-u ito.ichiro \
 -p successUserCode \
 -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
 -b http://localhost:8080 \

@@ -53,7 +53,7 @@ export const serverConfig = {
     authenticationDeviceId: "7736a252-60b4-45f5-b817-65ea9a540860",
   },
   oauth: {
-    username: "ito.ichiro@gmail.com",
+    username: "ito.ichiro",
     password: "successUserCode",
   },
   acr: "urn:mace:incommon:iap:bronze",
