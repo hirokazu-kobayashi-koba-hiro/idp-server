@@ -36,11 +36,13 @@ public class AuditLogCreator {
       OAuthToken oAuthToken,
       ConfigRegistrationContext context,
       RequestAttributes requestAttributes) {
+
     String id = UUID.randomUUID().toString();
     String description = context.type();
     String tenantId = tenant.identifier().value();
     String clientId = oAuthToken.requestedClientId().value();
     String userId = user.sub();
+    String externalUserId = user.providerUserId();
     JsonNodeWrapper userPayload = JsonNodeWrapper.fromMap(user.toMap());
     String targetResource = requestAttributes.resource().value();
     String targetResourceAction = requestAttributes.action().value();
@@ -58,6 +60,7 @@ public class AuditLogCreator {
         tenantId,
         clientId,
         userId,
+        externalUserId,
         userPayload,
         targetResource,
         targetResourceAction,
@@ -77,10 +80,12 @@ public class AuditLogCreator {
       User user,
       OAuthToken oAuthToken,
       RequestAttributes requestAttributes) {
+
     String id = UUID.randomUUID().toString();
     String tenantId = tenant.identifier().value();
     String clientId = oAuthToken.requestedClientId().value();
     String userId = user.sub();
+    String externalUserId = user.providerUserId();
     JsonNodeWrapper userPayload = JsonNodeWrapper.fromMap(user.toMap());
     String targetResource = requestAttributes.resource().value();
     String targetResourceAction = requestAttributes.action().value();
@@ -98,6 +103,7 @@ public class AuditLogCreator {
         tenantId,
         clientId,
         userId,
+        externalUserId,
         userPayload,
         targetResource,
         targetResourceAction,
@@ -117,11 +123,13 @@ public class AuditLogCreator {
       OAuthToken oAuthToken,
       ConfigUpdateContext context,
       RequestAttributes requestAttributes) {
+
     String id = UUID.randomUUID().toString();
     String description = context.type();
     String tenantId = tenant.identifier().value();
     String clientId = oAuthToken.requestedClientId().value();
     String userId = user.sub();
+    String externalUserId = user.providerUserId();
     JsonNodeWrapper userPayload = JsonNodeWrapper.fromMap(user.toMap());
     String targetResource = requestAttributes.resource().value();
     String targetResourceAction = requestAttributes.action().value();
@@ -139,6 +147,7 @@ public class AuditLogCreator {
         tenantId,
         clientId,
         userId,
+        externalUserId,
         userPayload,
         targetResource,
         targetResourceAction,
@@ -159,10 +168,12 @@ public class AuditLogCreator {
       OAuthToken oAuthToken,
       Map<String, Object> beforePayload,
       RequestAttributes requestAttributes) {
+
     String id = UUID.randomUUID().toString();
     String tenantId = tenant.identifier().value();
     String clientId = oAuthToken.requestedClientId().value();
     String userId = user.sub();
+    String externalUserId = user.providerUserId();
     JsonNodeWrapper userPayload = JsonNodeWrapper.fromMap(user.toMap());
     String targetResource = requestAttributes.resource().value();
     String targetResourceAction = requestAttributes.action().value();
@@ -180,6 +191,7 @@ public class AuditLogCreator {
         tenantId,
         clientId,
         userId,
+        externalUserId,
         userPayload,
         targetResource,
         targetResourceAction,

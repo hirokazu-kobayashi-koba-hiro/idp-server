@@ -27,12 +27,14 @@ import java.util.UUID;
 public class SecurityEventUser implements UuidConvertable {
   String id;
   String name;
+  String exSub;
 
   public SecurityEventUser() {}
 
-  public SecurityEventUser(String id, String name) {
+  public SecurityEventUser(String id, String name, String exSub) {
     this.id = id;
     this.name = name;
+    this.exSub = exSub;
   }
 
   public Map<String, Object> toMap() {
@@ -42,6 +44,9 @@ public class SecurityEventUser implements UuidConvertable {
     }
     if (name != null) {
       result.put("name", name);
+    }
+    if (exSub != null) {
+      result.put("sub", exSub);
     }
     return result;
   }
@@ -56,6 +61,10 @@ public class SecurityEventUser implements UuidConvertable {
 
   public String name() {
     return name;
+  }
+
+  public String exSub() {
+    return exSub;
   }
 
   public boolean exists() {

@@ -43,7 +43,7 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
                 client_name,
                 user_id,
                 user_name,
-                login_hint,
+                external_user_id,
                 ip_address,
                 user_agent,
                 detail
@@ -76,8 +76,7 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
     if (securityEvent.hasUser()) {
       params.add(securityEvent.user().idAsUuid());
       params.add(securityEvent.user().name());
-      // TODO login hint
-      params.add(securityEvent.user().name());
+      params.add(securityEvent.user().exSub());
     } else {
       params.add(null);
       params.add(null);

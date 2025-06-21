@@ -78,7 +78,8 @@ public class OAuthFlowEventCreator {
     builder.add(securityEventClient);
 
     if (user != null) {
-      SecurityEventUser securityEventUser = new SecurityEventUser(user.sub(), user.name());
+      SecurityEventUser securityEventUser =
+          new SecurityEventUser(user.sub(), user.name(), user.providerUserId());
       builder.add(securityEventUser);
       detailsMap.put("user", user.toMap());
     }

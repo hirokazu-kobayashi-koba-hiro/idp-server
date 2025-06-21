@@ -34,8 +34,35 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
     String sqlTemplate =
         """
                 INSERT IGNORE INTO security_event
-               　(id, type, description, tenant_id, tenant_name, client_id, client_name, user_id, user_name, login_hint, ip_address, user_agent, detail)
-               　VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+               　(
+               id,
+               type,
+               description,
+               tenant_id,
+               tenant_name,
+               client_id,
+               client_name,
+               user_id,
+               user_name,
+               external_user_id,
+               ip_address,
+               user_agent,
+               detail)
+               VALUES (
+               ?,
+               ?,
+               ?,
+               ?,
+               ?,
+               ?,
+               ?,
+               ?,
+               ?,
+               ?,
+               ?,
+               ?,
+               ?
+               );
                 """;
     List<Object> params = new ArrayList<>();
     params.add(securityEvent.identifier().value());
@@ -49,8 +76,7 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
     if (securityEvent.hasUser()) {
       params.add(securityEvent.user().id());
       params.add(securityEvent.user().name());
-      // TODO login hint
-      params.add(securityEvent.user().name());
+      params.add(securityEvent.user().exSub());
     } else {
       params.add(null);
       params.add(null);

@@ -18,6 +18,7 @@ org.idp.server.core.adapters.datasource.oidc.request.AuthorizationRequestDataSou
 org.idp.server.core.adapters.datasource.oidc.request.operation.AuthorizationRequestOperationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.multi_tenancy.organization.OrganizationDataSourceProvider
 org.idp.server.core.adapters.datasource.security.event.SecurityEventDataSourceProvider
+org.idp.server.core.adapters.datasource.security.event.query.SecurityEventQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.security.hook.configuration.query.SecurityEventHookConfigurationDataSourceProvider
 org.idp.server.core.adapters.datasource.security.hook.configuration.command.SecurityEventHookConfigurationDataSourceProvider
 org.idp.server.core.adapters.datasource.security.hook.result.SecurityEventHookResultCommandDataSourceProvider
@@ -41,3 +42,4 @@ org.idp.server.core.adapters.datasource.federation.config.command.FederationConf
 org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.command.TenantInvitationDataSourceProvider
 org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.query.TenantInvitationQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.audit.command.AuditLogCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.audit.query.AuditLogQueryDataSourceProvider

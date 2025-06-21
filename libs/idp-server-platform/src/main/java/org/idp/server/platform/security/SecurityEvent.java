@@ -165,4 +165,8 @@ public class SecurityEvent {
   public String tokenIssuer() {
     return tenant.issuer();
   }
+
+  public boolean exists() {
+    return identifier != null && identifier.exists();
+  }
 }

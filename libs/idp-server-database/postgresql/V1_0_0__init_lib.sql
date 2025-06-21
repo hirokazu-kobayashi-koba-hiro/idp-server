@@ -595,20 +595,20 @@ CREATE INDEX idx_authorization_granted_tenant_client_user ON authorization_grant
 
 CREATE TABLE security_event
 (
-    id          UUID,
-    type        VARCHAR(255) NOT NULL,
-    description VARCHAR(255) NOT NULL,
-    tenant_id   UUID         NOT NULL,
-    tenant_name VARCHAR(255) NOT NULL,
-    client_id   VARCHAR(255) NOT NULL,
-    client_name VARCHAR(255) NOT NULL,
-    user_id     UUID,
-    user_name   VARCHAR(255),
-    login_hint  VARCHAR(255),
-    ip_address  INET,
-    user_agent  TEXT,
-    detail      JSONB        NOT NULL,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id               UUID,
+    type             VARCHAR(255) NOT NULL,
+    description      VARCHAR(255) NOT NULL,
+    tenant_id        UUID         NOT NULL,
+    tenant_name      VARCHAR(255) NOT NULL,
+    client_id        VARCHAR(255) NOT NULL,
+    client_name      VARCHAR(255) NOT NULL,
+    user_id          UUID,
+    user_name        VARCHAR(255),
+    external_user_id VARCHAR(255),
+    ip_address       INET,
+    user_agent       TEXT,
+    detail           JSONB        NOT NULL,
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
 
@@ -623,8 +623,10 @@ CREATE INDEX idx_events_type ON security_event (type);
 CREATE INDEX idx_events_tenant ON security_event (tenant_id);
 CREATE INDEX idx_events_client ON security_event (client_id);
 CREATE INDEX idx_events_user ON security_event (user_id);
+CREATE INDEX idx_events_external_user_id ON security_event (external_user_id);
 CREATE INDEX idx_events_created_at ON security_event (created_at);
 CREATE INDEX idx_events_detail_jsonb ON security_event USING GIN (detail);
+CREATE INDEX idx_events_tenant_created_at ON security_event (tenant_id, created_at);
 
 CREATE TABLE security_event_hook_configurations
 (
@@ -898,6 +900,7 @@ CREATE TABLE audit_log
     tenant_id              UUID                    NOT NULL,
     client_id              VARCHAR(255)            NOT NULL,
     user_id                UUID                    NOT NULL,
+    external_user_id       VARCHAR(255)            NOT NULL,
     user_payload           JSONB                   NOT NULL,
     target_resource        TEXT                    NOT NULL,
     target_resource_action TEXT                    NOT NULL,
@@ -906,6 +909,7 @@ CREATE TABLE audit_log
     ip_address             TEXT,
     user_agent             TEXT,
     dry_run                BOOLEAN,
+    attributes             JSONB,
     created_at             TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id)
 );
@@ -913,3 +917,7 @@ CREATE TABLE audit_log
 CREATE INDEX idx_audit_log_tenant_id ON audit_log (tenant_id);
 CREATE INDEX idx_audit_log_client_id ON audit_log (client_id);
 CREATE INDEX idx_audit_log_user_id ON audit_log (user_id);
+CREATE INDEX idx_audit_log_external_user_id ON audit_log (external_user_id);
+CREATE INDEX idx_audit_log_created_at ON audit_log (created_at);
+CREATE INDEX idx_audit_log_tenant_created_at ON audit_log (tenant_id, created_at);
+CREATE INDEX idx_audit_log_attributes ON audit_log USING GIN (attributes);

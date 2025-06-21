@@ -34,6 +34,7 @@ import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.control_plane.base.schema.SchemaReader;
+import org.idp.server.control_plane.management.audit.AuditLogManagementApi;
 import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
@@ -41,6 +42,7 @@ import org.idp.server.control_plane.management.identity.verification.IdentityVer
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
+import org.idp.server.control_plane.management.security.event.SecurityEventManagementApi;
 import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
 import org.idp.server.control_plane.management.tenant.TenantManagementApi;
 import org.idp.server.control_plane.management.tenant.invitation.TenantInvitationManagementApi;
@@ -96,6 +98,7 @@ import org.idp.server.core.oidc.userinfo.UserinfoProtocol;
 import org.idp.server.core.oidc.userinfo.UserinfoProtocols;
 import org.idp.server.federation.sso.oidc.OidcSsoExecutorPluginLoader;
 import org.idp.server.federation.sso.oidc.OidcSsoExecutors;
+import org.idp.server.platform.audit.AuditLogQueryRepository;
 import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.datasource.cache.CacheStore;
@@ -110,10 +113,7 @@ import org.idp.server.platform.proxy.TenantAwareEntryServiceProxy;
 import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.SecurityEventHooks;
 import org.idp.server.platform.security.SecurityEventPublisher;
-import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
-import org.idp.server.platform.security.repository.SecurityEventHookConfigurationCommandRepository;
-import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
-import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
+import org.idp.server.platform.security.repository.*;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
 import org.idp.server.usecases.application.system.*;
@@ -152,6 +152,8 @@ public class IdpServerApplication {
   FederationConfigurationManagementApi federationConfigurationManagementApi;
   IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi;
   SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi;
+  SecurityEventManagementApi securityEventManagementApi;
+  AuditLogManagementApi auditLogManagementApi;
   UserAuthenticationApi userAuthenticationApi;
 
   public IdpServerApplication(
@@ -271,6 +273,10 @@ public class IdpServerApplication {
                 BackchannelAuthenticationRequestOperationCommandRepository.class);
     CibaGrantOperationCommandRepository cibaGrantOperationCommandRepository =
         applicationComponentContainer.resolve(CibaGrantOperationCommandRepository.class);
+    SecurityEventQueryRepository securityEventQueryRepository =
+        applicationComponentContainer.resolve(SecurityEventQueryRepository.class);
+    AuditLogQueryRepository auditLogQueryRepository =
+        applicationComponentContainer.resolve(AuditLogQueryRepository.class);
 
     applicationComponentContainer.register(
         PasswordCredentialsGrantDelegate.class,
@@ -628,6 +634,20 @@ public class IdpServerApplication {
             IdentityVerificationConfigManagementApi.class,
             tenantDialectProvider);
 
+    this.securityEventManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new SecurityEventManagementEntryService(
+                securityEventQueryRepository, tenantQueryRepository, auditLogWriters),
+            SecurityEventManagementApi.class,
+            tenantDialectProvider);
+
+    this.auditLogManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AuditLogManagementEntryService(
+                auditLogQueryRepository, tenantQueryRepository, auditLogWriters),
+            AuditLogManagementApi.class,
+            tenantDialectProvider);
+
     this.userAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new UserAuthenticationEntryService(
@@ -744,5 +764,13 @@ public class IdpServerApplication {
 
   public SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi() {
     return securityEventHookConfigurationManagementApi;
+  }
+
+  public SecurityEventManagementApi securityEventManagementApi() {
+    return securityEventManagementApi;
+  }
+
+  public AuditLogManagementApi auditLogManagementApi() {
+    return auditLogManagementApi;
   }
 }

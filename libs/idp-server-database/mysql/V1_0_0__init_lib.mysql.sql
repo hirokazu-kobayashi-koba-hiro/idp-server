@@ -465,6 +465,7 @@ CREATE TABLE security_event
     client_id   VARCHAR(255) NOT NULL,
     client_name VARCHAR(255) NOT NULL,
     user_id     CHAR(36),
+    external_user_id VARCHAR(255),
     user_name   VARCHAR(255),
     login_hint  VARCHAR(255),
     ip_address  VARCHAR(45),
@@ -476,14 +477,12 @@ CREATE TABLE security_event
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_events_type ON security_event (type);
-
 CREATE INDEX idx_events_tenant ON security_event (tenant_id);
-
 CREATE INDEX idx_events_client ON security_event (client_id);
-
 CREATE INDEX idx_events_user ON security_event (user_id);
-
+CREATE INDEX idx_events_external_user_id ON security_event (external_user_id);
 CREATE INDEX idx_events_created_at ON security_event (created_at);
+CREATE INDEX idx_events_tenant_created_at ON security_event (tenant_id, created_at);
 
 
 CREATE TABLE security_event_notifications
@@ -608,3 +607,32 @@ CREATE TABLE idp_user_lifecycle_event_result
     created_at     TIMESTAMP DEFAULT now(),
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE audit_log
+(
+    id                     CHAR(36)                    NOT NULL,
+    type                   VARCHAR(255)            NOT NULL,
+    description            VARCHAR(255)            NOT NULL,
+    tenant_id              CHAR(36)                    NOT NULL,
+    client_id              VARCHAR(255)            NOT NULL,
+    user_id                CHAR(36)                    NOT NULL,
+    external_user_id       VARCHAR(255)            NOT NULL,
+    user_payload           JSON                   NOT NULL,
+    target_resource        TEXT                    NOT NULL,
+    target_resource_action TEXT                    NOT NULL,
+    before_payload         JSON,
+    after_payload          JSON,
+    ip_address             TEXT,
+    user_agent             TEXT,
+    dry_run                BOOLEAN,
+    attributes             JSON,
+    created_at             TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE INDEX idx_audit_log_tenant_id ON audit_log (tenant_id);
+CREATE INDEX idx_audit_log_client_id ON audit_log (client_id);
+CREATE INDEX idx_audit_log_user_id ON audit_log (user_id);
+CREATE INDEX idx_audit_log_external_user_id ON audit_log (external_user_id);
+CREATE INDEX idx_audit_log_created_at ON audit_log (created_at);
+CREATE INDEX idx_audit_log_tenant_created_at ON audit_log (tenant_id, created_at);
