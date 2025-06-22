@@ -42,10 +42,9 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
       UserQueryRepository userQueryRepository) {
 
     try {

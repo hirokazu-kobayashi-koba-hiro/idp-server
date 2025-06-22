@@ -40,10 +40,9 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
       UserQueryRepository userQueryRepository) {
 
     String username = request.optValueAsString("username", "");

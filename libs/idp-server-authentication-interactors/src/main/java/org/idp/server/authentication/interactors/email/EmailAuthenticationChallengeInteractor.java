@@ -47,10 +47,9 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
       UserQueryRepository userQueryRepository) {
 
     EmailAuthenticationConfiguration emailAuthenticationConfiguration =
@@ -90,7 +89,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
         EmailVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
 
     transactionCommandRepository.register(
-        tenant, authenticationTransactionIdentifier, "email", emailVerificationChallenge);
+        tenant, transaction.identifier(), "email", emailVerificationChallenge);
 
     User user = userQueryRepository.findByEmail(tenant, email, "idp-server");
 

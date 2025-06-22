@@ -40,10 +40,9 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
       UserQueryRepository userQueryRepository) {
     SmsAuthenticationConfiguration configuration =
         configurationQueryRepository.get(tenant, "sms", SmsAuthenticationConfiguration.class);
@@ -52,8 +51,7 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
     SmsAuthenticationExecutionRequest executionRequest =
         new SmsAuthenticationExecutionRequest(request.toMap());
     SmsAuthenticationExecutionResult executionResult =
-        executor.verify(
-            tenant, authenticationTransactionIdentifier, executionRequest, configuration);
+        executor.verify(tenant, transaction.identifier(), executionRequest, configuration);
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(

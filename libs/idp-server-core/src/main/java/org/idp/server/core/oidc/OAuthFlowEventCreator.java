@@ -37,13 +37,13 @@ public class OAuthFlowEventCreator {
       Tenant tenant,
       AuthorizationRequest authorizationRequest,
       User user,
-      DefaultSecurityEventType defaultSecurityEventType,
+      SecurityEventType securityEventType,
       RequestAttributes requestAttributes) {
     this.tenant = tenant;
     this.authorizationRequest = authorizationRequest;
     this.user = user;
-    this.securityEventType = defaultSecurityEventType.toEventType();
-    this.securityEventDescription = defaultSecurityEventType.toEventDescription();
+    this.securityEventType = securityEventType;
+    this.securityEventDescription = new SecurityEventDescription(securityEventType.value());
     this.requestAttributes = requestAttributes;
   }
 

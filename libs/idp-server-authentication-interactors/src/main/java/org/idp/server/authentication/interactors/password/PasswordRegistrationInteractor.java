@@ -49,10 +49,9 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
       UserQueryRepository userQueryRepository) {
 
     Map json = configurationQueryRepository.get(tenant, "password", Map.class);

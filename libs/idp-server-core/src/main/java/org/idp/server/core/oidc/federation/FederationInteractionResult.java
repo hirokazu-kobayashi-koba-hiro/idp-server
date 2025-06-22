@@ -25,6 +25,7 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.event.SecurityEventType;
 
 public class FederationInteractionResult {
 
@@ -36,7 +37,7 @@ public class FederationInteractionResult {
   User user;
   Authentication authentication;
   Map<String, Object> response;
-  DefaultSecurityEventType eventType;
+  SecurityEventType eventType;
 
   public static FederationInteractionResult success(
       FederationType federationType, SsoProvider ssoProvider, OidcSsoSession session, User user) {
@@ -79,7 +80,7 @@ public class FederationInteractionResult {
     this.user = user;
     this.authentication = authentication;
     this.response = response;
-    this.eventType = eventType;
+    this.eventType = eventType.toEventType();
   }
 
   public FederationInteractionStatus status() {
@@ -106,7 +107,7 @@ public class FederationInteractionResult {
     return response;
   }
 
-  public DefaultSecurityEventType eventType() {
+  public SecurityEventType eventType() {
     return eventType;
   }
 

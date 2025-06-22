@@ -120,12 +120,7 @@ public class UserOperationEntryService implements UserOperationApi {
         authenticationTransactionQueryRepository.get(tenant, authenticationTransactionIdentifier);
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
-            tenant,
-            authenticationTransaction.identifier(),
-            type,
-            request,
-            authenticationTransaction,
-            userQueryRepository);
+            tenant, authenticationTransaction, type, request, userQueryRepository);
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);

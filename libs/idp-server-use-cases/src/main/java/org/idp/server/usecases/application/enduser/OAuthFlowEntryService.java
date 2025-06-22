@@ -163,12 +163,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
-            tenant,
-            authenticationTransaction.identifier(),
-            type,
-            request,
-            authenticationTransaction,
-            userQueryRepository);
+            tenant, authenticationTransaction, type, request, userQueryRepository);
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
@@ -216,7 +211,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         tenant,
         authorizationRequest,
         oAuthSession.user(),
-        DefaultSecurityEventType.federation_request,
+        DefaultSecurityEventType.federation_request.toEventType(),
         requestAttributes);
 
     return response;
@@ -305,14 +300,14 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
           tenant,
           authorizationRequest,
           user,
-          DefaultSecurityEventType.oauth_authorize,
+          DefaultSecurityEventType.oauth_authorize.toEventType(),
           requestAttributes);
     } else {
       eventPublisher.publish(
           tenant,
           authorizationRequest,
           user,
-          DefaultSecurityEventType.authorize_failure,
+          DefaultSecurityEventType.authorize_failure.toEventType(),
           requestAttributes);
     }
 
@@ -352,7 +347,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         tenant,
         authorizationRequest,
         session.user(),
-        DefaultSecurityEventType.oauth_authorize_with_session,
+        DefaultSecurityEventType.oauth_authorize_with_session.toEventType(),
         requestAttributes);
 
     return authorize;
@@ -384,7 +379,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         tenant,
         authorizationRequest,
         session.user(),
-        DefaultSecurityEventType.oauth_deny,
+        DefaultSecurityEventType.oauth_deny.toEventType(),
         requestAttributes);
 
     authenticationTransactionCommandRepository.delete(

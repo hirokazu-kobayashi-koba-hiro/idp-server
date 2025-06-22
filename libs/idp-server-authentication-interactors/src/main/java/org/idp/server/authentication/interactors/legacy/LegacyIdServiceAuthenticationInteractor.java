@@ -43,10 +43,9 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
       UserQueryRepository userQueryRepository) {
 
     LegacyIdServiceAuthenticationConfiguration configuration =

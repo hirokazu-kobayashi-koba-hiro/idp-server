@@ -21,7 +21,7 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventPublisher;
-import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.event.SecurityEventType;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 public class OAuthFlowEventPublisher {
@@ -36,7 +36,7 @@ public class OAuthFlowEventPublisher {
       Tenant tenant,
       AuthorizationRequest authorizationRequest,
       User user,
-      DefaultSecurityEventType type,
+      SecurityEventType type,
       RequestAttributes requestAttributes) {
     OAuthFlowEventCreator eventCreator =
         new OAuthFlowEventCreator(tenant, authorizationRequest, user, type, requestAttributes);
