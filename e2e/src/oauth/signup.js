@@ -199,6 +199,18 @@ export const requestAuthorizationsForSignup = async ({
         console.error(passwordResponse.data);
       }
 
+      if (mfa === "initial-registration") {
+        const challengeResponse = await postAuthentication({
+          endpoint: serverConfig.authorizationIdEndpoint + "initial-registration",
+          id,
+          body: {
+            ...user,
+          },
+        });
+        console.log(challengeResponse.status);
+        console.log(challengeResponse.data);
+      }
+
       if (mfa === "email") {
         const challengeResponse = await postAuthentication({
           endpoint: serverConfig.authorizationIdEndpoint + "email-verification-challenge",

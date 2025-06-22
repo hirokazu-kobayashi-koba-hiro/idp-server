@@ -17,10 +17,28 @@
 
 package org.idp.server.platform.notification;
 
+import org.idp.server.platform.exception.UnSupportedException;
 
-public interface EmailSender {
+public enum DefaultEmailSenderType {
+  SMTP("smtp"),
+  EXTERNAL_API_SERVICE("external_api_service");
 
-  EmailSenderType type();
+  String typeName;
 
-  EmailSendResult send(EmailSendingRequest request, EmailSenderSetting setting);
+  DefaultEmailSenderType(String typeName) {
+    this.typeName = typeName;
+  }
+
+  public static DefaultEmailSenderType of(String type) {
+    for (DefaultEmailSenderType senderType : values()) {
+      if (senderType.typeName.equals(type)) {
+        return senderType;
+      }
+    }
+    throw new UnSupportedException("No EmailSenderType found for type " + type);
+  }
+
+  public EmailSenderType toType() {
+      return new EmailSenderType(this.typeName);
+  }
 }

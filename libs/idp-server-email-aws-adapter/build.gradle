@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.idp.server'
+version = 'unspecified'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':libs:idp-server-platform')
+    implementation project(':libs:idp-server-authentication-interactors')
+
+    implementation platform('software.amazon.awssdk:bom:2.25.18')
+    implementation 'software.amazon.awssdk:ses'
+
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}

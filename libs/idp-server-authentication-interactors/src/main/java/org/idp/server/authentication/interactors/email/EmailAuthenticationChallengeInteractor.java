@@ -18,12 +18,15 @@ package org.idp.server.authentication.interactors.email;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.notification.EmailSendResult;
 import org.idp.server.platform.notification.EmailSender;
 import org.idp.server.platform.notification.EmailSenders;
 import org.idp.server.platform.notification.EmailSendingRequest;
@@ -55,12 +58,12 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
     EmailAuthenticationConfiguration emailAuthenticationConfiguration =
         configurationQueryRepository.get(tenant, "email", EmailAuthenticationConfiguration.class);
 
-    String email = request.optValueAsString("email", "");
+    String email = resolveEmail(transaction, request);
 
     if (email.isEmpty()) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "invalid_request");
-      response.put("error_description", "email is required.");
+      response.put("error_description", "email is unspecified.");
 
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,
@@ -83,7 +86,14 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
     EmailSendingRequest emailSendingRequest = new EmailSendingRequest(sender, email, subject, body);
 
     EmailSender emailSender = emailSenders.get(emailAuthenticationConfiguration.senderType());
-    emailSender.send(emailSendingRequest, emailAuthenticationConfiguration.setting());
+    EmailSendResult sendResult =
+        emailSender.send(emailSendingRequest, emailAuthenticationConfiguration.setting());
+
+    if (sendResult.isError()) {
+
+      return AuthenticationInteractionRequestResult.serverError(
+          sendResult.data(), type, DefaultSecurityEventType.email_verification_request_failure);
+    }
 
     EmailVerificationChallenge emailVerificationChallenge =
         EmailVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
@@ -91,7 +101,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
     transactionCommandRepository.register(
         tenant, transaction.identifier(), "email", emailVerificationChallenge);
 
-    User user = userQueryRepository.findByEmail(tenant, email, "idp-server");
+    User user = resolveUser(transaction, email);
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -99,6 +109,33 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
         user,
         new Authentication(),
         Map.of(),
-        DefaultSecurityEventType.email_verification_request);
+        DefaultSecurityEventType.email_verification_request_success);
+  }
+
+  private User resolveUser(AuthenticationTransaction transaction, String email) {
+
+    if (!transaction.hasUser()) {
+      User user = new User();
+      user.setSub(UUID.randomUUID().toString());
+      user.setEmail(email);
+      user.setStatus(UserStatus.REGISTERED);
+      return user;
+    }
+
+    User user = transaction.user();
+    user.setEmail(email);
+    return user;
+  }
+
+  private String resolveEmail(
+      AuthenticationTransaction transaction, AuthenticationInteractionRequest request) {
+    if (request.containsKey("email")) {
+      return request.getValueAsString("email");
+    }
+    if (transaction.hasUser()) {
+      User user = transaction.user();
+      return user.email();
+    }
+    return "";
   }
 }

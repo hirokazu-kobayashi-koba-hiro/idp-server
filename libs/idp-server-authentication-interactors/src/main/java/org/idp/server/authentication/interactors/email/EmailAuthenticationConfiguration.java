@@ -43,7 +43,7 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
   }
 
   public EmailSenderType senderType() {
-    return EmailSenderType.of(type);
+    return new EmailSenderType(type);
   }
 
   public String sender() {

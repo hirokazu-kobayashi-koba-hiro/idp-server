@@ -17,10 +17,22 @@
 
 package org.idp.server.platform.notification;
 
+import java.util.Map;
 
-public interface EmailSender {
+public class EmailSendResult {
+    boolean result;
+    Map<String, Object> data;
 
-  EmailSenderType type();
+    public EmailSendResult(boolean result, Map<String, Object> data) {
+        this.result = result;
+        this.data = data;
+    }
 
-  EmailSendResult send(EmailSendingRequest request, EmailSenderSetting setting);
+    public boolean isError() {
+        return !result;
+    }
+
+    public Map<String, Object> data() {
+        return data;
+    }
 }
