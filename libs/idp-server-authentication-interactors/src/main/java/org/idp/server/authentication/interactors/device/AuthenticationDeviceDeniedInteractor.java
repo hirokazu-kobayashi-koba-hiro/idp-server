@@ -27,10 +27,9 @@ public class AuthenticationDeviceDeniedInteractor implements AuthenticationInter
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
       UserQueryRepository userQueryRepository) {
 
     AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;

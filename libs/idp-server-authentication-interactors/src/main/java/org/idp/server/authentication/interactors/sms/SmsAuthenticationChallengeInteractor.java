@@ -40,10 +40,9 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
   @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
-      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
-      AuthenticationTransaction transaction,
       UserQueryRepository userQueryRepository) {
     try {
       SmsAuthenticationConfiguration configuration =
@@ -65,8 +64,7 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
       SmsAuthenticationExecutionRequest executionRequest =
           new SmsAuthenticationExecutionRequest(request.toMap());
       SmsAuthenticationExecutionResult executionResult =
-          executor.challenge(
-              tenant, authenticationTransactionIdentifier, executionRequest, configuration);
+          executor.challenge(tenant, transaction.identifier(), executionRequest, configuration);
 
       if (executionResult.isClientError()) {
         return AuthenticationInteractionRequestResult.clientError(

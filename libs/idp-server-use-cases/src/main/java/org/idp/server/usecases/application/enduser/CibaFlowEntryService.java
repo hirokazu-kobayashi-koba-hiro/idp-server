@@ -97,7 +97,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
         tenant,
         issueResponse.request(),
         issueResponse.user(),
-        DefaultSecurityEventType.backchannel_authentication_request_success,
+        DefaultSecurityEventType.backchannel_authentication_request_success.toEventType(),
         requestAttributes);
 
     AuthenticationTransaction authenticationTransaction =
@@ -110,10 +110,9 @@ public class CibaFlowEntryService implements CibaFlowApi {
     AuthenticationInteractionRequestResult interactionRequestResult =
         authenticationInteractor.interact(
             tenant,
-            authenticationTransaction.identifier(),
+            authenticationTransaction,
             authenticationInteractionType,
             new AuthenticationInteractionRequest(Map.of()),
-            authenticationTransaction,
             userQueryRepository);
 
     AuthenticationTransaction updatedTransaction =
@@ -147,12 +146,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
 
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
-            tenant,
-            authenticationTransaction.identifier(),
-            type,
-            request,
-            authenticationTransaction,
-            userQueryRepository);
+            tenant, authenticationTransaction, type, request, userQueryRepository);
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
 
@@ -177,7 +171,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
           tenant,
           backchannelAuthenticationRequest,
           result.user(),
-          DefaultSecurityEventType.backchannel_authentication_authorize,
+          DefaultSecurityEventType.backchannel_authentication_authorize.toEventType(),
           requestAttributes);
     }
 
@@ -189,7 +183,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
           tenant,
           backchannelAuthenticationRequest,
           result.user(),
-          DefaultSecurityEventType.backchannel_authentication_deny,
+          DefaultSecurityEventType.backchannel_authentication_deny.toEventType(),
           requestAttributes);
     }
 

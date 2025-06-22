@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.event.SecurityEventType;
 
 public class AuthenticationInteractionRequestResult {
 
@@ -28,7 +29,7 @@ public class AuthenticationInteractionRequestResult {
   User user;
   Authentication authentication;
   Map<String, Object> response;
-  DefaultSecurityEventType eventType;
+  SecurityEventType eventType;
 
   public static AuthenticationInteractionRequestResult clientError(
       Map<String, Object> response,
@@ -54,7 +55,7 @@ public class AuthenticationInteractionRequestResult {
     this.status = status;
     this.type = type;
     this.response = response;
-    this.eventType = eventType;
+    this.eventType = eventType.toEventType();
   }
 
   public AuthenticationInteractionRequestResult(
@@ -64,6 +65,21 @@ public class AuthenticationInteractionRequestResult {
       Authentication authentication,
       Map<String, Object> response,
       DefaultSecurityEventType eventType) {
+    this.status = status;
+    this.type = type;
+    this.user = user;
+    this.authentication = authentication;
+    this.response = response;
+    this.eventType = eventType.toEventType();
+  }
+
+  public AuthenticationInteractionRequestResult(
+      AuthenticationInteractionStatus status,
+      AuthenticationInteractionType type,
+      User user,
+      Authentication authentication,
+      Map<String, Object> response,
+      SecurityEventType eventType) {
     this.status = status;
     this.type = type;
     this.user = user;
@@ -100,7 +116,7 @@ public class AuthenticationInteractionRequestResult {
     return response;
   }
 
-  public DefaultSecurityEventType eventType() {
+  public SecurityEventType eventType() {
     return eventType;
   }
 
@@ -118,9 +134,5 @@ public class AuthenticationInteractionRequestResult {
 
   public int statusCode() {
     return this.status.statusCode();
-  }
-
-  public boolean isIdentifyUserEventType() {
-    return eventType.isIdentifyUserEventType();
   }
 }
