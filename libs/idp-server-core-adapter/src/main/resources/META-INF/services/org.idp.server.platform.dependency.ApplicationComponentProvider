@@ -43,3 +43,4 @@ org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.command.
 org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.query.TenantInvitationQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.audit.command.AuditLogCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.audit.query.AuditLogQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.authentication.interaction.query.AuthenticationInteractionQueryDataSourceProvider

@@ -33,7 +33,7 @@ import org.idp.server.platform.uuid.UuidConvertable;
 
 public class User implements JsonReadable, Serializable, UuidConvertable {
   String sub;
-  String providerId;
+  String providerId = "idp-server";
   String providerUserId;
   HashMap<String, Object> providerOriginalPayload = new HashMap<>();
   String name;

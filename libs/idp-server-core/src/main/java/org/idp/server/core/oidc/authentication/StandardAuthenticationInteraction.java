@@ -17,7 +17,7 @@
 package org.idp.server.core.oidc.authentication;
 
 public enum StandardAuthenticationInteraction {
-  PASSWORD_REGISTRATION("password-registration"),
+  INITIAL_REGISTRATION("initial-registration"),
   PASSWORD_AUTHENTICATION("password-authentication"),
   SMS_AUTHENTICATION_REGISTRATION_CHALLENGE("sms-authentication-registration-challenge"),
   SMS_AUTHENTICATION_REGISTRATION("sms-authentication-registration"),

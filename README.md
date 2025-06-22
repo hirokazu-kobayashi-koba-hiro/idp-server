@@ -193,7 +193,7 @@ docker compose logs -f idp-server
 ./sample-config/test-data.sh \
 -e "local" \
 -u ito.ichiro \
--p successUserCode \
+-p successUserCode001 \
 -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
 -b http://localhost:8080 \
 -c clientSecretPost \

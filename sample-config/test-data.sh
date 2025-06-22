@@ -100,10 +100,10 @@ echo "authentication-config"
 
 authentication_config_files=(
   authentication-device/fcm.json
-  email/smtp.json
+  email/no-action.json
   fido-uaf/external.json
   legacy/mocky.json
-  password/standard.json
+  initial-registration/standard.json
   sms/external.json
   webauthn/webauthn4j.json
 )

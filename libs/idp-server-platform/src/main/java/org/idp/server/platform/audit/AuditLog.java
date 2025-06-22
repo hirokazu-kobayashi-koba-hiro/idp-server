@@ -144,7 +144,7 @@ public class AuditLog {
         map.put("description", description);
         map.put("tenant_id", tenantId);
         map.put("client_id", clientId);
-        map.put("user_od", userId);
+        map.put("user_id", userId);
         map.put("external_user_id", externalUserId);
         map.put("user_payload", userPayload.toMap());
         map.put("target_resource", targetResource);

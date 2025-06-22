@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.password;
+package org.idp.server.authentication.interactors.initial_registration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,13 +32,13 @@ import org.idp.server.platform.json.schema.JsonSchemaValidator;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
-public class PasswordRegistrationInteractor implements AuthenticationInteractor {
+public class InitialRegistrationInteractor implements AuthenticationInteractor {
 
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   PasswordEncodeDelegation passwordEncodeDelegation;
   JsonConverter jsonConverter;
 
-  public PasswordRegistrationInteractor(
+  public InitialRegistrationInteractor(
       AuthenticationConfigurationQueryRepository configurationQueryRepository,
       PasswordEncodeDelegation passwordEncodeDelegation) {
     this.configurationQueryRepository = configurationQueryRepository;
@@ -54,7 +54,8 @@ public class PasswordRegistrationInteractor implements AuthenticationInteractor 
       AuthenticationInteractionRequest request,
       UserQueryRepository userQueryRepository) {
 
-    Map json = configurationQueryRepository.get(tenant, "password", Map.class);
+    // TODO fix type
+    Map json = configurationQueryRepository.get(tenant, "initial-registration", Map.class);
     JsonNodeWrapper definition = jsonConverter.readTree(json);
     JsonSchemaDefinition jsonSchemaDefinition = new JsonSchemaDefinition(definition);
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);

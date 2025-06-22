@@ -35,7 +35,8 @@ import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.control_plane.base.schema.SchemaReader;
 import org.idp.server.control_plane.management.audit.AuditLogManagementApi;
-import org.idp.server.control_plane.management.authentication.AuthenticationConfigurationManagementApi;
+import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigurationManagementApi;
+import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementApi;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
@@ -62,8 +63,8 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.oidc.*;
-import org.idp.server.core.oidc.authentication.AuthenticationApi;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractors;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.oidc.authentication.repository.*;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
@@ -134,7 +135,7 @@ public class IdpServerApplication {
   UserinfoApi userinfoApi;
   CibaFlowApi cibaFlowApi;
   AuthenticationMetaDataApi authenticationMetaDataApi;
-  AuthenticationApi authenticationApi;
+  AuthenticationTransactionApi authenticationTransactionApi;
   IdentityVerificationApi identityVerificationApi;
   SecurityEventApi securityEventApi;
   TenantMetaDataApi tenantMetaDataApi;
@@ -154,6 +155,7 @@ public class IdpServerApplication {
   SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi;
   SecurityEventManagementApi securityEventManagementApi;
   AuditLogManagementApi auditLogManagementApi;
+  AuthenticationInteractionManagementApi authenticationInteractionManagementApi;
   UserAuthenticationApi userAuthenticationApi;
 
   public IdpServerApplication(
@@ -277,6 +279,8 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(SecurityEventQueryRepository.class);
     AuditLogQueryRepository auditLogQueryRepository =
         applicationComponentContainer.resolve(AuditLogQueryRepository.class);
+    AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository =
+        applicationComponentContainer.resolve(AuthenticationInteractionQueryRepository.class);
 
     applicationComponentContainer.register(
         PasswordCredentialsGrantDelegate.class,
@@ -443,13 +447,13 @@ public class IdpServerApplication {
             AuthenticationMetaDataApi.class,
             tenantDialectProvider);
 
-    this.authenticationApi =
+    this.authenticationTransactionApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new AuthenticationEntryService(
+            new AuthenticationTransactionEntryService(
                 tenantQueryRepository,
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository),
-            AuthenticationApi.class,
+            AuthenticationTransactionApi.class,
             tenantDialectProvider);
 
     this.identityVerificationApi =
@@ -648,6 +652,13 @@ public class IdpServerApplication {
             AuditLogManagementApi.class,
             tenantDialectProvider);
 
+    this.authenticationInteractionManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AuthenticationInteractionManagementEntryService(
+                authenticationInteractionQueryRepository, tenantQueryRepository, auditLogWriters),
+            AuthenticationInteractionManagementApi.class,
+            tenantDialectProvider);
+
     this.userAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new UserAuthenticationEntryService(
@@ -690,8 +701,8 @@ public class IdpServerApplication {
     return authenticationMetaDataApi;
   }
 
-  public AuthenticationApi authenticationApi() {
-    return authenticationApi;
+  public AuthenticationTransactionApi authenticationApi() {
+    return authenticationTransactionApi;
   }
 
   public IdentityVerificationApi identityVerificationApi() {
@@ -772,5 +783,9 @@ public class IdpServerApplication {
 
   public AuditLogManagementApi auditLogManagementApi() {
     return auditLogManagementApi;
+  }
+
+  public AuthenticationInteractionManagementApi authenticationInteractionManagementApi() {
+    return authenticationInteractionManagementApi;
   }
 }

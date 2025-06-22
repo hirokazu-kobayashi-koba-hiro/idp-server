@@ -16,10 +16,15 @@
 
 package org.idp.server.core.adapters.datasource.authentication.interaction.query;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.oidc.authentication.exception.MfaTransactionNotFoundException;
+import org.idp.server.core.oidc.authentication.interaction.AuthenticationInteraction;
+import org.idp.server.core.oidc.authentication.interaction.AuthenticationInteractionQueries;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -44,9 +49,48 @@ public class AuthenticationInteractionQueryDataSource
 
     if (Objects.isNull(result) || result.isEmpty()) {
       throw new MfaTransactionNotFoundException(
-          String.format("Mfa transaction is Not Found (%s) (%s)", identifier.value(), type));
+          String.format(
+              "Authentication interaction is Not Found (%s) (%s)", identifier.value(), type));
     }
 
     return jsonConverter.read(result.get("payload"), clazz);
+  }
+
+  @Override
+  public long findTotalCount(Tenant tenant, AuthenticationInteractionQueries queries) {
+    AuthenticationInteractionQuerySqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectCount(tenant, queries);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return 0;
+    }
+
+    return Long.parseLong(result.get("count"));
+  }
+
+  @Override
+  public List<AuthenticationInteraction> findList(
+      Tenant tenant, AuthenticationInteractionQueries queries) {
+    AuthenticationInteractionQuerySqlExecutor executor = executors.get(tenant.databaseType());
+    List<Map<String, String>> results = executor.selectList(tenant, queries);
+
+    if (Objects.isNull(results) || results.isEmpty()) {
+      return new ArrayList<>();
+    }
+
+    return results.stream().map(ModelConvertor::convert).collect(Collectors.toList());
+  }
+
+  @Override
+  public AuthenticationInteraction find(
+      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type) {
+    AuthenticationInteractionQuerySqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectOne(tenant, identifier, type);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return new AuthenticationInteraction();
+    }
+
+    return ModelConvertor.convert(result);
   }
 }

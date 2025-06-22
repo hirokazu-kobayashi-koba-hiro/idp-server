@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.password;
+package org.idp.server.authentication.interactors.initial_registration;
 
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractor;
@@ -24,11 +24,11 @@ import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFa
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.authentication.PasswordEncodeDelegation;
 
-public class PasswordRegistrationFactory implements AuthenticationInteractorFactory {
+public class InitialRegistrationFactory implements AuthenticationInteractorFactory {
 
   @Override
   public AuthenticationInteractionType type() {
-    return StandardAuthenticationInteraction.PASSWORD_REGISTRATION.toType();
+    return StandardAuthenticationInteraction.INITIAL_REGISTRATION.toType();
   }
 
   @Override
@@ -38,7 +38,7 @@ public class PasswordRegistrationFactory implements AuthenticationInteractorFact
         container.resolve(AuthenticationConfigurationQueryRepository.class);
     PasswordEncodeDelegation passwordEncodeDelegation =
         container.resolve(PasswordEncodeDelegation.class);
-    return new PasswordRegistrationInteractor(
+    return new InitialRegistrationInteractor(
         configurationQueryRepository, passwordEncodeDelegation);
   }
 }

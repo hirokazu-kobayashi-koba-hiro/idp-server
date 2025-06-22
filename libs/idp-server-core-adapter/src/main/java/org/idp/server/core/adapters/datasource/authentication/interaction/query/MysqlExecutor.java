@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.oidc.authentication.interaction.AuthenticationInteractionQueries;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -46,5 +47,60 @@ public class MysqlExecutor implements AuthenticationInteractionQuerySqlExecutor 
     params.add(type);
 
     return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
+  public Map<String, String> selectCount(Tenant tenant, AuthenticationInteractionQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM authentication_interactions");
+    sql.append(" WHERE tenant_id = ?");
+    sql.append(" AND created_at BETWEEN ? AND ?");
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(queries.from());
+    params.add(queries.to());
+
+    if (queries.hasType()) {
+      sql.append(" AND interaction_type = ?");
+      params.add(queries.type());
+    }
+
+    sql.append(" LIMIT ? OFFSET ?");
+    params.add(queries.limit());
+    params.add(queries.offset());
+
+    return sqlExecutor.selectOne(sql.toString(), params);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(
+      Tenant tenant, AuthenticationInteractionQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    StringBuilder sql =
+        new StringBuilder(
+            """
+            SELECT
+            authentication_transaction_id,
+            type,
+            payload
+            FROM authentication_interactions
+            """);
+    sql.append(" WHERE tenant_id = ?");
+    sql.append(" AND created_at BETWEEN ? AND ?");
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(queries.from());
+    params.add(queries.to());
+
+    if (queries.hasType()) {
+      sql.append(" AND interaction_type = ?");
+      params.add(queries.type());
+    }
+
+    sql.append(" LIMIT ? OFFSET ?");
+    params.add(queries.limit());
+    params.add(queries.offset());
+
+    return sqlExecutor.selectList(sql.toString(), params);
   }
 }

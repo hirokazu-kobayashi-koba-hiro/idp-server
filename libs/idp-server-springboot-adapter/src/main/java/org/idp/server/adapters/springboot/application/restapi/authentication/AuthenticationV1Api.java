@@ -24,7 +24,7 @@ import org.idp.server.core.extension.ciba.CibaFlowApi;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.authentication.*;
-import org.idp.server.core.oidc.authentication.AuthenticationApi;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingListResponse;
 import org.idp.server.core.oidc.identity.UserOperationApi;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
@@ -40,13 +40,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(("{tenant-id}/v1/authentications"))
 public class AuthenticationV1Api implements ParameterTransformable {
 
-  AuthenticationApi authenticationApi;
+  AuthenticationTransactionApi authenticationTransactionApi;
   OAuthFlowApi oAuthFlowApi;
   CibaFlowApi cibaFlowApi;
   UserOperationApi userOperationApi;
 
   public AuthenticationV1Api(IdpServerApplication idpServerApplication) {
-    this.authenticationApi = idpServerApplication.authenticationApi();
+    this.authenticationTransactionApi = idpServerApplication.authenticationApi();
     this.oAuthFlowApi = idpServerApplication.oAuthFlowApi();
     this.cibaFlowApi = idpServerApplication.cibaFlowApi();
     this.userOperationApi = idpServerApplication.userOperationApi();
@@ -73,7 +73,7 @@ public class AuthenticationV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationTransactionFindingListResponse response =
-        authenticationApi.findList(
+        authenticationTransactionApi.findList(
             tenantIdentifier, new AuthenticationTransactionQueries(queryParams));
 
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -94,7 +94,7 @@ public class AuthenticationV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationTransaction authenticationTransaction =
-        authenticationApi.get(tenantIdentifier, authenticationTransactionIdentifier);
+        authenticationTransactionApi.get(tenantIdentifier, authenticationTransactionIdentifier);
     AuthenticationInteractionRequestResult result =
         interact(tenantIdentifier, authenticationTransaction, type, request, requestAttributes);
 

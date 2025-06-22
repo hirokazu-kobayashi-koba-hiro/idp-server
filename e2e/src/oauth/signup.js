@@ -3,9 +3,9 @@ import {
   createAuthorizationRequest,
   deny,
   getAuthorizations,
-  postAuthentication
+  postAuthentication, requestToken
 } from "../api/oauthClient";
-import { serverConfig } from "../tests/testConfig";
+import { backendUrl, clientSecretPostClient, serverConfig } from "../tests/testConfig";
 import { convertNextAction, convertToAuthorizationResponse, convertToSnake } from "../lib/util";
 import puppeteer from "puppeteer-core";
 import { createHash, X509Certificate } from "node:crypto";
@@ -13,6 +13,7 @@ import { encodeBuffer } from "../lib/bas64";
 import { getClientCert } from "../api/cert/clientCert";
 import { get } from "../lib/http";
 import { generateFakeWebAuthnCredential } from "../lib/webauthn";
+import { expect } from "@jest/globals";
 
 export const requestAuthorizationsForSignup = async ({
   endpoint,
@@ -41,6 +42,7 @@ export const requestAuthorizationsForSignup = async ({
   action = "authorize",
   user,
   mfa,
+  interaction = (id, user) => {},
 }) => {
   if (serverConfig.enabledSsr) {
     const requestUrl = createAuthorizationRequest({
@@ -157,7 +159,7 @@ export const requestAuthorizationsForSignup = async ({
       customParams,
     });
 
-    console.log(response.headers);
+    // console.log(response.headers);
     console.log(response.data);
     const { location } = response.headers;
     const { nextAction, params } = convertNextAction(location);
@@ -184,57 +186,30 @@ export const requestAuthorizationsForSignup = async ({
     }
 
     const id = params.get("id");
+    console.log(id);
 
     if (action === "authorize") {
 
-      const passwordResponse = await postAuthentication({
-        endpoint: serverConfig.authorizationIdEndpoint + "password-registration",
-        id,
-        body: {
-          ...user
-        }
-      });
-
-      if (passwordResponse.status >= 400) {
-        console.error(passwordResponse.data);
+      if (interaction) {
+        await interaction(id, user);
       }
 
-      if (mfa === "initial-registration") {
-        const challengeResponse = await postAuthentication({
+      if (mfa.includes("initial-registration")) {
+        const initialResponse = await postAuthentication({
           endpoint: serverConfig.authorizationIdEndpoint + "initial-registration",
           id,
           body: {
-            ...user,
-          },
-        });
-        console.log(challengeResponse.status);
-        console.log(challengeResponse.data);
-      }
-
-      if (mfa === "email") {
-        const challengeResponse = await postAuthentication({
-          endpoint: serverConfig.authorizationIdEndpoint + "email-verification-challenge",
-          id,
-          body: {
-            email_template: "authentication"
-          },
-        });
-        console.log(challengeResponse.status);
-        console.log(challengeResponse.data);
-
-        const verificationResponse = await postAuthentication({
-          endpoint: serverConfig.authorizationIdEndpoint + "email-verification",
-          id,
-          body: {
-            verification_code: "123",
+            ...user
           }
         });
 
-        console.log(verificationResponse.status);
-        console.log(verificationResponse.data);
+        if (initialResponse.status >= 400) {
+          console.error(initialResponse.data);
+        }
       }
 
-      if (mfa === "webauthn") {
+
+      if (mfa.includes("webauthn")) {
         const challengeResponse = await postAuthentication({
           endpoint: serverConfig.authorizationIdEndpoint + "webauthn-registration-challenge",
           id,
@@ -265,8 +240,9 @@ export const requestAuthorizationsForSignup = async ({
         }
       });
 
-      console.log(authorizeResponse.headers);
+      // console.log(authorizeResponse.headers);
       console.log(authorizeResponse.data);
+      console.log(authorizeResponse.status);
       const authorizationResponse = convertToAuthorizationResponse(
         authorizeResponse.data.redirect_uri
       );

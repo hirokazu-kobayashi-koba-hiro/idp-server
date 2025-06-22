@@ -46,7 +46,8 @@ public class AuthenticationConfigurationQueryDataSource
     if (Objects.isNull(result) || result.isEmpty()) {
       throw new AuthenticationConfigurationNotFoundException(
           String.format(
-              "Mfa Configuration is Not Found (%s) (%s)", tenant.identifierValue(), type));
+              "Authentication Configuration is Not Found (%s) (%s)",
+              tenant.identifierValue(), type));
     }
 
     return jsonConverter.read(result.get("payload"), clazz);

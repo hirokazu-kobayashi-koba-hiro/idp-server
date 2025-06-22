@@ -16,11 +16,21 @@
 
 package org.idp.server.core.oidc.authentication.repository;
 
+import java.util.List;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.oidc.authentication.interaction.AuthenticationInteraction;
+import org.idp.server.core.oidc.authentication.interaction.AuthenticationInteractionQueries;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationInteractionQueryRepository {
 
   <T> T get(
       Tenant tenant, AuthenticationTransactionIdentifier identifier, String key, Class<T> clazz);
+
+  long findTotalCount(Tenant tenant, AuthenticationInteractionQueries queries);
+
+  List<AuthenticationInteraction> findList(Tenant tenant, AuthenticationInteractionQueries queries);
+
+  AuthenticationInteraction find(
+      Tenant tenant, AuthenticationTransactionIdentifier identifier, String key);
 }
