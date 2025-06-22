@@ -19,21 +19,20 @@ package org.idp.server.adapters.springboot.application.delegation;
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
-import org.idp.server.platform.notification.EmailSender;
-import org.idp.server.platform.notification.EmailSenderSetting;
-import org.idp.server.platform.notification.EmailSenderType;
-import org.idp.server.platform.notification.EmailSendingRequest;
+import org.idp.server.platform.notification.*;
 
 public class SmtpEmailSender implements EmailSender {
 
   @Override
   public EmailSenderType type() {
-    return EmailSenderType.SMTP;
+    return DefaultEmailSenderType.SMTP.toType();
   }
 
   @Override
-  public void send(EmailSendingRequest request, EmailSenderSetting setting) {
+  public EmailSendResult send(EmailSendingRequest request, EmailSenderSetting setting) {
     Properties props = new Properties();
     props.put("mail.smtp.auth", "true");
     props.put("mail.smtp.starttls.enable", "true");
@@ -60,8 +59,12 @@ public class SmtpEmailSender implements EmailSender {
 
       Transport.send(message);
 
+      return new EmailSendResult(true, Map.of());
     } catch (MessagingException e) {
-      throw new RuntimeException("Failed to send email", e);
+      Map<String, Object> data = new HashMap<>();
+      data.put("error", "server_error");
+      data.put("error_description", e.getMessage());
+      return new EmailSendResult(false, data);
     }
   }
 }

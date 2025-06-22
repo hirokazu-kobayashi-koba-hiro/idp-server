@@ -20,7 +20,6 @@ package org.idp.server.platform.plugin;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import org.idp.server.platform.notification.EmailSender;
 import org.idp.server.platform.notification.EmailSenderType;
 import org.idp.server.platform.notification.EmailSenders;
