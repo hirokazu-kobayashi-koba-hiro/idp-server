@@ -16,10 +16,13 @@
 
 package org.idp.server.authentication.interactors.sms;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -49,17 +52,22 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
           configurationQueryRepository.get(tenant, "sms", SmsAuthenticationConfiguration.class);
       SmsAuthenticationExecutor executor = executors.get(configuration.type());
 
-      // TODO dynamic specify provider
-      User user =
-          userQueryRepository.findByPhone(
-              tenant, request.getValueAsString("phone_number"), "idp-server");
+      String phoneNumber = resolvePhoneNumber(transaction, request);
 
-      if (!user.exists()) {
-        Map<String, Object> response =
-            Map.of("error", "invalid_request", "error_description", "user not found");
-        return AuthenticationInteractionRequestResult.clientError(
-            response, type, DefaultSecurityEventType.sms_verification_challenge_failure);
+      if (phoneNumber.isEmpty()) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "invalid_request");
+        response.put("error_description", "phoneNumber is unspecified.");
+
+        return new AuthenticationInteractionRequestResult(
+            AuthenticationInteractionStatus.CLIENT_ERROR,
+            type,
+            response,
+            DefaultSecurityEventType.sms_verification_challenge_failure);
       }
+
+      String providerId = request.optValueAsString("provider_id", "idp-server");
+      User user = resolveUser(tenant, transaction, phoneNumber, providerId, userQueryRepository);
 
       SmsAuthenticationExecutionRequest executionRequest =
           new SmsAuthenticationExecutionRequest(request.toMap());
@@ -98,5 +106,45 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
       return AuthenticationInteractionRequestResult.clientError(
           response, type, DefaultSecurityEventType.sms_verification_challenge_failure);
     }
+  }
+
+  private User resolveUser(
+      Tenant tenant,
+      AuthenticationTransaction transaction,
+      String phoneNumber,
+      String providerId,
+      UserQueryRepository userQueryRepository) {
+
+    if (transaction.hasUser()) {
+      User user = transaction.user();
+      user.setPhoneNumber(phoneNumber);
+      return user;
+    }
+
+    User existingUser = userQueryRepository.findByPhone(tenant, phoneNumber, providerId);
+    if (existingUser.exists()) {
+      return existingUser;
+    }
+
+    User user = new User();
+    String id = UUID.randomUUID().toString();
+    user.setSub(id);
+    user.setProviderUserId(id);
+    user.setPhoneNumber(phoneNumber);
+    user.setStatus(UserStatus.REGISTERED);
+
+    return user;
+  }
+
+  private String resolvePhoneNumber(
+      AuthenticationTransaction transaction, AuthenticationInteractionRequest request) {
+    if (request.containsKey("phone_number")) {
+      return request.getValueAsString("phone_number");
+    }
+    if (transaction.hasUser()) {
+      User user = transaction.user();
+      return user.phoneNumber();
+    }
+    return "";
   }
 }

@@ -15,26 +15,17 @@
  */
 
 
-package org.idp.server.platform.notification;
+package org.idp.server.platform.notification.sms;
+
+
+import org.idp.server.platform.notification.email.EmailSenderSetting;
+import org.idp.server.platform.notification.email.EmailSendingRequest;
 
 import java.util.Map;
-import org.idp.server.platform.exception.UnSupportedException;
 
-public class EmailSenders {
+public interface SmsSender {
 
-  Map<EmailSenderType, EmailSender> senders;
+  SmsSenderType type();
 
-  public EmailSenders(Map<EmailSenderType, EmailSender> senders) {
-    this.senders = senders;
-  }
-
-  public EmailSender get(EmailSenderType type) {
-    EmailSender emailSender = senders.get(type);
-
-    if (emailSender == null) {
-      throw new UnSupportedException("No EmailSender found for type " + type);
-    }
-
-    return emailSender;
-  }
+  SmsSendResult send(SmsSendingRequest request, Map<String, Object> setting);
 }

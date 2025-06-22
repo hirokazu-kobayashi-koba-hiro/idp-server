@@ -38,7 +38,7 @@ import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.platform.notification.EmailSenders;
+import org.idp.server.platform.notification.email.EmailSenders;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction

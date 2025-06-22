@@ -378,7 +378,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       const request = createJwtWithPrivateKey({
         payload: {
           client_id: clientSecretPostClient.clientId,
-          scope: "openid profile phone email " + clientSecretPostClient.identityVerificationScope,
+          scope: "openid profile phone email ",
           binding_message: ciba.bindingMessage,
           userCode: ciba.userCode,
           authorization_details: authorizationDetails,
@@ -515,7 +515,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       const request = createJwtWithPrivateKey({
         payload: {
           client_id: clientSecretPostClient.clientId,
-          scope: "openid profile phone email " + clientSecretPostClient.identityVerificationScope,
+          scope: "openid profile phone email ",
           binding_message: ciba.bindingMessage,
           userCode: ciba.userCode,
           authorization_details: authorizationDetails,

@@ -15,31 +15,31 @@
  */
 
 
-package org.idp.server.platform.notification;
+package org.idp.server.platform.notification.sms;
 
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.notification.email.EmailSenderType;
 
-public enum DefaultEmailSenderType {
-  SMTP("smtp"),
+public enum DefaultSmsSenderType {
   EXTERNAL_API_SERVICE("external_api_service"),
   NO_ACTION("no_action");
 
   String typeName;
 
-  DefaultEmailSenderType(String typeName) {
+  DefaultSmsSenderType(String typeName) {
     this.typeName = typeName;
   }
 
-  public static DefaultEmailSenderType of(String type) {
-    for (DefaultEmailSenderType senderType : values()) {
+  public static DefaultSmsSenderType of(String type) {
+    for (DefaultSmsSenderType senderType : values()) {
       if (senderType.typeName.equals(type)) {
         return senderType;
       }
     }
-    throw new UnSupportedException("No EmailSenderType found for type " + type);
+    throw new UnSupportedException("No SmsSenderType found for type " + type);
   }
 
-  public EmailSenderType toType() {
-      return new EmailSenderType(this.typeName);
+  public SmsSenderType toType() {
+      return new SmsSenderType(this.typeName);
   }
 }

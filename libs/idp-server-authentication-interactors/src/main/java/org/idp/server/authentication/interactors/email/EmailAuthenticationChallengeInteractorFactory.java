@@ -23,7 +23,7 @@ import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyCo
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFactory;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
-import org.idp.server.platform.notification.EmailSenders;
+import org.idp.server.platform.notification.email.EmailSenders;
 
 public class EmailAuthenticationChallengeInteractorFactory
     implements AuthenticationInteractorFactory {

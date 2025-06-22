@@ -24,26 +24,27 @@ import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigur
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserStatus;
+import org.idp.server.core.oidc.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.notification.EmailSendResult;
-import org.idp.server.platform.notification.EmailSender;
-import org.idp.server.platform.notification.EmailSenders;
-import org.idp.server.platform.notification.EmailSendingRequest;
+import org.idp.server.platform.notification.email.EmailSendResult;
+import org.idp.server.platform.notification.email.EmailSender;
+import org.idp.server.platform.notification.email.EmailSenders;
+import org.idp.server.platform.notification.email.EmailSendingRequest;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 public class EmailAuthenticationChallengeInteractor implements AuthenticationInteractor {
 
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
-  AuthenticationInteractionCommandRepository transactionCommandRepository;
+  AuthenticationInteractionCommandRepository interactionCommandRepository;
   EmailSenders emailSenders;
 
   public EmailAuthenticationChallengeInteractor(
       AuthenticationConfigurationQueryRepository configurationQueryRepository,
-      AuthenticationInteractionCommandRepository transactionCommandRepository,
+      AuthenticationInteractionCommandRepository interactionCommandRepository,
       EmailSenders emailSenders) {
     this.configurationQueryRepository = configurationQueryRepository;
-    this.transactionCommandRepository = transactionCommandRepository;
+    this.interactionCommandRepository = interactionCommandRepository;
     this.emailSenders = emailSenders;
   }
 
@@ -55,62 +56,77 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       AuthenticationInteractionRequest request,
       UserQueryRepository userQueryRepository) {
 
-    EmailAuthenticationConfiguration emailAuthenticationConfiguration =
-        configurationQueryRepository.get(tenant, "email", EmailAuthenticationConfiguration.class);
+    try {
 
-    String email = resolveEmail(transaction, request);
+      EmailAuthenticationConfiguration emailAuthenticationConfiguration =
+          configurationQueryRepository.get(tenant, "email", EmailAuthenticationConfiguration.class);
 
-    if (email.isEmpty()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_request");
-      response.put("error_description", "email is unspecified.");
+      String email = resolveEmail(transaction, request);
+
+      if (email.isEmpty()) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "invalid_request");
+        response.put("error_description", "email is unspecified.");
+
+        return new AuthenticationInteractionRequestResult(
+            AuthenticationInteractionStatus.CLIENT_ERROR,
+            type,
+            response,
+            DefaultSecurityEventType.email_verification_failure);
+      }
+
+      String providerId = request.optValueAsString("provider_id", "idp-server");
+      User user = resolveUser(tenant, transaction, email, providerId, userQueryRepository);
+
+      OneTimePassword oneTimePassword = OneTimePasswordGenerator.generate();
+      String sender = emailAuthenticationConfiguration.sender();
+      EmailVerificationTemplate emailVerificationTemplate =
+          emailAuthenticationConfiguration.findTemplate(
+              request.optValueAsString("email_template", "authentication"));
+      String subject = emailVerificationTemplate.subject();
+      int retryCountLimitation = emailAuthenticationConfiguration.retryCountLimitation();
+      int expireSeconds = emailAuthenticationConfiguration.expireSeconds();
+
+      String body =
+          emailVerificationTemplate.interpolateBody(oneTimePassword.value(), expireSeconds);
+
+      EmailSendingRequest emailSendingRequest =
+          new EmailSendingRequest(sender, email, subject, body);
+
+      EmailSender emailSender = emailSenders.get(emailAuthenticationConfiguration.senderType());
+      EmailSendResult sendResult =
+          emailSender.send(emailSendingRequest, emailAuthenticationConfiguration.setting());
+
+      if (sendResult.isError()) {
+
+        return AuthenticationInteractionRequestResult.serverError(
+            sendResult.data(), type, DefaultSecurityEventType.email_verification_request_failure);
+      }
+
+      EmailVerificationChallenge emailVerificationChallenge =
+          EmailVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
+
+      interactionCommandRepository.register(
+          tenant, transaction.identifier(), "email", emailVerificationChallenge);
 
       return new AuthenticationInteractionRequestResult(
-          AuthenticationInteractionStatus.CLIENT_ERROR,
+          AuthenticationInteractionStatus.SUCCESS,
           type,
-          response,
-          DefaultSecurityEventType.email_verification_failure);
+          user,
+          new Authentication(),
+          Map.of(),
+          DefaultSecurityEventType.email_verification_request_success);
+    } catch (UserTooManyFoundResultException tooManyFoundResultException) {
+
+      Map<String, Object> response =
+          Map.of(
+              "error",
+              "invalid_request",
+              "error_description",
+              "too many users found for email: " + request.getValueAsString("email"));
+      return AuthenticationInteractionRequestResult.clientError(
+          response, type, DefaultSecurityEventType.email_verification_request_failure);
     }
-
-    OneTimePassword oneTimePassword = OneTimePasswordGenerator.generate();
-    String sender = emailAuthenticationConfiguration.sender();
-    EmailVerificationTemplate emailVerificationTemplate =
-        emailAuthenticationConfiguration.findTemplate(
-            request.optValueAsString("email_template", "authentication"));
-    String subject = emailVerificationTemplate.subject();
-    int retryCountLimitation = emailAuthenticationConfiguration.retryCountLimitation();
-    int expireSeconds = emailAuthenticationConfiguration.expireSeconds();
-
-    String body = emailVerificationTemplate.interpolateBody(oneTimePassword.value(), expireSeconds);
-
-    EmailSendingRequest emailSendingRequest = new EmailSendingRequest(sender, email, subject, body);
-
-    EmailSender emailSender = emailSenders.get(emailAuthenticationConfiguration.senderType());
-    EmailSendResult sendResult =
-        emailSender.send(emailSendingRequest, emailAuthenticationConfiguration.setting());
-
-    if (sendResult.isError()) {
-
-      return AuthenticationInteractionRequestResult.serverError(
-          sendResult.data(), type, DefaultSecurityEventType.email_verification_request_failure);
-    }
-
-    EmailVerificationChallenge emailVerificationChallenge =
-        EmailVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
-
-    transactionCommandRepository.register(
-        tenant, transaction.identifier(), "email", emailVerificationChallenge);
-
-    String providerId = request.optValueAsString("provider_id", "idp-server");
-    User user = resolveUser(tenant, transaction, email, providerId, userQueryRepository);
-
-    return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.SUCCESS,
-        type,
-        user,
-        new Authentication(),
-        Map.of(),
-        DefaultSecurityEventType.email_verification_request_success);
   }
 
   private User resolveUser(

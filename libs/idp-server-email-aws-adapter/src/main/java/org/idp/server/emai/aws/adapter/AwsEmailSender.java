@@ -17,7 +17,7 @@
 package org.idp.server.emai.aws.adapter;
 
 
-import org.idp.server.platform.notification.*;
+import org.idp.server.platform.notification.email.*;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
