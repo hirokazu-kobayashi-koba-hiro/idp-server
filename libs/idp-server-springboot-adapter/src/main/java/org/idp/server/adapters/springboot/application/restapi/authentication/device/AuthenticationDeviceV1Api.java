@@ -19,7 +19,7 @@ package org.idp.server.adapters.springboot.application.restapi.authentication.de
 import jakarta.servlet.http.HttpServletRequest;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
-import org.idp.server.core.oidc.authentication.AuthenticationApi;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -33,10 +33,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("{tenant-id}/v1/authentication-devices/{authentication-device-id}/authentications")
 public class AuthenticationDeviceV1Api implements ParameterTransformable {
 
-  AuthenticationApi authenticationApi;
+  AuthenticationTransactionApi authenticationTransactionApi;
 
   public AuthenticationDeviceV1Api(IdpServerApplication idpServerApplication) {
-    this.authenticationApi = idpServerApplication.authenticationApi();
+    this.authenticationTransactionApi = idpServerApplication.authenticationApi();
   }
 
   @GetMapping("/latest")
@@ -49,7 +49,7 @@ public class AuthenticationDeviceV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationTransactionFindingResponse response =
-        authenticationApi.findLatest(
+        authenticationTransactionApi.findLatest(
             tenantIdentifier, authenticationDeviceIdentifier, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

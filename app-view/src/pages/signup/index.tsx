@@ -94,7 +94,7 @@ export default function SignUpPage() {
     const invitationTenantId = data?.invitation?.tenant_id || "";
 
     const response = await fetch(
-      `${backendUrl}/${tenantId}/v1/authorizations/${id}/password-registration`,
+      `${backendUrl}/${tenantId}/v1/authorizations/${id}/initial-registration`,
       {
         method: "POST",
         credentials: "include",

@@ -22,7 +22,7 @@ import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 
-public interface AuthenticationApi {
+public interface AuthenticationTransactionApi {
 
   AuthenticationTransaction request(
       TenantIdentifier tenantIdentifier, RequestAttributes requestAttributes);

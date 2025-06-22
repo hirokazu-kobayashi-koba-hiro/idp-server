@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.authentication;
+package org.idp.server.control_plane.management.authentication.configuration;
 
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.ConfigUpdateContext;
-import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementResponse;
-import org.idp.server.control_plane.management.authentication.io.AuthenticationConfigManagementStatus;
+import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
+import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementStatus;
 import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
 import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;

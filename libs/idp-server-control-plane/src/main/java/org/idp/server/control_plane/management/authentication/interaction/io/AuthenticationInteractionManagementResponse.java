@@ -14,23 +14,29 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.authentication.io;
+package org.idp.server.control_plane.management.authentication.interaction.io;
 
 import java.util.Map;
 
-public class AuthenticationConfigRequest {
+public class AuthenticationInteractionManagementResponse {
+  AuthenticationInteractionManagementStatus status;
+  Map<String, Object> contents;
 
-  Map<String, Object> values;
-
-  public AuthenticationConfigRequest(Map<String, Object> values) {
-    this.values = values;
+  public AuthenticationInteractionManagementResponse(
+      AuthenticationInteractionManagementStatus status, Map<String, Object> contents) {
+    this.status = status;
+    this.contents = contents;
   }
 
-  public Map<String, Object> toMap() {
-    return values;
+  public AuthenticationInteractionManagementStatus status() {
+    return status;
   }
 
-  public Object get(String key) {
-    return values.get(key);
+  public int statusCode() {
+    return status.statusCode();
+  }
+
+  public Map<String, Object> contents() {
+    return contents;
   }
 }

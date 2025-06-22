@@ -37,7 +37,7 @@ export const requestAuthorizations = async ({
   action = "authorize",
   user = {
     "username": "ito.ichiro@gmail.com",
-    "password": "successUserCode",
+    "password": "successUserCode001",
   },
   mfa,
 }) => {

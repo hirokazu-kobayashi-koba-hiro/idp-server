@@ -101,7 +101,8 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
     transactionCommandRepository.register(
         tenant, transaction.identifier(), "email", emailVerificationChallenge);
 
-    User user = resolveUser(transaction, email);
+    String providerId = request.optValueAsString("provider_id", "idp-server");
+    User user = resolveUser(tenant, transaction, email, providerId, userQueryRepository);
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -112,18 +113,31 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
         DefaultSecurityEventType.email_verification_request_success);
   }
 
-  private User resolveUser(AuthenticationTransaction transaction, String email) {
+  private User resolveUser(
+      Tenant tenant,
+      AuthenticationTransaction transaction,
+      String email,
+      String providerId,
+      UserQueryRepository userQueryRepository) {
 
-    if (!transaction.hasUser()) {
-      User user = new User();
-      user.setSub(UUID.randomUUID().toString());
+    if (transaction.hasUser()) {
+      User user = transaction.user();
       user.setEmail(email);
-      user.setStatus(UserStatus.REGISTERED);
       return user;
     }
 
-    User user = transaction.user();
+    User existingUser = userQueryRepository.findByEmail(tenant, email, providerId);
+    if (existingUser.exists()) {
+      return existingUser;
+    }
+
+    User user = new User();
+    String id = UUID.randomUUID().toString();
+    user.setSub(id);
+    user.setProviderUserId(id);
     user.setEmail(email);
+    user.setStatus(UserStatus.REGISTERED);
+
     return user;
   }
 

@@ -93,4 +93,14 @@ public class EmailVerificationChallenge implements Serializable, JsonReadable {
   private boolean isExpired() {
     return SystemDateTime.now().isAfter(createdAt.plusSeconds(expiresSeconds));
   }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("verification_code", verificationCode);
+    map.put("retry_count_limitation", retryCountLimitation);
+    map.put("try_count", tryCount);
+    map.put("expires_seconds", expiresSeconds);
+    map.put("created_at", createdAt);
+    return map;
+  }
 }

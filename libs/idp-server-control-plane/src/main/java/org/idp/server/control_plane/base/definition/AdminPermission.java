@@ -183,7 +183,11 @@ public enum AdminPermission {
       "security-event:read",
       "Admin Read security-event information"),
   AUDIT_LOG_READ(
-      "dac5337d-a014-4039-a537-d282881d256d", "audit-log:read", "Admin Read audit-log information");
+      "dac5337d-a014-4039-a537-d282881d256d", "audit-log:read", "Admin Read audit-log information"),
+  AUTHENTICATION_INTERACTION_READ(
+      "faff38c2-7d4c-4c71-9403-c2b76d82c4f9",
+      "authentication-interaction:read",
+      "Admin Read authentication-interaction information");
 
   private final String id;
   private final String value;

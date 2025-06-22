@@ -17,8 +17,8 @@
 package org.idp.server.usecases.application.enduser;
 
 import java.util.List;
-import org.idp.server.core.oidc.authentication.AuthenticationApi;
 import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionQueries;
 import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingListResponse;
@@ -33,13 +33,13 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction(readOnly = true)
-public class AuthenticationEntryService implements AuthenticationApi {
+public class AuthenticationTransactionEntryService implements AuthenticationTransactionApi {
 
   TenantQueryRepository tenantQueryRepository;
   AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
 
-  public AuthenticationEntryService(
+  public AuthenticationTransactionEntryService(
       TenantQueryRepository tenantQueryRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository) {

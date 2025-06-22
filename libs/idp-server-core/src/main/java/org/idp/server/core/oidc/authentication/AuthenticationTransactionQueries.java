@@ -50,6 +50,18 @@ public class AuthenticationTransactionQueries implements UuidConvertable {
     return values.get("flow");
   }
 
+  public String authorizationId() {
+    return values.get("authorization_id");
+  }
+
+  public UUID authorizationIdAsUuid() {
+    return convertUuid(authorizationId());
+  }
+
+  public boolean hasAuthorizationId() {
+    return values.containsKey("authorization_id");
+  }
+
   public boolean hasClientId() {
     return values.containsKey("client_id");
   }
@@ -74,8 +86,10 @@ public class AuthenticationTransactionQueries implements UuidConvertable {
     Map<String, String> attributes = new HashMap<>();
     for (Map.Entry<String, String> entry : values.entrySet()) {
       String key = entry.getKey();
-      String value = entry.getValue();
-      attributes.put(key.replace("attributes.", ""), value);
+      if (key.startsWith("attributes.")) {
+        String value = entry.getValue();
+        attributes.put(key.replace("attributes.", ""), value);
+      }
     }
     return attributes;
   }

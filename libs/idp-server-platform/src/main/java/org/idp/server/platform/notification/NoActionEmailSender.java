@@ -17,29 +17,23 @@
 
 package org.idp.server.platform.notification;
 
-import org.idp.server.platform.exception.UnSupportedException;
 
-public enum DefaultEmailSenderType {
-  SMTP("smtp"),
-  EXTERNAL_API_SERVICE("external_api_service"),
-  NO_ACTION("no_action");
+import org.idp.server.platform.log.LoggerWrapper;
 
-  String typeName;
+import java.util.Map;
 
-  DefaultEmailSenderType(String typeName) {
-    this.typeName = typeName;
+public class NoActionEmailSender implements EmailSender {
+
+  LoggerWrapper log = LoggerWrapper.getLogger(this.getClass());
+
+  public EmailSenderType type() {
+    return DefaultEmailSenderType.NO_ACTION.toType();
   }
 
-  public static DefaultEmailSenderType of(String type) {
-    for (DefaultEmailSenderType senderType : values()) {
-      if (senderType.typeName.equals(type)) {
-        return senderType;
-      }
-    }
-    throw new UnSupportedException("No EmailSenderType found for type " + type);
-  }
+  public EmailSendResult send(EmailSendingRequest request, EmailSenderSetting setting) {
 
-  public EmailSenderType toType() {
-      return new EmailSenderType(this.typeName);
+    log.info("EmailSender: NoActionEmailSender sending request");
+
+    return new EmailSendResult(true, Map.of());
   }
 }

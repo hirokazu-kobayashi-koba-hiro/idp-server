@@ -104,6 +104,11 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
       params.add(queries.flow());
     }
 
+    if (queries.hasAuthorizationId()) {
+      sql.append(" AND authorization_id = ?::uuid");
+      params.add(queries.authorizationIdAsUuid());
+    }
+
     if (queries.hasClientId()) {
       sql.append(" AND client_id = ?");
       params.add(queries.clientId());

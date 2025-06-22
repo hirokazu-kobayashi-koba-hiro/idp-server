@@ -296,6 +296,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         userLifecycleEventPublisher.publish(event);
       }
 
+      authenticationTransactionCommandRepository.delete(
+          tenant, authenticationTransaction.identifier());
+
       eventPublisher.publish(
           tenant,
           authorizationRequest,
@@ -310,9 +313,6 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
           DefaultSecurityEventType.authorize_failure.toEventType(),
           requestAttributes);
     }
-
-    authenticationTransactionCommandRepository.delete(
-        tenant, authenticationTransaction.identifier());
 
     return authorize;
   }

@@ -16,17 +16,16 @@
 
 package org.idp.server.core.adapters.datasource.authentication.interaction.query;
 
-import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.oidc.authentication.interaction.AuthenticationInteractionQueries;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.oidc.authentication.interaction.AuthenticationInteraction;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
-public interface AuthenticationInteractionQuerySqlExecutor {
-  Map<String, String> selectOne(
-      Tenant tenant, AuthenticationTransactionIdentifier identifier, String type);
+public class ModelConvertor {
 
-  Map<String, String> selectCount(Tenant tenant, AuthenticationInteractionQueries queries);
-
-  List<Map<String, String>> selectList(Tenant tenant, AuthenticationInteractionQueries queries);
+  static AuthenticationInteraction convert(Map<String, String> result) {
+    String transactionId = result.get("authentication_transaction_id");
+    String type = result.get("type");
+    Map<String, Object> payload = JsonNodeWrapper.fromString(result.get("payload")).toMap();
+    return new AuthenticationInteraction(transactionId, type, payload);
+  }
 }

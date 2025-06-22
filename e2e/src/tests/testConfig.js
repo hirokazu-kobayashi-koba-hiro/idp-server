@@ -47,14 +47,14 @@ export const serverConfig = {
     loginHintExSub: "ex-sub:3ec055a8-8000-44a2-8677-e70ebff414e2,idp:idp-server",
     loginHintDevice: "device:7736a252-60b4-45f5-b817-65ea9a540860,idp:idp-server",
     username: "ito.ichiro@gmail.com",
-    userCode: "successUserCode",
+    userCode: "successUserCode001",
     bindingMessage: "999",
     invalidLoginHint: "invalid",
     authenticationDeviceId: "7736a252-60b4-45f5-b817-65ea9a540860",
   },
   oauth: {
     username: "ito.ichiro",
-    password: "successUserCode",
+    password: "successUserCode001",
   },
   acr: "urn:mace:incommon:iap:bronze",
 };
@@ -80,7 +80,7 @@ export const unsupportedServerConfig = {
   enabledSsr: false,
   ciba: {
     loginHint: "001",
-    userCode: "successUserCode",
+    userCode: "successUserCode001",
     bindingMessage: "999",
     invalidLoginHint: "invalid",
   },
