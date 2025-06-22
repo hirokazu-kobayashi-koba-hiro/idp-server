@@ -15,7 +15,7 @@
  */
 
 
-package org.idp.server.platform.notification;
+package org.idp.server.platform.notification.email;
 
 import java.util.Map;
 import java.util.function.BiConsumer;

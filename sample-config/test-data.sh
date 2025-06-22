@@ -104,7 +104,7 @@ authentication_config_files=(
   fido-uaf/external.json
   legacy/mocky.json
   initial-registration/standard.json
-  sms/external.json
+  sms/no-action.json
   webauthn/webauthn4j.json
 )
 

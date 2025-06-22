@@ -108,7 +108,8 @@ import org.idp.server.platform.dependency.ApplicationComponentDependencyContaine
 import org.idp.server.platform.dependency.protocol.ProtocolContainer;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.*;
-import org.idp.server.platform.notification.EmailSenders;
+import org.idp.server.platform.notification.email.EmailSenders;
+import org.idp.server.platform.notification.sms.SmsSenders;
 import org.idp.server.platform.plugin.*;
 import org.idp.server.platform.proxy.TenantAwareEntryServiceProxy;
 import org.idp.server.platform.security.SecurityEventApi;
@@ -300,6 +301,8 @@ public class IdpServerApplication {
         PasswordVerificationDelegation.class, passwordVerificationDelegation);
     EmailSenders emailSenders = EmailSenderPluginLoader.load();
     authenticationDependencyContainer.register(EmailSenders.class, emailSenders);
+    SmsSenders smsSenders = SmslSenderPluginLoader.load();
+    authenticationDependencyContainer.register(SmsSenders.class, smsSenders);
     WebAuthnExecutors webAuthnExecutors =
         WebAuthnExecutorPluginLoader.load(authenticationDependencyContainer);
     authenticationDependencyContainer.register(WebAuthnExecutors.class, webAuthnExecutors);

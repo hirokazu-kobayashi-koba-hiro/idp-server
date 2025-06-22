@@ -15,32 +15,34 @@
  */
 
 
-package org.idp.server.platform.notification;
+package org.idp.server.platform.notification.email;
 
+public class EmailSendingRequest {
+  String from;
+  String to;
+  String subject;
+  String body;
 
-import java.util.Objects;
-
-public class EmailSenderType {
-
-  String name;
-
-  public EmailSenderType(String name) {
-    this.name = name;
+  public EmailSendingRequest(String from, String to, String subject, String body) {
+    this.from = from;
+    this.to = to;
+    this.subject = subject;
+    this.body = body;
   }
 
-  public String name() {
-    return name;
+  public String from() {
+    return from;
   }
 
-  @Override
-  public boolean equals(Object object) {
-    if (object == null || getClass() != object.getClass()) return false;
-    EmailSenderType that = (EmailSenderType) object;
-    return Objects.equals(name, that.name);
+  public String to() {
+    return to;
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(name);
+  public String subject() {
+    return subject;
+  }
+
+  public String body() {
+    return body;
   }
 }

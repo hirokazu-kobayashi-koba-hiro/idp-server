@@ -14,49 +14,40 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.email;
+package org.idp.server.authentication.interactors.sms.internal;
 
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
-import org.idp.server.platform.notification.email.EmailSenderSetting;
-import org.idp.server.platform.notification.email.EmailSenderType;
+import org.idp.server.platform.notification.sms.SmsSenderType;
 
-public class EmailAuthenticationConfiguration implements JsonReadable {
-  String sender;
+public class InternalSmsAuthenticationConfiguration implements JsonReadable {
   String type;
   Map<String, Map<String, Object>> settings;
-  Map<String, EmailVerificationTemplate> templates;
+  Map<String, SmslVerificationTemplate> templates;
   int retryCountLimitation;
   int expireSeconds;
 
-  public EmailAuthenticationConfiguration() {}
+  public InternalSmsAuthenticationConfiguration() {}
 
-  public EmailAuthenticationConfiguration(
-      String sender,
-      Map<String, EmailVerificationTemplate> templates,
+  public InternalSmsAuthenticationConfiguration(
+      Map<String, SmslVerificationTemplate> templates,
       int retryCountLimitation,
       int expireSeconds) {
-    this.sender = sender;
     this.templates = templates;
     this.retryCountLimitation = retryCountLimitation;
     this.expireSeconds = expireSeconds;
   }
 
-  public EmailSenderType senderType() {
-    return new EmailSenderType(type);
+  public SmsSenderType senderType() {
+    return new SmsSenderType(type);
   }
 
-  public String sender() {
-    return sender;
+  public SmslVerificationTemplate findTemplate(String templateKey) {
+    return templates.getOrDefault(templateKey, new SmslVerificationTemplate());
   }
 
-  public EmailVerificationTemplate findTemplate(String templateKey) {
-    return templates.getOrDefault(templateKey, new EmailVerificationTemplate());
-  }
-
-  public EmailSenderSetting setting() {
-
-    return new EmailSenderSetting(settings.get(type));
+  public Map<String, Object> settings(String templateKey) {
+    return settings.getOrDefault(templateKey, Map.of());
   }
 
   public int retryCountLimitation() {
@@ -68,6 +59,6 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
   }
 
   public boolean exists() {
-    return sender != null && !sender.isEmpty();
+    return type != null && !type.isEmpty();
   }
 }

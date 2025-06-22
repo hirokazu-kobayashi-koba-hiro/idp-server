@@ -22,7 +22,7 @@ import jakarta.mail.internet.MimeMessage;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import org.idp.server.platform.notification.*;
+import org.idp.server.platform.notification.email.*;
 
 public class SmtpEmailSender implements EmailSender {
 

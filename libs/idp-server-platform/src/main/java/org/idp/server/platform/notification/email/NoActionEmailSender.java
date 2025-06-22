@@ -15,16 +15,25 @@
  */
 
 
-package org.idp.server.platform.notification;
+package org.idp.server.platform.notification.email;
 
-import org.idp.server.platform.exception.TooManyRequestsException;
 
-public class EmailSendingTooManyRequestsException extends TooManyRequestsException {
-  public EmailSendingTooManyRequestsException(String message) {
-    super(message);
+import org.idp.server.platform.log.LoggerWrapper;
+
+import java.util.Map;
+
+public class NoActionEmailSender implements EmailSender {
+
+  LoggerWrapper log = LoggerWrapper.getLogger(this.getClass());
+
+  public EmailSenderType type() {
+    return DefaultEmailSenderType.NO_ACTION.toType();
   }
 
-  public EmailSendingTooManyRequestsException(String message, Throwable cause) {
-    super(message, cause);
+  public EmailSendResult send(EmailSendingRequest request, EmailSenderSetting setting) {
+
+    log.info("EmailSender: NoActionEmailSender sending request");
+
+    return new EmailSendResult(true, Map.of());
   }
 }

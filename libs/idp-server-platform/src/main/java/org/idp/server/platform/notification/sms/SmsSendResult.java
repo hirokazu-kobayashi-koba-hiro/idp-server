@@ -15,25 +15,24 @@
  */
 
 
-package org.idp.server.platform.notification;
-
-
-import org.idp.server.platform.log.LoggerWrapper;
+package org.idp.server.platform.notification.sms;
 
 import java.util.Map;
 
-public class NoActionEmailSender implements EmailSender {
+public class SmsSendResult {
+    boolean result;
+    Map<String, Object> data;
 
-  LoggerWrapper log = LoggerWrapper.getLogger(this.getClass());
+    public SmsSendResult(boolean result, Map<String, Object> data) {
+        this.result = result;
+        this.data = data;
+    }
 
-  public EmailSenderType type() {
-    return DefaultEmailSenderType.NO_ACTION.toType();
-  }
+    public boolean isError() {
+        return !result;
+    }
 
-  public EmailSendResult send(EmailSendingRequest request, EmailSenderSetting setting) {
-
-    log.info("EmailSender: NoActionEmailSender sending request");
-
-    return new EmailSendResult(true, Map.of());
-  }
+    public Map<String, Object> data() {
+        return data;
+    }
 }

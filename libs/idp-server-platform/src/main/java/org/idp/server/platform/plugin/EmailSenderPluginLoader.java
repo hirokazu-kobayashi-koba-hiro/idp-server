@@ -20,9 +20,9 @@ package org.idp.server.platform.plugin;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.platform.notification.EmailSender;
-import org.idp.server.platform.notification.EmailSenderType;
-import org.idp.server.platform.notification.EmailSenders;
+import org.idp.server.platform.notification.email.EmailSender;
+import org.idp.server.platform.notification.email.EmailSenderType;
+import org.idp.server.platform.notification.email.EmailSenders;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class EmailSenderPluginLoader extends PluginLoader{

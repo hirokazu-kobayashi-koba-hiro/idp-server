@@ -7,9 +7,10 @@ import {
   requestToken
 } from "../../api/oauthClient";
 import {
+  backendUrl,
   clientSecretPostClient,
   privateKeyJwtClient,
-  serverConfig,
+  serverConfig
 } from "../testConfig";
 import { createJwt, createJwtWithPrivateKey, generateJti, verifyAndDecodeJwt } from "../../lib/jose";
 import { isNumber, toEpocTime } from "../../lib/util";
@@ -198,13 +199,37 @@ describe("ciba - mfa", () => {
     });
     expect(authenticationResponse.status).toBe(200);
 
+    const transactionId = authenticationTransaction.id;
+
+    const adminTokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "password",
+      username: serverConfig.oauth.username,
+      password: serverConfig.oauth.password,
+      scope: clientSecretPostClient.scope,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret
+    });
+    console.log(adminTokenResponse.data);
+    expect(adminTokenResponse.status).toBe(200);
+    const accessToken = adminTokenResponse.data.access_token;
+
+    const interactionResponse = await get({
+      url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms`,
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+    console.log(interactionResponse.data);
+    const verificationCode = interactionResponse.data.payload.verification_code;
+
     authenticationResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
       flowType: authenticationTransaction.flow,
       id: authenticationTransaction.id,
       interactionType: "sms-authentication",
       body: {
-        "verification_code": "123456",
+        "verification_code": verificationCode,
       }
     });
     expect(authenticationResponse.status).toBe(200);

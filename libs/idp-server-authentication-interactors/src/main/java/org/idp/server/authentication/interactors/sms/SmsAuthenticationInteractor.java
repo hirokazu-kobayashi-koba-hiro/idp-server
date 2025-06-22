@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -69,10 +70,13 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
             .addMethods(new ArrayList<>(List.of("opt")))
             .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
+    User verifiedUser = transaction.user();
+    verifiedUser.setPhoneNumberVerified(true);
+
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
-        transaction.user(),
+        verifiedUser,
         authentication,
         executionResult.contents(),
         DefaultSecurityEventType.sms_verification_success);

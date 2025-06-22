@@ -70,7 +70,8 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
           DefaultSecurityEventType.email_verification_failure);
     }
 
-    User user = transaction.user();
+    User verifiedUser = transaction.user();
+    verifiedUser.setEmailVerified(true);
 
     Authentication authentication =
         new Authentication()
@@ -79,13 +80,13 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
             .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     Map<String, Object> response = new HashMap<>();
-    response.put("user", user.toMap());
+    response.put("user", verifiedUser.toMap());
     response.put("authentication", authentication.toMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
-        user,
+        verifiedUser,
         authentication,
         response,
         DefaultSecurityEventType.email_verification_success);
