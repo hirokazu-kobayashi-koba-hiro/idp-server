@@ -1,0 +1,72 @@
+{
+  "id": "b7481833-c95a-4c7a-9481-94b30008c8ef",
+  "type": "oidc",
+  "sso_provider": "b7481833-c95a-4c7a-9481-94b30008c8ef",
+  "payload": {
+    "issuer": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3",
+    "issuer_name": "test-provider",
+    "type": "oauth-extension",
+    "provider": "oauth-extension",
+    "authorization_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/authorizations",
+    "token_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens",
+    "userinfo_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/userinfo",
+    "revocation_endpoint": "https://oauth2.googleapis.com/revoke",
+    "jwks_uri": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/jwks",
+    "response_types_supported": [
+      "code",
+      "token",
+      "id_token",
+      "code token",
+      "code id_token",
+      "token id_token",
+      "code token id_token",
+      "none"
+    ],
+    "subject_types_supported": [
+      "public"
+    ],
+    "id_token_signing_alg_values_supported": [
+      "RS256"
+    ],
+    "scopes_supported": [
+      "openid",
+      "email",
+      "profile"
+    ],
+    "token_endpoint_auth_methods_supported": [
+      "client_secret_post",
+      "client_secret_basic"
+    ],
+    "claims_supported": [
+      "aud",
+      "email",
+      "email_verified",
+      "exp",
+      "family_name",
+      "given_name",
+      "iat",
+      "iss",
+      "name",
+      "picture",
+      "sub"
+    ],
+    "code_challenge_methods_supported": [
+      "plain",
+      "S256"
+    ],
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token",
+      "urn:ietf:params:oauth:grant-type:device_code",
+      "urn:ietf:params:oauth:grant-type:jwt-bearer"
+    ],
+    "client_id": "clientSecretPost",
+    "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
+    "redirect_uri": "http://localhost:8080/signin/sso-callback/index.html",
+    "userinfo_mapping_rules": [
+      { "source": "body", "from": "$.sub", "to": "provider_user_id", "type": "string" },
+      { "source": "body", "from": "$.email", "to": "email", "type": "string" },
+      { "source": "body", "from": "$.email_verified", "to": "email_verified", "type": "boolean" }
+    ]
+  }
+}

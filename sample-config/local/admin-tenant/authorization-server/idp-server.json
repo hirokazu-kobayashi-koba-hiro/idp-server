@@ -344,6 +344,10 @@
             {
               "type": "oidc-facebook",
               "success_count": 1
+            },
+            {
+              "type": "oidc-b7481833-c95a-4c7a-9481-94b30008c8ef",
+              "success_count": 1
             }
           ]
         },

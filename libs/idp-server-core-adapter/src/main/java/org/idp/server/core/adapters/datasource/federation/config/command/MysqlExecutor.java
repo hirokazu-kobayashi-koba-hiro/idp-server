@@ -63,13 +63,15 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
     String sqlTemplate =
         """
             UPDATE federation_configurations
-            SET payload = ?
+            SET payload = ?,
+            sso_provider = ?, = ?
             WHERE id = ?
             AND tenant_id = ?;
             """;
 
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration.payload()));
+    params.add(configuration.ssoProvider().name());
     params.add(configuration.identifier().value());
     params.add(tenant.identifier().value());
 

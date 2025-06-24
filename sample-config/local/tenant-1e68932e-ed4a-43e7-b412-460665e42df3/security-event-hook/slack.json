@@ -1,0 +1,22 @@
+{
+  "id": "45e3fe69-2b23-4205-bfa0-326f728b52df",
+  "type": "SLACK",
+  "triggers": [
+    "user_signup"
+  ],
+  "execution_order": 1,
+  "payload": {
+    "base": {
+      "description": "slack common notification",
+      "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
+      "message_template": "🔐 type: ${trigger} / user: ${user.id} / tenant: ${tenant.id} / client: ${client.id}"
+    },
+    "overlays": {
+      "user_deletion": {
+        "description": "slack user_deletion notification",
+        "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
+        "message_template": "⚠ user_deletion: ${user.email}"
+      }
+    }
+  }
+}

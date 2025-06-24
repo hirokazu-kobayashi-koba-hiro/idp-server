@@ -62,7 +62,10 @@ public class JsonWebKey {
   }
 
   public String algorithm() {
-    if (Objects.isNull(value.getAlgorithm())) {
+    if (value == null) {
+      return "";
+    }
+    if (value.getAlgorithm() == null) {
       return "";
     }
     return value.getAlgorithm().getName();

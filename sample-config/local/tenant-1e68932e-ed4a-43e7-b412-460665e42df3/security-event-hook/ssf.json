@@ -1,0 +1,69 @@
+{
+  "id": "3c9ac07b-2934-44b6-9535-5e3d5cb9c3ae",
+  "type": "SSF",
+  "triggers": [
+    "user_signup",
+    "user_signup_conflict",
+    "user_disabled",
+    "user_enabled",
+    "user_deletion",
+    "password_success",
+    "password_failure",
+    "webauthn_registration_challenge",
+    "webauthn_registration_success",
+    "webauthn_registration_failure",
+    "webauthn_authentication_challenge",
+    "webauthn_authentication_success",
+    "webauthn_authentication_failure",
+    "email_verification_request",
+    "email_verification_success",
+    "email_verification_failure",
+    "legacy_authentication_success",
+    "legacy_authentication_failure",
+    "login",
+    "login_with_session",
+    "logout",
+    "password_reset",
+    "password_change",
+    "application_create",
+    "application_get",
+    "application_edit",
+    "application_delete",
+    "server_create",
+    "server_get",
+    "server_edit",
+    "server_delete",
+    "user_create",
+    "user_get",
+    "user_edit",
+    "user_lock",
+    "user_delete",
+    "member_invite",
+    "member_join",
+    "member_leave",
+    "subscription_start",
+    "subscription_suspend",
+    "subscription_end",
+    "subscription_change",
+    "subscription_add"
+  ],
+  "execution_order": 2,
+  "payload": {
+    "base": {
+      "description": "ssf base",
+      "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+      "private_key": "{\n    \"kty\": \"EC\",\n    \"d\": \"_9Ki4nmPFljpGneu1bZeAVxHoJiOnt7Cmr98qSI9SQI\",\n    \"use\": \"sig\",\n    \"crv\": \"P-256\",\n    \"kid\": \"ssf-debug\",\n    \"x\": \"nitxvSyqpZEhGXT-oJ8CJD_Pr3feMVFAO43d8TlHk1w\",\n    \"y\": \"xA6Slvr4rRnF53TNaIdeRsw9v655xGlHPD3YNGy_CMY\",\n    \"alg\": \"ES256\"\n}",
+      "endpoint": "https://webhook.site/753d5840-43a4-4e9c-8ad3-ce85242f97b2",
+      "headers": {}
+    },
+    "overlays": {
+      "legacy_authentication_success": {
+        "description": "ssf legacy_authentication_success",
+        "issuer": "http://localhost",
+        "private_key": "{\n    \"kty\": \"EC\",\n    \"d\": \"_9Ki4nmPFljpGneu1bZeAVxHoJiOnt7Cmr98qSI9SQI\",\n    \"use\": \"sig\",\n    \"crv\": \"P-256\",\n    \"kid\": \"ssf-debug\",\n    \"x\": \"nitxvSyqpZEhGXT-oJ8CJD_Pr3feMVFAO43d8TlHk1w\",\n    \"y\": \"xA6Slvr4rRnF53TNaIdeRsw9v655xGlHPD3YNGy_CMY\",\n    \"alg\": \"ES256\"\n}",
+        "endpoint": "https://webhook.site/753d5840-43a4-4e9c-8ad3-ce85242f97b2",
+        "headers": {}
+      }
+    }
+  }
+}

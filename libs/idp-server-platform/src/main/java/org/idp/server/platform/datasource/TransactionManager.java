@@ -101,7 +101,7 @@ public class TransactionManager {
   }
 
   private static void setTenantId(Connection conn, String tenantIdentifier) {
-    log.info("[RLS] SET app.tenant_id = '" + tenantIdentifier + "'");
+    log.debug("[RLS] SET app.tenant_id = '" + tenantIdentifier + "'");
 
     try (var stmt = conn.createStatement()) {
       stmt.execute("SET app.tenant_id = '" + tenantIdentifier + "'");

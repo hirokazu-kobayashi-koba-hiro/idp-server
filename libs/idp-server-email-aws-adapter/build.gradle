@@ -1,26 +1,42 @@
 plugins {
-    id 'java'
+	id 'java'
+	id "com.diffplug.spotless" version "6.24.0"
 }
 
 group = 'org.idp.server'
-version = 'unspecified'
+version = '1.0.0'
 
 repositories {
-    mavenCentral()
+	mavenCentral()
 }
 
+
 dependencies {
-    implementation project(':libs:idp-server-platform')
-    implementation project(':libs:idp-server-authentication-interactors')
+	implementation project(':libs:idp-server-platform')
+	implementation project(':libs:idp-server-authentication-interactors')
 
-    implementation platform('software.amazon.awssdk:bom:2.25.18')
-    implementation 'software.amazon.awssdk:ses'
+	implementation platform('software.amazon.awssdk:bom:2.25.18')
+	implementation 'software.amazon.awssdk:ses'
 
 
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+	testImplementation platform('org.junit:junit-bom:5.10.0')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
 test {
-    useJUnitPlatform()
+	useJUnitPlatform()
+}
+
+spotless {
+	java {
+		target 'src/*/java/**/*.java'
+		importOrder()
+		removeUnusedImports()
+		googleJavaFormat()
+		toggleOffOn()
+	}
+	groovyGradle {
+		target '*.gradle'
+		greclipse()
+	}
 }

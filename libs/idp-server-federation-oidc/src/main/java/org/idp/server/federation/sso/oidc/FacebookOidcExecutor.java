@@ -24,11 +24,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 import org.idp.server.core.oidc.federation.sso.SsoProvider;
-import org.idp.server.platform.http.HttpClientErrorException;
 import org.idp.server.platform.http.HttpClientFactory;
-import org.idp.server.platform.http.HttpNetworkErrorException;
 import org.idp.server.platform.http.QueryParams;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class FacebookOidcExecutor implements OidcSsoExecutor {
@@ -48,7 +47,7 @@ public class FacebookOidcExecutor implements OidcSsoExecutor {
   }
 
   @Override
-  public OidcTokenResponse requestToken(OidcTokenRequest oidcTokenRequest) {
+  public OidcTokenResult requestToken(OidcTokenRequest oidcTokenRequest) {
     try {
 
       QueryParams queryParams = new QueryParams(oidcTokenRequest.toMap());
@@ -70,19 +69,21 @@ public class FacebookOidcExecutor implements OidcSsoExecutor {
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
       String body = httpResponse.body();
 
-      validateResponse(httpResponse, body);
+      JsonNodeWrapper json = JsonNodeWrapper.fromString(body);
 
-      Map map = jsonConverter.read(body, Map.class);
-
-      return new OidcTokenResponse(map);
+      return new OidcTokenResult(
+          httpResponse.statusCode(), httpResponse.headers().map(), json.toMap());
     } catch (IOException | InterruptedException | URISyntaxException e) {
-      log.error(e.getMessage());
-      throw new HttpNetworkErrorException("unexpected network error", e);
+      log.error(e.getMessage(), e);
+      return new OidcTokenResult(
+          500,
+          Map.of(),
+          Map.of("error", "server_error", "error_description", "unexpected network error"));
     }
   }
 
   @Override
-  public OidcJwksResponse getJwks(OidcJwksRequest oidcJwksRequest) {
+  public OidcJwksResult getJwks(OidcJwksRequest oidcJwksRequest) {
 
     try {
 
@@ -100,17 +101,15 @@ public class FacebookOidcExecutor implements OidcSsoExecutor {
       String body = httpResponse.body();
       log.info("jwks response:" + body);
 
-      validateResponse(httpResponse, body);
-
-      return new OidcJwksResponse(body);
+      return new OidcJwksResult(httpResponse.statusCode(), httpResponse.headers().map(), body);
     } catch (IOException | InterruptedException | URISyntaxException e) {
-      log.error(e.getMessage());
-      throw new HttpNetworkErrorException("unexpected network error", e);
+      log.error(e.getMessage(), e);
+      return new OidcJwksResult(500, Map.of(), "unexpected network error");
     }
   }
 
   @Override
-  public OidcUserinfoResponse requestUserInfo(OidcUserinfoRequest oidcUserinfoRequest) {
+  public OidcUserinfoResult requestUserInfo(OidcUserinfoRequest oidcUserinfoRequest) {
     try {
 
       QueryParams queryParams = new QueryParams();
@@ -129,24 +128,16 @@ public class FacebookOidcExecutor implements OidcSsoExecutor {
 
       String body = httpResponse.body();
 
-      validateResponse(httpResponse, body);
+      JsonNodeWrapper json = JsonNodeWrapper.fromString(body);
 
-      Map map = jsonConverter.read(body, Map.class);
-
-      return new OidcUserinfoResponse(map);
+      return new OidcUserinfoResult(httpResponse.statusCode(), httpResponse.headers().map(), json);
     } catch (IOException | InterruptedException | URISyntaxException e) {
-      log.error(e.getMessage());
-      throw new HttpNetworkErrorException("unexpected network error", e);
-    }
-  }
-
-  private void validateResponse(HttpResponse<String> httpResponse, String body) {
-    if (httpResponse.statusCode() >= 400 && httpResponse.statusCode() < 500) {
-      throw new HttpClientErrorException(body, httpResponse.statusCode());
-    }
-
-    if (httpResponse.statusCode() >= 500) {
-      throw new HttpClientErrorException(body, httpResponse.statusCode());
+      log.error(e.getMessage(), e);
+      return new OidcUserinfoResult(
+          500,
+          Map.of(),
+          JsonNodeWrapper.fromMap(
+              Map.of("error", "server_error", "error_description", "unexpected network error")));
     }
   }
 }

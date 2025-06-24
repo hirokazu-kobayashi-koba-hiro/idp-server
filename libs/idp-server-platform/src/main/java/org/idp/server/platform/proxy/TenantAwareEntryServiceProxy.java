@@ -61,7 +61,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
     if (isTransactional && operationType == OperationType.READ) {
       try {
         OperationContext.set(operationType);
-        log.info("READ start: " + target.getClass().getName() + ": " + method.getName() + " ...");
+        log.debug("READ start: " + target.getClass().getName() + ": " + method.getName() + " ...");
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TransactionManager.createConnection(DatabaseType.POSTGRESQL, tenantIdentifier.value());
         DatabaseType databaseType = dialectProvider.provide(tenantIdentifier);
@@ -71,7 +71,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         Object result = method.invoke(target, args);
 
         TransactionManager.closeConnection();
-        log.info("READ end: " + target.getClass().getName() + ": " + method.getName() + " ...");
+        log.debug("READ end: " + target.getClass().getName() + ": " + method.getName() + " ...");
 
         return result;
       } catch (InvocationTargetException e) {
@@ -93,7 +93,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
     } else if (isTransactional && operationType == OperationType.WRITE) {
       try {
         OperationContext.set(operationType);
-        log.info("WRITE start: " + target.getClass().getName() + ": " + method.getName() + " ...");
+        log.debug("WRITE start: " + target.getClass().getName() + ": " + method.getName() + " ...");
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
 
         TransactionManager.createConnection(DatabaseType.POSTGRESQL, tenantIdentifier.value());
@@ -118,7 +118,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
                 + ": "
                 + method.getName());
 
-        log.info("WRITE end: " + target.getClass().getName() + ": " + method.getName() + " ...");
+        log.debug("WRITE end: " + target.getClass().getName() + ": " + method.getName() + " ...");
 
         return result;
       } catch (InvocationTargetException e) {

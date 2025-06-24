@@ -40,7 +40,7 @@ public class HikariConnectionProvider implements DbConnectionProvider {
         (type == OperationType.READ)
             ? readerConfigs.get(databaseType)
             : writerConfigs.get(databaseType);
-    log.info(
+    log.debug(
         "DB connection for "
             + databaseType
             + " url: "

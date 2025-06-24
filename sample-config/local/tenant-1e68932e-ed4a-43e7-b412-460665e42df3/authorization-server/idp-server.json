@@ -1,0 +1,355 @@
+{
+  "issuer": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3",
+  "authorization_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/debug/v1/authorizations",
+  "token_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens",
+  "token_endpoint_auth_methods_supported": [
+    "client_secret_post",
+    "client_secret_basic",
+    "client_secret_jwt",
+    "private_key_jwt",
+    "tls_client_auth",
+    "self_signed_tls_client_auth"
+  ],
+  "token_endpoint_auth_signing_alg_values_supported": [
+    "RS256",
+    "ES256"
+  ],
+  "userinfo_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/userinfo",
+  "jwks_uri": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/jwks",
+  "jwks": "{\n    \"keys\": [\n        {\n            \"kty\": \"EC\",\n            \"d\": \"yIWDrlhnCy3yL9xLuqZGOBFFq4PWGsCeM7Sc_lfeaQQ\",\n            \"use\": \"sig\",\n            \"crv\": \"P-256\",\n            \"kid\": \"access_token\",\n            \"x\": \"iWJINqt0ySv3kVEvlHbvNkPKY2pPSf1cG1PSx3tRfw0\",\n            \"y\": \"rW1FdfXK5AQcv-Go6Xho0CR5AbLai7Gp9IdLTIXTSIQ\",\n            \"alg\": \"ES256\"\n        }\n    ]\n}",
+  "grant_types_supported": [
+    "authorization_code",
+    "refresh_token",
+    "password",
+    "client_credentials",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "token_signed_key_id": "access_token",
+  "id_token_signed_key_id": "access_token",
+  "scopes_supported": [
+    "openid",
+    "profile",
+    "email",
+    "address",
+    "phone",
+    "offline_access",
+    "account",
+    "transfers",
+    "read",
+    "write",
+    "identity_verification_application",
+    "identity_verification_delete",
+    "identity_credentials_update",
+    "management",
+    "claims:roles",
+    "claims:permissions",
+    "claims:assigned_tenant",
+    "claims:assigned_organization",
+    "claims:authentication_devices",
+    "verified_claims:family_name"
+  ],
+  "response_types_supported": [
+    "code",
+    "token",
+    "id_token",
+    "code token",
+    "code token id_token",
+    "token id_token",
+    "code id_token",
+    "none"
+  ],
+  "response_modes_supported": [
+    "query",
+    "fragment"
+  ],
+  "acr_values_supported": [
+    "urn:mace:incommon:iap:gold",
+    "urn:mace:incommon:iap:silver",
+    "urn:mace:incommon:iap:bronze"
+  ],
+  "subject_types_supported": [
+    "public",
+    "pairwise"
+  ],
+  "userinfo_signing_alg_values_supported": [
+    "RS256",
+    "ES256",
+    "HS256"
+  ],
+  "userinfo_encryption_alg_values_supported": [
+    "RSA1_5",
+    "A128KW"
+  ],
+  "userinfo_encryption_enc_values_supported": [
+    "A128CBC-HS256",
+    "A128GCM"
+  ],
+  "id_token_signing_alg_values_supported": [
+    "RS256",
+    "ES256",
+    "HS256"
+  ],
+  "id_token_encryption_alg_values_supported": [
+    "RSA1_5",
+    "A128KW"
+  ],
+  "id_token_encryption_enc_values_supported": [
+    "A128CBC-HS256",
+    "A128GCM"
+  ],
+  "request_object_signing_alg_values_supported": [
+    "none",
+    "RS256",
+    "ES256"
+  ],
+  "display_values_supported": [
+    "page",
+    "popup"
+  ],
+  "claim_types_supported": [
+    "normal"
+  ],
+  "claims_supported": [
+    "sub",
+    "iss",
+    "auth_time",
+    "acr",
+    "name",
+    "given_name",
+    "family_name",
+    "nickname",
+    "profile",
+    "picture",
+    "website",
+    "email",
+    "email_verified",
+    "locale",
+    "zoneinfo",
+    "birthdate",
+    "gender",
+    "preferred_username",
+    "middle_name",
+    "updated_at",
+    "address",
+    "phone_number",
+    "phone_number_verified",
+    "roles",
+    "permissions",
+    "assigned_tenant",
+    "assigned_organization",
+    "authentication_devices"
+  ],
+  "claims_parameter_supported": true,
+  "service_documentation": "http://server.example.com/connect/service_documentation.html",
+  "ui_locales_supported": [
+    "en-US",
+    "en-GB",
+    "en-CA",
+    "fr-FR",
+    "fr-CA"
+  ],
+  "token_introspection_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens/introspection",
+  "token_revocation_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens/revocation",
+  "backchannel_token_delivery_modes_supported": [
+    "poll",
+    "ping",
+    "push"
+  ],
+  "backchannel_authentication_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/backchannel/authentications",
+  "backchannel_authentication_request_signing_alg_values_supported": [
+    "RS256",
+    "ES256"
+  ],
+  "backchannel_user_code_parameter_supported": true,
+  "access_token_duration": 3600,
+  "extension": {
+    "token_signed_key_id": "access_token",
+    "id_token_signed_key_id": "access_token",
+    "access_token_duration": 3600,
+    "id_token_duration": 3600,
+    "id_token_strict_mode": false,
+    "default_max_age": 86400,
+    "fapi_baseline_scopes": [
+      "read"
+    ],
+    "fapi_advance_scopes": [
+      "write"
+    ],
+    "required_identity_verification_scopes": [
+      "transfers"
+    ],
+    "custom_claims_scope_mapping": true,
+    "access_token_user_custom_properties": true,
+    "access_token_selective_verified_claims": true,
+    "authentication_policies": [
+      {
+        "id": "gold",
+        "priority": 100,
+        "conditions": {
+          "acr_values": [
+            "urn:mace:incommon:iap:gold"
+          ]
+        },
+        "available_methods": [
+          "password",
+          "email",
+          "sms",
+          "webauthn",
+          "fido-uaf",
+          "legacy"
+        ],
+        "acr_mapping_rules": {
+          "urn:mace:incommon:iap:gold": [
+            "fido-uaf",
+            "webauthn"
+          ],
+          "urn:mace:incommon:iap:silver": [
+            "email",
+            "sms"
+          ],
+          "urn:mace:incommon:iap:bronze": [
+            "password",
+            "legacy"
+          ]
+        },
+        "level_of_authentication_scopes": {
+          "transfers": [
+            "fido-uaf", "webauthn"
+          ]
+        },
+        "success_conditions": {
+          "any_of": [
+            {
+              "type": "fido-uaf-authentication",
+              "success_count": 1
+            }
+          ]
+        },
+        "failure_conditions": {
+          "any_of": [
+            {
+              "type": "password",
+              "failure_count": 5
+            },
+            {
+              "type": "fido-uaf-authentication",
+              "failure_count": 5
+            }
+          ]
+        },
+        "lock_conditions": {
+          "any_of": [
+            {
+              "type": "password",
+              "failure_count": 5
+            },
+            {
+              "type": "fido-uaf-authentication",
+              "failure_count": 5
+            }
+          ]
+        }
+      },
+      {
+        "id": "default_authentication_policy",
+        "priority": 1,
+        "conditions": {
+          "scopes": [
+            "openid"
+          ]
+        },
+        "available_methods": [
+          "password",
+          "email",
+          "sms",
+          "webauthn",
+          "fido-uaf",
+          "legacy"
+        ],
+        "acr_mapping_rules": {
+          "urn:mace:incommon:iap:gold": [
+            "fido-uaf",
+            "webauthn"
+          ],
+          "urn:mace:incommon:iap:silver": [
+            "email",
+            "sms"
+          ],
+          "urn:mace:incommon:iap:bronze": [
+            "password",
+            "legacy"
+          ]
+        },
+        "level_of_authentication_scopes": {
+          "transfers": [
+            "fido-uaf", "webauthn"
+          ]
+        },
+        "success_conditions": {
+          "any_of": [
+            {
+              "type": "password-authentication",
+              "success_count": 1
+            },
+            {
+              "type": "authentication-device-binding-message",
+              "success_count": 1
+            },
+            {
+              "type": "sms-authentication",
+              "success_count": 1
+            },
+            {
+              "type": "email-authentication",
+              "success_count": 1
+            },
+            {
+              "type": "fido-uaf-authentication",
+              "success_count": 1
+            },
+            {
+              "type": "oidc-google",
+              "success_count": 1
+            },
+            {
+              "type": "oidc-facebook",
+              "success_count": 1
+            }
+          ]
+        },
+        "failure_conditions": {
+          "any_of": [
+            {
+              "type": "password",
+              "failure_count": 5
+            },
+            {
+              "type": "authentication-device-binding-message",
+              "failure_count": 5
+            },
+            {
+              "type": "fido-uaf-authentication",
+              "failure_count": 5
+            }
+          ]
+        },
+        "lock_conditions": {
+          "any_of": [
+            {
+              "type": "password",
+              "failure_count": 5
+            },
+            {
+              "type": "authentication-device-binding-message",
+              "failure_count": 5
+            },
+            {
+              "type": "fido-uaf-authentication",
+              "failure_count": 5
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
