@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.basic.type.oidc.AcrValues;
@@ -36,6 +37,7 @@ public class AuthenticationPolicy implements JsonReadable {
   AuthenticationResultConditions failureConditions = new AuthenticationResultConditions();
   AuthenticationResultConditions lockConditions = new AuthenticationResultConditions();
   AuthenticationDeviceRule authenticationDeviceRule = new AuthenticationDeviceRule();
+  List<AuthenticationStepDefinition> stepDefinitions = new ArrayList<>();
 
   public AuthenticationPolicy() {}
 
@@ -115,6 +117,20 @@ public class AuthenticationPolicy implements JsonReadable {
     return authenticationDeviceRule != null;
   }
 
+  public List<AuthenticationStepDefinition> stepDefinitions() {
+    return stepDefinitions;
+  }
+
+  public List<Map<String, Object>> stepDefinitionsAsMap() {
+    return stepDefinitions.stream()
+        .map(AuthenticationStepDefinition::toMap)
+        .collect(Collectors.toList());
+  }
+
+  public boolean hasStepDefinitions() {
+    return stepDefinitions != null && !stepDefinitions.isEmpty();
+  }
+
   public boolean exists() {
     return id != null && !id.isEmpty();
   }
@@ -131,7 +147,8 @@ public class AuthenticationPolicy implements JsonReadable {
     if (hasFailureConditions()) map.put("failure_conditions", failureConditions.toMap());
     if (hasLockConditions()) map.put("lock_conditions", lockConditions.toMap());
     if (hasAuthenticationDeviceRule())
-      map.put("authentication_device_rule", authenticationDeviceRule);
+      map.put("authentication_device_rule", authenticationDeviceRule.toMap());
+    if (hasStepDefinitions()) map.put("step_definitions", stepDefinitionsAsMap());
     return map;
   }
 }

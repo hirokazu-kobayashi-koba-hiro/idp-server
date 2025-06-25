@@ -20,24 +20,29 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
-public class AuthenticationDeviceRule implements JsonReadable {
-  int maxDevices = 1;
-  boolean requiredIdentityVerification = false;
+public class AuthenticationStepDefinition implements JsonReadable {
+  String method;
+  int order;
 
-  public AuthenticationDeviceRule() {}
+  public AuthenticationStepDefinition() {}
 
-  public int maxDevices() {
-    return maxDevices;
+  public AuthenticationStepDefinition(String method, int order) {
+    this.method = method;
+    this.order = order;
   }
 
-  public boolean requiredIdentityVerification() {
-    return requiredIdentityVerification;
+  public String authenticationMethod() {
+    return method;
+  }
+
+  public int order() {
+    return order;
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("max_devices", maxDevices);
-    map.put("required_identity_verification", requiredIdentityVerification);
+    map.put("method", method);
+    map.put("order", order);
     return map;
   }
 }
