@@ -19,6 +19,7 @@ package org.idp.server.federation.sso.oidc;
 import java.util.List;
 import java.util.Objects;
 import org.idp.server.core.oidc.federation.sso.SsoProvider;
+import org.idp.server.core.oidc.identity.mapper.UserinfoMappingRule;
 import org.idp.server.platform.json.JsonReadable;
 
 public class OidcSsoConfiguration implements JsonReadable {
@@ -37,6 +38,8 @@ public class OidcSsoConfiguration implements JsonReadable {
   String tokenEndpoint;
   String userinfoEndpoint;
   String jwksUri;
+  String privateKeys = "";
+  List<UserinfoMappingRule> userinfoMappingRules;
   String paramsDelimiter;
 
   public OidcSsoConfiguration() {}
@@ -55,6 +58,7 @@ public class OidcSsoConfiguration implements JsonReadable {
       String tokenEndpoint,
       String userinfoEndpoint,
       String jwksUri,
+      String privateKeys,
       String paramsDelimiter) {
     this.type = type;
     this.issuer = issuer;
@@ -69,6 +73,7 @@ public class OidcSsoConfiguration implements JsonReadable {
     this.tokenEndpoint = tokenEndpoint;
     this.userinfoEndpoint = userinfoEndpoint;
     this.jwksUri = jwksUri;
+    this.privateKeys = privateKeys;
     this.paramsDelimiter = paramsDelimiter;
   }
 
@@ -133,7 +138,15 @@ public class OidcSsoConfiguration implements JsonReadable {
     return jwksUri;
   }
 
+  public String privateKeys() {
+    return privateKeys;
+  }
+
   public SsoProvider ssoProvider() {
     return new SsoProvider(provider);
+  }
+
+  public List<UserinfoMappingRule> userinfoMappingRules() {
+    return userinfoMappingRules;
   }
 }

@@ -39,8 +39,33 @@ public class FederationInteractionResult {
   Map<String, Object> response;
   SecurityEventType eventType;
 
+  public static FederationInteractionResult serverError(
+      FederationType federationType,
+      SsoProvider ssoProvider,
+      OidcSsoSession session,
+      Map<String, Object> response) {
+
+    AuthorizationRequestIdentifier authorizationRequestIdentifier =
+        new AuthorizationRequestIdentifier(session.authorizationRequestId());
+    FederationInteractionStatus status = FederationInteractionStatus.SERVER_ERROR;
+    TenantIdentifier tenantIdentifier = new TenantIdentifier(session.tenantId());
+    DefaultSecurityEventType eventType = DefaultSecurityEventType.federation_failure;
+
+    return new FederationInteractionResult(
+        federationType,
+        ssoProvider,
+        authorizationRequestIdentifier,
+        tenantIdentifier,
+        status,
+        new User(),
+        new Authentication(),
+        response,
+        eventType);
+  }
+
   public static FederationInteractionResult success(
       FederationType federationType, SsoProvider ssoProvider, OidcSsoSession session, User user) {
+
     AuthorizationRequestIdentifier authorizationRequestIdentifier =
         new AuthorizationRequestIdentifier(session.authorizationRequestId());
     FederationInteractionStatus status = FederationInteractionStatus.SUCCESS;
@@ -50,6 +75,7 @@ public class FederationInteractionResult {
 
     TenantIdentifier tenantIdentifier = new TenantIdentifier(session.tenantId());
     DefaultSecurityEventType eventType = DefaultSecurityEventType.federation_success;
+
     return new FederationInteractionResult(
         federationType,
         ssoProvider,

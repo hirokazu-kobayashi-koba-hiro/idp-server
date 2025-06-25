@@ -20,6 +20,7 @@ import java.util.*;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.mapper.UserInfoMapper;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.http.*;
@@ -94,6 +95,7 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
     UserInfoMapper userInfoMapper =
         new UserInfoMapper(
             configuration.providerName(),
+            userinfoResult.headers(),
             userinfoResult.body(),
             userinfoConfig.userinfoMappingRules());
     User user = userInfoMapper.toUser();

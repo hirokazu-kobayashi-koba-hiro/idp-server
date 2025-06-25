@@ -18,15 +18,14 @@ package org.idp.server.federation.sso.oidc;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.jose.JoseContext;
-import org.idp.server.basic.jose.JoseHandler;
-import org.idp.server.basic.jose.JoseInvalidException;
+import java.util.UUID;
 import org.idp.server.core.oidc.federation.*;
 import org.idp.server.core.oidc.federation.io.*;
 import org.idp.server.core.oidc.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.oidc.federation.sso.*;
 import org.idp.server.core.oidc.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.mapper.UserInfoMapper;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -97,47 +96,66 @@ public class OidcFederationInteractor implements FederationInteractor {
     OidcTokenRequestCreator tokenRequestCreator =
         new OidcTokenRequestCreator(parameters, session, oidcSsoConfiguration);
     OidcTokenRequest tokenRequest = tokenRequestCreator.create();
-    OidcTokenResponse tokenResponse = oidcSsoExecutor.requestToken(tokenRequest);
+    OidcTokenResult tokenResult = oidcSsoExecutor.requestToken(tokenRequest);
 
-    JoseContext joseContext =
-        verifyAndParseIdToken(oidcSsoExecutor, oidcSsoConfiguration, tokenResponse);
+    if (tokenResult.isError()) {
+
+      return FederationInteractionResult.serverError(
+          federationType, ssoProvider, session, tokenResult.bodyAsMap());
+    }
+
+    OidcJwksResult jwksResult =
+        oidcSsoExecutor.getJwks(new OidcJwksRequest(oidcSsoConfiguration.jwksUri()));
+
+    if (jwksResult.isError()) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "server_error");
+      response.put("error_description", jwksResult.body());
+
+      return FederationInteractionResult.serverError(
+          federationType, ssoProvider, session, response);
+    }
+
+    IdTokenVerificationResult idTokenVerificationResult =
+        oidcSsoExecutor.verifyIdToken(oidcSsoConfiguration, session, jwksResult, tokenResult);
+    if (idTokenVerificationResult.isError()) {
+
+      return FederationInteractionResult.serverError(
+          federationType, ssoProvider, session, idTokenVerificationResult.data());
+    }
 
     OidcUserinfoRequest userinfoRequest =
-        new OidcUserinfoRequest(
-            oidcSsoConfiguration.userinfoEndpoint(), tokenResponse.accessToken());
-    OidcUserinfoResponse userinfoResponse = oidcSsoExecutor.requestUserInfo(userinfoRequest);
+        new OidcUserinfoRequest(oidcSsoConfiguration.userinfoEndpoint(), tokenResult.accessToken());
+    OidcUserinfoResult userinfoResult = oidcSsoExecutor.requestUserInfo(userinfoRequest);
+    if (userinfoResult.isError()) {
+      return FederationInteractionResult.serverError(
+          federationType, ssoProvider, session, userinfoResult.bodyAsMap());
+    }
 
-    User existingUser =
-        userQueryRepository.findByProvider(
-            tenant, oidcSsoConfiguration.issuerName(), userinfoResponse.sub());
+    UserInfoMapper userInfoMapper =
+        new UserInfoMapper(
+            oidcSsoConfiguration.issuerName(),
+            userinfoResult.headers(),
+            userinfoResult.body(),
+            oidcSsoConfiguration.userinfoMappingRules());
+    User user = userInfoMapper.toUser();
 
-    OidcUserinfoResponseConvertor convertor =
-        new OidcUserinfoResponseConvertor(existingUser, userinfoResponse, oidcSsoConfiguration);
-    User user = convertor.convert();
+    User exsitingUser =
+        userQueryRepository.findByExternalIdpSubject(
+            tenant, user.sub(), oidcSsoConfiguration.issuerName());
+
+    if (exsitingUser.exists()) {
+      user.setSub(exsitingUser.sub());
+    } else {
+      user.setSub(UUID.randomUUID().toString());
+    }
+
+    if (!user.hasProviderUserId()) {
+      user.setProviderUserId(user.sub());
+    }
 
     sessionCommandRepository.delete(tenant, session.ssoSessionIdentifier());
 
     return FederationInteractionResult.success(federationType, ssoProvider, session, user);
-  }
-
-  private JoseContext verifyAndParseIdToken(
-      OidcSsoExecutor oidcSsoExecutor,
-      OidcSsoConfiguration configuration,
-      OidcTokenResponse tokenResponse) {
-    try {
-      OidcJwksResponse jwksResponse =
-          oidcSsoExecutor.getJwks(new OidcJwksRequest(configuration.jwksUri()));
-
-      JoseHandler joseHandler = new JoseHandler();
-      JoseContext joseContext =
-          joseHandler.handle(tokenResponse.idToken(), jwksResponse.value(), "", "");
-
-      joseContext.verifySignature();
-
-      return joseContext;
-    } catch (JoseInvalidException e) {
-
-      throw new OidcInvalidIdTokenException("failed to parse id_token", e);
-    }
   }
 }

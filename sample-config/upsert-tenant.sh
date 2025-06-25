@@ -53,7 +53,7 @@ elif [ "$HTTP_CODE" == "404" ]; then
   echo "🆕 Config not found. Registering new one..."
   METHOD="POST"
   URL="${BASE_URL}/v1/management/tenants${DRY_RUN_PARM}"
-  REQUEST_BODY=$(jq "$JSON_FILE")
+  REQUEST_BODY=$(jq . "$JSON_FILE")
 else
   echo "❌ Unexpected response from GET: HTTP $HTTP_CODE"
   exit 1

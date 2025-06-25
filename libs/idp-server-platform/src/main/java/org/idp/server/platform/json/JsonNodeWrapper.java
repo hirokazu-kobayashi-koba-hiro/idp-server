@@ -290,6 +290,11 @@ public class JsonNodeWrapper {
     }
   }
 
+  @Override
+  public String toString() {
+    return jsonNode.toString();
+  }
+
   public String toJson() {
     return jsonNode.toString();
   }

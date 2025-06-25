@@ -16,14 +16,12 @@
 
 package org.idp.server.emai.aws.adapter;
 
-
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.platform.notification.email.*;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class AwsEmailSender implements EmailSender {
 
@@ -40,30 +38,18 @@ public class AwsEmailSender implements EmailSender {
     Region region = Region.of(regionName);
 
     try (SesClient sesClient = SesClient.builder().region(region).build()) {
-      Destination destination = Destination.builder()
-              .toAddresses(request.to())
-              .build();
+      Destination destination = Destination.builder().toAddresses(request.to()).build();
 
-      Content subject = Content.builder()
-              .data(request.subject())
-              .charset("UTF-8")
-              .build();
+      Content subject = Content.builder().data(request.subject()).charset("UTF-8").build();
 
-      Content textBody = Content.builder()
-              .data(request.body())
-              .charset("UTF-8")
-              .build();
+      Content textBody = Content.builder().data(request.body()).charset("UTF-8").build();
 
-      Body body = Body.builder()
-              .text(textBody)
-              .build();
+      Body body = Body.builder().text(textBody).build();
 
-      Message message = Message.builder()
-              .subject(subject)
-              .body(body)
-              .build();
+      Message message = Message.builder().subject(subject).body(body).build();
 
-      SendEmailRequest emailRequest = SendEmailRequest.builder()
+      SendEmailRequest emailRequest =
+          SendEmailRequest.builder()
               .source(sender)
               .destination(destination)
               .message(message)
@@ -77,7 +63,9 @@ public class AwsEmailSender implements EmailSender {
     } catch (SesException e) {
       Map<String, Object> data = new HashMap<>();
       data.put("error", "server_error");
-      data.put("error_description", "Failed to send email via AWS SES: " + e.awsErrorDetails().errorMessage());
+      data.put(
+          "error_description",
+          "Failed to send email via AWS SES: " + e.awsErrorDetails().errorMessage());
 
       return new EmailSendResult(false, data);
     }

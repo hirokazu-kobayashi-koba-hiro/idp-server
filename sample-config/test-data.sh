@@ -6,7 +6,7 @@ echo "get access token"
 echo "-------------------------------------------------"
 echo ""
 
-while getopts ":e:u:p:t:b:c:s:d:" opt; do
+while getopts ":e:u:p:t:b:c:s:n:l:a:d:" opt; do
   case $opt in
     e) ENV="$OPTARG" ;;
     u) USERNAME="$OPTARG" ;;
@@ -37,7 +37,6 @@ echo "tenant-1"
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
 
- admin-tenant
 
 ## tenant-a
 
@@ -150,6 +149,7 @@ echo "federation-config oidc"
 federation_config_files=(
   facebook.json
   google.json
+  oauth-extenstion.json
 )
 
 for federation_config_file in "${federation_config_files[@]}"; do

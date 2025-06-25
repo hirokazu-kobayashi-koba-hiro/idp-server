@@ -1,0 +1,26 @@
+{
+  "id": "e59d3823-bea1-4928-97b9-33f4a9c4e8ed",
+  "type": "authentication-device",
+  "payload": {
+    "channel": "fcm",
+    "details": {
+      "fcm": {
+        "templates": {
+          "transaction": {
+            "subject": "transaction",
+            "body": "Hello,\n\nPlease try authentication"
+          },
+          "authentication": {
+            "subject": "authentication ",
+            "body": "Hello,\n\nPlease try authentication"
+          },
+          "default": {
+            "subject": "default",
+            "body": "Hello,\n\nPlease try"
+          }
+        },
+        "credential": "{}"
+      }
+    }
+  }
+}

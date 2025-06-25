@@ -63,13 +63,15 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
     String sqlTemplate =
         """
             UPDATE federation_configurations
-            SET payload = ?::jsonb
+            SET payload = ?::jsonb,
+            sso_provider = ?
             WHERE id = ?::uuid
             AND tenant_id = ?::uuid;
             """;
 
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration.payload()));
+    params.add(configuration.ssoProvider().name());
     params.add(configuration.identifier().valueAsUuid());
     params.add(tenant.identifier().valueAsUuid());
 

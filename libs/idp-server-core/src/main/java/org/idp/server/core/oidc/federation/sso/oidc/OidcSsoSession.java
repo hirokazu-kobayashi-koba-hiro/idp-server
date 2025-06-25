@@ -107,4 +107,8 @@ public class OidcSsoSession implements Serializable, JsonReadable {
   public SsoSessionIdentifier ssoSessionIdentifier() {
     return new SsoSessionIdentifier(ssoSessionId);
   }
+
+  public boolean hasNonce() {
+    return nonce != null && !nonce.isEmpty();
+  }
 }

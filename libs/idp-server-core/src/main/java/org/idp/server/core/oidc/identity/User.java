@@ -502,6 +502,13 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return this;
   }
 
+  public User addCustomProperties(HashMap<String, Object> customProperties) {
+    HashMap<String, Object> newCustomProperties = new HashMap<>(this.customProperties);
+    newCustomProperties.putAll(customProperties);
+    this.customProperties = newCustomProperties;
+    return this;
+  }
+
   public boolean hasCustomProperties() {
     return !customProperties.isEmpty();
   }
