@@ -14,50 +14,42 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.configuration.authentication;
+package org.idp.server.core.oidc.configuration.client;
 
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
-public class AuthenticationResultCondition implements JsonReadable {
+public class AvailableFederation implements JsonReadable {
+  String id;
   String type;
-  int successCount;
-  int failureCount;
+  String ssoProvider;
+  boolean autoSelected = false;
 
-  public AuthenticationResultCondition() {}
+  public AvailableFederation() {}
 
-  public AuthenticationResultCondition(String type, int successCount, int failureCount) {
-    this.type = type;
-    this.successCount = successCount;
-    this.failureCount = failureCount;
+  public String id() {
+    return id;
   }
 
   public String type() {
     return type;
   }
 
-  public int successCount() {
-    return successCount;
+  public String ssoProvider() {
+    return ssoProvider;
   }
 
-  public int failureCount() {
-    return failureCount;
-  }
-
-  public boolean isSatisfiedSuccess(int successCount) {
-    return successCount >= this.successCount;
-  }
-
-  public boolean isSatisfiedFailure(int failureCount) {
-    return failureCount >= this.failureCount;
+  public boolean autoSelected() {
+    return autoSelected;
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
+    map.put("id", id);
     map.put("type", type);
-    map.put("success_count", successCount);
-    map.put("failure_count", failureCount);
+    map.put("sso_provider", ssoProvider);
+    map.put("auto_selected", autoSelected);
     return map;
   }
 }

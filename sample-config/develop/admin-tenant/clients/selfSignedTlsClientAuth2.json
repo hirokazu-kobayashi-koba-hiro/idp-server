@@ -1,6 +1,4 @@
 {
-  "tenant_id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
-  "issuer": "https://idp-server-0d10773f8944.herokuapp.com/67e7eae6-62b0-4500-9eff-87459f63fc66",
   "client_id": "ddaa4458-7d6c-4359-bd32-b8f094148d12",
   "client_id_alias": "selfSignedTlsClientAuth2",
   "client_secret": "selfSignedTlsClientAuth2",

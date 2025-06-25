@@ -16,7 +16,6 @@
 
 package org.idp.server.core.oidc.view;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.OAuthSession;
@@ -30,16 +29,19 @@ public class OAuthViewDataCreator {
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
   OAuthSession session;
+  Map<String, Object> additionalViewData;
 
   public OAuthViewDataCreator(
       AuthorizationRequest authorizationRequest,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
-      OAuthSession session) {
+      OAuthSession session,
+      Map<String, Object> additionalViewData) {
     this.authorizationRequest = authorizationRequest;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
     this.session = session;
+    this.additionalViewData = additionalViewData;
   }
 
   public OAuthViewData create() {
@@ -52,21 +54,10 @@ public class OAuthViewDataCreator {
     String policyUri = clientConfiguration.policyUri();
     Map<String, String> customParams = authorizationRequest.customParams().values();
     List<String> scopes = authorizationRequest.scopes().toStringList();
-    Map<String, Object> contents = new HashMap<>();
-    contents.put("client_id", clientId);
-    contents.put("client_name", clientName);
-    contents.put("client_uri", clientUri);
-    contents.put("logo_uri", logoUri);
-    contents.put("contacts", contacts);
-    contents.put("tos_uri", tosUri);
-    contents.put("policy_uri", policyUri);
-    contents.put("scopes", scopes);
-    if (session == null) {
-      contents.put("session_enabled", false);
-    } else {
-      contents.put("session_enabled", session.isValid(authorizationRequest));
-    }
-    contents.put("custom_params", customParams);
+    boolean sessionEnabled = session != null && session.isValid(authorizationRequest);
+    List<Map<String, Object>> availableFederationsAsMapList =
+        clientConfiguration.availableFederationsAsMapList();
+
     return new OAuthViewData(
         clientId,
         clientName,
@@ -76,7 +67,9 @@ public class OAuthViewDataCreator {
         tosUri,
         policyUri,
         scopes,
+        sessionEnabled,
+        availableFederationsAsMapList,
         customParams,
-        contents);
+        additionalViewData);
   }
 }

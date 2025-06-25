@@ -16,16 +16,24 @@
 
 package org.idp.server.core.oidc.io;
 
+import java.util.Map;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthViewDataRequest {
   Tenant tenant;
   String id;
+  Map<String, Object> additionalViewData;
 
   public OAuthViewDataRequest(Tenant tenant, String id) {
     this.tenant = tenant;
     this.id = id;
+  }
+
+  public OAuthViewDataRequest(Tenant tenant, String id, Map<String, Object> additionalViewData) {
+    this.tenant = tenant;
+    this.id = id;
+    this.additionalViewData = additionalViewData;
   }
 
   public Tenant tenant() {
@@ -34,5 +42,9 @@ public class OAuthViewDataRequest {
 
   public AuthorizationRequestIdentifier toIdentifier() {
     return new AuthorizationRequestIdentifier(id);
+  }
+
+  public Map<String, Object> additionalViewData() {
+    return additionalViewData;
   }
 }

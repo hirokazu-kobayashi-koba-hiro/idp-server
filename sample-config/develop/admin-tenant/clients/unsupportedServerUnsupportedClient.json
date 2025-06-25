@@ -1,6 +1,4 @@
 {
-  "tenant_id": "94d8598e-f238-4150-85c2-c4accf515784",
-  "issuer": "https://idp-server-0d10773f8944.herokuapp.com/94d8598e-f238-4150-85c2-c4accf515784",
   "client_id": "9254dbd3-285a-4627-bfad-bf0d0a050ad7",
   "client_id_alias": "unsupportedClient",
   "client_secret": "unsupportedClientSecret",
