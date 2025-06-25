@@ -296,6 +296,24 @@
           "fido-uaf",
           "legacy"
         ],
+        "step_definitions": [
+          {
+            "method": "password",
+            "order": 1
+          },
+          {
+            "method": "email",
+            "order": 2
+          },
+          {
+            "method": "sms",
+            "order": 3
+          },
+          {
+            "method": "fido-uaf",
+            "order": 4
+          }
+        ],
         "acr_mapping_rules": {
           "urn:mace:incommon:iap:gold": [
             "fido-uaf",
