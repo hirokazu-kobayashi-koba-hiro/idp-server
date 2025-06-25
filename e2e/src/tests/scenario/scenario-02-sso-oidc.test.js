@@ -17,7 +17,7 @@ describe("sso oidc", () => {
         // /{id}/federations/{federation-type}/{sso-provider-name}
         const federationInteraction = async (id, user) => {
           const challengeResponse = await postAuthentication({
-            endpoint: `${backendUrl}/1e68932e-ed4a-43e7-b412-460665e42df3/v1/authorizations/{id}/` + "email-authentication-challenge",
+            endpoint: `${backendUrl}/1e68932e-ed4a-43e7-b412-460665e42df3/v1/authorizations/{id}/email-authentication-challenge`,
             id,
             body: {
               email: user.email,
@@ -28,7 +28,7 @@ describe("sso oidc", () => {
           console.log(challengeResponse.data);
 
           const authenticationTransactionResponse = await get({
-            url: `${backendUrl}/1e68932e-ed4a-43e7-b412-460665e42df3/v1/authentications` + `?authorization_id=${id}`,
+            url: `${backendUrl}/1e68932e-ed4a-43e7-b412-460665e42df3/v1/authentications?authorization_id=${id}`,
           });
           console.log(authenticationTransactionResponse.data);
           const transactionId = authenticationTransactionResponse.data.list[0].id;
@@ -56,7 +56,7 @@ describe("sso oidc", () => {
           const verificationCode = interactionResponse.data.payload.verification_code;
 
           const verificationResponse = await postAuthentication({
-            endpoint: `${backendUrl}/1e68932e-ed4a-43e7-b412-460665e42df3/v1/authorizations/{id}/` + "email-authentication",
+            endpoint: `${backendUrl}/1e68932e-ed4a-43e7-b412-460665e42df3/v1/authorizations/{id}/email-authentication`,
             id,
             body: {
               verification_code: verificationCode,
@@ -67,12 +67,22 @@ describe("sso oidc", () => {
           console.log(verificationResponse.data);
         };
 
+        const viewResponse = await get({
+          url: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations/${id}/view-data`,
+        });
+        console.log(JSON.stringify(viewResponse.data, null, 2));
+        expect(viewResponse.status).toBe(200);
+        expect(viewResponse.data.available_federations).not.toBeNull();
+
+        const federationSetting = viewResponse.data.available_federations.find(federation => federation.auto_selected);
+        console.log(federationSetting);
+
         const { params } = await requestFederation({
           url: "http://localhost:8080",
           authSessionId: id,
           authSessionTenantId: "67e7eae6-62b0-4500-9eff-87459f63fc66",
-          type: "oidc",
-          providerName: "b7481833-c95a-4c7a-9481-94b30008c8ef",
+          type: federationSetting.type,
+          providerName: federationSetting.sso_provider,
           federationTenantId: "1e68932e-ed4a-43e7-b412-460665e42df3",
           user: {
             email: faker.internet.email(),

@@ -16,6 +16,7 @@
 
 package org.idp.server.core.oidc.view;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,8 +29,10 @@ public class OAuthViewData {
   String tosUri;
   String policyUri;
   List<String> scopes;
+  boolean sessionEnabled;
+  List<Map<String, Object>> availableFederations;
   Map<String, String> customParams;
-  Map<String, Object> contents;
+  Map<String, Object> additionalViewData;
 
   public OAuthViewData(
       String clientId,
@@ -40,8 +43,10 @@ public class OAuthViewData {
       String tosUri,
       String policyUri,
       List<String> scopes,
+      boolean sessionEnabled,
+      List<Map<String, Object>> availableFederations,
       Map<String, String> customParams,
-      Map<String, Object> contents) {
+      Map<String, Object> additionalViewData) {
     this.clientId = clientId;
     this.clientName = clientName;
     this.clientUri = clientUri;
@@ -50,8 +55,10 @@ public class OAuthViewData {
     this.tosUri = tosUri;
     this.policyUri = policyUri;
     this.scopes = scopes;
+    this.sessionEnabled = sessionEnabled;
+    this.availableFederations = availableFederations;
     this.customParams = customParams;
-    this.contents = contents;
+    this.additionalViewData = additionalViewData;
   }
 
   public String clientId() {
@@ -91,6 +98,23 @@ public class OAuthViewData {
   }
 
   public Map<String, Object> contents() {
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("client_id", clientId);
+    contents.put("client_name", clientName);
+    contents.put("client_uri", clientUri);
+    contents.put("logo_uri", logoUri);
+    contents.put("contacts", contacts);
+    contents.put("tos_uri", tosUri);
+    contents.put("policy_uri", policyUri);
+    contents.put("scopes", scopes);
+    contents.put("session_enabled", sessionEnabled);
+
+    if (availableFederations != null && !availableFederations.isEmpty()) {
+      contents.put("available_federations", availableFederations);
+    }
+
+    contents.put("custom_params", customParams);
+    contents.putAll(additionalViewData);
     return contents;
   }
 }

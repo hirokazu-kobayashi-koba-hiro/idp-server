@@ -1,6 +1,4 @@
 {
-  "tenant_id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
-  "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
   "client_id": "27690772-ba44-4110-aa3a-a5e3462d81b3",
   "client_id_alias": "privateKeyJwt",
   "client_secret": "privateKeyJwtSecret",

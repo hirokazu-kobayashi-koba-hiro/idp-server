@@ -25,6 +25,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthViewUrlResolver {
 
+  // TODO more flexible
   public static String resolve(OAuthRequestContext context) {
     String base = context.tenant().domain().value();
 

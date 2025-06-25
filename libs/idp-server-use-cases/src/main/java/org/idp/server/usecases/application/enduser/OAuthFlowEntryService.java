@@ -16,6 +16,7 @@
 
 package org.idp.server.usecases.application.enduser;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,6 +25,7 @@ import org.idp.server.core.oidc.*;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionQueryRepository;
+import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.exception.OAuthAuthorizeBadRequestException;
 import org.idp.server.core.oidc.federation.*;
 import org.idp.server.core.oidc.federation.io.FederationCallbackRequest;
@@ -130,8 +132,16 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    AuthenticationTransaction authenticationTransaction =
+        authenticationTransactionQueryRepository.get(
+            tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
+    AuthenticationPolicy authenticationPolicy = authenticationTransaction.authenticationPolicy();
+    Map<String, Object> additionalViewData = new HashMap<>();
+    additionalViewData.put("authentication_policy", authenticationPolicy.toMap());
+
     OAuthViewDataRequest oAuthViewDataRequest =
-        new OAuthViewDataRequest(tenant, authorizationRequestIdentifier.value());
+        new OAuthViewDataRequest(
+            tenant, authorizationRequestIdentifier.value(), additionalViewData);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 

@@ -358,6 +358,18 @@ public class ClientConfiguration implements JsonReadable {
     return extension.refreshTokenDuration();
   }
 
+  public boolean hasAvailableFederations() {
+    return extension.hasAvailableFederations();
+  }
+
+  public List<AvailableFederation> availableFederations() {
+    return extension.availableFederations();
+  }
+
+  public List<Map<String, Object>> availableFederationsAsMapList() {
+    return extension.availableFederationsAsMapList();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("client_id", clientId);

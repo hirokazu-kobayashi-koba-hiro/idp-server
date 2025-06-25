@@ -17,6 +17,7 @@
 package org.idp.server.core.oidc.configuration.client;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -25,6 +26,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   Long accessTokenDuration;
   Long refreshTokenDuration;
   boolean supportedJar = false;
+  List<AvailableFederation> availableFederations;
 
   public ClientExtensionConfiguration() {}
 
@@ -48,11 +50,25 @@ public class ClientExtensionConfiguration implements JsonReadable {
     return supportedJar;
   }
 
+  public List<AvailableFederation> availableFederations() {
+    return availableFederations;
+  }
+
+  public List<Map<String, Object>> availableFederationsAsMapList() {
+    return availableFederations.stream().map(AvailableFederation::toMap).toList();
+  }
+
+  public boolean hasAvailableFederations() {
+    return availableFederations != null && !availableFederations.isEmpty();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("access_token_duration", accessTokenDuration);
     map.put("refresh_token_duration", refreshTokenDuration);
     map.put("supported_jar", supportedJar);
+    if (hasAvailableFederations())
+      map.put("available_federations", availableFederationsAsMapList());
     return map;
   }
 }

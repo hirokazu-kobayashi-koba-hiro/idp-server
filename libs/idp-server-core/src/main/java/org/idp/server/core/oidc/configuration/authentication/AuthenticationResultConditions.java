@@ -42,6 +42,14 @@ public class AuthenticationResultConditions implements JsonReadable {
     return allOf;
   }
 
+  public List<Map<String, Object>> anyOfAsMap() {
+    return anyOf.stream().map(AuthenticationResultCondition::toMap).toList();
+  }
+
+  public List<Map<String, Object>> allOfAsMap() {
+    return allOf.stream().map(AuthenticationResultCondition::toMap).toList();
+  }
+
   public boolean hasAnyOf() {
     return anyOf != null && !anyOf.isEmpty();
   }
@@ -56,8 +64,8 @@ public class AuthenticationResultConditions implements JsonReadable {
 
   public Map<String, Object> toMap() {
     HashMap<String, Object> map = new HashMap<>();
-    if (hasAnyOf()) map.put("any_of", anyOf);
-    if (hasAllOf()) map.put("all_of", allOf);
+    if (hasAnyOf()) map.put("any_of", anyOfAsMap());
+    if (hasAllOf()) map.put("all_of", allOfAsMap());
     return map;
   }
 }

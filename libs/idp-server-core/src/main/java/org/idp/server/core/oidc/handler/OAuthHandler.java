@@ -67,7 +67,11 @@ public class OAuthHandler {
 
     OAuthViewDataCreator creator =
         new OAuthViewDataCreator(
-            authorizationRequest, authorizationServerConfiguration, clientConfiguration, session);
+            authorizationRequest,
+            authorizationServerConfiguration,
+            clientConfiguration,
+            session,
+            request.additionalViewData());
     OAuthViewData oAuthViewData = creator.create();
 
     return new OAuthViewDataResponse(OAuthViewDataStatus.OK, oAuthViewData);
