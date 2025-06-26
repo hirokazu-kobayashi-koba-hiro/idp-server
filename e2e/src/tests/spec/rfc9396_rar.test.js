@@ -7,7 +7,7 @@ import {
   requestToken
 } from "../../api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "../testConfig";
-import { requestAuthorizations } from "../../oauth/signin";
+import { requestAuthorizations } from "../../oauth/request";
 import {
   createJwe,
   createJwt,

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
-import { requestAuthorizationsForSignup } from "../../oauth/signup";
 import { backendUrl, clientSecretPostClient, serverConfig } from "../testConfig";
 import { faker } from "@faker-js/faker";
 import { postAuthentication, requestToken } from "../../api/oauthClient";
 import { get } from "../../lib/http";
+import { requestAuthorizations } from "../../oauth/request";
 
 describe("user registration", () => {
 
@@ -64,7 +64,7 @@ describe("user registration", () => {
         console.log(verificationResponse.data);
       };
 
-      const { authorizationResponse } = await requestAuthorizationsForSignup({
+      const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         responseType: "code",
@@ -82,7 +82,6 @@ describe("user registration", () => {
           locale: "ja-JP",
           phone_number: faker.phone.number("090-####-####"),
         },
-        mfa: "",
         interaction,
       });
       console.log(authorizationResponse);
@@ -166,7 +165,7 @@ describe("user registration", () => {
         console.log(verificationResponse.data);
       };
 
-      const { authorizationResponse } = await requestAuthorizationsForSignup({
+      const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         responseType: "code",
@@ -198,7 +197,6 @@ describe("user registration", () => {
           locale: "ja-JP",
           phone_number: faker.phone.number("090-####-####"),
         },
-        mfa: "",
         interaction,
       });
       console.log(authorizationResponse);
@@ -270,7 +268,7 @@ describe("user registration", () => {
         console.log(verificationResponse.data);
       };
 
-      const { authorizationResponse } = await requestAuthorizationsForSignup({
+      const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         responseType: "code",
@@ -288,7 +286,6 @@ describe("user registration", () => {
           locale: "ja-JP",
           phone_number: faker.phone.number("090-####-####"),
         },
-        mfa: "",
         interaction,
       });
       console.log(authorizationResponse);
@@ -372,7 +369,7 @@ describe("user registration", () => {
         console.log(verificationResponse.data);
       };
 
-      const { authorizationResponse } = await requestAuthorizationsForSignup({
+      const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         responseType: "code",
@@ -404,7 +401,6 @@ describe("user registration", () => {
           locale: "ja-JP",
           phone_number: faker.phone.number("090-####-####"),
         },
-        mfa: "",
         interaction,
       });
       console.log(authorizationResponse);
@@ -527,7 +523,7 @@ describe("user registration", () => {
         console.log(verificationResponse.data);
       };
 
-      const { authorizationResponse } = await requestAuthorizationsForSignup({
+      const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         responseType: "code",
@@ -543,7 +539,6 @@ describe("user registration", () => {
           name: faker.person.fullName(),
           phone_number: faker.phone.number("090-####-####"),
         },
-        mfa: "",
         interaction,
       });
       console.log(authorizationResponse);
@@ -666,7 +661,7 @@ describe("user registration", () => {
         console.log(verificationResponse.data);
       };
 
-      const { authorizationResponse } = await requestAuthorizationsForSignup({
+      const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         responseType: "code",
@@ -682,7 +677,6 @@ describe("user registration", () => {
           name: faker.person.fullName(),
           phone_number: faker.phone.number("090-####-####"),
         },
-        mfa: "",
         interaction,
       });
       console.log(authorizationResponse);

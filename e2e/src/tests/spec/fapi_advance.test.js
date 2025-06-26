@@ -7,7 +7,7 @@ import {
   selfSignedTlsAuthClient,
   serverConfig,
 } from "../testConfig";
-import { requestAuthorizations, certThumbprint } from "../../oauth/signin";
+import { requestAuthorizations, certThumbprint } from "../../oauth/request";
 import { createJwtWithPrivateKey, generateJti, verifyAndDecodeJwt } from "../../lib/jose";
 import {
   calculateCodeChallengeWithS256,

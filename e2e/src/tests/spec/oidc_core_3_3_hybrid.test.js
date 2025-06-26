@@ -6,7 +6,7 @@ import {
   clientSecretPostClient,
   serverConfig,
 } from "../testConfig";
-import { requestAuthorizations } from "../../oauth/signin";
+import { requestAuthorizations } from "../../oauth/request";
 import { createJwtWithPrivateKey, verifyAndDecodeJwt } from "../../lib/jose";
 import { createBasicAuthHeader, toEpocTime } from "../../lib/util";
 import { calculateIdTokenClaimHashWithS256 } from "../../lib/oauth";
