@@ -5,7 +5,7 @@ import {
   selfSignedTlsAuthClient,
   serverConfig,
 } from "../testConfig";
-import { requestAuthorizations, certThumbprint } from "../../oauth/signin";
+import { requestAuthorizations, certThumbprint } from "../../oauth/request";
 import { verifyAndDecodeJwt } from "../../lib/jose";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", () => {

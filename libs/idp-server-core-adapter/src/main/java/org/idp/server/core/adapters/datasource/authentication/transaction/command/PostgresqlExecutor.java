@@ -135,8 +135,13 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
 
     User user = authenticationTransaction.user();
     List<Object> params = new ArrayList<>();
-    params.add(user.subAsUuid());
-    params.add(jsonConverter.write(user));
+    if (authenticationTransaction.hasUser()) {
+      params.add(user.subAsUuid());
+      params.add(jsonConverter.write(user));
+    } else {
+      params.add(null);
+      params.add(null);
+    }
 
     if (user.hasAuthenticationDevices()) {
       AuthenticationDevice authenticationDevice = user.findPreferredForNotification();

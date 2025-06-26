@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 
 import { getJwks, requestToken } from "../../api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "../testConfig";
-import { pushAuthorizations, requestAuthorizations } from "../../oauth/signin";
+import { pushAuthorizations, requestAuthorizations } from "../../oauth/request";
 import {
   createJwtWithPrivateKey,
   generateJti,

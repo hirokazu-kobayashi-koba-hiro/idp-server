@@ -39,7 +39,19 @@ export const requestAuthorizations = async ({
     "username": "ito.ichiro@gmail.com",
     "password": "successUserCode001",
   },
-  mfa,
+  interaction = async (id, user) => {
+    const passwordResponse = await postAuthentication({
+      endpoint: serverConfig.authorizationIdEndpoint + "password-authentication",
+      id,
+      body: {
+        ...user
+      }
+    });
+
+    if (passwordResponse.status >= 400) {
+      console.error(passwordResponse.data);
+    }
+  }
 }) => {
     const response = await getAuthorizations({
       endpoint,
@@ -66,7 +78,7 @@ export const requestAuthorizations = async ({
       customParams,
     });
 
-    console.log(response.headers);
+    // console.log(response.headers);
     console.log(response.data);
     const { location } = response.headers;
     const { nextAction, params } = convertNextAction(location);
@@ -96,77 +108,7 @@ export const requestAuthorizations = async ({
 
     if (action === "authorize") {
 
-      const passwordResponse = await postAuthentication({
-        endpoint: serverConfig.authorizationIdEndpoint + "password-authentication",
-        id,
-        body: {
-          ...user
-        }
-      });
-
-      if (passwordResponse.status >= 400) {
-        console.error(passwordResponse.data);
-      }
-
-      if (mfa === "email") {
-        const challengeResponse = await postAuthentication({
-          endpoint: serverConfig.authorizationIdEndpoint + "email-verification-challenge",
-          id,
-          body: {
-            email: "test@gmail.com",
-            email_template: "authentication"
-          },
-        });
-        console.log(challengeResponse.status);
-        console.log(challengeResponse.data);
-
-        const verificationResponse = await postAuthentication({
-          endpoint: serverConfig.authorizationIdEndpoint + "email-verification",
-          id,
-          body: {
-            verification_code: "123",
-          }
-        });
-
-        console.log(verificationResponse.status);
-        console.log(verificationResponse.data);
-      }
-
-      if (mfa === "webauthn") {
-        const challengeResponse = await postAuthentication({
-          endpoint: serverConfig.authorizationIdEndpoint + "webauthn-authentication-challenge",
-          id,
-          body: {
-            email_template: "authentication"
-          }
-        });
-        console.log(challengeResponse.status);
-        console.log(challengeResponse.data);
-
-        const verificationResponse = await postAuthentication({
-          endpoint: serverConfig.authorizationIdEndpoint + "webauthn-authentication",
-          id,
-          body: {
-            verification_code: "123",
-          }
-        });
-
-        console.log(verificationResponse.status);
-        console.log(verificationResponse.data);
-      }
-
-      if (mfa === "legacy-authentication") {
-        const challengeResponse = await postAuthentication({
-          endpoint: serverConfig.authorizationIdEndpoint + "legacy-authentication",
-          id,
-          body: {
-            username: "dummy",
-            password: "password",
-          }
-        });
-        console.log(challengeResponse.status);
-        console.log(challengeResponse.data);
-      }
+      await interaction(id, user);
 
       const authorizeResponse = await authorize({
         endpoint: serverConfig.authorizeEndpoint,
@@ -176,7 +118,7 @@ export const requestAuthorizations = async ({
         }
       });
 
-      console.log(authorizeResponse.headers);
+      // console.log(authorizeResponse.headers);
       console.log(authorizeResponse.data);
       const authorizationResponse = convertToAuthorizationResponse(
         authorizeResponse.data.redirect_uri
@@ -186,6 +128,7 @@ export const requestAuthorizations = async ({
         authorizationResponse,
       };
     } else {
+
       const denyResponse = await deny({
         endpoint: serverConfig.denyEndpoint,
         id,

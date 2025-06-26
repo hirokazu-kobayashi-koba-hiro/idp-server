@@ -1,4 +1,4 @@
-import { describe, expect, it, xit } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 
 import {
   getAuthenticationDeviceAuthenticationTransaction, getJwks,
@@ -9,11 +9,9 @@ import {
 import {
   backendUrl,
   clientSecretPostClient,
-  privateKeyJwtClient,
   serverConfig
 } from "../testConfig";
-import { createJwt, createJwtWithPrivateKey, generateJti, verifyAndDecodeJwt } from "../../lib/jose";
-import { isNumber, toEpocTime } from "../../lib/util";
+import { verifyAndDecodeJwt } from "../../lib/jose";
 import { get } from "../../lib/http";
 
 describe("ciba - mfa", () => {

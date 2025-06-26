@@ -2,6 +2,7 @@ export const backendUrl = process.env.IDP_SERVER_URL || "http://localhost:8080";
 
 export const serverConfig = {
   issuer: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66`,
+  tenantId: "67e7eae6-62b0-4500-9eff-87459f63fc66",
   authorizationEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations`,
   authorizationIdEndpoint:
@@ -57,6 +58,11 @@ export const serverConfig = {
     password: "successUserCode001",
   },
   acr: "urn:mace:incommon:iap:bronze",
+};
+
+export const federationServerConfig = {
+  issuer: `${backendUrl}/1e68932e-ed4a-43e7-b412-460665e42df3`,
+  tenantId: "1e68932e-ed4a-43e7-b412-460665e42df3"
 };
 
 export const unsupportedServerConfig = {

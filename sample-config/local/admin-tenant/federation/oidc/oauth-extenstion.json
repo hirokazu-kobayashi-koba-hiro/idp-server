@@ -66,7 +66,8 @@
     "userinfo_mapping_rules": [
       { "source": "body", "from": "$.sub", "to": "provider_user_id", "type": "string" },
       { "source": "body", "from": "$.email", "to": "email", "type": "string" },
-      { "source": "body", "from": "$.email_verified", "to": "email_verified", "type": "boolean" }
+      { "source": "body", "from": "$.email_verified", "to": "email_verified", "type": "boolean" },
+      { "source": "header", "from": "$.cache-control", "to": "name", "type": "string" }
     ]
   }
 }
