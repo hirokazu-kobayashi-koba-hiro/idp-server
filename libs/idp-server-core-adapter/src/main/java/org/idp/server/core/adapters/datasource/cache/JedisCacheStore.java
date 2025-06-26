@@ -60,7 +60,7 @@ public class JedisCacheStore implements CacheStore {
         return Optional.empty();
       }
 
-      log.info("Find cache. key:{}, type:{}", key, type.getSimpleName());
+      log.debug("Find cache. key:{}, type:{}", key, type.getSimpleName());
       return Optional.of(jsonConverter.read(json, type));
     } catch (Exception e) {
 

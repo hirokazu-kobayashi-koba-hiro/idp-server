@@ -36,8 +36,8 @@ public class OAuthSessionDataSource implements OAuthSessionRepository {
   @Override
   public void register(OAuthSession oAuthSession) {
     String sessionKey = oAuthSession.sessionKeyValue();
-    log.info("registerSession: {}", sessionKey);
-    log.info("register sessionId: {}", httpSession.getId());
+    log.debug("registerSession: {}", sessionKey);
+    log.debug("register sessionId: {}", httpSession.getId());
     httpSession.setAttribute(sessionKey, oAuthSession);
   }
 
@@ -45,10 +45,10 @@ public class OAuthSessionDataSource implements OAuthSessionRepository {
   public OAuthSession find(OAuthSessionKey oAuthSessionKey) {
     String sessionKey = oAuthSessionKey.key();
     OAuthSession oAuthSession = (OAuthSession) httpSession.getAttribute(sessionKey);
-    log.info("find sessionId: {}", httpSession.getId());
-    log.info("findSession: {}", sessionKey);
+    log.debug("find sessionId: {}", httpSession.getId());
+    log.debug("findSession: {}", sessionKey);
     if (oAuthSession == null) {
-      log.info("session not found");
+      log.debug("session not found");
       return new OAuthSession();
     }
     return oAuthSession;
@@ -57,16 +57,16 @@ public class OAuthSessionDataSource implements OAuthSessionRepository {
   @Override
   public void update(OAuthSession oAuthSession) {
     String sessionKey = oAuthSession.sessionKeyValue();
-    log.info("update sessionId: {}", httpSession.getId());
-    log.info("updateSession: {}", sessionKey);
+    log.debug("update sessionId: {}", httpSession.getId());
+    log.debug("updateSession: {}", sessionKey);
     httpSession.getId();
     httpSession.setAttribute(sessionKey, oAuthSession);
   }
 
   @Override
   public void delete(OAuthSessionKey oAuthSessionKey) {
-    log.info("delete sessionId: {}", httpSession.getId());
-    log.info("deleteSession: {}", oAuthSessionKey.key());
+    log.debug("delete sessionId: {}", httpSession.getId());
+    log.debug("deleteSession: {}", oAuthSessionKey.key());
     // FIXME every client
     httpSession.invalidate();
   }
