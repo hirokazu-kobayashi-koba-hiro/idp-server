@@ -55,6 +55,9 @@ public class ClientExtensionConfiguration implements JsonReadable {
   }
 
   public List<Map<String, Object>> availableFederationsAsMapList() {
+    if (availableFederations == null) {
+      return List.of();
+    }
     return availableFederations.stream().map(AvailableFederation::toMap).toList();
   }
 
