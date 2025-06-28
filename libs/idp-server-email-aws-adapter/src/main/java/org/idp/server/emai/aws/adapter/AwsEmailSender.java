@@ -19,6 +19,8 @@ package org.idp.server.emai.aws.adapter;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.notification.email.*;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
@@ -34,10 +36,18 @@ public class AwsEmailSender implements EmailSender {
   public EmailSendResult send(EmailSendingRequest request, EmailSenderSetting setting) {
     String sender = setting.getValueAsString("sender");
     String regionName = setting.optValueAsString("region", "ap-northeast-1");
+    String accessKeyId = setting.optValueAsString("access_key_id", "");
+    String secretAccessKey = setting.optValueAsString("secret_access_key", "");
 
     Region region = Region.of(regionName);
 
-    try (SesClient sesClient = SesClient.builder().region(region).build()) {
+    try (SesClient sesClient =
+        SesClient.builder()
+            .credentialsProvider(
+                StaticCredentialsProvider.create(
+                    AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
+            .region(region)
+            .build()) {
       Destination destination = Destination.builder().toAddresses(request.to()).build();
 
       Content subject = Content.builder().data(request.subject()).charset("UTF-8").build();
