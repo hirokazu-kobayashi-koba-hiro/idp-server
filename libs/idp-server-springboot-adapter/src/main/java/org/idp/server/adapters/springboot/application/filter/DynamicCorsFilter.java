@@ -21,21 +21,28 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URI;
+import java.util.List;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.platform.exception.BadRequestException;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 public class DynamicCorsFilter extends OncePerRequestFilter {
   TenantMetaDataApi tenantMetaDataApi;
+  URI serverUri;
   LoggerWrapper log = LoggerWrapper.getLogger(DynamicCorsFilter.class);
 
-  public DynamicCorsFilter(IdpServerApplication idpServerApplication) {
+  public DynamicCorsFilter(
+      IdpServerApplication idpServerApplication,
+      @Value("${idp.configurations.serverUrl}") String serverUrl) {
     this.tenantMetaDataApi = idpServerApplication.tenantMetadataApi();
+    this.serverUri = URI.create(serverUrl);
   }
 
   @Override
@@ -46,11 +53,15 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
     try {
       TenantIdentifier tenantIdentifier = extractTenantIdentifier(request);
       Tenant tenant = tenantMetaDataApi.get(tenantIdentifier);
-      TenantDomain domain = tenant.domain();
+      TenantAttributes tenantAttributes = tenant.attributes();
+      List<String> allowOrigins = tenantAttributes.optValueAsStringList("allow_origins", List.of());
+      String origin = request.getServerName();
+      String allowOrigin =
+          allowOrigins.stream().filter(origin::equals).findFirst().orElse(tenant.domain().host());
       log.info(
-          "DynamicCorsFilter tenantId: {} domain: {}", tenantIdentifier.value(), domain.host());
+          "DynamicCorsFilter tenantId: {} allow origin: {}", tenantIdentifier.value(), allowOrigin);
 
-      response.setHeader("Access-Control-Allow-Origin", domain.host());
+      response.setHeader("Access-Control-Allow-Origin", allowOrigin);
       response.setHeader("Access-Control-Allow-Credentials", "true");
       response.setHeader(
           "Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, X-Requested-With");
@@ -85,8 +96,11 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
   }
 
   protected boolean shouldNotFilter(HttpServletRequest request) {
+    if (serverUri.getHost().equals(request.getServerName())) {
+      return true;
+    }
     String path = request.getRequestURI();
-    return true;
-    //    return path.contains("/admin/") || path.contains("/management/");
+
+    return path.contains("/admin/") || path.contains("/management/");
   }
 }

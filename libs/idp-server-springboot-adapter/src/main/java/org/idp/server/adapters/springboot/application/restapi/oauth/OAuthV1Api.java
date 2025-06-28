@@ -24,7 +24,9 @@ import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
+import org.idp.server.core.oidc.federation.FederationInteractionResult;
 import org.idp.server.core.oidc.federation.FederationType;
+import org.idp.server.core.oidc.federation.io.FederationCallbackRequest;
 import org.idp.server.core.oidc.federation.io.FederationRequestResponse;
 import org.idp.server.core.oidc.federation.sso.SsoProvider;
 import org.idp.server.core.oidc.io.*;
@@ -148,6 +150,31 @@ public class OAuthV1Api implements ParameterTransformable {
             Map.of("error", "unexpected error is occurred"), HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
+  }
+
+  @PostMapping("/federations/{federation-type}/callback")
+  public ResponseEntity<?> callbackFederation(
+      @PathVariable("federation-type") FederationType federationType,
+      @RequestBody(required = false) MultiValueMap<String, String> body,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+    Map<String, String[]> params = transform(body);
+    FederationCallbackRequest federationCallbackRequest = new FederationCallbackRequest(params);
+
+    FederationInteractionResult result =
+        oAuthFlowApi.callbackFederation(
+            federationCallbackRequest.tenantIdentifier(),
+            federationType,
+            federationCallbackRequest.ssoProvider(),
+            federationCallbackRequest,
+            requestAttributes);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(
+        result.response(), headers, HttpStatus.valueOf(result.statusCode()));
   }
 
   @PostMapping("/{id}/{interaction-type}")

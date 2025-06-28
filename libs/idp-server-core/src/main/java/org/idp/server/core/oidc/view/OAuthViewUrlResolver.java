@@ -22,18 +22,22 @@ import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.platform.http.QueryParams;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 
 public class OAuthViewUrlResolver {
 
-  // TODO more flexible
   public static String resolve(OAuthRequestContext context) {
+    Tenant tenant = context.tenant();
+    TenantAttributes attributes = tenant.attributes();
     String base = context.tenant().domain().value();
 
     if (context.isPromptCreate()) {
-      return buildUrl(base, "signup/index.html", context);
+      String signupPage = attributes.optValueAsString("signup_page", "signup/index.html");
+      return buildUrl(base, signupPage, context);
     }
 
-    return buildUrl(base, "signin/index.html", context);
+    String signinPage = attributes.optValueAsString("signin_page", "signin/index.html");
+    return buildUrl(base, signinPage, context);
   }
 
   public static String resolveError(Tenant tenant, Error error, ErrorDescription errorDescription) {
@@ -44,11 +48,13 @@ public class OAuthViewUrlResolver {
   }
 
   private static String buildUrl(String base, String path, OAuthRequestContext context) {
+    String normalizedBase = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+    String normalizedPath = path.startsWith("/") ? path.replaceFirst("/", "") : path;
     CustomParams customParams = context.authorizationRequest().customParams();
     QueryParams queryParams = new QueryParams(customParams.values());
     queryParams.add("id", context.authorizationRequestIdentifier().value());
     queryParams.add("tenant_id", context.tenantIdentifier().value());
     String params = queryParams.params();
-    return String.format("%s/%s/?%s", base, path, params);
+    return String.format("%s/%s?%s", normalizedBase, normalizedPath, params);
   }
 }
