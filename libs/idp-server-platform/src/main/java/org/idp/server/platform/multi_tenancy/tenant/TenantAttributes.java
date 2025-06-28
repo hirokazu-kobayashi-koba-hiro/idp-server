@@ -18,6 +18,7 @@
 package org.idp.server.platform.multi_tenancy.tenant;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -48,6 +49,9 @@ public class TenantAttributes {
   }
 
   public boolean containsKey(String key) {
+    if (values == null || values.isEmpty()) {
+      return false;
+    }
     return values.containsKey(key);
   }
 
@@ -62,5 +66,19 @@ public class TenantAttributes {
   public TenantAttributes updateWith(TenantAttributes other) {
     values.putAll(other.values);
     return new TenantAttributes(values);
+  }
+
+  public boolean optValueAsBoolean(String key, boolean defaultValue) {
+    if (values == null || values.isEmpty()) {
+      return defaultValue;
+    }
+    return (boolean) values.get(key);
+  }
+
+  public List<String> optValueAsStringList(String key, List<String> defaultValue) {
+    if (values == null || values.isEmpty()) {
+      return defaultValue;
+    }
+    return (List<String>) values.get(key);
   }
 }

@@ -113,6 +113,10 @@ public class FederationInteractionResult {
     return status;
   }
 
+  public int statusCode() {
+    return status.statusCode();
+  }
+
   public boolean isSuccess() {
     return status.isSuccess();
   }

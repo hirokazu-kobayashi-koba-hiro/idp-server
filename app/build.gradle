@@ -28,11 +28,11 @@ dependencies {
 	implementation project(':libs:idp-server-springboot-adapter')
 
 	//session-redis
-	//	implementation 'org.springframework.session:spring-session-data-redis'
-	//	implementation('org.springframework.boot:spring-boot-starter-data-redis') {
-	//		exclude group: 'io.lettuce.core', module: 'lettuce-core'
-	//	}
-	//	implementation 'redis.clients:jedis:5.1.0'
+	implementation 'org.springframework.session:spring-session-data-redis'
+	implementation('org.springframework.boot:spring-boot-starter-data-redis') {
+		exclude group: 'io.lettuce.core', module: 'lettuce-core'
+	}
+	implementation 'redis.clients:jedis:5.1.0'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

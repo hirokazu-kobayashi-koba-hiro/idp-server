@@ -98,7 +98,7 @@ describe("sso oidc", () => {
         console.log(params);
 
         const federationCallbackResponse = await post({
-          url: `${backendUrl}/v1/authorizations/federations/oidc/callback`,
+          url: `${backendUrl}/${federationServerConfig.tenantId}/v1/authorizations/federations/oidc/callback`,
           body: params.toString()
         });
         console.log(federationCallbackResponse.data);
@@ -211,7 +211,7 @@ describe("sso oidc", () => {
         console.log(params);
 
         const federationCallbackResponse = await post({
-          url: `${backendUrl}/v1/authorizations/federations/oidc/callback`,
+          url: `${backendUrl}/${federationServerConfig.tenantId}/v1/authorizations/federations/oidc/callback`,
           body: params.toString()
         });
         console.log(federationCallbackResponse.data);
@@ -387,7 +387,7 @@ describe("sso oidc", () => {
         console.log(params);
 
         const federationCallbackResponse = await post({
-          url: `${backendUrl}/v1/authorizations/federations/oidc/callback`,
+          url: `${backendUrl}/${federationServerConfig.tenantId}/v1/authorizations/federations/oidc/callback`,
           body: params.toString()
         });
         console.log(federationCallbackResponse.data);
@@ -500,7 +500,7 @@ describe("sso oidc", () => {
         console.log(params);
 
         const federationCallbackResponse = await post({
-          url: `${backendUrl}/v1/authorizations/federations/oidc/callback`,
+          url: `${backendUrl}/${federationServerConfig.tenantId}/v1/authorizations/federations/oidc/callback`,
           body: params.toString()
         });
         console.log(federationCallbackResponse.data);

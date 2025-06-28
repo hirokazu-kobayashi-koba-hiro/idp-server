@@ -78,7 +78,7 @@ export const requestAuthorizations = async ({
       customParams,
     });
 
-    // console.log(response.headers);
+    console.log(response.headers);
     console.log(response.data);
     const { location } = response.headers;
     const { nextAction, params } = convertNextAction(location);

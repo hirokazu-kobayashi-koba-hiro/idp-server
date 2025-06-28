@@ -6,6 +6,19 @@ import { Stack, Typography } from "@mui/material";
 import { BaseLayout } from "@/components/layout/BaseLayout";
 import { useState } from "react";
 
+const decodeSsoState = (state: string) => {
+
+  const base64 = state.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+
+  const json = JSON.parse(atob(padded));
+  const sessionId: string = json.session_id;
+  const tenantId: string = json.tenant_id;
+  const provider: string = json.provider;
+
+  return { sessionId, tenantId, provider };
+}
+
 const SsoCallback = () => {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -16,16 +29,23 @@ const SsoCallback = () => {
       if (!router.isReady || Object.keys(router.query).length === 0) return; // Ensure query params exist
       const query = router.query;
       console.log(query);
+      const params = new URLSearchParams(query as Record<string, string>);
+      const state = params.get("state")
+      if (!state) {
+        console.error("state is null")
+        return
+      }
+      const stateObject = decodeSsoState(state);
 
       const response = await fetch(
-        `${backendUrl}/v1/authorizations/federations/oidc/callback`,
+        `${backendUrl}/${stateObject.tenantId}/v1/authorizations/federations/oidc/callback`,
         {
           method: "POST",
           credentials: "include",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-          body: new URLSearchParams(query as Record<string, string>).toString(),
+          body: params.toString(),
         },
       );
 

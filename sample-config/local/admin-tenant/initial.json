@@ -9,7 +9,15 @@
     "name": "admin-tenant",
     "domain": "http://localhost:8080",
     "authorization_provider": "idp-server",
-    "database_type": "postgresql"
+    "database_type": "postgresql",
+    "attributes": {
+      "cookie_name": "ADMIN_TENANT_IDP_SERVER_SESSION",
+      "use_secure_cookie": false,
+      "allow_origins": [
+        "idp-auth-frontend-ecru.vercel.app",
+        "idp-auth-frontend-diqt.vercel.app"
+      ]
+    }
   },
   "authorization_server": {
     "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
