@@ -52,6 +52,8 @@ public enum DefaultSecurityEventType {
   sms_verification_failure("User failed phone number verification"),
   legacy_authentication_success("User legacy ID authentication verified"),
   legacy_authentication_failure("User failed legacy ID authentication verified"),
+  external_token_authentication_success("User request verified their token is success"),
+  external_token_authentication_failure("User request verified their token is failed"),
   federation_request("Federation request"),
   federation_success("Federation success"),
   federation_failure("Federation failed"),

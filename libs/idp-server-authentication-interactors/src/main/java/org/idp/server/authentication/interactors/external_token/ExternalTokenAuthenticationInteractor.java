@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.legacy;
+package org.idp.server.authentication.interactors.external_token;
 
 import java.util.*;
 import org.idp.server.core.oidc.authentication.*;
@@ -23,16 +23,18 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.mapper.UserInfoMapper;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.date.SystemDateTime;
-import org.idp.server.platform.http.*;
+import org.idp.server.platform.http.HttpClientFactory;
+import org.idp.server.platform.http.HttpRequestBaseParams;
+import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
-public class LegacyIdServiceAuthenticationInteractor implements AuthenticationInteractor {
-
+public class ExternalTokenAuthenticationInteractor implements AuthenticationInteractor {
   AuthenticationConfigurationQueryRepository configurationRepository;
   HttpRequestExecutor httpRequestExecutor;
 
-  public LegacyIdServiceAuthenticationInteractor(
+  public ExternalTokenAuthenticationInteractor(
       AuthenticationConfigurationQueryRepository configurationRepository) {
     this.configurationRepository = configurationRepository;
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
@@ -46,38 +48,11 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
       AuthenticationInteractionRequest request,
       UserQueryRepository userQueryRepository) {
 
-    LegacyIdServiceAuthenticationConfiguration configuration =
+    ExternalTokenAuthenticationConfiguration configuration =
         configurationRepository.get(
-            tenant, "legacy-id-service", LegacyIdServiceAuthenticationConfiguration.class);
+            tenant, "external-token", ExternalTokenAuthenticationConfiguration.class);
 
-    LegacyIdServiceAuthenticationDetailConfiguration authenticationConfig =
-        configuration.authenticationDetailConfig();
-
-    HttpRequestResult authenticationResult =
-        httpRequestExecutor.execute(
-            authenticationConfig.httpRequestUrl(),
-            authenticationConfig.httpMethod(),
-            authenticationConfig.httpRequestHeaders(),
-            new HttpRequestBaseParams(request.toMap()),
-            authenticationConfig.httpRequestDynamicBodyKeys(),
-            authenticationConfig.httpRequestStaticBody());
-
-    if (authenticationResult.isClientError()) {
-
-      return new AuthenticationInteractionRequestResult(
-          AuthenticationInteractionStatus.CLIENT_ERROR,
-          type,
-          authenticationResult.toMap(),
-          DefaultSecurityEventType.legacy_authentication_failure);
-    }
-
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("pwd")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
-
-    LegacyIdServiceAuthenticationDetailConfiguration userinfoConfig =
+    ExternalTokenAuthenticationDetailConfiguration userinfoConfig =
         configuration.userinfoDetailConfig();
 
     HttpRequestResult userinfoResult =
@@ -85,9 +60,24 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
             userinfoConfig.httpRequestUrl(),
             userinfoConfig.httpMethod(),
             userinfoConfig.httpRequestHeaders(),
+            userinfoConfig.httpRequestHeaderMappingRules(),
             new HttpRequestBaseParams(request.toMap()),
             userinfoConfig.httpRequestDynamicBodyKeys(),
             userinfoConfig.httpRequestStaticBody());
+
+    if (userinfoResult.isClientError()) {
+      return AuthenticationInteractionRequestResult.clientError(
+          userinfoResult.toMap(),
+          type,
+          DefaultSecurityEventType.external_token_authentication_failure);
+    }
+
+    if (userinfoResult.isServerError()) {
+      return AuthenticationInteractionRequestResult.serverError(
+          userinfoResult.toMap(),
+          type,
+          DefaultSecurityEventType.external_token_authentication_failure);
+    }
 
     UserInfoMapper userInfoMapper =
         new UserInfoMapper(
@@ -106,6 +96,12 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
       user.setSub(UUID.randomUUID().toString());
     }
 
+    Authentication authentication =
+        new Authentication()
+            .setTime(SystemDateTime.now())
+            .addMethods(new ArrayList<>(List.of("token")))
+            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
+
     Map<String, Object> result = new HashMap<>();
     result.put("user", user.toMap());
     result.put("authentication", authentication.toMap());
@@ -116,6 +112,6 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
         user,
         authentication,
         result,
-        DefaultSecurityEventType.legacy_authentication_success);
+        DefaultSecurityEventType.external_token_authentication_success);
   }
 }

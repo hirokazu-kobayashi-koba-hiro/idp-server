@@ -16,7 +16,9 @@
 
 package org.idp.server.platform.http;
 
-public class HttpRequestMappingRule {
+import org.idp.server.platform.json.JsonReadable;
+
+public class HttpRequestMappingRule implements JsonReadable {
   String source;
   String from;
   String to;
