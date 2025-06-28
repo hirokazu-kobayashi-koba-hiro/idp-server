@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.audit;
 
 import org.idp.server.platform.dependency.ApplicationComponentContainer;

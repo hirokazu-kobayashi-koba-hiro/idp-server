@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.security;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.platform.security.event.*;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.security.event.*;
 import org.idp.server.platform.security.type.IpAddress;
 import org.idp.server.platform.security.type.UserAgent;
 

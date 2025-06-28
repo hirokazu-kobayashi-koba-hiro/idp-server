@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.multi_tenancy.tenant;
 
-import org.idp.server.platform.uuid.UuidConvertable;
 import java.util.Objects;
 import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
 public class TenantIdentifier implements UuidConvertable {
 

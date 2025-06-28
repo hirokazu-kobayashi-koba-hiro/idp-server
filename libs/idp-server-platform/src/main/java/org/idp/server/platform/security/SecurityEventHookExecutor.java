@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.security;
 
-import org.idp.server.platform.security.hook.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.hook.*;
 
 public interface SecurityEventHookExecutor {
 

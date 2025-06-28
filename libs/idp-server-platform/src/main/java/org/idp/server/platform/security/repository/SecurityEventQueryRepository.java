@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.security.repository;
 
+import java.util.List;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventQueries;
 import org.idp.server.platform.security.event.SecurityEventIdentifier;
-
-import java.util.List;
 
 public interface SecurityEventQueryRepository {
 

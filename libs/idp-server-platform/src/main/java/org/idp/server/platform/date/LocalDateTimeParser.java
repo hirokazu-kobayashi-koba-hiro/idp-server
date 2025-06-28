@@ -14,45 +14,43 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.date;
-
-import org.idp.server.platform.exception.BadRequestException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import org.idp.server.platform.exception.BadRequestException;
 
 public class LocalDateTimeParser {
 
-    public static LocalDateTime parse(String date) {
-        try {
-            if (date.contains("T")) {
-                return LocalDateTime.parse(date);
-            }
+  public static LocalDateTime parse(String date) {
+    try {
+      if (date.contains("T")) {
+        return LocalDateTime.parse(date);
+      }
 
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
-            return LocalDateTime.parse(normalizeDateTime(date), formatter);
-        } catch (DateTimeParseException e) {
-            throw new BadRequestException(e.getMessage());
-        }
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+      return LocalDateTime.parse(normalizeDateTime(date), formatter);
+    } catch (DateTimeParseException e) {
+      throw new BadRequestException(e.getMessage());
+    }
+  }
+
+  private static String normalizeDateTime(String dateTimeStr) {
+    if (!dateTimeStr.contains(".")) {
+      return dateTimeStr + ".000000"; // No fraction present, add six zeroes
     }
 
-    private static String normalizeDateTime(String dateTimeStr) {
-        if (!dateTimeStr.contains(".")) {
-            return dateTimeStr + ".000000"; // No fraction present, add six zeroes
-        }
+    String[] parts = dateTimeStr.split("\\.");
+    String fraction = parts[1];
 
-        String[] parts = dateTimeStr.split("\\.");
-        String fraction = parts[1];
-
-        // Ensure fraction has exactly 6 digits
-        if (fraction.length() < 6) {
-            fraction = String.format("%-6s", fraction).replace(' ', '0'); // Pad with zeros
-        } else if (fraction.length() > 6) {
-            fraction = fraction.substring(0, 6); // Trim to 6 digits
-        }
-
-        return parts[0] + "." + fraction;
+    // Ensure fraction has exactly 6 digits
+    if (fraction.length() < 6) {
+      fraction = String.format("%-6s", fraction).replace(' ', '0'); // Pad with zeros
+    } else if (fraction.length() > 6) {
+      fraction = fraction.substring(0, 6); // Trim to 6 digits
     }
+
+    return parts[0] + "." + fraction;
+  }
 }

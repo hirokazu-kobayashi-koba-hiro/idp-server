@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.security.event;
-
-import org.idp.server.platform.uuid.UuidConvertable;
 
 import java.util.Objects;
 import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
 public class SecurityEventIdentifier implements UuidConvertable {
   String value;

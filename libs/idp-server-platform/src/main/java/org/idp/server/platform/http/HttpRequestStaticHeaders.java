@@ -19,11 +19,11 @@ package org.idp.server.platform.http;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class HttpRequestHeaders {
+public class HttpRequestStaticHeaders {
 
   Map<String, String> values;
 
-  public HttpRequestHeaders(Map<String, String> values) {
+  public HttpRequestStaticHeaders(Map<String, String> values) {
     this.values = values;
   }
 

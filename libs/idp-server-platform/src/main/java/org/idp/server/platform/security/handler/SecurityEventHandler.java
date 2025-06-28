@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.security.handler;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventHookExecutor;
 import org.idp.server.platform.security.SecurityEventHooks;
@@ -26,8 +27,6 @@ import org.idp.server.platform.security.hook.*;
 import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class SecurityEventHandler {
 

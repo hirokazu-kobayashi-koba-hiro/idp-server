@@ -1,26 +1,41 @@
 plugins {
-    id 'java'
+	id 'java'
+	id "com.diffplug.spotless" version "6.24.0"
 }
 
 group = 'org.idp.server'
 version = '1.0.0'
 
 repositories {
-    mavenCentral()
+	mavenCentral()
 }
 
 dependencies {
-    //json
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
-    implementation 'com.jayway.jsonpath:json-path:2.9.0'
-    //log
-    implementation("org.slf4j:slf4j-api:2.0.12")
+	//json
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
+	implementation 'com.jayway.jsonpath:json-path:2.9.0'
+	//log
+	implementation("org.slf4j:slf4j-api:2.0.12")
 
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+	testImplementation platform('org.junit:junit-bom:5.10.0')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
 test {
-    useJUnitPlatform()
+	useJUnitPlatform()
+}
+
+spotless {
+	java {
+		target 'src/*/java/**/*.java'
+		importOrder()
+		removeUnusedImports()
+		googleJavaFormat()
+		toggleOffOn()
+	}
+	groovyGradle {
+		target '*.gradle'
+		greclipse()
+	}
 }

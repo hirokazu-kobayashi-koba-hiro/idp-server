@@ -14,12 +14,7 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.notification.sms;
-
-
-import org.idp.server.platform.notification.email.EmailSenderSetting;
-import org.idp.server.platform.notification.email.EmailSendingRequest;
 
 import java.util.Map;
 

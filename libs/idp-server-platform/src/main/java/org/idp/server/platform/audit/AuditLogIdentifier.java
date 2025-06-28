@@ -14,44 +14,42 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.audit;
-
-import org.idp.server.platform.uuid.UuidConvertable;
 
 import java.util.Objects;
 import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
 public class AuditLogIdentifier implements UuidConvertable {
-    String value;
+  String value;
 
-    public AuditLogIdentifier() {}
+  public AuditLogIdentifier() {}
 
-    public AuditLogIdentifier(String value) {
-        this.value = value;
-    }
+  public AuditLogIdentifier(String value) {
+    this.value = value;
+  }
 
-    public String value() {
-        return value;
-    }
+  public String value() {
+    return value;
+  }
 
-    public UUID valueAsUuid() {
-        return convertUuid(value);
-    }
+  public UUID valueAsUuid() {
+    return convertUuid(value);
+  }
 
-    @Override
-    public boolean equals(Object object) {
-        if (object == null || getClass() != object.getClass()) return false;
-        AuditLogIdentifier that = (AuditLogIdentifier) object;
-        return Objects.equals(value, that.value);
-    }
+  @Override
+  public boolean equals(Object object) {
+    if (object == null || getClass() != object.getClass()) return false;
+    AuditLogIdentifier that = (AuditLogIdentifier) object;
+    return Objects.equals(value, that.value);
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(value);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(value);
+  }
 
-    public boolean exists() {
-        return value != null && !value.isEmpty();
-    }
+  public boolean exists() {
+    return value != null && !value.isEmpty();
+  }
 }

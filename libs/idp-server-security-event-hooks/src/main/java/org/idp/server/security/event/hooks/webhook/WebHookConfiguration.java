@@ -47,7 +47,7 @@ public class WebHookConfiguration implements JsonReadable {
     return base.httpMethod();
   }
 
-  public HttpRequestHeaders httpRequestHeaders(SecurityEventType type) {
+  public HttpRequestStaticHeaders httpRequestHeaders(SecurityEventType type) {
     if (overlays.containsKey(type.value())) {
       return overlays.get(type.value()).httpRequestHeaders();
     }

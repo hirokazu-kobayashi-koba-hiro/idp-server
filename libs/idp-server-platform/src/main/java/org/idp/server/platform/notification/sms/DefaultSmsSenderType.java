@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.notification.sms;
 
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.notification.email.EmailSenderType;
 
 public enum DefaultSmsSenderType {
   EXTERNAL_API_SERVICE("external_api_service"),
@@ -40,6 +38,6 @@ public enum DefaultSmsSenderType {
   }
 
   public SmsSenderType toType() {
-      return new SmsSenderType(this.typeName);
+    return new SmsSenderType(this.typeName);
   }
 }

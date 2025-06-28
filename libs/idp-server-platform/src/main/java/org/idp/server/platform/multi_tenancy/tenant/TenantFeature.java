@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.multi_tenancy.tenant;
 
 import java.time.LocalDateTime;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.notification.email;
 
 import org.idp.server.platform.exception.UnSupportedException;
@@ -40,6 +39,6 @@ public enum DefaultEmailSenderType {
   }
 
   public EmailSenderType toType() {
-      return new EmailSenderType(this.typeName);
+    return new EmailSenderType(this.typeName);
   }
 }

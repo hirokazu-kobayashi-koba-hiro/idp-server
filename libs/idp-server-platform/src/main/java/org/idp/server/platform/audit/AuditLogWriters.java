@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.audit;
 
+import java.util.List;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-import java.util.List;
-
 public class AuditLogWriters {
 
-    List<AuditLogWriter> writers;
-    LoggerWrapper log = LoggerWrapper.getLogger(AuditLogWriters.class);
+  List<AuditLogWriter> writers;
+  LoggerWrapper log = LoggerWrapper.getLogger(AuditLogWriters.class);
 
-    public AuditLogWriters(List<AuditLogWriter> writers) {
-        this.writers = writers;
-    }
+  public AuditLogWriters(List<AuditLogWriter> writers) {
+    this.writers = writers;
+  }
 
-    public void write(Tenant tenant, AuditLog auditLog) {
-        for (AuditLogWriter writer : writers) {
-            if (writer.shouldExecute(tenant, auditLog)) {
-                log.info("AuditLogWriter execute: " + writer.getClass().getSimpleName());
-                writer.write(tenant, auditLog);
-            }
-        }
+  public void write(Tenant tenant, AuditLog auditLog) {
+    for (AuditLogWriter writer : writers) {
+      if (writer.shouldExecute(tenant, auditLog)) {
+        log.info("AuditLogWriter execute: " + writer.getClass().getSimpleName());
+        writer.write(tenant, auditLog);
+      }
     }
+  }
 }

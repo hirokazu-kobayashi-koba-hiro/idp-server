@@ -62,7 +62,7 @@ public class WebHookExecutor implements SecurityEventHookExecutor {
           jsonConverter.read(hookConfiguration, WebHookConfiguration.class);
       HttpRequestUrl httpRequestUrl = configuration.httpRequestUrl(securityEvent.type());
       HttpMethod httpMethod = configuration.httpMethod(securityEvent.type());
-      HttpRequestHeaders httpRequestHeaders =
+      HttpRequestStaticHeaders httpRequestStaticHeaders =
           configuration.httpRequestHeaders(securityEvent.type());
       HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys =
           configuration.httpRequestDynamicBodyKeys(securityEvent.type());
@@ -81,7 +81,7 @@ public class WebHookExecutor implements SecurityEventHookExecutor {
               .uri(new URI(httpRequestUrl.value()))
               .header("Content-Type", "application/json");
 
-      setHeaders(httpRequestBuilder, httpRequestHeaders);
+      setHeaders(httpRequestBuilder, httpRequestStaticHeaders);
       setParams(httpRequestBuilder, httpMethod, requestBody);
 
       HttpRequest httpRequest = httpRequestBuilder.build();
@@ -114,8 +114,8 @@ public class WebHookExecutor implements SecurityEventHookExecutor {
   }
 
   private void setHeaders(
-      HttpRequest.Builder httpRequestBuilder, HttpRequestHeaders httpRequestHeaders) {
-    httpRequestHeaders.forEach(httpRequestBuilder::header);
+      HttpRequest.Builder httpRequestBuilder, HttpRequestStaticHeaders httpRequestStaticHeaders) {
+    httpRequestStaticHeaders.forEach(httpRequestBuilder::header);
   }
 
   private void setParams(
