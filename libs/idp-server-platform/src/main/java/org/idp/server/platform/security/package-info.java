@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 /**
  * @see <a href="https://openid.net/wg/sharedsignals/">Shared Signals Working Group - Overview</a>
  */

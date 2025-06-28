@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.plugin;
 
+import java.util.List;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 import org.idp.server.platform.log.LoggerWrapper;
-
-import java.util.List;
 
 public class ApplicationComponentContainerPluginLoader extends PluginLoader {
 
@@ -41,7 +39,7 @@ public class ApplicationComponentContainerPluginLoader extends PluginLoader {
     }
 
     List<ApplicationComponentProvider> externals =
-            loadFromExternalModule(ApplicationComponentProvider.class);
+        loadFromExternalModule(ApplicationComponentProvider.class);
     for (ApplicationComponentProvider<?> provider : externals) {
       container.register(provider.type(), provider.provide(dependencyContainer));
       log.info("Dynamic Registered external application component " + provider.type());

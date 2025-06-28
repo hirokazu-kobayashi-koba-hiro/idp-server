@@ -39,14 +39,14 @@ public class ExternalSmsAuthenticationHttpClient {
       ExternalSmsAuthenticationExecutionConfiguration configuration,
       OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
 
-    HttpRequestHeaders httpRequestHeaders =
+    HttpRequestStaticHeaders httpRequestStaticHeaders =
         createHttpRequestHeaders(configuration.httpRequestHeaders(), oAuthAuthorizationConfig);
 
     HttpRequestResult executionResult =
         httpRequestExecutor.execute(
             configuration.httpRequestUrl(),
             configuration.httpMethod(),
-            httpRequestHeaders,
+            httpRequestStaticHeaders,
             new HttpRequestBaseParams(request.toMap()),
             configuration.httpRequestDynamicBodyKeys(),
             configuration.httpRequestStaticBody());
@@ -54,10 +54,10 @@ public class ExternalSmsAuthenticationHttpClient {
     return new ExternalSmsAuthenticationHttpRequestResult(executionResult);
   }
 
-  private HttpRequestHeaders createHttpRequestHeaders(
-      HttpRequestHeaders httpRequestHeaders,
+  private HttpRequestStaticHeaders createHttpRequestHeaders(
+      HttpRequestStaticHeaders httpRequestStaticHeaders,
       OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
-    Map<String, String> values = new HashMap<>(httpRequestHeaders.toMap());
+    Map<String, String> values = new HashMap<>(httpRequestStaticHeaders.toMap());
 
     if (oAuthAuthorizationConfig.exists()) {
       OAuthAuthorizationResolver resolver =
@@ -66,6 +66,6 @@ public class ExternalSmsAuthenticationHttpClient {
       values.put("Authorization", "Bearer " + accessToken);
     }
 
-    return new HttpRequestHeaders(values);
+    return new HttpRequestStaticHeaders(values);
   }
 }

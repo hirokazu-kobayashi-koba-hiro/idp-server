@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.audit;
 
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 
-public class AuditLogDataBaseWriterProvider implements AuditLogWriterProvider{
+public class AuditLogDataBaseWriterProvider implements AuditLogWriterProvider {
 
-    @Override
-    public AuditLogWriter provide(ApplicationComponentContainer container) {
+  @Override
+  public AuditLogWriter provide(ApplicationComponentContainer container) {
 
-        AuditLogCommandRepository auditLogCommandRepository = container.resolve(AuditLogCommandRepository.class);
-        return new AuditLogDataBaseWriter(auditLogCommandRepository);
-    }
+    AuditLogCommandRepository auditLogCommandRepository =
+        container.resolve(AuditLogCommandRepository.class);
+    return new AuditLogDataBaseWriter(auditLogCommandRepository);
+  }
 }

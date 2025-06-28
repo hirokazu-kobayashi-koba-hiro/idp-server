@@ -14,41 +14,43 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.plugin;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.platform.audit.AuditLogWriter;
 import org.idp.server.platform.audit.AuditLogWriterProvider;
 import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.log.LoggerWrapper;
 
-import java.util.ArrayList;
-import java.util.List;
+public class AuditLogWriterPluginLoader extends PluginLoader {
 
-public class AuditLogWriterPluginLoader extends PluginLoader{
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(EmailSenderPluginLoader.class);
 
-    private static final LoggerWrapper log = LoggerWrapper.getLogger(EmailSenderPluginLoader.class);
+  public static AuditLogWriters load(ApplicationComponentContainer container) {
 
-    public static AuditLogWriters load(ApplicationComponentContainer container) {
-
-        List<AuditLogWriter> writers = new ArrayList<>();
-        List<AuditLogWriterProvider> internalAuditLogWriterProviders = loadFromInternalModule(AuditLogWriterProvider.class);
-        for (AuditLogWriterProvider provider : internalAuditLogWriterProviders) {
-            AuditLogWriter auditLogWriter = provider.provide(container);
-            writers.add(auditLogWriter);
-            log.info("Dynamic Registered internal AuditLogWriter: " + auditLogWriter.getClass().getSimpleName());
-        }
-
-        List<AuditLogWriterProvider> externalAuditLogWriterProviders = loadFromExternalModule(AuditLogWriterProvider.class);
-        for (AuditLogWriterProvider provider : externalAuditLogWriterProviders) {
-            AuditLogWriter auditLogWriter = provider.provide(container);
-            writers.add(auditLogWriter);
-            log.info("Dynamic Registered external AuditLogWriter: " + auditLogWriter.getClass().getSimpleName());
-        }
-
-        return new AuditLogWriters(writers);
+    List<AuditLogWriter> writers = new ArrayList<>();
+    List<AuditLogWriterProvider> internalAuditLogWriterProviders =
+        loadFromInternalModule(AuditLogWriterProvider.class);
+    for (AuditLogWriterProvider provider : internalAuditLogWriterProviders) {
+      AuditLogWriter auditLogWriter = provider.provide(container);
+      writers.add(auditLogWriter);
+      log.info(
+          "Dynamic Registered internal AuditLogWriter: "
+              + auditLogWriter.getClass().getSimpleName());
     }
 
+    List<AuditLogWriterProvider> externalAuditLogWriterProviders =
+        loadFromExternalModule(AuditLogWriterProvider.class);
+    for (AuditLogWriterProvider provider : externalAuditLogWriterProviders) {
+      AuditLogWriter auditLogWriter = provider.provide(container);
+      writers.add(auditLogWriter);
+      log.info(
+          "Dynamic Registered external AuditLogWriter: "
+              + auditLogWriter.getClass().getSimpleName());
+    }
 
+    return new AuditLogWriters(writers);
+  }
 }

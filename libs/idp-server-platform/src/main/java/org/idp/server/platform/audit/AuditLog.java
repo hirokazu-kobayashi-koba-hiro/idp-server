@@ -14,153 +14,167 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.audit;
-
-import org.idp.server.platform.json.JsonNodeWrapper;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class AuditLog {
 
-    String id;
-    String type;
-    String description;
-    String tenantId;
-    String clientId;
-    String userId;
-    String externalUserId;
-    JsonNodeWrapper userPayload;
-    String targetResource;
-    String targetResourceAction;
-    String ipAddress;
-    String userAgent;
-    JsonNodeWrapper before;
-    JsonNodeWrapper after;
-    JsonNodeWrapper attributes;
-    boolean dryRun;
-    LocalDateTime createdAt;
+  String id;
+  String type;
+  String description;
+  String tenantId;
+  String clientId;
+  String userId;
+  String externalUserId;
+  JsonNodeWrapper userPayload;
+  String targetResource;
+  String targetResourceAction;
+  String ipAddress;
+  String userAgent;
+  JsonNodeWrapper before;
+  JsonNodeWrapper after;
+  JsonNodeWrapper attributes;
+  boolean dryRun;
+  LocalDateTime createdAt;
 
-    public AuditLog() {}
+  public AuditLog() {}
 
-    public AuditLog(String id, String type, String description, String tenantId, String clientId, String userId, String externalUserId, JsonNodeWrapper userPayload, String targetResource, String targetResourceAction, String ipAddress, String userAgent, JsonNodeWrapper before, JsonNodeWrapper after, JsonNodeWrapper attributes, boolean dryRun, LocalDateTime createdAt) {
-        this.id = id;
-        this.type = type;
-        this.description = description;
-        this.tenantId = tenantId;
-        this.clientId = clientId;
-        this.userId = userId;
-        this.externalUserId = externalUserId;
-        this.userPayload = userPayload;
-        this.targetResource = targetResource;
-        this.targetResourceAction = targetResourceAction;
-        this.ipAddress = ipAddress;
-        this.userAgent = userAgent;
-        this.before = before;
-        this.after = after;
-        this.attributes = attributes;
-        this.dryRun = dryRun;
-        this.createdAt = createdAt;
-    }
+  public AuditLog(
+      String id,
+      String type,
+      String description,
+      String tenantId,
+      String clientId,
+      String userId,
+      String externalUserId,
+      JsonNodeWrapper userPayload,
+      String targetResource,
+      String targetResourceAction,
+      String ipAddress,
+      String userAgent,
+      JsonNodeWrapper before,
+      JsonNodeWrapper after,
+      JsonNodeWrapper attributes,
+      boolean dryRun,
+      LocalDateTime createdAt) {
+    this.id = id;
+    this.type = type;
+    this.description = description;
+    this.tenantId = tenantId;
+    this.clientId = clientId;
+    this.userId = userId;
+    this.externalUserId = externalUserId;
+    this.userPayload = userPayload;
+    this.targetResource = targetResource;
+    this.targetResourceAction = targetResourceAction;
+    this.ipAddress = ipAddress;
+    this.userAgent = userAgent;
+    this.before = before;
+    this.after = after;
+    this.attributes = attributes;
+    this.dryRun = dryRun;
+    this.createdAt = createdAt;
+  }
 
-    public String id() {
-        return id;
-    }
+  public String id() {
+    return id;
+  }
 
-    public AuditLogIdentifier identifier() {
-        return new AuditLogIdentifier(id);
-    }
+  public AuditLogIdentifier identifier() {
+    return new AuditLogIdentifier(id);
+  }
 
-    public String type() {
-        return type;
-    }
+  public String type() {
+    return type;
+  }
 
-    public String description() {
-        return description;
-    }
+  public String description() {
+    return description;
+  }
 
-    public String tenantId() {
-        return tenantId;
-    }
+  public String tenantId() {
+    return tenantId;
+  }
 
-    public String clientId() {
-        return clientId;
-    }
+  public String clientId() {
+    return clientId;
+  }
 
-    public String userId() {
-        return userId;
-    }
+  public String userId() {
+    return userId;
+  }
 
-    public String externalUserId() {
-        return externalUserId;
-    }
+  public String externalUserId() {
+    return externalUserId;
+  }
 
-    public JsonNodeWrapper userPayload() {
-        return userPayload;
-    }
+  public JsonNodeWrapper userPayload() {
+    return userPayload;
+  }
 
-    public String targetResource() {
-        return targetResource;
-    }
+  public String targetResource() {
+    return targetResource;
+  }
 
-    public String targetResourceAction() {
-        return targetResourceAction;
-    }
+  public String targetResourceAction() {
+    return targetResourceAction;
+  }
 
-    public String ipAddress() {
-        return ipAddress;
-    }
+  public String ipAddress() {
+    return ipAddress;
+  }
 
-    public String userAgent() {
-        return userAgent;
-    }
+  public String userAgent() {
+    return userAgent;
+  }
 
-    public JsonNodeWrapper before() {
-        return before;
-    }
+  public JsonNodeWrapper before() {
+    return before;
+  }
 
-    public JsonNodeWrapper after() {
-        return after;
-    }
+  public JsonNodeWrapper after() {
+    return after;
+  }
 
-    public JsonNodeWrapper attributes() {
-        return attributes;
-    }
+  public JsonNodeWrapper attributes() {
+    return attributes;
+  }
 
-    public boolean dryRun() {
-        return dryRun;
-    }
+  public boolean dryRun() {
+    return dryRun;
+  }
 
-    public LocalDateTime createdAt() {
-        return createdAt;
-    }
+  public LocalDateTime createdAt() {
+    return createdAt;
+  }
 
-    public Map<String, Object> toMap() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", id);
-        map.put("type", type);
-        map.put("description", description);
-        map.put("tenant_id", tenantId);
-        map.put("client_id", clientId);
-        map.put("user_id", userId);
-        map.put("external_user_id", externalUserId);
-        map.put("user_payload", userPayload.toMap());
-        map.put("target_resource", targetResource);
-        map.put("target_resource_action", targetResourceAction);
-        map.put("ip_address", ipAddress);
-        map.put("user_agent", userAgent);
-        map.put("before", before.toMap());
-        map.put("after", after.toMap());
-        map.put("attributes", attributes.toMap());
-        map.put("dry_run", dryRun);
-        map.put("created_at", createdAt.toString());
-        return map;
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", id);
+    map.put("type", type);
+    map.put("description", description);
+    map.put("tenant_id", tenantId);
+    map.put("client_id", clientId);
+    map.put("user_id", userId);
+    map.put("external_user_id", externalUserId);
+    map.put("user_payload", userPayload.toMap());
+    map.put("target_resource", targetResource);
+    map.put("target_resource_action", targetResourceAction);
+    map.put("ip_address", ipAddress);
+    map.put("user_agent", userAgent);
+    map.put("before", before.toMap());
+    map.put("after", after.toMap());
+    map.put("attributes", attributes.toMap());
+    map.put("dry_run", dryRun);
+    map.put("created_at", createdAt.toString());
+    return map;
+  }
 
-    }
-
-    public boolean exists() {
-        return id != null && !id.isEmpty();
-    }
+  public boolean exists() {
+    return id != null && !id.isEmpty();
+  }
 }

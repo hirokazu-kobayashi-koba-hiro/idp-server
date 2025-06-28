@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.datasource.cache;
 
 import java.util.Optional;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.notification.exception;
 
 import org.idp.server.platform.exception.TimeoutException;

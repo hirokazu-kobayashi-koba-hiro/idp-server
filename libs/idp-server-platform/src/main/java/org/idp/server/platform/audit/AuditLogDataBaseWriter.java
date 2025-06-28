@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.audit;
 
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuditLogDataBaseWriter implements AuditLogWriter {
 
-    AuditLogCommandRepository auditLogCommandRepository;
+  AuditLogCommandRepository auditLogCommandRepository;
 
-    public AuditLogDataBaseWriter(AuditLogCommandRepository auditLogCommandRepository) {
-        this.auditLogCommandRepository = auditLogCommandRepository;
-    }
+  public AuditLogDataBaseWriter(AuditLogCommandRepository auditLogCommandRepository) {
+    this.auditLogCommandRepository = auditLogCommandRepository;
+  }
 
-    @Override
-    public void write(Tenant tenant, AuditLog auditLog) {
-        auditLogCommandRepository.register(tenant, auditLog);
-    }
-
+  @Override
+  public void write(Tenant tenant, AuditLog auditLog) {
+    auditLogCommandRepository.register(tenant, auditLog);
+  }
 }

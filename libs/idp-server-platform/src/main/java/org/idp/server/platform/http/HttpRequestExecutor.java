@@ -18,12 +18,11 @@ package org.idp.server.platform.http;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.exception.InvalidConfigurationException;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -42,30 +41,75 @@ public class HttpRequestExecutor {
   public HttpRequestResult execute(
       HttpRequestUrl httpRequestUrl,
       HttpMethod httpMethod,
-      HttpRequestHeaders httpRequestHeaders,
+      HttpRequestStaticHeaders httpRequestStaticHeaders,
+      HttpRequestHeaderMappingRules headerMappingRules,
       HttpRequestBaseParams httpRequestBaseParams,
       HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys,
       HttpRequestStaticBody httpRequestStaticBody) {
 
+    HttpRequestDynamicHeaderMapper headerMapper =
+        new HttpRequestDynamicHeaderMapper(
+            httpRequestStaticHeaders.toMap(),
+            JsonNodeWrapper.fromObject(httpRequestBaseParams.toMap()),
+            headerMappingRules);
+    Map<String, String> headers = headerMapper.toHeaders();
+
+    HttpRequestBodyCreator requestBodyCreator =
+        new HttpRequestBodyCreator(
+            httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
+    Map<String, Object> requestBody = requestBodyCreator.create();
+
+    log.debug("Request headers: {}", headers);
+    log.debug("Request body: {}", requestBody);
+
+    HttpRequest.Builder httpRequestBuilder =
+        HttpRequest.newBuilder().uri(URI.create(httpRequestUrl.value()));
+
+    if (!headers.containsKey("Content-Type")) {
+      httpRequestBuilder.setHeader("Content-Type", "application/json");
+    }
+
+    setHeaders(httpRequestBuilder, headers);
+    setParams(httpRequestBuilder, httpMethod, requestBody);
+
+    HttpRequest httpRequest = httpRequestBuilder.build();
+
+    return execute(httpRequest);
+  }
+
+  public HttpRequestResult execute(
+      HttpRequestUrl httpRequestUrl,
+      HttpMethod httpMethod,
+      HttpRequestStaticHeaders httpRequestStaticHeaders,
+      HttpRequestBaseParams httpRequestBaseParams,
+      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys,
+      HttpRequestStaticBody httpRequestStaticBody) {
+
+    HttpRequestBodyCreator requestBodyCreator =
+        new HttpRequestBodyCreator(
+            httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
+    Map<String, Object> requestBody = requestBodyCreator.create();
+
+    log.debug("Request headers: {}", httpRequestStaticHeaders);
+    log.debug("Request body: {}", requestBody);
+
+    HttpRequest.Builder httpRequestBuilder =
+        HttpRequest.newBuilder().uri(URI.create(httpRequestUrl.value()));
+
+    if (!httpRequestStaticHeaders.containsKey("Content-Type")) {
+      httpRequestBuilder.setHeader("Content-Type", "application/json");
+    }
+
+    setHeaders(httpRequestBuilder, httpRequestStaticHeaders.toMap());
+    setParams(httpRequestBuilder, httpMethod, requestBody);
+
+    HttpRequest httpRequest = httpRequestBuilder.build();
+
+    return execute(httpRequest);
+  }
+
+  public HttpRequestResult execute(HttpRequest httpRequest) {
     try {
-
-      HttpRequestBodyCreator requestBodyCreator =
-          new HttpRequestBodyCreator(
-              httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
-      Map<String, Object> requestBody = requestBodyCreator.create();
-
-      log.debug("Request headers: {}", httpRequestHeaders);
-      log.debug("Request body: {}", requestBody);
-
-      HttpRequest.Builder httpRequestBuilder =
-          HttpRequest.newBuilder()
-              .uri(new URI(httpRequestUrl.value()))
-              .header("Content-Type", "application/json");
-
-      setHeaders(httpRequestBuilder, httpRequestHeaders);
-      setParams(httpRequestBuilder, httpMethod, requestBody);
-
-      HttpRequest httpRequest = httpRequestBuilder.build();
 
       HttpResponse<String> httpResponse =
           httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -77,12 +121,14 @@ public class HttpRequestExecutor {
 
       return new HttpRequestResult(
           httpResponse.statusCode(), httpResponse.headers().map(), jsonResponse);
-    } catch (URISyntaxException e) {
-
-      throw new InvalidConfigurationException("HttpRequestUrl is invalid.", e);
-
     } catch (IOException | InterruptedException e) {
-      throw new HttpNetworkErrorException("Http request is failed.", e);
+
+      log.warn("HTTP request was error: {}", e.getMessage(), e);
+
+      Map<String, Object> message = new HashMap<>();
+      message.put("error", "client_error");
+      message.put("error_description", e.getMessage());
+      return new HttpRequestResult(499, Map.of(), JsonNodeWrapper.fromObject(message));
     }
   }
 
@@ -95,8 +141,8 @@ public class HttpRequestExecutor {
   }
 
   private void setHeaders(
-      HttpRequest.Builder httpRequestBuilder, HttpRequestHeaders httpRequestHeaders) {
-    httpRequestHeaders.forEach(httpRequestBuilder::header);
+      HttpRequest.Builder httpRequestBuilder, Map<String, String> httpRequestStaticHeaders) {
+    httpRequestStaticHeaders.forEach(httpRequestBuilder::header);
   }
 
   private void setParams(

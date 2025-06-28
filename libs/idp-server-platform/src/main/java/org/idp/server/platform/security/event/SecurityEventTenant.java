@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.security.event;
-
-import org.idp.server.platform.uuid.UuidConvertable;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
 public class SecurityEventTenant implements UuidConvertable {
 

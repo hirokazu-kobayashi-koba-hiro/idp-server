@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.json.path;
 
 import com.jayway.jsonpath.*;
@@ -22,42 +21,42 @@ import java.util.*;
 
 public class JsonPathWrapper {
 
-    Object document;
+  Object document;
 
-    public JsonPathWrapper(Object jsonSource) {
-        Configuration conf = Configuration.defaultConfiguration();
-        this.document = conf.jsonProvider().parse(jsonSource.toString());
-    }
+  public JsonPathWrapper(Object jsonSource) {
+    Configuration conf = Configuration.defaultConfiguration();
+    this.document = conf.jsonProvider().parse(jsonSource.toString());
+  }
 
-    public String readAsString(String path) {
-        return JsonPath.read(document, path);
-    }
+  public String readAsString(String path) {
+    return JsonPath.read(document, path);
+  }
 
-    public Integer readAsInt(String path) {
-        return JsonPath.read(document, path);
-    }
+  public Integer readAsInt(String path) {
+    return JsonPath.read(document, path);
+  }
 
-    public Boolean readAsBoolean(String path) {
-        return JsonPath.read(document, path);
-    }
+  public Boolean readAsBoolean(String path) {
+    return JsonPath.read(document, path);
+  }
 
-    public List<String> readAsStringList(String path) {
-        return JsonPath.read(document, path);
-    }
+  public List<String> readAsStringList(String path) {
+    return JsonPath.read(document, path);
+  }
 
-    public List<Map<String, Object>> readAsMapList(String path) {
-        return JsonPath.read(document, path);
-    }
+  public List<Map<String, Object>> readAsMapList(String path) {
+    return JsonPath.read(document, path);
+  }
 
-    public Map<String, Object> readAsMap(String path) {
-        return JsonPath.read(document, path);
-    }
+  public Map<String, Object> readAsMap(String path) {
+    return JsonPath.read(document, path);
+  }
 
-    public Map<String, String> readAsStringMap(String path) {
-        return JsonPath.read(document, path);
-    }
+  public Map<String, String> readAsStringMap(String path) {
+    return JsonPath.read(document, path);
+  }
 
-    public Object readRaw(String path) {
-        return JsonPath.read(document, path);
-    }
+  public Object readRaw(String path) {
+    return JsonPath.read(document, path);
+  }
 }

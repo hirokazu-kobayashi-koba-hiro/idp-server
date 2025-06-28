@@ -100,7 +100,7 @@ public class JsonConverter {
 
   public JsonNodeWrapper readTree(Object jsonObject) {
 
-      return new JsonNodeWrapper(objectMapper.valueToTree(jsonObject));
+    return new JsonNodeWrapper(objectMapper.valueToTree(jsonObject));
   }
 
   public String write(Object value) {

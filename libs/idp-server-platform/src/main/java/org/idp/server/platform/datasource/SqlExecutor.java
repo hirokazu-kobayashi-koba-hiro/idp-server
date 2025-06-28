@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.datasource;
-
-import org.idp.server.platform.log.LoggerWrapper;
 
 import java.sql.*;
 import java.time.LocalDateTime;

@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.notification.email;
 
-
-import org.idp.server.platform.log.LoggerWrapper;
-
 import java.util.Map;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class NoActionEmailSender implements EmailSender {
 

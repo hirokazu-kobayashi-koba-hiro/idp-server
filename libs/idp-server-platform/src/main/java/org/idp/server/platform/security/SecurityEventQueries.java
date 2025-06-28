@@ -16,15 +16,14 @@
 
 package org.idp.server.platform.security;
 
-import org.idp.server.platform.date.LocalDateTimeParser;
-import org.idp.server.platform.date.SystemDateTime;
-import org.idp.server.platform.uuid.UuidConvertable;
-
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.idp.server.platform.date.LocalDateTimeParser;
+import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.uuid.UuidConvertable;
 
 public class SecurityEventQueries implements UuidConvertable {
   Map<String, String> values;
@@ -32,7 +31,7 @@ public class SecurityEventQueries implements UuidConvertable {
   public SecurityEventQueries() {}
 
   public SecurityEventQueries(Map<String, String> values) {
-      this.values = Objects.requireNonNullElseGet(values, HashMap::new);
+    this.values = Objects.requireNonNullElseGet(values, HashMap::new);
   }
 
   public LocalDateTime from() {

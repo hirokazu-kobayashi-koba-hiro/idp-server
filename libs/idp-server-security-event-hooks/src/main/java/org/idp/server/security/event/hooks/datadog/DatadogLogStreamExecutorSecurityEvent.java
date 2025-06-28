@@ -57,14 +57,14 @@ public class DatadogLogStreamExecutorSecurityEvent implements SecurityEventHookE
       WebHookConfiguration configuration =
           jsonConverter.read(hookConfiguration, WebHookConfiguration.class);
       HttpRequestUrl httpRequestUrl = configuration.httpRequestUrl(securityEvent.type());
-      HttpRequestHeaders httpRequestHeaders =
+      HttpRequestStaticHeaders httpRequestStaticHeaders =
           configuration.httpRequestHeaders(securityEvent.type());
       HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys =
           configuration.httpRequestDynamicBodyKeys(securityEvent.type());
       HttpRequestStaticBody httpRequestStaticBody =
           configuration.httpRequestStaticBody(securityEvent.type());
 
-      validate(httpRequestHeaders);
+      validate(httpRequestStaticHeaders);
       validate(httpRequestStaticBody);
 
       HttpRequestBodyCreator requestBodyCreator =
@@ -80,7 +80,7 @@ public class DatadogLogStreamExecutorSecurityEvent implements SecurityEventHookE
           HttpRequest.newBuilder()
               .uri(new URI(httpRequestUrl.value()))
               .header("Content-Type", "application/json")
-              .header("DD-API-KEY", httpRequestHeaders.getValueAsString("DD-API-KEY"))
+              .header("DD-API-KEY", httpRequestStaticHeaders.getValueAsString("DD-API-KEY"))
               .POST(HttpRequest.BodyPublishers.ofString(body))
               .build();
 
@@ -112,8 +112,8 @@ public class DatadogLogStreamExecutorSecurityEvent implements SecurityEventHookE
     }
   }
 
-  private void validate(HttpRequestHeaders httpRequestHeaders) {
-    if (!httpRequestHeaders.containsKey("DD-API-KEY")) {
+  private void validate(HttpRequestStaticHeaders httpRequestStaticHeaders) {
+    if (!httpRequestStaticHeaders.containsKey("DD-API-KEY")) {
       throw new DatadogConfigurationInvalidException("DD-API-KEY header is required.");
     }
   }

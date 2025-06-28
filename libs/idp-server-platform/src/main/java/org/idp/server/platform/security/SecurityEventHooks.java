@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.security;
 
 import java.util.Map;
-import org.idp.server.platform.security.hook.SecurityEventHookType;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.security.hook.SecurityEventHookType;
 
 public class SecurityEventHooks {
 

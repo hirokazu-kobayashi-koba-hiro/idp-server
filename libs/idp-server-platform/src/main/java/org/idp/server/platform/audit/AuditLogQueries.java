@@ -16,15 +16,14 @@
 
 package org.idp.server.platform.audit;
 
-import org.idp.server.platform.date.LocalDateTimeParser;
-import org.idp.server.platform.date.SystemDateTime;
-import org.idp.server.platform.uuid.UuidConvertable;
-
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.idp.server.platform.date.LocalDateTimeParser;
+import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.uuid.UuidConvertable;
 
 public class AuditLogQueries implements UuidConvertable {
   Map<String, String> values;
@@ -32,7 +31,7 @@ public class AuditLogQueries implements UuidConvertable {
   public AuditLogQueries() {}
 
   public AuditLogQueries(Map<String, String> values) {
-      this.values = Objects.requireNonNullElseGet(values, HashMap::new);
+    this.values = Objects.requireNonNullElseGet(values, HashMap::new);
   }
 
   public LocalDateTime from() {
@@ -80,6 +79,7 @@ public class AuditLogQueries implements UuidConvertable {
   public boolean hasTargetResource() {
     return values.containsKey("target_resource");
   }
+
   public String targetResource() {
     return values.get("target_resource");
   }

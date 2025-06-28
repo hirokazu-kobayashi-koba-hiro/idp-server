@@ -14,25 +14,24 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.notification.sms;
 
 import java.util.Map;
 
 public class SmsSendResult {
-    boolean result;
-    Map<String, Object> data;
+  boolean result;
+  Map<String, Object> data;
 
-    public SmsSendResult(boolean result, Map<String, Object> data) {
-        this.result = result;
-        this.data = data;
-    }
+  public SmsSendResult(boolean result, Map<String, Object> data) {
+    this.result = result;
+    this.data = data;
+  }
 
-    public boolean isError() {
-        return !result;
-    }
+  public boolean isError() {
+    return !result;
+  }
 
-    public Map<String, Object> data() {
-        return data;
-    }
+  public Map<String, Object> data() {
+    return data;
+  }
 }

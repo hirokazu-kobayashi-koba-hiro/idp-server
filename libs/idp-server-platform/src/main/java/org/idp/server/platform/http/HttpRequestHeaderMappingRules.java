@@ -14,25 +14,30 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.notification.sms;
+package org.idp.server.platform.http;
 
-import java.util.Map;
-import org.idp.server.platform.log.LoggerWrapper;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-public class NoActionSmsSender implements SmsSender {
+public class HttpRequestHeaderMappingRules implements Iterable<HttpRequestMappingRule> {
 
-  LoggerWrapper log = LoggerWrapper.getLogger(this.getClass());
+  List<HttpRequestMappingRule> values;
 
-  @Override
-  public SmsSenderType type() {
-    return DefaultSmsSenderType.NO_ACTION.toType();
+  public HttpRequestHeaderMappingRules() {
+    this.values = new ArrayList<>();
+  }
+
+  public HttpRequestHeaderMappingRules(List<HttpRequestMappingRule> values) {
+    this.values = values;
   }
 
   @Override
-  public SmsSendResult send(SmsSendingRequest request, Map<String, Object> setting) {
+  public Iterator<HttpRequestMappingRule> iterator() {
+    return values.iterator();
+  }
 
-    log.info("EmailSender: NoActionEmailSender sending request");
-
-    return new SmsSendResult(true, Map.of());
+  public boolean exists() {
+    return values != null && !values.isEmpty();
   }
 }

@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.audit;
 
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuditLogCommandRepository {
 
-    void register(Tenant tenant, AuditLog auditLog);
+  void register(Tenant tenant, AuditLog auditLog);
 }

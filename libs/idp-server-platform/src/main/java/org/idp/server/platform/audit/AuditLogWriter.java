@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.audit;
 
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuditLogWriter {
 
-    default boolean shouldExecute(Tenant tenant, AuditLog auditLog) {
-        return true;
-    }
+  default boolean shouldExecute(Tenant tenant, AuditLog auditLog) {
+    return true;
+  }
 
-    void write(Tenant tenant, AuditLog auditLog);
-
+  void write(Tenant tenant, AuditLog auditLog);
 }

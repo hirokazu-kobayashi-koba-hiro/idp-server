@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.security.event;
 
 import java.util.UUID;
-import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.type.IpAddress;
 import org.idp.server.platform.security.type.UserAgent;
 

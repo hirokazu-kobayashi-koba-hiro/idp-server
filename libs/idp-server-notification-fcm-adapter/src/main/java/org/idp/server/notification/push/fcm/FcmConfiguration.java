@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.notification.push.fcm;
 
-import org.idp.server.platform.json.JsonReadable;
-import org.idp.server.core.oidc.identity.device.NotificationTemplate;
-
 import java.util.Map;
+import org.idp.server.core.oidc.identity.device.NotificationTemplate;
+import org.idp.server.platform.json.JsonReadable;
 
 public class FcmConfiguration implements JsonReadable {
 

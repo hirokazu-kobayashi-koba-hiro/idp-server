@@ -14,34 +14,38 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.plugin;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.security.SecurityEventHookExecutor;
 import org.idp.server.platform.security.SecurityEventHooks;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.security.hook.SecurityEventHookType;
 
 public class SecurityEventHooksPluginLoader extends PluginLoader {
 
-  private static final LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHooksPluginLoader.class);
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(SecurityEventHooksPluginLoader.class);
 
   public static SecurityEventHooks load() {
     Map<SecurityEventHookType, SecurityEventHookExecutor> hookExecutors = new HashMap<>();
 
-    List<SecurityEventHookExecutor> internalHookExecutors = loadFromInternalModule(SecurityEventHookExecutor.class);
+    List<SecurityEventHookExecutor> internalHookExecutors =
+        loadFromInternalModule(SecurityEventHookExecutor.class);
     for (SecurityEventHookExecutor executor : internalHookExecutors) {
       hookExecutors.put(executor.type(), executor);
-      log.info("Dynamic Registered internal security event hook executor: " + executor.type().name());
+      log.info(
+          "Dynamic Registered internal security event hook executor: " + executor.type().name());
     }
 
-    List<SecurityEventHookExecutor>  externalHookExecutors = loadFromExternalModule(SecurityEventHookExecutor.class);
+    List<SecurityEventHookExecutor> externalHookExecutors =
+        loadFromExternalModule(SecurityEventHookExecutor.class);
     for (SecurityEventHookExecutor executor : externalHookExecutors) {
       hookExecutors.put(executor.type(), executor);
-      log.info("Dynamic Registered external security event hook executor: " + executor.type().name());
+      log.info(
+          "Dynamic Registered external security event hook executor: " + executor.type().name());
     }
 
     return new SecurityEventHooks(hookExecutors);

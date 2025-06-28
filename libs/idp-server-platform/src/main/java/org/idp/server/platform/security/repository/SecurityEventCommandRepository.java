@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.security.repository;
 
-import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.SecurityEvent;
 
 public interface SecurityEventCommandRepository {
   void register(Tenant tenant, SecurityEvent securityEvent);

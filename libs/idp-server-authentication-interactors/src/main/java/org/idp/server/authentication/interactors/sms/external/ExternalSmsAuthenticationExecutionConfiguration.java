@@ -38,8 +38,8 @@ public class ExternalSmsAuthenticationExecutionConfiguration implements JsonRead
     return HttpMethod.valueOf(method);
   }
 
-  public HttpRequestHeaders httpRequestHeaders() {
-    return new HttpRequestHeaders(headers);
+  public HttpRequestStaticHeaders httpRequestHeaders() {
+    return new HttpRequestStaticHeaders(headers);
   }
 
   public HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys() {

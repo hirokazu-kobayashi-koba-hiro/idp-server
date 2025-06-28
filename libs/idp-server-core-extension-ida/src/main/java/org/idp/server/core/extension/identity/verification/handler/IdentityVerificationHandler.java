@@ -86,7 +86,7 @@ public class IdentityVerificationHandler {
 
     OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
         verificationConfiguration.oauthAuthorization();
-    HttpRequestHeaders httpRequestHeaders =
+    HttpRequestStaticHeaders httpRequestStaticHeaders =
         createHttpRequestHeaders(processConfig.httpRequestHeaders(), oAuthAuthorizationConfig);
 
     HttpRequestStaticBody httpRequestStaticBody =
@@ -104,7 +104,7 @@ public class IdentityVerificationHandler {
         httpRequestExecutor.execute(
             processConfig.httpRequestUrl(),
             processConfig.httpMethod(),
-            httpRequestHeaders,
+            httpRequestStaticHeaders,
             new HttpRequestBaseParams(request.toMap()),
             processConfig.httpRequestDynamicBodyKeys(),
             httpRequestStaticBody);
@@ -148,10 +148,10 @@ public class IdentityVerificationHandler {
     return new HttpRequestStaticBody(parameters);
   }
 
-  private HttpRequestHeaders createHttpRequestHeaders(
-      HttpRequestHeaders httpRequestHeaders,
+  private HttpRequestStaticHeaders createHttpRequestHeaders(
+      HttpRequestStaticHeaders httpRequestStaticHeaders,
       OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
-    Map<String, String> values = new HashMap<>(httpRequestHeaders.toMap());
+    Map<String, String> values = new HashMap<>(httpRequestStaticHeaders.toMap());
 
     if (oAuthAuthorizationConfig.exists()) {
       OAuthAuthorizationResolver resolver =
@@ -160,6 +160,6 @@ public class IdentityVerificationHandler {
       values.put("Authorization", "Bearer " + accessToken);
     }
 
-    return new HttpRequestHeaders(values);
+    return new HttpRequestStaticHeaders(values);
   }
 }

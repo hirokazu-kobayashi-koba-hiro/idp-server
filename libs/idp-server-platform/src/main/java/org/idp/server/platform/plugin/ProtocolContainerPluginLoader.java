@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.plugin;
 
+import java.util.List;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolProvider;
 import org.idp.server.platform.log.LoggerWrapper;
 
-import java.util.List;
-
 public class ProtocolContainerPluginLoader extends PluginLoader {
 
-  private static final LoggerWrapper log = LoggerWrapper.getLogger(ProtocolContainerPluginLoader.class);
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(ProtocolContainerPluginLoader.class);
 
   public static ProtocolContainer load(
       ApplicationComponentContainer applicationComponentContainer) {

@@ -38,8 +38,8 @@ public class ExternalFidoUafServerExecutionConfiguration implements JsonReadable
     return HttpMethod.valueOf(method);
   }
 
-  public HttpRequestHeaders httpRequestHeaders() {
-    return new HttpRequestHeaders(headers);
+  public HttpRequestStaticHeaders httpRequestHeaders() {
+    return new HttpRequestStaticHeaders(headers);
   }
 
   public HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys() {

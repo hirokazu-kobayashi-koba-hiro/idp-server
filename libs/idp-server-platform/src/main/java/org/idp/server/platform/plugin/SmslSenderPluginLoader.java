@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.plugin;
-
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.notification.email.EmailSender;
-import org.idp.server.platform.notification.email.EmailSenderType;
-import org.idp.server.platform.notification.email.EmailSenders;
-import org.idp.server.platform.notification.sms.SmsSender;
-import org.idp.server.platform.notification.sms.SmsSenderType;
-import org.idp.server.platform.notification.sms.SmsSenders;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.notification.sms.SmsSender;
+import org.idp.server.platform.notification.sms.SmsSenderType;
+import org.idp.server.platform.notification.sms.SmsSenders;
 
-public class SmslSenderPluginLoader extends PluginLoader{
+public class SmslSenderPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(SmslSenderPluginLoader.class);
 

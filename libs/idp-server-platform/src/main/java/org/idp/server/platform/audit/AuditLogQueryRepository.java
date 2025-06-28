@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-
 package org.idp.server.platform.audit;
 
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-
 import java.util.List;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuditLogQueryRepository {
 
-    long findTotalCount(Tenant tenant, AuditLogQueries queries);
-    List<AuditLog> findList(Tenant tenant, AuditLogQueries queries);
-    AuditLog find(Tenant tenant, AuditLogIdentifier identifier);
+  long findTotalCount(Tenant tenant, AuditLogQueries queries);
+
+  List<AuditLog> findList(Tenant tenant, AuditLogQueries queries);
+
+  AuditLog find(Tenant tenant, AuditLogIdentifier identifier);
 }
