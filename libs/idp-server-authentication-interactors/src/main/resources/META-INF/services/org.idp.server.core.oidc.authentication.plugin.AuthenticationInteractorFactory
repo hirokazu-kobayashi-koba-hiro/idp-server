@@ -17,3 +17,4 @@ org.idp.server.authentication.interactors.fidouaf.FidoUafAuthenticationInteracto
 org.idp.server.authentication.interactors.fidouaf.FidoUafDeRegistrationInteractorFactory
 org.idp.server.authentication.interactors.sms.SmsAuthenticationChallengeInteractorFactory
 org.idp.server.authentication.interactors.sms.SmsAuthenticationInteractorFactory
+org.idp.server.authentication.interactors.external_token.ExternalTokenAuthenticationInteractorFactory
