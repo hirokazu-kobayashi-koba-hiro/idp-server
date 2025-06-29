@@ -23,8 +23,8 @@ import org.idp.server.core.oidc.verifier.AuthorizationRequestExtensionVerifier;
 
 public class OAuthAuthorizationDetailsVerifier implements AuthorizationRequestExtensionVerifier {
 
-  public boolean shouldNotVerify(OAuthRequestContext oAuthRequestContext) {
-    return !oAuthRequestContext.hasAuthorizationDetails();
+  public boolean shouldVerify(OAuthRequestContext oAuthRequestContext) {
+    return oAuthRequestContext.hasAuthorizationDetails();
   }
 
   @Override

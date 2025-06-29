@@ -25,8 +25,8 @@ public class RequestObjectVerifier
     implements AuthorizationRequestExtensionVerifier, RequestObjectVerifyable {
 
   @Override
-  public boolean shouldNotVerify(OAuthRequestContext context) {
-    return !context.isRequestParameterPattern() || context.isUnsignedRequestObject();
+  public boolean shouldVerify(OAuthRequestContext context) {
+    return context.isRequestParameterPattern() && !context.isUnsignedRequestObject();
   }
 
   @Override

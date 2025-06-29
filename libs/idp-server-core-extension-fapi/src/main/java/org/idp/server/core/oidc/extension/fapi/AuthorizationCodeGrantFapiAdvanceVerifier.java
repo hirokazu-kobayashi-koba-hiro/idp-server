@@ -14,20 +14,29 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.token.verifier;
+package org.idp.server.core.oidc.extension.fapi;
 
 import org.idp.server.basic.type.oauth.ClientAuthenticationType;
+import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.token.TokenRequestContext;
 import org.idp.server.core.oidc.token.exception.TokenBadRequestException;
+import org.idp.server.core.oidc.token.verifier.AuthorizationCodeGrantBaseVerifier;
+import org.idp.server.core.oidc.token.verifier.AuthorizationCodeGrantVerifierInterface;
 
 public class AuthorizationCodeGrantFapiAdvanceVerifier
     implements AuthorizationCodeGrantVerifierInterface {
 
   AuthorizationCodeGrantBaseVerifier baseVerifier = new AuthorizationCodeGrantBaseVerifier();
 
+  @Override
+  public AuthorizationProfile profile() {
+    return AuthorizationProfile.FAPI_ADVANCE;
+  }
+
+  @Override
   public void verify(
       TokenRequestContext tokenRequestContext,
       AuthorizationRequest authorizationRequest,

@@ -23,7 +23,6 @@ import org.idp.server.core.oidc.plugin.request.AuthorizationRequestExtensionVeri
 import org.idp.server.core.oidc.plugin.request.AuthorizationRequestVerifierPluginLoader;
 import org.idp.server.core.oidc.verifier.extension.JarmVerifier;
 import org.idp.server.core.oidc.verifier.extension.OAuthAuthorizationDetailsVerifier;
-import org.idp.server.core.oidc.verifier.extension.OAuthVerifiableCredentialVerifier;
 import org.idp.server.core.oidc.verifier.extension.RequestObjectVerifier;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -48,7 +47,6 @@ public class OAuthRequestVerifier {
     extensionVerifiers.add(new RequestObjectVerifier());
     extensionVerifiers.add(new OAuthAuthorizationDetailsVerifier());
     extensionVerifiers.add(new JarmVerifier());
-    extensionVerifiers.add(new OAuthVerifiableCredentialVerifier());
   }
 
   public void verify(OAuthRequestContext context) {
@@ -60,10 +58,9 @@ public class OAuthRequestVerifier {
     baseRequestVerifier.verify(context);
     extensionVerifiers.forEach(
         verifier -> {
-          if (verifier.shouldNotVerify(context)) {
-            return;
+          if (verifier.shouldVerify(context)) {
+            verifier.verify(context);
           }
-          verifier.verify(context);
         });
   }
 }

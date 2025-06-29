@@ -99,6 +99,7 @@ public class AuthorizationCodeGrantService
   OAuthTokenRepository oAuthTokenRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
+  AuthorizationCodeGrantVerifier verifier;
   IdTokenCreator idTokenCreator;
   AccessTokenCreator accessTokenCreator;
 
@@ -111,6 +112,7 @@ public class AuthorizationCodeGrantService
     this.oAuthTokenRepository = oAuthTokenRepository;
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
     this.authorizationGrantedRepository = authorizationGrantedRepository;
+    this.verifier = new AuthorizationCodeGrantVerifier();
     this.idTokenCreator = IdTokenCreator.getInstance();
     this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
@@ -142,10 +144,8 @@ public class AuthorizationCodeGrantService
         authorizationRequestRepository.find(
             tenant, authorizationCodeGrant.authorizationRequestIdentifier());
 
-    AuthorizationCodeGrantVerifier verifier =
-        new AuthorizationCodeGrantVerifier(
-            tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);
-    verifier.verify();
+    verifier.verify(
+        tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);
 
     AuthorizationServerConfiguration authorizationServerConfiguration =
         tokenRequestContext.serverConfiguration();

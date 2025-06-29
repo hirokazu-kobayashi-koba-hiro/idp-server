@@ -23,7 +23,7 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.token.TokenRequestContext;
 import org.idp.server.core.oidc.token.exception.TokenBadRequestException;
 
-public class AuthorizationCodeGrantBaseVerifier implements AuthorizationCodeGrantVerifierInterface {
+public class AuthorizationCodeGrantBaseVerifier {
 
   public void verify(
       TokenRequestContext tokenRequestContext,

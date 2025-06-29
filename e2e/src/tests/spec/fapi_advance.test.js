@@ -10,13 +10,13 @@ import {
 import { requestAuthorizations, certThumbprint } from "../../oauth/request";
 import { createJwtWithPrivateKey, generateJti, verifyAndDecodeJwt } from "../../lib/jose";
 import {
-  calculateCodeChallengeWithS256,
+  calculateCodeChallengeWithS256, generateCodeVerifier
 } from "../../lib/oauth";
 import { toEpocTime } from "../../lib/util";
 
 describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
   it("success", async () => {
-    const codeVerifier = "aiueo12345678";
+    const codeVerifier = generateCodeVerifier(64);
     const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
     const request = createJwtWithPrivateKey({
       payload: {
@@ -90,7 +90,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
   });
 
   it("bad setting client", async () => {
-    const codeVerifier = "aiueo12345678";
+    const codeVerifier = generateCodeVerifier(64);
     const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
     const request = createJwtWithPrivateKey({
       payload: {
@@ -126,7 +126,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
 
   describe("5.1.1.  ID Token as Detached Signature", () => {
     it("While the name ID Token (as used in the OpenID Connect Hybrid Flow) suggests that it is something that provides the identity of the resource owner (subject), it is not necessarily so. While it does identify the authorization server by including the issuer identifier, it is perfectly fine to have an ephemeral subject identifier. In this case, the ID Token acts as a detached signature of the issuer to the authorization response and it was an explicit design decision of OpenID Connect Core to make the ID Token act as a detached signature.", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const request = createJwtWithPrivateKey({
         payload: {
@@ -202,7 +202,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
 
   describe("5.2.2.  Authorization server", () => {
     it ("1. shall require a JWS signed JWT request object passed by value with the request parameter or by reference with the request_uri parameter;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
@@ -231,7 +231,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
     });
 
     it ("2. shall require the response_type value code id_token, the response_type value code in conjunction with the response_mode value jwt;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const request = createJwtWithPrivateKey({
         payload: {
@@ -275,7 +275,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
     });
 
     it ("5. shall only issue sender-constrained access tokens;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const request = createJwtWithPrivateKey({
         payload: {
@@ -347,7 +347,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
     });
 
     it("13. shall require the request object to contain an exp claim that has a lifetime of no longer than 60 minutes after the nbf claim;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const request = createJwtWithPrivateKey({
         payload: {
@@ -392,7 +392,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
     });
 
     xit("14. shall authenticate the confidential client using one of the following methods (this overrides FAPI Security Profile 1.0 - Part 1: Baseline clause 5.2.2-4): tls_client_auth or self_signed_tls_client_auth as specified in section 2 of MTLS, or private_key_jwt as specified in section 9 of OIDC;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const request = createJwtWithPrivateKey({
         payload: {
@@ -437,7 +437,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
     });
 
     it("15. shall require the aud claim in the request object to be, or to be an array containing, the OP's Issuer Identifier URL;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const request = createJwtWithPrivateKey({
         payload: {
@@ -481,7 +481,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
     });
 
     it("16. shall not support public clients;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const request = createJwtWithPrivateKey({
         payload: {
@@ -515,7 +515,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
     });
 
     it("17. shall require the request object to contain an nbf claim that is no longer than 60 minutes in the past; and", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const request = createJwtWithPrivateKey({
         payload: {

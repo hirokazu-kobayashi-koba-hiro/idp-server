@@ -16,15 +16,20 @@
 
 package org.idp.server.core.oidc.token.verifier;
 
-import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.token.TokenRequestContext;
 
-public interface AuthorizationCodeGrantVerifierInterface {
+public interface AuthorizationCodeGrantExtensionVerifierInterface {
 
-  AuthorizationProfile profile();
+  default boolean shouldVerify(
+      TokenRequestContext tokenRequestContext,
+      AuthorizationRequest authorizationRequest,
+      AuthorizationCodeGrant authorizationCodeGrant,
+      ClientCredentials clientCredentials) {
+    return false;
+  }
 
   void verify(
       TokenRequestContext tokenRequestContext,

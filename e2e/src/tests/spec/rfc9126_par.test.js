@@ -9,10 +9,11 @@ import {
   verifyAndDecodeJwt,
 } from "../../lib/jose";
 import { toEpocTime } from "../../lib/util";
+import { generateCodeVerifier } from "../../lib/oauth";
 
 describe("rfc9126 OAuth 2.0 Pushed Authorization Requests", () => {
   it("success pattern normal", async () => {
-    const codeVerifier = "aiueo12345678";
+    const codeVerifier = generateCodeVerifier(64);
     const codeChallenge = codeVerifier;
     const authorizationDetails = [{
       "type": "account_information",
@@ -112,7 +113,7 @@ describe("rfc9126 OAuth 2.0 Pushed Authorization Requests", () => {
   });
 
   it("success pattern request object", async () => {
-    const codeVerifier = "aiueo12345678";
+    const codeVerifier = generateCodeVerifier(64);
     const codeChallenge = codeVerifier;
     const requestObject = createJwtWithPrivateKey({
       payload: {

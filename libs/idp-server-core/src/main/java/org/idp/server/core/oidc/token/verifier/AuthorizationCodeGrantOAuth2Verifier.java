@@ -22,13 +22,23 @@ import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.token.TokenRequestContext;
 
-public interface AuthorizationCodeGrantVerifierInterface {
+public class AuthorizationCodeGrantOAuth2Verifier
+    implements AuthorizationCodeGrantVerifierInterface {
 
-  AuthorizationProfile profile();
+  AuthorizationCodeGrantBaseVerifier baseVerifier = new AuthorizationCodeGrantBaseVerifier();
 
-  void verify(
+  @Override
+  public AuthorizationProfile profile() {
+    return AuthorizationProfile.OAUTH2;
+  }
+
+  @Override
+  public void verify(
       TokenRequestContext tokenRequestContext,
       AuthorizationRequest authorizationRequest,
       AuthorizationCodeGrant authorizationCodeGrant,
-      ClientCredentials clientCredentials);
+      ClientCredentials clientCredentials) {
+    baseVerifier.verify(
+        tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);
+  }
 }

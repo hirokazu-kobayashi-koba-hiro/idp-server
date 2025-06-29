@@ -13,10 +13,11 @@ import {
 } from "../../lib/jose";
 import { toEpocTime, toJsonString } from "../../lib/util";
 import {decodeWithBase58, verifyBlockCert} from "../../lib/vc";
+import { generateCodeVerifier } from "../../lib/oauth";
 
 xdescribe("OpenID for Verifiable Credential Issuance - draft 13", () => {
   it("did-vc success pattern normal", async () => {
-    const codeVerifier = "aiueo12345678";
+    const codeVerifier = generateCodeVerifier(64);
     const codeChallenge = codeVerifier;
     const authorizationDetails = [
       {
@@ -90,7 +91,7 @@ xdescribe("OpenID for Verifiable Credential Issuance - draft 13", () => {
   });
 
   it("block-cert-vc success pattern normal", async () => {
-    const codeVerifier = "aiueo12345678";
+    const codeVerifier = generateCodeVerifier(64);
     const codeChallenge = codeVerifier;
     const authorizationDetails = [
       {
@@ -170,7 +171,7 @@ xdescribe("OpenID for Verifiable Credential Issuance - draft 13", () => {
   });
 
   it("success pattern request object", async () => {
-    const codeVerifier = "aiueo12345678";
+    const codeVerifier = generateCodeVerifier(64);
     const codeChallenge = codeVerifier;
     const requestObject = createJwtWithPrivateKey({
       payload: {
@@ -429,7 +430,7 @@ xdescribe("OpenID for Verifiable Credential Issuance - draft 13", () => {
 });
 
 const getToken = async ({ authorizationDetails}) => {
-  const codeVerifier = "aiueo12345678";
+  const codeVerifier = generateCodeVerifier(64);
   const codeChallenge = codeVerifier;
 
   const { authorizationResponse } = await requestAuthorizations({

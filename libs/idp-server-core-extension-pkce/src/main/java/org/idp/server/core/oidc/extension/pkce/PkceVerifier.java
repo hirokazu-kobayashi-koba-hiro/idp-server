@@ -25,8 +25,8 @@ public class PkceVerifier implements AuthorizationRequestExtensionVerifier {
   LoggerWrapper log = LoggerWrapper.getLogger(PkceVerifier.class);
 
   @Override
-  public boolean shouldNotVerify(OAuthRequestContext context) {
-    return !context.isPckeRequest();
+  public boolean shouldVerify(OAuthRequestContext context) {
+    return context.isPckeRequest();
   }
 
   @Override

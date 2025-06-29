@@ -21,7 +21,7 @@ import org.idp.server.core.oidc.OAuthRequestContext;
 /** AuthorizationRequestExtensionVerifier */
 public interface AuthorizationRequestExtensionVerifier {
 
-  default boolean shouldNotVerify(OAuthRequestContext oAuthRequestContext) {
+  default boolean shouldVerify(OAuthRequestContext oAuthRequestContext) {
     return false;
   }
 
