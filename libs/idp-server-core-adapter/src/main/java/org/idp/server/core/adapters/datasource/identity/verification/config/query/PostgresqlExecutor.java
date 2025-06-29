@@ -29,7 +29,7 @@ public class PostgresqlExecutor implements IdentityVerificationConfigSqlExecutor
   String selectSql =
       """
           SELECT id, payload
-          FROM identity_verification_configurations \n
+          FROM identity_verification_configuration \n
           """;
 
   @Override

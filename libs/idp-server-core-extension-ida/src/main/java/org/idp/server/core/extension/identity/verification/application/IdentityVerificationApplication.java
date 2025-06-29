@@ -31,7 +31,6 @@ import org.idp.server.core.extension.identity.verification.delegation.ExternalWo
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
-import org.idp.server.core.extension.identity.verification.trustframework.TrustFramework;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.platform.date.SystemDateTime;
@@ -50,6 +49,9 @@ public class IdentityVerificationApplication {
   ExternalWorkflowApplicationIdentifier externalApplicationId;
   ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails;
   TrustFramework trustFramework;
+  EvidenceDocumentType evidenceDocumentType;
+  EvidenceDocumentDetail evidenceDocumentDetail;
+  EvidenceMethod evidenceMethod;
   IdentityVerificationExaminationResults examinations;
   IdentityVerificationApplicationProcesses processes;
   IdentityVerificationApplicationStatus status;
@@ -68,6 +70,9 @@ public class IdentityVerificationApplication {
       ExternalWorkflowApplicationIdentifier externalApplicationId,
       ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails,
       TrustFramework trustFramework,
+      EvidenceDocumentType evidenceDocumentType,
+      EvidenceDocumentDetail evidenceDocumentDetail,
+      EvidenceMethod evidenceMethod,
       IdentityVerificationExaminationResults examinations,
       IdentityVerificationApplicationProcesses processes,
       IdentityVerificationApplicationStatus status,
@@ -116,6 +121,11 @@ public class IdentityVerificationApplication {
             applyingResult.externalWorkflowResponse(), processConfig);
 
     TrustFramework trustFramework = new TrustFramework(request.extractTrustFramework());
+    EvidenceDocumentType evidenceDocumentType =
+        new EvidenceDocumentType(request.extractEvidenceDocumentType());
+    EvidenceDocumentDetail evidenceDocumentDetail =
+        EvidenceDocumentDetail.fromObject(request.extractEvidenceDocumentDetail());
+    EvidenceMethod evidenceMethod = new EvidenceMethod(request.extractEvidenceMethod());
     LocalDateTime requestedAt = SystemDateTime.now();
     IdentityVerificationApplicationProcess applicationProcess =
         new IdentityVerificationApplicationProcess(process, requestedAt);
@@ -133,6 +143,9 @@ public class IdentityVerificationApplication {
         externalApplicationId,
         externalWorkflowApplicationDetails,
         trustFramework,
+        evidenceDocumentType,
+        evidenceDocumentDetail,
+        evidenceMethod,
         new IdentityVerificationExaminationResults(),
         processes,
         IdentityVerificationApplicationStatus.REQUESTED,
@@ -153,6 +166,11 @@ public class IdentityVerificationApplication {
         externalWorkflowApplicationDetails.merge(
             applyingResult.externalWorkflowResponse(), processConfig);
     TrustFramework trustFramework = new TrustFramework(request.extractTrustFramework());
+    EvidenceDocumentType evidenceDocumentType =
+        new EvidenceDocumentType(request.extractEvidenceDocumentType());
+    EvidenceDocumentDetail evidenceDocumentDetail =
+        EvidenceDocumentDetail.fromObject(request.extractEvidenceDocumentDetail());
+    EvidenceMethod evidenceMethod = new EvidenceMethod(request.extractEvidenceMethod());
 
     IdentityVerificationApplicationProcess applicationProcess =
         new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
@@ -169,6 +187,9 @@ public class IdentityVerificationApplication {
         externalApplicationId,
         mergedExternalWorkflowApplicationDetails,
         trustFramework,
+        evidenceDocumentType,
+        evidenceDocumentDetail,
+        evidenceMethod,
         new IdentityVerificationExaminationResults(),
         addedProcesses,
         IdentityVerificationApplicationStatus.APPLYING,
@@ -207,6 +228,9 @@ public class IdentityVerificationApplication {
         externalApplicationId,
         externalWorkflowApplicationDetails,
         trustFramework,
+        evidenceDocumentType,
+        evidenceDocumentDetail,
+        evidenceMethod,
         addExaminations,
         addedProcesses,
         status,
@@ -242,6 +266,9 @@ public class IdentityVerificationApplication {
         externalApplicationId,
         externalWorkflowApplicationDetails,
         trustFramework,
+        evidenceDocumentType,
+        evidenceDocumentDetail,
+        evidenceMethod,
         addExaminations,
         addedProcesses,
         status,
@@ -324,6 +351,30 @@ public class IdentityVerificationApplication {
     return trustFramework != null && trustFramework.exists();
   }
 
+  public EvidenceDocumentType evidenceDocumentType() {
+    return evidenceDocumentType;
+  }
+
+  public boolean hasEvidenceDocumentType() {
+    return evidenceDocumentType != null && evidenceDocumentType.exists();
+  }
+
+  public EvidenceDocumentDetail evidenceDocumentDetail() {
+    return evidenceDocumentDetail;
+  }
+
+  public boolean hasEvidenceDocumentDetail() {
+    return evidenceDocumentDetail != null && evidenceDocumentDetail.exists();
+  }
+
+  public EvidenceMethod evidenceMethod() {
+    return evidenceMethod;
+  }
+
+  public boolean hasEvidenceMethod() {
+    return evidenceMethod != null && evidenceMethod.exists();
+  }
+
   public boolean hasExternalApplicationDetails() {
     return externalWorkflowApplicationDetails != null
         && externalWorkflowApplicationDetails.exists();
@@ -345,7 +396,11 @@ public class IdentityVerificationApplication {
     map.put("external_application_id", externalApplicationId.value());
     map.put("external_application_details", externalWorkflowApplicationDetails.toMap());
     map.put("trust_framework", trustFramework.name());
-    map.put("examination_results", examinationResultsAsMapList());
+    if (hasTrustFramework()) map.put("evidence_document_type", evidenceDocumentType.name());
+    if (hasEvidenceDocumentType())
+      map.put("evidence_document_details", evidenceDocumentDetail.toMap());
+    if (hasEvidenceDocumentDetail()) map.put("evidence_method", evidenceMethod.name());
+    if (hasEvidenceMethod()) map.put("examination_results", examinationResultsAsMapList());
     map.put("processes", processesAsMapList());
     map.put("status", status.value());
     map.put("requested_at", requestedAt.toString());

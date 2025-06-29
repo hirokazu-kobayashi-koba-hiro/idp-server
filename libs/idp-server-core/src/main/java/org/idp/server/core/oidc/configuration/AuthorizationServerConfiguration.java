@@ -71,11 +71,23 @@ public class AuthorizationServerConfiguration implements JsonReadable {
   boolean tlsClientCertificateBoundAccessTokens = false;
   boolean requireSignedRequestObject = false;
   boolean authorizationResponseIssParameterSupported = false;
+
+  // ciba
   List<String> backchannelTokenDeliveryModesSupported = new ArrayList<>();
   String backchannelAuthenticationEndpoint = "";
   List<String> backchannelAuthenticationRequestSigningAlgValuesSupported = new ArrayList<>();
   boolean backchannelUserCodeParameterSupported = false;
   List<String> authorizationDetailsTypesSupported = new ArrayList<>();
+
+  // ida
+  boolean verifiedClaimsSupported = false;
+  List<String> trustFrameworksSupported = new ArrayList<>();
+  List<String> evidenceSupported = new ArrayList<>();
+  List<String> idDocumentsSupported = new ArrayList<>();
+  List<String> idDocumentsVerificationMethodsSupported = new ArrayList<>();
+  List<String> claimsInVerifiedClaimsSupported = new ArrayList<>();
+
+  // vc
   VerifiableCredentialConfiguration credentialIssuerMetadata =
       new VerifiableCredentialConfiguration();
 
@@ -590,6 +602,51 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     return extension.enabledAccessTokenSelectiveVerifiedClaims();
   }
 
+  public boolean verifiedClaimsSupported() {
+    return verifiedClaimsSupported;
+  }
+
+  public List<String> trustFrameworksSupported() {
+    return trustFrameworksSupported;
+  }
+
+  public boolean hasTrustFrameworksSupported() {
+    return trustFrameworksSupported != null && !trustFrameworksSupported.isEmpty();
+  }
+
+  public List<String> evidenceSupported() {
+    return evidenceSupported;
+  }
+
+  public boolean hasEvidenceSupported() {
+    return evidenceSupported != null && !evidenceSupported.isEmpty();
+  }
+
+  public List<String> idDocumentsSupported() {
+    return idDocumentsSupported;
+  }
+
+  public boolean hasIdDocumentsSupported() {
+    return idDocumentsSupported != null && !idDocumentsSupported.isEmpty();
+  }
+
+  public List<String> idDocumentsVerificationMethodsSupported() {
+    return idDocumentsVerificationMethodsSupported;
+  }
+
+  public boolean hasIdDocumentsVerificationMethodsSupported() {
+    return idDocumentsVerificationMethodsSupported != null
+        && !idDocumentsVerificationMethodsSupported.isEmpty();
+  }
+
+  public List<String> claimsInVerifiedClaimsSupported() {
+    return claimsInVerifiedClaimsSupported;
+  }
+
+  public boolean hasClaimsInVerifiedClaimsSupported() {
+    return claimsInVerifiedClaimsSupported != null && !claimsInVerifiedClaimsSupported.isEmpty();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("issuer", issuer);
@@ -684,6 +741,12 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     if (hasBackchannelUserCodeParameterSupported()) {
       map.put("backchannel_user_code_parameter_supported", backchannelUserCodeParameterSupported);
     }
+    map.put("verified_claims_supported", verifiedClaimsSupported);
+    map.put("trust_frameworks_supported", trustFrameworksSupported);
+    map.put("evidence_supported", evidenceSupported);
+    map.put("id_documents_supported", idDocumentsSupported);
+    map.put("id_documents_verification_methods_supported", idDocumentsVerificationMethodsSupported);
+    map.put("claims_in_verified_claims_supported", claimsInVerifiedClaimsSupported);
     return map;
   }
 }

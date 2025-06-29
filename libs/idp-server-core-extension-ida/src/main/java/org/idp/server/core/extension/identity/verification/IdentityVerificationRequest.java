@@ -82,4 +82,16 @@ public class IdentityVerificationRequest {
   public String extractTrustFramework() {
     return optValueAsString("trust_framework", "");
   }
+
+  public String extractEvidenceDocumentType() {
+    return optValueAsString("evidence_document_type", "");
+  }
+
+  public Object extractEvidenceDocumentDetail() {
+    return getValue("evidence_document_details");
+  }
+
+  public String extractEvidenceMethod() {
+    return optValueAsString("evidence_method", "");
+  }
 }

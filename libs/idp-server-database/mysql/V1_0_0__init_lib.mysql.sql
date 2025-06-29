@@ -457,21 +457,21 @@ CREATE TABLE verifiable_credential_transaction
 
 CREATE TABLE security_event
 (
-    id          CHAR(36)     NOT NULL,
-    type        VARCHAR(255) NOT NULL,
-    description VARCHAR(255) NOT NULL,
-    tenant_id   CHAR(36)     NOT NULL,
-    tenant_name VARCHAR(255) NOT NULL,
-    client_id   VARCHAR(255) NOT NULL,
-    client_name VARCHAR(255) NOT NULL,
-    user_id     CHAR(36),
+    id               CHAR(36)     NOT NULL,
+    type             VARCHAR(255) NOT NULL,
+    description      VARCHAR(255) NOT NULL,
+    tenant_id        CHAR(36)     NOT NULL,
+    tenant_name      VARCHAR(255) NOT NULL,
+    client_id        VARCHAR(255) NOT NULL,
+    client_name      VARCHAR(255) NOT NULL,
+    user_id          CHAR(36),
     external_user_id VARCHAR(255),
-    user_name   VARCHAR(255),
-    login_hint  VARCHAR(255),
-    ip_address  VARCHAR(45),
-    user_agent  TEXT,
-    detail      JSON         NOT NULL,
-    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    user_name        VARCHAR(255),
+    login_hint       VARCHAR(255),
+    ip_address       VARCHAR(45),
+    user_agent       TEXT,
+    detail           JSON         NOT NULL,
+    created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -595,6 +595,79 @@ CREATE TABLE authentication_interactions
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE identity_verification_configuration
+(
+    id         CHAR(36)                           NOT NULL,
+    tenant_id  CHAR(36)                           NOT NULL,
+    type       VARCHAR(255)                       NOT NULL,
+    payload    JSON                               NOT NULL,
+    enabled    TINYINT(1)                         NOT NULL DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_identity_verification_configuration_type
+    ON identity_verification_configuration (tenant_id, type);
+
+CREATE TABLE identity_verification_application
+(
+    id                           CHAR(36)                           NOT NULL,
+    tenant_id                    CHAR(36)                           NOT NULL,
+    client_id                    VARCHAR(255)                       NOT NULL,
+    user_id                      CHAR(36)                           NOT NULL,
+    verification_type            VARCHAR(255)                       NOT NULL,
+    application_details          JSON                               NOT NULL,
+    trust_framework              VARCHAR(255),
+    evidence_document_type       VARCHAR(255),
+    evidence_document_details    JSON,
+    evidence_method              VARCHAR(255),
+    external_workflow_delegation VARCHAR(255)                       NOT NULL,
+    external_application_id      VARCHAR(255)                       NOT NULL,
+    external_application_details JSON,
+    examination_results          JSON,
+    processes                    JSON                               NOT NULL,
+    status                       VARCHAR(255)                       NOT NULL,
+    requested_at                 DATETIME                           NOT NULL,
+    comment                      TEXT,
+    created_at                   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at                   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_verification_user ON identity_verification_application (user_id);
+CREATE INDEX idx_verification_tenant_client ON identity_verification_application (tenant_id, client_id);
+CREATE INDEX idx_verification_status ON identity_verification_application (status);
+CREATE INDEX idx_verification_external_ref ON identity_verification_application (external_application_id);
+CREATE INDEX idx_verification_evidence_document_type ON identity_verification_application (evidence_document_type);
+CREATE INDEX idx_verification_evidence_method ON identity_verification_application (evidence_method);
+
+CREATE TABLE identity_verification_result
+(
+    id                      CHAR(36)     NOT NULL,
+    tenant_id               CHAR(36)     NOT NULL,
+    user_id                 CHAR(36)     NOT NULL,
+    application_id          CHAR(36),
+    verification_type       VARCHAR(255),
+    external_application_id VARCHAR(255),
+    verified_claims         JSON         NOT NULL,
+    verified_at             DATETIME     NOT NULL,
+    valid_until             DATETIME,
+    source                  VARCHAR(255) NOT NULL DEFAULT 'application',
+    created_at              DATETIME              DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (application_id) REFERENCES identity_verification_application (id) ON DELETE CASCADE,
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_verification_result_user_id ON identity_verification_result (user_id);
+CREATE INDEX idx_verification_result_application_id ON identity_verification_result (application_id);
+CREATE INDEX idx_verification_result_verification_type ON identity_verification_result (verification_type);
+CREATE INDEX idx_verification_result_verified_at ON identity_verification_result (verified_at);
+
+
 CREATE TABLE idp_user_lifecycle_event_result
 (
     id             CHAR(36)     NOT NULL,
@@ -610,14 +683,14 @@ CREATE TABLE idp_user_lifecycle_event_result
 
 CREATE TABLE audit_log
 (
-    id                     CHAR(36)                    NOT NULL,
+    id                     CHAR(36)                NOT NULL,
     type                   VARCHAR(255)            NOT NULL,
     description            VARCHAR(255)            NOT NULL,
-    tenant_id              CHAR(36)                    NOT NULL,
+    tenant_id              CHAR(36)                NOT NULL,
     client_id              VARCHAR(255)            NOT NULL,
-    user_id                CHAR(36)                    NOT NULL,
+    user_id                CHAR(36)                NOT NULL,
     external_user_id       VARCHAR(255)            NOT NULL,
-    user_payload           JSON                   NOT NULL,
+    user_payload           JSON                    NOT NULL,
     target_resource        TEXT                    NOT NULL,
     target_resource_action TEXT                    NOT NULL,
     before_payload         JSON,

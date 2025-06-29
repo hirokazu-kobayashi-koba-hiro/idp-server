@@ -14,28 +14,12 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.trustframework;
+package org.idp.server.core.extension.identity.verification.repository;
 
-import java.util.Map;
-import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class TrustFrameworkDetails {
+public interface IdentityVerificationResultCommandRepository {
 
-  JsonNodeWrapper json;
-
-  public TrustFrameworkDetails() {
-    this.json = JsonNodeWrapper.empty();
-  }
-
-  public TrustFrameworkDetails(JsonNodeWrapper json) {
-    this.json = json;
-  }
-
-  public Map<String, Object> toMap() {
-    return json.toMap();
-  }
-
-  public boolean exists() {
-    return json != null && json.exists();
-  }
+  void register(Tenant tenant, IdentityVerificationResult result);
 }

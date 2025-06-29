@@ -28,8 +28,10 @@ import org.idp.server.core.extension.identity.verification.delegation.ExternalWo
 import org.idp.server.core.extension.identity.verification.handler.IdentityVerificationHandler;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationDynamicResponseMapper;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
+import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
+import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationQueryRepository;
+import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
-import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationRequestValidator;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationValidationResult;
 import org.idp.server.core.oidc.identity.User;

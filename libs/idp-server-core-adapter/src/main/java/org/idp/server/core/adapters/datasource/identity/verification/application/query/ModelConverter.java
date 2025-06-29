@@ -23,10 +23,10 @@ import java.util.Map;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.*;
+import org.idp.server.core.extension.identity.verification.application.TrustFramework;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationDetails;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
-import org.idp.server.core.extension.identity.verification.trustframework.TrustFramework;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -56,6 +56,11 @@ public class ModelConverter {
             JsonNodeWrapper.fromString(map.get("external_application_details")));
 
     TrustFramework trustFramework = new TrustFramework(map.get("trust_framework"));
+    EvidenceDocumentType evidenceDocumentType =
+        new EvidenceDocumentType(map.get("evidence_document_type"));
+    EvidenceDocumentDetail evidenceDocumentDetail =
+        EvidenceDocumentDetail.fromString(map.get("evidence_document_details"));
+    EvidenceMethod evidenceMethod = new EvidenceMethod(map.get("evidence_method"));
     IdentityVerificationExaminationResults examinationResults = toExaminationResults(map);
     IdentityVerificationApplicationProcesses processes = toProcesses(map);
 
@@ -74,6 +79,9 @@ public class ModelConverter {
         externalApplicationId,
         externalWorkflowApplicationDetails,
         trustFramework,
+        evidenceDocumentType,
+        evidenceDocumentDetail,
+        evidenceMethod,
         examinationResults,
         processes,
         status,
