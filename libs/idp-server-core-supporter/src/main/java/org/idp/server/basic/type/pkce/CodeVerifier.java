@@ -34,4 +34,25 @@ public class CodeVerifier {
   public boolean exists() {
     return Objects.nonNull(value) && !value.isEmpty();
   }
+
+  public int length() {
+    if (!exists()) {
+      return 0;
+    }
+    return value.length();
+  }
+
+  public boolean isShorterThan43() {
+    if (!exists()) {
+      return false;
+    }
+    return value.length() < 43;
+  }
+
+  public boolean isLongerThan128() {
+    if (!exists()) {
+      return false;
+    }
+    return value.length() > 128;
+  }
 }

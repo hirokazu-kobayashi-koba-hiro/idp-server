@@ -3,11 +3,11 @@ import { describe, expect, it } from "@jest/globals";
 import { requestToken } from "../../api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
-import { calculateCodeChallengeWithS256 } from "../../lib/oauth";
+import { calculateCodeChallengeWithS256, generateCodeVerifier } from "../../lib/oauth";
 
 describe("The OAuth 2.0 Authorization Framework code", () => {
   it("success pattern plain", async () => {
-    const codeVerifier = "aiueo12345678";
+    const codeVerifier = generateCodeVerifier(64);
     const codeChallenge = codeVerifier;
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
@@ -36,7 +36,7 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
   });
 
   it("success pattern S256", async () => {
-    const codeVerifier = "aiueo12345678";
+    const codeVerifier = generateCodeVerifier(64);
     const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,

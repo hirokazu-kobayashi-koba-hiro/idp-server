@@ -10,13 +10,13 @@ import { requestAuthorizations, certThumbprint } from "../../oauth/request";
 import { createJwtWithPrivateKey, generateJti, verifyAndDecodeJwt } from "../../lib/jose";
 import {
   calculateCodeChallengeWithS256,
-  createInvalidClientAssertionWithPrivateKey,
+  createInvalidClientAssertionWithPrivateKey, generateCodeVerifier
 } from "../../lib/oauth";
 import { toEpocTime } from "../../lib/util";
 
 describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
   it("success", async () => {
-    const codeVerifier = "aiueo12345678";
+    const codeVerifier = generateCodeVerifier(64);
     const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
@@ -70,7 +70,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
 
   describe("5.2.2.  Authorization server", () => {
     it("1. shall support confidential clients;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
@@ -96,7 +96,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
     });
 
     it("4. shall authenticate the confidential client using one of the following methods: unauthorized client_secret_basic", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
@@ -115,7 +115,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
     });
 
     it("4. shall authenticate the confidential client using one of the following methods: unauthorized client_secret_post", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
@@ -134,7 +134,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
     });
 
     it("5. shall require and use a key of size 2048 bits or larger for RSA algorithms;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
@@ -179,7 +179,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
     });
 
     it("7. shall require RFC7636 with S256 as the code challenge method;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
@@ -198,7 +198,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
     });
 
     it("8. shall require redirect URIs to be pre-registered;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const { error } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
@@ -217,7 +217,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
     });
 
     it("9. shall require the redirect_uri in the authorization request;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const { error } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
@@ -235,7 +235,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
     });
 
     it("10. shall require the value of redirect_uri to exactly match one of the pre-registered redirect URIs;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const { error } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
@@ -254,7 +254,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
     });
 
     it("19. shall return an invalid_client error as defined in 5.2 of RFC6749 when mis-matched client identifiers were provided through the client authentication methods that permits sending the client identifier in more than one way;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
@@ -300,7 +300,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
     });
 
     it("20. shall require redirect URIs to use the https scheme;", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const { error } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
@@ -321,7 +321,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
 
   describe("5.2.2.2.  Client requesting openid scope", () => {
     it("If the client requests the openid scope, the authorization server shall require the nonce parameter defined in Section 3.1.2.1 of OIDC in the authentication request.", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,

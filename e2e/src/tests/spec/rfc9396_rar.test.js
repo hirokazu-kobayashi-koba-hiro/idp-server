@@ -18,11 +18,12 @@ import {
 } from "../../lib/jose";
 import { toEpocTime } from "../../lib/util";
 import { get } from "../../lib/http";
+import { generateCodeVerifier } from "../../lib/oauth";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", () => {
   describe("authorization code flow", () => {
     it("success pattern normal", async () => {
-      const codeVerifier = "aiueo12345678";
+      const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = codeVerifier;
       const authorizationDetails = [{
         "type": "account_information",
@@ -111,7 +112,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
   });
 
   it("success pattern request object", async () => {
-    const codeVerifier = "aiueo12345678";
+    const codeVerifier = generateCodeVerifier(64);
     const codeChallenge = codeVerifier;
     const requestObject = createJwtWithPrivateKey({
       payload: {

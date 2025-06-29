@@ -16,15 +16,25 @@
 
 package org.idp.server.core.oidc.verifier.extension;
 
+import org.idp.server.basic.type.oidc.ResponseMode;
 import org.idp.server.core.oidc.OAuthRequestContext;
+import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.oidc.verifier.AuthorizationRequestExtensionVerifier;
 
 public class JarmVerifier implements AuthorizationRequestExtensionVerifier {
 
-  public boolean shouldNotVerify(OAuthRequestContext oAuthRequestContext) {
-    return !oAuthRequestContext.responseMode().isJwtMode();
+  public boolean shouldVerify(OAuthRequestContext oAuthRequestContext) {
+    return oAuthRequestContext.responseMode().isJwtMode();
   }
 
   @Override
-  public void verify(OAuthRequestContext oAuthRequestContext) {}
+  public void verify(OAuthRequestContext oAuthRequestContext) {
+    ResponseMode responseMode = oAuthRequestContext.responseMode();
+
+    // TODO support
+    if (responseMode.isFormPostJwt()) {
+      throw new OAuthRedirectableBadRequestException(
+          "unauthorized_client", "response_mode form_post_jwt is unsupported", oAuthRequestContext);
+    }
+  }
 }

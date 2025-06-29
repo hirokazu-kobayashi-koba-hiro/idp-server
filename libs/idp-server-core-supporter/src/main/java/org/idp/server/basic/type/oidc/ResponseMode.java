@@ -79,4 +79,8 @@ public enum ResponseMode {
   public boolean isJwt() {
     return this == jwt;
   }
+
+  public boolean isFormPostJwt() {
+    return this == form_post_jwt;
+  }
 }

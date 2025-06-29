@@ -47,6 +47,17 @@ export const calculateCodeChallengeWithS256 = (codeVerifier) => {
   return codeChallenge;
 };
 
+export const generateCodeVerifier =(length = 43) => {
+
+  const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+  const randomValues = new Uint8Array(length);
+  crypto.getRandomValues(randomValues);
+
+  return Array.from(randomValues)
+    .map(b => charset[b % charset.length])
+    .join("");
+};
+
 export const calculateIdTokenClaimHashWithS256 = (input) => {
   const digest = createHash("sha256").update(input).digest();
   return base64UrlEncode(digest.slice(0, digest.length / 2));

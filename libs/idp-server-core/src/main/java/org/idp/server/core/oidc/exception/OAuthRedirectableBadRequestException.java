@@ -26,10 +26,6 @@ public class OAuthRedirectableBadRequestException extends RuntimeException {
   String errorDescription;
   OAuthRequestContext oAuthRequestContext;
 
-  public OAuthRedirectableBadRequestException(String message) {
-    super(message);
-  }
-
   public OAuthRedirectableBadRequestException(
       String error, String message, OAuthRequestContext oAuthRequestContext) {
     super(message);
