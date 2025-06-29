@@ -408,6 +408,34 @@
         }
       ]
     },
+    "verified_claims_supported": true,
+    "trust_frameworks_supported":[
+      "nist_800_63A_ial_2",
+      "nist_800_63A_ial_3"
+    ],
+    "evidence_supported":[
+      "id_document",
+      "utility_bill",
+      "qes"
+    ],
+    "id_documents_supported":[
+      "idcard",
+      "passport",
+      "driving_permit"
+    ],
+    "id_documents_verification_methods_supported":[
+      "pipp",
+      "sripp",
+      "eid"
+    ],
+    "claims_in_verified_claims_supported":[
+      "given_name",
+      "family_name",
+      "birthdate",
+      "place_of_birth",
+      "nationalities",
+      "address"
+    ],
     "credential_issuer_metadata": {
       "credential_issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
       "authorization_server": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",

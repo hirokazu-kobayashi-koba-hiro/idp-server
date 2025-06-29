@@ -154,6 +154,23 @@ public class ServerConfigurationResponseCreator {
           "backchannel_user_code_parameter_supported",
           authorizationServerConfiguration.backchannelUserCodeParameterSupported());
     }
+
+    // ida
+    map.put(
+        "verified_claims_supported", authorizationServerConfiguration.verifiedClaimsSupported());
+    if (authorizationServerConfiguration.verifiedClaimsSupported()) {
+      map.put(
+          "trust_frameworks_supported",
+          authorizationServerConfiguration.trustFrameworksSupported());
+      map.put("evidence_supported", authorizationServerConfiguration.evidenceSupported());
+      map.put("id_documents_supported", authorizationServerConfiguration.idDocumentsSupported());
+      map.put(
+          "id_documents_verification_methods_supported",
+          authorizationServerConfiguration.idDocumentsVerificationMethodsSupported());
+      map.put(
+          "claims_in_verified_claims_supported",
+          authorizationServerConfiguration.claimsInVerifiedClaimsSupported());
+    }
     return map;
   }
 }

@@ -65,9 +65,9 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
     params.add(result.identityVerificationType().name());
     params.add(result.externalApplicationId().value());
     params.add(jsonConverter.write(result.verifiedClaims().toMap()));
-    params.add(result.verifiedAt().toString());
+    params.add(result.verifiedAt());
     if (result.hasVerifiedUntil()) {
-      params.add(result.verifiedUntil().toString());
+      params.add(result.verifiedUntil());
     } else {
       params.add(null);
     }

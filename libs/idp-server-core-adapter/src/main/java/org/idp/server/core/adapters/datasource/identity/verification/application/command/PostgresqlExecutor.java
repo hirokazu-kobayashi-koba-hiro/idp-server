@@ -34,7 +34,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                    INSERT INTO public.identity_verification_applications
+                    INSERT INTO public.identity_verification_application
                     (id,
                     tenant_id,
                     client_id,
@@ -45,6 +45,9 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
                     external_application_id,
                     external_application_details,
                     trust_framework,
+                    evidence_document_type,
+                    evidence_document_details,
+                    evidence_method,
                     processes,
                     status,
                     requested_at)
@@ -53,6 +56,9 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
                     ?::uuid,
                     ?,
                     ?::uuid,
+                    ?,
+                    ?::jsonb,
+                    ?,
                     ?,
                     ?::jsonb,
                     ?,
@@ -87,9 +93,27 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
       params.add(null);
     }
 
+    if (application.hasEvidenceDocumentType()) {
+      params.add(application.evidenceDocumentType().name());
+    } else {
+      params.add(null);
+    }
+
+    if (application.hasEvidenceDocumentDetail()) {
+      params.add(application.evidenceDocumentDetail().toJson());
+    } else {
+      params.add(null);
+    }
+
+    if (application.hasEvidenceMethod()) {
+      params.add(application.evidenceMethod().name());
+    } else {
+      params.add(null);
+    }
+
     params.add(jsonConverter.write(application.processesAsList()));
     params.add(application.status().value());
-    params.add(application.requestedAt().toString());
+    params.add(application.requestedAt());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -100,7 +124,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     StringBuilder sqlBuilder = new StringBuilder();
     List<Object> params = new ArrayList<>();
 
-    sqlBuilder.append("UPDATE identity_verification_applications SET ");
+    sqlBuilder.append("UPDATE identity_verification_application SET ");
 
     List<String> setClauses = new ArrayList<>();
     setClauses.add("application_details = ?::jsonb");
@@ -109,6 +133,21 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     if (application.hasTrustFramework()) {
       setClauses.add("trust_framework = ?");
       params.add(application.trustFramework().name());
+    }
+
+    if (application.hasEvidenceDocumentType()) {
+      setClauses.add("evidence_document_type = ?");
+      params.add(application.evidenceDocumentType().name());
+    }
+
+    if (application.hasEvidenceDocumentDetail()) {
+      setClauses.add("evidence_document_details = ?::jsonb");
+      params.add(application.evidenceDocumentDetail().toJson());
+    }
+
+    if (application.hasEvidenceMethod()) {
+      setClauses.add("evidence_method = ?");
+      params.add(application.evidenceMethod().name());
     }
 
     setClauses.add("status = ?");
@@ -144,7 +183,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
 
     String sqlTemplate =
         """
-            DELETE FROM identity_verification_applications
+            DELETE FROM identity_verification_application
             WHERE tenant_id = ?::uuid
             AND user_id = ?::uuid
             AND id = ?::uuid;

@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.application;
+package org.idp.server.core.extension.identity.verification.repository;
 
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationQueries;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

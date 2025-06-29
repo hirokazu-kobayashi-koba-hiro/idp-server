@@ -17,8 +17,8 @@
 package org.idp.server.core.adapters.datasource.identity.verification.application.command;
 
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

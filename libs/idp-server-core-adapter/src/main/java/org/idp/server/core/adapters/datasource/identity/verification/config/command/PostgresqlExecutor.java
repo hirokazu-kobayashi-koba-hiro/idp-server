@@ -37,7 +37,7 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
 
     String sqlTemplate =
         """
-            INSERT INTO identity_verification_configurations (
+            INSERT INTO identity_verification_configuration (
             id,
             tenant_id,
             type,
@@ -69,7 +69,7 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
 
     String sqlTemplate =
         """
-            UPDATE identity_verification_configurations
+            UPDATE identity_verification_configuration
             SET payload = ?::jsonb
             WHERE id = ?::uuid
             AND type = ?
@@ -93,7 +93,7 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM identity_verification_configurations
+            DELETE FROM identity_verification_configuration
             WHERE tenant_id = ?::uuid
             AND type = ?
             AND id = ?::uuid;

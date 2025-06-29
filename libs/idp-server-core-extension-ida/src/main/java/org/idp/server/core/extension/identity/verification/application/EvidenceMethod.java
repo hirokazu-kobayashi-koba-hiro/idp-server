@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.trustframework;
+package org.idp.server.core.extension.identity.verification.application;
 
 import java.util.Objects;
 
-public class TrustFramework {
+public class EvidenceMethod {
   String name;
 
-  public TrustFramework() {}
+  public EvidenceMethod() {}
 
-  public TrustFramework(String name) {
+  public EvidenceMethod(String name) {
     this.name = name;
   }
 
@@ -34,7 +34,7 @@ public class TrustFramework {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    TrustFramework that = (TrustFramework) o;
+    EvidenceMethod that = (EvidenceMethod) o;
     return Objects.equals(name, that.name);
   }
 

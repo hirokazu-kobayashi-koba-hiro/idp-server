@@ -31,7 +31,7 @@
 | Table Name | Action | Description |
 |------------|--------|-------------|
 | `authorization_granted` | Set `revoked_at` | Record of user consent |
-| `identity_verification_applications` | Set `status = 'deleted'` | KYC application history |
+| `identity_verification_application` | Set `status = 'deleted'` | KYC application history |
 | `identity_verification_results` | Set `source = 'deleted_user'` or similar | Record of identity proof |
 | `verifiable_credential_transaction` | Set `status = 'revoked'` | VC issuance and revocation logs |
 

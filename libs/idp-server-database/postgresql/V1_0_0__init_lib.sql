@@ -788,7 +788,7 @@ POLICY rls_authentication_interactions
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE authentication_interactions FORCE ROW LEVEL SECURITY;
 
-CREATE TABLE identity_verification_configurations
+CREATE TABLE identity_verification_configuration
 (
     id         UUID                    NOT NULL,
     tenant_id  UUID                    NOT NULL,
@@ -801,16 +801,16 @@ CREATE TABLE identity_verification_configurations
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
-ALTER TABLE identity_verification_configurations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE identity_verification_configuration ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_identity_verification_configurations
-  ON identity_verification_configurations
+POLICY rls_identity_verification_configuration
+  ON identity_verification_configuration
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
-ALTER TABLE identity_verification_configurations FORCE ROW LEVEL SECURITY;
+ALTER TABLE identity_verification_configuration FORCE ROW LEVEL SECURITY;
 
-CREATE INDEX idx_identity_verification_configurations_type ON identity_verification_configurations (tenant_id, type);
+CREATE INDEX idx_identity_verification_configuration_type ON identity_verification_configuration (tenant_id, type);
 
-CREATE TABLE identity_verification_applications
+CREATE TABLE identity_verification_application
 (
     id                           UUID                    NOT NULL,
     tenant_id                    UUID                    NOT NULL,
@@ -819,34 +819,39 @@ CREATE TABLE identity_verification_applications
     verification_type            VARCHAR(255)            NOT NULL,
     application_details          JSONB                   NOT NULL,
     trust_framework              VARCHAR(255),
+    evidence_document_type       VARCHAR(255),
+    evidence_document_details     JSONB,
+    evidence_method              VARCHAR(255),
     external_workflow_delegation VARCHAR(255)            NOT NULL,
     external_application_id      VARCHAR(255)            NOT NULL,
     external_application_details JSONB,
     examination_results          JSONB,
     processes                    JSONB                   NOT NULL,
     status                       VARCHAR(255)            NOT NULL,
-    requested_at                 TEXT                    NOT NULL,
-    comment                      VARCHAR(255),
+    requested_at                 TIMESTAMP               NOT NULL,
+    comment                      TEXT,
     created_at                   TIMESTAMP DEFAULT now() NOT NULL,
     updated_at                   TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
-ALTER TABLE identity_verification_applications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE identity_verification_application ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_identity_verification_applications
-  ON identity_verification_applications
+POLICY rls_identity_verification_application
+  ON identity_verification_application
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
-ALTER TABLE identity_verification_applications FORCE ROW LEVEL SECURITY;
+ALTER TABLE identity_verification_application FORCE ROW LEVEL SECURITY;
 
-CREATE INDEX idx_verification_user ON identity_verification_applications (user_id);
-CREATE INDEX idx_verification_tenant_client ON identity_verification_applications (tenant_id, client_id);
-CREATE INDEX idx_verification_status ON identity_verification_applications (status);
-CREATE INDEX idx_verification_external_ref ON identity_verification_applications (external_application_id);
+CREATE INDEX idx_verification_user ON identity_verification_application (user_id);
+CREATE INDEX idx_verification_tenant_client ON identity_verification_application (tenant_id, client_id);
+CREATE INDEX idx_verification_status ON identity_verification_application (status);
+CREATE INDEX idx_verification_external_ref ON identity_verification_application (external_application_id);
+CREATE INDEX idx_verification_evidence_document_type ON identity_verification_application (evidence_document_type);
+CREATE INDEX idx_verification_evidence_method ON identity_verification_application (evidence_method);
+CREATE INDEX idx_verification_evidence_document_details ON identity_verification_application USING GIN (evidence_document_details);
 
-CREATE TABLE identity_verification_results
+CREATE TABLE identity_verification_result
 (
     id                      UUID         NOT NULL,
     tenant_id               UUID         NOT NULL,
@@ -855,22 +860,27 @@ CREATE TABLE identity_verification_results
     verification_type       VARCHAR(255),
     external_application_id VARCHAR(255),
     verified_claims         JSONB        NOT NULL,
-    verified_at             TEXT         NOT NULL,
-    valid_until             TEXT,
+    verified_at             TIMESTAMP    NOT NULL,
+    valid_until             TIMESTAMP,
     source                  VARCHAR(255) NOT NULL DEFAULT 'application',
     created_at              TIMESTAMP             DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (application_id) REFERENCES identity_verification_applications (id) ON DELETE CASCADE,
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE
+    FOREIGN KEY (application_id) REFERENCES identity_verification_application (id) ON DELETE CASCADE,
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
-ALTER TABLE identity_verification_results ENABLE ROW LEVEL SECURITY;
+CREATE INDEX idx_verification_result_user_id ON identity_verification_result (user_id);
+CREATE INDEX idx_verification_result_application_id ON identity_verification_result (application_id);
+CREATE INDEX idx_verification_result_verification_type ON identity_verification_result (verification_type);
+CREATE INDEX idx_verification_result_verified_at ON identity_verification_result (verified_at);
+CREATE INDEX idx_verification_result_verified_claims ON identity_verification_result USING GIN (verified_claims);
+
+ALTER TABLE identity_verification_result ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_identity_verification_results
-  ON identity_verification_results
+POLICY rls_identity_verification_result
+  ON identity_verification_result
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
-ALTER TABLE identity_verification_results FORCE ROW LEVEL SECURITY;
+ALTER TABLE identity_verification_result FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE idp_user_lifecycle_event_result
 (
