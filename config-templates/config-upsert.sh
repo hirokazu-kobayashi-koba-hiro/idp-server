@@ -23,6 +23,9 @@ while getopts ":e:u:p:t:b:c:s:n:l:a:d:" opt; do
   esac
 done
 
+echo $USERNAME
+echo $PASSWORD
+
 ACCESS_TOKEN=$(./config-templates/get-access-token.sh -u "$USERNAME" -p "$PASSWORD" -t "$ADMIN_TENANT_ID" -e "$BASE_URL" -c "$ADMIN_CLIENT_ID" -s "$ADMIN_CLIENT_SECRET")
 
 echo "$ACCESS_TOKEN"

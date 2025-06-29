@@ -6,7 +6,7 @@ PROVIDER_ID="idp-server"
 EMAIL_DOMAIN="example.com"
 
 
-for i in $(seq 100000 199999); do
+for i in $(seq 1 100000); do
   USER_SUB=$(uuidgen | tr 'A-Z' 'a-z')
   USER_ID="user_$(uuidgen | tr 'A-Z' 'a-z')"
   EMAIL="${USER_ID}@${EMAIL_DOMAIN}"
