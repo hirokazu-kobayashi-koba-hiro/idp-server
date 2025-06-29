@@ -53,7 +53,7 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
       AuthenticationDeviceNotificationConfiguration configuration) {
 
     try {
-      log.info("Fcm notification channel called");
+      log.debug("Fcm notification channel called");
 
       FcmConfiguration fcmConfiguration =
           jsonConverter.read(configuration.getDetail(chanel()), FcmConfiguration.class);
