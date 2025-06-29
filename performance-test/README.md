@@ -26,6 +26,7 @@ conducted. Each test type targets a specific system behavior:
 
 ```shell
 ../data/generate_users_100k.sh
+../data/test-user.sh
 ```
 
 * 10k
@@ -70,13 +71,13 @@ psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
 ```shell
 ./performance-test/load/register-tenants.sh \
   -e local \
-  -u ito.ichiro@gmail.com \
-  -p successUserCode \
+  -u ito.ichiro \
+  -p successUserCode001 \
   -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
   -b http://localhost:8080 \
   -c clientSecretPost \
   -s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
-  -n 50 \
+  -n 1 \
   -d false
 ```
 
