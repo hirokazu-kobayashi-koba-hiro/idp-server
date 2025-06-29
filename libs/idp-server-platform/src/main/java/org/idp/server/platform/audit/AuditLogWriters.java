@@ -32,7 +32,10 @@ public class AuditLogWriters {
   public void write(Tenant tenant, AuditLog auditLog) {
     for (AuditLogWriter writer : writers) {
       if (writer.shouldExecute(tenant, auditLog)) {
-        log.info("AuditLogWriter execute: " + writer.getClass().getSimpleName());
+        log.info(
+            "TenantId {} AuditLogWriter execute: {}",
+            tenant.identifierValue(),
+            writer.getClass().getSimpleName());
         writer.write(tenant, auditLog);
       }
     }

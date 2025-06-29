@@ -96,6 +96,7 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
   }
 
   protected boolean shouldNotFilter(HttpServletRequest request) {
+    log.info("RequestURI: {}, {}", request.getRequestURI(), request.getMethod());
     if (serverUri.getHost().equals(request.getServerName())) {
       return true;
     }

@@ -59,8 +59,8 @@ public class HttpRequestExecutor {
             httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
     Map<String, Object> requestBody = requestBodyCreator.create();
 
-    log.debug("Request headers: {}", headers);
-    log.debug("Request body: {}", requestBody);
+    log.debug("Http Request headers: {}", headers);
+    log.debug("Http Request body: {}", requestBody);
 
     HttpRequest.Builder httpRequestBuilder =
         HttpRequest.newBuilder().uri(URI.create(httpRequestUrl.value()));
@@ -90,8 +90,8 @@ public class HttpRequestExecutor {
             httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
     Map<String, Object> requestBody = requestBodyCreator.create();
 
-    log.debug("Request headers: {}", httpRequestStaticHeaders);
-    log.debug("Request body: {}", requestBody);
+    log.debug("Http Request headers: {}", httpRequestStaticHeaders);
+    log.debug("Http Request body: {}", requestBody);
 
     HttpRequest.Builder httpRequestBuilder =
         HttpRequest.newBuilder().uri(URI.create(httpRequestUrl.value()));
@@ -111,11 +111,13 @@ public class HttpRequestExecutor {
   public HttpRequestResult execute(HttpRequest httpRequest) {
     try {
 
+      log.info("Http Request: {} {}", httpRequest.uri(), httpRequest.method());
+
       HttpResponse<String> httpResponse =
           httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-      log.debug("Response status: {}", httpResponse.statusCode());
-      log.debug("Response body: {}", httpResponse.body());
+      log.debug("Http Response status: {}", httpResponse.statusCode());
+      log.debug("Http Response body: {}", httpResponse.body());
 
       JsonNodeWrapper jsonResponse = resolveResponseBody(httpResponse);
 
@@ -123,7 +125,7 @@ public class HttpRequestExecutor {
           httpResponse.statusCode(), httpResponse.headers().map(), jsonResponse);
     } catch (IOException | InterruptedException e) {
 
-      log.warn("HTTP request was error: {}", e.getMessage(), e);
+      log.warn("Http request was error: {}", e.getMessage(), e);
 
       Map<String, Object> message = new HashMap<>();
       message.put("error", "client_error");

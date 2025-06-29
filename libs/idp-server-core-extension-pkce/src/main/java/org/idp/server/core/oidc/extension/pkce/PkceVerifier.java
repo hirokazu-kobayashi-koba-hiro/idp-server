@@ -31,8 +31,8 @@ public class PkceVerifier implements AuthorizationRequestExtensionVerifier {
 
   @Override
   public void verify(OAuthRequestContext context) {
-    log.info("PKCE verification start");
+    log.debug("PKCE verification start");
 
-    log.info("PKCE verification end");
+    log.debug("PKCE verification end");
   }
 }
