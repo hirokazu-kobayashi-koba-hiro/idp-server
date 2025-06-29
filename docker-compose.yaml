@@ -19,7 +19,7 @@ services:
           cpus: '0.5'
           memory: 1g
     environment:
-      SERVER_URL: "http:localhost:8080"
+      SERVER_URL: "http://localhost:8080"
       IDP_SERVER_API_KEY: $IDP_SERVER_API_KEY
       IDP_SERVER_API_SECRET: $IDP_SERVER_API_SECRET
       ENCRYPTION_KEY: $ENCRYPTION_KEY

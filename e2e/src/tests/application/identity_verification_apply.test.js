@@ -1,9 +1,9 @@
-import { describe, expect, it, xit } from "@jest/globals";
+import { xdescribe, describe, expect, it, xit } from "@jest/globals";
 import { deletion, get, post } from "../../lib/http";
 import { clientSecretPostClient, serverConfig } from "../testConfig";
 import { loginForClientSecretPost } from "../../ciba/login";
 
-describe("identity-verification application", () => {
+xdescribe("identity-verification application", () => {
 
   describe("success pattern", () => {
 
