@@ -60,12 +60,12 @@ logging:
 spring:
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: "${REDIS_HOST:localhost}"
+      port: ${REDIS_PORT:6379}
   session:
     redis:
       configure-action: none
-    timeout: 3600s
+    timeout: "${SESSION_TIMEOUT:3600s}"
 
 server:
   tomcat:

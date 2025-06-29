@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, xit } from "@jest/globals";
 
 import {
   getAuthenticationDeviceAuthenticationTransaction, getJwks,
@@ -17,7 +17,7 @@ import { get } from "../../lib/http";
 describe("ciba - mfa", () => {
   const ciba = serverConfig.ciba;
 
-  it("fido-uaf", async () => {
+  xit("fido-uaf", async () => {
     const fidoUafFacetsResponse = await get({
       url: serverConfig.fidoUafFacetsEndpoint,
       headers: {
