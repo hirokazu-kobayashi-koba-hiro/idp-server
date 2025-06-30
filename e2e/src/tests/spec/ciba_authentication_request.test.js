@@ -255,6 +255,9 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
           },
           privateKey: clientSecretPostClient.requestKey,
         });
+
+        console.log(request);
+
         const backchannelAuthenticationResponse =
           await requestBackchannelAuthentications({
             endpoint: serverConfig.backchannelAuthenticationEndpoint,

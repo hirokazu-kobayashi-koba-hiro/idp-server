@@ -1,7 +1,6 @@
-import { describe, expect, it, xit } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 import { deletion, get, post, postWithJson } from "../../../lib/http";
 import { clientSecretPostClient, serverConfig, federationServerConfig } from "../../testConfig";
-import { loginForClientSecretPost } from "../../../ciba/login";
 import { createFederatedUser } from "../../../user";
 import {
   getAuthenticationDeviceAuthenticationTransaction, getJwks, getUserinfo, postAuthenticationDeviceInteraction,

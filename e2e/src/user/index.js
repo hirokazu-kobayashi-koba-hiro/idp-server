@@ -16,7 +16,21 @@ export const createFederatedUser = async ({
 
   const registrationUser = {
     email: faker.internet.email(),
+    password: faker.internet.password(
+      12,
+      false,
+      "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()]).+$") + "!",
     name: faker.person.fullName(),
+    given_name: faker.person.firstName(),
+    family_name: faker.person.lastName(),
+    middle_name: faker.person.middleName(),
+    nickname: faker.person.lastName(),
+    preferred_username: faker.person.lastName(),
+    profile: faker.internet.url(),
+    picture: faker.internet.url(),
+    website: faker.internet.url(),
+    gender: faker.person.gender(),
+    birthdate: faker.date.birthdate({ min: 1, max: 100, mode: "age" }).toISOString().split("T")[0],
     zoneinfo: "Asia/Tokyo",
     locale: "ja-JP",
     phone_number: faker.phone.number("090-####-####"),
@@ -25,6 +39,16 @@ export const createFederatedUser = async ({
   const interaction = async (id, user) => {
 
     const federationInteraction = async (id, user) => {
+
+      const initialResponse = await postAuthentication({
+        endpoint: `${backendUrl}/${federationServerConfig.tenantId}/v1/authorizations/{id}/initial-registration`,
+        id,
+        body: user,
+      });
+
+      console.log(initialResponse.data);
+      expect(initialResponse.status).toBe(200);
+
       const challengeResponse = await postAuthentication({
         endpoint: `${backendUrl}/${federationServerConfig.tenantId}/v1/authorizations/{id}/email-authentication-challenge`,
         id,
