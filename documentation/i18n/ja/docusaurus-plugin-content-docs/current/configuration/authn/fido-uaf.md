@@ -78,3 +78,9 @@ FIDO-UAF認証は以下の複数のインタラクションを連続的に実行
 ## 備考
 
 * FIDO-UAFはユーザーにとってパスワード入力不要なUXを実現しながら、高いセキュリティを提供します
+
+## 参考
+* プロトコル
+  * https://fidoalliance.org/specs/fido-uaf-v1.1-ps-20170202/fido-uaf-protocol-v1.1-ps-20170202.html
+* Facets仕様
+  * https://fidoalliance.org/specs/fido-uaf-v1.2-rd-20171128/fido-appid-and-facets-v1.2-rd-20171128.html

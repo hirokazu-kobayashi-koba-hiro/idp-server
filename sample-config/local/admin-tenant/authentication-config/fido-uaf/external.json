@@ -17,7 +17,7 @@
       "external": {
         "executions": {
           "facets": {
-            "url": "https://run.mocky.io/v3/35c7931b-85ce-4d4d-81b5-3e041e67214b",
+            "url": "http://localhost:4000/fido-uaf/facets",
             "method": "GET",
             "headers": {
               "Content-Type": "application/json"
@@ -26,7 +26,7 @@
             "static_body": {}
           },
           "registration-challenge": {
-            "url": "https://run.mocky.io/v3/c47110bf-0c92-42ea-b725-4c56f21696c8",
+            "url": "http://localhost:4000/fido-uaf/registration-challenge",
             "method": "POST",
             "headers": {
               "Content-Type": "application/json"
@@ -35,7 +35,7 @@
             "static_body": {}
           },
           "registration": {
-            "url": "https://run.mocky.io/v3/69fbecce-391c-406d-a669-56692e4600bd",
+            "url": "http://localhost:4000/fido-uaf/registration",
             "method": "POST",
             "headers": {
               "Content-Type": "application/json"
@@ -44,7 +44,7 @@
             "static_body": {}
           },
           "authentication-challenge": {
-            "url": "https://run.mocky.io/v3/57d41fba-4490-4e88-99fa-197db5c0c5a8",
+            "url": "http://localhost:4000/fido-uaf/authentication-challenge",
             "method": "POST",
             "headers": {
               "Content-Type": "application/json"
@@ -53,7 +53,7 @@
             "static_body": {}
           },
           "authentication": {
-            "url": "https://run.mocky.io/v3/35e6b282-354e-4bc5-8a36-98c54de61796",
+            "url": "http://localhost:4000/fido-uaf/authentication",
             "method": "POST",
             "headers": {
               "Content-Type": "application/json"
@@ -62,7 +62,7 @@
             "static_body": {}
           },
           "delete-key": {
-            "url": "https://run.mocky.io/v3/35e6b282-354e-4bc5-8a36-98c54de61796",
+            "url": "http://localhost:4000/fido-uaf/delete-key",
             "method": "POST",
             "headers": {
               "Content-Type": "application/json"

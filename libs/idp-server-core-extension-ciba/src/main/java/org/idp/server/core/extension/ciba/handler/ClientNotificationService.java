@@ -66,13 +66,11 @@ public class ClientNotificationService implements RefreshTokenCreatable {
 
   public void notify(
       Tenant tenant,
+      BackchannelAuthenticationRequest backchannelAuthenticationRequest,
       CibaGrant cibaGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
 
-    BackchannelAuthenticationRequest backchannelAuthenticationRequest =
-        backchannelAuthenticationRequestRepository.find(
-            tenant, cibaGrant.backchannelAuthenticationRequestIdentifier());
     ClientNotificationRequestBodyBuilder builder =
         new ClientNotificationRequestBodyBuilder().add(cibaGrant.authReqId());
 

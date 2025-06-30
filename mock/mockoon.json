@@ -1,0 +1,417 @@
+{
+  "uuid": "e7b1892c-39cb-4962-bfc9-a99db50ea033",
+  "lastMigration": 33,
+  "name": "idp-server-mock",
+  "endpointPrefix": "",
+  "latency": 0,
+  "port": 4000,
+  "hostname": "",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "7f811db2-3288-4435-94a7-ea960b4bfee0",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "token",
+      "responses": [
+        {
+          "uuid": "521fee62-c6ab-434c-9845-bfd176555cd9",
+          "body": "{\n  \"access_token\": \"eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImlkX3Rva2VuX25leHRhdXRoIn0.eyJzdWIiOiIzZWMwNTVhOC04MDAwLTQ0YTItODY3Ny1lNzBlYmZmNDE0ZTIiLCJzY29wZSI6ImlkZW50aXR5X2NyZWRlbnRpYWxzX3VwZGF0ZSBwaG9uZSBtYW5hZ2VtZW50IG9wZW5pZCBpZGVudGl0eV92ZXJpZmljYXRpb25fZGVsZXRlIHByb2ZpbGUgaWRlbnRpdHlfdmVyaWZpY2F0aW9uX2FwcGxpY2F0aW9uIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwLzY3ZTdlYWU2LTYyYjAtNDUwMC05ZWZmLTg3NDU5ZjYzZmM2NiIsImV4cCI6MTc1MTI0Nzk0NywiaWF0IjoxNzUxMjQ3ODI3LCJjbGllbnRfaWQiOiJjbGllbnRTZWNyZXRQb3N0IiwianRpIjoiMTY5YzAxNjgtM2Y3Ni00YzNkLWI5M2ItYzM4MDRkZjY5MzBhIn0.Yb2mY3vRTv0zFZ_9Lnd-y1qipfFTh--VxfWvj-zCF7Btkhh1yMcd2r-KTUytfL4hkPgfMZo3MN8o7sMPix7PJ5JAKeR1xHBIib-ghaZdzTE6oA8nG4U-9g1Jk8vAgnqlqZSowUqO3P5MSN9BSyEJVxJGkHfaPUHwISSNzLduGGgtnFK8dcQbfrpkcg1znBKNoKah082Qe0mgokSdHBCfFsHHmO-UhGJ6TQTs-KBp7hk6mLnXytZ2aAOMsSQY_dI2hf7u3wLsESiEEUf0oixREn5JCbhMf3IyCLSJ3NbnnH5szrEjdr3O2X7-P4mLg45MocKft8kxiIIX_Gld2IkJ8A\",\n  \"refresh_token\": \"OaL6Pt9QX9_3y_B3pVy9bobKqO9kY0gBhR9YOhgbFP8\",\n  \"scope\": \"identity_credentials_update phone management openid identity_verification_delete profile identity_verification_application\",\n  \"id_token\": \"eyJraWQiOiJpZF90b2tlbl9uZXh0YXV0aCIsImFsZyI6IlJTMjU2In0.eyJhdWQiOiJjbGllbnRTZWNyZXRQb3N0IiwiYWNyIjoidXJuOm1hY2U6aW5jb21tb246aWFwOmJyb256ZSIsInN1YiI6IjNlYzA1NWE4LTgwMDAtNDRhMi04Njc3LWU3MGViZmY0MTRlMiIsImF1dGhfdGltZSI6MTc1MTI0NzgyNywiYW1yIjpbInBhc3N3b3JkIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MC82N2U3ZWFlNi02MmIwLTQ1MDAtOWVmZi04NzQ1OWY2M2ZjNjYiLCJleHAiOjE3NTEyNTE0MjcsImlhdCI6MTc1MTI0NzgyN30.Ht5yhrsjQLb0F219iti44rjExFIDrnGyNzbXN2PEYUVFr4X7VcO4lIeedr_bjiHO4t7mtOHxBtHOTRgl_TuNqMFoEvGGd_hbDmcA2edggjugMj4DJszoqZAfxwMYFgE-in11DnT4GlWi1JJixMURo0-byw2pSbYKrq3ERfI1cyNUqLDYome7-y4z56U5bfCSYC3HuI9kc-DIyof7GwVeY1fTLHk6tQ38k2pxNbqTIJagoT2t2I9RP2ol47w5BesMH7zQgf7gDjjErl6nHIFzuLCe7M_4k4PAC4EDIdbX391oVnmh6FluQzY8CFWmrdv7GLn8gzUaVRlp5aBe9miKoA\",\n  \"token_type\": \"Bearer\",\n  \"expires_in\": 1800\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "2214f08a-3b3a-461b-919a-8d8257f9bd15",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "apply",
+      "responses": [
+        {
+          "uuid": "cef4e024-5af1-4f3e-9fdb-ca6b5bc1fc3f",
+          "body": "{\n  \"application_id\": \"{{ uuid }}\" \n}",
+          "latency": 0,
+          "statusCode": 201,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "56a2e57f-66d3-4d88-bf53-2d54c8cca639",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "request-ekyc",
+      "responses": [
+        {
+          "uuid": "0a7dffec-df84-44fe-938a-f99021a53d04",
+          "body": "{\n  \"ekyc_url\": \"https://test.ekyc.com\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e6481060-8795-49a1-9906-b38cb7936c20",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "complete-ekyc",
+      "responses": [
+        {
+          "uuid": "42afa479-2567-4059-9997-ea07abcb74a0",
+          "body": "{\n  \"ekyc_url\": \"https://test.ekyc.com\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "7cd7a5c2-403d-4381-88cf-552b0206a1d7",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "fido-uaf/facets",
+      "responses": [
+        {
+          "uuid": "0dc7d121-7220-447a-ac3c-ea4af2c3c1d8",
+          "body": "{\n  \"trustedFacets\": [\n    {\n      \"version\": {\n        \"major\": 1,\n        \"minor\": 0\n      },\n      \"ids\": [\n        \"https://register.example.com\",\n        \"https://fido.example.com\",\n        \"http://www.example.com\",\n        \"http://www.example-test.com\",\n        \"https://www.example.com:444\"\n      ]\n    }\n  ]\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "0c21ced5-9c3d-4060-92bb-a24af18fecf2",
+      "type": "http",
+      "documentation": "74575f26-d472-4f5e-b958-75c7f88273b3",
+      "method": "post",
+      "endpoint": "fido-uaf/registration-challenge",
+      "responses": [
+        {
+          "uuid": "d87bee34-a739-4400-b536-7288e3d550f5",
+          "body": "{\n  \"user_id\": \"{{ uuid }}\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "9d258722-0b15-4124-9e58-64b8743389da",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "fido-uaf/registration",
+      "responses": [
+        {
+          "uuid": "8c5fa788-7b59-46c5-ae35-a32fa9f616d7",
+          "body": "{\n  \"user_id\": \"{{ uuid }}\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "c2d1cfa0-9598-4c80-9019-8f2430bcf342",
+      "type": "http",
+      "documentation": "4c324657-d9a6-4be0-98ee-be50389231af",
+      "method": "post",
+      "endpoint": "fido-uaf/authentication-challenge",
+      "responses": [
+        {
+          "uuid": "13b94c1c-42c8-4f0c-8a51-596590b599da",
+          "body": "{\n  \"user_id\": \"{{ uuid }}\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "4711f4fd-0823-4a8d-89f9-06f94c4c21af",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "fido-uaf/authentication",
+      "responses": [
+        {
+          "uuid": "479bd4e6-5295-45fa-96b5-bb9c58cb43aa",
+          "body": "{\n  \"user_id\": \"{{ uuid }}\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "1b9599b7-ebfc-4450-b1c5-26fe78bb14cc",
+      "type": "http",
+      "documentation": "042b7ec8-d777-4e97-9d88-d1f9b32ca5a7",
+      "method": "post",
+      "endpoint": "fido-uaf/delete-key",
+      "responses": [
+        {
+          "uuid": "75661cde-c865-45c3-9f74-df63d348cbc7",
+          "body": "{\n  \"user_id\": \"{{ uuid }}\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "2214f08a-3b3a-461b-919a-8d8257f9bd15"
+    },
+    {
+      "type": "route",
+      "uuid": "56a2e57f-66d3-4d88-bf53-2d54c8cca639"
+    },
+    {
+      "type": "route",
+      "uuid": "e6481060-8795-49a1-9906-b38cb7936c20"
+    },
+    {
+      "type": "route",
+      "uuid": "7f811db2-3288-4435-94a7-ea960b4bfee0"
+    },
+    {
+      "type": "route",
+      "uuid": "7cd7a5c2-403d-4381-88cf-552b0206a1d7"
+    },
+    {
+      "type": "route",
+      "uuid": "0c21ced5-9c3d-4060-92bb-a24af18fecf2"
+    },
+    {
+      "type": "route",
+      "uuid": "9d258722-0b15-4124-9e58-64b8743389da"
+    },
+    {
+      "type": "route",
+      "uuid": "c2d1cfa0-9598-4c80-9019-8f2430bcf342"
+    },
+    {
+      "type": "route",
+      "uuid": "4711f4fd-0823-4a8d-89f9-06f94c4c21af"
+    },
+    {
+      "type": "route",
+      "uuid": "1b9599b7-ebfc-4450-b1c5-26fe78bb14cc"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Content-Type",
+      "value": "application/json"
+    },
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+    }
+  ],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": [
+    {
+      "uuid": "407ec81c-ade6-4879-8354-e3c9ea3bdb73",
+      "id": "dt8z",
+      "name": "Users",
+      "documentation": "",
+      "value": "[\n  {{#repeat 50}}\n  {\n    \"id\": \"{{faker 'string.uuid'}}\",\n    \"username\": \"{{faker 'internet.userName'}}\"\n  }\n  {{/repeat}}\n]"
+    }
+  ],
+  "callbacks": []
+}

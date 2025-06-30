@@ -396,7 +396,7 @@ public class IdentityVerificationApplication {
     map.put("external_application_id", externalApplicationId.value());
     map.put("external_application_details", externalWorkflowApplicationDetails.toMap());
     map.put("trust_framework", trustFramework.name());
-    if (hasTrustFramework()) map.put("evidence_document_type", evidenceDocumentType.name());
+    if (hasTrustFramework()) map.put("trustFramework", trustFramework.name());
     if (hasEvidenceDocumentType())
       map.put("evidence_document_details", evidenceDocumentDetail.toMap());
     if (hasEvidenceDocumentDetail()) map.put("evidence_method", evidenceMethod.name());

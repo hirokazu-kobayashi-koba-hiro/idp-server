@@ -24,6 +24,7 @@ import org.idp.server.core.extension.ciba.handler.io.CibaAuthorizeResponse;
 import org.idp.server.core.extension.ciba.handler.io.CibaAuthorizeStatus;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
+import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.extension.ciba.validator.CibaAuthorizeRequestValidator;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
@@ -67,6 +68,9 @@ public class CibaAuthorizeHandler {
   public CibaAuthorizeResponse handle(CibaAuthorizeRequest request) {
     BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier =
         request.backchannleAuthenticationIdentifier();
+    BackchannelAuthenticationRequest backchannelAuthenticationRequest =
+        backchannelAuthenticationRequestRepository.find(
+            request.tenant(), backchannelAuthenticationRequestIdentifier);
 
     CibaAuthorizeRequestValidator validator =
         new CibaAuthorizeRequestValidator(
@@ -91,7 +95,11 @@ public class CibaAuthorizeHandler {
         tenant, backchannelAuthenticationRequestIdentifier);
 
     clientNotificationService.notify(
-        tenant, cibaGrant, authorizationServerConfiguration, clientConfiguration);
+        tenant,
+        backchannelAuthenticationRequest,
+        cibaGrant,
+        authorizationServerConfiguration,
+        clientConfiguration);
     return new CibaAuthorizeResponse(CibaAuthorizeStatus.OK);
   }
 }
