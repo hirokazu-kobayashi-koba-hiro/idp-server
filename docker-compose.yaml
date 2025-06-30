@@ -83,3 +83,14 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+
+  mockoon:
+    image: mockoon/cli:latest
+    volumes:
+      - ./mock/mockoon.json:/data/mock.json
+    command: [
+      "-d", "/data/mock.json",
+      "-p", "4000"
+    ]
+    ports:
+      - "4000:4000"

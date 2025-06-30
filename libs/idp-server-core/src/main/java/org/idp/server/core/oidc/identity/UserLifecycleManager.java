@@ -37,6 +37,7 @@ public class UserLifecycleManager {
                   UserStatus.DISABLED,
                   UserStatus.SUSPENDED,
                   UserStatus.DEACTIVATED),
+          UserStatus.IDENTITY_VERIFICATION_REQUIRED, EnumSet.of(UserStatus.IDENTITY_VERIFIED),
           UserStatus.LOCKED, EnumSet.of(UserStatus.IDENTITY_VERIFIED, UserStatus.REGISTERED),
           UserStatus.DISABLED, EnumSet.of(UserStatus.IDENTITY_VERIFIED, UserStatus.REGISTERED),
           UserStatus.SUSPENDED, EnumSet.of(UserStatus.IDENTITY_VERIFIED, UserStatus.REGISTERED),

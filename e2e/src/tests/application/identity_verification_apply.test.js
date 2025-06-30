@@ -3,7 +3,7 @@ import { deletion, get, post } from "../../lib/http";
 import { clientSecretPostClient, serverConfig } from "../testConfig";
 import { loginForClientSecretPost } from "../../ciba/login";
 
-xdescribe("identity-verification application", () => {
+describe("identity-verification application", () => {
 
   describe("success pattern", () => {
 
