@@ -63,7 +63,7 @@ xdescribe("identity-verification application", () => {
         },
         body: {
           "trust_framework":"eidas",
-          "document_type": "driver_license",
+          "evidence_document_type": "driver_license",
         }
       });
       console.log(requestEkycResponse.data);

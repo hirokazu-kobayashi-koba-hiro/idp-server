@@ -32,7 +32,7 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                    INSERT INTO public.identity_verification_results
+                    INSERT INTO public.identity_verification_result
                     (id,
                     tenant_id,
                     user_id,

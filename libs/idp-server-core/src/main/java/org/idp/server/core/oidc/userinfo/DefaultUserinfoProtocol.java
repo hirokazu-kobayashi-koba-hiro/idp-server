@@ -16,16 +16,14 @@
 
 package org.idp.server.core.oidc.userinfo;
 
-import org.idp.server.basic.type.oauth.Error;
-import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
 import org.idp.server.core.oidc.userinfo.handler.UserinfoDelegate;
+import org.idp.server.core.oidc.userinfo.handler.UserinfoErrorHandler;
 import org.idp.server.core.oidc.userinfo.handler.UserinfoHandler;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequest;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
-import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestStatus;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -33,6 +31,7 @@ import org.idp.server.platform.log.LoggerWrapper;
 public class DefaultUserinfoProtocol implements UserinfoProtocol {
 
   UserinfoHandler userinfoHandler;
+  UserinfoErrorHandler errorHandler;
   LoggerWrapper log = LoggerWrapper.getLogger(UserinfoProtocol.class);
 
   public DefaultUserinfoProtocol(
@@ -45,6 +44,7 @@ public class DefaultUserinfoProtocol implements UserinfoProtocol {
             oAuthTokenRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
+    this.errorHandler = new UserinfoErrorHandler();
   }
 
   @Override
@@ -54,13 +54,11 @@ public class DefaultUserinfoProtocol implements UserinfoProtocol {
 
   public UserinfoRequestResponse request(UserinfoRequest request, UserinfoDelegate delegate) {
     try {
+
       return userinfoHandler.handle(request, delegate);
     } catch (Exception exception) {
-      Error error = new Error("server_error");
-      ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
-      log.error(exception.getMessage(), exception);
-      return new UserinfoRequestResponse(
-          UserinfoRequestStatus.SERVER_ERROR, new UserinfoErrorResponse(error, errorDescription));
+
+      return errorHandler.handle(exception);
     }
   }
 }

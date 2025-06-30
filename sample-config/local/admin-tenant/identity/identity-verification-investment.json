@@ -5,7 +5,7 @@
   "external_workflow_application_id_param": "application_id",
   "oauth_authorization": {
     "type": "password",
-    "token_endpoint": "https://run.mocky.io/v3/04646fc3-8cce-44c8-bc59-5c64df51bf82",
+    "token_endpoint": "http://localhost:4000/token",
     "client_id": "your-client-id",
     "username": "username",
     "password": "password",
@@ -23,7 +23,7 @@
   },
   "processes": {
     "apply": {
-      "url": "https://run.mocky.io/v3/1f706ee6-9bca-45d2-9676-d0c85c48ccb9",
+      "url": "http://localhost:4000/apply",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json",
@@ -161,7 +161,7 @@
       }
     },
     "request-ekyc": {
-      "url": "https://run.mocky.io/v3/0a587222-da2b-4713-b090-e4ff8447a02b",
+      "url": "http://localhost:4000/request-ekyc",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json",
@@ -169,7 +169,7 @@
       },
       "dynamic_body_keys": [
         "trust_framework",
-        "document_type"
+        "evidence_document_type"
       ],
       "static_body": {},
       "request_validation_schema": {
@@ -178,7 +178,7 @@
         "type": "object",
         "required": [
           "trust_framework",
-          "document_type"
+          "evidence_document_type"
         ],
         "properties": {
           "trust_framework": {
@@ -186,7 +186,7 @@
             "maxLength": 100,
             "store": true
           },
-          "document_type": {
+          "evidence_document_type": {
             "type": "string",
             "maxLength": 50,
             "store": true
@@ -202,9 +202,6 @@
           "ekyc_url"
         ],
         "properties": {
-          "application_id": {
-            "type": "string"
-          },
           "ekyc_url": {
             "type": "string",
             "respond": true,
@@ -215,7 +212,7 @@
       }
     },
     "complete-ekyc": {
-      "url": "https://run.mocky.io/v3/1f706ee6-9bca-45d2-9676-d0c85c48ccb9",
+      "url": "http://localhost:4000/complete-ekyc",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json",

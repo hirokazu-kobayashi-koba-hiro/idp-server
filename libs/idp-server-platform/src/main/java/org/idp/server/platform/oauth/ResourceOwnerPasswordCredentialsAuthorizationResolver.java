@@ -57,6 +57,7 @@ public class ResourceOwnerPasswordCredentialsAuthorizationResolver
 
       HttpRequest request = builder.build();
 
+      log.info("Http Request: {}, {}", request.uri(), request.method());
       log.debug("Request headers: {}", request.headers());
       if (request.bodyPublisher().isPresent()) {
         log.debug("Request body: {}", request.bodyPublisher().get());
