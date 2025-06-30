@@ -5,14 +5,14 @@ import {
   postAuthenticationDeviceInteraction,
   requestBackchannelAuthentications,
   requestToken
-} from "../../api/oauthClient";
+} from "../../../api/oauthClient";
 import {
   backendUrl,
   clientSecretPostClient,
   serverConfig
-} from "../testConfig";
-import { verifyAndDecodeJwt } from "../../lib/jose";
-import { get } from "../../lib/http";
+} from "../../testConfig";
+import { verifyAndDecodeJwt } from "../../../lib/jose";
+import { get } from "../../../lib/http";
 
 describe("ciba - mfa", () => {
   const ciba = serverConfig.ciba;
