@@ -2,6 +2,7 @@ import { createJwt, createJwtWithPrivateKey, generateJti } from "../jose";
 import { base64UrlEncode, isObject, toEpocTime } from "../util";
 import { digestS256 } from "../hash";
 import Base64 from "crypto-js/enc-base64url";
+const crypto = require("crypto");
 const { createHash } = require("crypto");
 
 export const createClientAssertion = ({ client, issuer }) => {
