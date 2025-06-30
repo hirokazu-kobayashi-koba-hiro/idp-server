@@ -2,6 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import { backendUrl, clientSecretPostClient, federationServerConfig, serverConfig } from "../../testConfig";
 import { faker } from "@faker-js/faker";
 import {
+  deny,
   getUserinfo,
   postAuthentication,
   requestToken
@@ -10,6 +11,7 @@ import { get, post } from "../../../lib/http";
 import { requestFederation } from "../../../oauth/federation";
 import { requestAuthorizations } from "../../../oauth/request";
 import { verifyAndDecodeJwt } from "../../../lib/jose";
+import { convertToAuthorizationResponse } from "../../../lib/util";
 
 describe("sso oidc", () => {
 
@@ -255,6 +257,89 @@ describe("sso oidc", () => {
       console.log(registeredUser);
       expect(userinfoResponse.data.sub).toEqual(registeredUser.sub);
 
+    });
+
+  });
+
+  describe("error pattern", () => {
+
+    it("oauth-extension signup - deny", async () => {
+      const registrationUser = {
+        email: faker.internet.email(),
+        name: faker.person.fullName(),
+        zoneinfo: "Asia/Tokyo",
+        locale: "ja-JP",
+        phone_number: faker.phone.number("090-####-####"),
+      };
+
+      const interaction = async (id, user) => {
+
+        const federationInteraction = async (id, user) => {
+          const challengeResponse = await postAuthentication({
+            endpoint: `${backendUrl}/${federationServerConfig.tenantId}/v1/authorizations/{id}/deny`,
+            id,
+            body: {
+              email: user.email,
+              email_template: "authentication"
+            },
+          });
+          console.log(challengeResponse.status);
+          console.log(challengeResponse.data);
+          return "deny";
+        };
+
+        const viewResponse = await get({
+          url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${id}/view-data`,
+        });
+        console.log(JSON.stringify(viewResponse.data, null, 2));
+        expect(viewResponse.status).toBe(200);
+        expect(viewResponse.data.available_federations).not.toBeNull();
+
+        const federationSetting = viewResponse.data.available_federations.find(federation => federation.auto_selected);
+        console.log(federationSetting);
+
+        const { result } = await requestFederation({
+          url: backendUrl,
+          authSessionId: id,
+          authSessionTenantId: serverConfig.tenantId,
+          type: federationSetting.type,
+          providerName: federationSetting.sso_provider,
+          federationTenantId: federationServerConfig.tenantId,
+          user: registrationUser,
+          interaction: federationInteraction,
+        });
+        console.log(result);
+
+        const denyResponse = await deny({
+          endpoint: serverConfig.denyEndpoint,
+          id,
+        });
+        console.log(denyResponse.data);
+        const authorizationResponse = convertToAuthorizationResponse(
+          denyResponse.data.redirect_uri
+        );
+        console.log(authorizationResponse);
+        expect(authorizationResponse.error).not.toBeNull();
+        expect(authorizationResponse.error).toEqual("access_denied");
+        expect(authorizationResponse.errorDescription).toEqual("The resource owner or authorization server denied the request.");
+        return "deny";
+      };
+
+      const { result } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid profile phone email" + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        customParams: {
+          organizationId: "123",
+          organizationName: "test",
+        },
+        interaction,
+      });
+
+      expect(result).toEqual("deny");
     });
 
   });

@@ -108,7 +108,14 @@ export const requestAuthorizations = async ({
 
     if (action === "authorize") {
 
-      await interaction(id, user);
+      const interactionResult = await interaction(id, user);
+      if (interactionResult) {
+        if (interactionResult === "deny") {
+          return {
+            result: "deny"
+          };
+        }
+      }
 
       const authorizeResponse = await authorize({
         endpoint: serverConfig.authorizeEndpoint,
