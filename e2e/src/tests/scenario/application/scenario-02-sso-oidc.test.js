@@ -1,16 +1,15 @@
 import { describe, expect, it } from "@jest/globals";
-import { backendUrl, clientSecretPostClient, federationServerConfig, serverConfig } from "../testConfig";
+import { backendUrl, clientSecretPostClient, federationServerConfig, serverConfig } from "../../testConfig";
 import { faker } from "@faker-js/faker";
 import {
   getUserinfo,
   postAuthentication,
-  postAuthenticationDeviceInteraction,
   requestToken
-} from "../../api/oauthClient";
-import { get, post, postWithJson } from "../../lib/http";
-import { requestFederation } from "../../oauth/federation";
-import { requestAuthorizations } from "../../oauth/request";
-import { verifyAndDecodeJwt } from "../../lib/jose";
+} from "../../../api/oauthClient";
+import { get, post } from "../../../lib/http";
+import { requestFederation } from "../../../oauth/federation";
+import { requestAuthorizations } from "../../../oauth/request";
+import { verifyAndDecodeJwt } from "../../../lib/jose";
 
 describe("sso oidc", () => {
 

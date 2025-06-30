@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
-import { backendUrl, clientSecretPostClient, serverConfig } from "../testConfig";
+import { backendUrl, clientSecretPostClient, serverConfig } from "../../testConfig";
 import { faker } from "@faker-js/faker";
-import { postAuthentication, requestToken } from "../../api/oauthClient";
-import { get } from "../../lib/http";
-import { requestAuthorizations } from "../../oauth/request";
+import { postAuthentication, requestToken } from "../../../api/oauthClient";
+import { get } from "../../../lib/http";
+import { requestAuthorizations } from "../../../oauth/request";
 
 describe("user registration", () => {
 

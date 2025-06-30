@@ -25,6 +25,7 @@ import org.idp.server.core.oidc.federation.repository.FederationConfigurationQue
 import org.idp.server.core.oidc.federation.sso.*;
 import org.idp.server.core.oidc.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.mapper.UserInfoMapper;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
@@ -152,6 +153,10 @@ public class OidcFederationInteractor implements FederationInteractor {
 
     if (!user.hasProviderUserId()) {
       user.setProviderUserId(user.sub());
+    }
+
+    if (user.status() == UserStatus.UNREGISTERED) {
+      user.setStatus(UserStatus.REGISTERED);
     }
 
     sessionCommandRepository.delete(tenant, session.ssoSessionIdentifier());

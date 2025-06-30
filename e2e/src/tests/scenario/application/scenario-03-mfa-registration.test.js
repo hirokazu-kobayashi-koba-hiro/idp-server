@@ -3,17 +3,17 @@ import { describe, expect, it, xit } from "@jest/globals";
 import {
   getUserinfo, postAuthentication,
   postAuthenticationDeviceInteraction, requestToken
-} from "../../api/oauthClient";
+} from "../../../api/oauthClient";
 import {
   backendUrl,
   clientSecretPostClient, federationServerConfig,
   serverConfig
-} from "../testConfig";
-import { get, post, postWithJson } from "../../lib/http";
-import { requestFederation } from "../../oauth/federation";
+} from "../../testConfig";
+import { get, post, postWithJson } from "../../../lib/http";
+import { requestFederation } from "../../../oauth/federation";
 import { faker } from "@faker-js/faker";
-import { requestAuthorizations } from "../../oauth/request";
-import { verifyAndDecodeJwt } from "../../lib/jose";
+import { requestAuthorizations } from "../../../oauth/request";
+import { verifyAndDecodeJwt } from "../../../lib/jose";
 
 describe("user - mfa registration", () => {
 

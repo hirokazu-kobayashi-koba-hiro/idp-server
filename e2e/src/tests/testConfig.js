@@ -62,7 +62,8 @@ export const serverConfig = {
 
 export const federationServerConfig = {
   issuer: `${backendUrl}/1e68932e-ed4a-43e7-b412-460665e42df3`,
-  tenantId: "1e68932e-ed4a-43e7-b412-460665e42df3"
+  tenantId: "1e68932e-ed4a-43e7-b412-460665e42df3",
+  providerName: "test-provider"
 };
 
 export const unsupportedServerConfig = {
