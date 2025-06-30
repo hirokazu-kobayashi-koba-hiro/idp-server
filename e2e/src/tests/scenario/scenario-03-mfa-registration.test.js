@@ -283,6 +283,7 @@ describe("user - mfa registration", () => {
         password: serverConfig.ciba.userCode,
       }
     });
+    console.log(authenticationResponse.data);
     expect(authenticationResponse.status).toBe(200);
 
     const fidoUafFacetsResponse = await get({

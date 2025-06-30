@@ -236,16 +236,6 @@ npm install
 npm test
 ```
 
-* if you want to test identity-verification application, you install mockoon and setup config
-  * [identity_verification_apply.test.js](e2e/src/tests/application/identity_verification_apply.test.js)
-  * change xdescribe to describe at identity_verification_apply.test.js
-
-```shell
-brew install --cask mockoon
-```
-
-* setup mockoon with [mockoon.json](mock/mockoon.json)
-
 ### docker 
 
 ```shell
