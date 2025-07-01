@@ -25,6 +25,4 @@ public interface OAuthTokenSqlExecutor {
   void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
 
   void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
-
-  void deleteExpiredToken(int limit);
 }

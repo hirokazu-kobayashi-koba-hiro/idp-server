@@ -43,7 +43,11 @@ public class UserLifecycleEventListerService {
   @Async
   @EventListener
   public void onEvent(UserLifecycleEvent userLifecycleEvent) {
-    log.info("onEvent: {}", userLifecycleEvent.lifecycleType().name());
+    log.info(
+        "tenantId: {}, user: {}, onEvent: {}",
+        userLifecycleEvent.tenant().identifier().value(),
+        userLifecycleEvent.user().sub(),
+        userLifecycleEvent.lifecycleType().name());
 
     taskExecutor.execute(
         new UserLifecycleEventRunnable(

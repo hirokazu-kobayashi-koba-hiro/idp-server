@@ -26,7 +26,8 @@ import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oidc.token.exception.TokenUnSupportedGrantException;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 
 public class OAuthTokenCreationServices {
 
@@ -36,18 +37,22 @@ public class OAuthTokenCreationServices {
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
-      OAuthTokenRepository oAuthTokenRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
+      OAuthTokenQueryRepository oAuthTokenQueryRepository,
       Map<GrantType, OAuthTokenCreationService> extensionOAuthTokenCreationServices) {
     values.put(
         authorization_code,
         new AuthorizationCodeGrantService(
             authorizationRequestRepository,
-            oAuthTokenRepository,
+            oAuthTokenCommandRepository,
             authorizationCodeGrantRepository,
             authorizationGrantedRepository));
-    values.put(refresh_token, new RefreshTokenGrantService(oAuthTokenRepository));
-    values.put(password, new ResourceOwnerPasswordCredentialsGrantService(oAuthTokenRepository));
-    values.put(client_credentials, new ClientCredentialsGrantService(oAuthTokenRepository));
+    values.put(
+        refresh_token,
+        new RefreshTokenGrantService(oAuthTokenCommandRepository, oAuthTokenQueryRepository));
+    values.put(
+        password, new ResourceOwnerPasswordCredentialsGrantService(oAuthTokenCommandRepository));
+    values.put(client_credentials, new ClientCredentialsGrantService(oAuthTokenCommandRepository));
     values.putAll(extensionOAuthTokenCreationServices);
   }
 

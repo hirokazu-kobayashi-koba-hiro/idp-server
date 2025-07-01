@@ -38,7 +38,8 @@ import org.idp.server.core.oidc.token.TokenRequestParameters;
 import org.idp.server.core.oidc.token.handler.token.io.TokenRequest;
 import org.idp.server.core.oidc.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.oidc.token.handler.token.io.TokenRequestStatus;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.oidc.token.service.*;
 import org.idp.server.core.oidc.token.validator.TokenRequestValidator;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -47,7 +48,7 @@ public class TokenRequestHandler {
 
   OAuthTokenCreationServices oAuthTokenCreationServices;
   ClientAuthenticationHandler clientAuthenticationHandler;
-  OAuthTokenRepository oAuthTokenRepository;
+  OAuthTokenCommandRepository oAuthTokenCommandRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
@@ -55,7 +56,8 @@ public class TokenRequestHandler {
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
-      OAuthTokenRepository oAuthTokenRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
+      OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
@@ -65,10 +67,11 @@ public class TokenRequestHandler {
             authorizationRequestRepository,
             authorizationCodeGrantRepository,
             authorizationGrantedRepository,
-            oAuthTokenRepository,
+            oAuthTokenCommandRepository,
+            oAuthTokenQueryRepository,
             extensionOAuthTokenCreationServices);
     this.clientAuthenticationHandler = new ClientAuthenticationHandler();
-    this.oAuthTokenRepository = oAuthTokenRepository;
+    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;

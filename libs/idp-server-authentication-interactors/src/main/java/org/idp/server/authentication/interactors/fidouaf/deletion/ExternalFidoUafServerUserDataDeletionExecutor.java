@@ -84,6 +84,8 @@ public class ExternalFidoUafServerUserDataDeletionExecutor implements UserLifecy
 
       return UserLifecycleEventResult.success(name(), executionResult.contents());
     } catch (Exception e) {
+      log.error("UserLifecycleEventExecutor error: {}", e.getMessage(), e);
+
       Map<String, Object> data = new HashMap<>();
       data.put("message", e.getMessage());
       return UserLifecycleEventResult.failure(name(), data);

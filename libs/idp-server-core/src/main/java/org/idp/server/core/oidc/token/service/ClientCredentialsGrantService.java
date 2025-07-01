@@ -26,17 +26,17 @@ import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.oidc.token.*;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.oidc.token.validator.ClientCredentialsGrantValidator;
 import org.idp.server.core.oidc.token.verifier.ClientCredentialsGrantVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class ClientCredentialsGrantService implements OAuthTokenCreationService {
-  OAuthTokenRepository oAuthTokenRepository;
+  OAuthTokenCommandRepository oAuthTokenCommandRepository;
   AccessTokenCreator accessTokenCreator;
 
-  public ClientCredentialsGrantService(OAuthTokenRepository oAuthTokenRepository) {
-    this.oAuthTokenRepository = oAuthTokenRepository;
+  public ClientCredentialsGrantService(OAuthTokenCommandRepository oAuthTokenCommandRepository) {
+    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
 
@@ -83,7 +83,7 @@ public class ClientCredentialsGrantService implements OAuthTokenCreationService 
             .add(accessToken)
             .build();
 
-    oAuthTokenRepository.register(tenant, oAuthToken);
+    oAuthTokenCommandRepository.register(tenant, oAuthToken);
     return oAuthToken;
   }
 }

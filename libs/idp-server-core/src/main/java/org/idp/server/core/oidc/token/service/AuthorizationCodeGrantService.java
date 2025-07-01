@@ -37,7 +37,7 @@ import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.token.*;
 import org.idp.server.core.oidc.token.exception.TokenBadRequestException;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.oidc.token.validator.TokenRequestCodeGrantValidator;
 import org.idp.server.core.oidc.token.verifier.AuthorizationCodeGrantVerifier;
 import org.idp.server.core.oidc.vc.CNonceCreatable;
@@ -96,7 +96,7 @@ public class AuthorizationCodeGrantService
     implements OAuthTokenCreationService, RefreshTokenCreatable, CNonceCreatable {
 
   AuthorizationRequestRepository authorizationRequestRepository;
-  OAuthTokenRepository oAuthTokenRepository;
+  OAuthTokenCommandRepository oAuthTokenCommandRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
   AuthorizationCodeGrantVerifier verifier;
@@ -105,11 +105,11 @@ public class AuthorizationCodeGrantService
 
   public AuthorizationCodeGrantService(
       AuthorizationRequestRepository authorizationRequestRepository,
-      OAuthTokenRepository oAuthTokenRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
-    this.oAuthTokenRepository = oAuthTokenRepository;
+    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
     this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.verifier = new AuthorizationCodeGrantVerifier();
@@ -196,7 +196,7 @@ public class AuthorizationCodeGrantService
 
     OAuthToken oAuthToken = oAuthTokenBuilder.build();
 
-    oAuthTokenRepository.register(tenant, oAuthToken);
+    oAuthTokenCommandRepository.register(tenant, oAuthToken);
     authorizationCodeGrantRepository.delete(tokenRequestContext.tenant(), authorizationCodeGrant);
     authorizationRequestRepository.delete(
         tokenRequestContext.tenant(), authorizationCodeGrant.authorizationRequestIdentifier());

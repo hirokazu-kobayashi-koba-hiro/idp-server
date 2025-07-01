@@ -31,7 +31,7 @@ import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRep
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -54,7 +54,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
       CibaGrantRepository cibaGrantRepository,
       UserQueryRepository userQueryRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
-      OAuthTokenRepository oAuthTokenRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
@@ -69,7 +69,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
             backchannelAuthenticationRequestRepository,
             cibaGrantRepository,
             authorizationGrantedRepository,
-            oAuthTokenRepository,
+            oAuthTokenCommandRepository,
             new NotificationClient(),
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);

@@ -18,7 +18,7 @@ package org.idp.server.core.oidc.userinfo;
 
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.oidc.userinfo.handler.UserinfoDelegate;
 import org.idp.server.core.oidc.userinfo.handler.UserinfoErrorHandler;
 import org.idp.server.core.oidc.userinfo.handler.UserinfoHandler;
@@ -35,13 +35,13 @@ public class DefaultUserinfoProtocol implements UserinfoProtocol {
   LoggerWrapper log = LoggerWrapper.getLogger(UserinfoProtocol.class);
 
   public DefaultUserinfoProtocol(
-      OAuthTokenRepository oAuthTokenRepository,
+      OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.userinfoHandler =
         new UserinfoHandler(
-            oAuthTokenRepository,
+            oAuthTokenQueryRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.errorHandler = new UserinfoErrorHandler();

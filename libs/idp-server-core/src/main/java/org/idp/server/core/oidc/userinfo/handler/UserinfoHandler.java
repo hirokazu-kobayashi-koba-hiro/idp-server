@@ -22,7 +22,7 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQu
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.oidc.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.core.oidc.userinfo.UserinfoClaimsCreator;
 import org.idp.server.core.oidc.userinfo.UserinfoResponse;
@@ -34,16 +34,16 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserinfoHandler {
 
-  OAuthTokenRepository oAuthTokenRepository;
+  OAuthTokenQueryRepository oAuthTokenQueryRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public UserinfoHandler(
-      OAuthTokenRepository oAuthTokenRepository,
+      OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
-    this.oAuthTokenRepository = oAuthTokenRepository;
+    this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
@@ -55,7 +55,7 @@ public class UserinfoHandler {
 
     // TODO validate
 
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
+    OAuthToken oAuthToken = oAuthTokenQueryRepository.find(tenant, accessTokenEntity);
 
     if (!oAuthToken.exists()) {
       throw new TokenInvalidException("not found token");

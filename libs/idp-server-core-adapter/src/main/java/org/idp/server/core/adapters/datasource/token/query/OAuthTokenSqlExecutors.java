@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token.command;
+package org.idp.server.core.adapters.datasource.token.query;
 
 import java.util.HashMap;
 import java.util.Map;
