@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package org.idp.server.usecases.application.enduser;
+package org.idp.server.usecases.application.system;
 
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.*;
-import org.idp.server.core.extension.identity.verification.application.*;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.extension.identity.verification.handler.IdentityVerificationHandler;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationDynamicResponseMapper;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationQueryRepository;
@@ -38,18 +36,16 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.TokenEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.platform.security.event.DefaultSecurityEventType;
-import org.idp.server.platform.security.event.SecurityEventType;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
-public class IdentityVerificationEntryService implements IdentityVerificationApi {
+public class IdentityVerificationCallbackEntryService implements IdentityVerificationCallbackApi {
 
   IdentityVerificationConfigurationQueryRepository configurationQueryRepository;
   IdentityVerificationApplicationCommandRepository applicationCommandRepository;
@@ -61,7 +57,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   UserCommandRepository userCommandRepository;
   TokenEventPublisher eventPublisher;
 
-  public IdentityVerificationEntryService(
+  public IdentityVerificationCallbackEntryService(
       IdentityVerificationConfigurationQueryRepository configurationQueryRepository,
       IdentityVerificationApplicationCommandRepository applicationCommandRepository,
       IdentityVerificationApplicationQueryRepository applicationQueryRepository,
@@ -82,141 +78,50 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   }
 
   @Override
-  public IdentityVerificationResponse apply(
+  public IdentityVerificationResponse callbackExamination(
       TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
+      BasicAuth basicAuth,
       IdentityVerificationType type,
-      IdentityVerificationProcess process,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
-    IdentityVerificationApplications applications =
-        applicationQueryRepository.findAll(tenant, user);
 
-    ExternalWorkflowApplyingResult applyingResult =
-        identityVerificationHandler.handleRequest(
-            tenant, user, applications, type, process, request, verificationConfiguration);
-    if (applyingResult.isError()) {
+    IdentityVerificationProcess process =
+        ReservedIdentityVerificationProcess.CALLBACK_EXAMINATION.toProcess();
+    IdentityVerificationProcessConfiguration processConfiguration =
+        verificationConfiguration.getProcessConfig(process);
 
-      eventPublisher.publish(
-          tenant,
-          oAuthToken,
-          DefaultSecurityEventType.identity_verification_application_failure,
-          requestAttributes);
-      return applyingResult.errorResponse();
+    IdentityVerificationRequestValidator applicationValidator =
+        new IdentityVerificationRequestValidator(processConfiguration, request);
+    IdentityVerificationValidationResult validationResult = applicationValidator.validate();
+
+    if (validationResult.isError()) {
+
+      return validationResult.errorResponse();
     }
 
+    ExternalWorkflowApplicationIdentifier externalWorkflowApplicationIdentifier =
+        new ExternalWorkflowApplicationIdentifier(
+            request.getValueAsString(
+                verificationConfiguration.externalWorkflowApplicationIdParam().value()));
     IdentityVerificationApplication application =
-        IdentityVerificationApplication.create(
-            tenant,
-            oAuthToken.requestedClientId(),
-            user,
-            type,
-            request,
-            verificationConfiguration.externalWorkflowDelegation(),
-            applyingResult,
-            process,
-            verificationConfiguration);
-    applicationCommandRepository.register(tenant, application);
-    eventPublisher.publish(
-        tenant,
-        oAuthToken,
-        DefaultSecurityEventType.identity_verification_application_apply,
-        requestAttributes);
+        applicationQueryRepository.get(tenant, externalWorkflowApplicationIdentifier);
 
-    Map<String, Object> response =
-        IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
-            application,
-            applyingResult.externalWorkflowResponse(),
-            process,
-            verificationConfiguration);
-
-    return IdentityVerificationResponse.OK(response);
-  }
-
-  @Override
-  public IdentityVerificationResponse findApplications(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationQueries queries,
-      RequestAttributes requestAttributes) {
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    IdentityVerificationApplications applications =
-        applicationQueryRepository.findList(tenant, user, queries);
-
-    eventPublisher.publish(
-        tenant,
-        oAuthToken,
-        DefaultSecurityEventType.identity_verification_application_findList,
-        requestAttributes);
+    IdentityVerificationApplication updatedExamination =
+        application.updateExamination(process, request, verificationConfiguration);
+    applicationCommandRepository.update(tenant, updatedExamination);
 
     Map<String, Object> response = new HashMap<>();
-    response.put("list", applications.toList());
     return IdentityVerificationResponse.OK(response);
   }
 
   @Override
-  public IdentityVerificationResponse process(
+  public IdentityVerificationResponse callbackResult(
       TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType type,
-      IdentityVerificationProcess process,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes) {
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    IdentityVerificationApplication application =
-        applicationQueryRepository.get(tenant, user, identifier);
-    IdentityVerificationConfiguration verificationConfiguration =
-        configurationQueryRepository.get(tenant, type);
-    IdentityVerificationApplications applications =
-        applicationQueryRepository.findAll(tenant, user);
-
-    ExternalWorkflowApplyingResult applyingResult =
-        identityVerificationHandler.handleRequest(
-            tenant, user, applications, type, process, request, verificationConfiguration);
-    if (applyingResult.isError()) {
-
-      eventPublisher.publish(
-          tenant,
-          oAuthToken,
-          DefaultSecurityEventType.identity_verification_application_failure,
-          requestAttributes);
-
-      return applyingResult.errorResponse();
-    }
-
-    IdentityVerificationApplication updated =
-        application.updateProcess(process, request, applyingResult, verificationConfiguration);
-    applicationCommandRepository.update(tenant, updated);
-    SecurityEventType securityEventType =
-        new SecurityEventType(type.name() + "_" + process.name() + "_" + "success");
-
-    eventPublisher.publish(tenant, oAuthToken, securityEventType, requestAttributes);
-
-    Map<String, Object> response =
-        IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
-            application,
-            applyingResult.externalWorkflowResponse(),
-            process,
-            verificationConfiguration);
-    return IdentityVerificationResponse.OK(response);
-  }
-
-  @Override
-  public IdentityVerificationResponse evaluateResult(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
+      BasicAuth basicAuth,
       IdentityVerificationType type,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
@@ -255,6 +160,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     resultCommandRepository.register(tenant, identityVerificationResult);
 
     // TODO dynamic lifecycle management
+    User user = userQueryRepository.get(tenant, application.userIdentifier());
     User verifiedUser =
         user.transitStatus(UserStatus.IDENTITY_VERIFIED)
             .setVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
@@ -263,27 +169,5 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     Map<String, Object> response = new HashMap<>();
     return IdentityVerificationResponse.OK(response);
-  }
-
-  @Override
-  public IdentityVerificationResponse delete(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType type,
-      RequestAttributes requestAttributes) {
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    applicationQueryRepository.get(tenant, user, identifier);
-    applicationCommandRepository.delete(tenant, user, identifier);
-
-    eventPublisher.publish(
-        tenant,
-        oAuthToken,
-        DefaultSecurityEventType.identity_verification_application_delete,
-        requestAttributes);
-
-    return IdentityVerificationResponse.OK(Map.of());
   }
 }

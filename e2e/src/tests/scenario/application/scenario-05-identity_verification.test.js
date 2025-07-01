@@ -191,8 +191,7 @@ describe("identity-verification application", () => {
       let callbackExaminationResponse = await post({
         url: callbackEndpoint,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`
+          "Content-Type": "application/json"
         },
         body: {
           "application_id": externalId,
@@ -222,8 +221,7 @@ describe("identity-verification application", () => {
       const callbackResultResponse = await post({
         url: callbackResultEndpoint,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`
+          "Content-Type": "application/json"
         },
         body: {
           "application_id": externalId,

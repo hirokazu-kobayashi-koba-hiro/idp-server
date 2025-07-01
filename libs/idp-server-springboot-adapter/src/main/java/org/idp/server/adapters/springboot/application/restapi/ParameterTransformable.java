@@ -18,10 +18,11 @@ package org.idp.server.adapters.springboot.application.restapi;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
+import org.idp.server.core.oidc.token.AuthorizationHeaderHandlerable;
 import org.idp.server.platform.security.type.RequestAttributes;
 import org.springframework.util.MultiValueMap;
 
-public interface ParameterTransformable {
+public interface ParameterTransformable extends AuthorizationHeaderHandlerable {
 
   default Map<String, String[]> transform(MultiValueMap<String, String> request) {
     HashMap<String, String[]> map = new HashMap<>();

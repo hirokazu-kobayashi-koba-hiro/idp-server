@@ -57,6 +57,7 @@ import org.idp.server.core.extension.ciba.CibaProtocols;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestOperationCommandRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantOperationCommandRepository;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApi;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationCallbackApi;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
@@ -138,6 +139,7 @@ public class IdpServerApplication {
   AuthenticationMetaDataApi authenticationMetaDataApi;
   AuthenticationTransactionApi authenticationTransactionApi;
   IdentityVerificationApi identityVerificationApi;
+  IdentityVerificationCallbackApi identityVerificationCallbackApi;
   SecurityEventApi securityEventApi;
   TenantMetaDataApi tenantMetaDataApi;
   TenantInvitationMetaDataApi tenantInvitationMetaDataApi;
@@ -473,6 +475,20 @@ public class IdpServerApplication {
             IdentityVerificationApi.class,
             tenantDialectProvider);
 
+    this.identityVerificationCallbackApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new IdentityVerificationCallbackEntryService(
+                identityVerificationConfigurationQueryRepository,
+                identityVerificationApplicationCommandRepository,
+                identityVerificationApplicationQueryRepository,
+                identityVerificationResultCommandRepository,
+                tenantQueryRepository,
+                userQueryRepository,
+                userCommandRepository,
+                tokenEventPublisher),
+            IdentityVerificationCallbackApi.class,
+            tenantDialectProvider);
+
     this.securityEventApi =
         TenantAwareEntryServiceProxy.createProxy(
             new SecurityEventEntryService(
@@ -710,6 +726,10 @@ public class IdpServerApplication {
 
   public IdentityVerificationApi identityVerificationApi() {
     return identityVerificationApi;
+  }
+
+  public IdentityVerificationCallbackApi identityVerificationCallbackApi() {
+    return identityVerificationCallbackApi;
   }
 
   public SecurityEventApi securityEventApi() {

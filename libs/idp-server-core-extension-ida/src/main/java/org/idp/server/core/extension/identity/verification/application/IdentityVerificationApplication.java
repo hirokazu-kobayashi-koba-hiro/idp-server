@@ -87,6 +87,9 @@ public class IdentityVerificationApplication {
     this.externalApplicationId = externalApplicationId;
     this.externalWorkflowApplicationDetails = externalWorkflowApplicationDetails;
     this.trustFramework = trustFramework;
+    this.evidenceDocumentType = evidenceDocumentType;
+    this.evidenceDocumentDetail = evidenceDocumentDetail;
+    this.evidenceMethod = evidenceMethod;
     this.examinations = examinations;
     this.processes = processes;
     this.status = status;
