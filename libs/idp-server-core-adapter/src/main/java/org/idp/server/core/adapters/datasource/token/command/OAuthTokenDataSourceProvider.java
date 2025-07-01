@@ -18,25 +18,22 @@ package org.idp.server.core.adapters.datasource.token.command;
 
 import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.HmacHasher;
-import org.idp.server.core.oidc.token.repository.OAuthTokenOperationCommandRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
-public class OAuthTokenOperationCommandDataSource implements OAuthTokenOperationCommandRepository {
+public class OAuthTokenDataSourceProvider
+    implements ApplicationComponentProvider<OAuthTokenCommandRepository> {
 
-  OAuthTokenSqlExecutors executors;
-  AesCipher aesCipher;
-  HmacHasher hmacHasher;
-
-  public OAuthTokenOperationCommandDataSource(AesCipher aesCipher, HmacHasher hmacHasher) {
-    this.executors = new OAuthTokenSqlExecutors();
-    this.aesCipher = aesCipher;
-    this.hmacHasher = hmacHasher;
+  @Override
+  public Class<OAuthTokenCommandRepository> type() {
+    return OAuthTokenCommandRepository.class;
   }
 
   @Override
-  public void deleteExpiredToken(Tenant tenant, int limit) {
-    // TODO database type
-    OAuthTokenSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.deleteExpiredToken(limit);
+  public OAuthTokenCommandRepository provide(ApplicationComponentDependencyContainer container) {
+    AesCipher aesCipher = container.resolve(AesCipher.class);
+    HmacHasher hmacHasher = container.resolve(HmacHasher.class);
+    return new OAuthTokenCommandDataSource(aesCipher, hmacHasher);
   }
 }

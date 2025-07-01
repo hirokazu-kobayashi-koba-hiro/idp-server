@@ -14,26 +14,27 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token;
+package org.idp.server.core.adapters.datasource.token.operation.command;
 
 import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.HmacHasher;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenOperationCommandRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
-public class OAuthTokenDataSourceProvider
-    implements ApplicationComponentProvider<OAuthTokenRepository> {
+public class OAuthTokenCommandDataSourceProvider
+    implements ApplicationComponentProvider<OAuthTokenOperationCommandRepository> {
 
   @Override
-  public Class<OAuthTokenRepository> type() {
-    return OAuthTokenRepository.class;
+  public Class<OAuthTokenOperationCommandRepository> type() {
+    return OAuthTokenOperationCommandRepository.class;
   }
 
   @Override
-  public OAuthTokenRepository provide(ApplicationComponentDependencyContainer container) {
+  public OAuthTokenOperationCommandRepository provide(
+      ApplicationComponentDependencyContainer container) {
     AesCipher aesCipher = container.resolve(AesCipher.class);
     HmacHasher hmacHasher = container.resolve(HmacHasher.class);
-    return new OAuthTokenDataSource(aesCipher, hmacHasher);
+    return new OAuthTokenOperationCommandDataSource(aesCipher, hmacHasher);
   }
 }

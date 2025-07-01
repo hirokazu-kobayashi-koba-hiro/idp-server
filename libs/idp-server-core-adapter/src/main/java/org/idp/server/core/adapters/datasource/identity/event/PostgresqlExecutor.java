@@ -64,8 +64,8 @@ public class PostgresqlExecutor implements UserLifecycleEventResultSqlExecutor {
       params.add(result.identifier().valueAsUuid());
       params.add(tenant.identifierUUID());
       params.add(user.subAsUuid());
-      params.add(result.executorName());
       params.add(userLifecycleType.name());
+      params.add(result.executorName());
       params.add(converter.write(result.data()));
       params.add(result.status().name());
     }

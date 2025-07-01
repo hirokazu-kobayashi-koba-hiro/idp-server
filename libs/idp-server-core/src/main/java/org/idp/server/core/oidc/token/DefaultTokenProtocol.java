@@ -35,7 +35,8 @@ import org.idp.server.core.oidc.token.handler.tokenrevocation.TokenRevocationHan
 import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationRequestStatus;
 import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationResponse;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.oidc.token.service.OAuthTokenCreationService;
 import org.idp.server.core.oidc.token.tokenintrospection.TokenIntrospectionContentsCreator;
 import org.idp.server.core.oidc.token.tokenintrospection.exception.TokenInvalidException;
@@ -56,7 +57,8 @@ public class DefaultTokenProtocol implements TokenProtocol {
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
-      OAuthTokenRepository oAuthTokenRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
+      OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
@@ -67,15 +69,18 @@ public class DefaultTokenProtocol implements TokenProtocol {
             authorizationRequestRepository,
             authorizationCodeGrantRepository,
             authorizationGrantedRepository,
-            oAuthTokenRepository,
+            oAuthTokenCommandRepository,
+            oAuthTokenQueryRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository,
             extensionOAuthTokenCreationServices);
     this.errorHandler = new TokenRequestErrorHandler();
-    this.tokenIntrospectionHandler = new TokenIntrospectionHandler(oAuthTokenRepository);
+    this.tokenIntrospectionHandler =
+        new TokenIntrospectionHandler(oAuthTokenCommandRepository, oAuthTokenQueryRepository);
     this.tokenRevocationHandler =
         new TokenRevocationHandler(
-            oAuthTokenRepository,
+            oAuthTokenCommandRepository,
+            oAuthTokenQueryRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;

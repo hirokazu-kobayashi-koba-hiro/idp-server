@@ -2,6 +2,7 @@ import { describe, it, expect } from "@jest/globals";
 import { backendUrl, clientSecretPostClient, federationServerConfig, serverConfig } from "../../testConfig";
 import { deletion, post } from "../../../lib/http";
 import { createFederatedUser } from "../../../user";
+import { sleep } from "../../../lib/util";
 
 describe("User lifecycle", () => {
 
@@ -27,18 +28,6 @@ describe("User lifecycle", () => {
 
       expect(deleteResponse.status).toBe(204);
 
-      const introspectionResponse = await post({
-        url: `${backendUrl}/${serverConfig.tenantId}/v1/tokens/introspection`,
-        body: new URLSearchParams({
-          token: accessToken
-        }).toString()
-      });
-      console.log(introspectionResponse.data);
-      expect(introspectionResponse.status).toBe(200);
-      // TODO implement lifecycle event
-      // expect(introspectionResponse.data.active).toBe(false);
-
-
       const userinfoResponse = await post({
         url: `${backendUrl}/${serverConfig.tenantId}/v1/userinfo`,
         headers: {
@@ -49,6 +38,18 @@ describe("User lifecycle", () => {
 
       console.log(userinfoResponse.data);
       expect(userinfoResponse.status).toBe(401);
+
+      await sleep(200);
+
+      const introspectionResponse = await post({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/tokens/introspection`,
+        body: new URLSearchParams({
+          token: accessToken
+        }).toString()
+      });
+      console.log(introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(false);
 
     });
   });

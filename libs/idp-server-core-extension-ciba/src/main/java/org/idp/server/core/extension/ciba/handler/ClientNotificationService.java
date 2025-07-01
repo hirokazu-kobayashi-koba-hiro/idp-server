@@ -38,7 +38,7 @@ import org.idp.server.core.oidc.token.*;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.OAuthTokenBuilder;
 import org.idp.server.core.oidc.token.OAuthTokenIdentifier;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 // FIXME consider. this is bad code.
@@ -46,7 +46,7 @@ public class ClientNotificationService implements RefreshTokenCreatable {
 
   BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
   AuthorizationGrantedRepository authorizationGrantedRepository;
-  OAuthTokenRepository oAuthTokenRepository;
+  OAuthTokenCommandRepository oAuthTokenCommandRepository;
   ClientNotificationGateway clientNotificationGateway;
   IdTokenCreator idTokenCreator;
   AccessTokenCreator accessTokenCreator;
@@ -54,11 +54,11 @@ public class ClientNotificationService implements RefreshTokenCreatable {
   public ClientNotificationService(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
-      OAuthTokenRepository oAuthTokenRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
       ClientNotificationGateway clientNotificationGateway) {
     this.backchannelAuthenticationRequestRepository = backchannelAuthenticationRequestRepository;
     this.authorizationGrantedRepository = authorizationGrantedRepository;
-    this.oAuthTokenRepository = oAuthTokenRepository;
+    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.clientNotificationGateway = clientNotificationGateway;
     this.idTokenCreator = IdTokenCreator.getInstance();
     this.accessTokenCreator = AccessTokenCreator.getInstance();
@@ -123,7 +123,7 @@ public class ClientNotificationService implements RefreshTokenCreatable {
 
       OAuthToken oAuthToken =
           new OAuthTokenBuilder(identifier).add(accessToken).add(refreshToken).add(idToken).build();
-      oAuthTokenRepository.register(tenant, oAuthToken);
+      oAuthTokenCommandRepository.register(tenant, oAuthToken);
     }
   }
 

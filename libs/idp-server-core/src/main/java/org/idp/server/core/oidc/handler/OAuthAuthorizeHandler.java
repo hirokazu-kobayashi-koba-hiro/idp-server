@@ -39,7 +39,7 @@ import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.response.*;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.OAuthTokenFactory;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.oidc.validator.OAuthAuthorizeRequestValidator;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -49,20 +49,20 @@ public class OAuthAuthorizeHandler {
   AuthorizationResponseCreators creators;
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
-  OAuthTokenRepository oAuthTokenRepository;
+  OAuthTokenCommandRepository oAuthTokenCommandRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public OAuthAuthorizeHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
-      OAuthTokenRepository oAuthTokenRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
-    this.oAuthTokenRepository = oAuthTokenRepository;
+    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
@@ -115,7 +115,7 @@ public class OAuthAuthorizeHandler {
 
     if (authorizationResponse.hasAccessToken()) {
       OAuthToken oAuthToken = OAuthTokenFactory.create(authorizationResponse, authorizationGrant);
-      oAuthTokenRepository.register(tenant, oAuthToken);
+      oAuthTokenCommandRepository.register(tenant, oAuthToken);
     }
 
     OAuthSessionKey oAuthSessionKey =

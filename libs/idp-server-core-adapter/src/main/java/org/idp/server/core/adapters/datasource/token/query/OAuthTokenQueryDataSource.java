@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token;
+package org.idp.server.core.adapters.datasource.token.query;
 
 import java.util.Map;
 import java.util.Objects;
@@ -23,25 +23,19 @@ import org.idp.server.basic.crypto.HmacHasher;
 import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class OAuthTokenDataSource implements OAuthTokenRepository {
+public class OAuthTokenQueryDataSource implements OAuthTokenQueryRepository {
 
   OAuthTokenSqlExecutors executors;
   AesCipher aesCipher;
   HmacHasher hmacHasher;
 
-  public OAuthTokenDataSource(AesCipher aesCipher, HmacHasher hmacHasher) {
+  public OAuthTokenQueryDataSource(AesCipher aesCipher, HmacHasher hmacHasher) {
     this.executors = new OAuthTokenSqlExecutors();
     this.aesCipher = aesCipher;
     this.hmacHasher = hmacHasher;
-  }
-
-  @Override
-  public void register(Tenant tenant, OAuthToken oAuthToken) {
-    OAuthTokenSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.insert(oAuthToken, aesCipher, hmacHasher);
   }
 
   @Override
@@ -68,11 +62,5 @@ public class OAuthTokenDataSource implements OAuthTokenRepository {
     }
 
     return ModelConverter.convert(stringMap, aesCipher);
-  }
-
-  @Override
-  public void delete(Tenant tenant, OAuthToken oAuthToken) {
-    OAuthTokenSqlExecutor executor = executors.get(tenant.databaseType());
-    executor.delete(oAuthToken, aesCipher, hmacHasher);
   }
 }

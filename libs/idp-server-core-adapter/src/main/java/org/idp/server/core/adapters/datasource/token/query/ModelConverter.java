@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token;
+package org.idp.server.core.adapters.datasource.token.query;
 
 import java.util.Map;
 import java.util.Objects;

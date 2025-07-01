@@ -16,12 +16,12 @@
 
 package org.idp.server.core.oidc.token.repository;
 
-import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public interface OAuthTokenOperationCommandRepository {
+public interface OAuthTokenCommandRepository {
 
-  void deleteExpiredToken(Tenant tenant, int limit);
+  void register(Tenant tenant, OAuthToken oAuthToken);
 
-  void deleteAll(Tenant tenant, User user);
+  void delete(Tenant tenant, OAuthToken oAuthToken);
 }

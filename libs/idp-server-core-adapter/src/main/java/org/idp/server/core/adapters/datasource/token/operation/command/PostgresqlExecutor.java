@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token;
+package org.idp.server.core.adapters.datasource.token.operation.command;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.HmacHasher;
-import org.idp.server.basic.type.oauth.AccessTokenEntity;
-import org.idp.server.basic.type.oauth.RefreshTokenEntity;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -101,46 +100,6 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectOneByAccessToken(
-      Tenant tenant,
-      AccessTokenEntity accessTokenEntity,
-      AesCipher aesCipher,
-      HmacHasher hmacHasher) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        selectSql
-            + """
-        FROM oauth_token
-        WHERE tenant_id = ?::uuid
-        AND hashed_access_token = ?;
-        """;
-
-    List<Object> params =
-        List.of(tenant.identifierValue(), hmacHasher.hash(accessTokenEntity.value()));
-    return sqlExecutor.selectOne(sqlTemplate, params);
-  }
-
-  @Override
-  public Map<String, String> selectOneByRefreshToken(
-      Tenant tenant,
-      RefreshTokenEntity refreshTokenEntity,
-      AesCipher aesCipher,
-      HmacHasher hmacHasher) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        selectSql
-            + """
-            FROM oauth_token
-            WHERE tenant_id = ?::uuid
-            AND hashed_refresh_token = ?;
-            """;
-
-    List<Object> params =
-        List.of(tenant.identifierValue(), hmacHasher.hash(refreshTokenEntity.value()));
-    return sqlExecutor.selectOne(sqlTemplate, params);
-  }
-
-  @Override
   public void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
@@ -149,6 +108,43 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
             WHERE id = ?::uuid;
             """;
     List<Object> params = List.of(oAuthToken.identifier().value());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void deleteExpiredToken(int limit) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+            DELETE FROM oauth_token
+            WHERE ctid IN (
+              SELECT ctid FROM oauth_token
+              WHERE expires_at < now()
+              LIMIT ?
+            );
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(limit);
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void deleteAll(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                DELETE FROM oauth_token
+                WHERE ctid IN (
+                  SELECT ctid FROM oauth_token
+                  WHERE user_id = ?::uuid
+                  AND tenant_id = ?::uuid
+                );
+                """;
+    List<Object> params = new ArrayList<>();
+    params.add(user.subAsUuid());
+    params.add(tenant.identifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

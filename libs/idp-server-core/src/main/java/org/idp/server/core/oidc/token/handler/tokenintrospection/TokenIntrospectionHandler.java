@@ -23,7 +23,8 @@ import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionRequestStatus;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.oidc.token.tokenintrospection.TokenIntrospectionContentsCreator;
 import org.idp.server.core.oidc.token.tokenintrospection.TokenIntrospectionRequestParameters;
 import org.idp.server.core.oidc.token.tokenintrospection.validator.TokenIntrospectionValidator;
@@ -32,10 +33,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenIntrospectionHandler {
 
-  OAuthTokenRepository oAuthTokenRepository;
+  OAuthTokenCommandRepository oAuthTokenCommandRepository;
+  OAuthTokenQueryRepository oAuthTokenQueryRepository;
 
-  public TokenIntrospectionHandler(OAuthTokenRepository oAuthTokenRepository) {
-    this.oAuthTokenRepository = oAuthTokenRepository;
+  public TokenIntrospectionHandler(
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
+      OAuthTokenQueryRepository oAuthTokenQueryRepository) {
+    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
+    this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
   }
 
   public TokenIntrospectionResponse handle(TokenIntrospectionRequest request) {
@@ -55,7 +60,7 @@ public class TokenIntrospectionHandler {
         TokenIntrospectionContentsCreator.createSuccessContents(oAuthToken);
 
     if (oAuthToken.isOneshotToken()) {
-      oAuthTokenRepository.delete(request.tenant(), oAuthToken);
+      oAuthTokenCommandRepository.delete(request.tenant(), oAuthToken);
     }
 
     return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
@@ -65,12 +70,12 @@ public class TokenIntrospectionHandler {
     TokenIntrospectionRequestParameters parameters = request.toParameters();
     AccessTokenEntity accessTokenEntity = parameters.accessToken();
     Tenant tenant = request.tenant();
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
+    OAuthToken oAuthToken = oAuthTokenQueryRepository.find(tenant, accessTokenEntity);
     if (oAuthToken.exists()) {
       return oAuthToken;
     } else {
       RefreshTokenEntity refreshTokenEntity = parameters.refreshToken();
-      return oAuthTokenRepository.find(tenant, refreshTokenEntity);
+      return oAuthTokenQueryRepository.find(tenant, refreshTokenEntity);
     }
   }
 }

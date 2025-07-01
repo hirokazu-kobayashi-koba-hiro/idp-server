@@ -28,24 +28,28 @@ import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationRequestStatus;
 import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationResponse;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.oidc.token.tokenrevocation.TokenRevocationRequestContext;
 import org.idp.server.core.oidc.token.tokenrevocation.TokenRevocationRequestParameters;
 import org.idp.server.core.oidc.token.tokenrevocation.validator.TokenRevocationValidator;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenRevocationHandler {
-  OAuthTokenRepository oAuthTokenRepository;
+  OAuthTokenCommandRepository oAuthTokenCommandRepository;
+  OAuthTokenQueryRepository oAuthTokenQueryRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   ClientAuthenticationHandler clientAuthenticationHandler;
 
   public TokenRevocationHandler(
-      OAuthTokenRepository oAuthTokenRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
+      OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
-    this.oAuthTokenRepository = oAuthTokenRepository;
+    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
+    this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
@@ -72,7 +76,7 @@ public class TokenRevocationHandler {
 
     OAuthToken oAuthToken = find(request);
     if (oAuthToken.exists()) {
-      oAuthTokenRepository.delete(tenant, oAuthToken);
+      oAuthTokenCommandRepository.delete(tenant, oAuthToken);
     }
     return new TokenRevocationResponse(TokenRevocationRequestStatus.OK, oAuthToken, Map.of());
   }
@@ -82,12 +86,12 @@ public class TokenRevocationHandler {
     TokenRevocationRequestParameters parameters = request.toParameters();
     AccessTokenEntity accessTokenEntity = parameters.accessToken();
     Tenant tenant = request.tenant();
-    OAuthToken oAuthToken = oAuthTokenRepository.find(tenant, accessTokenEntity);
+    OAuthToken oAuthToken = oAuthTokenQueryRepository.find(tenant, accessTokenEntity);
     if (oAuthToken.exists()) {
       return oAuthToken;
     } else {
       RefreshTokenEntity refreshTokenEntity = parameters.refreshToken();
-      return oAuthTokenRepository.find(tenant, refreshTokenEntity);
+      return oAuthTokenQueryRepository.find(tenant, refreshTokenEntity);
     }
   }
 }

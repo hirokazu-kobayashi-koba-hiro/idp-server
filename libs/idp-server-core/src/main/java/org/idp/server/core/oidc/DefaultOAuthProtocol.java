@@ -28,7 +28,7 @@ import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.response.AuthorizationResponse;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -51,7 +51,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
-      OAuthTokenRepository oAuthTokenRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
       OAuthSessionDelegate oAuthSessionDelegate) {
     this.requestHandler =
         new OAuthRequestHandler(
@@ -65,7 +65,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
         new OAuthAuthorizeHandler(
             authorizationRequestRepository,
             authorizationCodeGrantRepository,
-            oAuthTokenRepository,
+            oAuthTokenCommandRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.oAuthDenyHandler =

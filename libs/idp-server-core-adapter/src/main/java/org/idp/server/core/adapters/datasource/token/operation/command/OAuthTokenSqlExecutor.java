@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token;
+package org.idp.server.core.adapters.datasource.token.operation.command;
 
-import java.util.Map;
 import org.idp.server.basic.crypto.AesCipher;
 import org.idp.server.basic.crypto.HmacHasher;
-import org.idp.server.basic.type.oauth.AccessTokenEntity;
-import org.idp.server.basic.type.oauth.RefreshTokenEntity;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -28,17 +26,9 @@ public interface OAuthTokenSqlExecutor {
 
   void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
 
-  Map<String, String> selectOneByAccessToken(
-      Tenant tenant,
-      AccessTokenEntity accessTokenEntity,
-      AesCipher aesCipher,
-      HmacHasher hmacHasher);
-
-  Map<String, String> selectOneByRefreshToken(
-      Tenant tenant,
-      RefreshTokenEntity refreshTokenEntity,
-      AesCipher aesCipher,
-      HmacHasher hmacHasher);
-
   void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
+
+  void deleteExpiredToken(int limit);
+
+  void deleteAll(Tenant tenant, User user);
 }

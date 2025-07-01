@@ -30,7 +30,7 @@ import org.idp.server.core.oidc.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.oidc.id_token.*;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.*;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.oidc.token.validator.ResourceOwnerPasswordGrantValidator;
 import org.idp.server.core.oidc.token.verifier.ResourceOwnerPasswordGrantVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -54,12 +54,13 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class ResourceOwnerPasswordCredentialsGrantService
     implements OAuthTokenCreationService, RefreshTokenCreatable {
 
-  OAuthTokenRepository oAuthTokenRepository;
+  OAuthTokenCommandRepository oAuthTokenCommandRepository;
   IdTokenCreator idTokenCreator;
   AccessTokenCreator accessTokenCreator;
 
-  public ResourceOwnerPasswordCredentialsGrantService(OAuthTokenRepository oAuthTokenRepository) {
-    this.oAuthTokenRepository = oAuthTokenRepository;
+  public ResourceOwnerPasswordCredentialsGrantService(
+      OAuthTokenCommandRepository oAuthTokenCommandRepository) {
+    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.idTokenCreator = IdTokenCreator.getInstance();
     this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
@@ -126,7 +127,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
     }
 
     OAuthToken oAuthToken = oAuthTokenBuilder.build();
-    oAuthTokenRepository.register(tenant, oAuthToken);
+    oAuthTokenCommandRepository.register(tenant, oAuthToken);
     return oAuthToken;
   }
 }

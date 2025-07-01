@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token;
+package org.idp.server.core.adapters.datasource.token.operation.command;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +28,6 @@ public class OAuthTokenSqlExecutors {
   public OAuthTokenSqlExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
-    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
   public OAuthTokenSqlExecutor get(DatabaseType databaseType) {

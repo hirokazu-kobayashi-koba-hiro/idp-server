@@ -22,6 +22,7 @@ import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorized
 import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.oidc.identity.exception.UserNotFoundException;
+import org.idp.server.core.oidc.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.core.oidc.userinfo.UserinfoErrorResponse;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestStatus;
@@ -32,6 +33,14 @@ public class UserinfoErrorHandler {
   LoggerWrapper log = LoggerWrapper.getLogger(UserinfoErrorHandler.class);
 
   public UserinfoRequestResponse handle(Exception exception) {
+    if (exception instanceof TokenInvalidException) {
+      log.info(exception.getMessage());
+      return new UserinfoRequestResponse(
+          UserinfoRequestStatus.UNAUTHORIZE,
+          new UserinfoErrorResponse(
+              new Error("invalid_token"), new ErrorDescription(exception.getMessage())));
+    }
+
     if (exception instanceof UserNotFoundException) {
       log.warn(exception.getMessage());
       return new UserinfoRequestResponse(

@@ -22,7 +22,7 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQu
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolProvider;
 
@@ -46,7 +46,8 @@ public class DefaultCibaProtocolProvider implements ProtocolProvider<CibaProtoco
         container.resolve(ClientConfigurationQueryRepository.class);
     AuthorizationGrantedRepository authorizationGrantedRepository =
         container.resolve(AuthorizationGrantedRepository.class);
-    OAuthTokenRepository oAuthTokenRepository = container.resolve(OAuthTokenRepository.class);
+    OAuthTokenCommandRepository oAuthTokenCommandRepository =
+        container.resolve(OAuthTokenCommandRepository.class);
     UserQueryRepository userQueryRepository = container.resolve(UserQueryRepository.class);
 
     return new DefaultCibaProtocol(
@@ -54,7 +55,7 @@ public class DefaultCibaProtocolProvider implements ProtocolProvider<CibaProtoco
         cibaGrantRepository,
         userQueryRepository,
         authorizationGrantedRepository,
-        oAuthTokenRepository,
+        oAuthTokenCommandRepository,
         authorizationServerConfigurationQueryRepository,
         clientConfigurationQueryRepository);
   }

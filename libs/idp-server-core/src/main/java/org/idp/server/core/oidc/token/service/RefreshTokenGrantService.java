@@ -24,18 +24,23 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.token.*;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.oidc.token.validator.RefreshTokenGrantValidator;
 import org.idp.server.core.oidc.token.verifier.RefreshTokenVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class RefreshTokenGrantService implements OAuthTokenCreationService, RefreshTokenCreatable {
 
-  OAuthTokenRepository oAuthTokenRepository;
+  OAuthTokenCommandRepository oAuthTokenCommandRepository;
+  OAuthTokenQueryRepository oAuthTokenQueryRepository;
   AccessTokenCreator accessTokenCreator;
 
-  public RefreshTokenGrantService(OAuthTokenRepository oAuthTokenRepository) {
-    this.oAuthTokenRepository = oAuthTokenRepository;
+  public RefreshTokenGrantService(
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
+      OAuthTokenQueryRepository oAuthTokenQueryRepository) {
+    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
+    this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
 
@@ -54,7 +59,7 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
     AuthorizationServerConfiguration authorizationServerConfiguration =
         context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
-    OAuthToken oAuthToken = oAuthTokenRepository.find(context.tenant(), refreshTokenEntity);
+    OAuthToken oAuthToken = oAuthTokenQueryRepository.find(context.tenant(), refreshTokenEntity);
 
     RefreshTokenVerifier verifier = new RefreshTokenVerifier(context, oAuthToken);
     verifier.verify();
@@ -76,10 +81,10 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
             .add(accessToken)
             .add(refreshToken);
 
-    oAuthTokenRepository.delete(tenant, oAuthToken);
+    oAuthTokenCommandRepository.delete(tenant, oAuthToken);
 
     OAuthToken refresh = oAuthTokenBuilder.build();
-    oAuthTokenRepository.register(tenant, refresh);
+    oAuthTokenCommandRepository.register(tenant, refresh);
 
     return refresh;
   }

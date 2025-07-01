@@ -32,7 +32,7 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQu
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.oidc.token.repository.OAuthTokenRepository;
+import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CibaAuthorizeHandler {
@@ -47,7 +47,7 @@ public class CibaAuthorizeHandler {
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
       CibaGrantRepository cibaGrantRepository,
       AuthorizationGrantedRepository authorizationGrantedRepository,
-      OAuthTokenRepository oAuthTokenRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
       ClientNotificationGateway clientNotificationGateway,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
@@ -58,7 +58,7 @@ public class CibaAuthorizeHandler {
         new ClientNotificationService(
             backchannelAuthenticationRequestRepository,
             authorizationGrantedRepository,
-            oAuthTokenRepository,
+            oAuthTokenCommandRepository,
             clientNotificationGateway);
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
