@@ -82,8 +82,8 @@ idp-server の申込APIは、テンプレート定義の内容に基づいて動
 この定義の場合
 
 ```
-POST /{tenant-id}/v1/identity/applications/investment-account-opening/apply
-POST /{tenant-id}/v1/identity/applications/investment-account-opening/ekyc-request
+POST /{tenant-id}/v1/identity-verification/applications/investment-account-opening/apply
+POST /{tenant-id}/v1/identity-verification/applications/investment-account-opening/ekyc-request
 ```
 
 

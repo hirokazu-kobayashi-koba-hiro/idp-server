@@ -51,14 +51,10 @@ public interface IdentityVerificationApi {
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes);
 
-  IdentityVerificationResponse callbackExaminationForStaticPath(
+  IdentityVerificationResponse evaluateResult(
       TenantIdentifier tenantIdentifier,
-      IdentityVerificationType type,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes);
-
-  IdentityVerificationResponse callbackResultForStaticPath(
-      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
       IdentityVerificationType identityVerificationType,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes);

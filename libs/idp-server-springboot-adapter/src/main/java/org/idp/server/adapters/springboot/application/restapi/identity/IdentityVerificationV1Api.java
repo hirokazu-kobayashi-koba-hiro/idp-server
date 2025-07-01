@@ -37,12 +37,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/v1/identity/applications")
-public class IdentityV1Api implements ParameterTransformable {
+@RequestMapping("/{tenant-id}/v1/identity-verification/applications")
+public class IdentityVerificationV1Api implements ParameterTransformable {
 
   IdentityVerificationApi identityVerificationApi;
 
-  public IdentityV1Api(IdpServerApplication idpServerApplication) {
+  public IdentityVerificationV1Api(IdpServerApplication idpServerApplication) {
     this.identityVerificationApi = idpServerApplication.identityVerificationApi();
   }
 
@@ -125,30 +125,9 @@ public class IdentityV1Api implements ParameterTransformable {
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
-  @PostMapping("/{verification-type}/callback-examination")
-  public ResponseEntity<?> callback(
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("verification-type") IdentityVerificationType verificationType,
-      @RequestBody Map<String, Object> requestBody,
-      HttpServletRequest httpServletRequest) {
-
-    RequestAttributes requestAttributes = transform(httpServletRequest);
-
-    IdentityVerificationResponse response =
-        identityVerificationApi.callbackExaminationForStaticPath(
-            tenantIdentifier,
-            verificationType,
-            new IdentityVerificationRequest(requestBody),
-            requestAttributes);
-
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", "application/json");
-    return new ResponseEntity<>(
-        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
-  }
-
-  @PostMapping("/{verification-type}/callback-result")
+  @PostMapping("/{id}/{verification-type}/callback-result")
   public ResponseEntity<?> callbackExamination(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("verification-type") IdentityVerificationType verificationType,
       @RequestBody(required = false) Map<String, Object> requestBody,
@@ -157,8 +136,10 @@ public class IdentityV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     IdentityVerificationResponse response =
-        identityVerificationApi.callbackResultForStaticPath(
+        identityVerificationApi.evaluateResult(
             tenantIdentifier,
+            resourceOwnerPrincipal.getUser(),
+            resourceOwnerPrincipal.getOAuthToken(),
             verificationType,
             new IdentityVerificationRequest(requestBody),
             requestAttributes);

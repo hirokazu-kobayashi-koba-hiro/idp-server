@@ -77,7 +77,7 @@ psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
   -b http://localhost:8080 \
   -c clientSecretPost \
   -s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
-  -n 1 \
+  -n 50 \
   -d false
 ```
 
