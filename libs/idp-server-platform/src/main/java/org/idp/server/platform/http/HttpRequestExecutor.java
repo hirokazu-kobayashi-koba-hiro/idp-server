@@ -80,6 +80,51 @@ public class HttpRequestExecutor {
   public HttpRequestResult execute(
       HttpRequestUrl httpRequestUrl,
       HttpMethod httpMethod,
+      HmacAuthenticationConfiguration hmacAuthenticationConfig,
+      HttpRequestStaticHeaders httpRequestStaticHeaders,
+      HttpRequestBaseParams httpRequestBaseParams,
+      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys,
+      HttpRequestStaticBody httpRequestStaticBody) {
+
+    HttpRequestBodyCreator requestBodyCreator =
+        new HttpRequestBodyCreator(
+            httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
+    Map<String, Object> requestBody = requestBodyCreator.create();
+
+    HttpHmacAuthorizationHeaderCreator httpHmacAuthorizationHeaderCreator =
+        new HttpHmacAuthorizationHeaderCreator(
+            hmacAuthenticationConfig.apiKey(), hmacAuthenticationConfig.secret());
+    String hmacAuthentication =
+        httpHmacAuthorizationHeaderCreator.create(
+            httpMethod.name(),
+            httpRequestUrl.value(),
+            requestBody,
+            hmacAuthenticationConfig.signingFields(),
+            hmacAuthenticationConfig.signatureFormat());
+    Map<String, String> headers = new HashMap<>(httpRequestStaticHeaders.toMap());
+    headers.put("Authorization", hmacAuthentication);
+
+    log.debug("Http Request headers: {}", headers);
+    log.debug("Http Request body: {}", requestBody);
+
+    HttpRequest.Builder httpRequestBuilder =
+        HttpRequest.newBuilder().uri(URI.create(httpRequestUrl.value()));
+
+    if (!httpRequestStaticHeaders.containsKey("Content-Type")) {
+      httpRequestBuilder.setHeader("Content-Type", "application/json");
+    }
+
+    setHeaders(httpRequestBuilder, headers);
+    setParams(httpRequestBuilder, httpMethod, requestBody);
+
+    HttpRequest httpRequest = httpRequestBuilder.build();
+
+    return execute(httpRequest);
+  }
+
+  public HttpRequestResult execute(
+      HttpRequestUrl httpRequestUrl,
+      HttpMethod httpMethod,
       HttpRequestStaticHeaders httpRequestStaticHeaders,
       HttpRequestBaseParams httpRequestBaseParams,
       HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys,

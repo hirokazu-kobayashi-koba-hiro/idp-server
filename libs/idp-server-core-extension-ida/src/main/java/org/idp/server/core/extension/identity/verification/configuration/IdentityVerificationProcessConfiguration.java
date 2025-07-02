@@ -22,10 +22,14 @@ import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
+import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class IdentityVerificationProcessConfiguration implements JsonReadable {
   String url;
   String method;
+  String authType;
+  OAuthAuthorizationConfiguration oauthAuthorization;
+  HmacAuthenticationConfiguration hmacAuthentication;
   Map<String, String> headers;
   List<String> dynamicBodyKeys;
   Map<String, Object> staticBody;
@@ -43,6 +47,32 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
 
   public HttpMethod httpMethod() {
     return HttpMethod.valueOf(method);
+  }
+
+  public HttpRequestAuthType httpRequestAuthType() {
+    return HttpRequestAuthType.of(authType);
+  }
+
+  public boolean hasOAuthAuthorization() {
+    return oauthAuthorization != null && oauthAuthorization.exists();
+  }
+
+  public OAuthAuthorizationConfiguration oauthAuthorization() {
+    if (oauthAuthorization == null) {
+      return new OAuthAuthorizationConfiguration();
+    }
+    return oauthAuthorization;
+  }
+
+  public boolean hasHmacAuthentication() {
+    return hmacAuthentication != null && hmacAuthentication.exists();
+  }
+
+  public HmacAuthenticationConfiguration hmacAuthentication() {
+    if (hmacAuthentication == null) {
+      return new HmacAuthenticationConfiguration();
+    }
+    return hmacAuthentication;
   }
 
   public HttpRequestStaticHeaders httpRequestHeaders() {

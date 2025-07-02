@@ -11,6 +11,7 @@
     "password": "password",
     "scope": "application"
   },
+  "hmac_authentication": {},
   "verified_claims_schema": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "verified claim definition",
@@ -214,6 +215,44 @@
     "complete-ekyc": {
       "url": "http://mockoon:4000/complete-ekyc",
       "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer dummy-token"
+      },
+      "dynamic_body_keys": [],
+      "static_body": {},
+      "request_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "complete eKYC",
+        "type": "object",
+        "required": [],
+        "properties": {},
+        "additionalProperties": false
+      },
+      "response_validation_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "complete eKYC response",
+        "type": "object",
+        "required": [],
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    "crm-registration": {
+      "url": "http://mockoon:4000/crm-registration",
+      "method": "POST",
+      "auth_type": "hmac_sha256",
+      "hmac_authentication": {
+        "api_key": "abcdef123456",
+        "secret": "super-secret-key",
+        "signature_format": "HmacSHA256={signature}",
+        "signing_fields": [
+          "method",
+          "path",
+          "timestamp",
+          "body"
+        ]
+      },
       "headers": {
         "Content-Type": "application/json",
         "Authorization": "Bearer dummy-token"

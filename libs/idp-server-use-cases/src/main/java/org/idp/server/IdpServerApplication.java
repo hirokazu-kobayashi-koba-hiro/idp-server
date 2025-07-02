@@ -27,8 +27,6 @@ import org.idp.server.authentication.interactors.plugin.SmsAuthenticationExecuto
 import org.idp.server.authentication.interactors.plugin.WebAuthnExecutorPluginLoader;
 import org.idp.server.authentication.interactors.sms.SmsAuthenticationExecutors;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
-import org.idp.server.basic.crypto.AesCipher;
-import org.idp.server.basic.crypto.HmacHasher;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
@@ -102,6 +100,8 @@ import org.idp.server.federation.sso.oidc.OidcSsoExecutorPluginLoader;
 import org.idp.server.federation.sso.oidc.OidcSsoExecutors;
 import org.idp.server.platform.audit.AuditLogQueryRepository;
 import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.crypto.AesCipher;
+import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;

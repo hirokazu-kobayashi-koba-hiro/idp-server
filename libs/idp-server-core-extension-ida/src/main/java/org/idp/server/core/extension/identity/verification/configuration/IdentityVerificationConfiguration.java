@@ -22,6 +22,7 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationT
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
 import org.idp.server.core.extension.identity.verification.exception.IdentityVerificationApplicationConfigurationNotFoundException;
+import org.idp.server.platform.http.HmacAuthenticationConfiguration;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
@@ -36,6 +37,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
   String externalWorkflowDelegation;
   String externalWorkflowApplicationIdParam;
   OAuthAuthorizationConfiguration oauthAuthorization;
+  HmacAuthenticationConfiguration hmacAuthentication;
   Map<String, IdentityVerificationProcessConfiguration> processes;
   List<String> approvedTargetTypes = new ArrayList<>();
   Map<String, Object> verifiedClaimsSchema;
@@ -50,6 +52,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
       String externalWorkflowDelegation,
       String externalWorkflowApplicationIdParam,
       OAuthAuthorizationConfiguration oauthAuthorization,
+      HmacAuthenticationConfiguration hmacAuthentication,
       Map<String, IdentityVerificationProcessConfiguration> processes,
       List<String> approvedTargetTypes,
       Map<String, Object> verifiedClaimsSchema) {
@@ -60,6 +63,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     this.externalWorkflowDelegation = externalWorkflowDelegation;
     this.externalWorkflowApplicationIdParam = externalWorkflowApplicationIdParam;
     this.oauthAuthorization = oauthAuthorization;
+    this.hmacAuthentication = hmacAuthentication;
     this.processes = processes;
     this.approvedTargetTypes = approvedTargetTypes;
     this.verifiedClaimsSchema = verifiedClaimsSchema;
@@ -93,6 +97,10 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     return new ExternalWorkflowApplicationIdParam(externalWorkflowApplicationIdParam);
   }
 
+  public boolean hasOAuthAuthorization() {
+    return oauthAuthorization != null && oauthAuthorization.exists();
+  }
+
   public OAuthAuthorizationConfiguration oauthAuthorization() {
     if (oauthAuthorization == null) {
       return new OAuthAuthorizationConfiguration();
@@ -100,8 +108,15 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     return oauthAuthorization;
   }
 
-  public boolean hasAuthorization() {
-    return oauthAuthorization != null && oauthAuthorization.exists();
+  public boolean hasHmacAuthentication() {
+    return hmacAuthentication != null && hmacAuthentication.exists();
+  }
+
+  public HmacAuthenticationConfiguration hmacAuthentication() {
+    if (hmacAuthentication == null) {
+      return new HmacAuthenticationConfiguration();
+    }
+    return hmacAuthentication;
   }
 
   public Map<String, IdentityVerificationProcessConfiguration> processes() {
@@ -115,6 +130,28 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
           "invalid configuration. type: " + process.name() + " is unregistered.");
     }
     return processes.get(process.name());
+  }
+
+  public OAuthAuthorizationConfiguration getOAuthAuthorizationConfig(
+      IdentityVerificationProcess process) {
+    IdentityVerificationProcessConfiguration processConfig = getProcessConfig(process);
+
+    if (processConfig.hasOAuthAuthorization()) {
+      return processConfig.oauthAuthorization();
+    }
+
+    return oauthAuthorization();
+  }
+
+  public HmacAuthenticationConfiguration getHmacAuthenticationConfig(
+      IdentityVerificationProcess process) {
+    IdentityVerificationProcessConfiguration processConfig = getProcessConfig(process);
+
+    if (processConfig.hasHmacAuthentication()) {
+      return processConfig.hmacAuthentication();
+    }
+
+    return hmacAuthentication();
   }
 
   public List<String> approvedTargetTypes() {
@@ -141,7 +178,8 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     map.put("description", description);
     map.put("external_workflow_delegation", externalWorkflowDelegation);
     map.put("externalWorkflowApplicationIdParam", externalWorkflowApplicationIdParam);
-    map.put("oauth_authorization", oauthAuthorization.toMap());
+    if (hasOAuthAuthorization()) map.put("oauth_authorization", oauthAuthorization.toMap());
+    if (hasHmacAuthentication()) map.put("hmac_authentication", hmacAuthentication.toMap());
     map.put("processes", processes);
     map.put("approved_target_types", approvedTargetTypes);
     map.put("verified_claims_schema", verifiedClaimsSchema);

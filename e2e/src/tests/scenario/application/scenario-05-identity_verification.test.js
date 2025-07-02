@@ -147,6 +147,21 @@ describe("identity-verification application", () => {
         .replace("{type}", type)
         .replace("{id}", applicationId);
 
+      const registrationResponse = await post({
+        url: processEndpoint.replace("{process}", "crm-registration"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: {
+          "trust_framework":"eidas",
+          "evidence_document_type": "driver_license",
+        }
+      });
+      console.log(registrationResponse.data);
+      expect(registrationResponse.status).toBe(200);
+
+
       const requestEkycResponse = await post({
         url: processEndpoint.replace("{process}", "request-ekyc"),
         headers: {

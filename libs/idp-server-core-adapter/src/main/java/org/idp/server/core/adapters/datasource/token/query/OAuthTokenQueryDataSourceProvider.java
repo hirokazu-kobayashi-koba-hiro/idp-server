@@ -16,9 +16,9 @@
 
 package org.idp.server.core.adapters.datasource.token.query;
 
-import org.idp.server.basic.crypto.AesCipher;
-import org.idp.server.basic.crypto.HmacHasher;
 import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
+import org.idp.server.platform.crypto.AesCipher;
+import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
