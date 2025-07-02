@@ -16,10 +16,10 @@
 
 package org.idp.server.core.adapters.datasource.token.operation.command;
 
-import org.idp.server.basic.crypto.AesCipher;
-import org.idp.server.basic.crypto.HmacHasher;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.repository.OAuthTokenOperationCommandRepository;
+import org.idp.server.platform.crypto.AesCipher;
+import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthTokenOperationCommandDataSource implements OAuthTokenOperationCommandRepository {

@@ -317,6 +317,37 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e9ed1223-8bc7-42bc-97bd-d67dc191fe6e",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "crm-registration",
+      "responses": [
+        {
+          "uuid": "a8f4a769-a5bf-4c08-ba06-ead7c29ee980",
+          "body": "{\n  \"status\": \"ok\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [

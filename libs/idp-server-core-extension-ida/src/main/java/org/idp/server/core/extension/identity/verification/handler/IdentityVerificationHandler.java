@@ -84,11 +84,6 @@ public class IdentityVerificationHandler {
           requestValidationResult, verifyResult);
     }
 
-    OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
-        verificationConfiguration.oauthAuthorization();
-    HttpRequestStaticHeaders httpRequestStaticHeaders =
-        createHttpRequestHeaders(processConfig.httpRequestHeaders(), oAuthAuthorizationConfig);
-
     HttpRequestStaticBody httpRequestStaticBody =
         resolveStaticBody(
             processConfig.httpRequestStaticBody(),
@@ -101,13 +96,11 @@ public class IdentityVerificationHandler {
             verificationConfiguration);
 
     HttpRequestResult executionResult =
-        httpRequestExecutor.execute(
-            processConfig.httpRequestUrl(),
-            processConfig.httpMethod(),
-            httpRequestStaticHeaders,
+        execute(
             new HttpRequestBaseParams(request.toMap()),
-            processConfig.httpRequestDynamicBodyKeys(),
-            httpRequestStaticBody);
+            httpRequestStaticBody,
+            processes,
+            verificationConfiguration);
 
     ExternalWorkflowApplyingExecutionResult externalWorkflowApplyingExecutionResult =
         new ExternalWorkflowApplyingExecutionResult(executionResult);
@@ -148,18 +141,57 @@ public class IdentityVerificationHandler {
     return new HttpRequestStaticBody(parameters);
   }
 
-  private HttpRequestStaticHeaders createHttpRequestHeaders(
-      HttpRequestStaticHeaders httpRequestStaticHeaders,
-      OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
-    Map<String, String> values = new HashMap<>(httpRequestStaticHeaders.toMap());
+  private HttpRequestResult execute(
+      HttpRequestBaseParams httpRequestBaseParams,
+      HttpRequestStaticBody httpRequestStaticBody,
+      IdentityVerificationProcess processes,
+      IdentityVerificationConfiguration verificationConfiguration) {
 
-    if (oAuthAuthorizationConfig.exists()) {
-      OAuthAuthorizationResolver resolver =
-          authorizationResolvers.get(oAuthAuthorizationConfig.type());
-      String accessToken = resolver.resolve(oAuthAuthorizationConfig);
-      values.put("Authorization", "Bearer " + accessToken);
+    IdentityVerificationProcessConfiguration processConfig =
+        verificationConfiguration.getProcessConfig(processes);
+    Map<String, String> headers = new HashMap<>(processConfig.httpRequestHeaders().toMap());
+
+    switch (processConfig.httpRequestAuthType()) {
+      case OAUTH2 -> {
+        OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
+            verificationConfiguration.getOAuthAuthorizationConfig(processes);
+        OAuthAuthorizationResolver resolver =
+            authorizationResolvers.get(oAuthAuthorizationConfig.type());
+        String accessToken = resolver.resolve(oAuthAuthorizationConfig);
+        headers.put("Authorization", "Bearer " + accessToken);
+        HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
+        return httpRequestExecutor.execute(
+            processConfig.httpRequestUrl(),
+            processConfig.httpMethod(),
+            httpRequestStaticHeaders,
+            httpRequestBaseParams,
+            processConfig.httpRequestDynamicBodyKeys(),
+            httpRequestStaticBody);
+      }
+      case HMAC_SHA256 -> {
+        HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
+        HmacAuthenticationConfiguration hmacAuthenticationConfig =
+            verificationConfiguration.getHmacAuthenticationConfig(processes);
+
+        return httpRequestExecutor.execute(
+            processConfig.httpRequestUrl(),
+            processConfig.httpMethod(),
+            hmacAuthenticationConfig,
+            httpRequestStaticHeaders,
+            httpRequestBaseParams,
+            processConfig.httpRequestDynamicBodyKeys(),
+            httpRequestStaticBody);
+      }
+      default -> {
+        HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
+        return httpRequestExecutor.execute(
+            processConfig.httpRequestUrl(),
+            processConfig.httpMethod(),
+            httpRequestStaticHeaders,
+            httpRequestBaseParams,
+            processConfig.httpRequestDynamicBodyKeys(),
+            httpRequestStaticBody);
+      }
     }
-
-    return new HttpRequestStaticHeaders(values);
   }
 }

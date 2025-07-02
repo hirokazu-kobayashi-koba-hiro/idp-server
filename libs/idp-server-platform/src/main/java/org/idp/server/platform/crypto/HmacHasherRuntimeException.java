@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package org.idp.server.basic.crypto;
+package org.idp.server.platform.crypto;
 
-public class AesCryptoRuntimeException extends RuntimeException {
-  public AesCryptoRuntimeException(String message) {
+public class HmacHasherRuntimeException extends RuntimeException {
+  public HmacHasherRuntimeException(String message) {
     super(message);
   }
 
-  public AesCryptoRuntimeException(String message, Throwable cause) {
+  public HmacHasherRuntimeException(String message, Throwable cause) {
     super(message, cause);
   }
 }

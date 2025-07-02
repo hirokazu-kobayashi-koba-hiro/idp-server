@@ -14,15 +14,29 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token.command;
+package org.idp.server.platform.http;
 
-import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.platform.crypto.AesCipher;
-import org.idp.server.platform.crypto.HmacHasher;
+public enum HttpRequestAuthType {
+  OAUTH2("oauth2"),
+  HMAC_SHA256("hmac_sha256"),
+  UNKNOWN("unknown");
 
-public interface OAuthTokenSqlExecutor {
+  String type;
 
-  void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
+  HttpRequestAuthType(String type) {
+    this.type = type;
+  }
 
-  void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
+  public String type() {
+    return type;
+  }
+
+  public static HttpRequestAuthType of(String type) {
+    for (HttpRequestAuthType authType : HttpRequestAuthType.values()) {
+      if (authType.type.equals(type)) {
+        return authType;
+      }
+    }
+    return UNKNOWN;
+  }
 }

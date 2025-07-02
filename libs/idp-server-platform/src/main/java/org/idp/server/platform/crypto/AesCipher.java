@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.basic.crypto;
+package org.idp.server.platform.crypto;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
@@ -25,9 +25,8 @@ import java.util.Base64;
 import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import org.idp.server.basic.base64.Base64Codeable;
 
-public class AesCipher implements Base64Codeable {
+public class AesCipher {
 
   private static final int IV_LENGTH = 12;
   private static final int TAG_LENGTH = 128;

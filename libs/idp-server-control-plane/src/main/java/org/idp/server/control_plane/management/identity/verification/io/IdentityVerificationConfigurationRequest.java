@@ -22,6 +22,7 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
+import org.idp.server.platform.http.HmacAuthenticationConfiguration;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
@@ -35,6 +36,7 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
   String externalWorkflowDelegation;
   String externalWorkflowApplicationIdParam;
   OAuthAuthorizationConfiguration oauthAuthorization;
+  HmacAuthenticationConfiguration hmacAuthentication;
   Map<String, IdentityVerificationProcessConfiguration> processes;
   List<String> approvedTargetTypes = new ArrayList<>();
   Map<String, Object> verifiedClaimsSchema;
@@ -109,6 +111,7 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
         externalWorkflowDelegation,
         externalWorkflowApplicationIdParam,
         oauthAuthorization,
+        hmacAuthentication,
         processes,
         approvedTargetTypes,
         verifiedClaimsSchema);

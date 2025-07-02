@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.basic.crypto;
+package org.idp.server.platform.crypto;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
