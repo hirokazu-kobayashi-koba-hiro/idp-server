@@ -67,8 +67,7 @@ public class JsonConverter {
   }
 
   public <TYPE> TYPE read(Object jsonObject, Class<TYPE> type) {
-    String json = write(jsonObject);
-    return read(json, type);
+    return objectMapper.convertValue(jsonObject, type);
   }
 
   public <TYPE> TYPE read(String value, Class<TYPE> typeClass) {
@@ -89,13 +88,8 @@ public class JsonConverter {
   }
 
   public JsonNodeWrapper readTree(Map<String, Object> jsonObject) {
-    try {
 
-      String json = write(jsonObject);
-      return new JsonNodeWrapper(objectMapper.readTree(json));
-    } catch (JsonProcessingException exception) {
-      throw new JsonRuntimeException(exception);
-    }
+    return new JsonNodeWrapper(objectMapper.valueToTree(jsonObject));
   }
 
   public JsonNodeWrapper readTree(Object jsonObject) {

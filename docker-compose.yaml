@@ -2,7 +2,8 @@ version: '3'
 
 services:
   idp-server:
-    build: ./
+    image: 17f195ec6d7624fcd975f99e74cd12363738ecab3b33b3c527d07b9b666e0fe6
+#    build: ./
     ports:
       - "8080:8080"
     depends_on:
@@ -13,8 +14,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.5'
-          memory: 2g
+          cpus: '1.0'
+          memory: 1g
         reservations:
           cpus: '0.5'
           memory: 1g
