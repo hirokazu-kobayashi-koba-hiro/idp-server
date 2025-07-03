@@ -21,7 +21,7 @@ import org.idp.server.basic.type.extension.ResponseModeValue;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oidc.ResponseMode;
-import org.idp.server.platform.http.QueryParams;
+import org.idp.server.platform.http.HttpQueryParams;
 
 public class AuthorizationErrorResponseBuilder {
   RedirectUri redirectUri;
@@ -32,7 +32,7 @@ public class AuthorizationErrorResponseBuilder {
   Error error;
   ErrorDescription errorDescription;
   JarmPayload jarmPayload = new JarmPayload();
-  QueryParams queryParams;
+  HttpQueryParams httpQueryParams;
 
   public AuthorizationErrorResponseBuilder(
       RedirectUri redirectUri,
@@ -43,25 +43,25 @@ public class AuthorizationErrorResponseBuilder {
     this.responseMode = responseMode;
     this.responseModeValue = responseModeValue;
     this.tokenIssuer = tokenIssuer;
-    this.queryParams = new QueryParams();
-    queryParams.add("iss", tokenIssuer.value());
+    this.httpQueryParams = new HttpQueryParams();
+    httpQueryParams.add("iss", tokenIssuer.value());
   }
 
   public AuthorizationErrorResponseBuilder add(State state) {
     this.state = state;
-    this.queryParams.add("state", state.value());
+    this.httpQueryParams.add("state", state.value());
     return this;
   }
 
   public AuthorizationErrorResponseBuilder add(Error error) {
     this.error = error;
-    this.queryParams.add("error", error.value());
+    this.httpQueryParams.add("error", error.value());
     return this;
   }
 
   public AuthorizationErrorResponseBuilder add(ErrorDescription errorDescription) {
     this.errorDescription = errorDescription;
-    this.queryParams.add("error_description", errorDescription.value());
+    this.httpQueryParams.add("error_description", errorDescription.value());
     return this;
   }
 
@@ -73,8 +73,8 @@ public class AuthorizationErrorResponseBuilder {
   public AuthorizationErrorResponse build() {
     // TODO consider
     if (jarmPayload.exists()) {
-      this.queryParams = new QueryParams();
-      this.queryParams.add("response", jarmPayload.value());
+      this.httpQueryParams = new HttpQueryParams();
+      this.httpQueryParams.add("response", jarmPayload.value());
     }
     return new AuthorizationErrorResponse(
         redirectUri,
@@ -84,6 +84,6 @@ public class AuthorizationErrorResponseBuilder {
         error,
         errorDescription,
         jarmPayload,
-        queryParams);
+        httpQueryParams);
   }
 }

@@ -39,6 +39,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class IdentityVerificationHandler {
 
@@ -61,6 +62,7 @@ public class IdentityVerificationHandler {
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =
@@ -76,7 +78,14 @@ public class IdentityVerificationHandler {
 
     IdentityVerificationRequestVerificationResult verifyResult =
         requestVerifiers.verify(
-            tenant, user, applications, type, processes, request, verificationConfiguration);
+            tenant,
+            user,
+            applications,
+            type,
+            processes,
+            request,
+            requestAttributes,
+            verificationConfiguration);
 
     if (verifyResult.isError()) {
 
@@ -93,6 +102,7 @@ public class IdentityVerificationHandler {
             type,
             processes,
             request,
+            requestAttributes,
             verificationConfiguration);
 
     HttpRequestResult executionResult =
@@ -132,15 +142,24 @@ public class IdentityVerificationHandler {
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
     Map<String, Object> parameters = new HashMap<>(staticBody.toMap());
     Map<String, Object> additionalParameters =
         additionalRequestParameterResolvers.resolve(
-            tenant, user, applications, type, processes, request, verificationConfiguration);
+            tenant,
+            user,
+            applications,
+            type,
+            processes,
+            request,
+            requestAttributes,
+            verificationConfiguration);
     parameters.putAll(additionalParameters);
     return new HttpRequestStaticBody(parameters);
   }
 
+  // TODO to be more simply
   private HttpRequestResult execute(
       HttpRequestBaseParams httpRequestBaseParams,
       HttpRequestStaticBody httpRequestStaticBody,
@@ -160,6 +179,7 @@ public class IdentityVerificationHandler {
         String accessToken = resolver.resolve(oAuthAuthorizationConfig);
         headers.put("Authorization", "Bearer " + accessToken);
         HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
+
         return httpRequestExecutor.execute(
             processConfig.httpRequestUrl(),
             processConfig.httpMethod(),
@@ -183,14 +203,25 @@ public class IdentityVerificationHandler {
             httpRequestStaticBody);
       }
       default -> {
-        HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
-        return httpRequestExecutor.execute(
+        if (processConfig.hasDynamicBodyKeys()) {
+
+          return httpRequestExecutor.execute(
+              processConfig.httpRequestUrl(),
+              processConfig.httpMethod(),
+              processConfig.httpRequestHeaders(),
+              httpRequestBaseParams,
+              processConfig.httpRequestDynamicBodyKeys(),
+              processConfig.httpRequestStaticBody());
+        }
+
+        return httpRequestExecutor.executeWithDynamicMapping(
             processConfig.httpRequestUrl(),
             processConfig.httpMethod(),
-            httpRequestStaticHeaders,
+            processConfig.httpRequestHeaders(),
+            processConfig.httpRequestHeaderMappingRules(),
+            processConfig.httpRequestHeaderMappingRules(),
             httpRequestBaseParams,
-            processConfig.httpRequestDynamicBodyKeys(),
-            httpRequestStaticBody);
+            processConfig.httpRequestStaticBody());
       }
     }
   }

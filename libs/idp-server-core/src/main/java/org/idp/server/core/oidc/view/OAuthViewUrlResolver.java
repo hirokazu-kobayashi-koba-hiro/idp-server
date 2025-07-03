@@ -20,7 +20,7 @@ import org.idp.server.basic.type.oauth.CustomParams;
 import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.OAuthRequestContext;
-import org.idp.server.platform.http.QueryParams;
+import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 
@@ -51,10 +51,10 @@ public class OAuthViewUrlResolver {
     String normalizedBase = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
     String normalizedPath = path.startsWith("/") ? path.replaceFirst("/", "") : path;
     CustomParams customParams = context.authorizationRequest().customParams();
-    QueryParams queryParams = new QueryParams(customParams.values());
-    queryParams.add("id", context.authorizationRequestIdentifier().value());
-    queryParams.add("tenant_id", context.tenantIdentifier().value());
-    String params = queryParams.params();
+    HttpQueryParams httpQueryParams = new HttpQueryParams(customParams.values());
+    httpQueryParams.add("id", context.authorizationRequestIdentifier().value());
+    httpQueryParams.add("tenant_id", context.tenantIdentifier().value());
+    String params = httpQueryParams.params();
     return String.format("%s/%s?%s", normalizedBase, normalizedPath, params);
   }
 }

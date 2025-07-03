@@ -2,8 +2,7 @@ version: '3'
 
 services:
   idp-server:
-    image: 17f195ec6d7624fcd975f99e74cd12363738ecab3b33b3c527d07b9b666e0fe6
-#    build: ./
+    build: ./
     ports:
       - "8080:8080"
     depends_on:

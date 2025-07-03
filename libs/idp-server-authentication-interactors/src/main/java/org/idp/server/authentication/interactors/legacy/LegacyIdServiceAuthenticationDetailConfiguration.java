@@ -37,7 +37,7 @@ public class LegacyIdServiceAuthenticationDetailConfiguration implements JsonRea
   }
 
   public HttpMethod httpMethod() {
-    return HttpMethod.valueOf(method);
+    return HttpMethod.of(method);
   }
 
   public HttpRequestStaticHeaders httpRequestHeaders() {

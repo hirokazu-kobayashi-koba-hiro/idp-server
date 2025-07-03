@@ -26,6 +26,7 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class DenyDuplicateIdentityVerificationApplicationVerifier
     implements IdentityVerificationRequestVerifier {
@@ -38,6 +39,7 @@ public class DenyDuplicateIdentityVerificationApplicationVerifier
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =
@@ -60,6 +62,7 @@ public class DenyDuplicateIdentityVerificationApplicationVerifier
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     if (applications.containsRunningState(type)) {

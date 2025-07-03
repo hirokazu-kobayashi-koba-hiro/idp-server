@@ -18,14 +18,15 @@ package org.idp.server.platform.json.path;
 
 import com.jayway.jsonpath.*;
 import java.util.*;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class JsonPathWrapper {
 
   Object document;
 
-  public JsonPathWrapper(Object jsonSource) {
+  public JsonPathWrapper(JsonNodeWrapper jsonSource) {
     Configuration conf = Configuration.defaultConfiguration();
-    this.document = conf.jsonProvider().parse(jsonSource.toString());
+    this.document = conf.jsonProvider().parse(jsonSource.toJson());
   }
 
   public String readAsString(String path) {

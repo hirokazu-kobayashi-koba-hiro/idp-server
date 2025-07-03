@@ -19,7 +19,7 @@ package org.idp.server.control_plane.base;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.platform.http.QueryParams;
+import org.idp.server.platform.http.HttpQueryParams;
 
 public class AuthorizationRequestBuilder {
   String authorizationEndpoint;
@@ -29,7 +29,7 @@ public class AuthorizationRequestBuilder {
   String responseType;
   List<Map<String, Object>> authorizationDetails;
   Map<String, String> customParameters = new HashMap<>();
-  QueryParams queryParams = new QueryParams();
+  HttpQueryParams httpQueryParams = new HttpQueryParams();
 
   public AuthorizationRequestBuilder(
       String authorizationEndpoint,

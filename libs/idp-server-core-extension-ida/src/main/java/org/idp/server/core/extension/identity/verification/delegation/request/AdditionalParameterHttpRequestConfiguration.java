@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.external_token;
+package org.idp.server.core.extension.identity.verification.delegation.request;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.identity.mapper.UserinfoMappingRule;
 import org.idp.server.platform.http.*;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
-public class ExternalTokenAuthenticationDetailConfiguration
+public class AdditionalParameterHttpRequestConfiguration
     implements HttpRequestExecutionConfigInterface, JsonReadable {
   String url;
   String method;
@@ -33,25 +34,29 @@ public class ExternalTokenAuthenticationDetailConfiguration
   OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
   HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
   Map<String, String> headers = new HashMap<>();
-  List<String> dynamicBodyKeys = new ArrayList<>();
   Map<String, Object> staticBody = new HashMap<>();
+  List<String> dynamicBodyKeys = new ArrayList<>();
   List<HttpRequestMappingRule> headerMappingRules = new ArrayList<>();
   List<HttpRequestMappingRule> bodyMappingRules = new ArrayList<>();
   List<HttpRequestMappingRule> queryMappingRules = new ArrayList<>();
-  List<UserinfoMappingRule> userinfoMappingRules;
+  Map<String, Object> requestValidationSchema = new HashMap<>();
+  Map<String, Object> requestVerificationSchema = new HashMap<>();
+  Map<String, Object> responseValidationSchema = new HashMap<>();
 
-  public ExternalTokenAuthenticationDetailConfiguration() {}
+  public AdditionalParameterHttpRequestConfiguration() {}
 
+  @Override
   public HttpRequestUrl httpRequestUrl() {
     return new HttpRequestUrl(url);
   }
 
+  @Override
   public HttpMethod httpMethod() {
     return HttpMethod.of(method);
   }
 
   public boolean isGetHttpMethod() {
-    return httpMethod().isGet();
+    return httpMethod().equals(HttpMethod.GET);
   }
 
   @Override
@@ -66,6 +71,9 @@ public class ExternalTokenAuthenticationDetailConfiguration
 
   @Override
   public OAuthAuthorizationConfiguration oauthAuthorization() {
+    if (oauthAuthorization == null) {
+      return new OAuthAuthorizationConfiguration();
+    }
     return oauthAuthorization;
   }
 
@@ -76,6 +84,9 @@ public class ExternalTokenAuthenticationDetailConfiguration
 
   @Override
   public HmacAuthenticationConfiguration hmacAuthentication() {
+    if (hmacAuthentication == null) {
+      return new HmacAuthenticationConfiguration();
+    }
     return hmacAuthentication;
   }
 
@@ -85,13 +96,13 @@ public class ExternalTokenAuthenticationDetailConfiguration
   }
 
   @Override
-  public boolean hasDynamicBodyKeys() {
-    return dynamicBodyKeys != null && !dynamicBodyKeys.isEmpty();
+  public HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys() {
+    return new HttpRequestDynamicBodyKeys(dynamicBodyKeys);
   }
 
   @Override
-  public HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys() {
-    return new HttpRequestDynamicBodyKeys(dynamicBodyKeys);
+  public boolean hasDynamicBodyKeys() {
+    return dynamicBodyKeys != null && !dynamicBodyKeys.isEmpty();
   }
 
   @Override
@@ -114,7 +125,23 @@ public class ExternalTokenAuthenticationDetailConfiguration
     return new HttpRequestMappingRules(queryMappingRules);
   }
 
-  public List<UserinfoMappingRule> userinfoMappingRules() {
-    return userinfoMappingRules;
+  public Map<String, Object> requestValidationSchema() {
+    return requestValidationSchema;
+  }
+
+  public Map<String, Object> requestVerificationSchema() {
+    return requestVerificationSchema;
+  }
+
+  public Map<String, Object> responseValidationSchema() {
+    return responseValidationSchema;
+  }
+
+  public JsonSchemaDefinition requestValidationSchemaAsDefinition() {
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(requestValidationSchema));
+  }
+
+  public JsonSchemaDefinition responseValidationSchemaAsDefinition() {
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(responseValidationSchema));
   }
 }

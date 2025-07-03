@@ -23,15 +23,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class QueryParams {
-  Map<String, String> values;
+public class HttpQueryParams {
+  Map<String, String> values = new HashMap<>();
 
-  public QueryParams() {
-    this.values = new HashMap<>();
-  }
+  public HttpQueryParams() {}
 
-  public QueryParams(Map<String, String> values) {
-    this.values = values;
+  public HttpQueryParams(Map<String, String> values) {
+    this.values.putAll(values);
   }
 
   public void add(String key, String value) {

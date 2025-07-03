@@ -35,7 +35,7 @@ public class ExternalSmsAuthenticationExecutionConfiguration implements JsonRead
   }
 
   public HttpMethod httpMethod() {
-    return HttpMethod.valueOf(method);
+    return HttpMethod.of(method);
   }
 
   public HttpRequestStaticHeaders httpRequestHeaders() {

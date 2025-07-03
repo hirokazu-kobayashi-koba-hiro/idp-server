@@ -23,7 +23,7 @@ import org.idp.server.core.oidc.federation.sso.SsoState;
 import org.idp.server.core.oidc.federation.sso.SsoStateCoder;
 import org.idp.server.core.oidc.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
-import org.idp.server.platform.http.QueryParams;
+import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OidcSsoSessionCreator {
@@ -55,16 +55,16 @@ public class OidcSsoSessionCreator {
     String state = SsoStateCoder.encode(ssoState);
     String nonce = UUID.randomUUID().toString();
 
-    QueryParams queryParams = new QueryParams();
-    queryParams.add("client_id", configuration.clientId());
-    queryParams.add("redirect_uri", configuration.redirectUri());
-    queryParams.add("response_type", "code");
-    queryParams.add("state", state);
-    queryParams.add("nonce", nonce);
-    queryParams.add("scope", configuration.scopeAsString());
+    HttpQueryParams httpQueryParams = new HttpQueryParams();
+    httpQueryParams.add("client_id", configuration.clientId());
+    httpQueryParams.add("redirect_uri", configuration.redirectUri());
+    httpQueryParams.add("response_type", "code");
+    httpQueryParams.add("state", state);
+    httpQueryParams.add("nonce", nonce);
+    httpQueryParams.add("scope", configuration.scopeAsString());
 
     String authorizationRequestUri =
-        String.format("%s?%s", authorizationEndpoint, queryParams.params());
+        String.format("%s?%s", authorizationEndpoint, httpQueryParams.params());
 
     return new OidcSsoSession(
         sessionId,

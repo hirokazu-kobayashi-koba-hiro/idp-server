@@ -20,15 +20,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class HttpRequestHeaderMappingRules implements Iterable<HttpRequestMappingRule> {
+public class HttpRequestMappingRules implements Iterable<HttpRequestMappingRule> {
 
   List<HttpRequestMappingRule> values;
 
-  public HttpRequestHeaderMappingRules() {
+  public HttpRequestMappingRules() {
     this.values = new ArrayList<>();
   }
 
-  public HttpRequestHeaderMappingRules(List<HttpRequestMappingRule> values) {
+  public HttpRequestMappingRules(List<HttpRequestMappingRule> values) {
     this.values = values;
   }
 

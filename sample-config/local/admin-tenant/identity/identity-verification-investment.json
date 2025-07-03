@@ -133,7 +133,40 @@
       },
       "request_additional_parameter_schema": {
         "$schema": "original",
-        "user_id": true
+        "user": {
+          "mapping_rules": [
+            { "from": "", "to": "" }
+          ]
+        },
+        "http_request": {
+          "url": "http://mockoon:4000/apply",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer dummy-token"
+          },
+          "dynamic_body_keys": [
+            "last_name",
+            "first_name",
+            "last_name_kana",
+            "first_name_kana"
+          ],
+          "response_validation_schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "title": "external user data response",
+            "type": "object",
+            "required": [
+              "application_id"
+            ],
+            "properties": {
+              "application_id": {
+                "type": "string",
+                "store": true
+              }
+            },
+            "additionalProperties": false
+          }
+        }
       },
       "request_verification_schema": {
         "$schema": "original",

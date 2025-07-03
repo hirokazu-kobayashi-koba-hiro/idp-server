@@ -21,4 +21,32 @@ public enum HttpMethod {
   POST,
   PUT,
   DELETE,
+  ;
+
+  public static HttpMethod of(String method) {
+
+    for (HttpMethod httpMethod : HttpMethod.values()) {
+      if (httpMethod.name().equalsIgnoreCase(method)) {
+        return httpMethod;
+      }
+    }
+
+    return POST;
+  }
+
+  public boolean isGet() {
+    return this == GET;
+  }
+
+  public boolean isPost() {
+    return this == POST;
+  }
+
+  public boolean isPut() {
+    return this == PUT;
+  }
+
+  public boolean isDelete() {
+    return this == DELETE;
+  }
 }

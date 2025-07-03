@@ -99,7 +99,14 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     ExternalWorkflowApplyingResult applyingResult =
         identityVerificationHandler.handleRequest(
-            tenant, user, applications, type, process, request, verificationConfiguration);
+            tenant,
+            user,
+            applications,
+            type,
+            process,
+            request,
+            requestAttributes,
+            verificationConfiguration);
     if (applyingResult.isError()) {
 
       eventPublisher.publish(
@@ -183,7 +190,14 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     ExternalWorkflowApplyingResult applyingResult =
         identityVerificationHandler.handleRequest(
-            tenant, user, applications, type, process, request, verificationConfiguration);
+            tenant,
+            user,
+            applications,
+            type,
+            process,
+            request,
+            requestAttributes,
+            verificationConfiguration);
     if (applyingResult.isError()) {
 
       eventPublisher.publish(
