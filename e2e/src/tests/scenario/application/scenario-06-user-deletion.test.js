@@ -39,7 +39,7 @@ describe("User lifecycle", () => {
       console.log(userinfoResponse.data);
       expect(userinfoResponse.status).toBe(401);
 
-      await sleep(200);
+      await sleep(1000);
 
       const introspectionResponse = await post({
         url: `${backendUrl}/${serverConfig.tenantId}/v1/tokens/introspection`,

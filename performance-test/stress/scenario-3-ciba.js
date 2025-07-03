@@ -43,6 +43,7 @@ export default function() {
   const authReqId = JSON.parse(backchannelRes.body).auth_req_id;
   // console.log(authReqId)
 
+
   //authentication transaction
   const txRes = http.get(`${baseUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentication-devices/${deviceId}/authentications/latest`);
   check(txRes, { "txRes request OK": (r) => r.status === 200 });
@@ -56,6 +57,8 @@ export default function() {
   );
   check(bindingMessageRes, { "authentication-device-binding-message request OK": (r) => r.status === 200 });
   // console.log(bindingMessageRes)
+
+  // sleep(1)
 
   //token
   const tokenRes = http.post(
