@@ -19,6 +19,7 @@ package org.idp.server.platform.http;
 public enum HttpRequestAuthType {
   OAUTH2("oauth2"),
   HMAC_SHA256("hmac_sha256"),
+  NONE("none"),
   UNKNOWN("unknown");
 
   String type;
@@ -32,11 +33,16 @@ public enum HttpRequestAuthType {
   }
 
   public static HttpRequestAuthType of(String type) {
+    if (type == null) {
+      return NONE;
+    }
+
     for (HttpRequestAuthType authType : HttpRequestAuthType.values()) {
       if (authType.type.equals(type)) {
         return authType;
       }
     }
+
     return UNKNOWN;
   }
 }

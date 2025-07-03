@@ -22,19 +22,17 @@ import java.util.Map;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 
-public class HttpRequestDynamicHeaderMapper {
+public class HttpRequestDynamicMapper {
 
   Map<String, String> headers;
-  HttpRequestHeaderMappingRules mappingRules;
+  HttpRequestMappingRules mappingRules;
   JsonPathWrapper bodyJsonPath;
 
-  public HttpRequestDynamicHeaderMapper(
-      Map<String, String> headers,
-      JsonNodeWrapper body,
-      HttpRequestHeaderMappingRules mappingRules) {
+  public HttpRequestDynamicMapper(
+      Map<String, String> headers, JsonNodeWrapper body, HttpRequestMappingRules mappingRules) {
     this.headers = headers;
     this.mappingRules = mappingRules;
-    this.bodyJsonPath = new JsonPathWrapper(body.toJson());
+    this.bodyJsonPath = new JsonPathWrapper(body);
   }
 
   public Map<String, String> toHeaders() {
@@ -56,6 +54,31 @@ public class HttpRequestDynamicHeaderMapper {
     }
 
     return resolvedHeaders;
+  }
+
+  public Map<String, Object> toBody() {
+    Map<String, Object> resolvedBody = new HashMap<>();
+
+    for (HttpRequestMappingRule rule : mappingRules) {
+      Object value = null;
+
+      switch (rule.getSource()) {
+        case "header" -> value = extractFromHeader(rule);
+        case "body" -> value = extractFromBody(rule);
+      }
+
+      if (value == null) {
+        continue;
+      }
+
+      resolvedBody.put(rule.getTo(), value);
+    }
+
+    return resolvedBody;
+  }
+
+  public Map<String, String> toQueryParams() {
+    return toHeaders();
   }
 
   private Object extractFromHeader(HttpRequestMappingRule rule) {
@@ -107,6 +130,9 @@ public class HttpRequestDynamicHeaderMapper {
       case "string" -> bodyJsonPath.readAsString(rule.getFrom());
       case "boolean" -> bodyJsonPath.readAsBoolean(rule.getFrom());
       case "int" -> bodyJsonPath.readAsInt(rule.getFrom());
+      case "list<string>" -> bodyJsonPath.readAsStringList(rule.getFrom());
+      case "object" -> bodyJsonPath.readAsMap(rule.getFrom());
+      case "list<object>" -> bodyJsonPath.readAsMapList(rule.getFrom());
       default -> null;
     };
   }

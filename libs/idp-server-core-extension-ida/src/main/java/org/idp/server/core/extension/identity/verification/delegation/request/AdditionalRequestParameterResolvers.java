@@ -27,6 +27,7 @@ import org.idp.server.core.extension.identity.verification.application.IdentityV
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class AdditionalRequestParameterResolvers {
 
@@ -34,8 +35,9 @@ public class AdditionalRequestParameterResolvers {
 
   public AdditionalRequestParameterResolvers() {
     this.resolvers = new ArrayList<>();
-    this.resolvers.add(new UserIdParameterResolver());
+    this.resolvers.add(new UserParameterResolver());
     this.resolvers.add(new ContinuousCustomerDueDiligenceParameterResolver());
+    this.resolvers.add(new HttpRequestParameterResolver());
   }
 
   public Map<String, Object> resolve(
@@ -45,16 +47,31 @@ public class AdditionalRequestParameterResolvers {
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     Map<String, Object> additionalParameters = new HashMap<>();
 
     for (AdditionalRequestParameterResolver resolver : resolvers) {
       if (resolver.shouldResolve(
-          tenant, user, applications, type, processes, request, verificationConfiguration)) {
+          tenant,
+          user,
+          applications,
+          type,
+          processes,
+          request,
+          requestAttributes,
+          verificationConfiguration)) {
         additionalParameters.putAll(
             resolver.resolve(
-                tenant, user, applications, type, processes, request, verificationConfiguration));
+                tenant,
+                user,
+                applications,
+                type,
+                processes,
+                request,
+                requestAttributes,
+                verificationConfiguration));
       }
     }
 

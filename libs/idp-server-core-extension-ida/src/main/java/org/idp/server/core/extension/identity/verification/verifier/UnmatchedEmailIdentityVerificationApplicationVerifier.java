@@ -27,6 +27,7 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class UnmatchedEmailIdentityVerificationApplicationVerifier
     implements IdentityVerificationRequestVerifier {
@@ -39,6 +40,7 @@ public class UnmatchedEmailIdentityVerificationApplicationVerifier
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =
@@ -61,6 +63,7 @@ public class UnmatchedEmailIdentityVerificationApplicationVerifier
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =

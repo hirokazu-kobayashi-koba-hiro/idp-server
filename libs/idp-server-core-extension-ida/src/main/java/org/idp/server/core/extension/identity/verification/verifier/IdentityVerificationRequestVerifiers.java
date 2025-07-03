@@ -25,6 +25,7 @@ import org.idp.server.core.extension.identity.verification.application.IdentityV
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class IdentityVerificationRequestVerifiers {
 
@@ -45,18 +46,33 @@ public class IdentityVerificationRequestVerifiers {
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     for (IdentityVerificationRequestVerifier verifier : verifiers) {
 
       if (!verifier.shouldVerify(
-          tenant, user, applications, type, processes, request, verificationConfiguration)) {
+          tenant,
+          user,
+          applications,
+          type,
+          processes,
+          request,
+          requestAttributes,
+          verificationConfiguration)) {
         continue;
       }
 
       IdentityVerificationRequestVerificationResult verifyResult =
           verifier.verify(
-              tenant, user, applications, type, processes, request, verificationConfiguration);
+              tenant,
+              user,
+              applications,
+              type,
+              processes,
+              request,
+              requestAttributes,
+              verificationConfiguration);
 
       if (verifyResult.isError()) {
         return verifyResult;

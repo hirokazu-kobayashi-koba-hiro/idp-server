@@ -23,7 +23,7 @@ import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.basic.type.oidc.ResponseMode;
 import org.idp.server.basic.type.verifiablepresentation.VpToken;
 import org.idp.server.core.oidc.token.AccessToken;
-import org.idp.server.platform.http.QueryParams;
+import org.idp.server.platform.http.HttpQueryParams;
 
 public class AuthorizationResponseBuilder {
   RedirectUri redirectUri;
@@ -39,7 +39,7 @@ public class AuthorizationResponseBuilder {
   VpToken vpToken = new VpToken();
   TokenIssuer tokenIssuer;
   JarmPayload jarmPayload = new JarmPayload();
-  QueryParams queryParams;
+  HttpQueryParams httpQueryParams;
 
   public AuthorizationResponseBuilder(
       RedirectUri redirectUri,
@@ -50,57 +50,57 @@ public class AuthorizationResponseBuilder {
     this.responseMode = responseMode;
     this.responseModeValue = responseModeValue;
     this.tokenIssuer = tokenIssuer;
-    this.queryParams = new QueryParams();
-    queryParams.add("iss", tokenIssuer.value());
+    this.httpQueryParams = new HttpQueryParams();
+    httpQueryParams.add("iss", tokenIssuer.value());
   }
 
   public AuthorizationResponseBuilder add(AuthorizationCode authorizationCode) {
     this.authorizationCode = authorizationCode;
-    this.queryParams.add("code", authorizationCode.value());
+    this.httpQueryParams.add("code", authorizationCode.value());
     return this;
   }
 
   public AuthorizationResponseBuilder add(State state) {
     this.state = state;
-    this.queryParams.add("state", state.value());
+    this.httpQueryParams.add("state", state.value());
     return this;
   }
 
   public AuthorizationResponseBuilder add(AccessToken accessToken) {
     this.accessToken = accessToken;
-    this.queryParams.add("access_token", accessToken.accessTokenEntity().value());
+    this.httpQueryParams.add("access_token", accessToken.accessTokenEntity().value());
     return this;
   }
 
   public AuthorizationResponseBuilder add(ExpiresIn expiresIn) {
     this.expiresIn = expiresIn;
-    this.queryParams.add("expires_in", expiresIn.toStringValue());
+    this.httpQueryParams.add("expires_in", expiresIn.toStringValue());
     return this;
   }
 
   public AuthorizationResponseBuilder add(TokenType tokenType) {
     if (tokenType.isDefined()) {
       this.tokenType = tokenType;
-      this.queryParams.add("token_type", tokenType.name());
+      this.httpQueryParams.add("token_type", tokenType.name());
     }
     return this;
   }
 
   public AuthorizationResponseBuilder add(Scopes scopes) {
     this.scopes = scopes;
-    this.queryParams.add("scope", scopes.toStringValues());
+    this.httpQueryParams.add("scope", scopes.toStringValues());
     return this;
   }
 
   public AuthorizationResponseBuilder add(IdToken idToken) {
     this.idToken = idToken;
-    this.queryParams.add("id_token", idToken.value());
+    this.httpQueryParams.add("id_token", idToken.value());
     return this;
   }
 
   public AuthorizationResponseBuilder add(VpToken vpToken) {
     this.vpToken = vpToken;
-    this.queryParams.add("vp_token", vpToken.value());
+    this.httpQueryParams.add("vp_token", vpToken.value());
     return this;
   }
 
@@ -112,8 +112,8 @@ public class AuthorizationResponseBuilder {
   public AuthorizationResponse build() {
     // TODO consider
     if (jarmPayload.exists()) {
-      this.queryParams = new QueryParams();
-      this.queryParams.add("response", jarmPayload.value());
+      this.httpQueryParams = new HttpQueryParams();
+      this.httpQueryParams.add("response", jarmPayload.value());
     }
     return new AuthorizationResponse(
         redirectUri,
@@ -128,6 +128,6 @@ public class AuthorizationResponseBuilder {
         idToken,
         tokenIssuer,
         jarmPayload,
-        queryParams);
+        httpQueryParams);
   }
 }

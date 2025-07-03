@@ -28,4 +28,21 @@ public class HttpRequestUrl {
   public String value() {
     return value;
   }
+
+  public String withQueryParams(HttpQueryParams queryParams) {
+    String paramString = queryParams.params();
+    if (paramString == null || paramString.isEmpty()) {
+      return value;
+    }
+
+    StringBuilder stringBuilder = new StringBuilder(value);
+    if (!value.contains("?")) {
+      stringBuilder.append("?");
+    } else if (!value.endsWith("&") && !value.endsWith("?")) {
+      stringBuilder.append("&");
+    }
+
+    stringBuilder.append(paramString);
+    return stringBuilder.toString();
+  }
 }

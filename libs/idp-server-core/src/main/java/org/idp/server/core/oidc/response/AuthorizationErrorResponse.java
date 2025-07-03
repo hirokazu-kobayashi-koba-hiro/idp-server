@@ -20,7 +20,7 @@ import org.idp.server.basic.type.extension.JarmPayload;
 import org.idp.server.basic.type.extension.ResponseModeValue;
 import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oauth.Error;
-import org.idp.server.platform.http.QueryParams;
+import org.idp.server.platform.http.HttpQueryParams;
 
 public class AuthorizationErrorResponse {
   RedirectUri redirectUri;
@@ -30,7 +30,7 @@ public class AuthorizationErrorResponse {
   Error error;
   ErrorDescription errorDescription;
   JarmPayload jarmPayload;
-  QueryParams queryParams;
+  HttpQueryParams httpQueryParams;
 
   public AuthorizationErrorResponse() {}
 
@@ -42,7 +42,7 @@ public class AuthorizationErrorResponse {
       Error error,
       ErrorDescription errorDescription,
       JarmPayload jarmPayload,
-      QueryParams queryParams) {
+      HttpQueryParams httpQueryParams) {
     this.redirectUri = redirectUri;
     this.responseModeValue = responseModeValue;
     this.state = state;
@@ -50,7 +50,7 @@ public class AuthorizationErrorResponse {
     this.error = error;
     this.errorDescription = errorDescription;
     this.jarmPayload = jarmPayload;
-    this.queryParams = queryParams;
+    this.httpQueryParams = httpQueryParams;
   }
 
   public RedirectUri redirectUri() {
@@ -81,12 +81,12 @@ public class AuthorizationErrorResponse {
     return jarmPayload;
   }
 
-  QueryParams queryParams() {
-    return queryParams;
+  HttpQueryParams queryParams() {
+    return httpQueryParams;
   }
 
   public String redirectUriValue() {
     return String.format(
-        "%s%s%s", redirectUri.value(), responseModeValue.value(), queryParams.params());
+        "%s%s%s", redirectUri.value(), responseModeValue.value(), httpQueryParams.params());
   }
 }

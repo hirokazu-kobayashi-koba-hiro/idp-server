@@ -22,7 +22,7 @@ import org.idp.server.basic.type.oauth.*;
 import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.basic.type.oidc.ResponseMode;
 import org.idp.server.core.oidc.token.AccessToken;
-import org.idp.server.platform.http.QueryParams;
+import org.idp.server.platform.http.HttpQueryParams;
 
 public class AuthorizationResponse {
   RedirectUri redirectUri;
@@ -37,7 +37,7 @@ public class AuthorizationResponse {
   IdToken idToken;
   TokenIssuer tokenIssuer;
   JarmPayload jarmPayload;
-  QueryParams queryParams;
+  HttpQueryParams httpQueryParams;
 
   AuthorizationResponse(
       RedirectUri redirectUri,
@@ -52,7 +52,7 @@ public class AuthorizationResponse {
       IdToken idToken,
       TokenIssuer tokenIssuer,
       JarmPayload jarmPayload,
-      QueryParams queryParams) {
+      HttpQueryParams httpQueryParams) {
     this.redirectUri = redirectUri;
     this.responseMode = responseMode;
     this.responseModeValue = responseModeValue;
@@ -65,7 +65,7 @@ public class AuthorizationResponse {
     this.idToken = idToken;
     this.tokenIssuer = tokenIssuer;
     this.jarmPayload = jarmPayload;
-    this.queryParams = queryParams;
+    this.httpQueryParams = httpQueryParams;
   }
 
   public RedirectUri redirectUri() {
@@ -136,12 +136,12 @@ public class AuthorizationResponse {
     return jarmPayload.exists();
   }
 
-  QueryParams queryParams() {
-    return queryParams;
+  HttpQueryParams queryParams() {
+    return httpQueryParams;
   }
 
   public String redirectUriValue() {
     return String.format(
-        "%s%s%s", redirectUri.value(), responseModeValue.value(), queryParams.params());
+        "%s%s%s", redirectUri.value(), responseModeValue.value(), httpQueryParams.params());
   }
 }

@@ -61,8 +61,7 @@
         }
       },
       "request_additional_parameter_schema": {
-        "$schema": "original",
-        "user_id": true
+        "$schema": "original"
       },
       "response_validation_schema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",

@@ -22,7 +22,7 @@ import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementRequest;
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitation;
 import org.idp.server.platform.date.SystemDateTime;
-import org.idp.server.platform.http.QueryParams;
+import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TenantInvitationContextCreator {
@@ -52,10 +52,10 @@ public class TenantInvitationContextCreator {
     String roleName = request.getValueAsString("role_name");
 
     // TODO improve determining path
-    QueryParams queryParams = new QueryParams();
-    queryParams.add("invitation_id", id);
-    queryParams.add("invitation_tenant_id", tenantId);
-    String url = adminDashboardUrl.value() + "/invitation/?" + queryParams.params();
+    HttpQueryParams httpQueryParams = new HttpQueryParams();
+    httpQueryParams.add("invitation_id", id);
+    httpQueryParams.add("invitation_tenant_id", tenantId);
+    String url = adminDashboardUrl.value() + "/invitation/?" + httpQueryParams.params();
     String status = "created";
     // 1 week
     int expiresIn = 604800;

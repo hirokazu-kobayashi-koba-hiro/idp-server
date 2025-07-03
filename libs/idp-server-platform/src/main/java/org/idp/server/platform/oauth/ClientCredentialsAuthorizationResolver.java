@@ -24,7 +24,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpNetworkErrorException;
-import org.idp.server.platform.http.QueryParams;
+import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -44,14 +44,14 @@ public class ClientCredentialsAuthorizationResolver implements OAuthAuthorizatio
   public String resolve(OAuthAuthorizationConfiguration config) {
     try {
 
-      QueryParams queryParams = new QueryParams(config.toRequestValues());
+      HttpQueryParams httpQueryParams = new HttpQueryParams(config.toRequestValues());
 
       HttpRequest.Builder builder =
           HttpRequest.newBuilder()
               .uri(new URI(config.tokenEndpoint()))
               .header("Content-Type", "application/x-www-form-urlencoded")
               .header("Accept", "application/json")
-              .POST(HttpRequest.BodyPublishers.ofString(queryParams.params()));
+              .POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
 
       if (config.isClientSecretBasic()) {
         builder.header("Authorization", config.basicAuthenticationValue());

@@ -25,7 +25,7 @@ import java.net.http.HttpResponse;
 import java.util.Map;
 import org.idp.server.core.oidc.federation.sso.SsoProvider;
 import org.idp.server.platform.http.HttpClientFactory;
-import org.idp.server.platform.http.QueryParams;
+import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -50,14 +50,14 @@ public class StandardOidcExecutor implements OidcSsoExecutor {
   public OidcTokenResult requestToken(OidcTokenRequest oidcTokenRequest) {
     try {
 
-      QueryParams queryParams = new QueryParams(oidcTokenRequest.toMap());
+      HttpQueryParams httpQueryParams = new HttpQueryParams(oidcTokenRequest.toMap());
 
       HttpRequest.Builder builder =
           HttpRequest.newBuilder()
               .uri(new URI(oidcTokenRequest.endpoint()))
               .header("Content-Type", "application/x-www-form-urlencoded")
               .header("Accept", "application/json")
-              .POST(HttpRequest.BodyPublishers.ofString(queryParams.params()));
+              .POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
 
       if (oidcTokenRequest.isClientSecretBasic()) {
         builder.header("Authorization", oidcTokenRequest.basicAuthenticationValue());

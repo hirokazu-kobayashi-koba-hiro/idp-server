@@ -25,10 +25,10 @@ import org.idp.server.core.extension.identity.verification.application.IdentityV
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.type.RequestAttributes;
 
-public class UserIdParameterResolver implements AdditionalRequestParameterResolver {
+public class UserParameterResolver implements AdditionalRequestParameterResolver {
 
   public boolean shouldResolve(
       Tenant tenant,
@@ -37,7 +37,9 @@ public class UserIdParameterResolver implements AdditionalRequestParameterResolv
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
+
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(processes);
     Map<String, Object> additionalParameterSchema =
@@ -47,10 +49,10 @@ public class UserIdParameterResolver implements AdditionalRequestParameterResolv
       return false;
     }
 
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(additionalParameterSchema);
-    return jsonNodeWrapper.optValueAsBoolean("user_id", false);
+    return additionalParameterSchema.containsKey("user");
   }
 
+  // TODO improve to be more flexible
   @Override
   public Map<String, Object> resolve(
       Tenant tenant,
@@ -59,7 +61,9 @@ public class UserIdParameterResolver implements AdditionalRequestParameterResolv
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
+
     Map<String, Object> additionalParameters = new HashMap<>();
     additionalParameters.put("user_id", user.sub());
     String providerUserId = user.providerUserId();

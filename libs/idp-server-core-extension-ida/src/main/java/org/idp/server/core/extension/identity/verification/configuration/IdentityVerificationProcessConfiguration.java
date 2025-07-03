@@ -16,6 +16,8 @@
 
 package org.idp.server.core.extension.identity.verification.configuration;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.http.*;
@@ -24,39 +26,52 @@ import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
-public class IdentityVerificationProcessConfiguration implements JsonReadable {
+public class IdentityVerificationProcessConfiguration
+    implements HttpRequestExecutionConfigInterface, JsonReadable {
   String url;
   String method;
   String authType;
-  OAuthAuthorizationConfiguration oauthAuthorization;
-  HmacAuthenticationConfiguration hmacAuthentication;
-  Map<String, String> headers;
-  List<String> dynamicBodyKeys;
-  Map<String, Object> staticBody;
-  Map<String, Object> requestValidationSchema;
-  Map<String, Object> requestVerificationSchema;
-  Map<String, Object> requestAdditionalParameterSchema;
-  Map<String, Object> responseValidationSchema;
-  Map<String, Object> rejectedConditionSchema;
+  OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
+  HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
+  Map<String, String> headers = new HashMap<>();
+  Map<String, Object> staticBody = new HashMap<>();
+  List<String> dynamicBodyKeys = new ArrayList<>();
+  List<HttpRequestMappingRule> headerMappingRules = new ArrayList<>();
+  List<HttpRequestMappingRule> bodyMappingRules = new ArrayList<>();
+  List<HttpRequestMappingRule> queryMappingRules = new ArrayList<>();
+  Map<String, Object> requestValidationSchema = new HashMap<>();
+  Map<String, Object> requestVerificationSchema = new HashMap<>();
+  Map<String, Object> requestAdditionalParameterSchema = new HashMap<>();
+  Map<String, Object> responseValidationSchema = new HashMap<>();
+  Map<String, Object> rejectedConditionSchema = new HashMap<>();
 
   public IdentityVerificationProcessConfiguration() {}
 
+  @Override
   public HttpRequestUrl httpRequestUrl() {
     return new HttpRequestUrl(url);
   }
 
+  @Override
   public HttpMethod httpMethod() {
-    return HttpMethod.valueOf(method);
+    return HttpMethod.of(method);
   }
 
+  public boolean isGetHttpMethod() {
+    return httpMethod().equals(HttpMethod.GET);
+  }
+
+  @Override
   public HttpRequestAuthType httpRequestAuthType() {
     return HttpRequestAuthType.of(authType);
   }
 
+  @Override
   public boolean hasOAuthAuthorization() {
     return oauthAuthorization != null && oauthAuthorization.exists();
   }
 
+  @Override
   public OAuthAuthorizationConfiguration oauthAuthorization() {
     if (oauthAuthorization == null) {
       return new OAuthAuthorizationConfiguration();
@@ -64,10 +79,12 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
     return oauthAuthorization;
   }
 
+  @Override
   public boolean hasHmacAuthentication() {
     return hmacAuthentication != null && hmacAuthentication.exists();
   }
 
+  @Override
   public HmacAuthenticationConfiguration hmacAuthentication() {
     if (hmacAuthentication == null) {
       return new HmacAuthenticationConfiguration();
@@ -75,16 +92,39 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
     return hmacAuthentication;
   }
 
+  @Override
   public HttpRequestStaticHeaders httpRequestHeaders() {
     return new HttpRequestStaticHeaders(headers);
   }
 
+  @Override
   public HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys() {
     return new HttpRequestDynamicBodyKeys(dynamicBodyKeys);
   }
 
+  @Override
+  public boolean hasDynamicBodyKeys() {
+    return dynamicBodyKeys != null && !dynamicBodyKeys.isEmpty();
+  }
+
+  @Override
   public HttpRequestStaticBody httpRequestStaticBody() {
     return new HttpRequestStaticBody(staticBody);
+  }
+
+  @Override
+  public HttpRequestMappingRules httpRequestHeaderMappingRules() {
+    return new HttpRequestMappingRules(headerMappingRules);
+  }
+
+  @Override
+  public HttpRequestMappingRules httpRequestBodyMappingRules() {
+    return new HttpRequestMappingRules(bodyMappingRules);
+  }
+
+  @Override
+  public HttpRequestMappingRules httpRequestQueryMappingRules() {
+    return new HttpRequestMappingRules(queryMappingRules);
   }
 
   public Map<String, Object> requestValidationSchema() {

@@ -28,6 +28,7 @@ import org.idp.server.core.extension.identity.verification.application.IdentityV
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class ContinuousCustomerDueDiligenceParameterResolver
     implements AdditionalRequestParameterResolver {
@@ -39,6 +40,7 @@ public class ContinuousCustomerDueDiligenceParameterResolver
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     return type.isContinuousCustomerDueDiligence();
@@ -52,7 +54,9 @@ public class ContinuousCustomerDueDiligenceParameterResolver
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
+
     Map<String, Object> additionalParameters = new HashMap<>();
 
     List<Map<String, Object>> applicationList = new ArrayList<>();
