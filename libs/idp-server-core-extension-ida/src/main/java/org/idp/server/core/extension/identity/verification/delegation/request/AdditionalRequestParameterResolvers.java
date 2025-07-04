@@ -25,6 +25,7 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationR
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.plugin.IdentityVerificationRequestAdditionalParameterPluginLoader;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.type.RequestAttributes;
@@ -38,6 +39,9 @@ public class AdditionalRequestParameterResolvers {
     this.resolvers.add(new UserParameterResolver());
     this.resolvers.add(new ContinuousCustomerDueDiligenceParameterResolver());
     this.resolvers.add(new HttpRequestParameterResolver());
+    List<AdditionalRequestParameterResolver> loaded =
+        IdentityVerificationRequestAdditionalParameterPluginLoader.load();
+    this.resolvers.addAll(loaded);
   }
 
   public Map<String, Object> resolve(
