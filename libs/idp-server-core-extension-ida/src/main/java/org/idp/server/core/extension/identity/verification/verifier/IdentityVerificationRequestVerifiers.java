@@ -23,6 +23,7 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationR
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.plugin.IdentityVerificationRequestVerifierPluginLoader;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.type.RequestAttributes;
@@ -37,6 +38,9 @@ public class IdentityVerificationRequestVerifiers {
     this.verifiers.add(new UnmatchedEmailIdentityVerificationApplicationVerifier());
     this.verifiers.add(new UnmatchedPhoneIdentityVerificationApplicationVerifier());
     this.verifiers.add(new ContinuousCustomerDueDiligenceIdentityVerificationVerifier());
+    List<IdentityVerificationRequestVerifier> loaded =
+        IdentityVerificationRequestVerifierPluginLoader.load();
+    this.verifiers.addAll(loaded);
   }
 
   public IdentityVerificationRequestVerificationResult verify(
