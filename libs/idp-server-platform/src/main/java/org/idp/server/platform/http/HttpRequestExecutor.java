@@ -49,9 +49,7 @@ public class HttpRequestExecutor {
 
     HttpRequestDynamicMapper headerMapper =
         new HttpRequestDynamicMapper(
-            httpRequestStaticHeaders.toMap(),
-            JsonNodeWrapper.fromObject(httpRequestBaseParams.toMap()),
-            headerMappingRules);
+            headerMappingRules, httpRequestStaticHeaders.toMap(), httpRequestBaseParams.toMap());
     Map<String, String> headers = headerMapper.toHeaders();
 
     HttpRequestBodyCreator requestBodyCreator =
@@ -83,10 +81,7 @@ public class HttpRequestExecutor {
     baseBody.putAll(httpRequestStaticBody.toMap());
 
     HttpRequestDynamicMapper bodyMapper =
-        new HttpRequestDynamicMapper(
-            httpRequestStaticHeaders.toMap(),
-            JsonNodeWrapper.fromObject(baseBody),
-            bodyMappingRules);
+        new HttpRequestDynamicMapper(bodyMappingRules, httpRequestStaticHeaders.toMap(), baseBody);
 
     Map<String, Object> requestBody = bodyMapper.toBody();
 
@@ -112,19 +107,14 @@ public class HttpRequestExecutor {
 
     HttpRequestDynamicMapper headerMapper =
         new HttpRequestDynamicMapper(
-            httpRequestStaticHeaders.toMap(),
-            JsonNodeWrapper.fromObject(httpRequestBaseParams.toMap()),
-            headerMappingRules);
+            headerMappingRules, httpRequestStaticHeaders.toMap(), httpRequestBaseParams.toMap());
     Map<String, String> headers = headerMapper.toHeaders();
 
     Map<String, Object> baseBody = new HashMap<>(httpRequestBaseParams.toMap());
     baseBody.putAll(httpRequestStaticBody.toMap());
 
     HttpRequestDynamicMapper bodyMapper =
-        new HttpRequestDynamicMapper(
-            httpRequestStaticHeaders.toMap(),
-            JsonNodeWrapper.fromObject(baseBody),
-            bodyMappingRules);
+        new HttpRequestDynamicMapper(bodyMappingRules, httpRequestStaticHeaders.toMap(), baseBody);
 
     Map<String, Object> requestBody = bodyMapper.toBody();
 
@@ -148,9 +138,7 @@ public class HttpRequestExecutor {
     Map<String, String> headers = httpRequestStaticHeaders.toMap();
     HttpRequestDynamicMapper bodyMapper =
         new HttpRequestDynamicMapper(
-            httpRequestStaticHeaders.toMap(),
-            JsonNodeWrapper.fromObject(httpRequestBaseParams),
-            queryMappingRules);
+            queryMappingRules, httpRequestStaticHeaders.toMap(), httpRequestBaseParams.toMap());
 
     Map<String, String> queryParams = bodyMapper.toQueryParams();
 

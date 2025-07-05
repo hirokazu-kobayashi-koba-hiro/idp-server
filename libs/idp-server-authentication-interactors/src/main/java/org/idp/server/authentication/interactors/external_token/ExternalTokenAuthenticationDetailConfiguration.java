@@ -20,9 +20,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.identity.mapper.UserinfoMappingRule;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class ExternalTokenAuthenticationDetailConfiguration
@@ -35,10 +35,10 @@ public class ExternalTokenAuthenticationDetailConfiguration
   Map<String, String> headers = new HashMap<>();
   List<String> dynamicBodyKeys = new ArrayList<>();
   Map<String, Object> staticBody = new HashMap<>();
-  List<HttpRequestMappingRule> headerMappingRules = new ArrayList<>();
-  List<HttpRequestMappingRule> bodyMappingRules = new ArrayList<>();
-  List<HttpRequestMappingRule> queryMappingRules = new ArrayList<>();
-  List<UserinfoMappingRule> userinfoMappingRules;
+  List<MappingRule> headerMappingRules = new ArrayList<>();
+  List<MappingRule> bodyMappingRules = new ArrayList<>();
+  List<MappingRule> queryMappingRules = new ArrayList<>();
+  List<MappingRule> userinfoMappingRules;
 
   public ExternalTokenAuthenticationDetailConfiguration() {}
 
@@ -114,7 +114,7 @@ public class ExternalTokenAuthenticationDetailConfiguration
     return new HttpRequestMappingRules(queryMappingRules);
   }
 
-  public List<UserinfoMappingRule> userinfoMappingRules() {
+  public List<MappingRule> userinfoMappingRules() {
     return userinfoMappingRules;
   }
 }

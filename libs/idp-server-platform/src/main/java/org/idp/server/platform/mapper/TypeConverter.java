@@ -16,15 +16,12 @@
 
 package org.idp.server.platform.mapper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import org.idp.server.platform.json.JsonConverter;
+import java.time.LocalDateTime;
+import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class TypeConverter {
 
-  private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
   private static final LoggerWrapper log = LoggerWrapper.getLogger(TypeConverter.class);
 
   public static Object convert(Object value, String type) {
@@ -51,28 +48,11 @@ public class TypeConverter {
           }
           yield Boolean.parseBoolean(value.toString());
         }
-        case "list<string>" -> {
-          if (value instanceof List) {
-            List<?> list = (List<?>) value;
-            List<String> result = new ArrayList<>();
-            for (Object o : list) {
-              result.add(o.toString());
-            }
-            yield result;
-          }
-          yield jsonConverter.read(value.toString(), List.class);
-        }
-        case "list<object>" -> {
-          if (value instanceof List) {
+        case "datetime" -> {
+          if (value instanceof LocalDateTime) {
             yield value;
           }
-          yield jsonConverter.read(value.toString(), List.class);
-        }
-        case "map", "object" -> {
-          if (value instanceof Map) {
-            yield value;
-          }
-          yield jsonConverter.read(value.toString(), Map.class);
+          yield LocalDateTimeParser.parse((value.toString()));
         }
         default -> value;
       };

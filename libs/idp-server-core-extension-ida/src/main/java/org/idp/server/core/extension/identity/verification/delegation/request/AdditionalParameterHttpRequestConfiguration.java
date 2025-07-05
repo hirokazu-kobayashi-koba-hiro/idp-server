@@ -24,6 +24,7 @@ import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
+import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class AdditionalParameterHttpRequestConfiguration
@@ -36,9 +37,9 @@ public class AdditionalParameterHttpRequestConfiguration
   Map<String, String> headers = new HashMap<>();
   Map<String, Object> staticBody = new HashMap<>();
   List<String> dynamicBodyKeys = new ArrayList<>();
-  List<HttpRequestMappingRule> headerMappingRules = new ArrayList<>();
-  List<HttpRequestMappingRule> bodyMappingRules = new ArrayList<>();
-  List<HttpRequestMappingRule> queryMappingRules = new ArrayList<>();
+  List<MappingRule> headerMappingRules = new ArrayList<>();
+  List<MappingRule> bodyMappingRules = new ArrayList<>();
+  List<MappingRule> queryMappingRules = new ArrayList<>();
   Map<String, Object> requestValidationSchema = new HashMap<>();
   Map<String, Object> requestVerificationSchema = new HashMap<>();
   Map<String, Object> responseValidationSchema = new HashMap<>();

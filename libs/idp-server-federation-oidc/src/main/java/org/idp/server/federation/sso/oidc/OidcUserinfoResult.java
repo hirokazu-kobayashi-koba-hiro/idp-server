@@ -18,6 +18,7 @@ package org.idp.server.federation.sso.oidc;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class OidcUserinfoResult {
@@ -41,6 +42,11 @@ public class OidcUserinfoResult {
 
   public Map<String, List<String>> headers() {
     return headers;
+  }
+
+  public Map<String, String> headersAsSingleValueMap() {
+    return headers.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getFirst()));
   }
 
   public Map<String, Object> bodyAsMap() {

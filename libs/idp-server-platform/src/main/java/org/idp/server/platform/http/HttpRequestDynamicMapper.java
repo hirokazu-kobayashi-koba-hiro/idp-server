@@ -21,119 +21,50 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.mapper.MappingRule;
+import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 
 public class HttpRequestDynamicMapper {
 
-  Map<String, String> headers;
-  HttpRequestMappingRules mappingRules;
-  JsonPathWrapper bodyJsonPath;
+  List<MappingRule> mappingRules;
+  Map<String, Object> payload;
 
   public HttpRequestDynamicMapper(
-      Map<String, String> headers, JsonNodeWrapper body, HttpRequestMappingRules mappingRules) {
-    this.headers = headers;
-    this.mappingRules = mappingRules;
-    this.bodyJsonPath = new JsonPathWrapper(body.toJson());
+      HttpRequestMappingRules httpRequestMappingRules,
+      Map<String, String> headers,
+      Map<String, Object> body) {
+    this.mappingRules = httpRequestMappingRules.toList();
+    Map<String, Object> payload = new HashMap<>();
+    payload.put("header", headers);
+    payload.put("body", body);
+    this.payload = payload;
   }
 
   public Map<String, String> toHeaders() {
-    Map<String, String> resolvedHeaders = new HashMap<>();
-
-    for (HttpRequestMappingRule rule : mappingRules) {
-      Object value = null;
-
-      switch (rule.getSource()) {
-        case "header" -> value = extractFromHeader(rule);
-        case "body" -> value = extractFromBody(rule);
-      }
-
-      if (value == null) {
-        continue;
-      }
-
-      resolvedHeaders.put(rule.getTo(), value.toString());
-    }
-
-    return resolvedHeaders;
+    return executeAndConvertString();
   }
 
   public Map<String, Object> toBody() {
-    Map<String, Object> resolvedBody = new HashMap<>();
-
-    for (HttpRequestMappingRule rule : mappingRules) {
-      Object value = null;
-
-      switch (rule.getSource()) {
-        case "header" -> value = extractFromHeader(rule);
-        case "body" -> value = extractFromBody(rule);
-      }
-
-      if (value == null) {
-        continue;
-      }
-
-      resolvedBody.put(rule.getTo(), value);
-    }
-
-    return resolvedBody;
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(payload);
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    return MappingRuleObjectMapper.execute(mappingRules, jsonPathWrapper);
   }
 
   public Map<String, String> toQueryParams() {
-    return toHeaders();
+    return executeAndConvertString();
   }
 
-  private Object extractFromHeader(HttpRequestMappingRule rule) {
-    String from = rule.getFrom().replace("$.", "");
-    String rawValue = headers.get(from);
-    if (rawValue == null) return null;
+  private Map<String, String> executeAndConvertString() {
+    Map<String, String> resolvedHeaders = new HashMap<>();
 
-    return switch (rule.getType()) {
-      case "string" -> rawValue;
-      case "boolean" -> Boolean.parseBoolean(rawValue);
-      case "int" -> {
-        try {
-          yield Integer.parseInt(rawValue);
-        } catch (NumberFormatException e) {
-          yield null;
-        }
-      }
-      default -> null;
-    };
-  }
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(payload);
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> executed = MappingRuleObjectMapper.execute(mappingRules, jsonPathWrapper);
 
-  private Object extractFromBody(HttpRequestMappingRule rule) {
-
-    if (rule.hasItemIndex()) {
-      int index = rule.getItemIndexOrDefault(0);
-
-      return switch (rule.getType()) {
-        case "list<string>" -> {
-          List<String> strings = bodyJsonPath.readAsStringList(rule.getFrom());
-          if (strings.size() > index) {
-            yield strings.get(index);
-          }
-          yield null;
-        }
-        case "list<object>" -> {
-          List<Map<String, Object>> mapList = bodyJsonPath.readAsMapList(rule.getFrom());
-          String field = rule.getFieldOrDefault("");
-          if (mapList.size() > index) {
-            Map<String, Object> objectMap = mapList.get(index);
-            yield objectMap.get(field);
-          }
-          yield null;
-        }
-        default -> null;
-      };
+    for (Map.Entry<String, Object> entry : executed.entrySet()) {
+      resolvedHeaders.put(entry.getKey(), entry.getValue().toString());
     }
 
-    return switch (rule.getType()) {
-      case "string" -> bodyJsonPath.readAsString(rule.getFrom());
-      case "boolean" -> bodyJsonPath.readAsBoolean(rule.getFrom());
-      case "int" -> bodyJsonPath.readAsInt(rule.getFrom());
-      case "list<string>" -> bodyJsonPath.readAsStringList(rule.getFrom());
-      case "object" -> bodyJsonPath.readAsMap(rule.getFrom());
-      case "list<object>" -> bodyJsonPath.readAsMapList(rule.getFrom());
-      default -> null;
-    };
+    return resolvedHeaders;
   }
 }

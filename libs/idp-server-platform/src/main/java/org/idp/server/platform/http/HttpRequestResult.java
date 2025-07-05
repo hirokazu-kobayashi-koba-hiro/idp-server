@@ -19,6 +19,7 @@ package org.idp.server.platform.http;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class HttpRequestResult {
@@ -45,6 +46,11 @@ public class HttpRequestResult {
 
   public Map<String, List<String>> headers() {
     return headers;
+  }
+
+  public Map<String, String> headersAsSingleValueMap() {
+    return headers.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getFirst()));
   }
 
   public JsonNodeWrapper body() {

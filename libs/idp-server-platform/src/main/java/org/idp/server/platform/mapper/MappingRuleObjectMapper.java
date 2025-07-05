@@ -30,7 +30,7 @@ public class MappingRuleObjectMapper {
     for (MappingRule rule : mappingRules) {
       Object value = jsonPath.readRaw(rule.from());
       if (value != null) {
-        Object converted = TypeConverter.convert(value, rule.type());
+        Object converted = TypeConverter.convert(value, rule.convertType());
         flatMap.put(rule.to(), converted);
       }
     }

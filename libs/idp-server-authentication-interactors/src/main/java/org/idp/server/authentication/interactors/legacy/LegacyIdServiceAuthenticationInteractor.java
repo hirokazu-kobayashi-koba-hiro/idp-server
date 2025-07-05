@@ -91,10 +91,10 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
 
     UserInfoMapper userInfoMapper =
         new UserInfoMapper(
-            configuration.providerName(),
-            userinfoResult.headers(),
+            userinfoConfig.userinfoMappingRules(),
+            userinfoResult.headersAsSingleValueMap(),
             userinfoResult.body(),
-            userinfoConfig.userinfoMappingRules());
+            configuration.providerName());
     User user = userInfoMapper.toUser();
 
     User exsitingUser =

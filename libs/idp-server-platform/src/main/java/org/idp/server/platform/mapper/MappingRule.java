@@ -21,9 +21,7 @@ import org.idp.server.platform.json.JsonReadable;
 public class MappingRule implements JsonReadable {
   String from;
   String to;
-  String type;
-  Integer itemIndex;
-  String field;
+  String convertType;
 
   public MappingRule() {}
 
@@ -32,12 +30,10 @@ public class MappingRule implements JsonReadable {
     this.to = to;
   }
 
-  public MappingRule(String from, String to, String type, Integer itemIndex, String field) {
+  public MappingRule(String from, String to, String convertType) {
     this.from = from;
     this.to = to;
-    this.type = type;
-    this.itemIndex = itemIndex;
-    this.field = field;
+    this.convertType = convertType;
   }
 
   public String from() {
@@ -48,19 +44,7 @@ public class MappingRule implements JsonReadable {
     return to;
   }
 
-  public String type() {
-    return type;
-  }
-
-  public int itemIndexOrDefault(int defaultValue) {
-    return itemIndex != null ? itemIndex : defaultValue;
-  }
-
-  public boolean hasItemIndex() {
-    return itemIndex != null;
-  }
-
-  public String fieldOrDefault(String defaultField) {
-    return field != null ? field : defaultField;
+  public String convertType() {
+    return convertType;
   }
 }
